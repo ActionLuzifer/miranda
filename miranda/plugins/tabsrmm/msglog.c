@@ -1407,24 +1407,17 @@ void StreamInEvents(HWND hwndDlg, HANDLE hDbEventFirst, int count, int fAppend, 
     FINDTEXTEXA fi;
     struct tm tm_now, tm_today;
     time_t now;
-    SCROLLINFO si = {0}, *psi = &si;
+    SCROLLINFO si = {0};
     POINT pt;
     BOOL  wasFirstAppend = (dat->isAutoRTL & 2) ? TRUE : FALSE;
     /*
      * calc time limit for grouping
      */
 
-    hwndrtf = GetDlgItem(hwndDlg, IDC_LOG);
-
     si.cbSize = sizeof(si);
     si.fMask = SIF_PAGE | SIF_RANGE | SIF_POS;;
-    GetScrollInfo(hwndrtf, SB_VERT, &si);
+    GetScrollInfo(GetDlgItem(hwndDlg, IDC_LOG), SB_VERT, &si);
     SendDlgItemMessage(hwndDlg, IDC_LOG, EM_GETSCROLLPOS, 0, (LPARAM) &pt);
-
-    if(GetWindowLong(hwndrtf, GWL_STYLE) & WS_VSCROLL)
-        psi = &si;
-    else
-        psi = NULL;
 
     rtfFonts = dat->theme.rtfFonts ? dat->theme.rtfFonts : &(rtfFontsGlobal[0][0]);
     now = time(NULL);
@@ -1568,6 +1561,8 @@ void StreamInEvents(HWND hwndDlg, HANDLE hDbEventFirst, int count, int fAppend, 
 
     startAt = fi.chrg.cpMin;
     
+    hwndrtf = GetDlgItem(hwndDlg, IDC_LOG);
+
     SendMessage(hwndrtf, WM_SETREDRAW, FALSE, 0);
 
     SendDlgItemMessage(hwndDlg, IDC_LOG, EM_STREAMIN, fAppend ? SFF_SELECTION | SF_RTF : SF_RTF, (LPARAM) & stream);
@@ -1622,7 +1617,7 @@ void StreamInEvents(HWND hwndDlg, HANDLE hDbEventFirst, int count, int fAppend, 
     if(ci.pszVal)
         mir_free(ci.pszVal);
 
-    SendMessage(hwndDlg, DM_FORCESCROLL, (WPARAM)&pt, (LPARAM)psi);
+    SendMessage(hwndDlg, DM_FORCESCROLL, (WPARAM)&pt, (LPARAM)&si);
     SendDlgItemMessage(hwndDlg, IDC_LOG, WM_SETREDRAW, TRUE, 0);
     InvalidateRect(GetDlgItem(hwndDlg, IDC_LOG), NULL, FALSE);
     //SendMessage(hwndDlg, DM_SCROLLLOGTOBOTTOM, 0, 0);

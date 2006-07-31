@@ -75,6 +75,8 @@ HANDLE hImgMutex;
 int gg_img_add(GGIMAGEDLGDATA *dat);
 int gg_img_remove(GGIMAGEDLGDATA *dat);
 int gg_img_sendimg(WPARAM wParam, LPARAM lParam);
+extern "C" GGIMAGEENTRY *gg_img_loadpicture(struct gg_event* e, HANDLE hContact, char *szFileName);
+extern "C" BOOL gg_img_releasepicture(GGIMAGEENTRY *img);
 
 // Image decoder prototypes
 typedef DWORD (__stdcall *pfnImgNewDecoder)(void ** ppDecoder);
@@ -804,7 +806,7 @@ static BOOL CALLBACK gg_img_dlgproc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARA
             {
                 if(dat->lpImages)
 					gg_img_releasepicture(dat->lpImages);
-                if(!(dat->lpImages = (GGIMAGEENTRY *)gg_img_loadpicture(0, dat->hContact, szFileName)))
+                if(!(dat->lpImages = gg_img_loadpicture(0, dat->hContact, szFileName)))
                 {
                     EndDialog(hwndDlg, 0);
                     return FALSE;
@@ -872,10 +874,8 @@ extern "C" BOOL gg_img_opened(uin_t uin)
 
 ////////////////////////////////////////////////////////////////////////////
 // Image Module : Looking for window entry, create if not found
-extern "C" int gg_img_display(HANDLE hContact, void *img)
+extern "C" int gg_img_display(HANDLE hContact, GGIMAGEENTRY *img)
 {
-	if(!img)
-		return FALSE;
     if(WaitForSingleObject(hImgMutex, 20000) == WAIT_TIMEOUT)
     {
 #ifdef DEBUGMODE
@@ -935,20 +935,18 @@ extern "C" int gg_img_display(HANDLE hContact, void *img)
 
 ////////////////////////////////////////////////////////////////////////////
 // Image Window : Frees image entry structure
-extern "C" int gg_img_releasepicture(void *img)
+extern "C" BOOL gg_img_releasepicture(GGIMAGEENTRY *img)
 {
-	if(!img)
-		return FALSE;
-	if(((GGIMAGEENTRY *)img)->lpszFileName)
-		free(((GGIMAGEENTRY *)img)->lpszFileName);
-	if(((GGIMAGEENTRY *)img)->hBitmap)
-		DeleteObject(((GGIMAGEENTRY *)img)->hBitmap);
-	if(((GGIMAGEENTRY *)img)->lpDIBSection)
-		ImgDeleteDIBSection(((GGIMAGEENTRY *)img)->lpDIBSection);
-	if(((GGIMAGEENTRY *)img)->lpPicture)
-		((GGIMAGEENTRY *)img)->lpPicture->Release();
-	if(((GGIMAGEENTRY *)img)->hPicture)
-		GlobalFree(((GGIMAGEENTRY *)img)->hPicture);
+	if(img->lpszFileName)
+		free(img->lpszFileName);
+	if(img->hBitmap)
+		DeleteObject(img->hBitmap);
+	if(img->lpDIBSection)
+		ImgDeleteDIBSection(img->lpDIBSection);
+	if(img->lpPicture)
+		img->lpPicture->Release();
+	if(img->hPicture)
+		GlobalFree(img->hPicture);
 	free(img);
 
 	return TRUE;
@@ -956,7 +954,7 @@ extern "C" int gg_img_releasepicture(void *img)
 
 ////////////////////////////////////////////////////////////////////////////
 // Image Window : Loading picture and sending for display
-extern "C" void * gg_img_loadpicture(struct gg_event* e, HANDLE hContact, char *szFileName)
+extern "C" GGIMAGEENTRY * gg_img_loadpicture(struct gg_event* e, HANDLE hContact, char *szFileName)
 {
     HANDLE hImageFile = NULL;
 

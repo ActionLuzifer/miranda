@@ -113,7 +113,7 @@ int Chat_ModulesLoaded(WPARAM wParam,LPARAM lParam)
         return 0;
     
     { 
-		char * mods[3] = {"Chat",CHAT_FONTMODULE};
+		char * mods[3] = {"Chat","ChatFonts"};
 		CallService("DBEditorpp/RegisterModule",(WPARAM)mods,(LPARAM)2);
 	}
 

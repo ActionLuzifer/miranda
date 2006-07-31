@@ -238,7 +238,6 @@ BOOL CALLBACK DlgProcTabbedOpts(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lP
 			for (i = 0 ; i < data->allocedItems ; i++)
 			{
 				DestroyWindow(data->items[i].hwnd); 
-				
 			}
 			mir_free(data->items); 
 			mir_free(data); 

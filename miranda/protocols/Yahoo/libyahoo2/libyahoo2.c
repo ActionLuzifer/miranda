@@ -489,7 +489,6 @@ static const value_string packet_keys[]={
 	{185, "stealth/hide?"},
 	{192, "Pictures/Buddy Icons"},
 	{197, "Avatars"},
-	{203, "YAB data?"},
 	{206, "display image type"},
 	{213, "share avatar type"},
 	{219, "cookie separator?"},
@@ -745,7 +744,7 @@ static struct yahoo_input_data * find_input_by_id_and_webcam_user(int id, const 
 static struct yahoo_input_data * find_input_by_id_and_type(int id, enum yahoo_connection_type type)
 {
 	YList *l;
-	LOG(("find_input_by_id_and_type"));
+	LOG(("[find_input_by_id_and_type] id: %d type: %d", id, type));
 	for(l = inputs; l; l = y_list_next(l)) {
 		struct yahoo_input_data *yid = l->data;
 		if(yid->type == type && yid->yd->client_id == id)
@@ -2585,7 +2584,7 @@ static void yahoo_process_auth_0x0b(struct yahoo_input_data *yid, const char *se
 		strcat(resp_96, byte);
 	}
 
-	pack = yahoo_packet_new(YAHOO_SERVICE_AUTHRESP, (yd->initial_status == YAHOO_STATUS_INVISIBLE) ?YAHOO_STATUS_INVISIBLE:YAHOO_STATUS_WEBLOGIN, yd->session_id);
+	pack = yahoo_packet_new(YAHOO_SERVICE_AUTHRESP, yd->initial_status, yd->session_id);
 	yahoo_packet_hash(pack, 6, resp_6);
 	yahoo_packet_hash(pack, 96, resp_96);
 	yahoo_packet_hash(pack, 0, sn);
@@ -2598,11 +2597,10 @@ static void yahoo_process_auth_0x0b(struct yahoo_input_data *yid, const char *se
 	yahoo_packet_hash(pack, 2, "1");
 	yahoo_packet_hash(pack, 1, sn);
 	// A little experiment ;) HEHEHE
-	yahoo_packet_hash(pack, 244, "524223");  // Features??? I wonder...
+	//yahoo_packet_hash(pack, 244, "524223");  // Features??? I wonder...
 	/////////////
-	//yahoo_packet_hash(pack, 135, "6,0,0,1922"); 
-	yahoo_packet_hash(pack, 135, "7,0,2,120"); 
-	yahoo_packet_hash(pack, 148, "300");  // ???
+	yahoo_packet_hash(pack, 135, "6,0,0,1922"); 
+	yahoo_packet_hash(pack, 148, "300"); 
 	/* mmmm GAIM does it differently???
 	yahoo_packet_hash(pack, 0, sn);
 	yahoo_packet_hash(pack, 6, resp_6);
@@ -2743,7 +2741,7 @@ static void yahoo_buddy_added_us(struct yahoo_input_data *yid, struct yahoo_pack
 		}
 	}
 
-	YAHOO_CALLBACK(ext_yahoo_contact_added)(yd->client_id, id, who, NULL, NULL, msg);
+	YAHOO_CALLBACK(ext_yahoo_contact_added)(yd->client_id, id, who, msg);
 }
 
 static void yahoo_buddy_denied_our_add(struct yahoo_input_data *yid, struct yahoo_packet *pkt)
@@ -2788,73 +2786,12 @@ static void yahoo_process_contact(struct yahoo_input_data *yid, struct yahoo_pac
 
 }
 
-static void yahoo_process_authorization(struct yahoo_input_data *yid, struct yahoo_packet *pkt)
-{
-	struct yahoo_data *yd = yid->yd;
-	char *who = NULL,
-		 *msg = NULL,
-		 *fname = NULL,
-		 *lname = NULL,
-		 *id  = NULL;
-	int state = 0, utf8 = 0;
-	YList *l;
-	
-	for (l = pkt->hash; l; l = l->next) {
-		struct yahoo_pair *pair = l->data;
-		switch (pair->key) {
-		case 4: /* who added us */
-			who = pair->value;
-			break;
-
-		case 5: /* our identity */
-			id = pair->value;
-			break;
-			
-		case 13: /* which type of request this is */
-			state = strtol(pair->value, NULL, 10);
-			break;
-			
-		case 14: /* was there a message ? */
-			msg = pair->value;
-			break;
-			
-		case 97: /* Unicode flag? */
-			utf8 = strtol(pair->value, NULL, 10);
-			break;
-			
-		case 216:
-			fname = pair->value;
-			break;
-
-		case 254:
-			lname = pair->value;
-			break;
-			
-		default:
-			LOG(("key: %d => value: '%s'", pair->key, pair->value));
-		}
-	}
-
-	switch (state) {
-		case 1: /* Authorization Accepted */
-				
-				break;
-		case 2: /* Authorization Denied */
-				YAHOO_CALLBACK(ext_yahoo_rejected)(yd->client_id, who, msg);
-				break;
-		default: /* Authorization Request? */
-				YAHOO_CALLBACK(ext_yahoo_contact_added)(yd->client_id, id, who, fname, lname, msg);
-			
-	}
-
-}
-
 static void yahoo_process_buddyadd(struct yahoo_input_data *yid, struct yahoo_packet *pkt)
 {
 	struct yahoo_data *yd = yid->yd;
 	char *who = NULL;
 	char *where = NULL;
-	int status = 0, auth = 0;
+	int status = 0;
 	char *me = NULL;
 
 	struct yahoo_buddy *bud=NULL;
@@ -2862,24 +2799,14 @@ static void yahoo_process_buddyadd(struct yahoo_input_data *yid, struct yahoo_pa
 	YList *l;
 	for (l = pkt->hash; l; l = l->next) {
 		struct yahoo_pair *pair = l->data;
-		
-		switch (pair->key){ 
-		case 1:
+		if (pair->key == 1)
 			me = pair->value;
-			break;
-		case 7:
+		if (pair->key == 7)
 			who = pair->value;
-			break;
-		case 65:
+		if (pair->key == 65)
 			where = pair->value;
-			break;
-		case 66:
+		if (pair->key == 66)
 			status = strtol(pair->value, NULL, 10);
-			break;
-		case 223:
-			auth = strtol(pair->value, NULL, 10);
-			break;
-		}
 	}
 
 	//yahoo_dump_unhandled(pkt);
@@ -2896,7 +2823,7 @@ static void yahoo_process_buddyadd(struct yahoo_input_data *yid, struct yahoo_pa
 
 	yd->buddies = y_list_append(yd->buddies, bud);
 
-	YAHOO_CALLBACK(ext_yahoo_buddy_added)(yd->client_id, me, who, where, status, auth); 
+	YAHOO_CALLBACK(ext_yahoo_buddy_added)(yd->client_id, me, who, where, status); 
 /*	YAHOO_CALLBACK(ext_yahoo_status_changed)(yd->client_id, who, status, NULL, (status==YAHOO_STATUS_AVAILABLE?0:1)); */
 }
 
@@ -3648,9 +3575,6 @@ static void yahoo_packet_process(struct yahoo_input_data *yid, struct yahoo_pack
 		break;
 	case YAHOO_SERVICE_CALENDAR:
 		yahoo_process_calendar(yid, pkt);
-		break;
-	case YAHOO_SERVICE_YAHOO7_AUTHORIZATION:
-		yahoo_process_authorization(yid, pkt);
 		break;
 	case YAHOO_SERVICE_IDLE:
 	case YAHOO_SERVICE_MAILSTAT:
@@ -4663,8 +4587,7 @@ void yahoo_send_im(int id, const char *from, const char *who, const char *what, 
 	yahoo_packet_hash(pkt, 63, "");	/* imvironment name; or ;0 (doodle;11)*/
 	yahoo_packet_hash(pkt, 64, "2"); 
 	
-	//yahoo_packet_hash(pkt, 1002, "1"); /* YIM6+ */
-	yahoo_packet_hash(pkt, 10093, "4"); /* YIM7? */
+	yahoo_packet_hash(pkt, 1002, "1"); /* YIM6+ */
 	snprintf(buf, sizeof(buf), "%d", buddy_icon);
 	yahoo_packet_hash(pkt, 206, buf); /* buddy_icon, 0 = none, 1=avatar?, 2=picture */
 	
@@ -4689,8 +4612,7 @@ void yahoo_send_typing(int id, const char *from, const char *who, int typ)
 	yahoo_packet_hash(pkt, 14, " ");
 	yahoo_packet_hash(pkt, 13, typ ? "1" : "0");
 	yahoo_packet_hash(pkt, 5, who);
-	//yahoo_packet_hash(pkt, 1002, "1"); /* YIM6+ */
-	yahoo_packet_hash(pkt, 10093, "4"); /* YIM7+ */
+	yahoo_packet_hash(pkt, 1002, "1"); /* YIM6+ */
 	yahoo_send_packet(yid, pkt, 0);
 
 	yahoo_packet_free(pkt);
@@ -5083,28 +5005,6 @@ void yahoo_remove_buddy(int id, const char *who, const char *group)
 	yahoo_packet_free(pkt);
 }
 
-void yahoo_accept_buddy(int id, const char *who)
-{
-	struct yahoo_input_data *yid = find_input_by_id_and_type(id, YAHOO_CONNECTION_PAGER);
-	struct yahoo_data *yd;
-	struct yahoo_packet *pkt;
-
-	if(!yid)
-		return;
-	yd = yid->yd;
-
-	if (!yd->logged_in)
-		return;
-
-	pkt = yahoo_packet_new(YAHOO_SERVICE_YAHOO7_AUTHORIZATION, YAHOO_STATUS_AVAILABLE, yd->session_id);
-	yahoo_packet_hash(pkt, 1, yd->user);
-	yahoo_packet_hash(pkt, 5, who);
-	yahoo_packet_hash(pkt, 13, "1"); // Reject Authorization
-	
-	yahoo_send_packet(yid, pkt, 0);
-	yahoo_packet_free(pkt);
-}
-
 void yahoo_reject_buddy(int id, const char *who, const char *msg)
 {
 	struct yahoo_input_data *yid = find_input_by_id_and_type(id, YAHOO_CONNECTION_PAGER);
@@ -5118,14 +5018,10 @@ void yahoo_reject_buddy(int id, const char *who, const char *msg)
 	if (!yd->logged_in)
 		return;
 
-	pkt = yahoo_packet_new(YAHOO_SERVICE_YAHOO7_AUTHORIZATION, YAHOO_STATUS_AVAILABLE, yd->session_id);
+	pkt = yahoo_packet_new(YAHOO_SERVICE_REJECTCONTACT, YAHOO_STATUS_AVAILABLE, yd->session_id);
 	yahoo_packet_hash(pkt, 1, yd->user);
-	yahoo_packet_hash(pkt, 5, who);
-	yahoo_packet_hash(pkt, 13, "2"); // Reject Authorization
-	
-	if (msg != NULL)
-		yahoo_packet_hash(pkt, 14, msg);
-	
+	yahoo_packet_hash(pkt, 7, who);
+	yahoo_packet_hash(pkt, 14, msg);
 	yahoo_send_packet(yid, pkt, 0);
 	yahoo_packet_free(pkt);
 }
@@ -5862,8 +5758,6 @@ const char * yahoo_get_cookie(int id, const char *which)
 		return yd->cookie_c;
 	if(!strncasecmp(which, "login", 5))
 		return yd->login_cookie;
-	if(!strncasecmp(which, "b", 1))
-		return yd->cookie_b;
 	return NULL;
 }
 

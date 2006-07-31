@@ -1,6 +1,10 @@
 #ifndef DEFINES_H
 #define DEFINES_H
+#if defined __GNUC__
+#pragma GCC system_header
+#endif 
 #define  _CRT_SECURE_NO_DEPRECATE
+#pragma warning (disable : 4996)
 //System includes
 #include <windows.h>
 #include <ctype.h>
@@ -13,6 +17,9 @@
 #include <sys/stat.h>
 #include <time.h>
 //Miranda IM includes
+#pragma warning( disable: 4100 )
+#pragma warning( disable: 4244 )
+#pragma warning( disable: 4201 )
 #include <newpluginapi.h>
 #include <statusmodes.h>
 #include <m_clist.h>
@@ -33,6 +40,9 @@
 #include <m_system.h>
 #include <m_userinfo.h>
 #include <m_addcontact.h>
+#pragma warning( default: 4100 )
+#pragma warning( default: 4244 )
+#pragma warning( default: 4201 )
 //independent includes
 #include "strl.h"
 #include "flap.h"
@@ -93,6 +103,22 @@
 #define OTH_KEY_AI						"AwayIgnore"
 #define OTH_KEY_AD						"AwayDefault"
 #define OTH_KEY_AM						"AwayMsg"
+#define OTH_KEY_OI						"OccupiedIgnore"
+#define OTH_KEY_OD						"OccupiedDefault"
+#define OTH_KEY_OM						"OccupiedMsg"
+#define OTH_KEY_NI						"NaIgnore"
+#define OTH_KEY_ND						"NaDefault"
+#define OTH_KEY_NM						"NaMsg"
+#define OTH_KEY_DI						"DndIgnore"
+#define OTH_KEY_DD						"DndDefault"
+#define OTH_KEY_DM						"DndMsg"
+#define OTH_KEY_PI						"OtpIgnore"
+#define OTH_KEY_PD						"OtpDefault"
+#define OTH_KEY_PM						"OtpMsg"
+#define OTH_KEY_LI						"OtlIgnore"
+#define OTH_KEY_LD						"OtlDefault"
+#define OTH_KEY_LM						"OtlMsg"
+
 #define OTH_KEY_SM						"StatusMsg"
 #define OTH_KEY_GP						"Group"
 //Module Name Key
@@ -135,7 +161,7 @@
 //Some Defaults for various things
 #define DEFAULT_KEEPALIVE_TIMER			60// 1000 milliseconds * 60 = 60 secs
 #define DEFAULT_GRACE_PERIOD			60
-#define AIM_DEFAULT_GROUP				"Miranda Merged"
+#define AIM_DEFAULT_GROUP				"miranda merged"
 #define AIM_DEFAULT_SERVER				"login.oscar.aol.com:5190"
 #define SYSTEM_BUDDY					"aolsystemmsg"
 #define DEFAULT_AWAY_MSG				"I am away from my computer right now."
@@ -211,7 +237,7 @@ class oscar_data
 public:
     char *username;
     char *password;
-    int seqno;//main connection sequence number
+    unsigned short seqno;//main connection sequence number
 	int state;//status of the connection; e.g. whether connected or not
 	int packet_offset;//current offset of main connection client to server packet
 	unsigned int status;//current status
@@ -227,6 +253,7 @@ public:
 	bool shutting_down;
 	bool idle;
 	bool instantidle;
+	bool checking_mail;
 
 	HINSTANCE hInstance;//plugin handle instance
 	
@@ -252,7 +279,7 @@ public:
 	
 	//Some mail connection stuff
 	HANDLE hMailConn;
-	int mail_seqno;
+	unsigned short mail_seqno;
 	int mail_packet_offset;
 	
 	//Some Icon handles

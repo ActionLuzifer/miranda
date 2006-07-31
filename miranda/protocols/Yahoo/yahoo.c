@@ -515,11 +515,6 @@ void YAHOO_sendtyping(const char *who, int stat)
 	yahoo_send_typing(ylad->id, NULL, who, stat);
 }
 
-void YAHOO_accept(const char *who)
-{
-    yahoo_accept_buddy(ylad->id, who);
-}
-
 void YAHOO_reject(const char *who, const char *msg)
 {
     yahoo_reject_buddy(ylad->id, who, msg);
@@ -665,9 +660,9 @@ HANDLE add_buddy( const char *yahoo_id, const char *yahoo_name, DWORD flags )
 	YAHOO_CallService( MS_PROTO_ADDTOCONTACT, ( WPARAM )hContact,( LPARAM )yahooProtocolName );
 	YAHOO_SetString( hContact, YAHOO_LOGINID, yahoo_id );
 	if (lstrlen(yahoo_name) > 0)
-		YAHOO_SetStringUtf( hContact, "Nick", yahoo_name );
+		YAHOO_SetString( hContact, "Nick", yahoo_name );
 	else
-	    YAHOO_SetStringUtf( hContact, "Nick", yahoo_id );
+	    YAHOO_SetString( hContact, "Nick", yahoo_id );
 	    
 	//DBWriteContactSettingWord(hContact, yahooProtocolName, "Status", ID_STATUS_OFFLINE);
 
@@ -1383,15 +1378,15 @@ void ext_yahoo_got_buddies(int id, YList * buds)
 		  //LOG(("YAB_ENTRY"));
 		  
 		  if (bud->yab_entry->fname) 
-		    YAHOO_SetStringUtf( hContact, "FirstName", bud->yab_entry->fname);
+		    YAHOO_SetString( hContact, "FirstName", bud->yab_entry->fname);
 		  
 		  
 		  if (bud->yab_entry->lname) 
-		      YAHOO_SetStringUtf( hContact, "LastName", bud->yab_entry->lname);
+		      YAHOO_SetString( hContact, "LastName", bud->yab_entry->lname);
 		  
 		  
 		  if (bud->yab_entry->nname) 
-		      YAHOO_SetStringUtf( hContact, "Nick", bud->yab_entry->nname);
+		      YAHOO_SetString( hContact, "Nick", bud->yab_entry->nname);
 		  
 		  
 		  if (bud->yab_entry->email) 
@@ -1605,22 +1600,21 @@ void YAHOO_add_buddy(const char *who, const char *group, const char *msg)
     yahoo_add_buddy(ylad->id, who, group, msg);
 }
 
-void ext_yahoo_buddy_added(int id, char *myid, char *who, char *group, int status, int auth)
+void ext_yahoo_buddy_added(int id, char *myid, char *who, char *group, int status)
 {
-	LOG(("[ext_yahoo_buddy_added] %s authorized you as %s group: %s status: %d auth: %d", who, myid, group, status, auth));
+	LOG(("[ext_yahoo_buddy_added] %s authorized you as %s group: %s status: %d", who, myid, group, status));
 	
 }
 
-void ext_yahoo_contact_added(int id, char *myid, char *who, char *fname, char *lname, char *msg)
+void ext_yahoo_contact_added(int id, char *myid, char *who, char *msg)
 {
 	char *szBlob,*pCurBlob;
-	char m[1024];
+	char m[1024], m1[5];
 	HANDLE hContact=NULL;
 	CCSDATA ccs;
 	PROTORECVEVENT pre;
 
-	/* NOTE: Msg is actually in UTF8 unless stated otherwise!! */
-    LOG(("[ext_yahoo_contact_added] %s added you as %s w/ msg '%s'", who, myid, msg));
+    LOG(("ext_yahoo_contact_added %s added you as %s w/ msg '%s'", who, myid, msg));
     
 	hContact = add_buddy(who, who, PALF_TEMPORARY);
 	
@@ -1631,23 +1625,23 @@ void ext_yahoo_contact_added(int id, char *myid, char *who, char *fname, char *l
 	pre.flags=0;
 	pre.timestamp=time(NULL);
 	
-	pre.lParam=sizeof(DWORD)*2+lstrlen(who)+lstrlen(who)+5;
-	
-	if (fname != NULL)
-		pre.lParam += lstrlen(fname);
-	
-	if (lname != NULL)
-		pre.lParam += lstrlen(lname);
-	
-	if (msg != NULL)
-		pre.lParam += lstrlen(msg);
+	m1[0]='\0';
+	if (msg == NULL)
+	  m[0]='\0';
+    else
+        lstrcpy(m, msg);
+	 
+	pre.lParam=sizeof(DWORD)*2+lstrlen(who)+lstrlen(m1)+lstrlen(m1)+lstrlen(who)+lstrlen(m)+5;
 	
 	pCurBlob=szBlob=(char *)malloc(pre.lParam);
     /*
+       Added blob is: uin(DWORD), hcontact(HANDLE), nick(ASCIIZ), first(ASCIIZ), 
+                  last(ASCIIZ), email(ASCIIZ)
+                  
        Auth blob is: uin(DWORD),hcontact(HANDLE),nick(ASCIIZ),first(ASCIIZ),
                   last(ASCIIZ),email(ASCIIZ),reason(ASCIIZ)
 
-	  blob is: 0(DWORD), nick(ASCIIZ), fname (ASCIIZ), lname (ASCIIZ), email(ASCIIZ), msg(ASCIIZ)
+	//blob is: 0(DWORD), nick(ASCIIZ), ""(ASCIIZ), ""(ASCIIZ), email(ASCIIZ), ""(ASCIIZ)
 
     */
 
@@ -1664,21 +1658,11 @@ void ext_yahoo_contact_added(int id, char *myid, char *who, char *fname, char *l
     pCurBlob+=lstrlen((char *)pCurBlob)+1;
     
     // FIRST
-	if (fname != NULL)
-		lstrcpyn(m, fname, sizeof(m));
-	else 
-		m[0] = '\0';
-	
-    lstrcpy((char *)pCurBlob,m); 
+    lstrcpy((char *)pCurBlob,m1); 
     pCurBlob+=lstrlen((char *)pCurBlob)+1;
     
     // LAST
-	if (lname != NULL)
-		lstrcpyn(m, lname, sizeof(m));
-	else 
-		m[0] = '\0';
-	
-    lstrcpy((char *)pCurBlob,m); 
+    lstrcpy((char *)pCurBlob,m1); 
     pCurBlob+=lstrlen((char *)pCurBlob)+1;
     
     // E-mail    
@@ -1686,11 +1670,6 @@ void ext_yahoo_contact_added(int id, char *myid, char *who, char *fname, char *l
 	pCurBlob+=lstrlen((char *)pCurBlob)+1;
 	
 	// Reason
-	if (msg != NULL)
-		lstrcpyn(m, msg, sizeof(m));
-	else 
-		m[0] = '\0';
-	
 	lstrcpy((char *)pCurBlob, m); 
 	
 	pre.szMessage=(char *)szBlob;

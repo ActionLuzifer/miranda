@@ -598,8 +598,8 @@ int YahooAddToListByEvent(WPARAM wParam,LPARAM lParam)
 
 int YahooAuthAllow(WPARAM wParam,LPARAM lParam)
 {
-    DBEVENTINFO dbei;
-    char* nick;
+    //DBEVENTINFO dbei;
+    //char* nick;
     
     YAHOO_DebugLog("[YahooAuthAllow]");
 	if ( !yahooLoggedIn ) {
@@ -608,7 +608,7 @@ int YahooAuthAllow(WPARAM wParam,LPARAM lParam)
 	}
 
 	
-	memset( &dbei, 0, sizeof( dbei ));
+	/*memset( &dbei, 0, sizeof( dbei ));
 	dbei.cbSize = sizeof( dbei );
 
 	if (( dbei.cbBlob = YAHOO_CallService( MS_DB_EVENT_GETBLOBSIZE, wParam, 0 )) == -1 )
@@ -624,12 +624,11 @@ int YahooAuthAllow(WPARAM wParam,LPARAM lParam)
 	if ( strcmp( dbei.szModule, yahooProtocolName ))
 		return 1;
 
-	nick = ( char* )( dbei.pBlob + sizeof( DWORD )*2 );
+	//nick = ( char* )( dbei.pBlob + sizeof( DWORD )*2 );
 
-    YAHOO_DebugLog("Accepting buddy:%s ", nick);
+    //YAHOO_DebugLog("Adding buddy:%s ", nick);
 	//YAHOO_add_buddy(nick, "miranda", NULL);
-	YAHOO_accept(nick);
-	
+	*/
 	return 0;
 }
 

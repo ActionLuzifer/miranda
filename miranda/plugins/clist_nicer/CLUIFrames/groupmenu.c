@@ -33,7 +33,7 @@ HANDLE hPreBuildGroupMenuEvent;
 HANDLE hAppearanceMenuItemProxy;
 HANDLE hEventAreaMenuItemProxy;
 
-static HMENU hMenuOldContext;
+static HMENU hMenuOldContext, hMenuEventArea;
 
 HANDLE hHideOfflineUsersMenuItem;
 HANDLE hHideOfflineUsersOutHereMenuItem;
@@ -177,6 +177,12 @@ int GroupMenuonAddService(WPARAM wParam,LPARAM lParam) {
 		//mi.fType=MFT_STRING;
 		mii->hSubMenu=(HMENU)hMenuOldContext;
 	}
+	if (hEventAreaMenuItemProxy==(HANDLE)lParam) {
+		mii->fMask|=MIIM_SUBMENU;
+		//mi.fType=MFT_STRING;
+		mii->hSubMenu=(HMENU)hMenuEventArea;
+	}
+
 	return(TRUE);
 };
 
@@ -273,6 +279,9 @@ static int OnBuildGroupMenu(WPARAM wParam,LPARAM lParam)
 	CheckMenuItem(hMenuOldContext, POPUP_TOOLBAR, MF_BYCOMMAND | (g_CluiData.dwFlags & CLUI_FRAME_SHOWTOPBUTTONS ? MF_CHECKED : MF_UNCHECKED));
 	CheckMenuItem(hMenuOldContext, POPUP_BUTTONS, MF_BYCOMMAND | (g_CluiData.dwFlags & CLUI_FRAME_SHOWBOTTOMBUTTONS ? MF_CHECKED : MF_UNCHECKED));
 	CheckMenuItem(hMenuOldContext, POPUP_SHOWMETAICONS, MF_BYCOMMAND | (g_CluiData.dwFlags & CLUI_USEMETAICONS ? MF_CHECKED : MF_UNCHECKED));
+	CheckMenuItem(hMenuEventArea, ID_EVENTAREA_AUTOHIDE, MF_BYCOMMAND | (g_CluiData.dwFlags & CLUI_FRAME_AUTOHIDENOTIFY ? MF_CHECKED : MF_UNCHECKED));
+	CheckMenuItem(hMenuEventArea, ID_EVENTAREA_ENABLED, MF_BYCOMMAND | (g_CluiData.dwFlags & CLUI_FRAME_USEEVENTAREA ? MF_CHECKED : MF_UNCHECKED));
+	CheckMenuItem(hMenuEventArea, ID_EVENTAREA_SUNKENFRAME, MF_BYCOMMAND | (g_CluiData.dwFlags & CLUI_FRAME_EVENTAREASUNKEN ? MF_CHECKED : MF_UNCHECKED));
 	CheckMenuItem(hMenuOldContext, POPUP_SHOWSTATUSICONS, MF_BYCOMMAND | (g_CluiData.dwFlags & CLUI_FRAME_STATUSICONS ? MF_CHECKED : MF_UNCHECKED));
 
 	// floater menu items
@@ -313,7 +322,9 @@ void InitGroupMenus(void)
 	//NewGroupIconidx=ImageList_AddIcon(hCListImages,hicon ); 
 
 	hMenuOldContext = GetSubMenu(LoadMenu(g_hInst, MAKEINTRESOURCE(IDR_CONTEXT)), 4);
+	hMenuEventArea = GetSubMenu(LoadMenu(g_hInst, MAKEINTRESOURCE(IDR_CONTEXT)), 5);
 	CallService(MS_LANGPACK_TRANSLATEMENU, (WPARAM) hMenuOldContext, 0);
+	CallService(MS_LANGPACK_TRANSLATEMENU, (WPARAM) hMenuEventArea, 0);
 
 	CreateServiceFunction("CLISTMENUSGroup/ExecService",GroupMenuExecService);
 	CreateServiceFunction("CLISTMENUSGroup/FreeOwnerDataGroupMenu",FreeOwnerDataGroupMenu);
@@ -394,6 +405,13 @@ void InitGroupMenus(void)
 		mi.pszService="";
 		mi.pszName=Translate("&Status");
 		hGroupStatusMenuItemProxy=(HANDLE)AddGroupMenuItem((WPARAM)0,(LPARAM)&mi);
+
+		memset(&mi,0,sizeof(mi));
+		mi.cbSize=sizeof(mi);
+		mi.position=300300;
+		mi.pszService="";
+		mi.pszName=Translate("Event Area");
+		hEventAreaMenuItemProxy=(HANDLE)AddGroupMenuItem((WPARAM)0,(LPARAM)&mi);
 
 		memset(&mi,0,sizeof(mi));
 		mi.cbSize=sizeof(mi);

@@ -8,7 +8,7 @@ extern int LoadPositionsFromDB(BYTE * OrderPos);
 #define EXTRACOLUMNCOUNT 10
 int EnabledColumnCount=0;
 boolean visar[EXTRACOLUMNCOUNT];
-#define ExtraImageIconsIndexCount 6
+#define ExtraImageIconsIndexCount 5
 int ExtraImageIconsIndex[ExtraImageIconsIndexCount];
 
 static HANDLE hExtraImageListRebuilding,hExtraImageApplying;
@@ -171,9 +171,6 @@ int OnIconLibIconChanged(WPARAM wParam,LPARAM lParam)
 	ExtraImageIconsIndex[4]=ImageList_ReplaceIcon(hExtraImageList,ExtraImageIconsIndex[4],hicon );		
 	//DestroyIcon(hicon);
 
-	hicon=LoadIconFromExternalFile("clisticons.dll",7,TRUE,TRUE,"ChatActivity","Contact List",Translate("Chat Activity"),-IDI_CHAT);
-	ExtraImageIconsIndex[5]=ImageList_ReplaceIcon(hExtraImageList,ExtraImageIconsIndex[5],hicon );
-
 	CluiIconsChanged(wParam,lParam);
 	NotifyEventHooks(ME_SKIN_ICONSCHANGED,0,0);
 	pcli->pfnClcBroadcast( INTM_INVALIDATE,0,0);
@@ -224,10 +221,6 @@ void ReloadExtraIcons()
 		hicon=LoadIconFromExternalFile("clisticons.dll",6,TRUE,TRUE,"NeverVis","Contact List",Translate("Never Visible"),-IDI_NEVERVIS);
 		if (!hicon) hicon=LoadIcon(g_hInst, MAKEINTRESOURCE(IDI_NEVERVIS));
 		ExtraImageIconsIndex[4]=ImageList_AddIcon(hExtraImageList,hicon );
-
-		hicon=LoadIconFromExternalFile("clisticons.dll",7,TRUE,TRUE,"ChatActivity","Contact List",Translate("Chat Activity"),-IDI_CHAT);
-		if (!hicon) hicon=LoadIcon(g_hInst, MAKEINTRESOURCE(IDI_CHAT));
-		ExtraImageIconsIndex[5]=ImageList_AddIcon(hExtraImageList,hicon );
 
 		SendMessage(pcli->hwndContactTree,CLM_SETEXTRAIMAGELIST,0,(LPARAM)hExtraImageList);		
 		//SetAllExtraIcons(hImgList);
@@ -328,7 +321,8 @@ void SetAllExtraIcons(HWND hwndList,HANDLE hContact)
 		szProto=pdnce->szProto;
 		{
 			boolean showweb;	
-			showweb=FALSE;     
+			showweb=FALSE;
+      
 			if (ExtraToColumnNum(EXTRA_ICON_WEB)!=-1)
 			{
 
@@ -396,28 +390,19 @@ void SetAllExtraIcons(HWND hwndList,HANDLE hContact)
 		if(ExtraToColumnNum(EXTRA_ICON_VISMODE)!=-1) 
 		{
 			BYTE iconIndex=0xFF;
-			if (szProto != NULL)
+			if (szProto != NULL && !DBGetContactSettingByte(hContact, szProto, "ChatRoom", 0))
 			{
-				if (!DBGetContactSettingByte(hContact, szProto, "ChatRoom", 0))		
+			if (pdnce->ApparentMode==ID_STATUS_OFFLINE)
+					iconIndex=ExtraImageIconsIndex[4];	
+			else if (pdnce->ApparentMode==ID_STATUS_ONLINE)
 				{
-					if (pdnce->ApparentMode==ID_STATUS_OFFLINE)
-						iconIndex=ExtraImageIconsIndex[4];	
-					else if (pdnce->ApparentMode==ID_STATUS_ONLINE)
+					if (szProto!=locApparentModeProto)
 					{
-						if (szProto!=locApparentModeProto)
-						{
-							locApparentModeProto=szProto;
-							locApparentMode=CallProtoService(locApparentModeProto,PS_GETSTATUS,0,0);
-						}
-						if (locApparentMode==ID_STATUS_INVISIBLE) 
-							iconIndex=ExtraImageIconsIndex[3];				
+						locApparentModeProto=szProto;
+						locApparentMode=CallProtoService(locApparentModeProto,PS_GETSTATUS,0,0);
 					}
-				}
-				else 
-				{
-					if (pdnce->ApparentMode==ID_STATUS_OFFLINE)
-						iconIndex=ExtraImageIconsIndex[5];	
-					else iconIndex=255;	
+					if (locApparentMode==ID_STATUS_INVISIBLE) 
+						iconIndex=ExtraImageIconsIndex[3];				
 				}
 			}
 			SendMessage(hwndList,CLM_SETEXTRAIMAGE,(WPARAM)hItem,MAKELPARAM(ExtraToColumnNum(EXTRA_ICON_VISMODE),iconIndex));	

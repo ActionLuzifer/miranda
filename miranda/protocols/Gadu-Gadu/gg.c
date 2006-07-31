@@ -25,7 +25,7 @@
 PLUGININFO pluginInfo = {
     sizeof(PLUGININFO),
     "Gadu-Gadu Protocol",
-    PLUGIN_MAKE_VERSION(0, 0, 3, 8),
+    PLUGIN_MAKE_VERSION(0, 0, 3, 7),
     "Provides support for Gadu-Gadu protocol",
     "Adam Strzelecki",
     "ono+miranda@java.pl",
@@ -390,16 +390,15 @@ int __declspec(dllexport) Unload()
     if(ggModeMsg.szInvisible)   free(ggModeMsg.szInvisible);
     if(ggModeMsg.szOffline)     free(ggModeMsg.szOffline);
 
+	// Cleanup protonames
+	if(ggProtoName) free(ggProtoName);
+	if(ggProtoError) free(ggProtoError);
+
 	// Uninit SSL library
 	gg_ssl_uninit();
 
     // Cleanup WinSock
     WSACleanup();
-
-	// Cleanup protonames
-	if(ggProtoName) free(ggProtoName);
-	if(ggProtoError) free(ggProtoError);
-
     return 0;
 }
 

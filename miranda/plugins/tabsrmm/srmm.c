@@ -80,14 +80,6 @@ int __declspec(dllexport) Load(PLUGINLINK * link)
 {
     pluginLink = link;
 
-#ifdef _DEBUG //mem leak detector :-) Thanks Tornado!
-    {
-        int flag = _CrtSetDbgFlag(_CRTDBG_REPORT_FLAG); // Get current flag
-        flag |= (_CRTDBG_LEAK_CHECK_DF | _CRTDBG_ALLOC_MEM_DF | _CRTDBG_CHECK_CRT_DF); // Turn on leak-checking bit
-        _CrtSetDbgFlag(flag); // Set flag to the new value
-    }
-#endif
-
     memset(&memoryManagerInterface, 0, sizeof(memoryManagerInterface));
     memoryManagerInterface.cbSize = sizeof(memoryManagerInterface);
     CallService(MS_SYSTEM_GET_MMI, 0, (LPARAM) &memoryManagerInterface);

@@ -1640,7 +1640,7 @@ case WM_LBUTTONUP:
 			default:
 				saveContactListControlWndProc(hwnd, msg, wParam, lParam);
 				break;
-				
+				//dropee is a contact
 			}
 		}
 

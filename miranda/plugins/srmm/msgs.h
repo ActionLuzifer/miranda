@@ -31,7 +31,6 @@ struct NewMessageWindowLParam
 {
 	HANDLE hContact;
 	const char *szInitialText;
-	int isWchar;
 };
 
 struct MessageWindowData
@@ -65,8 +64,6 @@ struct MessageWindowData
 	WORD wOldStatus;
 	TCmdList *cmdList;
 	TCmdList *cmdListCurrent;
-	int bIsRtl, bIsFirstAppend;
-	int lastEventType;
 };
 
 #define HM_EVENTSENT         (WM_USER+10)

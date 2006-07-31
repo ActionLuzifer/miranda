@@ -105,12 +105,11 @@ BOOL WINAPI DllMain(HINSTANCE hinst,DWORD fdwReason,LPVOID lpvReserved)
 __declspec(dllexport) PLUGININFO* MirandaPluginInfo(DWORD mirandaVersion)
 {
 	//
-    // We require Miranda 0.5
-	// This requires the latest trunk... experimental API used here
+    // We require Miranda 0.4
 	//
-    if (mirandaVersion < PLUGIN_MAKE_VERSION(0, 5, 0, 0)) {
+    if (mirandaVersion < PLUGIN_MAKE_VERSION(0, 4, 0, 0)) {
 		MessageBox( NULL, 
-				Translate("Yahoo plugin cannot be loaded. It requires Miranda IM 0.5 or later."), 
+				Translate("Yahoo plugin cannot be loaded. It requires Miranda IM 0.4 or later."), 
 				Translate("Yahoo"), 
 				MB_OK|MB_ICONWARNING|MB_SETFOREGROUND|MB_TOPMOST );
 
@@ -166,14 +165,6 @@ static int OnModulesLoaded( WPARAM wParam, LPARAM lParam )
 	char tModule[ 100 ], tModuleDescr[ 100 ];
 	NETLIBUSER nlu = {0};
 
-	if ( !ServiceExists( MS_DB_CONTACT_GETSETTING_STR )) {
-		MessageBox( NULL, 
-				Translate("Yahoo plugin requires db3x plugin version 0.5.1.0 or later" ), 
-				Translate("Yahoo"), 
-				MB_OK );
-		return 1;
-	}
-
 	CharUpper( lstrcpy( tModule, yahooProtocolName ));
 	lstrcpyn(tModuleDescr, yahooProtocolName , sizeof( tModuleDescr ) - 25);
 	lstrcat(tModuleDescr," plugin connections");
@@ -181,9 +172,9 @@ static int OnModulesLoaded( WPARAM wParam, LPARAM lParam )
 	nlu.cbSize = sizeof(nlu);
 
 #ifdef HTTP_GATEWAY
-	nlu.flags =  NUF_OUTGOING | NUF_HTTPGATEWAY;
+	nlu.flags = NUF_OUTGOING | NUF_HTTPGATEWAY;
 #else
-   	nlu.flags = /*NUF_INCOMING |*/ NUF_OUTGOING | NUF_HTTPCONNS;
+   	nlu.flags = NUF_OUTGOING;
 #endif
 
 	nlu.szSettingsModule = tModule;
