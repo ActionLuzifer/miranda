@@ -457,7 +457,7 @@ LBL_Exit:
 					mir_free( szLogBuffer );
 			}	}
 
-			bytesParsed = JabberXmlParse( &xmlState, buffer );
+			bytesParsed = JabberXmlParse( &xmlState, buffer, datalen );
 			JabberLog( "bytesParsed = %d", bytesParsed );
 			if ( bytesParsed > 0 ) {
 				if ( bytesParsed < datalen )
@@ -696,9 +696,11 @@ static void JabberProcessFeatures( XmlNode *node, void *userdata )
 		bind->addChild( "resource", info->resource );
 		JabberSend( info->s, iq );
 
-		if ( isSessionAvailable )
-			info->bIsSessionAvailable = TRUE;
-
+		if ( isSessionAvailable ) {
+			XmlNodeIq iq("set");
+			iq.addChild( "session" )->addAttr( "xmlns", "urn:ietf:params:xml:ns:xmpp-session" );
+			JabberSend( info->s, iq );		
+		}	
 		return;
 	}
 	

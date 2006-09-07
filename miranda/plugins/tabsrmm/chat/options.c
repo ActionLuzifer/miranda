@@ -757,10 +757,7 @@ static BOOL CALLBACK DlgProcOptions2(HWND hwndDlg,UINT uMsg,WPARAM wParam,LPARAM
 		SendDlgItemMessage(hwndDlg, IDC_LOGBKG, CPM_SETDEFAULTCOLOUR, 0, g_Settings.crLogBackground);
 		SendDlgItemMessage(hwndDlg, IDC_MESSAGEBKG, CPM_SETDEFAULTCOLOUR, 0, DBGetContactSettingDword(NULL, "Chat", "ColorNicklistBG", GetSysColor(COLOR_WINDOW)));
 		SendDlgItemMessage(hwndDlg, IDC_NICKLISTBKG, CPM_SETDEFAULTCOLOUR, 0, DBGetContactSettingDword(NULL, "Chat", "ColorNicklistBG", GetSysColor(COLOR_WINDOW)));
-
-        SendDlgItemMessage(hwndDlg, IDC_CHAT_CHOOSEFONT, BM_SETIMAGE, IMAGE_ICON, (LPARAM)myGlobals.g_buttonBarIcons[21]);
-        SendDlgItemMessage(hwndDlg, IDC_CHAT_CHOOSEFONT, BUTTONADDTOOLTIP, (WPARAM)Translate("Select font"), 0);
-
+        
 		hBkgColourBrush = CreateSolidBrush(SendDlgItemMessage(hwndDlg, IDC_LOGBKG, CPM_GETCOLOUR, 0, 0));
 		hListColourBrush = CreateSolidBrush(SendDlgItemMessage(hwndDlg, IDC_NICKLISTBKG, CPM_GETCOLOUR, 0, 0));
 		hMessageColourBrush = CreateSolidBrush(SendDlgItemMessage(hwndDlg, IDC_MESSAGEBKG, CPM_GETCOLOUR, 0, 0));
@@ -797,6 +794,9 @@ static BOOL CALLBACK DlgProcOptions2(HWND hwndDlg,UINT uMsg,WPARAM wParam,LPARAM
         
         SendDlgItemMessage(hwndDlg, IDC_FONTCATEGORY, CB_SETCURSEL, 0, 0);
         SendDlgItemMessage(hwndDlg, IDC_NICKCOLORS, CB_SETCURSEL, 0, 0);
+
+        SendDlgItemMessage(hwndDlg, IDC_CHAT_CHOOSEFONT, BM_SETIMAGE, IMAGE_ICON, (LPARAM)myGlobals.g_buttonBarIcons[21]);
+        SendDlgItemMessage(hwndDlg, IDC_CHAT_CHOOSEFONT, BUTTONADDTOOLTIP, (WPARAM)Translate("Select font"), 0);
 
         fontOptionsList = IM_fontOptionsList;
 		fontCount = MSGDLGFONTCOUNT;

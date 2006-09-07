@@ -236,9 +236,9 @@ extern void Utf8Decode( char* str, wchar_t** ucs2 );
 #define DeleteObject(a) DebugDeleteObject(a)
 #endif 
 
-#define lockdat 
+#define lockdat
 //EnterCriticalSection(&(dat->lockitemCS))
-#define ulockdat 
+#define ulockdat
 //LeaveCriticalSection(&(dat->lockitemCS))
 
 #define strsetA(a,b) {if (a) mir_free(a); a=mir_strdup(b);}
@@ -258,33 +258,8 @@ extern SortedList *clistCache;
 extern void LockCacheItem(HANDLE hContact, char*, int);
 extern void UnlockCacheItem(HANDLE hContact);
 
-HICON LoadSmallIconShared(HINSTANCE hInstance, LPCTSTR lpIconName);
-HICON LoadSmallIcon(HINSTANCE hInstance, LPCTSTR lpIconName);
-BOOL DestroyIcon_protect(HICON icon);
-extern BOOL (WINAPI *pfEnableThemeDialogTexture)(HANDLE, DWORD);
-
-#ifndef ETDT_ENABLETAB
-#define ETDT_DISABLE        0x00000001
-#define ETDT_ENABLE         0x00000002
-#define ETDT_USETABTEXTURE  0x00000004
-#define ETDT_ENABLETAB      (ETDT_ENABLE  | ETDT_USETABTEXTURE)
-#endif
-
-
-
 #define TreeView_InsertItemA(hwnd, lpis) \
 	(HTREEITEM)SendMessageA((hwnd), TVM_INSERTITEMA, 0, (LPARAM)(LPTV_INSERTSTRUCTA)(lpis))
 
 #define TreeView_GetItemA(hwnd, pitem) \
 	(BOOL)SendMessageA((hwnd), TVM_GETITEMA, 0, (LPARAM)(TV_ITEM *)(pitem))
-
-extern HANDLE hAskStatusMessageThread;
-extern HANDLE hGetTextThread;
-extern HANDLE hSmoothAnimationThread;
-extern HANDLE hFillFontListThread;
-
-#define STATE_NORMAL 0
-#define STATE_EXITING 1
-extern BYTE g_STATE;
-#define MirandaExiting() ((g_STATE==STATE_EXITING) || Miranda_Terminated())
-extern BYTE gl_TrimText;

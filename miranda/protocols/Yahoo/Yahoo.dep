@@ -170,6 +170,7 @@
 	".\libyahoo2\yahoo_list.h"\
 	".\libyahoo2\yahoo_util.h"\
 	".\pthread.h"\
+	".\utf8.h"\
 	".\yahoo.h"\
 	
 
@@ -330,6 +331,10 @@
 	".\resource.h"\
 	".\search.h"\
 	".\yahoo.h"\
+	
+
+.\utf8.c : \
+	".\utf8.h"\
 	
 
 .\util.c : \

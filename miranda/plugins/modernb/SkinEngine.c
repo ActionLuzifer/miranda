@@ -2358,7 +2358,7 @@ BOOL mod_TextOutA(HDC hdc, int x, int y, char * lpString, int nCount)
 #ifdef UNICODE
 	TCHAR *buf=mir_alloc((2+nCount)*sizeof(TCHAR));
 	BOOL res;
-	MultiByteToWideChar(CallService( MS_LANGPACK_GETCODEPAGE, 0, 0 ), 0, lpString, -1, buf, (2+nCount)*sizeof(TCHAR)); 
+	MultiByteToWideChar(CP_ACP, 0, lpString, -1, buf, (2+nCount)*sizeof(TCHAR)); 
 	res=mod_TextOut(hdc,x,y,buf,nCount);
 	mir_free(buf);
 	return res;
@@ -2752,7 +2752,7 @@ BOOL DrawTextEffect_(BYTE* destPt,BYTE* maskPt, DWORD width, DWORD height, DWORD
 
 
 
-int AlphaTextOut (HDC hDC, LPCTSTR lpstring, int nCount, RECT * lpRect, UINT format, DWORD ARGBcolor)
+int AlphaTextOut (HDC hDC, LPCTSTR lpString, int nCount, RECT * lpRect, UINT format, DWORD ARGBcolor)
 {
   HBITMAP destBitmap;
   SIZE sz, fsize;
@@ -2768,7 +2768,6 @@ int AlphaTextOut (HDC hDC, LPCTSTR lpstring, int nCount, RECT * lpRect, UINT for
   BYTE * bits;
   BYTE * bufbits;
   HFONT hfnt, holdfnt;
-  LPTSTR lpString=NULL;
   
   int drx=0;
   int dry=0;
@@ -2799,8 +2798,7 @@ int AlphaTextOut (HDC hDC, LPCTSTR lpstring, int nCount, RECT * lpRect, UINT for
     }
     weightfilled=1;
   }
-  if (!lpstring) return 0;
-  lpString=mir_tstrdup(lpstring);
+  if (!lpString) return 0;
   if (nCount==-1) nCount=lstrlen(lpString);
   // retrieve destination bitmap bits
   {
@@ -2824,34 +2822,11 @@ int AlphaTextOut (HDC hDC, LPCTSTR lpstring, int nCount, RECT * lpRect, UINT for
     SetTextColor(memdc,RGB(255,255,255));
     holdfnt=(HFONT)SelectObject(memdc,hfnt);
   }
-  {
-      GetTextExtentPoint32(memdc,lpString,nCount,&sz);
-      if ((format&DT_END_ELLIPSIS) && sz.cx>workRect.right-workRect.left)
-      {
-          SIZE szElipses={0};
-          TCHAR *tem=NULL;
-          int number=0;
-          GetTextExtentPoint32A(memdc,"...",3,&szElipses);
-          szElipses.cx+=1;
-          GetTextExtentExPoint(memdc,lpString,nCount,
-                               workRect.right-workRect.left-szElipses.cx,
-                               &number, NULL, &sz);
-          
-          tem=(TCHAR*)mir_alloc((number+5)*sizeof(TCHAR));
-          //memset(tem,0,(number+5)*sizeof(TCHAR));
-          memcpy((void*)tem,lpString,number*sizeof(TCHAR));
-          memcpy((void*)((TCHAR*)tem+number),_T("..."),3*sizeof(TCHAR));
-          //tem[number+3]=(TCHAR)'\0';
-          nCount=number+3;
-          mir_free(lpString);
-          lpString=tem;
 
-      }
-  }
   // Calc Sizes
   {
     //Calc full text size
-    //GetTextExtentPoint32(memdc,lpString,nCount,&sz);
+    GetTextExtentPoint32(memdc,lpString,nCount,&sz);
     sz.cx+=2;
     fsize=sz;
     {
@@ -3008,7 +2983,6 @@ int AlphaTextOut (HDC hDC, LPCTSTR lpstring, int nCount, RECT * lpRect, UINT for
   SelectObject(memdc,holdfnt);
   mod_DeleteDC(memdc); 
   if (noDIB) free(destBits);
-  mir_free(lpString);
   return 0;
 }
 BOOL mod_DrawTextA(HDC hdc, char * lpString, int nCount, RECT * lpRect, UINT format)
@@ -3030,7 +3004,7 @@ BOOL mod_DrawText(HDC hdc, LPCTSTR lpString, int nCount, RECT * lpRect, UINT for
   DWORD form=0, color=0;
   RECT r=*lpRect;
   OffsetRect(&r,1,1);
-  if (format&DT_RTLREADING) SetTextAlign(hdc,TA_RTLREADING);
+  if (format|DT_RTLREADING) SetTextAlign(hdc,TA_RTLREADING);
   if (format&DT_CALCRECT) return DrawText(hdc,lpString,nCount,lpRect,format);
   form=format;
   color=GetTextColor(hdc);
@@ -3124,7 +3098,7 @@ BOOL mod_ImageList_DrawEx( HIMAGELIST himl,int i,HDC hdcDst,int x,int y,int dx,i
     }
   }
   {
-	  BOOL ret=DestroyIcon_protect(ic);
+	  BOOL ret=DestroyIcon(ic);
 	  if (!ret)
 		  ret=ret;
 
@@ -3255,35 +3229,40 @@ BOOL mod_DrawIconEx(HDC hdcDst,int xLeft,int yTop,HICON hIcon,int cxWidth,int cy
       for (x=0; x<right; x++)
       {
         DWORD * src, *dest;               
-        BYTE mask=0;
-        BYTE a; 
+        BYTE mask=((1<<(7-x%8))&(*(t3+(x>>3))))!=0;
         src=(DWORD*)(t1+(x<<2));
-        dest=(DWORD*)(t2+(x<<2));              
-        if (hasalpha && !hasmask)  
-            a=((BYTE*)src)[3];
+        dest=(DWORD*)(t2+(x<<2));
+        if (hasalpha && !hasmask)
+          *dest=*src;
         else
-        { 
-          mask=((1<<(7-x%8))&(*(t3+(x>>3))))!=0;
-          if (mask)// && !hasalpha)		
-		  {
-				if (!hasalpha) 
-                {  *dest=0; continue; }
-				else 
-                    a=((BYTE*)src)[3]>0?((BYTE*)src)[3]:0;//255;
-		  }
-          else if (hasalpha || hasmask)
-              a=(((BYTE*)src)[3]>0?((BYTE*)src)[3]:255);
-          else {  *dest=0; continue; }
-        }
-        if (a>0)
         {
+          if (mask)// && !hasalpha)
+			  // TODO: ADD verification about validity #0.4.2.8
+			{
+				if (!hasalpha)
+					*dest=0;  
+				else
+				{
+					
+					BYTE a;
+					a=((BYTE*)src)[3]>0?((BYTE*)src)[3]:0;//255;
+					((BYTE*)dest)[3]=a;
+					((BYTE*)dest)[0]=((BYTE*)src)[0]*a/255;
+					((BYTE*)dest)[1]=((BYTE*)src)[1]*a/255;
+					((BYTE*)dest)[2]=((BYTE*)src)[2]*a/255;
+					a=a;
+				}
+			}
+          else
+          {
+			BYTE a;
+            a=(((BYTE*)src)[3]>0?((BYTE*)src)[3]:255);
             ((BYTE*)dest)[3]=a;
-		    ((BYTE*)dest)[0]=((BYTE*)src)[0]*a/255;
-		    ((BYTE*)dest)[1]=((BYTE*)src)[1]*a/255;
-		    ((BYTE*)dest)[2]=((BYTE*)src)[2]*a/255;
+            ((BYTE*)dest)[0]=((BYTE*)src)[0]*a/255;
+            ((BYTE*)dest)[1]=((BYTE*)src)[1]*a/255;
+            ((BYTE*)dest)[2]=((BYTE*)src)[2]*a/255;
+          }
         }
-        else 
-            *dest=0;
       }
     }
   }
@@ -3790,7 +3769,6 @@ int ReCreateBackImage(BOOL Erase,RECT *w)
 		SelectObject(cachedWindow->hBackDC,hb2);
 		DeleteObject(cachedWindow->hBackDIB);
 		cachedWindow->hBackDIB=hb2;
-		FillRect(cachedWindow->hBackDC,&wnd,GetSysColorBrush(COLOR_BTNFACE));
 		SkinDrawGlyph(cachedWindow->hBackDC,&wnd,&wnd,"Main,ID=Background,Opt=Non-Layered");
 		SetRectAlpha_255(cachedWindow->hBackDC,&wnd);
 	}
@@ -3915,7 +3893,7 @@ int ValidateFrameImageProc(RECT * r)                                // Calling q
 
 int UpdateWindowImage()
 {
-  if (MirandaExiting()) 
+  if (Miranda_Terminated()) 
 	  return 0;
   if (LayeredFlag)
   {

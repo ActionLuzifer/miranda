@@ -314,10 +314,7 @@ void cliBeginRenameSelection(HWND hwnd,struct ClcData *dat)
 			else if (dat->row_align_group_mode==2) a|=ES_RIGHT;
 		}
 		if (dat->text_rtl) a|=EN_ALIGN_RTL_EC;
-		if (contact->type==CLCIT_GROUP)
-			dat->hwndRenameEdit=CreateWindow(TEXT("EDIT"),contact->szText,WS_POPUP|WS_BORDER|ES_AUTOHSCROLL|a,x,y,w,h,hwnd,NULL,g_hInst,NULL);
-		else
-			dat->hwndRenameEdit=CreateWindow(TEXT("EDIT"),pcli->pfnGetContactDisplayName(contact->hContact,0),WS_POPUP|WS_BORDER|ES_AUTOHSCROLL|a,x,y,w,h,hwnd,NULL,g_hInst,NULL);
+		dat->hwndRenameEdit=CreateWindow(TEXT("EDIT"),contact->szText,WS_POPUP|WS_BORDER|ES_AUTOHSCROLL|a,x,y,w,h,hwnd,NULL,g_hInst,NULL);
 	}
 	SetWindowLong(dat->hwndRenameEdit,GWL_STYLE,GetWindowLong(dat->hwndRenameEdit,GWL_STYLE)&(~WS_CAPTION)|WS_BORDER);
 	SetWindowLong(dat->hwndRenameEdit,GWL_USERDATA,(long)dat);
@@ -554,7 +551,6 @@ void LoadCLCOptions(HWND hwnd, struct ClcData *dat)
 	// First line
 	dat->first_line_draw_smileys = DBGetContactSettingByte(NULL,"CList","FirstLineDrawSmileys",1);
 	dat->first_line_append_nick = DBGetContactSettingByte(NULL,"CList","FirstLineAppendNick",0);
-    gl_TrimText=DBGetContactSettingByte(NULL,"CList","TrimText",1);
 
 	// Second line
 	if (pcli->hwndContactTree == hwnd || pcli->hwndContactTree==NULL)
@@ -579,7 +575,6 @@ void LoadCLCOptions(HWND hwnd, struct ClcData *dat)
 		}
 		dat->second_line_xstatus_has_priority = DBGetContactSettingByte(NULL,"CList","SecondLineXStatusHasPriority",1);
 		dat->second_line_show_status_if_no_away=DBGetContactSettingByte(NULL,"CList","SecondLineShowStatusIfNoAway",0);
-		dat->second_line_show_listening_if_no_away=DBGetContactSettingByte(NULL,"CList","SecondLineShowListeningIfNoAway",1);
 		dat->second_line_use_name_and_message_for_xstatus = DBGetContactSettingByte(NULL,"CList","SecondLineUseNameAndMessageForXStatus",0);
 	}
 	else
@@ -617,7 +612,6 @@ void LoadCLCOptions(HWND hwnd, struct ClcData *dat)
 		}
 		dat->third_line_xstatus_has_priority = DBGetContactSettingByte(NULL,"CList","ThirdLineXStatusHasPriority",1);
 		dat->third_line_show_status_if_no_away=DBGetContactSettingByte(NULL,"CList","ThirdLineShowStatusIfNoAway",0);
-		dat->third_line_show_listening_if_no_away=DBGetContactSettingByte(NULL,"CList","ThirdLineShowListeningIfNoAway",1);
 		dat->third_line_use_name_and_message_for_xstatus = DBGetContactSettingByte(NULL,"CList","ThirdLineUseNameAndMessageForXStatus",0);
 	}
 	else

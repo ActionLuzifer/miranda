@@ -38,7 +38,6 @@
 #define __ICQ_DIRECT_H
 
 typedef struct {
-  BYTE ft_magic;
   message_cookie_data pMessage;
   int status;
   int sending;
@@ -102,7 +101,7 @@ void CloseDirectConnection(directconnect *dc);
 void CloseContactDirectConns(HANDLE hContact);
 int SendDirectMessage(HANDLE hContact, icq_packet *pkt);
 int sendDirectPacket(directconnect *dc, icq_packet *pkt);
-void icq_newConnectionReceived(HANDLE hNewConnection, DWORD dwRemoteIP, void *pExtra);
+void icq_newConnectionReceived(HANDLE hNewConnection, DWORD dwRemoteIP);
 void InitDirectConns(void);
 void UninitDirectConns(void);
 directconnect* FindFileTransferDC(filetransfer* ft);

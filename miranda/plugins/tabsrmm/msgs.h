@@ -426,9 +426,9 @@ struct MessageWindowData {
     LONG    ipFieldHeight;
     WNDPROC oldIEViewProc;
     BOOL    clr_added;
-    BOOL    fIsReattach;
-    WPARAM  wParam;          // used for "delayed" actions like moved splitters in minimized windows
-    LPARAM  lParam;
+	BOOL	fIsReattach;
+	WPARAM  wParam;
+	LPARAM  lParam;
     int     iHaveRTLLang;
 };
 
@@ -583,7 +583,7 @@ typedef struct _globals {
     BOOL        m_visualMessageSizeIndicator;
     BOOL        m_autoSplit;
     int         rtf_ctablesize;
-    DWORD       dwThreadID;
+	DWORD		dwThreadID;
 } MYGLOBALS;
 
 typedef struct _tag_ICONDESC {

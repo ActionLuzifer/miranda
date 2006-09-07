@@ -1548,7 +1548,7 @@ buttons_done:
                     break;
                 }
                 //if(wParam == SIZE_MINIMIZED) {
-                    //pContainer->hwndSaved = 0;
+                //    pContainer->hwndSaved = 0;
                 //    break;
                 //}
 
@@ -2118,6 +2118,7 @@ panel_found:
                     if(pContainer->hwndActive != 0 && IsWindow(pContainer->hwndActive)) {
                         ShowWindow(pContainer->hwndActive, SW_SHOW);
                         SetFocus(pContainer->hwndActive);
+                        pContainer->hwndSaved = 0;
                         SendMessage(pContainer->hwndActive, WM_ACTIVATE, WA_ACTIVE, 0);
                         RedrawWindow(pContainer->hwndActive, NULL, NULL, RDW_INVALIDATE | RDW_ALLCHILDREN);
                     }
@@ -2591,7 +2592,7 @@ panel_found:
                         TrackPopupMenu(hMenu, 0, pt.x, pt.y, 0, hwndDlg, NULL);
                         DestroyMenu(hMenu);
                     }
-                    return TRUE;
+					return TRUE;
                 }
                 break;
             }

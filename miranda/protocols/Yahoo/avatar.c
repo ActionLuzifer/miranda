@@ -486,28 +486,33 @@ struct avatar_info{
 	int cksum;
 };
 
-static void __cdecl yahoo_recv_avatarthread(void *pavt) 
+void get_picture(int id, int fd, int error,	const char *filename, unsigned long size, void *data) 
 {
-	PROTO_AVATAR_INFORMATION AI;
-	struct avatar_info *avt = pavt;
-	int 	error = 0;
+    PROTO_AVATAR_INFORMATION AI;
+	char buf[4096];
+    int rsize = 0;
+	DWORD dw, c;
 	HANDLE 	hContact = 0;
-	char 	buf[4096];
+	char *pBuff = NULL;
+	struct avatar_info *avt = (struct avatar_info *) data;
+		
+	LOG(("Getting file: %s size: %lu fd: %d error: %d", filename, size, fd, error));
 	
-	if (avt == NULL) {
-		YAHOO_DebugLog("AVT IS NULL!!!");
-		return;
+	if (!size || fd <= 0) {/* empty file or some file loading error. don't crash! */
+        error = 1;
+		// we need to notify that there's something wrong?
+		if (!size) {
+			// make sure it's a real problem and not a problem w/ our connection
+			yahoo_send_picture_info(id, avt->who, 3, avt->pic_url, avt->cksum);
+		}
 	}
-
-	if (!yahooLoggedIn) {
-		YAHOO_DebugLog("We are not logged in!!!");
-		return;
+    
+	if (!error) {
+		pBuff = malloc(size);
+		if (!pBuff) 
+			error = 1;
 	}
 	
-//    ProtoBroadcastAck(yahooProtocolName, hContact, ACKTYPE_GETINFO, ACKRESULT_SUCCESS, (HANDLE) 1, 0);
-	
-	LOG(("yahoo_recv_avatarthread who:%s url:%s checksum: %d", avt->who, avt->pic_url, avt->cksum));
-
 	hContact = getbuddyH(avt->who);
 		
 	if (!hContact){
@@ -519,53 +524,26 @@ static void __cdecl yahoo_recv_avatarthread(void *pavt)
 	}
 	
     if(!error) {
-
-    NETLIBHTTPREQUEST nlhr={0},*nlhrReply;
-	
-	nlhr.cbSize		= sizeof(nlhr);
-	nlhr.requestType= REQUEST_GET;
-	nlhr.flags		= NLHRF_NODUMP|NLHRF_GENERATEHOST|NLHRF_SMARTAUTHHEADER;
-	nlhr.szUrl		= avt->pic_url;
-
-	nlhrReply=(NETLIBHTTPREQUEST*)CallService(MS_NETLIB_HTTPTRANSACTION,(WPARAM)hNetlibUser,(LPARAM)&nlhr);
-
-	if(nlhrReply) {
-		
-		if (nlhrReply->resultCode != 200) {
-			LOG(("Update server returned '%d' instead of 200. It also sent the following: %s", nlhrReply->resultCode, nlhrReply->szResultDescr));
-			// make sure it's a real problem and not a problem w/ our connection
-			yahoo_send_picture_info(ylad->id, avt->who, 3, avt->pic_url, avt->cksum);
-			error = 1;
-		} else if (nlhrReply->dataLength < 1 || nlhrReply->pData == NULL) {
-			LOG(("No data??? Got %d bytes.", nlhrReply->dataLength));
-			error = 1;
-		} else {
-			HANDLE myhFile;
-
-			GetAvatarFileName(hContact, buf, 1024, DBGetContactSettingByte(hContact, yahooProtocolName,"AvatarType", 0));
-			DeleteFile(buf);
+				do {
+					dw = Netlib_Recv((HANDLE)fd, buf, 4096, MSG_NODUMP);
+				
+					LOG(("Got %lu bytes!", dw));
+					
+					if (dw > 0) {
+						CopyMemory(&pBuff[rsize], buf, dw);
+						rsize += dw;
+					} else if (dw < 0) {
+						error = 1;
+					}
+					
+				} while ( dw > 0 );
 			
-			LOG(("Saving file: %s size: %u", buf, nlhrReply->dataLength));
-			myhFile = CreateFile(buf,
-								GENERIC_WRITE,
-								FILE_SHARE_WRITE,
-								NULL, OPEN_ALWAYS,  FILE_ATTRIBUTE_NORMAL,  0);
+    }
 	
-			if(myhFile !=INVALID_HANDLE_VALUE) {
-				DWORD c;
-				
-				WriteFile(myhFile, nlhrReply->pData, nlhrReply->dataLength, &c, NULL );
-				CloseHandle(myhFile);
-				
-				DBWriteContactSettingString(hContact, "ContactPhoto", "File", buf);
-				DBWriteContactSettingDword(hContact, yahooProtocolName, "PictLastCheck", 0);
-			} else {
-				LOG(("Can not open file for writing: %s", buf));
-				error = 1;
-			}
-		}
-		CallService(MS_NETLIB_FREEHTTPREQUESTSTRUCT,0,(LPARAM)nlhrReply);
-	}
+	if (fd > 0) {
+		//LOG(("Before Netlib_CloseHandle! Handle: %d", fd));
+		Netlib_CloseHandle((HANDLE)fd);
+		//LOG(("After Netlib_CloseHandle!"));
 	}
 	
 	if (DBGetContactSettingDword(hContact, yahooProtocolName, "PictCK", 0) != avt->cksum) {
@@ -576,13 +554,37 @@ static void __cdecl yahoo_recv_avatarthread(void *pavt)
 	DBWriteContactSettingDword(hContact, yahooProtocolName, "PictLoading", 0);
 	LOG(("File download complete!?"));
 
-	if (error) 
-		buf[0]='\0';
+//    ProtoBroadcastAck(yahooProtocolName, sf->hContact, ACKTYPE_FILE, !error ? ACKRESULT_SUCCESS:ACKRESULT_FAILED, sf, 0);
+	if (!error) {
+			HANDLE myhFile;
+
+			GetAvatarFileName(hContact, buf, 1024, DBGetContactSettingByte(hContact, yahooProtocolName,"AvatarType", 0));
+			DeleteFile(buf);
+			
+			LOG(("Saving file: %s size: %lu", buf, size));
+			myhFile    = CreateFile(buf,
+									GENERIC_WRITE,
+									FILE_SHARE_WRITE,
+									NULL, OPEN_ALWAYS,  FILE_ATTRIBUTE_NORMAL,  0);
 	
-	free(avt->who);
-	free(avt->pic_url);
-	free(avt);
-	
+			if(myhFile !=INVALID_HANDLE_VALUE) {
+				WriteFile(myhFile, pBuff, rsize, &c, NULL );
+				CloseHandle(myhFile);
+				
+				DBWriteContactSettingString(hContact, "ContactPhoto", "File", buf);
+				DBWriteContactSettingDword(hContact, yahooProtocolName, "PictLastCheck", 0);
+			} else {
+				LOG(("Can not open file for writing: %s", buf));
+				error = 1;
+			}
+			
+	} else {
+			//GetAvatarFileName(hContact, buf, 1024);
+			buf[0]='\0';
+	}
+
+	FREE(pBuff);
+
 	AI.cbSize = sizeof AI;
 	AI.format = PA_FORMAT_PNG;
 	AI.hContact = hContact;
@@ -592,19 +594,30 @@ static void __cdecl yahoo_recv_avatarthread(void *pavt)
 		DBWriteContactSettingDword(hContact, yahooProtocolName, "PictCK", 0);
 	
 	ProtoBroadcastAck(yahooProtocolName, hContact, ACKTYPE_AVATAR, !error ? ACKRESULT_SUCCESS:ACKRESULT_FAILED,(HANDLE) &AI, 0);
-
 }
 
-void YAHOO_get_avatar(const char *who, const char *pic_url, long cksum)
+
+static void __cdecl yahoo_recv_avatarthread(void *pavt) 
 {
-	struct avatar_info *avt;
+	struct avatar_info *avt = pavt;
 	
-	avt = malloc(sizeof(struct avatar_info));
-	avt->who = _strdup(who);
-	avt->pic_url = _strdup(pic_url);
-	avt->cksum = cksum;
+	if (!yahooLoggedIn) {
+		YAHOO_DebugLog("We are not logged in!!!");
+		return;
+	}
 	
-	pthread_create(yahoo_recv_avatarthread, (void *) avt);
+//    ProtoBroadcastAck(yahooProtocolName, hContact, ACKTYPE_GETINFO, ACKRESULT_SUCCESS, (HANDLE) 1, 0);
+	if (avt == NULL) {
+		YAHOO_DebugLog("AVT IS NULL!!!");
+		return;
+	}
+	
+	LOG(("yahoo_recv_avatarthread who:%s url:%s checksum: %d", avt->who, avt->pic_url, avt->cksum));
+	yahoo_get_url_handle(ylad->id, avt->pic_url, &get_picture, avt);
+	
+	free(avt->who);
+	free(avt->pic_url);
+	free(avt);
 }
 
 void ext_yahoo_got_picture(int id, const char *me, const char *who, const char *pic_url, int cksum, int type)
@@ -689,10 +702,15 @@ void ext_yahoo_got_picture(int id, const char *me, const char *who, const char *
 				GetAvatarFileName(hContact, z, 1024, DBGetContactSettingByte(hContact, yahooProtocolName,"AvatarType", 0));
 				
 				if (DBGetContactSettingDword(hContact, yahooProtocolName,"PictCK", 0) != cksum || _access( z, 0 ) != 0 ) {
+					struct avatar_info *avt;
 					
 					YAHOO_DebugLog("[ext_yahoo_got_picture] Checksums don't match or avatar file is missing. Current: %d, New: %d",(int)DBGetContactSettingDword(hContact, yahooProtocolName,"PictCK", 0), cksum);
-
-					YAHOO_get_avatar(who, pic_url, cksum);
+					avt = malloc(sizeof(struct avatar_info));
+					avt->who = _strdup(who);
+					avt->pic_url = _strdup(pic_url);
+					avt->cksum = cksum;
+					
+					pthread_create(yahoo_recv_avatarthread, (void *) avt);
 				}
 			}
 

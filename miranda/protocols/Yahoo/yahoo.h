@@ -39,7 +39,7 @@
 // Build is a cvs build
 //
 // If defined, the build will add cvs info to the plugin info
-#define YAHOO_CVSBUILD
+//#define YAHOO_CVSBUILD
 
 //#define modname			"myYahoo"
 #define YAHOO_LOGINSERVER                 "LoginServer"
@@ -105,10 +105,6 @@ extern BOOL             yahooLoggedIn;
 extern HANDLE           YahooMenuItems[ MENU_ITEMS_COUNT ];
 extern pthread_mutex_t connectionHandleMutex;
 
-#ifdef HTTP_GATEWAY
-extern int 				iHTTPGateway;
-#endif
-
 //int ext_yahoo_log(char *fmt,...);
 
 HANDLE __stdcall YAHOO_CreateProtoServiceFunction( 
@@ -135,7 +131,6 @@ DWORD __stdcall YAHOO_SetWord( HANDLE hContact, const char* valueName, int parVa
 int __stdcall YAHOO_SendBroadcast( HANDLE hContact, int type, int result, HANDLE hProcess, LPARAM lParam );
 
 DWORD __stdcall YAHOO_SetString( HANDLE hContact, const char* valueName, const char* parValue );
-DWORD __stdcall YAHOO_SetStringUtf( HANDLE hContact, const char* valueName, const char* parValue );
 
 int __stdcall	YAHOO_ShowPopup( const char* nickname, const char* msg, const char *szURL );
 
@@ -168,7 +163,6 @@ char* YAHOO_GetContactName(HANDLE hContact);
 
 void YAHOO_remove_buddy(const char *who);
 void YAHOO_reject(const char *who, const char *msg);
-void YAHOO_accept(const char *who);
 void YAHOO_add_buddy(const char *who, const char *group, const char *msg);
 HANDLE add_buddy( const char *yahoo_id, const char *yahoo_name, DWORD flags );
 void YAHOO_sendtyping(const char *who, int stat);
@@ -189,7 +183,6 @@ typedef struct {
 	int fd;
 	int status;
 	char *msg;
-	int  rpkts;
 } yahoo_local_account;
 
 void SetButtonCheck(HWND hwndDlg, int CtrlID, BOOL bCheck);

@@ -4,7 +4,7 @@
 //
 // Copyright © 2000,2001 Richard Hughes, Roland Rabien, Tristan Van de Vreede
 // Copyright © 2001,2002 Jon Keating, Richard Hughes
-// Copyright © 2002,2003,2004 Martin Öberg, Sam Kothari, Robert Rainwater
+// Copyright © 2002,2003,2004 Martin  berg, Sam Kothari, Robert Rainwater
 // Copyright © 2004,2005,2006 Joe Kucera
 //
 // This program is free software; you can redistribute it and/or
@@ -156,7 +156,15 @@ static void handleRecvServMsg(unsigned char *buf, WORD wLen, WORD wFlags, DWORD 
   wLen -= 2;                         //  0x0002: Advanced message format
                                      //  0x0004: 'New' message format
   // Sender UIN
-  if (!unpackUID(&buf, &wLen, &dwUin, &szUID)) return;
+  if (wMessageFormat == 1)
+  {
+    if (!unpackUID(&buf, &wLen, &dwUin, &szUID)) return;
+  }
+  else
+  {
+    szUID[0] = '\0';
+    if (!unpackUID(&buf, &wLen, &dwUin, NULL)) return;
+  }
 
   if (dwUin && IsOnSpammerList(dwUin))
   {
@@ -469,7 +477,7 @@ static void handleRecvServMsgType2(unsigned char *buf, WORD wLen, DWORD dwUin, c
     WORD wAckType;
     DWORD q1,q2,q3,q4;
 
-    if (wTLVLen < 26)
+    if (wTLVLen < 30)
     { // just check if all basic data is there
       NetLog_Server("Message (format %u) - Ignoring empty message", 2);
       return;
@@ -500,17 +508,6 @@ static void handleRecvServMsgType2(unsigned char *buf, WORD wLen, DWORD dwUin, c
     if (CompareGUIDs(q1,q2,q3,q4, MCAP_TLV2711_FMT))
     { // we surely have at least 4 bytes for TLV chain
       HANDLE hContact = HContactFromUIN(dwUin, NULL);
-
-      if (wTLVLen < 4)
-      { // just check if at least one tlv is there
-        NetLog_Server("Message (format %u) - Ignoring empty message", 2);
-        return;
-      }
-      if (!dwUin)
-      { // AIM cannot send this, just sanity
-        NetLog_Server("Error: Malformed UIN in packet");
-        return;
-      }
 
       // This TLV chain may contain the following TLVs:
       // TLV(A): Acktype 0x0000 - normal message
@@ -553,16 +550,7 @@ static void handleRecvServMsgType2(unsigned char *buf, WORD wLen, DWORD dwUin, c
     }
     else if (CompareGUIDs(q1,q2,q3,q4,MCAP_REVERSE_REQ))
     { // Handle reverse DC request
-      if (wTLVLen < 4)
-      { // just check if at least one tlv is there
-        NetLog_Server("Message (format %u) - Ignoring empty message", 2);
-        return;
-      }
-      if (!dwUin)
-      { // AIM cannot send this, just sanity
-        NetLog_Server("Error: Malformed UIN in packet");
-        return;
-      }
+      // we surely have at least 4 bytes for TLV chain
       chain = readIntoTLVChain(&pDataBuf, wTLVLen, 0);
 
       wAckType = getWordFromChain(chain, 0x0A, 1);
@@ -625,10 +613,6 @@ static void handleRecvServMsgType2(unsigned char *buf, WORD wLen, DWORD dwUin, c
       }
       // Clean up
       disposeChain(&chain);
-    }
-    else if (CompareGUIDs(q1,q2,q3,q4,MCAP_OSCAR_FT))
-    { // this is an OFT packet
-      handleRecvServMsgOFT(pDataBuf, wTLVLen, dwUin, szUID, dwID1, dwID2, wCommand);
     }
     else // here should be detection of extra data streams (Xtraz)
     {

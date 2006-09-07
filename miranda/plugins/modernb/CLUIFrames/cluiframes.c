@@ -806,7 +806,7 @@ int LocateStorePosition(int Frameid,int maxstored)
 		mir_snprintf(settingname,sizeof(settingname),"%s%d","Name",i);
     frmname=DBGetStringA(0,CLUIFrameModule,settingname);
     if(frmname==NULL) continue;
-    if(strcmpi(frmname,Frames[Frameid].name)==0) {
+    if(_strcmpi(frmname,Frames[Frameid].name)==0) {
       storpos=i;
       mir_free(frmname);
       break;
@@ -908,7 +908,7 @@ HMENU CLUIFramesCreateMenuForFrame(int frameid,int root,int popuppos,char *addse
   ZeroMemory(&mi,sizeof(mi));
 
   mi.cbSize=sizeof(mi);
-  mi.hIcon=LoadSmallIcon(g_hInst,MAKEINTRESOURCE(IDI_MIRANDA));
+  mi.hIcon=LoadIcon(g_hInst,MAKEINTRESOURCE(IDI_MIRANDA));
   mi.pszPopupName=(char *)root;
   mi.popupPosition=frameid;
   mi.position=popuppos++;
@@ -916,7 +916,6 @@ HMENU CLUIFramesCreateMenuForFrame(int frameid,int root,int popuppos,char *addse
   mi.flags=CMIF_CHILDPOPUP|CMIF_GRAYED;
   mi.pszContactOwner=(char *)0;
   menuid=(HANDLE)CallService(addservice,0,(LPARAM)&mi);
-  DestroyIcon_protect(mi.hIcon);
   if(frameid==-1) contMITitle=menuid;
   else Frames[framepos].MenuHandles.MITitle=menuid;
 
@@ -1095,7 +1094,7 @@ static int CLUIFramesModifyContextMenuForFrame(WPARAM wParam,LPARAM lParam)
   int pos;
   CLISTMENUITEM mi;
   //TMO_MenuItem tmi;
-  if (MirandaExiting()) return 0;
+
   if (FramesSysNotStarted) return -1;
 
   lockfrm();
@@ -1828,7 +1827,7 @@ static int CLUIFramesLoadMainMenu()
     ZeroMemory(&mi,sizeof(mi));
     mi.cbSize=sizeof(mi);
     // create "show all frames" menu
-    mi.hIcon=NULL;//LoadSmallIconShared(g_hInst,MAKEINTRESOURCEA(IDI_MIRANDA));
+    mi.hIcon=NULL;//LoadIcon(g_hInst,MAKEINTRESOURCEA(IDI_MIRANDA));
     mi.flags=CMIF_GRAYED;
     mi.position=10000000;
     mi.pszPopupName=Translate("Frames");
@@ -1837,7 +1836,7 @@ static int CLUIFramesLoadMainMenu()
     CallService(MS_CLIST_ADDMAINMENUITEM,0,(LPARAM)&mi);
 
     // create "show all frames" menu
-    mi.hIcon=NULL;//LoadSmallIconShared(g_hInst,MAKEINTRESOURCEA(IDI_MIRANDA));
+    mi.hIcon=NULL;//LoadIcon(g_hInst,MAKEINTRESOURCEA(IDI_MIRANDA));
     mi.flags=0;
     mi.position=10100000;
     mi.pszPopupName=Translate("Frames");
@@ -1845,7 +1844,7 @@ static int CLUIFramesLoadMainMenu()
     mi.pszService=MS_CLIST_FRAMES_SHOWALLFRAMES;
     CallService(MS_CLIST_ADDMAINMENUITEM,0,(LPARAM)&mi);
 
-    mi.hIcon=NULL;//LoadSmallIconShared(g_hInst,MAKEINTRESOURCEA(IDI_HELP));
+    mi.hIcon=NULL;//LoadIcon(g_hInst,MAKEINTRESOURCEA(IDI_HELP));
     mi.position=10100001;
     mi.pszPopupName=Translate("Frames");
     mi.flags=CMIF_CHILDPOPUP;
@@ -1862,14 +1861,14 @@ static int CLUIFramesLoadMainMenu()
   ZeroMemory(&mi,sizeof(mi));
   mi.cbSize=sizeof(mi);
   // create root menu
-  mi.hIcon=LoadSmallIcon(g_hInst,MAKEINTRESOURCE(IDI_MIRANDA));
+  mi.hIcon=LoadIcon(g_hInst,MAKEINTRESOURCE(IDI_MIRANDA));
   mi.flags=CMIF_ROOTPOPUP;
   mi.position=3000090000;
   mi.pszPopupName=(char*)-1;
   mi.pszName=Translate("Frames");
   mi.pszService=0;
   MainMIRoot=(HANDLE)CallService(MS_CLIST_ADDMAINMENUITEM,0,(LPARAM)&mi);
-  DestroyIcon_protect(mi.hIcon);
+
   // create frames menu
   separator=3000200000;
   for (i=0;i<nFramescount;i++) {
@@ -1890,7 +1889,7 @@ static int CLUIFramesLoadMainMenu()
   separator+=100000;
 
   // create "show all frames" menu
-  mi.hIcon=NULL;//LoadSmallIconShared(g_hInst,MAKEINTRESOURCEA(IDI_MIRANDA));
+  mi.hIcon=NULL;//LoadIcon(g_hInst,MAKEINTRESOURCEA(IDI_MIRANDA));
   mi.flags=CMIF_CHILDPOPUP;
   mi.position=separator++;
   mi.pszPopupName=(char*)MainMIRoot;
@@ -1899,7 +1898,7 @@ static int CLUIFramesLoadMainMenu()
   CallService(MS_CLIST_ADDMAINMENUITEM,0,(LPARAM)&mi);
 
   // create "show all titlebars" menu
-  mi.hIcon=NULL;//LoadSmallIconShared(g_hInst,MAKEINTRESOURCEA(IDI_HELP));
+  mi.hIcon=NULL;//LoadIcon(g_hInst,MAKEINTRESOURCEA(IDI_HELP));
   mi.position=separator++;
   mi.pszPopupName=(char*)MainMIRoot;
   mi.flags=CMIF_CHILDPOPUP;
@@ -1908,7 +1907,7 @@ static int CLUIFramesLoadMainMenu()
   CallService(MS_CLIST_ADDMAINMENUITEM,0,(LPARAM)&mi);
 
   // create "hide all titlebars" menu
-  mi.hIcon=NULL;//LoadSmallIconShared(g_hInst,MAKEINTRESOURCEA(IDI_HELP));
+  mi.hIcon=NULL;//LoadIcon(g_hInst,MAKEINTRESOURCEA(IDI_HELP));
   mi.position=separator++;
   mi.pszPopupName=(char*)MainMIRoot;
   mi.flags=CMIF_CHILDPOPUP;
@@ -3049,7 +3048,6 @@ boolean AlignCOLLIconToLeft; //will hide frame icon
 
 int OnFrameTitleBarBackgroundChange(WPARAM wParam,LPARAM lParam)
 {
-    if (MirandaExiting()) return 0;
   {	
     DBVARIANT dbv={0};
 
@@ -3887,7 +3885,6 @@ int CLUIFrameResizeFloatingFrame(int framepos)
 
 static int CLUIFrameOnMainMenuBuild(WPARAM wParam,LPARAM lParam)
 {
-  if (MirandaExiting()) return 0;
   CLUIFramesLoadMainMenu();
  
   return 0;
@@ -4293,7 +4290,6 @@ static CLUIFrameOnModulesLoad(WPARAM wParam,LPARAM lParam)
 static CLUIFrameOnModulesUnload(WPARAM wParam,LPARAM lParam)
 {
   //
-  if (MirandaExiting()) return 0;
   if (!contMIVisible) return 0;
   CallService( MS_CLIST_REMOVECONTEXTFRAMEMENUITEM, ( LPARAM )contMIVisible, 1 );
   CallService( MS_CLIST_REMOVECONTEXTFRAMEMENUITEM, ( LPARAM )contMITitle, 1 );

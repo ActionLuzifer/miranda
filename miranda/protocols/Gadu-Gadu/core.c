@@ -65,8 +65,7 @@ void gg_disconnect()
                     if(!(szMsg = ggModeMsg.szOnline) &&
                         !DBGetContactSetting(NULL, "SRAway", gg_status2db(ID_STATUS_ONLINE, "Default"), &dbv))
                     {
-						if(*(dbv.pszVal))
-							szMsg = dbMsg = strdup(dbv.pszVal);
+                        szMsg = dbMsg = strdup(dbv.pszVal);
                         DBFreeVariant(&dbv);
                     }
                     break;
@@ -74,8 +73,7 @@ void gg_disconnect()
                     if(!(szMsg = ggModeMsg.szAway) &&
                         !DBGetContactSetting(NULL, "SRAway", gg_status2db(ID_STATUS_AWAY, "Default"), &dbv))
                     {
-						if(*(dbv.pszVal))
-							szMsg = dbMsg = strdup(dbv.pszVal);
+                        szMsg = dbMsg = strdup(dbv.pszVal);
                         DBFreeVariant(&dbv);
                     }
                     break;
@@ -83,8 +81,7 @@ void gg_disconnect()
                     if(!(szMsg = ggModeMsg.szInvisible) &&
                         !DBGetContactSetting(NULL, "SRAway", gg_status2db(ID_STATUS_INVISIBLE, "Default"), &dbv))
                     {
-						if(*(dbv.pszVal))
-							szMsg = dbMsg = strdup(dbv.pszVal);
+                        szMsg = dbMsg = strdup(dbv.pszVal);
                         DBFreeVariant(&dbv);
                     }
                     break;
@@ -263,8 +260,6 @@ void *__stdcall gg_mainthread(void *empty)
 		{ GG_FAILURE_PASSWORD, 		"Your Gadu-Gadu number and password combination was rejected by the Gadu-Gadu server. Please check login details at M->Options->Network->Gadu-Gadu and try again." },
 		{ GG_FAILURE_404, 			"Connecting to Gadu-Gadu hub failed." },
 		{ GG_FAILURE_TLS, 			"Cannot establish secure connection." },
-		{ GG_FAILURE_NEED_EMAIL,	"Server disconnected asking you for changing your e-mail." },
-		{ GG_FAILURE_INTRUDER,		"Too many login attempts with invalid password." },
 		{ 0, 						"Unknown" }
 	};
     GGTHREAD *thread = empty;
@@ -522,8 +517,11 @@ start:
     {
 		// Subscribe users status notifications
         gg_notifyall();
-		// Set startup status
-        gg_broadcastnewstatus(ggDesiredStatus);
+        if(ggDesiredStatus == ID_STATUS_INVISIBLE &&
+            DBGetContactSettingByte(NULL, GG_PROTO, GG_KEY_STARTINVISIBLE, GG_KEYDEF_STARTINVISIBLE))
+            gg_broadcastnewstatus(ggDesiredStatus);    // Set just status (startup status)
+        else
+            gg_refreshstatus(ggDesiredStatus);         // Inform about my status
         // Mark was connected
         connected = TRUE;
     }

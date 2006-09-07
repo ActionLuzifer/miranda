@@ -206,6 +206,7 @@ static void	InitButtons(HWND hwndDlg, SESSION_INFO* si)
 	}
 }
 
+
 static int splitterEdges = FALSE;
 
 static UINT _toolbarCtrls[] = { IDC_SMILEY, IDC_CHAT_BOLD, IDC_CHAT_UNDERLINE, IDC_ITALICS, IDC_COLOR, IDC_BKGCOLOR,
@@ -1453,7 +1454,7 @@ BOOL CALLBACK RoomWndProc(HWND hwndDlg,UINT uMsg,WPARAM wParam,LPARAM lParam)
             psi->pContainer = newData->pContainer;
             dat->hwnd = hwndDlg;
             psi->hWnd = hwndDlg;
-            psi->iSplitterY = g_Settings.iSplitterY;
+			psi->iSplitterY = g_Settings.iSplitterY;
 
             BroadCastContainer(dat->pContainer, DM_REFRESHTABINDEX, 0, 0);
 
@@ -1968,10 +1969,9 @@ LABEL_SHOWWINDOW:
 				g_Settings.iSplitterX = si->iSplitterX;
 			}
 			else if((HWND)lParam==GetDlgItem(hwndDlg,IDC_SPLITTERY) || lParam == -1) {
-                int oldSplitterY;
-
+				int oldSplitterY;
 				GetClientRect(hwndDlg,&rc);
-				pt.x=0; pt.y = wParam;
+				pt.x=0; pt.y=wParam;
 				ScreenToClient(hwndDlg,&pt);
 				oldSplitterY=si->iSplitterY;
 				si->iSplitterY=bFormat?rc.bottom-pt.y+1:rc.bottom-pt.y+20;
@@ -2010,6 +2010,7 @@ LABEL_SHOWWINDOW:
             //PostMessage(hwndDlg, DM_DELAYEDSCROLL, 0, 1);
 			return 0;
         }
+
 		case GC_FIREHOOK:
 		{
 			if (lParam)

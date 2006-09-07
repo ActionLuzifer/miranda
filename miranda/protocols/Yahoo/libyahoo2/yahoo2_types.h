@@ -85,10 +85,8 @@ enum yahoo_log_level {
 };
 
 /* Yahoo Protocol versions. Thanks to GAIM devs.*/
-//#define YAHOO_WEBMESSENGER_PROTO_VER 0x0065
-#define YAHOO_WEBMESSENGER_PROTO_VER 0x000D
-//#define YAHOO_PROTO_VER 0x000c
-#define YAHOO_PROTO_VER 0x000d
+#define YAHOO_WEBMESSENGER_PROTO_VER 0x0065
+#define YAHOO_PROTO_VER 0x000c
 
 /* Yahoo style/color directives */
 #define YAHOO_COLOR_BLACK "\033[30m"
@@ -167,7 +165,6 @@ struct yahoo_data {
 	char  *cookie_y;
 	char  *cookie_t;
 	char  *cookie_c;
-	char  *cookie_b;
 	char  *login_cookie;
 
 	YList *buddies;
@@ -182,7 +179,6 @@ struct yahoo_data {
 	int   session_id;
 
 	int   client_id;
-	long session_timestamp;
 
 	char  *rawbuddylist;
 	char  *rawstealthlist;

@@ -31,11 +31,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "wingdi.h"
 #include <Winuser.h>
 #include "skinengine.h"
-#include "modern_statusbar.h"
 
 HANDLE gl_event_hSkinLoaded;
 BOOL ON_SIZING_CYCLE=0;
-extern StatusBarData sbdat;
 extern BYTE CALLED_FROM_SHOWHIDE;
 extern void (*saveLoadCluiGlobalOpts)(void);
 #define TM_AUTOALPHA  1
@@ -60,14 +58,6 @@ int BehindEdgeSettings;
 WORD BehindEdgeShowDelay;
 WORD BehindEdgeHideDelay;
 WORD BehindEdgeBorderSize;
-
-
-HANDLE hAskStatusMessageThread=NULL;
-HANDLE hGetTextThread=NULL;
-HANDLE hSmoothAnimationThread=NULL;
-HANDLE hFillFontListThread=NULL;
-
-BYTE g_STATE=STATE_NORMAL;
 
 extern BOOL LOCK_IMAGE_UPDATING;
 extern BOOL LOCK_UPDATING;
@@ -108,7 +98,7 @@ BOOL CheckOwner(HWND hwnd)
 	{
 		char buf[255];
 		GetClassNameA(midWnd,buf,254);
-		if (!strcmpi(buf,CLUIFrameSubContainerClassName)) return TRUE;
+		if (!_strcmpi(buf,CLUIFrameSubContainerClassName)) return TRUE;
 	}
 	return FALSE;
 }
@@ -202,7 +192,6 @@ typedef struct{
 	int n;
 	int TimerCreated;
 	BOOL isGlobal;
-	HIMAGELIST IconsList;
 } ProtoTicks,*pProtoTicks;
 //int SkinUpdateWindowProc(HWND hwnd1);
 
@@ -261,19 +250,6 @@ extern int dock_prevent_moving;
 int show_event_started=0;
 extern int JustUpdateWindowImage();
 BOOL TransparentFlag=FALSE;// TransparentFlag
-
-void DestroyThreads()
-{
-    while (hAskStatusMessageThread || hGetTextThread || hSmoothAnimationThread || hFillFontListThread ||Miranda_Terminated())
-    {
-        SleepEx(0,TRUE);
-    }
- //   TerminateThread(hAskStatusMessageThread,0);
- //   TerminateThread(hGetTextThread,0);
- //   TerminateThread(hSmoothAnimationThread,0);
- //   TerminateThread(hFillFontListThread,0);
-}
-
 
 void ChangeWindowMode()
 {
@@ -710,12 +686,7 @@ static int CluiModulesLoaded(WPARAM wParam,LPARAM lParam)
 	/*
 	 *	Updater support
 	*/
-#ifdef _UNICODE
 	CallService("Update/RegisterFL", (WPARAM)2103, (LPARAM)&pluginInfo);
-#else
-	CallService("Update/RegisterFL", (WPARAM)2996, (LPARAM)&pluginInfo);
-#endif 
-		
 	/*
 	 *  End of updater support
 	 */
@@ -761,7 +732,6 @@ pProtoTicks GetProtoTicksByProto(char * szProto)
 			CycleStartTick[i].CycleStartTick=0;
 			CycleStartTick[i].n=i;			
 			CycleStartTick[i].isGlobal=strcmpi(szProto,GLOBAL_PROTO_NAME)==0;
-			CycleStartTick[i].IconsList=NULL;
 			return(&CycleStartTick[i]);
 		}
 	}
@@ -788,7 +758,7 @@ int GetConnectingIconForProtoCount(char *szProto)
 
 }
 
-static HICON ExtractIconFromPath(const char *path, BOOL * needFree)
+static HICON ExtractIconFromPath(const char *path)
 {
 	char *comma;
 	char file[MAX_PATH],fileFull[MAX_PATH];
@@ -801,19 +771,15 @@ static HICON ExtractIconFromPath(const char *path, BOOL * needFree)
 	CallService(MS_UTILS_PATHTOABSOLUTE, (WPARAM)file, (LPARAM)fileFull);
 	hIcon=NULL;
 	ExtractIconExA(fileFull,n,NULL,&hIcon,1);
-	if (needFree)
-	{
-		*needFree=(hIcon!=NULL);
-	}
 	return hIcon;
 }
 
-HICON LoadIconFromExternalFile(char *filename,int i,boolean UseLibrary,boolean registerit,char *IconName,char *SectName,char *Description,int internalidx, BOOL * needFree)
+HICON LoadIconFromExternalFile(char *filename,int i,boolean UseLibrary,boolean registerit,char *IconName,char *SectName,char *Description,int internalidx)
 {
 	char szPath[MAX_PATH],szMyPath[MAX_PATH], szFullPath[MAX_PATH],*str;
 	HICON hIcon=NULL;
 	SKINICONDESC sid={0};
-	if (needFree) *needFree=FALSE;
+
 	GetModuleFileNameA(GetModuleHandle(NULL), szPath, MAX_PATH);
 	GetModuleFileNameA(g_hInst, szMyPath, MAX_PATH);
 	str=strrchr(szPath,'\\');
@@ -822,12 +788,12 @@ HICON LoadIconFromExternalFile(char *filename,int i,boolean UseLibrary,boolean r
 
 	if (!UseLibrary||!ServiceExists(MS_SKIN2_ADDICON))
 	{		
-		hIcon=ExtractIconFromPath(szFullPath,needFree);
+		hIcon=ExtractIconFromPath(szFullPath);
 		if (hIcon) return hIcon;
 		if (UseLibrary)
 		{
 			_snprintf(szFullPath, sizeof(szFullPath), "%s,%d", szMyPath, internalidx);
-			hIcon=ExtractIconFromPath(szFullPath,needFree);
+			hIcon=ExtractIconFromPath(szFullPath);
 			if (hIcon) return hIcon;		
 		}
 	}
@@ -858,12 +824,12 @@ HICON GetConnectingIconForProto(char *szProto,int b)
 {
 	char szFullPath[MAX_PATH];
 	HICON hIcon=NULL;
-	BOOL needFree;
+
 	b=b-1;
 	_snprintf(szFullPath, sizeof(szFullPath), "proto_conn_%s.dll",szProto);
-	hIcon=LoadIconFromExternalFile(szFullPath,b+1,FALSE,FALSE,NULL,NULL,NULL,0,&needFree);
+	hIcon=LoadIconFromExternalFile(szFullPath,b+1,FALSE,FALSE,NULL,NULL,NULL,0);
 	if (hIcon) return hIcon;
-	hIcon=(LoadSmallIcon(g_hInst,(TCHAR *)(IDI_ICQC1+b+1)));
+	hIcon=(LoadIconA(g_hInst,(char *)(IDI_ICQC1+b+1)));
 	return(hIcon);
 }
 
@@ -896,11 +862,7 @@ int GetConnectingIconService(WPARAM wParam,LPARAM lParam)
 		//	if (lParam)
 		//		hIcon=GetConnectingIconForProto("Global",b);
 		//	else
-			if (pt->IconsList)
-				hIcon=mod_ImageList_GetIcon(pt->IconsList,b,ILD_NORMAL);
-			else
-				hIcon=NULL;
-				//hIcon=GetConnectingIconForProto(szProto,b);
+				hIcon=GetConnectingIconForProto(szProto,b);
 		};
 	}
 
@@ -917,7 +879,7 @@ int CreateTimerForConnectingIcon(WPARAM wParam,LPARAM lParam)
 	if (!szProto) return (0);
 	if (!status) return (0);
 
-	if ((sbdat.connectingIcon==1)&&status>=ID_STATUS_CONNECTING&&status<=ID_STATUS_CONNECTING+MAX_CONNECT_RETRIES)
+	if ((DBGetContactSettingByte(NULL,"CLUI","UseConnectingIcon",1)==1)&&status>=ID_STATUS_CONNECTING&&status<=ID_STATUS_CONNECTING+MAX_CONNECT_RETRIES)
 	{
 
 		ProtoTicks *pt=NULL;
@@ -932,17 +894,8 @@ int CreateTimerForConnectingIcon(WPARAM wParam,LPARAM lParam)
 				cnt=GetConnectingIconForProtoCount(szProto);
 				if (cnt!=0)
 				{
-					int i=0;
-					DefaultStep=100;/*DBGetContactSettingWord(NULL,"CLUI","DefaultStepConnectingIcon",100);*/
+					DefaultStep=DBGetContactSettingWord(NULL,"CLUI","DefaultStepConnectingIcon",100);
 					pt->IconsCount=cnt;
-					if (pt->IconsList) ImageList_Destroy(pt->IconsList);
-					pt->IconsList=ImageList_Create(16,16,ILC_MASK|ILC_COLOR32,cnt,1);
-					for (i=0; i<cnt; i++)
-					{
-						HICON ic=GetConnectingIconForProto(szProto,i);
-						if (ic) ImageList_AddIcon(pt->IconsList,ic);
-						DestroyIcon_protect(ic);
-					}
 					SetTimer(pcli->hwndContactList,TM_STATUSBARUPDATE+pt->n,(int)(DefaultStep)/1,0);
 					pt->TimerCreated=1;
 					pt->CycleStartTick=GetTickCount();
@@ -985,7 +938,7 @@ int ReloadCLUIOptions()
 int OnSettingChanging(WPARAM wParam,LPARAM lParam)
 {
 	DBCONTACTWRITESETTING *dbcws=(DBCONTACTWRITESETTING *)lParam;
-    if (MirandaExiting()) return 0;
+
 	if (wParam==0)
 	{
 		if ((dbcws->value.type==DBVT_BYTE)&&!mir_strcmp(dbcws->szModule,"CLUI"))
@@ -1084,7 +1037,7 @@ int CreateCLC(HWND parent)
 		Frame.hWnd=pcli->hwndContactTree;
 		Frame.align=alClient;
 		Frame.hIcon=LoadSkinnedIcon(SKINICON_OTHER_MIRANDA);
-		//LoadSmallIconShared(hInst,MAKEINTRESOURCEA(IDI_MIRANDA));
+		//LoadIcon(hInst,MAKEINTRESOURCEA(IDI_MIRANDA));
 		Frame.Flags=F_VISIBLE|F_SHOWTB|F_SHOWTBTIP|F_NO_SUBCONTAINER;
 		Frame.name=Translate("My Contacts");
 		hFrameContactTree=(HWND)CallService(MS_CLIST_FRAMES_ADDFRAME,(WPARAM)&Frame,(LPARAM)0);
@@ -1374,36 +1327,7 @@ BOOL CALLBACK RepositChildInZORDER(HWND hwnd,LPARAM lParam)
 //	SetWindowPos(hwnd,
 	return TRUE;
 }
-void SnappingToEdge(HWND hwnd, WINDOWPOS * wp) //by ZORG
-{
-	if (DBGetContactSettingByte(NULL,"CLUI","SnapToEdges",0))
-	{
-		RECT* dr;
-		MONITORINFO monInfo;
-		HMONITOR curMonitor = MonitorFromWindow(hwnd, MONITOR_DEFAULTTONEAREST);
 
-		monInfo.cbSize = sizeof(monInfo);
-		GetMonitorInfo(curMonitor, &monInfo);
-
-		dr = &(monInfo.rcWork);
-
-		// Left side
-		if ( wp->x < dr->left + 10 && wp->x > dr->left - 10 && BehindEdgeSettings!=1)
-			wp->x = dr->left;
-
-		// Right side
-		if ( dr->right - wp->x - wp->cx <10 && dr->right - wp->x - wp->cx > -10 && BehindEdgeSettings!=2)
-			wp->x = dr->right - wp->cx;
-
-		// Top side
-		if ( wp->y < dr->top + 10 && wp->y > dr->top - 10)
-			wp->y = dr->top;
-				
-		// Bottom side
-		if ( dr->bottom - wp->y - wp->cy <10 && dr->bottom - wp->y - wp->cy > -10)
-			wp->y = dr->bottom - wp->cy;
-		}
-}
 
 LRESULT CALLBACK cli_ContactListWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {    
@@ -1414,8 +1338,6 @@ LRESULT CALLBACK cli_ContactListWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPAR
 
 	The caller is expected to create this mapping object and tell us the ID we need to open ours.	
 	*/
-    if (MirandaExiting()) 
-        return 0;
 	if (msg==hMsgGetProfile && wParam != 0) { /* got IPC message */
 		HANDLE hMap;
 		char szName[MAX_PATH];
@@ -1467,9 +1389,35 @@ LRESULT CALLBACK cli_ContactListWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPAR
 			wp=(WINDOWPOS *)lParam;
 			GetWindowRect(hwnd,&old_window_rect);
 
-			// Прилипание к краям by ZorG	
-			SnappingToEdge(hwnd, wp);
+			// Прилипание к краям by ZorG
+			if (DBGetContactSettingByte(NULL,"CLUI","SnapToEdges",0))
+			{
+				RECT* dr;
+				MONITORINFO monInfo;
+				HMONITOR curMonitor = MonitorFromWindow(hwnd, MONITOR_DEFAULTTONEAREST);
 
+				monInfo.cbSize = sizeof(monInfo);
+				GetMonitorInfo(curMonitor, &monInfo);
+
+				dr = &(monInfo.rcWork);
+
+				// Left side
+				if ( wp->x < dr->left + 10 && wp->x > dr->left - 10 && BehindEdgeSettings!=1)
+					wp->x = dr->left;
+
+				// Right side
+				if ( dr->right - wp->x - wp->cx <10 && dr->right - wp->x - wp->cx > -10 && BehindEdgeSettings!=2)
+					wp->x = dr->right - wp->cx;
+
+				// Top side
+				if ( wp->y < dr->top + 10 && wp->y > dr->top - 10)
+					wp->y = dr->top;
+				
+				// Bottom side
+				if ( dr->bottom - wp->y - wp->cy <10 && dr->bottom - wp->y - wp->cy > -10)
+					wp->y = dr->bottom - wp->cy;
+
+			}
 			if ((old_window_rect.bottom-old_window_rect.top!=wp->cy || old_window_rect.right-old_window_rect.left !=wp->cx)&&!(wp->flags&SWP_NOSIZE))
 			{
 				{         
@@ -1529,14 +1477,6 @@ LRESULT CALLBACK cli_ContactListWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPAR
 	}	
 }
 
-	else if (msg==WM_WINDOWPOSCHANGING)
-	{
-		// Snaping if it is not in LayeredMode	
-		WINDOWPOS * wp;
-		wp=(WINDOWPOS *)lParam;
-		SnappingToEdge(hwnd, wp);
-		return DefWindowProc(hwnd,msg,wParam,lParam); 
-	}
 	switch (msg) {
 	case WM_EXITSIZEMOVE:
 		{
@@ -1952,7 +1892,7 @@ LRESULT CALLBACK cli_ContactListWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPAR
 		}
 
 	case WM_TIMER:
-		if (MirandaExiting()) return 0;
+		if (Miranda_Terminated()) return 0;
 		if ((int)wParam>=TM_STATUSBARUPDATE&&(int)wParam<=TM_STATUSBARUPDATE+64)
 		{		
 			int status,i;
@@ -1973,8 +1913,6 @@ LRESULT CALLBACK cli_ContactListWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPAR
 					if (!(status>=ID_STATUS_CONNECTING&&status<=ID_STATUS_CONNECTING+MAX_CONNECT_RETRIES))
 					{													
 						pt->CycleStartTick=0;
-						ImageList_Destroy(pt->IconsList);
-						pt->IconsList=NULL;
 						KillTimer(hwnd,TM_STATUSBARUPDATE+pt->n);
 						pt->TimerCreated=0;
 					}
@@ -2353,7 +2291,7 @@ LRESULT CALLBACK cli_ContactListWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPAR
 						_snprintf(buf,sizeof(buf),"Main,ID=MainMenu,Selected=%s,Hot=%s",(dis->itemState&ODS_SELECTED)?"True":"False",(dis->itemState&ODS_HOTLIGHT)?"True":"False");
 						SkinDrawGlyph(dis->hDC,&dis->rcItem,&dis->rcItem,buf);
 						DrawState(dis->hDC,NULL,NULL,(LPARAM)hIcon,0,(dis->rcItem.right+dis->rcItem.left-GetSystemMetrics(SM_CXSMICON))/2+dx,(dis->rcItem.bottom+dis->rcItem.top-GetSystemMetrics(SM_CYSMICON))/2+dx,0,0,DST_ICON|(dis->itemState&ODS_INACTIVE&&FALSE?DSS_DISABLED:DSS_NORMAL));
-						DestroyIcon_protect(hIcon);         
+						DestroyIcon(hIcon);         
 						MirMenuState=dis->itemState;
 					} else {
 						MirMenuState=dis->itemState;
@@ -2406,9 +2344,7 @@ LRESULT CALLBACK cli_ContactListWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPAR
 	case WM_DESTROY:
 		{
 			int state=DBGetContactSettingByte(NULL,"CList","State",SETTING_STATE_NORMAL);
-			g_STATE=STATE_EXITING;
-            DisconnectAll();
-            DestroyThreads(); //stop all my threads            
+			DisconnectAll();
 			if (state==SETTING_STATE_NORMAL){ShowWindowNew(hwnd,SW_HIDE);};				
 			if(hSettingChangedHook!=0){UnhookEvent(hSettingChangedHook);};
 			TrayIconDestroy(hwnd);	
@@ -2447,7 +2383,6 @@ LRESULT CALLBACK cli_ContactListWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPAR
 
 int CluiIconsChanged(WPARAM wParam,LPARAM lParam)
 {
-    if (MirandaExiting()) return 0;
 	ImageList_ReplaceIcon(himlMirandaIcon,0,LoadSkinnedIcon(SKINICON_OTHER_MIRANDA));
 	DrawMenuBar(pcli->hwndContactList);
 	ReloadExtraIcons();
@@ -2467,7 +2402,7 @@ static int MenuItem_PreBuild(WPARAM wParam, LPARAM lParam)
 	HANDLE hItem;
 	HWND hwndClist = GetFocus();
 	CLISTMENUITEM mi;
-    if (MirandaExiting()) return 0;
+
 	ZeroMemory(&mi,sizeof(mi));
 	mi.cbSize = sizeof(mi);
 	mi.flags = CMIM_FLAGS;
@@ -2617,7 +2552,7 @@ void cliOnCreateClc(void)
 
 	InitModernRow();
   
-	//CreateServiceFunction("CLUI/GetConnectingIconForProtocol",GetConnectingIconService);
+	CreateServiceFunction("CLUI/GetConnectingIconForProtocol",GetConnectingIconService);
 
 	oldhideoffline=DBGetContactSettingByte(NULL,"CList","HideOffline",SETTING_HIDEOFFLINE_DEFAULT);
 
@@ -2636,19 +2571,18 @@ void cliOnCreateClc(void)
 		mi.pszContactOwner=NULL;    //on every contact
 		CreateServiceFunction("CList/ShowContactAvatar",MenuItem_ShowContactAvatar);
 		mi.position=2000150000;
-		mi.hIcon=LoadSmallIcon(g_hInst,MAKEINTRESOURCE(IDI_SHOW_AVATAR));
+		mi.hIcon=LoadIcon(g_hInst,MAKEINTRESOURCE(IDI_SHOW_AVATAR));
 		mi.pszName=Translate("Show Contact &Avatar");
 		mi.pszService="CList/ShowContactAvatar";
 		hShowAvatarMenuItem = (HANDLE)CallService(MS_CLIST_ADDCONTACTMENUITEM,0,(LPARAM)&mi);
-		DestroyIcon_protect(mi.hIcon);
 
 		CreateServiceFunction("CList/HideContactAvatar",MenuItem_HideContactAvatar);
 		mi.position=2000150001;
-		mi.hIcon=LoadSmallIcon(g_hInst,MAKEINTRESOURCE(IDI_HIDE_AVATAR));
+		mi.hIcon=LoadIcon(g_hInst,MAKEINTRESOURCE(IDI_HIDE_AVATAR));
 		mi.pszName=Translate("Hide Contact &Avatar");
 		mi.pszService="CList/HideContactAvatar";
 		hHideAvatarMenuItem = (HANDLE)CallService(MS_CLIST_ADDCONTACTMENUITEM,0,(LPARAM)&mi);
-		DestroyIcon_protect(mi.hIcon);
+
 		HookEvent(ME_CLIST_PREBUILDCONTACTMENU, MenuItem_PreBuild);
 	}
 
@@ -2788,30 +2722,21 @@ BYTE PAUSE=FALSE;
 void SmoothAnimationThread(HWND hwnd)
 {
 	//  return;
-	if (!ANIMATION_IS_IN_PROGRESS) 
-    {
-        hSmoothAnimationThread=NULL;
-        return;  /// Should be some locked to avoid painting against contact deletion.
-    }
+	if (!ANIMATION_IS_IN_PROGRESS) return;  /// Should be some locked to avoid painting against contact deletion.
 	do
 	{
 		if (!LOCK_UPDATING)
 		{
 			SmoothAlphaThreadTransition(hwnd);       
 			SleepEx(20,TRUE);
-			if (MirandaExiting()) 
-            {
-                hSmoothAnimationThread=NULL;
-                return;
-            }
+			if (Miranda_Terminated()) return;
 		}
 		else SleepEx(0,TRUE);
 
 	} while (ANIMATION_IS_IN_PROGRESS);
-    hSmoothAnimationThread=NULL;
 	return;
 }
-#define ANIMATION_STEP 40
+#define ANIMATION_STEP 20
 
 int SmoothAlphaThreadTransition(HWND hwnd)
 {
@@ -2908,7 +2833,7 @@ int SmoothAlphaTransition(HWND hwnd, BYTE GoalAlpha, BOOL wParam)
 					PAUSE=FALSE;
 				ANIMATION_IS_IN_PROGRESS=1;
 				if (SmoothAnimation)
-					hSmoothAnimationThread=(HANDLE)forkthread(SmoothAnimationThread,0,pcli->hwndContactList);	
+					forkthread(SmoothAnimationThread,0,pcli->hwndContactList);	
 
 			}
 		}
@@ -2948,4 +2873,3 @@ int SmoothAlphaTransition(HWND hwnd, BYTE GoalAlpha, BOOL wParam)
 
 	return 0;
 }
-

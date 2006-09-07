@@ -286,9 +286,6 @@ extern "C" int __declspec(dllexport) Load( PLUGINLINK* link )
 	mir_snprintf( path, sizeof( path ), "%s:HotmailNotify", protocolname );
 	ModuleName = strdup( path );
 
-	mir_snprintf( path, sizeof( path ), "%s/Status", protocolname );
-	MSN_CallService( MS_DB_SETSETTINGRESIDENT, TRUE, ( LPARAM )path );
-
 //	Uninstalling purposes
 //	if (ServiceExists("PluginSweeper/Add"))
 //		MSN_CallService("PluginSweeper/Add",(WPARAM)MSN_Translate(ModuleName),(LPARAM)ModuleName);
@@ -398,8 +395,8 @@ extern "C" int __declspec( dllexport ) Unload( void )
 
 extern "C" __declspec(dllexport) PLUGININFO* MirandaPluginInfo(DWORD mirandaVersion)
 {
-	if ( mirandaVersion < PLUGIN_MAKE_VERSION( 0, 6, 0, 0 )) {
-		MessageBox( NULL, _T("The MSN protocol plugin cannot be loaded. It requires Miranda IM 0.6.0 or later."), _T("MSN Protocol Plugin"), MB_OK|MB_ICONWARNING|MB_SETFOREGROUND|MB_TOPMOST );
+	if ( mirandaVersion < PLUGIN_MAKE_VERSION( 0, 5, 0, 0 )) {
+		MessageBox( NULL, _T("The MSN protocol plugin cannot be loaded. It requires Miranda IM 0.5.0 or later."), _T("MSN Protocol Plugin"), MB_OK|MB_ICONWARNING|MB_SETFOREGROUND|MB_TOPMOST );
 		return NULL;
 	}
 

@@ -465,7 +465,7 @@ char * GetUniqueProtoName(char * proto)
 	PROTOCOLDESCRIPTOR **protos;
 	CallService(MS_PROTO_ENUMPROTOCOLS, (WPARAM) & count, (LPARAM) & protos);
 	for (i=0; i<count; i++)
-		if (!strcmpi(proto,protos[i]->szName))
+		if (!_strcmpi(proto,protos[i]->szName))
 			return protos[i]->szName;
 	return NULL;
 }
@@ -637,7 +637,7 @@ int StatusMenuCheckService(WPARAM wParam, LPARAM lParam)
 					timi->mi.flags|=CMIM_ICON;
 					CallService(MO_MODIFYMENUITEM,(WPARAM)timi->globalid,(LPARAM)(&(timi->mi)));
 					if (IconNeedDestroy) 
-						DestroyIcon_protect(timi->mi.hIcon);
+						DestroyIcon(timi->mi.hIcon);
 				}
 			}
 		}
@@ -743,7 +743,7 @@ static int MenuProcessHotkey(WPARAM vKey,LPARAM lParam)
 
 static int MenuIconsChanged(WPARAM wParam,LPARAM lParam)
 {
-  if (MirandaExiting()) return 0;
+
   //just rebuild menu
   MenuModulesLoaded(0,0);
 
@@ -846,10 +846,8 @@ int MenuModulesLoaded(WPARAM wParam,LPARAM lParam)
   TMO_MenuItem tmi;
   TMenuParam tmp;
   int pos=0;
-  
   OptParam op;
 
-  if (MirandaExiting()) return 0;
   //
   CallService(MS_PROTO_ENUMPROTOCOLS,(WPARAM)&protoCount,(LPARAM)&proto);
   networkProtoCount=0;
@@ -1003,7 +1001,7 @@ int MenuModulesLoaded(WPARAM wParam,LPARAM lParam)
         op.Setting=OPT_MENUITEMSETUNIQNAME;
         CallService(MO_SETOPTIONSMENUITEM,(WPARAM)0,(LPARAM)&op);
       }
-      DestroyIcon_protect(tmi.hIcon);
+
       pos+=100000;
 
       for(j=0;j<sizeof(statusModeList)/sizeof(statusModeList[0]);j++) {
@@ -1136,7 +1134,7 @@ static int MenuProtoAck(WPARAM wParam,LPARAM lParam)
   ACKDATA *ack=(ACKDATA*)lParam;
   int overallStatus=0,thisStatus;
   TMO_MenuItem tmi;
-  if (MirandaExiting()) return 0;
+
   if(ack->type!=ACKTYPE_STATUS) return 0;
   if(ack->result!=ACKRESULT_SUCCESS) return 0;
   if (hStatusMainMenuHandles==NULL) return(0);
@@ -1230,16 +1228,13 @@ extern void DisconnectAll();
 int CloseAction(WPARAM wParam,LPARAM lParam)
 {
   int k;
-  do
-  {
-      k=CallService(MS_SYSTEM_OKTOEXIT,(WPARAM)0,(LPARAM)0);
-  } while (!k);
+  k=CallService(MS_SYSTEM_OKTOEXIT,(WPARAM)0,(LPARAM)0);
   if(k)
   {
 	DisconnectAll();
-    PostMessage((HWND)CallService(MS_CLUI_GETHWND,(WPARAM)0,(LPARAM)0),WM_DESTROY,0,0);
-//   PostQuitMessage(0);
-//   SleepEx(0,TRUE);
+    SendMessage((HWND)CallService(MS_CLUI_GETHWND,(WPARAM)0,(LPARAM)0),WM_DESTROY,0,0);
+    PostQuitMessage(0);
+    SleepEx(0,TRUE);
   }
 
   return(0);
@@ -1384,7 +1379,6 @@ int InitCustomMenus(void)
 void UninitCustomMenus(void)
 {
   int i;
-  if (!menusProto) return;
   for (i=0; i<AllocedProtos; i++)
         if (menusProto[i].szProto) 
 			mir_free(menusProto[i].szProto);

@@ -40,7 +40,7 @@ __________
   Manage server-list dialog now groups requests - much faster
   Full support for sub-groups in Manage server-list dialog
   Real Level 1 rate management (will solve multi-recipient message problems)
-  
+  AIM file transfers (OFT) - like icq5 (including transfer thru server)
 
 0.5
   Account management (together with Miranda core changes)
@@ -51,13 +51,12 @@ __________
 Changes
 _______
 
-0.3.8.0 Devel builds
+0.3.7.3
 
 Bugfixes:
   Fixed HTTP/HTTPS proxy support (removed useless gateway option), long messages are now sent properly
+  Improved status change handling (can handle broken packets)
 
-New Features:
-  TODO: AIM file transfers (OFT) - like icq5 (including transfer thru server)
 
 0.3.7.2
 
@@ -67,7 +66,7 @@ Bugfixes:
   Fixed offline greeting cards were not processed properly
   Fixed small protocol glitch with reverse peer-to-peer connection
 
-
+  
 0.3.7.1
 
 Bugfixes:
@@ -75,7 +74,7 @@ Bugfixes:
   Fixed avatars were not working when server port set to 0
   Made message parser more strict (fixes bug allowing stealth invisible client detection)
   Fixed Popup's unicode support cannot be used in ANSI mode even if available
-  
+
 Improvements:
   Added new session password API - allowing plugins like Secure Login to work better
 

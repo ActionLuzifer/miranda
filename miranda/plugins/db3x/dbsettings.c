@@ -26,6 +26,13 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "database.h"
 
 DWORD GetModuleNameOfs(const char *szName);
+static int GetContactSetting(WPARAM wParam,LPARAM lParam);
+static int GetContactSettingStr(WPARAM wParam,LPARAM lParam);
+static int GetContactSettingStatic(WPARAM wParam,LPARAM lParam);
+static int FreeVariant(WPARAM wParam,LPARAM lParam);
+static int WriteContactSetting(WPARAM wParam,LPARAM lParam);
+static int DeleteContactSetting(WPARAM wParam,LPARAM lParam);
+static int EnumContactSettings(WPARAM wParam,LPARAM lParam);
 
 extern CRITICAL_SECTION csDbAccess;
 extern struct DBHeader dbHeader;
@@ -34,7 +41,8 @@ HANDLE hCacheHeap = NULL;
 SortedList lContacts;
 
 static SortedList lSettings, lGlobalSettings;
-static HANDLE hSettingChangeEvent = NULL;
+
+static HANDLE hSettingChangeEvent;
 
 #define SETTINGSGROUPOFSCOUNT    32
 struct SettingsGroupOfsCacheEntry {
@@ -44,6 +52,54 @@ struct SettingsGroupOfsCacheEntry {
 };
 static struct SettingsGroupOfsCacheEntry settingsGroupOfsCache[SETTINGSGROUPOFSCOUNT];
 static int nextSGOCacheEntry;
+
+static int stringCompare( void* p1, void* p2 )
+{
+	return strcmp(( char* )p1, ( char* )p2 );
+}
+
+static int stringCompare2( void* p1, void* p2 )
+{
+	DBCachedGlobalValue *v1 = (DBCachedGlobalValue*)p1, *v2 = (DBCachedGlobalValue*)p2;
+	return strcmp( v1->name, v2->name );
+}
+
+static int handleCompare( void* p1, void* p2 )
+{
+	if ( *( long* )p1 == *( long* )p2 )
+		return 0;
+
+	return *( long* )p1 - *( long* )p2;
+}
+
+int InitSettings(void)
+{
+	CreateServiceFunction(MS_DB_CONTACT_GETSETTING,GetContactSetting);
+	CreateServiceFunction(MS_DB_CONTACT_GETSETTING_STR,GetContactSettingStr);
+	CreateServiceFunction(MS_DB_CONTACT_GETSETTINGSTATIC,GetContactSettingStatic);
+	CreateServiceFunction(MS_DB_CONTACT_FREEVARIANT,FreeVariant);
+	CreateServiceFunction(MS_DB_CONTACT_WRITESETTING,WriteContactSetting);
+	CreateServiceFunction(MS_DB_CONTACT_DELETESETTING,DeleteContactSetting);
+	CreateServiceFunction(MS_DB_CONTACT_ENUMSETTINGS,EnumContactSettings);
+	hSettingChangeEvent=CreateHookableEvent(ME_DB_CONTACT_SETTINGCHANGED);
+
+	hCacheHeap=HeapCreate(HEAP_NO_SERIALIZE,0,0);
+	lSettings.sortFunc=stringCompare;
+	lSettings.increment=50;
+	lContacts.sortFunc=handleCompare;
+	lContacts.increment=100;
+	lGlobalSettings.sortFunc=stringCompare2;
+	lGlobalSettings.increment=100;
+	return 0;
+}
+
+void UninitSettings(void)
+{
+	HeapDestroy(hCacheHeap);
+	li.List_Destroy(&lContacts);
+	li.List_Destroy(&lSettings);
+	li.List_Destroy(&lGlobalSettings);
+}
 
 //this function caches results
 static DWORD GetSettingsGroupOfsByModuleNameOfs(struct DBContact *dbc,DWORD ofsContact,DWORD ofsModuleName)
@@ -90,28 +146,22 @@ static DWORD __inline GetSettingValueLength(PBYTE pSetting)
 	return pSetting[0];
 }
 
-static char* InsertCachedSetting( const char* szName, size_t cbNameLen, int index )
-{
-	char* newValue = (char*)HeapAlloc( hCacheHeap, HEAP_NO_SERIALIZE, cbNameLen );
-	*newValue = 0;
-	strcpy(newValue+1,szName+1);
-	li.List_Insert(&lSettings,newValue,index);
-	return newValue;
-}
-
 static char* GetCachedSetting(const char *szModuleName,const char *szSettingName,int settingNameLen)
 {
 	int moduleNameLen = strlen(szModuleName),index;
-	char *szFullName = (char*)alloca(moduleNameLen+settingNameLen+3);
+	char *szFullName = (char*)alloca(moduleNameLen+settingNameLen+2), *newValue;
 
-	strcpy(szFullName+1,szModuleName);
-	szFullName[moduleNameLen+1]='/';
-	strcpy(szFullName+moduleNameLen+2,szSettingName);
+	strcpy(szFullName,szModuleName);
+	szFullName[moduleNameLen]='/';
+	strcpy(szFullName+moduleNameLen+1,szSettingName);
 
-	if ( li.List_GetIndex(&lSettings, szFullName, &index))
-		return((char*)lSettings.items[index] + 1);
+	if ( li.List_GetIndex(&lSettings,szFullName,&index))
+		return((char*)lSettings.items[index]);
 
-	return InsertCachedSetting( szFullName, moduleNameLen+settingNameLen+3, index )+1;
+	newValue = (char*)HeapAlloc(hCacheHeap,HEAP_NO_SERIALIZE,moduleNameLen+settingNameLen+2);
+	strcpy(newValue,szFullName);
+	li.List_Insert(&lSettings,newValue,index);
+	return(newValue);
 }
 
 static void SetCachedVariant( DBVARIANT* s /* new */, DBVARIANT* d /* cached */ )
@@ -239,10 +289,10 @@ static __inline int GetContactSettingWorker(HANDLE hContact,DBCONTACTGETSETTING 
 	{
 		DBVARIANT* pCachedValue = GetCachedValuePtr( hContact, szCachedSettingName, 0 );
 		if ( pCachedValue != NULL ) {
+			int   cbOrigLen = dbcgs->pValue->cchVal;
+			char* cbOrigPtr = dbcgs->pValue->pszVal;
+			memcpy( dbcgs->pValue, pCachedValue, sizeof( DBVARIANT ));
 			if ( pCachedValue->type == DBVT_ASCIIZ || pCachedValue->type == DBVT_UTF8 ) {
-				int   cbOrigLen = dbcgs->pValue->cchVal;
-				char* cbOrigPtr = dbcgs->pValue->pszVal;
-				memcpy( dbcgs->pValue, pCachedValue, sizeof( DBVARIANT ));
 				if ( isStatic ) {
 					int cbLen = 0;
 					if ( pCachedValue->pszVal != NULL )
@@ -258,10 +308,7 @@ static __inline int GetContactSettingWorker(HANDLE hContact,DBCONTACTGETSETTING 
 				else {
 					dbcgs->pValue->pszVal = (char*)mir_alloc(strlen(pCachedValue->pszVal)+1);
 					strcpy(dbcgs->pValue->pszVal,pCachedValue->pszVal);
-				}
-			}
-			else
-				memcpy( dbcgs->pValue, pCachedValue, sizeof( DBVARIANT ));
+			}	}
 
 			switch( dbcgs->pValue->type ) {
 				case DBVT_BYTE:	log1( "get cached byte: %d", dbcgs->pValue->bVal ); break;
@@ -470,26 +517,6 @@ static int FreeVariant(WPARAM wParam,LPARAM lParam)
 	return 0;
 }
 
-static int SetSettingResident(WPARAM wParam,LPARAM lParam)
-{
-	char*  szSetting;
-	size_t cbSettingNameLen = strlen(( char* )lParam );
-	int    idx;
-	char*  szTemp = ( char* )alloca( cbSettingNameLen+2 );
-	strcpy( szTemp+1, ( char* )lParam );
-
-	EnterCriticalSection(&csDbAccess);
-	if ( !li.List_GetIndex( &lSettings, szTemp, &idx ))
-		szSetting = InsertCachedSetting( szTemp, cbSettingNameLen+2, idx );
-	else
-		szSetting = lSettings.items[ idx ];
-
-   *szSetting = (char)wParam;
-
-	LeaveCriticalSection(&csDbAccess);
-	return 0;
-}
-
 static int WriteContactSetting(WPARAM wParam,LPARAM lParam)
 {
 	DBCONTACTWRITESETTING *dbcws=(DBCONTACTWRITESETTING*)lParam;
@@ -577,11 +604,6 @@ static int WriteContactSetting(WPARAM wParam,LPARAM lParam)
 					}
 				}
 				SetCachedVariant(&dbcws->value, pCachedValue);
-			}
-			if ( szCachedSettingName[-1] != 0 ) {
-				LeaveCriticalSection(&csDbAccess);
-				NotifyEventHooks(hSettingChangeEvent,wParam,lParam);
-				return 0;
 			}
 		}
 		else GetCachedValuePtr((HANDLE)wParam, szCachedSettingName, -1);
@@ -902,56 +924,4 @@ static int EnumContactSettings(WPARAM wParam,LPARAM lParam)
 	}
 	LeaveCriticalSection(&csDbAccess);
 	return result;
-}
-
-/////////////////////////////////////////////////////////////////////////////////////////
-//
-//   Module initialization procedure
-
-static int stringCompare( DBCachedSettingName* p1, DBCachedSettingName* p2 )
-{
-	return strcmp( p1->name, p2->name );
-}
-
-static int stringCompare2( DBCachedGlobalValue* p1, DBCachedGlobalValue* p2 )
-{
-	return strcmp( p1->name, p2->name );
-}
-
-static int handleCompare( void* p1, void* p2 )
-{
-	if ( *( long* )p1 == *( long* )p2 )
-		return 0;
-
-	return *( long* )p1 - *( long* )p2;
-}
-
-int InitSettings(void)
-{
-	CreateServiceFunction(MS_DB_CONTACT_GETSETTING,GetContactSetting);
-	CreateServiceFunction(MS_DB_CONTACT_GETSETTING_STR,GetContactSettingStr);
-	CreateServiceFunction(MS_DB_CONTACT_GETSETTINGSTATIC,GetContactSettingStatic);
-	CreateServiceFunction(MS_DB_CONTACT_FREEVARIANT,FreeVariant);
-	CreateServiceFunction(MS_DB_CONTACT_WRITESETTING,WriteContactSetting);
-	CreateServiceFunction(MS_DB_CONTACT_DELETESETTING,DeleteContactSetting);
-	CreateServiceFunction(MS_DB_CONTACT_ENUMSETTINGS,EnumContactSettings);
-	CreateServiceFunction(MS_DB_SETSETTINGRESIDENT,SetSettingResident);
-	hSettingChangeEvent=CreateHookableEvent(ME_DB_CONTACT_SETTINGCHANGED);
-
-	hCacheHeap=HeapCreate(HEAP_NO_SERIALIZE,0,0);
-	lSettings.sortFunc=stringCompare;
-	lSettings.increment=50;
-	lContacts.sortFunc=handleCompare;
-	lContacts.increment=100;
-	lGlobalSettings.sortFunc=stringCompare2;
-	lGlobalSettings.increment=100;
-	return 0;
-}
-
-void UninitSettings(void)
-{
-	HeapDestroy(hCacheHeap);
-	li.List_Destroy(&lContacts);
-	li.List_Destroy(&lSettings);
-	li.List_Destroy(&lGlobalSettings);
 }

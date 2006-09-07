@@ -103,12 +103,11 @@ BOOL WINAPI DllMain(HINSTANCE hinst,DWORD fdwReason,LPVOID lpvReserved)
 __declspec(dllexport) PLUGININFO* MirandaPluginInfo(DWORD mirandaVersion)
 {
 	//
-    // We require Miranda 0.6
-	// This requires the latest trunk... experimental API used here
+	// We require Miranda 0.4
 	//
-    if (mirandaVersion < PLUGIN_MAKE_VERSION(0, 6, 0, 0)) {
+    if (mirandaVersion < PLUGIN_MAKE_VERSION(0, 4, 0, 0)) {
 		MessageBox( NULL, 
-				"Yahoo plugin cannot be loaded. It requires Miranda IM 0.6 or later.", 
+				"Yahoo plugin cannot be loaded. It requires Miranda IM 0.4 or later.", 
 				"Yahoo", 
 				MB_OK|MB_ICONWARNING|MB_SETFOREGROUND|MB_TOPMOST );
 
@@ -164,23 +163,16 @@ static int OnModulesLoaded( WPARAM wParam, LPARAM lParam )
 	char tModule[ 100 ], tModuleDescr[ 100 ];
 	NETLIBUSER nlu = {0};
 
-	if ( !ServiceExists( MS_DB_CONTACT_GETSETTING_STR )) {
-		MessageBox( NULL, 
-				Translate("Yahoo plugin requires db3x plugin version 0.5.1.0 or later" ), 
-				Translate("Yahoo"), 
-				MB_OK );
-		return 1;
-	}
-
 	CharUpper( lstrcpy( tModule, yahooProtocolName ));
-	wsprintf(tModuleDescr, "%s plugin connections", yahooProtocolName);
+	lstrcpyn(tModuleDescr, yahooProtocolName , sizeof( tModuleDescr ) - 25);
+	lstrcat(tModuleDescr," plugin connections");
 	
 	nlu.cbSize = sizeof(nlu);
 
 #ifdef HTTP_GATEWAY
-	nlu.flags = NUF_OUTGOING | NUF_HTTPGATEWAY| NUF_HTTPCONNS;
+	nlu.flags = NUF_OUTGOING | NUF_HTTPGATEWAY;
 #else
-   	nlu.flags = NUF_OUTGOING | NUF_HTTPCONNS;
+   	nlu.flags = NUF_OUTGOING;
 #endif
 
 	nlu.szSettingsModule = tModule;
@@ -188,11 +180,12 @@ static int OnModulesLoaded( WPARAM wParam, LPARAM lParam )
 	
 #ifdef HTTP_GATEWAY
 	// Here comes the Gateway Code! 
-	nlu.szHttpGatewayHello = NULL;
-	nlu.szHttpGatewayUserAgent = "User-Agent: Mozilla/4.01 [en] (Win95; I)";
- 	nlu.pfnHttpGatewayInit = YAHOO_httpGatewayInit;
+	nlu.szHttpGatewayHello = NULL;//"http://http.proxy.icq.com/hello";
+	nlu.szHttpGatewayUserAgent = "Mozilla/4.08 [en] (WinNT; U ;Nav)";//"Mozilla/4.5 [en] (X11; U; FreeBSD 2.2.8-STABLE i386)";
+ //"Mozilla/4.01 [en] (Win95; I)";//"Mozilla/4.08 [en] (WinNT; U ;Nav)";//\nTest-Header: boo";
+	nlu.pfnHttpGatewayInit = YAHOO_httpGatewayInit;
 	nlu.pfnHttpGatewayBegin = NULL;
-	nlu.pfnHttpGatewayWrapSend = YAHOO_httpGatewayWrapSend;
+	nlu.pfnHttpGatewayWrapSend = NULL;
 	nlu.pfnHttpGatewayUnwrapRecv = YAHOO_httpGatewayUnwrapRecv;
 #endif	
 	
@@ -249,30 +242,6 @@ int __declspec(dllexport)Load(PLUGINLINK *link)
 		lstrcpyn(yahooProtocolName, protocolname, MAX_PATH);
 	} else 
 		lstrcpy(yahooProtocolName, "YAHOO");
-
-	mir_snprintf( path, sizeof( path ), "%s/Status", yahooProtocolName );
-	CallService( MS_DB_SETSETTINGRESIDENT, TRUE, ( LPARAM )path );
-
-	mir_snprintf( path, sizeof( path ), "%s/YStatus", yahooProtocolName );
-	CallService( MS_DB_SETSETTINGRESIDENT, TRUE, ( LPARAM )path );
-
-	mir_snprintf( path, sizeof( path ), "%s/YAway", yahooProtocolName );
-	CallService( MS_DB_SETSETTINGRESIDENT, TRUE, ( LPARAM )path );
-
-	mir_snprintf( path, sizeof( path ), "%s/Mobile", yahooProtocolName );
-	CallService( MS_DB_SETSETTINGRESIDENT, TRUE, ( LPARAM )path );
-	
-	mir_snprintf( path, sizeof( path ), "%s/YGMsg", yahooProtocolName );
-	CallService( MS_DB_SETSETTINGRESIDENT, TRUE, ( LPARAM )path );
-	
-	mir_snprintf( path, sizeof( path ), "%s/IdleTS", yahooProtocolName );
-	CallService( MS_DB_SETSETTINGRESIDENT, TRUE, ( LPARAM )path );
-	
-	mir_snprintf( path, sizeof( path ), "%s/PictLastCheck", yahooProtocolName );
-	CallService( MS_DB_SETSETTINGRESIDENT, TRUE, ( LPARAM )path );
-
-	mir_snprintf( path, sizeof( path ), "%s/PictLoading", yahooProtocolName );
-	CallService( MS_DB_SETSETTINGRESIDENT, TRUE, ( LPARAM )path );
 
 	// 1.
 	hHookModulesLoaded = HookEvent( ME_SYSTEM_MODULESLOADED, OnModulesLoaded );

@@ -16,8 +16,8 @@
 	<Configurations>
 		<Configuration
 			Name="Release|Win32"
-			OutputDirectory="$(SolutionDir)/Release/Plugins"
-			IntermediateDirectory="$(SolutionDir)/Release/Obj/$(ProjectName)"
+			OutputDirectory="../../bin7/Release/Plugins"
+			IntermediateDirectory="../../bin7/Release/Obj/$(ProjectName)"
 			ConfigurationType="2"
 			UseOfMFC="0"
 			ATLMinimizesCRunTimeLibraryUsage="TRUE"
@@ -52,7 +52,6 @@
 				Name="VCLinkerTool"
 				AdditionalOptions="/MACHINE:I386"
 				AdditionalDependencies="MSImg32.Lib comctl32.lib shlwapi.lib  gdiplus.lib Delayimp.lib"
-				OutputFile="c:\release\ansi/$(ProjectName).dll"
 				LinkIncremental="1"
 				SuppressStartupBanner="TRUE"
 				IgnoreAllDefaultLibraries="FALSE"
@@ -95,8 +94,8 @@
 		</Configuration>
 		<Configuration
 			Name="Debug|Win32"
-			OutputDirectory="$(SolutionDir)/Debug/Plugins"
-			IntermediateDirectory="$(SolutionDir)/Debug/Obj/$(ProjectName)"
+			OutputDirectory="../../bin7/Debug/Plugins"
+			IntermediateDirectory="../../bin7/Debug/Obj/$(ProjectName)"
 			ConfigurationType="2"
 			UseOfMFC="0"
 			UseOfATL="0"
@@ -162,8 +161,8 @@
 		</Configuration>
 		<Configuration
 			Name="Debug Unicode|Win32"
-			OutputDirectory="$(SolutionDir)/Debug/Plugins"
-			IntermediateDirectory="$(SolutionDir)/Debug/Obj/$(ProjectName)"
+			OutputDirectory="../../bin7/Debug/Plugins"
+			IntermediateDirectory="../../bin7/Debug/Obj/$(ProjectName)"
 			ConfigurationType="2"
 			UseOfMFC="0"
 			UseOfATL="0"
@@ -192,7 +191,6 @@
 				AdditionalOptions="/MACHINE:I386"
 				AdditionalDependencies="MSImg32.Lib comctl32.lib shlwapi.lib gdiplus.lib Delayimp.lib"
 				ShowProgress="0"
-				OutputFile="c:\program files\miranda im\plugins/$(ProjectName).dll"
 				LinkIncremental="2"
 				SuppressStartupBanner="TRUE"
 				AdditionalLibraryDirectories=""
@@ -230,8 +228,8 @@
 		</Configuration>
 		<Configuration
 			Name="Release Unicode|Win32"
-			OutputDirectory="$(SolutionDir)/Release/Plugins"
-			IntermediateDirectory="$(SolutionDir)/Release/Obj/$(ProjectName)"
+			OutputDirectory="../../bin7/Release/Plugins"
+			IntermediateDirectory="../../bin7/Release/Obj/$(ProjectName)"
 			ConfigurationType="2"
 			UseOfMFC="0"
 			ATLMinimizesCRunTimeLibraryUsage="TRUE"
@@ -265,7 +263,6 @@
 				Name="VCLinkerTool"
 				AdditionalOptions="/MACHINE:I386"
 				AdditionalDependencies="MSImg32.Lib comctl32.lib shlwapi.lib  gdiplus.lib Delayimp.lib"
-				OutputFile="c:\release\unicode/$(ProjectName).dll"
 				LinkIncremental="1"
 				SuppressStartupBanner="TRUE"
 				IgnoreAllDefaultLibraries="FALSE"
@@ -681,9 +678,6 @@
 				RelativePath="SkinEngine.c">
 			</File>
 			<File
-				RelativePath=".\tabbedoptions.c">
-			</File>
-			<File
 				RelativePath=".\utf.c">
 			</File>
 			<Filter
@@ -1045,9 +1039,6 @@
 				RelativePath=".\res\addgoupp.ico">
 			</File>
 			<File
-				RelativePath=".\res\AlwaysVis.ico">
-			</File>
-			<File
 				RelativePath=".\res\away.ico">
 			</File>
 			<File
@@ -1058,9 +1049,6 @@
 			</File>
 			<File
 				RelativePath=".\res\chat.ico">
-			</File>
-			<File
-				RelativePath=".\res\Chatchannel.ico">
 			</File>
 			<File
 				RelativePath=".\res\delete.ico">
@@ -1087,40 +1075,7 @@
 				RelativePath=".\res\invisible.ico">
 			</File>
 			<File
-				RelativePath=".\res\listening_to.ico">
-			</File>
-			<File
 				RelativePath=".\res\lunch.ico">
-			</File>
-			<File
-				RelativePath=".\res\MicroAway.ico">
-			</File>
-			<File
-				RelativePath=".\res\MicroChat.ico">
-			</File>
-			<File
-				RelativePath=".\res\MicroDnd.ico">
-			</File>
-			<File
-				RelativePath=".\res\MicroInvisible.ico">
-			</File>
-			<File
-				RelativePath=".\res\MicroLunch.ico">
-			</File>
-			<File
-				RelativePath=".\res\MicroNa.ico">
-			</File>
-			<File
-				RelativePath=".\res\MicroOccupied.ico">
-			</File>
-			<File
-				RelativePath=".\res\MicroOffline.ico">
-			</File>
-			<File
-				RelativePath=".\res\MicroPhone.ico">
-			</File>
-			<File
-				RelativePath=".\res\Miranda.ico">
 			</File>
 			<File
 				RelativePath=".\res\NA.ico">
@@ -1138,7 +1093,10 @@
 				RelativePath=".\res\neo_meta_move.cur">
 			</File>
 			<File
-				RelativePath=".\res\NeverVis.ico">
+				RelativePath=".\res\notick.ico">
+			</File>
+			<File
+				RelativePath=".\res\notick1.ico">
 			</File>
 			<File
 				RelativePath=".\res\occupied.ico">
@@ -1168,12 +1126,6 @@
 				RelativePath=".\res\sms.ico">
 			</File>
 		</Filter>
-		<File
-			RelativePath=".\res\Back.tga">
-		</File>
-		<File
-			RelativePath=".\res\skin.msf">
-		</File>
 	</Files>
 	<Globals>
 	</Globals>

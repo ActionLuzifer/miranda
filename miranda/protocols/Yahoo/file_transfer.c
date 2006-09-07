@@ -317,7 +317,7 @@ void YAHOO_RecvFile(y_filetransfer *ft)
 	yahoo_get_url_handle(ylad->id, ft->url, &get_url, ft);
 }
 
-void ext_yahoo_got_file(int id, const char *me, const char *who, const char *url, long expires, const char *msg, const char *fname, unsigned long fesize, const char *ft_token, int y7)
+void ext_yahoo_got_file(int id, const char *me, const char *who, const char *url, long expires, const char *msg, const char *fname, unsigned long fesize, const char *ft_token)
 {
     CCSDATA ccs;
     PROTORECVEVENT pre;
@@ -325,14 +325,13 @@ void ext_yahoo_got_file(int id, const char *me, const char *who, const char *url
 	char *szBlob;
 	y_filetransfer *ft;
 	
-    LOG(("[ext_yahoo_got_file] id: %i, ident:%s, who: %s, url: %s, expires: %lu, msg: %s, fname: %s, fsize: %lu ftoken: %s y7: %d", id, me, who, url, expires, msg, fname, fesize, ft_token == NULL ? "NULL" : ft_token, y7));
+    LOG(("[ext_yahoo_got_file] id: %i, ident:%s, who: %s, url: %s, expires: %lu, msg: %s, fname: %s, fsize: %lu ftoken: %s", id, me, who, url, expires, msg, fname, fesize, ft_token == NULL ? "NULL" : ft_token));
 	
 	hContact = getbuddyH(who);
 	if (hContact == NULL) 
 		hContact = add_buddy(who, who, PALF_TEMPORARY);
 	
 	ft= (y_filetransfer*) malloc(sizeof(y_filetransfer));
-	ft->id  = id;
 	ft->who = strdup(who);
 	ft->hWaitEvent = INVALID_HANDLE_VALUE;
 	if (msg != NULL)
@@ -366,7 +365,6 @@ void ext_yahoo_got_file(int id, const char *me, const char *who, const char *url
 	ft->url = strdup(url);
 	ft->fsize = fesize;
 	ft->cancel = 0;
-	ft->y7 = y7;
 	ft->ftoken = (ft_token == NULL) ? NULL : strdup(ft_token);
 	
     // blob is DWORD(*ft), ASCIIZ(filenames), ASCIIZ(description)
@@ -421,15 +419,6 @@ int YahooFileAllow(WPARAM wParam,LPARAM lParam)
     y_filetransfer *ft = (y_filetransfer *) ccs->wParam;
 	int len;
 	
-	YAHOO_DebugLog("[YahooFileAllow]");
-	
-	if (ft->y7) {
-		YAHOO_DebugLog("[YahooFileAllow] We don't handle y7 stuff yet.");
-		//void yahoo_ft7dc_accept(int id, const char *buddy, const char *ft_token);
-		yahoo_ft7dc_accept(ft->id, ft->who, ft->ftoken);
-
-		return ccs->wParam;
-	}
     //LOG(LOG_INFO, "[%s] Requesting file from %s", ft->cookie, ft->user);
     ft->savepath = _strdup((char *) ccs->lParam);
 	
@@ -453,13 +442,6 @@ int YahooFileDeny(WPARAM wParam,LPARAM lParam)
 	if ( !yahooLoggedIn || ft == NULL ) {
 		YAHOO_DebugLog("[YahooFileResume] Not logged-in or some other error!");
 		return 1;
-	}
-
-	if (ft->y7) {
-		YAHOO_DebugLog("[YahooFileDeny] We don't handle y7 stuff yet.");
-		//void yahoo_ft7dc_accept(int id, const char *buddy, const char *ft_token);
-		yahoo_ft7dc_cancel(ft->id, ft->who, ft->ftoken);
-		return 0;
 	}
 
 	if (ft->ftoken != NULL) {

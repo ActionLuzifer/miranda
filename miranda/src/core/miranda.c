@@ -2,8 +2,8 @@
 
 Miranda IM: the free IM client for Microsoft* Windows*
 
-Copyright 2000-2006 Miranda ICQ/IM project,
-all portions of this codebase are copyrighted to the people
+Copyright 2000-2006 Miranda ICQ/IM project, 
+all portions of this codebase are copyrighted to the people 
 listed in contributors.txt.
 
 This program is free software; you can redistribute it and/or
@@ -19,7 +19,6 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
-
 */
 
 #include "commonheaders.h"
@@ -30,10 +29,8 @@ void DestroyingModularEngine(void);
 void DestroyModularEngine(void);
 int UnloadNewPluginsModule(void);
 
-HINSTANCE GetInstByAddress( void* codePtr );
-
 DWORD (WINAPI *MyMsgWaitForMultipleObjectsEx)(DWORD,CONST HANDLE*,DWORD,DWORD,DWORD);
-static DWORD MsgWaitForMultipleObjectsExWorkaround(DWORD nCount, const HANDLE *pHandles,
+static DWORD MsgWaitForMultipleObjectsExWorkaround(DWORD nCount, const HANDLE *pHandles, 
 	DWORD dwMsecs, DWORD dwWakeMask, DWORD dwFlags);
 
 static HANDLE hOkToExitEvent,hModulesLoadedEvent;
@@ -46,9 +43,7 @@ HANDLE hStackMutex,hMirandaShutdown,hThreadQueueEmpty;
 struct THREAD_WAIT_ENTRY {
 	DWORD dwThreadId;	// valid if hThread isn't signalled
 	HANDLE hThread;
-	HINSTANCE hOwner;
 };
-
 struct THREAD_WAIT_ENTRY *WaitingThreads=NULL;
 int WaitingThreadsCount=0;
 
@@ -60,7 +55,7 @@ struct FORK_ARG {
 };
 
 void __cdecl forkthread_r(void * arg)
-{
+{	
 	struct FORK_ARG * fa = (struct FORK_ARG *) arg;
 	void (*callercode)(void*)=fa->threadcode;
 	void * cookie=fa->arg;
@@ -70,7 +65,7 @@ void __cdecl forkthread_r(void * arg)
 		callercode(cookie);
 	} __finally {
 		CallService(MS_SYSTEM_THREAD_POP,0,0);
-	}
+	} 
 	return;
 }
 
@@ -99,7 +94,7 @@ unsigned __stdcall forkthreadex_r(void * arg)
 	unsigned (__stdcall * threadcode) (void *)=fa->threadcodeex;
 	void *cookie=fa->arg;
 	unsigned long rc;
-
+	
 	CallService(MS_SYSTEM_THREAD_PUSH,0,0);
 	SetEvent(fa->hEvent);
 	__try {
@@ -127,7 +122,7 @@ unsigned long forkthreadex(
 	rc=_beginthreadex(sec,stacksize,forkthreadex_r,(void *)&fa,0,thraddr);
 	if (rc) {
 		WaitForSingleObject(fa.hEvent,INFINITE);
-	}
+	} 
 	CloseHandle(fa.hEvent);
 	return rc;
 }
@@ -153,25 +148,9 @@ static int MirandaWaitForMutex(HANDLE hEvent)
 		} else if ( rc==WAIT_OBJECT_0 ) {
 			// got object
 			return 1;
-		} else if ( rc==WAIT_ABANDONED_0 || rc == WAIT_FAILED ) return 0;
+		} else if ( rc==WAIT_ABANDONED_0 || rc == WAIT_FAILED ) return 0;		
 	}
 }
-
-VOID CALLBACK KillAllThreads(HWND hwnd, UINT uMsg, UINT_PTR idEvent, DWORD dwTime)
-{
-	if ( MirandaWaitForMutex( hStackMutex )) {
-		int j;
-		for ( j=0; j < WaitingThreadsCount; j++ ) {
-			char szModuleName[ MAX_PATH ];
-			GetModuleFileNameA( WaitingThreads[j].hOwner, szModuleName, sizeof(szModuleName));
-			Netlib_Logf( NULL, "Thread %08x was abnormally terminated because module '%s' didn't released it",
-				WaitingThreads[j].hThread, szModuleName );
-			TerminateThread( WaitingThreads[j].hThread, 9999 );
-		}
-
-		ReleaseMutex(hStackMutex);
-		SetEvent(hThreadQueueEmpty);
-}	}
 
 static void UnwindThreadWait(void)
 {
@@ -182,52 +161,20 @@ static void UnwindThreadWait(void)
 			QueueUserAPC(DummyAPCFunc,WaitingThreads[j].hThread, 0);
 		ReleaseMutex(hStackMutex);
 	}
-
-	// give all unclosed threads 5 seconds to close
-	SetTimer( NULL, 0, 5000, KillAllThreads );
-
-	// wait til the thread list is empty
+	// wait til the thread list is empty 
 	MirandaWaitForMutex(hThreadQueueEmpty);
-}
-
-
-/////////////////////////////////////////////////////////////////////////////////////////
-
-typedef LONG (WINAPI *pNtQIT)(HANDLE, LONG, PVOID, ULONG, PULONG);
-#define ThreadQuerySetWin32StartAddress 9
-
-void* GetCurrentThreadEntryPoint()
-{
-	LONG  ntStatus;
-	HANDLE hDupHandle, hCurrentProcess;
-	DWORD dwStartAddress;
-
-	pNtQIT NtQueryInformationThread = (pNtQIT)GetProcAddress(GetModuleHandle(_T("ntdll.dll")), "NtQueryInformationThread" );
-	if(NtQueryInformationThread == NULL) return 0;
-
-	hCurrentProcess = GetCurrentProcess();
-	if(!DuplicateHandle(hCurrentProcess, GetCurrentThread(), hCurrentProcess, &hDupHandle, THREAD_QUERY_INFORMATION, FALSE, 0)){
-		SetLastError(ERROR_ACCESS_DENIED);
-		return NULL;
-	}
-	ntStatus = NtQueryInformationThread(hDupHandle, ThreadQuerySetWin32StartAddress, &dwStartAddress, sizeof(DWORD), NULL);
-	CloseHandle(hDupHandle);
-
-	if(ntStatus != ERROR_SUCCESS) return 0;
-	return ( void* )dwStartAddress;
 }
 
 int UnwindThreadPush(WPARAM wParam,LPARAM lParam)
 {
 	ResetEvent(hThreadQueueEmpty); // thread list is not empty
-	if (WaitForSingleObject(hStackMutex,INFINITE)==WAIT_OBJECT_0)
+	if (WaitForSingleObject(hStackMutex,INFINITE)==WAIT_OBJECT_0) 
 	{
-		HANDLE hThread=0;
+		HANDLE hThread=0;		
 		DuplicateHandle(GetCurrentProcess(),GetCurrentThread(),GetCurrentProcess(),&hThread,THREAD_SET_CONTEXT,FALSE,0);
 		WaitingThreads=mir_realloc(WaitingThreads,sizeof(struct THREAD_WAIT_ENTRY)*(WaitingThreadsCount+1));
 		WaitingThreads[WaitingThreadsCount].hThread=hThread;
 		WaitingThreads[WaitingThreadsCount].dwThreadId=GetCurrentThreadId();
-		WaitingThreads[WaitingThreadsCount].hOwner=GetInstByAddress( GetCurrentThreadEntryPoint() );
 		WaitingThreadsCount++;
 #ifdef _DEBUG
 		{
@@ -236,7 +183,7 @@ int UnwindThreadPush(WPARAM wParam,LPARAM lParam)
 			OutputDebugStringA(szBuf);
 		}
 #endif
-		ReleaseMutex(hStackMutex);
+		ReleaseMutex(hStackMutex);		
 	} //if
 	return 0;
 }
@@ -279,7 +226,7 @@ int MirandaIsTerminated(WPARAM wParam,LPARAM lParam)
 
 static void __cdecl compactHeapsThread(void *dummy)
 {
-	while (!Miranda_Terminated())
+	while (!Miranda_Terminated()) 
 	{
 		HANDLE hHeaps[256];
 		DWORD hc;
@@ -288,14 +235,14 @@ static void __cdecl compactHeapsThread(void *dummy)
 		if (hc != 0 && hc < 256) {
 			DWORD j;
 			for (j=0;j<hc;j++) HeapCompact(hHeaps[j],0);
-		}
+		}		
 	} //while
 }
 
 static void InsertRegistryKey(void)
 {
 	if(DBGetContactSettingByte(NULL,"_Sys","CreateRegKey",1)) {
-		HKEY hKey;
+		HKEY hKey;	
 		DWORD dw;
 		if(RegCreateKeyExA(HKEY_LOCAL_MACHINE,"SOFTWARE\\Miranda",0,NULL,0,KEY_CREATE_SUB_KEY|KEY_SET_VALUE,NULL,&hKey,&dw)==ERROR_SUCCESS) {
 			char str[MAX_PATH],*str2;
@@ -328,13 +275,13 @@ static int SystemSetIdleCallback(WPARAM wParam, LPARAM lParam)
 
 static DWORD dwEventTime=0;
 void checkIdle(MSG * msg)
-{
+{	
 	switch(msg->message) {
 		case WM_MOUSEACTIVATE:
 		case WM_MOUSEMOVE:
 		case WM_CHAR:
 		{
-			dwEventTime = GetTickCount();
+			dwEventTime = GetTickCount();			
 		}
 	}
 }
@@ -345,7 +292,7 @@ static int SystemGetIdle(WPARAM wParam, LPARAM lParam)
 	return 0;
 }
 
-static DWORD MsgWaitForMultipleObjectsExWorkaround(DWORD nCount, const HANDLE *pHandles,
+static DWORD MsgWaitForMultipleObjectsExWorkaround(DWORD nCount, const HANDLE *pHandles, 
 	DWORD dwMsecs, DWORD dwWakeMask, DWORD dwFlags)
 {
 	DWORD rc;
@@ -364,7 +311,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 #ifdef _DEBUG
 	_CrtSetDbgFlag( _CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
 #endif
-
+	
 	if (InitialiseModularEngine())
 	{
 		NotifyEventHooks(hShutdownEvent,0,0);
@@ -375,7 +322,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	InsertRegistryKey();
 	NotifyEventHooks(hModulesLoadedEvent,0,0);
 	MyMsgWaitForMultipleObjectsEx=(DWORD (WINAPI *)(DWORD,CONST HANDLE*,DWORD,DWORD,DWORD))GetProcAddress(GetModuleHandleA("user32"),"MsgWaitForMultipleObjectsEx");
-	forkthread(compactHeapsThread,0,NULL);
+	forkthread(compactHeapsThread,0,NULL);	
 	CreateServiceFunction(MS_SYSTEM_SETIDLECALLBACK,SystemSetIdleCallback);
 	CreateServiceFunction(MS_SYSTEM_GETIDLE, SystemGetIdle);
 	dwEventTime=GetTickCount();
@@ -389,19 +336,19 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 			rc -= WAIT_OBJECT_0;
 			CallService(pszWaitServices[rc], (WPARAM) hWaitObjects[rc], 0);
 		}
-		//
+		// 
 		while ( PeekMessage(&msg, NULL, 0, 0, PM_REMOVE) ) {
 			if ( msg.message != WM_QUIT ) {
 				HWND h=GetForegroundWindow();
 				DWORD pid = 0;
 				checkIdle(&msg);
-				if ( h != NULL && GetWindowThreadProcessId(h,&pid) && pid==myPid
+				if ( h != NULL && GetWindowThreadProcessId(h,&pid) && pid==myPid 
 					&& GetClassLong(h, GCW_ATOM)==32770 ) {
 					if ( IsDialogMessage(h, &msg) ) continue;
 				}
 				TranslateMessage(&msg);
-				DispatchMessage(&msg);
-				if ( SetIdleCallback != NULL )
+				DispatchMessage(&msg);						
+				if ( SetIdleCallback != NULL ) 
 					SetIdleCallback();
 			} else if ( !dying ) {
 				dying++;
@@ -414,7 +361,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 				// if the hooks generated any messages, it'll get processed before the second WM_QUIT
 				PostQuitMessage(0);
 			} else if ( dying ) {
-				messageloop=0;
+				messageloop=0;	
 			}
 		} // while
 	}
@@ -507,7 +454,7 @@ static int RemoveWait(WPARAM wParam,LPARAM lParam)
 int GetMemoryManagerInterface(WPARAM wParam, LPARAM lParam)
 {
 	struct MM_INTERFACE *mmi = (struct MM_INTERFACE*) lParam;
-	if (mmi || mmi->cbSize == sizeof(struct MM_INTERFACE))
+	if (mmi || mmi->cbSize == sizeof(struct MM_INTERFACE)) 
 	{
 		mmi->mmi_malloc = mir_alloc;
 		mmi->mmi_realloc = mir_realloc;
@@ -520,7 +467,7 @@ int GetMemoryManagerInterface(WPARAM wParam, LPARAM lParam)
 int GetListInterface(WPARAM wParam, LPARAM lParam)
 {
 	struct LIST_INTERFACE *li = (struct LIST_INTERFACE*) lParam;
-	if (li || li->cbSize == sizeof(struct LIST_INTERFACE))
+	if (li || li->cbSize == sizeof(struct LIST_INTERFACE)) 
 	{
 		li->List_Create   = List_Create;
 		li->List_Destroy  = List_Destroy;
@@ -547,14 +494,14 @@ int LoadSystemModule(void)
 	hShutdownEvent=CreateHookableEvent(ME_SYSTEM_SHUTDOWN);
 	hPreShutdownEvent=CreateHookableEvent(ME_SYSTEM_PRESHUTDOWN);
 	hModulesLoadedEvent=CreateHookableEvent(ME_SYSTEM_MODULESLOADED);
-	hOkToExitEvent=CreateHookableEvent(ME_SYSTEM_OKTOEXIT);
+	hOkToExitEvent=CreateHookableEvent(ME_SYSTEM_OKTOEXIT);	
 
 	HookEvent(ME_SYSTEM_SHUTDOWN,SystemShutdownProc);
 
 	CreateServiceFunction(MS_SYSTEM_THREAD_PUSH,UnwindThreadPush);
 	CreateServiceFunction(MS_SYSTEM_THREAD_POP,UnwindThreadPop);
 	CreateServiceFunction(MS_SYSTEM_TERMINATED,MirandaIsTerminated);
-	CreateServiceFunction(MS_SYSTEM_OKTOEXIT,OkToExit);
+	CreateServiceFunction(MS_SYSTEM_OKTOEXIT,OkToExit);	
 	CreateServiceFunction(MS_SYSTEM_GETVERSION,GetMirandaVersion);
 	CreateServiceFunction(MS_SYSTEM_GETVERSIONTEXT,GetMirandaVersionText);
 	CreateServiceFunction(MS_SYSTEM_WAITONHANDLE,WaitOnHandle);

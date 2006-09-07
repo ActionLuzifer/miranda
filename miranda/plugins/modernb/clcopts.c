@@ -195,7 +195,6 @@ void GetFontSetting(int i,LOGFONTA *lf,COLORREF *colour,BYTE *effect, COLORREF *
 
 int BgMenuChange(WPARAM wParam,LPARAM lParam)
 {
-  if (MirandaExiting()) return 0;
   ClcOptionsChanged();
   return 0;
 }
@@ -208,7 +207,6 @@ int BgClcChange(WPARAM wParam,LPARAM lParam)
 
 int BgStatusBarChange(WPARAM wParam,LPARAM lParam)
 {
-  if (MirandaExiting()) return 0;
   ClcOptionsChanged();
   //OnStatusBarBackgroundChange();
   return 0;
@@ -244,7 +242,6 @@ BOOL CALLBACK DlgProcClcTabbedOpts(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM
 int ClcOptInit(WPARAM wParam,LPARAM lParam)
 {
    OPTIONSDIALOGPAGE odp;
-   if (MirandaExiting()) return 0;
    ZeroMemory(&odp,sizeof(odp));
    odp.cbSize=sizeof(odp);
    odp.position=0;
@@ -458,8 +455,8 @@ struct CheckBoxToStyleEx_t {
           {
             HIMAGELIST himlCheckBoxes;
             himlCheckBoxes=ImageList_Create(GetSystemMetrics(SM_CXSMICON),GetSystemMetrics(SM_CYSMICON),ILC_COLOR32|ILC_MASK,2,2);
-            ImageList_AddIcon(himlCheckBoxes,LoadSmallIconShared(GetModuleHandle(NULL),MAKEINTRESOURCE(IDI_NOTICK)));
-            ImageList_AddIcon(himlCheckBoxes,LoadSmallIconShared(GetModuleHandle(NULL),MAKEINTRESOURCE(IDI_TICK)));
+            ImageList_AddIcon(himlCheckBoxes,LoadIcon(GetModuleHandle(NULL),MAKEINTRESOURCE(IDI_NOTICK)));
+            ImageList_AddIcon(himlCheckBoxes,LoadIcon(GetModuleHandle(NULL),MAKEINTRESOURCE(IDI_TICK)));
             TreeView_SetImageList(GetDlgItem(hwndDlg,IDC_GREYOUTOPTS),himlCheckBoxes,TVSIL_NORMAL);
             TreeView_SetImageList(GetDlgItem(hwndDlg,IDC_HIDEOFFLINEOPTS),himlCheckBoxes,TVSIL_NORMAL);
           }			
@@ -960,7 +957,6 @@ struct CheckBoxToStyleEx_t {
         lf.lfPitchAndFamily=0;
         EnumFontFamiliesExA(hdc,&lf,(FONTENUMPROCA)EnumFontsProc,(LPARAM)GetDlgItem(hwndDlg,IDC_TYPEFACE),0);
         ReleaseDC(hwndDlg,hdc);
-        hFillFontListThread=NULL;
         return;
       }
 
@@ -1027,7 +1023,7 @@ struct CheckBoxToStyleEx_t {
 
           if(!SendMessage(GetParent(hwndDlg),PSM_ISEXPERT,0,0))
             SwitchTextDlgToMode(hwndDlg,0);
-          hFillFontListThread=(HANDLE)forkthread(FillFontListThread,0,hwndDlg);				
+          forkthread(FillFontListThread,0,hwndDlg);				
           {	int i,itemId,fontId;
           LOGFONTA lf={0};
           COLORREF colour;

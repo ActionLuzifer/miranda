@@ -15,8 +15,8 @@
 	<Configurations>
 		<Configuration
 			Name="Debug|Win32"
-			OutputDirectory="$(SolutionDir)/Debug/Plugins"
-			IntermediateDirectory="$(SolutionDir)/Debug/Obj/$(ProjectName)"
+			OutputDirectory="../../bin7/Debug/Plugins"
+			IntermediateDirectory="../../bin7/Debug/Obj/$(ProjectName)"
 			ConfigurationType="2"
 			UseOfMFC="0"
 			ATLMinimizesCRunTimeLibraryUsage="FALSE"
@@ -71,8 +71,8 @@
 		</Configuration>
 		<Configuration
 			Name="Release|Win32"
-			OutputDirectory="$(SolutionDir)/Release/Plugins"
-			IntermediateDirectory="$(SolutionDir)/Release/Obj/$(ProjectName)"
+			OutputDirectory="../../bin7/Release/Plugins"
+			IntermediateDirectory="../../bin7/Release/Obj/$(ProjectName)"
 			ConfigurationType="2"
 			UseOfMFC="0"
 			ATLMinimizesCRunTimeLibraryUsage="FALSE"
@@ -177,6 +177,9 @@
 				RelativePath=".\services.c">
 			</File>
 			<File
+				RelativePath=".\utf8.c">
+			</File>
+			<File
 				RelativePath=".\util.c">
 			</File>
 			<File
@@ -251,13 +254,40 @@
 			Name="Header Files"
 			Filter="h;hpp;hxx;hm;inl">
 			<File
+				RelativePath=".\avatar.h">
+			</File>
+			<File
+				RelativePath=".\chat.h">
+			</File>
+			<File
+				RelativePath=".\file_transfer.h">
+			</File>
+			<File
 				RelativePath=".\http_gateway.h">
+			</File>
+			<File
+				RelativePath=".\im.h">
+			</File>
+			<File
+				RelativePath=".\options.h">
 			</File>
 			<File
 				RelativePath=".\pthread.h">
 			</File>
 			<File
 				RelativePath=".\resource.h">
+			</File>
+			<File
+				RelativePath=".\search.h">
+			</File>
+			<File
+				RelativePath=".\utf8.h">
+			</File>
+			<File
+				RelativePath=".\version.h">
+			</File>
+			<File
+				RelativePath=".\webcam.h">
 			</File>
 			<File
 				RelativePath=".\yahoo.h">

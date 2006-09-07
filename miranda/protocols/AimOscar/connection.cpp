@@ -164,7 +164,7 @@ void __cdecl aim_protocol_negotiation()
 			LOG("Connection Closed: No Error during Connection Negotiation?");
 			break;
 		}
-        if (recvResult == SOCKET_ERROR)
+		if (recvResult == SOCKET_ERROR)
 		{
 			LOG("Connection Closed: Socket Error during Connection Negotiation");
 			break;
@@ -216,6 +216,7 @@ void __cdecl aim_protocol_negotiation()
 						snac_received_message(snac,conn.hServerConn,conn.seqno);
 						snac_typing_notification(snac);
 						snac_error(snac);
+						snac_busted_payload(snac);
 					}
 					else if(snac.cmp(0x0013))
 					{

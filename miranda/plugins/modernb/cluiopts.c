@@ -89,7 +89,7 @@ typedef struct _OrderTreeData
 
 TOrderTreeData OrderTreeData[]=
 {
-	{EXTRA_ICON_VISMODE, _T("Visibility/Chat activity"), EXTRA_ICON_VISMODE,  "EXTRA_ICON_VISMODE", TRUE},
+	{EXTRA_ICON_VISMODE, _T("Visibility"), EXTRA_ICON_VISMODE,  "EXTRA_ICON_VISMODE", TRUE},
 	{EXTRA_ICON_EMAIL, _T("E-mail"), EXTRA_ICON_EMAIL, "EXTRA_ICON_EMAIL", TRUE},
 	{EXTRA_ICON_PROTO, _T("Protocol"), EXTRA_ICON_PROTO, "EXTRA_ICON_PROTO", TRUE},
 	{EXTRA_ICON_SMS, _T("Phone/SMS"), EXTRA_ICON_SMS,	 "EXTRA_ICON_SMS", TRUE},
@@ -242,8 +242,8 @@ BOOL CALLBACK DlgProcExtraIconsOpts(HWND hwndDlg, UINT msg, WPARAM wParam, LPARA
 			{	
 				HIMAGELIST himlCheckBoxes;
 				himlCheckBoxes=ImageList_Create(GetSystemMetrics(SM_CXSMICON),GetSystemMetrics(SM_CYSMICON),ILC_COLOR32|ILC_MASK,2,2);
-				ImageList_AddIcon(himlCheckBoxes,LoadSmallIconShared(GetModuleHandle(NULL),MAKEINTRESOURCE(IDI_NOTICK)));
-				ImageList_AddIcon(himlCheckBoxes,LoadSmallIconShared(GetModuleHandle(NULL),MAKEINTRESOURCE(IDI_TICK)));
+				ImageList_AddIcon(himlCheckBoxes,LoadIcon(GetModuleHandle(NULL),MAKEINTRESOURCE(IDI_NOTICK)));
+				ImageList_AddIcon(himlCheckBoxes,LoadIcon(GetModuleHandle(NULL),MAKEINTRESOURCE(IDI_TICK)));
 				TreeView_SetImageList(GetDlgItem(hwndDlg,IDC_EXTRAORDER),himlCheckBoxes,TVSIL_NORMAL);
 			}
 			FillOrderTree(hwndDlg,GetDlgItem(hwndDlg,IDC_EXTRAORDER));
@@ -396,9 +396,6 @@ BOOL CALLBACK DlgProcCluiOpts2(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lPa
 		CheckDlgButton(hwndDlg, IDC_DRAGTOSCROLL, (DBGetContactSettingByte(NULL,"CLUI","DragToScroll",0)&&!DBGetContactSettingByte(NULL,"CLUI","ClientAreaDrag",SETTING_CLIENTDRAG_DEFAULT)) ? BST_CHECKED : BST_UNCHECKED);
 		CheckDlgButton(hwndDlg, IDC_AUTOSIZE, DBGetContactSettingByte(NULL,"CLUI","AutoSize",0) ? BST_CHECKED : BST_UNCHECKED);			
 		CheckDlgButton(hwndDlg, IDC_LOCKSIZING, DBGetContactSettingByte(NULL,"CLUI","LockSize",0) ? BST_CHECKED : BST_UNCHECKED);			   
-		CheckDlgButton(hwndDlg, IDC_BRINGTOFRONT, DBGetContactSettingByte(NULL,"CList","BringToFront",SETTING_BRINGTOFRONT_DEFAULT) ? BST_CHECKED : BST_UNCHECKED);			   		
-		
-		
 		SendDlgItemMessage(hwndDlg,IDC_MAXSIZESPIN,UDM_SETRANGE,0,MAKELONG(100,0));
 		SendDlgItemMessage(hwndDlg,IDC_MAXSIZESPIN,UDM_SETPOS,0,DBGetContactSettingByte(NULL,"CLUI","MaxSizeHeight",75));
 		CheckDlgButton(hwndDlg, IDC_AUTOSIZEUPWARD, DBGetContactSettingByte(NULL,"CLUI","AutoSizeUpward",0) ? BST_CHECKED : BST_UNCHECKED);
@@ -432,12 +429,6 @@ BOOL CALLBACK DlgProcCluiOpts2(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lPa
 			EnableWindow(GetDlgItem(hwndDlg,IDC_HIDETIMESPIN3),mode!=0);
 			EnableWindow(GetDlgItem(hwndDlg,IDC_HIDETIMESPIN4),mode!=0);
 			EnableWindow(GetDlgItem(hwndDlg,IDC_HIDEDELAY2),mode!=0);
-			EnableWindow(GetDlgItem(hwndDlg,IDC_STATIC5),mode!=0);
-			EnableWindow(GetDlgItem(hwndDlg,IDC_STATIC6),mode!=0);
-			EnableWindow(GetDlgItem(hwndDlg,IDC_STATIC7),mode!=0);
-			EnableWindow(GetDlgItem(hwndDlg,IDC_STATIC8),mode!=0);
-			EnableWindow(GetDlgItem(hwndDlg,IDC_STATIC10),mode!=0);
-			EnableWindow(GetDlgItem(hwndDlg,IDC_STATIC13),mode!=0);
 		}
 
 		if(!IsDlgButtonChecked(hwndDlg,IDC_AUTOSIZE)) {
@@ -476,12 +467,6 @@ BOOL CALLBACK DlgProcCluiOpts2(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lPa
 			EnableWindow(GetDlgItem(hwndDlg,IDC_HIDETIMESPIN3),mode!=0);
 			EnableWindow(GetDlgItem(hwndDlg,IDC_HIDETIMESPIN4),mode!=0);     
 			EnableWindow(GetDlgItem(hwndDlg,IDC_HIDEDELAY2),mode!=0);
-			EnableWindow(GetDlgItem(hwndDlg,IDC_STATIC5),mode!=0);
-			EnableWindow(GetDlgItem(hwndDlg,IDC_STATIC6),mode!=0);
-			EnableWindow(GetDlgItem(hwndDlg,IDC_STATIC7),mode!=0);
-			EnableWindow(GetDlgItem(hwndDlg,IDC_STATIC8),mode!=0);
-			EnableWindow(GetDlgItem(hwndDlg,IDC_STATIC10),mode!=0);
-			EnableWindow(GetDlgItem(hwndDlg,IDC_STATIC13),mode!=0);
 		}
 		if ((LOWORD(wParam)==IDC_HIDETIME || LOWORD(wParam)==IDC_HIDEDELAY2 ||LOWORD(wParam)==IDC_HIDEDELAY ||LOWORD(wParam)==IDC_SHOWDELAY || LOWORD(wParam)==IDC_MAXSIZEHEIGHT) &&
 			(HIWORD(wParam)!=EN_CHANGE || (HWND)lParam!=GetFocus()))

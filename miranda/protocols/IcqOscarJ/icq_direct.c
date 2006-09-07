@@ -78,7 +78,6 @@ static void sendPeerMsgInit(directconnect* dc, DWORD dwSeq);
 static void sendPeerFileInit(directconnect* dc);
 
 
-
 void InitDirectConns(void)
 {
   if (!mutexesInited)
@@ -335,7 +334,7 @@ BOOL IsDirectConnectionOpen(HANDLE hContact, int type)
 
 // This function is called from the Netlib when someone is connecting to
 // one of our incomming DC ports
-void icq_newConnectionReceived(HANDLE hNewConnection, DWORD dwRemoteIP, void *pExtra)
+void icq_newConnectionReceived(HANDLE hNewConnection, DWORD dwRemoteIP)
 {
   pthread_t tid;
 
@@ -678,7 +677,20 @@ static DWORD __stdcall icq_directThread(directthreadstartinfo *dtsi)
     else if (dc.ft->hConnection)
       ICQBroadcastAck(dc.ft->hContact, ACKTYPE_FILE, ACKRESULT_FAILED, dc.ft, 0);
 
-    SafeReleaseFileTransfer(&dc.ft);
+    SAFE_FREE(&dc.ft->szFilename);
+    SAFE_FREE(&dc.ft->szDescription);
+    SAFE_FREE(&dc.ft->szSavePath);
+    SAFE_FREE(&dc.ft->szThisFile);
+    SAFE_FREE(&dc.ft->szThisSubdir);
+    if (dc.ft->files)
+    {
+      int i;
+
+      for (i = 0; i < (int)dc.ft->dwFileCount; i++)
+        SAFE_FREE(&dc.ft->files[i]);
+      SAFE_FREE((char**)&dc.ft->files);
+    }
+    SAFE_FREE(&dc.ft);
     _chdir("\\");    /* so we don't leave a subdir handle open so it can't be deleted */
   }
 

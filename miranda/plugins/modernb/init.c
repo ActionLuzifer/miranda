@@ -104,11 +104,6 @@ void cli_ChangeContactIcon(HANDLE hContact,int iIcon,int add);
 LRESULT ( *saveProcessExternalMessages )(HWND hwnd,struct ClcData *dat,UINT msg,WPARAM wParam,LPARAM lParam);
 LRESULT cli_ProcessExternalMessages(HWND hwnd,struct ClcData *dat,UINT msg,WPARAM wParam,LPARAM lParam);
 
-// WinXP tabbed pane stuff
-HMODULE hUxTheme = NULL;
-typedef BOOL (WINAPI *fEnableThemeDialogTexture)(HANDLE, DWORD);
-fEnableThemeDialogTexture pfEnableThemeDialogTexture = NULL;
-
 
 PLUGININFO pluginInfo = {
 	sizeof(PLUGININFO),
@@ -116,26 +111,22 @@ PLUGININFO pluginInfo = {
 	#ifdef UNICODE
 		"Modern Contact List (UNICODE)",
 	#else
-		"Modern Contact List (ANSI)",
+		"Modern Contact List",
 	#endif
 
 #else
 	#ifdef UNICODE
 			"Debug of Modern Contact List (UNICODE)",
 	#else
-			"Debug of Modern Contact List (ANSI)",
+			"Debug of Modern Contact List",
 	#endif
 #endif
 	0,                              //will initiate later in MirandaPluginInfo
 	"Display contacts, event notifications, protocol status with advantage visual modifications. Supported MW modifications, enchanced metacontact cooperation.",
-	"Artem Shpynov, Ricardo Pescuma Domenecci and Anton Senko based on clist_mw by Bethoven",
-	"ashpynov@gmail.com" ,
+	"Artem Shpynov, Anton Senko and Ricardo Pescuma Domenecci, based on clist_mw by Bethoven",
+	"shpynov@nm.ru" ,
 	"Copyright 2000-2006 Miranda-IM project ["__DATE__" "__TIME__"]",
-#ifdef UNICODE
 	"http://miranda-im.org/download/details.php?action=viewfile&id=2103",
-#else
-    "http://miranda-im.org/download/details.php?action=viewfile&id=2996",
-#endif
 	UNICODE_AWARE,
 	DEFMOD_CLISTALL
 };
@@ -162,20 +153,7 @@ __declspec(dllexport) PLUGININFO* MirandaPluginInfo(DWORD mirandaVersion)
 	return &pluginInfo;
 }
 
-void InitUxTheme()
-{
-	hUxTheme = LoadLibraryA("uxtheme.dll");
-    if(hUxTheme == NULL)
-        return;
 
-    pfEnableThemeDialogTexture = (fEnableThemeDialogTexture) GetProcAddress(hUxTheme, "EnableThemeDialogTexture");
-}
-
-void FreeUxTheme()
-{
-    if(hUxTheme != NULL)
-        FreeLibrary(hUxTheme);
-}
 
 int SetDrawer(WPARAM wParam,LPARAM lParam)
 {
@@ -199,8 +177,6 @@ int __declspec(dllexport) CListInitialise(PLUGINLINK * link)
 	memset(&memoryManagerInterface,0,sizeof(memoryManagerInterface));
 	memoryManagerInterface.cbSize = sizeof(memoryManagerInterface);
 	CallService(MS_SYSTEM_GET_MMI, 0, (LPARAM)&memoryManagerInterface);
-
-	InitUxTheme();
 
 	// get the lists manager interface
 	li.cbSize = sizeof(li);
@@ -342,7 +318,6 @@ int __declspec(dllexport) Unload(void)
 	FreeRowCell();
 	pcli->hwndContactList=0;
 	UnhookAll();
-	FreeUxTheme();
 	TRACE("Unloading ClistMW COMPLETE\r\n");
 	return 0;
 }
@@ -431,7 +406,6 @@ int UnhookAll()
 	hooksRecAlloced=0;
 	return 1;
 }
-
 
 #define HookEvent(a,b)  mod_HookEvent(a,b)
 #define UnhookEvent(a)  mod_UnhookEvent(a)

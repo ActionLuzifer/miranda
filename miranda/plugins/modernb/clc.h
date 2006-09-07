@@ -110,7 +110,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #undef CLCDEFAULT_TEXTCOLOUR
 #undef CLCDEFAULT_SELTEXTCOLOUR
 #define CLCDEFAULT_TEXTCOLOUR    GetSysColor(COLOR_WINDOWTEXT)
-#define CLCDEFAULT_SELTEXTCOLOUR GetSysColor(COLOR_HIGHLIGHTTEXT)
+#define CLCDEFAULT_SELTEXTCOLOUR RGB(0,0,128) //GetSysColor(COLOR_HIGHLIGHTTEXT)
 #define CLCDEFAULT_HOTTEXTCOLOUR (IsWinVer98Plus()?RGB(0,0,255):GetSysColor(COLOR_HOTLIGHT))
 #define CLCDEFAULT_QUICKSEARCHCOLOUR RGB(255,255,0)
 #define CLCDEFAULT_LEFTMARGIN    0
@@ -161,8 +161,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define FONTID_MODERN_MAX 21
 
 struct ClcGroup;
-
-extern HICON listening_to_icon;
 
 #define CONTACTF_ONLINE    1
 #define CONTACTF_INVISTO   2
@@ -245,7 +243,6 @@ struct ClcContact {
 	RECT pos_rename_rect;
 	RECT pos_contact_time;
 	RECT pos_extra[MAXEXTRACOLUMNS];
-    DWORD lastPaintCounter;
 };
 
 #define DRAGSTAGE_NOTMOVED  0
@@ -267,7 +264,6 @@ struct ClcContact {
 #define TEXT_STATUS_MESSAGE 2
 #define TEXT_TEXT 3
 #define TEXT_CONTACT_TIME 4
-#define TEXT_LISTENING_TO 5
 
 #define TEXT_TEXT_MAX_LENGTH 1024
 
@@ -402,7 +398,6 @@ struct ClcData {
 	TCHAR second_line_text[TEXT_TEXT_MAX_LENGTH];
 	BOOL second_line_xstatus_has_priority;
 	BOOL second_line_show_status_if_no_away;
-	BOOL second_line_show_listening_if_no_away;
 	BOOL second_line_use_name_and_message_for_xstatus;
 
 	// Third line
@@ -413,13 +408,11 @@ struct ClcData {
 	TCHAR third_line_text[TEXT_TEXT_MAX_LENGTH];
 	BOOL third_line_xstatus_has_priority;
 	BOOL third_line_show_status_if_no_away;
-	BOOL third_line_show_listening_if_no_away;
 	BOOL third_line_use_name_and_message_for_xstatus;
 	struct ClcModernFontInfo fontModernInfo[FONTID_MODERN_MAX+1];
 	HWND hWnd;
 	BYTE menuOwnerType;
 	int menuOwnerID;
-    DWORD m_paintCouter; //range is enoght to 49 days if painting will occure each one millisecond
 };
 
 //clc.c

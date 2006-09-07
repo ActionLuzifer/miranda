@@ -1759,8 +1759,8 @@ void SaveSplitter(HWND hwndDlg, struct MessageWindowData *dat)
     }
 
     if(dat->splitterY < MINSPLITTERY || dat->splitterY < 0)
-        dat->splitterY = MINSPLITTERY;
-        
+		dat->splitterY = MINSPLITTERY;
+
     if(dat->dwFlagsEx & MWF_SHOW_SPLITTEROVERRIDE)
         DBWriteContactSettingDword(dat->hContact, SRMSGMOD_T, "splitsplity", dat->splitterY);
     else
@@ -1860,7 +1860,7 @@ void GetLocaleID(struct MessageWindowData *dat, char *szKLName)
     dat->lcID[0] = toupper(szLI[0]);
     dat->lcID[1] = toupper(szLI[1]);
     dat->lcID[2] = 0;
-    GetStringTypeA(dat->lcid, CT_CTYPE2, "הצü", 3, wCtype2);
+    GetStringTypeA(dat->lcid, CT_CTYPE2, "צהü", 3, wCtype2);
     pf2.cbSize = sizeof(pf2);
     pf2.dwMask = PFM_RTLPARA;
     SendDlgItemMessage(dat->hwnd, IDC_MESSAGE, EM_GETPARAFORMAT, 0, (LPARAM)&pf2);
@@ -1882,6 +1882,7 @@ void GetLocaleID(struct MessageWindowData *dat, char *szKLName)
         SendDlgItemMessage(dat->hwnd, IDC_MESSAGE, EM_SETLANGOPTIONS, 0, (LPARAM) SendDlgItemMessage(dat->hwnd, IDC_MESSAGE, EM_GETLANGOPTIONS, 0, 0) & ~IMF_AUTOKEYBOARD);
     }
 }
+
 
 // Returns true if the unicode buffer only contains 7-bit characters.
 BOOL IsUnicodeAscii(const wchar_t* pBuffer, int nSize)
@@ -2998,10 +2999,10 @@ void GetMyNick(HWND hwndDlg, struct MessageWindowData *dat)
         else if(ci.type == CNFT_DWORD)
             _ltow(ci.dVal, dat->szMyNickname, 10);
         else
-            _tcsncpy(dat->szMyNickname, _T("<undef>"), 110);                // that really should *never* happen
+            _tcsncpy(dat->szMyNickname, _T("<undef>"), 110);
     }
     else
-        _tcsncpy(dat->szMyNickname, _T("<undef>"), 110);                    // same here
+        _tcsncpy(dat->szMyNickname, _T(""), 110);
 #else
     if(!CallService(MS_CONTACT_GETCONTACTINFO, 0, (LPARAM)&ci)) {
         if(ci.type == CNFT_ASCIIZ) {

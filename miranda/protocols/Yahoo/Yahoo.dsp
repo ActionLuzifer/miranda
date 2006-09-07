@@ -210,6 +210,10 @@ SOURCE=.\services.c
 # End Source File
 # Begin Source File
 
+SOURCE=.\utf8.c
+# End Source File
+# Begin Source File
+
 SOURCE=.\util.c
 # End Source File
 # Begin Source File

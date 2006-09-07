@@ -186,7 +186,7 @@ static void LayoutButtons(HWND hwnd, RECT *rc)
     if(g_ButtonItems) {
         while(btnItems) {
             LONG x = (btnItems->xOff >= 0) ? rect.left + btnItems->xOff : rect.right - abs(btnItems->xOff);
-            LONG y = (btnItems->yOff >= 0) ? rect.top + btnItems->yOff : rect.bottom - g_CluiData.statusBarHeight;
+            LONG y = (btnItems->yOff >= 0) ? rect.top + btnItems->yOff : rect.bottom - abs(btnItems->yOff);
 
             SetWindowPos(btnItems->hWnd, 0, x, y, btnItems->width, btnItems->height,
                                   SWP_NOACTIVATE | SWP_NOZORDER | SWP_NOCOPYBITS | SWP_NOREDRAW);
@@ -279,7 +279,8 @@ static int CreateCLC(HWND parent)
         g_hwndEventArea = frame.hWnd;
 		hNotifyFrame = (HWND)CallService(MS_CLIST_FRAMES_ADDFRAME,(WPARAM)&frame,(LPARAM)0);
 		CallService(MS_CLIST_FRAMES_UPDATEFRAME, (WPARAM)hNotifyFrame, FU_FMPOS);
-		HideShowNotifyFrame();
+		if(!g_CluiData.bFirstRun)
+			HideShowNotifyFrame();
 		CreateViewModeFrame();
 	}
 	SetButtonToSkinned();
@@ -313,7 +314,6 @@ static int CreateCLC(HWND parent)
 static int CluiModulesLoaded(WPARAM wParam, LPARAM lParam)
 {
 	static Update upd = {0};
-    static char *szPrefix = "clist_nicer_plus ";
 #if defined(_UNICODE)
 	static char *component = "CList Nicer+ (Unicode)";
 	static char szCurrentVersion[30];
@@ -321,7 +321,6 @@ static int CluiModulesLoaded(WPARAM wParam, LPARAM lParam)
 	static char *szUpdateUrl = "http://miranda.or.at/files/clist_nicer/clist_nicer_plusW.zip";
 	static char *szFLVersionUrl = "http://addons.miranda-im.org/details.php?action=viewfile&id=2601";
 	static char *szFLUpdateurl = "http://addons.miranda-im.org/feed.php?dlfile=2601";
-    upd.pbVersionPrefix = (BYTE *)"<span class=\"fileNameHeader\">CList Nicer+ (NEW) - Unicode ";
 #else
 	static char *component = "CList Nicer+";
 	static char szCurrentVersion[30];
@@ -329,8 +328,8 @@ static int CluiModulesLoaded(WPARAM wParam, LPARAM lParam)
 	static char *szUpdateUrl = "http://miranda.or.at/files/clist_nicer/clist_nicer_plus.zip";
 	static char *szFLVersionUrl = "http://addons.miranda-im.org/details.php?action=viewfile&id=2602";
 	static char *szFLUpdateurl = "http://addons.miranda-im.org/feed.php?dlfile=2602";
-    upd.pbVersionPrefix = (BYTE *)"<span class=\"fileNameHeader\">CList Nicer+ (NEW) ";
 #endif
+	static char *szPrefix = "clist_nicer_plus ";
 
 	// updater plugin support
 
@@ -340,6 +339,7 @@ static int CluiModulesLoaded(WPARAM wParam, LPARAM lParam)
 	upd.cpbVersion = strlen((char *)upd.pbVersion);
 	upd.szVersionURL = szFLVersionUrl;
 	upd.szUpdateURL = szFLUpdateurl;
+	upd.pbVersionPrefix = (BYTE *)"<span class=\"fileNameHeader\">Updater ";
 
 	upd.szBetaUpdateURL = szUpdateUrl;
 	upd.szBetaVersionURL = szVersionUrl;
@@ -512,9 +512,8 @@ void ConfigureEventArea(HWND hwnd)
 	int iCount = GetMenuItemCount(g_CluiData.hMenuNotify);
 	DWORD dwFlags = g_CluiData.dwFlags;
 	int oldstate = g_CluiData.notifyActive;
-    int dwVisible = CallService(MS_CLIST_FRAMES_GETFRAMEOPTIONS, MAKEWPARAM(FO_FLAGS, hNotifyFrame), 0) & F_VISIBLE;
 
-	if (dwVisible) {
+	if (dwFlags & CLUI_FRAME_USEEVENTAREA) {
 		if (dwFlags & CLUI_FRAME_AUTOHIDENOTIFY)
 			g_CluiData.notifyActive = iCount > 0 ? 1 : 0;
 		else
@@ -2028,6 +2027,21 @@ buttons_done:
 			case POPUP_BUTTONS:
 				{
 					g_CluiData.dwFlags ^= CLUI_FRAME_SHOWBOTTOMBUTTONS;
+					break;
+				}
+			case ID_EVENTAREA_AUTOHIDE:
+				{
+					g_CluiData.dwFlags ^= CLUI_FRAME_AUTOHIDENOTIFY;
+					break;
+				}
+			case ID_EVENTAREA_ENABLED:
+				{
+					g_CluiData.dwFlags ^= CLUI_FRAME_USEEVENTAREA;
+					break;
+				}
+			case ID_EVENTAREA_SUNKENFRAME:
+				{
+					g_CluiData.dwFlags ^= CLUI_FRAME_EVENTAREASUNKEN;
 					break;
 				}
 			case POPUP_SHOWSTATUSICONS:

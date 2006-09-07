@@ -76,6 +76,7 @@ int SaveTree(HWND hwndDlg)
 		name=((MenuItemOptData *)tvi.lParam)->name;
 		menuitempos=GetMenuItembyId(menupos,((MenuItemOptData *)tvi.lParam)->id);
 		if (menuitempos!=-1) {
+			//MenuObjects[MenuObjectId].MenuItems[menuitempos].OverrideShow=
 			GetMenuItemName( &pimo->MenuItems[menuitempos], menuItemName, sizeof(menuItemName));
 
 			wsprintfA(DBString, "%s_visible", menuItemName); 
@@ -84,16 +85,20 @@ int SaveTree(HWND hwndDlg)
 			wsprintfA(DBString, "%s_pos", menuItemName);                                 
 			DBWriteContactSettingDword(NULL, MenuNameItems, DBString, runtimepos);
 
-            if(name && ((MenuItemOptData *)tvi.lParam)->defname) {
-                if( _tcscmp(name, ((MenuItemOptData *)tvi.lParam)->defname ) !=0 ) {
+            if(((MenuItemOptData *)tvi.lParam)->name && ((MenuItemOptData *)tvi.lParam)->defname) {
+                if ( _tcscmp( ((MenuItemOptData *)tvi.lParam)->name,((MenuItemOptData *)tvi.lParam)->defname )!=0 ) {
                     wsprintfA(DBString, "%s_name", menuItemName); 
-                    DBWriteContactSettingTString(NULL, MenuNameItems, DBString, name);
+                    DBWriteContactSettingTString(NULL, MenuNameItems, DBString, ((MenuItemOptData *)tvi.lParam)->name);
                 }
+            }
+            else {
+                wsprintfA(DBString, "%s_name", "[no name]"); 
+                DBWriteContactSettingTString(NULL, MenuNameItems, DBString, _T("[no name]"));
             }
 			runtimepos+=100;
 		}
 
-		if (name && !_tcscmp(name, STR_SEPARATOR) && ((MenuItemOptData *)tvi.lParam)->show )
+		if ( !_tcscmp(name, STR_SEPARATOR) && ((MenuItemOptData *)tvi.lParam)->show )
 			runtimepos+=SEPARATORPOSITIONINTERVAL;
 
 		tvi.hItem=TreeView_GetNextSibling(GetDlgItem(hwndDlg,IDC_MENUITEMS),tvi.hItem);                         

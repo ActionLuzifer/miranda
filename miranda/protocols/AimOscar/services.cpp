@@ -14,7 +14,7 @@ static int GetCaps(WPARAM wParam, LPARAM /*lParam*/)
             ret = PF2_SHORTAWAY;
             break;
 		case PFLAGNUM_4:
-			ret = PF4_SUPPORTTYPING | PF4_FORCEAUTH | PF4_SUPPORTIDLE;
+			ret = PF4_SUPPORTTYPING | PF4_FORCEAUTH | PF4_FORCEADDED | PF4_SUPPORTIDLE;
             break;
 		case PFLAGNUM_5:                
             ret = PF2_ONTHEPHONE;
@@ -172,45 +172,18 @@ static int RecvMsg(WPARAM /*wParam*/, LPARAM lParam)
 {
 	CCSDATA *ccs = ( CCSDATA* )lParam;
 	PROTORECVEVENT *pre = ( PROTORECVEVENT* )ccs->lParam;
+
 	DBEVENTINFO dbei = { 0 };
 	dbei.cbSize = sizeof( dbei );
 	dbei.szModule = AIM_PROTOCOL_NAME;
 	dbei.timestamp = pre->timestamp;
 	dbei.flags = pre->flags&PREF_CREATEREAD?DBEF_READ:0;
 	dbei.eventType = EVENTTYPE_MESSAGE;
+	dbei.cbBlob = lstrlen( pre->szMessage ) + 1;
 	if ( pre->flags & PREF_UNICODE )
-	{
-		wchar_t* wbuf=(wchar_t*)&pre->szMessage[lstrlen(pre->szMessage)+1];
-		wchar_t* st_wbuf;
-		if(DBGetContactSettingByte(NULL, AIM_PROTOCOL_NAME, AIM_KEY_FI, 0))
-		{
-			wchar_t* bbuf=html_to_bbcodes(wbuf);
-			st_wbuf=strip_html(bbuf);
-		}
-		else
-			st_wbuf=strip_html(wbuf);
-		delete[] pre->szMessage;
-		char* buf=new char[wcslen(st_wbuf)*3+3];
-		WideCharToMultiByte( CP_ACP, 0,st_wbuf, -1,buf,wcslen(st_wbuf)+1, NULL, NULL);
-		memcpy(&buf[strlen(buf)+1],st_wbuf,lstrlen(buf)*2+2);
-		delete[] st_wbuf;
-		dbei.pBlob=(PBYTE)buf;
-		dbei.cbBlob = lstrlen(buf)+1;
-		dbei.cbBlob*=(sizeof(wchar_t)+1);
-	}
-	else
-	{
-		char* buf;
-		if(DBGetContactSettingByte(NULL, AIM_PROTOCOL_NAME, AIM_KEY_FI, 0))
-		{
-			char* bbuf=html_to_bbcodes(pre->szMessage);
-			buf=strip_html(bbuf);
-		}
-		else
-			buf=strip_html(pre->szMessage);
-		dbei.pBlob=(PBYTE)buf;
-		dbei.cbBlob = lstrlen(buf)+1;
-	}
+		dbei.cbBlob *= ( sizeof( wchar_t )+1 );
+
+	dbei.pBlob = ( PBYTE ) pre->szMessage;
     CallService(MS_DB_EVENT_ADD, (WPARAM) ccs->hContact, (LPARAM) & dbei);
     return 0;
 }
@@ -483,6 +456,7 @@ static int SendFile(WPARAM /*wParam*/,LPARAM lParam)
 				int force_proxy=DBGetContactSettingByte(NULL,AIM_PROTOCOL_NAME,AIM_KEY_FP,0);
 				if(force_proxy)
 				{
+					LOG("We are forcing a proxy file transfer.");
 					HANDLE hProxy=aim_connect("ars.oscar.aol.com:5190");
 					if(hProxy)
 					{
@@ -553,6 +527,7 @@ static int DenyFile(WPARAM /*wParam*/, LPARAM lParam)
 	DBVARIANT dbv;
 	if (!DBGetContactSetting(ccs->hContact, AIM_PROTOCOL_NAME, AIM_KEY_SN, &dbv))
 	{
+		LOG("We are denying a file transfer.");
 		char cookie[8];
 		read_cookie(ccs->hContact,cookie);
 		aim_deny_file(conn.hServerConn,conn.seqno,dbv.pszVal,cookie);
@@ -567,6 +542,7 @@ static int CancelFile(WPARAM /*wParam*/, LPARAM lParam)
 	DBVARIANT dbv;
 	if (!DBGetContactSetting(ccs->hContact, AIM_PROTOCOL_NAME, AIM_KEY_SN, &dbv))
 	{
+		LOG("We are cancelling a file transfer.");
 		char cookie[8];
 		read_cookie(ccs->hContact,cookie);
 		aim_deny_file(conn.hServerConn,conn.seqno,dbv.pszVal,cookie);
@@ -625,11 +601,6 @@ static int CheckMail(WPARAM /*wParam*/, LPARAM /*lParam*/)
 static int ManageAccount(WPARAM /*wParam*/, LPARAM /*lParam*/)
 { 
 	execute_cmd("http","https://my.screenname.aol.com");
-	return 0;
-}
-static int EditProfile(WPARAM /*wParam*/, LPARAM /*lParam*/)
-{ 
-	DialogBox(conn.hInstance, MAKEINTRESOURCE(IDD_AIM), NULL, userinfo_dialog);
 	return 0;
 }
 int ExtraIconsRebuild(WPARAM /*wParam*/, LPARAM /*lParam*/) 
@@ -774,19 +745,6 @@ void CreateServices()
     mi.hIcon = LoadIcon(conn.hInstance,MAKEINTRESOURCE( IDI_AIM ));
 	mi.pszContactOwner = AIM_PROTOCOL_NAME;
     mi.pszName = Translate( "Manage Account" );
-    mi.pszService = service_name;
-	CallService(MS_CLIST_ADDMAINMENUITEM, 0, (LPARAM)&mi );
-
-	mir_snprintf(service_name, sizeof(service_name), "%s%s", AIM_PROTOCOL_NAME, "/EditProfile");
-	CreateServiceFunction(service_name,EditProfile);
-	memset( &mi, 0, sizeof( mi ));
-	mi.pszPopupName = AIM_PROTOCOL_NAME;
-    mi.cbSize = sizeof( mi );
-    mi.popupPosition = 500090000;
-	mi.position = 500090000;
-    mi.hIcon = LoadIcon(conn.hInstance,MAKEINTRESOURCE( IDI_AIM ));
-	mi.pszContactOwner = AIM_PROTOCOL_NAME;
-    mi.pszName = Translate( "Edit Profile" );
     mi.pszService = service_name;
 	CallService(MS_CLIST_ADDMAINMENUITEM, 0, (LPARAM)&mi );
 

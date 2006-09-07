@@ -61,7 +61,7 @@ extern int bHideXStatusUI;
 PLUGININFO pluginInfo = {
   sizeof(PLUGININFO),
   NULL,
-  PLUGIN_MAKE_VERSION(0,3,8,1),
+  PLUGIN_MAKE_VERSION(0,3,7,3),
   "Support for ICQ network, enhanced.",
   "Joe Kucera, Bio, Martin Öberg, Richard Hughes, Jon Keating, etc",
   "jokusoftware@miranda-im.org",
@@ -187,13 +187,6 @@ int __declspec(dllexport) Load(PLUGINLINK *link)
   // Initialize status message struct
   ZeroMemory(&modeMsgs, sizeof(icq_mode_messages));
 
-  // Initialize temporary DB settings
-  ICQCreateResidentSetting("Status"); // NOTE: XStatus cannot be temporary
-  ICQCreateResidentSetting("TemporaryVisible");
-  ICQCreateResidentSetting("TickTS");
-  ICQCreateResidentSetting("IdleTS");
-  ICQCreateResidentSetting("LogonTS");
-
   // Reset a bunch of session specific settings
   ResetSettingsOnLoad();
 
@@ -266,7 +259,6 @@ int __declspec(dllexport) Load(PLUGINLINK *link)
   }
 
   InitDirectConns();
-  InitOscarFileTransfer();
   InitServerLists();
   icq_InitInfoUpdate();
 
@@ -298,7 +290,6 @@ int __declspec(dllexport) Unload(void)
   UninitXStatusEvents();
 
   UninitServerLists();
-  UninitOscarFileTransfer();
   UninitDirectConns();
 
   NetLib_SafeCloseHandle(&ghDirectNetlibUser, FALSE);

@@ -99,18 +99,24 @@ static DWORD __stdcall icq_serverThread(serverthread_start_info* infoParam)
 
   // Initialize direct connection ports
   {
-    DWORD dwInternalIP;
-    BYTE bConstInternalIP = ICQGetContactSettingByte(NULL, "ConstRealIP", 0);
+    NETLIBBIND nlb = {0};
 
-    hDirectBoundPort = NetLib_BindPort(icq_newConnectionReceived, NULL, &wListenPort, &dwInternalIP);
+    nlb.cbSize = sizeof(nlb);
+    nlb.pfnNewConnection = icq_newConnectionReceived;
+    hDirectBoundPort = (HANDLE)CallService(MS_NETLIB_BINDPORT, (WPARAM)ghDirectNetlibUser, (LPARAM)&nlb);
+    if (!hDirectBoundPort && (GetLastError() == 87))
+    { // this ensures old Miranda also can bind a port for a dc
+      nlb.cbSize = NETLIBBIND_SIZEOF_V1;
+      hDirectBoundPort = (HANDLE)CallService(MS_NETLIB_BINDPORT, (WPARAM)ghDirectNetlibUser, (LPARAM)&nlb);
+    }
     if (hDirectBoundPort == NULL)
     {
       icq_LogUsingErrorCode(LOG_WARNING, GetLastError(), "Miranda was unable to allocate a port to listen for direct peer-to-peer connections between clients. You will be able to use most of the ICQ network without problems but you may be unable to send or receive files.\n\nIf you have a firewall this may be blocking Miranda, in which case you should configure your firewall to leave some ports open and tell Miranda which ports to use in M->Options->ICQ->Network.");
       wListenPort = 0;
-      if (!bConstInternalIP) ICQDeleteContactSetting(NULL, "RealIP");
     }
-    else if (!bConstInternalIP)
-      ICQWriteContactSettingDword(NULL, "RealIP", dwInternalIP);
+    wListenPort = nlb.wPort;
+    if (!ICQGetContactSettingByte(NULL, "ConstRealIP", 0))
+      ICQWriteContactSettingDword(NULL, "RealIP", nlb.dwInternalIP);
   }
 
 

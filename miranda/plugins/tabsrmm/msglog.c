@@ -1295,8 +1295,8 @@ nounicode:
                     break;
                 }
                 case '|':       // tab
-                    if(dwEffectiveFlags & MWF_LOG_INDENT)
-                        AppendToBuffer(&buffer, &bufferEnd, &bufferAlloced, "\\tab");
+					if(dwEffectiveFlags & MWF_LOG_INDENT)
+						AppendToBuffer(&buffer, &bufferEnd, &bufferAlloced, "\\tab");
                     else
                         AppendToBuffer(&buffer, &bufferEnd, &bufferAlloced, " ");
                     break;
@@ -1572,8 +1572,9 @@ void StreamInEvents(HWND hwndDlg, HANDLE hDbEventFirst, int count, int fAppend, 
         fi.chrg.cpMin = 0;
         dat->isAutoRTL = 0;
     }
-    startAt = fi.chrg.cpMin;
 
+    startAt = fi.chrg.cpMin;
+    
     SendMessage(hwndrtf, WM_SETREDRAW, FALSE, 0);
 
 	SendDlgItemMessage(hwndDlg, IDC_LOG, EM_STREAMIN, fAppend ? SFF_SELECTION | SF_RTF : SFF_SELECTION |  SF_RTF, (LPARAM) & stream);
@@ -1632,6 +1633,7 @@ static void ReplaceIcons(HWND hwndDlg, struct MessageWindowData *dat, LONG start
 
     hwndrtf = GetDlgItem(hwndDlg, IDC_LOG);
     fi.chrg.cpMin = startAt;
+
     if(dat->clr_added) {
         unsigned int length;
         int index;
@@ -1641,7 +1643,7 @@ static void ReplaceIcons(HWND hwndDlg, struct MessageWindowData *dat, LONG start
         ZeroMemory((void *)&cf2, sizeof(cf2));
         cf2.cbSize = sizeof(cf2);
         cf2.dwMask = CFM_COLOR;
-        while(SendMessageA(hwndrtf, EM_FINDTEXTEX, FR_DOWN, (LPARAM)&fi) > -1) {
+        while (SendMessageA(hwndrtf, EM_FINDTEXTEX, FR_DOWN, (LPARAM)&fi) > -1) {
             tr.chrg.cpMin = fi.chrgText.cpMin;
             tr.chrg.cpMax = tr.chrg.cpMin + 18;
             trbuffer[0] = 0;

@@ -139,7 +139,7 @@ static int sttCreateListener(
 		"SessionID: %lu\r\n"
 		"SChannelState: 0\r\n\r\n%c",
 		szUuid,
-		ipaddr, nlb.wExPort,
+		ipaddr, nlb.wPort,
 		hostname, ft->mIncomingPort,
 		ft->p2p_sessionid, 0 );
 	free( szUuid );

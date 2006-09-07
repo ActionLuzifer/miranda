@@ -699,21 +699,13 @@ static void __cdecl JabberGetAwayMsgThread( HANDLE hContact )
 			}
 			
 			if ( item->statusMessage != NULL ) {
-				#if defined( _UNICODE )
-					char* msg = u2a(item->statusMessage);
-				#else
-					char* msg = item->statusMessage;
-				#endif
-				JSendBroadcast( hContact, ACKTYPE_AWAYMSG, ACKRESULT_SUCCESS, ( HANDLE ) 1, ( LPARAM )msg );
-				#if defined( _UNICODE )
-					mir_free(msg);
-				#endif
+				JSendBroadcast( hContact, ACKTYPE_AWAYMSG, ACKRESULT_SUCCESS, ( HANDLE ) 1, ( LPARAM )item->statusMessage );
 				return;
 			}
 		}
 		else JFreeVariant( &dbv );
 	}
-
+	//JSendBroadcast( hContact, ACKTYPE_AWAYMSG, ACKRESULT_FAILED, ( HANDLE ) 1, ( LPARAM )0 );
 	JSendBroadcast( hContact, ACKTYPE_AWAYMSG, ACKRESULT_SUCCESS, ( HANDLE ) 1, ( LPARAM )"" );
 }
 

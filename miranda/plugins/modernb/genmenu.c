@@ -1185,7 +1185,6 @@ int OnIconLibChanges(WPARAM wParam,LPARAM lParam)
 {
   int mo,mi;
   HICON newIcon;
-  if (MirandaExiting()) return 0;
   lockmo();
   for (mo=0;mo<MenuObjectsCount;mo++)
   {
@@ -1216,7 +1215,7 @@ int OnIconLibChanges(WPARAM wParam,LPARAM lParam)
         {
           ImageList_ReplaceIcon(MenuObjects[mo].hMenuIcons,MenuObjects[mo].MenuItems[mi].iconId,newIcon);
         }
-		if (deficon) DestroyIcon_protect(deficon);
+		if (deficon) DestroyIcon(deficon);
       }	
 	  #ifdef UNICODE
 	   if (descr) mir_free(descr);
@@ -1258,7 +1257,7 @@ int RegisterOneIcon(int mo,int mi)
       defic,
       TRUE,&MenuObjects[mo].MenuItems[mi].IconRegistred);	
     if (newIcon) ImageList_ReplaceIcon(MenuObjects[mo].hMenuIcons,MenuObjects[mo].MenuItems[mi].iconId,newIcon);
-	if (defic) DestroyIcon_protect(defic);
+	if (defic) DestroyIcon(defic);
   };
 
 #ifdef UNICODE

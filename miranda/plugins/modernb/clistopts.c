@@ -401,7 +401,6 @@ static BOOL CALLBACK DlgProcItemAvatarOpts(HWND hwndDlg, UINT msg, WPARAM wParam
 				EnableWindow(GetDlgItem(hwndDlg,IDC_AVATAR_BORDER_COLOR_L),FALSE);
 				EnableWindow(GetDlgItem(hwndDlg,IDC_AVATAR_BORDER_COLOR),FALSE);
 				EnableWindow(GetDlgItem(hwndDlg,IDC_AVATAR_ROUND_CORNERS),FALSE);
-				EnableWindow(GetDlgItem(hwndDlg,IDC_AVATAR_CUSTOM_CORNER_SIZE_CHECK),FALSE);
 				EnableWindow(GetDlgItem(hwndDlg,IDC_AVATAR_IGNORE_SIZE),FALSE);
 				EnableWindow(GetDlgItem(hwndDlg,IDC_AVATAR_OVERLAY_ICONS),FALSE);
 				EnableWindow(GetDlgItem(hwndDlg,IDC_AVATAR_OVERLAY_ICON_NORMAL),FALSE);
@@ -411,7 +410,6 @@ static BOOL CALLBACK DlgProcItemAvatarOpts(HWND hwndDlg, UINT msg, WPARAM wParam
 				EnableWindow(GetDlgItem(hwndDlg,IDC_AVATAR_SIZE),FALSE);
 				EnableWindow(GetDlgItem(hwndDlg,IDC_AVATAR_SIZE_SPIN),FALSE);
 				EnableWindow(GetDlgItem(hwndDlg,IDC_AVATAR_SIZE_PIXELS),FALSE);
-				EnableWindow(GetDlgItem(hwndDlg,IDC_AVATAR_WIDTH),FALSE);
 				EnableWindow(GetDlgItem(hwndDlg,IDC_AVATAR_WIDTH_SPIN),FALSE);
 				EnableWindow(GetDlgItem(hwndDlg,IDC_AVATAR_SIZE_PIXELS2),FALSE);
 				EnableWindow(GetDlgItem(hwndDlg,IDC_AVATAR_SIZE_PIXELS3),FALSE);
@@ -449,29 +447,26 @@ static BOOL CALLBACK DlgProcItemAvatarOpts(HWND hwndDlg, UINT msg, WPARAM wParam
 				EnableWindow(GetDlgItem(hwndDlg,IDC_AVATAR_BORDER_COLOR_L),enabled && IsDlgButtonChecked(hwndDlg,IDC_AVATAR_DRAW_BORDER));
 				EnableWindow(GetDlgItem(hwndDlg,IDC_AVATAR_BORDER_COLOR),enabled && IsDlgButtonChecked(hwndDlg,IDC_AVATAR_DRAW_BORDER));
 				EnableWindow(GetDlgItem(hwndDlg,IDC_AVATAR_ROUND_CORNERS),enabled);
-				EnableWindow(GetDlgItem(hwndDlg,IDC_AVATAR_CUSTOM_CORNER_SIZE_CHECK),enabled);
 				EnableWindow(GetDlgItem(hwndDlg,IDC_AVATAR_IGNORE_SIZE),enabled);
 				EnableWindow(GetDlgItem(hwndDlg,IDC_AVATAR_OVERLAY_ICONS),enabled);
-				EnableWindow(GetDlgItem(hwndDlg,IDC_AVATAR_OVERLAY_ICON_NORMAL),enabled && IsDlgButtonChecked(hwndDlg,IDC_AVATAR_OVERLAY_ICONS));
-				EnableWindow(GetDlgItem(hwndDlg,IDC_AVATAR_OVERLAY_ICON_PROTOCOL),enabled && IsDlgButtonChecked(hwndDlg,IDC_AVATAR_OVERLAY_ICONS));
-				EnableWindow(GetDlgItem(hwndDlg,IDC_AVATAR_OVERLAY_ICON_CONTACT),enabled && IsDlgButtonChecked(hwndDlg,IDC_AVATAR_OVERLAY_ICONS));
+				EnableWindow(GetDlgItem(hwndDlg,IDC_AVATAR_OVERLAY_ICON_NORMAL),enabled);
+				EnableWindow(GetDlgItem(hwndDlg,IDC_AVATAR_OVERLAY_ICON_PROTOCOL),enabled);
+				EnableWindow(GetDlgItem(hwndDlg,IDC_AVATAR_OVERLAY_ICON_CONTACT),enabled);
 				EnableWindow(GetDlgItem(hwndDlg,IDC_AVATAR_SIZE_L),enabled);
 				EnableWindow(GetDlgItem(hwndDlg,IDC_AVATAR_SIZE),enabled);
 				EnableWindow(GetDlgItem(hwndDlg,IDC_AVATAR_SIZE_SPIN),enabled);
-				EnableWindow(GetDlgItem(hwndDlg,IDC_AVATAR_SIZE_PIXELS2),enabled);
-				EnableWindow(GetDlgItem(hwndDlg,IDC_AVATAR_SIZE_PIXELS3),enabled);
-//				if (DBGetContactSettingByte(NULL,"ModernData","UseAdvancedRowLayout",0)==1)
-//				{
-					EnableWindow(GetDlgItem(hwndDlg,IDC_AVATAR_WIDTH),enabled);
+				EnableWindow(GetDlgItem(hwndDlg,IDC_AVATAR_SIZE_PIXELS),enabled);
+				if (DBGetContactSettingByte(NULL,"ModernData","UseAdvancedRowLayout",0)==1)
+				{
 					EnableWindow(GetDlgItem(hwndDlg,IDC_AVATAR_WIDTH_SPIN),enabled);
-					EnableWindow(GetDlgItem(hwndDlg,IDC_AVATAR_SIZE_PIXELS),enabled);
-//				}
-//				else
-//				{
-//					EnableWindow(GetDlgItem(hwndDlg,IDC_AVATAR_WIDTH),FALSE);
-//					EnableWindow(GetDlgItem(hwndDlg,IDC_AVATAR_WIDTH_SPIN),FALSE);
-//					EnableWindow(GetDlgItem(hwndDlg,IDC_AVATAR_SIZE_PIXELS),FALSE);
-//				}
+					EnableWindow(GetDlgItem(hwndDlg,IDC_AVATAR_SIZE_PIXELS2),enabled);
+					EnableWindow(GetDlgItem(hwndDlg,IDC_AVATAR_SIZE_PIXELS3),enabled);
+				}
+				else
+				{	EnableWindow(GetDlgItem(hwndDlg,IDC_AVATAR_WIDTH_SPIN),FALSE);
+					EnableWindow(GetDlgItem(hwndDlg,IDC_AVATAR_SIZE_PIXELS2),FALSE);
+					EnableWindow(GetDlgItem(hwndDlg,IDC_AVATAR_SIZE_PIXELS3),FALSE);
+				}
 			}
 
 			if (LOWORD(wParam)==IDC_AVATAR_DRAW_BORDER)
@@ -678,7 +673,6 @@ static BOOL CALLBACK DlgProcItemTextOpts(HWND hwndDlg, UINT msg, WPARAM wParam, 
 
 			CheckDlgButton(hwndDlg, IDC_DRAW_SMILEYS_ON_FIRST_LINE, DBGetContactSettingByte(NULL,"CList","FirstLineDrawSmileys",1) == 1 ? BST_CHECKED : BST_UNCHECKED );
 			CheckDlgButton(hwndDlg, IDC_APPEND_NICK, DBGetContactSettingByte(NULL,"CList","FirstLineAppendNick",0) == 1 ? BST_CHECKED : BST_UNCHECKED );
-            CheckDlgButton(hwndDlg, IDC_TRIM_TEXT, DBGetContactSettingByte(NULL,"CList","TrimText",1) == 1 ? BST_CHECKED : BST_UNCHECKED );
 
 			ShowWindowNew(GetDlgItem(hwndDlg,IDC_REPLACE_SMILEYS), ServiceExists(MS_SMILEYADD_PARSE) ? SW_SHOW : SW_HIDE);
 			ShowWindowNew(GetDlgItem(hwndDlg,IDC_USE_PROTOCOL_SMILEYS), ServiceExists(MS_SMILEYADD_PARSE) ? SW_SHOW : SW_HIDE);
@@ -725,7 +719,7 @@ static BOOL CALLBACK DlgProcItemTextOpts(HWND hwndDlg, UINT msg, WPARAM wParam, 
 							DBWriteContactSettingByte(NULL,"CList","TextIgnoreSizeForRownHeight", (BYTE)IsDlgButtonChecked(hwndDlg,IDC_IGNORE_SIZE));
 							DBWriteContactSettingByte(NULL,"CList","FirstLineDrawSmileys", (BYTE)IsDlgButtonChecked(hwndDlg,IDC_DRAW_SMILEYS_ON_FIRST_LINE));
 							DBWriteContactSettingByte(NULL,"CList","FirstLineAppendNick", (BYTE)IsDlgButtonChecked(hwndDlg,IDC_APPEND_NICK));
-                            DBWriteContactSettingByte(NULL,"CList","TrimText", (BYTE)IsDlgButtonChecked(hwndDlg,IDC_TRIM_TEXT));
+
 							return TRUE;
 						}
 					}
@@ -772,13 +766,11 @@ static BOOL CALLBACK DlgProcItemSecondLineOpts(HWND hwndDlg, UINT msg, WPARAM wP
 			CheckDlgButton(hwndDlg, IDC_STATUS, radio == TEXT_STATUS ? BST_CHECKED : BST_UNCHECKED );
 			CheckDlgButton(hwndDlg, IDC_NICKNAME, radio == TEXT_NICKNAME ? BST_CHECKED : BST_UNCHECKED );
 			CheckDlgButton(hwndDlg, IDC_STATUS_MESSAGE, radio == TEXT_STATUS_MESSAGE ? BST_CHECKED : BST_UNCHECKED );
-			CheckDlgButton(hwndDlg, IDC_LISTENING_TO, radio == TEXT_LISTENING_TO ? BST_CHECKED : BST_UNCHECKED );
 			CheckDlgButton(hwndDlg, IDC_CONTACT_TIME, radio == TEXT_CONTACT_TIME ? BST_CHECKED : BST_UNCHECKED );
 			CheckDlgButton(hwndDlg, IDC_TEXT, radio == TEXT_TEXT ? BST_CHECKED : BST_UNCHECKED );
 
 			CheckDlgButton(hwndDlg, IDC_XSTATUS_HAS_PRIORITY, DBGetContactSettingByte(NULL,"CList","SecondLineXStatusHasPriority",1) == 1 ? BST_CHECKED : BST_UNCHECKED);
 			CheckDlgButton(hwndDlg, IDC_SHOW_STATUS_IF_NOAWAY, DBGetContactSettingByte(NULL,"CList","SecondLineShowStatusIfNoAway",0) == 1 ? BST_CHECKED : BST_UNCHECKED);
-			CheckDlgButton(hwndDlg, IDC_SHOW_LISTENING_IF_NOAWAY, DBGetContactSettingByte(NULL,"CList","SecondLineShowListeningIfNoAway",1) == 1 ? BST_CHECKED : BST_UNCHECKED);
 			CheckDlgButton(hwndDlg, IDC_USE_NAME_AND_MESSAGE, DBGetContactSettingByte(NULL,"CList","SecondLineUseNameAndMessageForXStatus",0) == 1 ? BST_CHECKED : BST_UNCHECKED);
 
 			if (!IsDlgButtonChecked(hwndDlg,IDC_SHOW))
@@ -790,7 +782,6 @@ static BOOL CALLBACK DlgProcItemSecondLineOpts(HWND hwndDlg, UINT msg, WPARAM wP
 				EnableWindow(GetDlgItem(hwndDlg,IDC_STATUS),FALSE);
 				EnableWindow(GetDlgItem(hwndDlg,IDC_NICKNAME),FALSE);
 				EnableWindow(GetDlgItem(hwndDlg,IDC_STATUS_MESSAGE),FALSE);
-				EnableWindow(GetDlgItem(hwndDlg,IDC_LISTENING_TO),FALSE);
 				EnableWindow(GetDlgItem(hwndDlg,IDC_CONTACT_TIME),FALSE);
 				EnableWindow(GetDlgItem(hwndDlg,IDC_TEXT),FALSE);
 				EnableWindow(GetDlgItem(hwndDlg,IDC_VARIABLE_TEXT),FALSE);
@@ -799,7 +790,6 @@ static BOOL CALLBACK DlgProcItemSecondLineOpts(HWND hwndDlg, UINT msg, WPARAM wP
 				EnableWindow(GetDlgItem(hwndDlg,IDC_STATIC_TEXT),FALSE);
 				EnableWindow(GetDlgItem(hwndDlg,IDC_VARIABLES_L),FALSE);
 				EnableWindow(GetDlgItem(hwndDlg,IDC_SHOW_STATUS_IF_NOAWAY),FALSE);
-				EnableWindow(GetDlgItem(hwndDlg,IDC_SHOW_LISTENING_IF_NOAWAY),FALSE);
 				EnableWindow(GetDlgItem(hwndDlg,IDC_XSTATUS_HAS_PRIORITY),FALSE);
 				EnableWindow(GetDlgItem(hwndDlg,IDC_USE_NAME_AND_MESSAGE),FALSE);
 			}
@@ -816,10 +806,7 @@ static BOOL CALLBACK DlgProcItemSecondLineOpts(HWND hwndDlg, UINT msg, WPARAM wP
 					EnableWindow(GetDlgItem(hwndDlg,IDC_USE_NAME_AND_MESSAGE),FALSE);
 				}
 				if (!IsDlgButtonChecked(hwndDlg,IDC_STATUS_MESSAGE))
-				{
 					EnableWindow(GetDlgItem(hwndDlg,IDC_SHOW_STATUS_IF_NOAWAY),FALSE);
-					EnableWindow(GetDlgItem(hwndDlg,IDC_SHOW_LISTENING_IF_NOAWAY),FALSE);
-				}
 			}
 
 			ShowWindowNew(GetDlgItem(hwndDlg,IDC_DRAW_SMILEYS), ServiceExists(MS_SMILEYADD_PARSE) ? SW_SHOW : SW_HIDE);
@@ -830,7 +817,7 @@ static BOOL CALLBACK DlgProcItemSecondLineOpts(HWND hwndDlg, UINT msg, WPARAM wP
 	case WM_COMMAND:
 		{
 			if (LOWORD(wParam)==IDC_TEXT || LOWORD(wParam)==IDC_STATUS || LOWORD(wParam)==IDC_NICKNAME || LOWORD(wParam)==IDC_STATUS_MESSAGE
-				 || LOWORD(wParam)==IDC_LISTENING_TO || LOWORD(wParam)==IDC_CONTACT_TIME)
+				 || LOWORD(wParam)==IDC_CONTACT_TIME)
 			{
 				EnableWindow(GetDlgItem(hwndDlg,IDC_VARIABLE_TEXT), IsDlgButtonChecked(hwndDlg,IDC_TEXT) 
 					&& IsDlgButtonChecked(hwndDlg,IDC_SHOW));
@@ -840,8 +827,6 @@ static BOOL CALLBACK DlgProcItemSecondLineOpts(HWND hwndDlg, UINT msg, WPARAM wP
 					(IsDlgButtonChecked(hwndDlg,IDC_STATUS) 
 					|| IsDlgButtonChecked(hwndDlg,IDC_STATUS_MESSAGE)));
 				EnableWindow(GetDlgItem(hwndDlg,IDC_SHOW_STATUS_IF_NOAWAY), IsDlgButtonChecked(hwndDlg,IDC_SHOW) && 
-					(IsDlgButtonChecked(hwndDlg,IDC_STATUS_MESSAGE)));
-				EnableWindow(GetDlgItem(hwndDlg,IDC_SHOW_LISTENING_IF_NOAWAY), IsDlgButtonChecked(hwndDlg,IDC_SHOW) && 
 					(IsDlgButtonChecked(hwndDlg,IDC_STATUS_MESSAGE)));
 				EnableWindow(GetDlgItem(hwndDlg,IDC_USE_NAME_AND_MESSAGE), IsDlgButtonChecked(hwndDlg,IDC_SHOW) && 
 					(IsDlgButtonChecked(hwndDlg,IDC_STATUS) 
@@ -858,7 +843,6 @@ static BOOL CALLBACK DlgProcItemSecondLineOpts(HWND hwndDlg, UINT msg, WPARAM wP
 				EnableWindow(GetDlgItem(hwndDlg,IDC_NICKNAME),enabled);
 				EnableWindow(GetDlgItem(hwndDlg,IDC_CONTACT_TIME),enabled);
 				EnableWindow(GetDlgItem(hwndDlg,IDC_STATUS_MESSAGE),enabled);
-				EnableWindow(GetDlgItem(hwndDlg,IDC_LISTENING_TO),enabled);
 				EnableWindow(GetDlgItem(hwndDlg,IDC_TEXT),enabled);
 				EnableWindow(GetDlgItem(hwndDlg,IDC_VARIABLE_TEXT),enabled && IsDlgButtonChecked(hwndDlg,IDC_TEXT));
 				EnableWindow(GetDlgItem(hwndDlg,IDC_STATIC_TOP),enabled);
@@ -870,7 +854,6 @@ static BOOL CALLBACK DlgProcItemSecondLineOpts(HWND hwndDlg, UINT msg, WPARAM wP
 				EnableWindow(GetDlgItem(hwndDlg,IDC_XSTATUS_HAS_PRIORITY), enabled && (IsDlgButtonChecked(hwndDlg,IDC_STATUS) 
 					|| IsDlgButtonChecked(hwndDlg,IDC_STATUS_MESSAGE)));
 				EnableWindow(GetDlgItem(hwndDlg,IDC_SHOW_STATUS_IF_NOAWAY), enabled && IsDlgButtonChecked(hwndDlg,IDC_STATUS_MESSAGE));
-				EnableWindow(GetDlgItem(hwndDlg,IDC_SHOW_LISTENING_IF_NOAWAY), enabled && IsDlgButtonChecked(hwndDlg,IDC_STATUS_MESSAGE));
 				EnableWindow(GetDlgItem(hwndDlg,IDC_USE_NAME_AND_MESSAGE), enabled && (IsDlgButtonChecked(hwndDlg,IDC_STATUS) 
 					|| IsDlgButtonChecked(hwndDlg,IDC_STATUS_MESSAGE)));			
 			}
@@ -904,8 +887,6 @@ static BOOL CALLBACK DlgProcItemSecondLineOpts(HWND hwndDlg, UINT msg, WPARAM wP
 								radio = TEXT_TEXT;
 							else if (IsDlgButtonChecked(hwndDlg,IDC_CONTACT_TIME))
 								radio = TEXT_CONTACT_TIME;
-							else if (IsDlgButtonChecked(hwndDlg,IDC_LISTENING_TO))
-								radio = TEXT_LISTENING_TO;
 							else
 								radio = TEXT_STATUS_MESSAGE;
 							DBWriteContactSettingWord(NULL,"CList","SecondLineType", (WORD)radio);
@@ -921,7 +902,6 @@ static BOOL CALLBACK DlgProcItemSecondLineOpts(HWND hwndDlg, UINT msg, WPARAM wP
 
 							DBWriteContactSettingByte(NULL,"CList","SecondLineXStatusHasPriority", (BYTE)IsDlgButtonChecked(hwndDlg,IDC_XSTATUS_HAS_PRIORITY));
 							DBWriteContactSettingByte(NULL,"CList","SecondLineShowStatusIfNoAway", (BYTE)IsDlgButtonChecked(hwndDlg,IDC_SHOW_STATUS_IF_NOAWAY));
-							DBWriteContactSettingByte(NULL,"CList","SecondLineShowListeningIfNoAway", (BYTE)IsDlgButtonChecked(hwndDlg,IDC_SHOW_LISTENING_IF_NOAWAY));
 							DBWriteContactSettingByte(NULL,"CList","SecondLineUseNameAndMessageForXStatus", (BYTE)IsDlgButtonChecked(hwndDlg,IDC_USE_NAME_AND_MESSAGE));
 
 							return TRUE;
@@ -969,13 +949,12 @@ static BOOL CALLBACK DlgProcItemThirdLineOpts(HWND hwndDlg, UINT msg, WPARAM wPa
 			CheckDlgButton(hwndDlg, IDC_STATUS, radio == TEXT_STATUS ? BST_CHECKED : BST_UNCHECKED );
 			CheckDlgButton(hwndDlg, IDC_NICKNAME, radio == TEXT_NICKNAME ? BST_CHECKED : BST_UNCHECKED );
 			CheckDlgButton(hwndDlg, IDC_STATUS_MESSAGE, radio == TEXT_STATUS_MESSAGE ? BST_CHECKED : BST_UNCHECKED );
-			CheckDlgButton(hwndDlg, IDC_LISTENING_TO, radio == TEXT_LISTENING_TO ? BST_CHECKED : BST_UNCHECKED );
 			CheckDlgButton(hwndDlg, IDC_CONTACT_TIME, radio == TEXT_CONTACT_TIME ? BST_CHECKED : BST_UNCHECKED );
 			CheckDlgButton(hwndDlg, IDC_TEXT, radio == TEXT_TEXT ? BST_CHECKED : BST_UNCHECKED );
 
 			CheckDlgButton(hwndDlg, IDC_XSTATUS_HAS_PRIORITY, DBGetContactSettingByte(NULL,"CList","ThirdLineXStatusHasPriority",1) == 1 ? BST_CHECKED : BST_UNCHECKED);
+
 			CheckDlgButton(hwndDlg, IDC_SHOW_STATUS_IF_NOAWAY, DBGetContactSettingByte(NULL,"CList","ThirdLineShowStatusIfNoAway",0) == 1 ? BST_CHECKED : BST_UNCHECKED);
-			CheckDlgButton(hwndDlg, IDC_SHOW_LISTENING_IF_NOAWAY, DBGetContactSettingByte(NULL,"CList","ThirdLineShowListeningIfNoAway",1) == 1 ? BST_CHECKED : BST_UNCHECKED);
 			CheckDlgButton(hwndDlg, IDC_USE_NAME_AND_MESSAGE, DBGetContactSettingByte(NULL,"CList","ThirdLineUseNameAndMessageForXStatus",0) == 1 ? BST_CHECKED : BST_UNCHECKED);
 
 			if (!IsDlgButtonChecked(hwndDlg,IDC_SHOW))
@@ -987,7 +966,6 @@ static BOOL CALLBACK DlgProcItemThirdLineOpts(HWND hwndDlg, UINT msg, WPARAM wPa
 				EnableWindow(GetDlgItem(hwndDlg,IDC_STATUS),FALSE);
 				EnableWindow(GetDlgItem(hwndDlg,IDC_NICKNAME),FALSE);
 				EnableWindow(GetDlgItem(hwndDlg,IDC_STATUS_MESSAGE),FALSE);
-				EnableWindow(GetDlgItem(hwndDlg,IDC_LISTENING_TO),FALSE);
 				EnableWindow(GetDlgItem(hwndDlg,IDC_CONTACT_TIME),FALSE);
 				EnableWindow(GetDlgItem(hwndDlg,IDC_TEXT),FALSE);
 				EnableWindow(GetDlgItem(hwndDlg,IDC_VARIABLE_TEXT),FALSE);
@@ -998,7 +976,6 @@ static BOOL CALLBACK DlgProcItemThirdLineOpts(HWND hwndDlg, UINT msg, WPARAM wPa
 				EnableWindow(GetDlgItem(hwndDlg,IDC_XSTATUS_HAS_PRIORITY),FALSE);
 				EnableWindow(GetDlgItem(hwndDlg,IDC_USE_NAME_AND_MESSAGE),FALSE);
 				EnableWindow(GetDlgItem(hwndDlg,IDC_SHOW_STATUS_IF_NOAWAY),FALSE);
-				EnableWindow(GetDlgItem(hwndDlg,IDC_SHOW_LISTENING_IF_NOAWAY),FALSE);
 			}
 			else
 			{
@@ -1013,10 +990,7 @@ static BOOL CALLBACK DlgProcItemThirdLineOpts(HWND hwndDlg, UINT msg, WPARAM wPa
 					EnableWindow(GetDlgItem(hwndDlg,IDC_USE_NAME_AND_MESSAGE),FALSE);
 				}
 				if (!IsDlgButtonChecked(hwndDlg,IDC_STATUS_MESSAGE))
-				{
 					EnableWindow(GetDlgItem(hwndDlg,IDC_SHOW_STATUS_IF_NOAWAY),FALSE);
-					EnableWindow(GetDlgItem(hwndDlg,IDC_SHOW_LISTENING_IF_NOAWAY),FALSE);
-				}
 			}
 
 			ShowWindowNew(GetDlgItem(hwndDlg,IDC_DRAW_SMILEYS), ServiceExists(MS_SMILEYADD_PARSE) ? SW_SHOW : SW_HIDE);
@@ -1027,7 +1001,7 @@ static BOOL CALLBACK DlgProcItemThirdLineOpts(HWND hwndDlg, UINT msg, WPARAM wPa
 	case WM_COMMAND:
 		{
 			if (LOWORD(wParam)==IDC_TEXT || LOWORD(wParam)==IDC_STATUS || LOWORD(wParam)==IDC_NICKNAME || LOWORD(wParam)==IDC_STATUS_MESSAGE
-				|| LOWORD(wParam)==IDC_LISTENING_TO || LOWORD(wParam)==IDC_CONTACT_TIME)
+				 || LOWORD(wParam)==IDC_CONTACT_TIME)
 			{
 				EnableWindow(GetDlgItem(hwndDlg,IDC_VARIABLE_TEXT), IsDlgButtonChecked(hwndDlg,IDC_TEXT) 
 					&& IsDlgButtonChecked(hwndDlg,IDC_SHOW));
@@ -1038,7 +1012,6 @@ static BOOL CALLBACK DlgProcItemThirdLineOpts(HWND hwndDlg, UINT msg, WPARAM wPa
 					|| IsDlgButtonChecked(hwndDlg,IDC_STATUS_MESSAGE)));
 				EnableWindow(GetDlgItem(hwndDlg,IDC_USE_NAME_AND_MESSAGE), IsDlgButtonChecked(hwndDlg,IDC_SHOW) && (IsDlgButtonChecked(hwndDlg,IDC_STATUS) || IsDlgButtonChecked(hwndDlg,IDC_STATUS_MESSAGE)));
 				EnableWindow(GetDlgItem(hwndDlg,IDC_SHOW_STATUS_IF_NOAWAY), IsDlgButtonChecked(hwndDlg,IDC_SHOW) && (IsDlgButtonChecked(hwndDlg,IDC_STATUS_MESSAGE)));																	
-				EnableWindow(GetDlgItem(hwndDlg,IDC_SHOW_LISTENING_IF_NOAWAY), IsDlgButtonChecked(hwndDlg,IDC_SHOW) && (IsDlgButtonChecked(hwndDlg,IDC_STATUS_MESSAGE)));																	
 			}
 			else if (LOWORD(wParam)==IDC_SHOW)
 			{
@@ -1050,7 +1023,6 @@ static BOOL CALLBACK DlgProcItemThirdLineOpts(HWND hwndDlg, UINT msg, WPARAM wPa
 				EnableWindow(GetDlgItem(hwndDlg,IDC_STATUS),enabled);
 				EnableWindow(GetDlgItem(hwndDlg,IDC_NICKNAME),enabled);
 				EnableWindow(GetDlgItem(hwndDlg,IDC_STATUS_MESSAGE),enabled);
-				EnableWindow(GetDlgItem(hwndDlg,IDC_LISTENING_TO),enabled);
 				EnableWindow(GetDlgItem(hwndDlg,IDC_CONTACT_TIME),enabled);
 				EnableWindow(GetDlgItem(hwndDlg,IDC_TEXT),enabled);
 				EnableWindow(GetDlgItem(hwndDlg,IDC_VARIABLE_TEXT),enabled && IsDlgButtonChecked(hwndDlg,IDC_TEXT));
@@ -1065,7 +1037,6 @@ static BOOL CALLBACK DlgProcItemThirdLineOpts(HWND hwndDlg, UINT msg, WPARAM wPa
 				EnableWindow(GetDlgItem(hwndDlg,IDC_USE_NAME_AND_MESSAGE), enabled && (IsDlgButtonChecked(hwndDlg,IDC_STATUS) 
 					|| IsDlgButtonChecked(hwndDlg,IDC_STATUS_MESSAGE)));
 				EnableWindow(GetDlgItem(hwndDlg,IDC_SHOW_STATUS_IF_NOAWAY), enabled && IsDlgButtonChecked(hwndDlg,IDC_STATUS_MESSAGE));
-				EnableWindow(GetDlgItem(hwndDlg,IDC_SHOW_LISTENING_IF_NOAWAY), enabled && IsDlgButtonChecked(hwndDlg,IDC_STATUS_MESSAGE));
 			}
 
 			if (LOWORD(wParam)==IDC_TOP_SPACE && HIWORD(wParam) != EN_CHANGE || (HWND)lParam != GetFocus()) return 0; // dont make apply enabled during buddy set crap
@@ -1097,8 +1068,6 @@ static BOOL CALLBACK DlgProcItemThirdLineOpts(HWND hwndDlg, UINT msg, WPARAM wPa
 								radio = TEXT_TEXT;
 							else if (IsDlgButtonChecked(hwndDlg,IDC_CONTACT_TIME))
 								radio = TEXT_CONTACT_TIME;
-							else if (IsDlgButtonChecked(hwndDlg,IDC_LISTENING_TO))
-								radio = TEXT_LISTENING_TO;
 							else
 								radio = TEXT_STATUS_MESSAGE;
 							DBWriteContactSettingWord(NULL,"CList","ThirdLineType", (WORD)radio);
@@ -1115,7 +1084,6 @@ static BOOL CALLBACK DlgProcItemThirdLineOpts(HWND hwndDlg, UINT msg, WPARAM wPa
 							DBWriteContactSettingByte(NULL,"CList","ThirdLineXStatusHasPriority", (BYTE)IsDlgButtonChecked(hwndDlg,IDC_XSTATUS_HAS_PRIORITY));
 							DBWriteContactSettingByte(NULL,"CList","ThirdLineUseNameAndMessageForXStatus", (BYTE)IsDlgButtonChecked(hwndDlg,IDC_USE_NAME_AND_MESSAGE));
 							DBWriteContactSettingByte(NULL,"CList","ThirdLineShowStatusIfNoAway", (BYTE)IsDlgButtonChecked(hwndDlg,IDC_SHOW_STATUS_IF_NOAWAY));
-							DBWriteContactSettingByte(NULL,"CList","ThirdLineShowListeningIfNoAway", (BYTE)IsDlgButtonChecked(hwndDlg,IDC_SHOW_LISTENING_IF_NOAWAY));
 
 							return TRUE;
 						}
@@ -1189,23 +1157,42 @@ static void ChangeTab(HWND hwndDlg, WndItemsData *data, int sel)
 	HWND hwndTab;
 	RECT rc_tab;
 	RECT rc_item;
+	int top;
 
 	hwndTab = GetDlgItem(hwndDlg, IDC_TAB);
 
 	// Get avaible space
 	GetWindowRect(hwndTab, &rc_tab);
+	ScreenToClientRect(hwndDlg, &rc_tab);
+	top = rc_tab.top;
+
+	GetWindowRect(hwndTab, &rc_tab);
 	ScreenToClientRect(hwndTab, &rc_tab);
 	TabCtrl_AdjustRect(hwndTab, FALSE, &rc_tab); 
+
+
+
 
 	// Get item size
 	GetClientRect(data->items[sel].hwnd, &rc_item);
 
 	// Fix rc_item
 	rc_item.right -= rc_item.left;	// width
-	rc_item.left = rc_tab.left + (rc_tab.right - rc_tab.left - rc_item.right) / 2;
-
+	rc_item.left = 0;
 	rc_item.bottom -= rc_item.top;	// height
-	rc_item.top = rc_tab.top; // + (rc_tab.bottom - rc_tab.top - rc_item.bottom) / 2;
+	rc_item.top = 0;
+
+	//OffsetRect(&rc_item,30,0);
+
+	if (rc_item.right < rc_tab.right - rc_tab.left)
+		rc_item.left = rc_tab.left + (rc_tab.right - rc_tab.left - rc_item.right) / 2;
+	else
+		rc_item.left = rc_tab.left;
+
+	if (rc_item.bottom < rc_tab.bottom - rc_tab.top)
+		rc_item.top = top + rc_tab.top + (rc_tab.bottom - rc_tab.top - rc_item.bottom) / 2;
+	else
+		rc_item.top = top + rc_tab.top;
 
 	// Set pos
 	SetWindowPos(data->items[sel].hwnd, HWND_TOP, rc_item.left, rc_item.top, rc_item.right,
@@ -1224,6 +1211,7 @@ static BOOL CALLBACK DlgProcItemsOpts(HWND hwndDlg, UINT msg, WPARAM wParam, LPA
 			WndItemsData *data;
 			int i;
 			TCITEM tie; 
+			RECT rc_tab;
 
 			TranslateDialogDefault(hwndDlg);
 
@@ -1248,12 +1236,21 @@ static BOOL CALLBACK DlgProcItemsOpts(HWND hwndDlg, UINT msg, WPARAM wParam, LPA
 				TranslateDialogDefault(data->items[i].hwnd);
 				ShowWindowNew(data->items[i].hwnd, SW_HIDE);
 
-				if (pfEnableThemeDialogTexture != NULL)
-					pfEnableThemeDialogTexture(data->items[i].hwnd, ETDT_ENABLETAB);
-
 				tie.pszText = TranslateTS(data->items[i].conf->name); 
 				TabCtrl_InsertItem(hwndTab, i, &tie);
 			}
+
+			// Get avaible space
+			GetWindowRect(hwndTab, &rc_tab);
+			ScreenToClientRect(hwndTab, &rc_tab);
+			TabCtrl_AdjustRect(hwndTab, FALSE, &rc_tab); 
+			rc_tab.left+=3;
+			rc_tab.right-=3;
+			// Create big display
+			data->hwndDisplay = CreateWindow(TEXT("STATIC"), TEXT(""), WS_CHILD|WS_VISIBLE, 
+				rc_tab.left, rc_tab.top, 
+				rc_tab.right-rc_tab.left, rc_tab.bottom-rc_tab.top, 
+				hwndTab, NULL, g_hInst, NULL); 
 
 			// Show first item
 			ChangeTab(hwndDlg, data, 0);
@@ -1330,7 +1327,7 @@ BOOL CALLBACK DlgProcGenOpts(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lPara
 			HANDLE hContact=(HANDLE)wParam;
 			DBCONTACTWRITESETTING * ws = (DBCONTACTWRITESETTING *)lParam;
 			if ( hContact == NULL && ws != NULL && ws->szModule != NULL && ws->szSetting != NULL
-				&& strcmpi(ws->szModule,"CList")==0 && strcmpi(ws->szSetting,"UseGroups")==0
+				&& _strcmpi(ws->szModule,"CList")==0 && _strcmpi(ws->szSetting,"UseGroups")==0
 				&& IsWindowVisible(hwndDlg) ) {
 					CheckDlgButton(hwndDlg,IDC_DISABLEGROUPS,ws->value.bVal == 0);
 				}
@@ -1403,7 +1400,7 @@ BOOL CALLBACK DlgProcGenOpts(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lPara
 		}
 		CheckDlgButton(hwndDlg, IDC_ALWAYSSTATUS, DBGetContactSettingByte(NULL,"CList","AlwaysStatus",SETTING_ALWAYSSTATUS_DEFAULT) ? BST_CHECKED : BST_UNCHECKED);
 		
-		CheckDlgButton(hwndDlg, IDC_ALWAYSPRIMARY, !DBGetContactSettingByte(NULL,"CList","AlwaysPrimary",0) ? BST_CHECKED : BST_UNCHECKED);
+		CheckDlgButton(hwndDlg, IDC_ALWAYSPRIMARY, !DBGetContactSettingByte(NULL,"CList","AlwaysPremary",0) ? BST_CHECKED : BST_UNCHECKED);
 		
 		CheckDlgButton(hwndDlg, IDC_ALWAYSMULTI, !DBGetContactSettingByte(NULL,"CList","AlwaysMulti",SETTING_ALWAYSMULTI_DEFAULT) ? BST_CHECKED : BST_UNCHECKED);
 		CheckDlgButton(hwndDlg, IDC_DONTCYCLE, DBGetContactSettingByte(NULL,"CList","TrayIcon",SETTING_TRAYICON_DEFAULT)==SETTING_TRAYICON_SINGLE ? BST_CHECKED : BST_UNCHECKED);

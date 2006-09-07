@@ -67,7 +67,6 @@ int NetlibFreeBoundPort(struct NetlibBoundPort *nlbp)
 	closesocket(nlbp->s);
 	WaitForSingleObject(nlbp->hThread,INFINITE);
 	CloseHandle(nlbp->hThread);
-	NetlibUPnPDeletePortMapping(nlbp->wExPort, "TCP");
 	mir_free(nlbp);
 	return 1;
 }
@@ -114,10 +113,7 @@ int NetlibBindPort(WPARAM wParam,LPARAM lParam)
 		SetLastError(ERROR_INVALID_PARAMETER);
 		return (int)(HANDLE)NULL;
 	}
-	if ( nlb->cbSize != sizeof(NETLIBBIND)   && 
-		 nlb->cbSize != NETLIBBIND_SIZEOF_V2 && 
-		 nlb->cbSize != NETLIBBIND_SIZEOF_V1 ) 
-	{
+	if ( !(nlb->cbSize == sizeof(NETLIBBIND) || nlb->cbSize==sizeof(NETLIBBINDOLD)) ) {
 		return (int)(HANDLE)NULL;
 	}
 	nlbp=(struct NetlibBoundPort*)mir_alloc(sizeof(struct NetlibBoundPort));
@@ -197,7 +193,8 @@ int NetlibBindPort(WPARAM wParam,LPARAM lParam)
 	}
 
 	{	int len;
-		DWORD extIP;
+		char hostname[64];
+		struct hostent *he;
 
 		ZeroMemory(&sin,sizeof(sin));
 		len=sizeof(sin);
@@ -211,35 +208,10 @@ int NetlibBindPort(WPARAM wParam,LPARAM lParam)
 		nlbp->wPort=nlb->wPort;
 		nlb->dwInternalIP=ntohl(sin.sin_addr.S_un.S_addr);
 
-		if (nlb->dwInternalIP == 0)
-		{
-			char hostname[64];
-			struct hostent *he;
-
-			gethostname(hostname,SIZEOF(hostname));
-			he=gethostbyname(hostname);
-			if(he->h_addr_list[0])
-				nlb->dwInternalIP=ntohl(*(PDWORD)he->h_addr_list[0]);
-		}
-		if (NetlibUPnPAddPortMapping(nlb->wPort, "TCP", &nlbp->wExPort, 
-			&extIP, nlb->cbSize > NETLIBBIND_SIZEOF_V2))
-		{
-			if (nlb->cbSize > NETLIBBIND_SIZEOF_V2)
-			{
-				nlb->wExPort = nlbp->wExPort;
-				nlb->dwExternalIP = extIP;
-			}
-		}
-		else
-		{
-			nlbp->wExPort = 0;
-			if (nlb->cbSize > NETLIBBIND_SIZEOF_V2)
-			{
-				nlb->wExPort = nlb->wPort;
-				nlb->dwExternalIP = nlb->dwInternalIP;
-			}
-		}
-
+		gethostname(hostname,SIZEOF(hostname));
+		he=gethostbyname(hostname);
+		if(he->h_addr_list[0])
+			nlb->dwInternalIP=ntohl(*(PDWORD)he->h_addr_list[0]);
 	}
 	nlbp->hThread=(HANDLE)forkthreadex(NULL,0,NetlibBindAcceptThread,nlbp,0,&dwThreadId);
 	return (int)nlbp;

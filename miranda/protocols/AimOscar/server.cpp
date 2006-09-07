@@ -137,6 +137,8 @@ void snac_icbm_limitations(SNAC &snac,HANDLE hServerConn,unsigned short &seqno)/
 							else
 								assign_modmsg(DEFAULT_AWAY_MSG);
 						}
+						else
+							assign_modmsg(DEFAULT_AWAY_MSG);
 					}
 					else if(conn.initial_status==ID_STATUS_DND)
 					{
@@ -155,6 +157,8 @@ void snac_icbm_limitations(SNAC &snac,HANDLE hServerConn,unsigned short &seqno)/
 							else
 								assign_modmsg(DEFAULT_AWAY_MSG);
 						}
+						else
+							assign_modmsg(DEFAULT_AWAY_MSG);
 					}
 					else if(conn.initial_status==ID_STATUS_OCCUPIED)
 					{
@@ -173,6 +177,8 @@ void snac_icbm_limitations(SNAC &snac,HANDLE hServerConn,unsigned short &seqno)/
 							else
 								assign_modmsg(DEFAULT_AWAY_MSG);
 						}
+						else
+							assign_modmsg(DEFAULT_AWAY_MSG);
 					}
 					else if(conn.initial_status==ID_STATUS_ONTHEPHONE)
 					{
@@ -191,6 +197,8 @@ void snac_icbm_limitations(SNAC &snac,HANDLE hServerConn,unsigned short &seqno)/
 							else
 								assign_modmsg(DEFAULT_AWAY_MSG);
 						}
+						else
+							assign_modmsg(DEFAULT_AWAY_MSG);
 					}
 					else if(conn.initial_status==ID_STATUS_NA)
 					{
@@ -209,6 +217,8 @@ void snac_icbm_limitations(SNAC &snac,HANDLE hServerConn,unsigned short &seqno)/
 							else
 								assign_modmsg(DEFAULT_AWAY_MSG);
 						}
+						else
+							assign_modmsg(DEFAULT_AWAY_MSG);
 					}
 					else if(conn.initial_status==ID_STATUS_OUTTOLUNCH)
 					{
@@ -227,6 +237,8 @@ void snac_icbm_limitations(SNAC &snac,HANDLE hServerConn,unsigned short &seqno)/
 							else
 								assign_modmsg(DEFAULT_AWAY_MSG);
 						}
+						else
+							assign_modmsg(DEFAULT_AWAY_MSG);
 					}
 				}
 					aim_set_invis(hServerConn,seqno,AIM_STATUS_AWAY,AIM_STATUS_NULL);
@@ -738,7 +750,7 @@ void snac_received_message(SNAC &snac,HANDLE hServerConn,unsigned short &seqno)/
 				unsigned short caps_length=tlv.ushort(2);
 				unsigned short msg_length=tlv.ushort(6+caps_length)-4;
 				unsigned short encoding=tlv.ushort(8+caps_length);
-				char* buf=tlv.part(12+caps_length,msg_length);
+				char* msg=tlv.part(12+caps_length,msg_length);
 				hContact=find_contact(sn);
 				if(!hContact)
 				{
@@ -752,18 +764,42 @@ void snac_received_message(SNAC &snac,HANDLE hServerConn,unsigned short &seqno)/
 					if(encoding==0x0002)
 					{
 						unicode_message=1;
-						wchar_t* wbuf=new wchar_t[msg_length+1];
-						memcpy(wbuf,buf,msg_length);	
-						wbuf[msg_length/2]=0x00;
-						wcs_htons(wbuf);
-						msg_buf=new char[msg_length/2+msg_length+3];
-						WideCharToMultiByte( CP_ACP, 0, wbuf, -1,msg_buf, msg_length/2+1, NULL, NULL );
-						char* p=msg_buf+lstrlen(msg_buf)+1;
-						memcpy(p,wbuf,msg_length+2);
+						wchar_t* wch=new wchar_t[msg_length+1];
+						memcpy(wch,msg,msg_length);	
+						wch[msg_length/2]=0x00;
+						wcs_htons(wch);
+						wchar_t* stripped_wch;
+						if(DBGetContactSettingByte(NULL, AIM_PROTOCOL_NAME, AIM_KEY_FI, 0))
+						{
+							wchar_t* bbmsg=html_to_bbcodes(wch);
+							stripped_wch=strip_html(bbmsg);
+						}
+						else
+							stripped_wch=strip_html(wch);
+						delete[] wch;
+						char* mbch=new char[msg_length/2+1];
+						WideCharToMultiByte( CP_ACP, 0, stripped_wch, -1,mbch, msg_length/2+1, NULL, NULL );
+						msg_buf=new char[msg_length/2+(msg_length)+2+1];
+						char* p=msg_buf;
+						memcpy( p, mbch, lstrlen(mbch)+1);
+						p+=(lstrlen(msg_buf)+1);
+						memcpy( p,stripped_wch,wcslen(stripped_wch)*2+2);
+						delete[] stripped_wch;
+						delete[] mbch;
 					}
 					else
-						msg_buf=buf;
+					{
+						if(DBGetContactSettingByte(NULL, AIM_PROTOCOL_NAME, AIM_KEY_FI, 0))
+						{
+							char* bbmsg=html_to_bbcodes(msg);
+							msg_buf=strip_html(bbmsg);
+							delete[] bbmsg;
+						}
+						else
+							msg_buf=strip_html(msg);
+					}
 				}
+				delete[] msg;
 			}
 			if(tlv.cmp(0x0004)&&!tlv.len())//auto response flag
 			{
@@ -883,15 +919,22 @@ void snac_received_message(SNAC &snac,HANDLE hServerConn,unsigned short &seqno)/
 		}
 		else if(recv_file_type==0&&request_num==1)//buddy wants to send us a file
 		{
+			LOG("Buddy Wants to Send us a file. Request 1");
 			if(DBGetContactSettingByte(hContact,AIM_PROTOCOL_NAME,AIM_KEY_FT,-1)!=-1)
 			{
 				ShowPopup("Aim Protocol","Cannot start a file transfer with this contact while another file transfer with the same contact is pending.", 0);
 				return;
 			}
 			if(force_proxy)
+			{
+				LOG("Forcing a Proxy File transfer.");
 				DBWriteContactSettingByte(hContact, AIM_PROTOCOL_NAME, AIM_KEY_FP, 1);
+			}
 			else
+			{
+				LOG("Not forcing Proxy File transfer.");
 				DBWriteContactSettingByte(hContact, AIM_PROTOCOL_NAME, AIM_KEY_FP, 0);
+			}
 			DBWriteContactSettingDword(hContact,AIM_PROTOCOL_NAME,AIM_KEY_FS,file_size);
 			write_cookie(hContact,icbm_cookie);
 			DBWriteContactSettingByte(hContact,AIM_PROTOCOL_NAME,AIM_KEY_FT,0);
@@ -920,10 +963,14 @@ void snac_received_message(SNAC &snac,HANDLE hServerConn,unsigned short &seqno)/
             ccs.hContact = hContact;
             ccs.wParam = 0;
             ccs.lParam = (LPARAM) & pre;
+			LOG("Local IP: %s:%u",local_ip,port);
+			LOG("Verified IP: %s:%u",verified_ip,port);
+			LOG("Proxy IP: %s:%u",proxy_ip,port);
 			CallService(MS_PROTO_CHAINRECV, 0, (LPARAM) & ccs);
 		}
 		else if(recv_file_type==0&&request_num==2)//we are sending file, but buddy wants us to connect to them cause they cannot connect to us.
 		{
+			LOG("We are sending a file. Buddy wants us to connect to them. Request 2");
 			long size=sizeof(hContact)+sizeof(icbm_cookie)+lstrlen(sn)+lstrlen(local_ip)+lstrlen(verified_ip)+lstrlen(proxy_ip)+sizeof(port)+sizeof(force_proxy)+9;
 			char* blob = new char[size];
 			memcpy(blob,(char*)&hContact,sizeof(HANDLE));
@@ -934,24 +981,41 @@ void snac_received_message(SNAC &snac,HANDLE hServerConn,unsigned short &seqno)/
 			strlcpy(blob+sizeof(HANDLE)+8+lstrlen(sn)+lstrlen(local_ip)+lstrlen(verified_ip)+3,proxy_ip,size);
 			memcpy(blob+sizeof(HANDLE)+8+lstrlen(sn)+lstrlen(local_ip)+lstrlen(verified_ip)+lstrlen(proxy_ip)+4,(char*)&port,sizeof(unsigned short));
 			memcpy(blob+sizeof(HANDLE)+8+lstrlen(sn)+lstrlen(local_ip)+lstrlen(verified_ip)+lstrlen(proxy_ip)+4+sizeof(unsigned short),(char*)&force_proxy,sizeof(bool));
+			if(force_proxy)
+				LOG("Forcing a Proxy File transfer.");
+			else
+				LOG("Not forcing Proxy File transfer.");
+			LOG("Local IP: %s:%u",local_ip,port);
+			LOG("Verified IP: %s:%u",verified_ip,port);
+			LOG("Proxy IP: %s:%u",proxy_ip,port);
 			ForkThread((pThreadFunc)redirected_file_thread,blob);
 		}
 		else if(recv_file_type==0&&request_num==3)//buddy sending file, redirected connection failed, so they asking us to connect to proxy
 		{
+			LOG("Buddy Wants to Send us a file through a proxy. Request 3");
 			long size = sizeof(hContact)+lstrlen(proxy_ip)+sizeof(port)+2;
    			char* blob = new char[size];
 			memcpy(blob,(char*)&hContact,sizeof(HANDLE));
 			strlcpy(blob+sizeof(HANDLE),proxy_ip,size);
 			memcpy(blob+sizeof(HANDLE)+lstrlen(proxy_ip)+1,(char*)&port,sizeof(unsigned short));
+			if(force_proxy)
+				LOG("Forcing a Proxy File transfer.");
+			else
+				LOG("Not forcing Proxy File transfer.");
+			LOG("Local IP: %s:%u",local_ip,port);
+			LOG("Verified IP: %s:%u",verified_ip,port);
+			LOG("Proxy IP: %s:%u",proxy_ip,port);
 			ForkThread((pThreadFunc)proxy_file_thread,blob);
 		}
 		else if(recv_file_type==1)//buddy cancelled or denied file transfer
 		{
+			LOG("File transfer cancelled or denied.");
 			ProtoBroadcastAck(AIM_PROTOCOL_NAME, hContact, ACKTYPE_FILE, ACKRESULT_DENIED,hContact,0);
 			DBDeleteContactSetting(hContact, AIM_PROTOCOL_NAME, AIM_KEY_FT);
 		}
 		else if(recv_file_type==2)//buddy accepts our file transfer request
 		{
+			LOG("File transfer accepted");
 			conn.current_rendezvous_accept_user=hContact;
 		}
 		delete[] sn;
@@ -960,7 +1024,36 @@ void snac_received_message(SNAC &snac,HANDLE hServerConn,unsigned short &seqno)/
 		delete[] icbm_cookie;
 	}
 }
-
+void snac_busted_payload(SNAC &snac)//family 0x0004
+{
+	if(snac.subcmp(0x000b))
+	{   
+		int channel=snac.ushort(8);
+		if(channel==0x02)
+		{
+			LOG("Channel 2:");
+			int sn_len=snac.ubyte(10);
+			char* sn=snac.part(11,sn_len);
+			int reason=snac.ushort(11+sn_len);
+			if(reason==0x03)
+			{
+				LOG("Something Broke:");
+				int error=snac.ushort(13+sn_len);
+				if(error==0x02)
+				{
+					LOG("Buddy says we have a busted payload- BS- end a potential FT");
+					HANDLE hContact=find_contact(sn);
+					if(hContact)
+					{
+						ProtoBroadcastAck(AIM_PROTOCOL_NAME, hContact, ACKTYPE_FILE, ACKRESULT_FAILED,hContact,0);
+						DBDeleteContactSetting(hContact, AIM_PROTOCOL_NAME, AIM_KEY_FT);
+					}
+				}
+			}
+			delete[] sn;
+		}
+	}
+}
 void snac_received_info(SNAC &snac)//family 0x0002
 {
 	if(snac.subcmp(0x0006))
@@ -1074,10 +1167,12 @@ void snac_list_modification_ack(SNAC &snac)//family 0x0013
 		{
 			if(code==0x0000)
 			{
+				LOG("Successfully removed buddy from list.");
 				ShowPopup("Aim Protocol","Successfully removed buddy from list.", 0);
 			}
 			else if(code==0x0002)
 			{
+				LOG("Item you want to delete not found in list.");
 				ShowPopup("Aim Protocol","Item you want to delete not found in list.", 0);
 			}
 			else
@@ -1093,6 +1188,7 @@ void snac_list_modification_ack(SNAC &snac)//family 0x0013
 				}
 				msg[lstrlen(msg)-2]=ccode[0];
 				msg[lstrlen(msg)-1]=ccode[1];
+				LOG("msg");
 				ShowPopup("Aim Protocol",msg, 0);
 			}
 		}
@@ -1100,26 +1196,32 @@ void snac_list_modification_ack(SNAC &snac)//family 0x0013
 		{
 			if(code==0x0000)
 			{
+				LOG("Successfully added buddy to list.");
 				ShowPopup("Aim Protocol","Successfully added buddy to list.", 0);
 			}
 			else if(code==0x0003)
 			{
+				LOG("Failed to add buddy to list: Item already exist.");
 				ShowPopup("Aim Protocol","Failed to add buddy to list: Item already exist.", 0);
 			}
 			else if(code==0x000a)
 			{
+				LOG("Error adding buddy(invalid id?, already in list?)");
 				ShowPopup("Aim Protocol","Error adding buddy(invalid id?, already in list?)", 0);
 			}
 			else if(code==0x000c)
 			{
+				LOG("Cannot add buddy. Limit for this type of item exceeded.");
 				ShowPopup("Aim Protocol","Cannot add buddy. Limit for this type of item exceeded.", 0);
 			}
 			else if(code==0x000d)
 			{
+				LOG("Error? Attempting to add ICQ contact to an AIM list.");
 				ShowPopup("Aim Protocol","Error? Attempting to add ICQ contact to an AIM list.", 0);
 			}
 			else if(code==0x000e)
 			{
+				LOG("Cannot add this buddy because it requires authorization.");
 				ShowPopup("Aim Protocol","Cannot add this buddy because it requires authorization.", 0);
 			}
 			else
@@ -1135,6 +1237,7 @@ void snac_list_modification_ack(SNAC &snac)//family 0x0013
 				}
 				msg[lstrlen(msg)-2]=ccode[0];
 				msg[lstrlen(msg)-1]=ccode[1];
+				LOG(msg);
 				ShowPopup("Aim Protocol",msg, 0);
 			}
 		}
@@ -1142,10 +1245,12 @@ void snac_list_modification_ack(SNAC &snac)//family 0x0013
 		{
 			if(code==0x0000)
 			{
+				LOG("Successfully modified group.");
 				ShowPopup("Aim Protocol","Successfully modified group.", 0);
 			}
 			else if(code==0x0002)
 			{
+				LOG("Item you want to modify not found in list.");
 				ShowPopup("Aim Protocol","Item you want to modify not found in list.", 0);
 			}
 			else
@@ -1161,6 +1266,7 @@ void snac_list_modification_ack(SNAC &snac)//family 0x0013
 				}
 				msg[lstrlen(msg)-2]=ccode[0];
 				msg[lstrlen(msg)-1]=ccode[1];
+				LOG(msg);
 				ShowPopup("Aim Protocol",msg, 0);
 			}
 		}

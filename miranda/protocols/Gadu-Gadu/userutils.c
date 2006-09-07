@@ -55,11 +55,11 @@ void *gg_doregister(char *newPass, char *newEmail)
     }
     else
     {
-        DBWriteContactSettingDword(NULL, GG_PROTO, GG_KEY_UIN, s->uin);
         gg_pubdir_free(h);
         CallService(MS_DB_CRYPT_ENCODESTRING, strlen(newPass) + 1, (LPARAM) newPass);
         DBWriteContactSettingString(NULL, GG_PROTO, GG_KEY_PASSWORD, newPass);
         DBWriteContactSettingString(NULL, GG_PROTO, GG_KEY_EMAIL, newEmail);
+        DBWriteContactSettingDword(NULL, GG_PROTO, GG_KEY_UIN, s->uin);
 #ifdef DEBUGMODE
         gg_netlog("gg_doregister(): Account registration succesful.");
 #endif
@@ -384,3 +384,27 @@ static int gg_chpass(WPARAM wParam, LPARAM lParam)
     DBFreeVariant(&dbv_email);
 }
 
+////////////////////////////////////////////////////////////////////////////////
+// Change Password : Init
+/* DEPRECATED: We change password now in options
+void gg_chpass_init()
+{
+
+	// Rest depreciated
+    CLISTMENUITEM mi;
+    ZeroMemory(&mi,sizeof(mi));
+    mi.cbSize = sizeof(mi);
+	char service[64];
+
+    // Import from server item
+	snprintf(service, sizeof(service), GGS_CHPASS, GG_PROTO);
+    CreateServiceFunction(service, gg_chpass);
+    mi.pszPopupName = GG_PROTONAME;
+    mi.popupPosition = 500090000;
+    mi.position = 500090000;
+    mi.hIcon = LoadIcon(hInstance, MAKEINTRESOURCE(IDI_CHPASS));
+    mi.pszName = Translate("Change Password...");
+    mi.pszService = service;
+    CallService(MS_CLIST_ADDMAINMENUITEM, 0, (LPARAM) &mi);
+}
+*/

@@ -50,6 +50,7 @@ extern PSLWA pSetLayeredWindowAttributes;
 extern COLORREF g_ContainerColorKey;
 extern StatusItems_t StatusItems[];
 extern struct GlobalLogSettings_t g_Settings;
+extern CRITICAL_SECTION cs_sessions;
 
 extern PITA pfnIsThemeActive;
 extern POTD pfnOpenThemeData;
@@ -242,7 +243,7 @@ static void MsgWindowUpdateState(HWND hwndDlg, struct MessageWindowData *dat, UI
             return;
 
         dat->pContainer->hwndSaved = hwndDlg;
-        //_DebugTraceW(L"activate handler for %s with %x", dat->szNickname, msg);
+
         dat->dwTickLastEvent = 0;
         dat->dwFlags &= ~MWF_DIVIDERSET;
         if (KillTimer(hwndDlg, TIMERID_FLASHWND)) {
@@ -310,6 +311,7 @@ static void MsgWindowUpdateState(HWND hwndDlg, struct MessageWindowData *dat, UI
         }
         DM_SetDBButtonStates(hwndDlg, dat);
         if(dat->hwndIEView) {
+            //GetRealIEViewWindow(hwndDlg, dat);
             RECT rcRTF;
             POINT pt;
 
@@ -545,13 +547,11 @@ UINT DrawRichEditFrame(HWND hwnd, struct MessageWindowData *mwdat, UINT skinID, 
 	LRESULT result = 0;
     BOOL isMultipleReason;
 
-    //SetWindowLong(hwnd, GWL_STYLE, GetWindowLong(hwnd, GWL_STYLE) & ~WS_VSCROLL);
-    //ShowScrollBar(hwnd, SB_VERT, FALSE);
-    //EnableScrollBar(hwnd, SB_VERT, ESB_DISABLE_BOTH);
     result = CallWindowProc(OldWndProc, hwnd, msg, wParam, lParam);			// do default processing (otherwise, NO scrollbar as it is painted in NC_PAINT)
     if(!mwdat)
         return result;
 
+	// isMultipleReason means that the msg window is in multisend mode (draw attention by rendering a red border around the text input field)
     isMultipleReason = ((skinID == ID_EXTBKINPUTAREA) && (mwdat->sendMode & SMODE_MULTIPLE || mwdat->sendMode & SMODE_CONTAINER));
 
 	if(isMultipleReason || ((mwdat && mwdat->hTheme) || (mwdat && mwdat->pContainer->bSkinned && !item->IGNORED && !mwdat->bFlatMsgLog))) {
@@ -584,33 +584,14 @@ UINT DrawRichEditFrame(HWND hwnd, struct MessageWindowData *mwdat, UINT skinID, 
 		rcWindow.bottom -= rcWindow.top;
 		rcWindow.left = rcWindow.top = 0;
 
-        //right_off += myGlobals.ncm.iScrollWidth;
-		// clip the client area from the dc
-
+		// clip the client area from the dc to avoid flickering
         ExcludeClipRect(hdc, left_off, top_off, rcWindow.right - right_off, rcWindow.bottom - bottom_off);
-        if(mwdat->pContainer->bSkinned && !item->IGNORED) {
-            ReleaseDC(hwnd, hdc);
+
+        if(mwdat->pContainer->bSkinned && !item->IGNORED) {					// this drawing is done by the parent actually 
+            ReleaseDC(hwnd, hdc);											// (skin underlays).
             return result;
-            /*
-            dcMem = CreateCompatibleDC(hdc);
-			hbm = CreateCompatibleBitmap(hdc, rcWindow.right, rcWindow.bottom);
-			hbmOld = SelectObject(dcMem, hbm);
-			ExcludeClipRect(dcMem, left_off, top_off, rcWindow.right - right_off, rcWindow.bottom - bottom_off);
-			SkinDrawBG(hwnd, mwdat->pContainer->hwnd, mwdat->pContainer, &rcWindow, dcMem);
-            if(isMultipleReason) {
-                HBRUSH br = CreateSolidBrush(RGB(255, 130, 130));
-                FillRect(dcMem, &rcWindow, br);
-                DeleteObject(br);
-            }
-			DrawAlpha(dcMem, &rcWindow, item->COLOR, isMultipleReason ? (item->ALPHA * 3) / 4 : item->ALPHA, item->COLOR2, item->COLOR2_TRANSPARENT, item->GRADIENT,
-					  item->CORNER, item->RADIUS, item->imageItem);
-			BitBlt(hdc, 0, 0, rcWindow.right, rcWindow.bottom, dcMem, 0, 0, SRCCOPY);
-			SelectObject(dcMem, hbmOld);
-			DeleteObject(hbm);
-			DeleteDC(dcMem);
-            */
 		}
-		else if(pfnDrawThemeBackground) {
+		else if(pfnDrawThemeBackground) {									// XP visual styles support
             if(isMultipleReason) {
                 HBRUSH br = CreateSolidBrush(RGB(255, 130, 130));
                 FillRect(hdc, &rcWindow, br);
@@ -993,29 +974,7 @@ static LRESULT CALLBACK MessageEditSubclassProc(HWND hwnd, UINT msg, WPARAM wPar
         case WM_ERASEBKGND:
         {
 			if(mwdat->pContainer->bSkinned) {
-				/*
-				StatusItems_t *item = &StatusItems[ID_EXTBKINPUTBOX];
-
-				if(!item->IGNORED) {
-					HDC hdcMem = CreateCompatibleDC((HDC)wParam);
-					HBITMAP bm, bmOld;
-					LONG width, height;
-					RECT rc;
-
-					GetClientRect(hwnd, &rc);
-					width = rc.right - rc.left; height = rc.bottom - rc.top;
-					bm = CreateCompatibleBitmap((HDC)wParam, width, height);
-					bmOld = SelectObject(hdcMem, bm);
-					SkinDrawBG(hwnd, mwdat->pContainer->hwnd, mwdat->pContainer, &rc, hdcMem);
-					DrawAlpha(hdcMem, &rc, item->COLOR, item->ALPHA, item->COLOR2, item->COLOR2_TRANSPARENT,
-							  item->GRADIENT, item->CORNER, item->RADIUS, item->imageItem);
-					BitBlt((HDC)wParam, rc.left, rc.top, width, height,hdcMem, 0, 0, SRCCOPY);
-					SelectObject(hdcMem, bmOld);
-					DeleteObject(bm);
-					DeleteDC(hdcMem);
-				}
-				else*/
-					return 0;
+				return 0;
 			}
             return 1;
         }
@@ -1905,7 +1864,7 @@ BOOL CALLBACK DlgProcMessage(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lPara
                 }
                 dat->stats.started = time(NULL);
                 LoadContactAvatar(hwndDlg, dat);
-                SendMessage(hwndDlg, DM_OPTIONSAPPLIED, 0, 0);
+				SendMessage(hwndDlg, DM_OPTIONSAPPLIED, 0, 0);
                 LoadOwnAvatar(hwndDlg, dat);
                 /*
                  * restore saved msg if any...
@@ -2094,7 +2053,7 @@ BOOL CALLBACK DlgProcMessage(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lPara
                 SendMessage(hwndDlg, WM_SIZE, 0, 0);
                 DM_ScrollToBottom(hwndDlg, dat, 0, 1);
             }
-            return 0;
+           return 0;
         case DM_LOADBUTTONBARICONS:
         {
             int i;
@@ -2211,6 +2170,7 @@ BOOL CALLBACK DlgProcMessage(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lPara
                         SendDlgItemMessage(hwndDlg, IDC_MESSAGE, EM_SETPARAFORMAT, 0, (LPARAM)&pf2);
                     }
                     SendDlgItemMessage(hwndDlg, IDC_MESSAGE, EM_SETLANGOPTIONS, 0, (LPARAM) SendDlgItemMessage(hwndDlg, IDC_MESSAGE, EM_GETLANGOPTIONS, 0, 0) & ~IMF_AUTOKEYBOARD);
+
                     pf2.wEffects = PFE_RTLPARA;
                     pf2.dwMask |= PFM_OFFSET;
                     if(dat->dwFlags & MWF_INITMODE) {
@@ -2502,7 +2462,6 @@ BOOL CALLBACK DlgProcMessage(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lPara
 
         case WM_ACTIVATE:
             if (LOWORD(wParam) != WA_ACTIVE) {
-                //m_pContainer->hwndSaved = 0;
                 break;
             }
             //fall through
@@ -2917,7 +2876,7 @@ BOOL CALLBACK DlgProcMessage(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lPara
                     //dat->dwLastActivity = GetTickCount();
                     //dat->pContainer->dwLastActivity = dat->dwLastActivity;
                     // tab flashing
-                    if ((/*IsIconic(hwndContainer) ||*/ TabCtrl_GetCurSel(hwndTab) != dat->iTabID) && !(dbei.flags & DBEF_SENT) && !fIsStatusChangeEvent) {
+                    if ((/* IsIconic(hwndContainer) ||*/ TabCtrl_GetCurSel(hwndTab) != dat->iTabID) && !(dbei.flags & DBEF_SENT) && !fIsStatusChangeEvent) {
                         switch (dbei.eventType) {
                             case EVENTTYPE_MESSAGE:
                                 dat->iFlashIcon = myGlobals.g_IconMsgEvent;
@@ -4274,6 +4233,8 @@ quote_from_last:
                     DM_ScrollToBottom(hwndDlg, dat, 1, 1);
                     ShowWindow(GetDlgItem(hwndDlg, IDC_MULTISPLITTER), (dat->sendMode & SMODE_MULTIPLE) ? SW_SHOW : SW_HIDE);
                     ShowWindow(GetDlgItem(hwndDlg, IDC_CLIST), (dat->sendMode & SMODE_MULTIPLE) ? SW_SHOW : SW_HIDE);
+                    if(m_pContainer->bSkinned)
+                        InvalidateRect(GetDlgItem(hwndDlg, IDC_MESSAGE), NULL, TRUE);
                     break;
                     }
                 case IDC_ADD:
@@ -4360,6 +4321,13 @@ quote_from_last:
                         updateMathWindow(hwndDlg, dat);
 					//mathMod end
 #endif                     
+                    /*
+					if ((HIWORD(wParam) == EN_VSCROLL || HIWORD(wParam) == EN_HSCROLL) && m_pContainer->bSkinned) {
+                        RECT rc;
+                        GetUpdateRect(GetDlgItem(hwndDlg, IDC_MESSAGE), &rc, FALSE);
+                        InvalidateRect(GetDlgItem(hwndDlg, IDC_MESSAGE), &rc, TRUE);
+                    }
+					*/
                     if (HIWORD(wParam) == EN_CHANGE) {
                         if(m_pContainer->hwndActive == hwndDlg)
                             UpdateReadChars(hwndDlg, dat);
@@ -4380,6 +4348,12 @@ quote_from_last:
                                 }
                             }
                         }
+						/*
+                        if(m_pContainer->bSkinned) {
+                            GetUpdateRect(GetDlgItem(hwndDlg, IDC_MESSAGE), &rc, FALSE);
+                            InvalidateRect(GetDlgItem(hwndDlg, IDC_MESSAGE), &rc, TRUE);
+                        }
+						*/
                     }
             }
             break;
@@ -4854,8 +4828,9 @@ quote_from_last:
                         CallService(MS_MC_SETDEFAULTCONTACTNUM, (WPARAM)dat->hContact, (LPARAM)(iSelection - 1000));
                     }
                     DestroyMenu(hMC);
-                    return TRUE;
+					return TRUE;
                 }
+                break;
             }
             break;
             /*
@@ -5017,7 +4992,7 @@ verify:
                 DBWriteContactSettingTString(dat->hContact, SRMSGMOD_T, "container", szNewName);
 #endif                
                 dat->fIsReattach = TRUE;
-                PostMessage(myGlobals.g_hwndHotkeyHandler, DM_DOCREATETAB, (WPARAM)pNewContainer, (LPARAM)dat->hContact);
+				PostMessage(myGlobals.g_hwndHotkeyHandler, DM_DOCREATETAB, (WPARAM)pNewContainer, (LPARAM)dat->hContact);
                 if (iOldItems > 1)                // there were more than 1 tab, container is still valid
                     SendMessage(m_pContainer->hwndActive, WM_SIZE, 0, 0);
                 SetForegroundWindow(pNewContainer->hwnd);
@@ -5286,16 +5261,16 @@ verify:
         {
             DWORD isForced;
             char *szProto;
+
+
             if((isForced = DBGetContactSettingDword(dat->hContact, SRMSGMOD_T, "tabSRMM_forced", -1)) >= 0) {
                 char szTemp[64];
                 mir_snprintf(szTemp, sizeof(szTemp), "Status%d", isForced);
                 if(DBGetContactSettingWord(dat->hContact, "MetaContacts", szTemp, 0) == ID_STATUS_OFFLINE) {
                     TCHAR szBuffer[200];
-                    mir_sntprintf(szBuffer, 200, TranslateT("Warning: you have selected a subprotocol for sending the following messages which is currently offline"));
+                    _sntprintf(szBuffer, 200, TranslateT("Warning: you have selected a subprotocol for sending the following messages which is currently offline"));
+					szBuffer[199] = 0;
                     SendMessage(hwndDlg, DM_ACTIVATETOOLTIP, IDC_MESSAGE, (LPARAM)szBuffer);
-                    //_DebugPopup(dat->hContact, Translate("MetaContact: The enforced protocol (%d) is now offline.\nReverting to default protocol selection."), isForced);
-                    //CallService(MS_MC_UNFORCESENDCONTACT, (WPARAM)dat->hContact, 0);
-                    //DBWriteContactSettingDword(dat->hContact, SRMSGMOD_T, "tabSRMM_forced", -1);
                 }
             }
             szProto = GetCurrentMetaContactProto(hwndDlg, dat);
@@ -5559,6 +5534,7 @@ verify:
                 fa.cProto = dat->szProto;
 				CallService(MS_FAVATAR_DESTROY, (WPARAM)&fa, 0);
 			}
+            EnterCriticalSection(&cs_sessions);
             if(!dat->bWasDeleted) {
                 TABSRMM_FireEvent(dat->hContact, hwndDlg, MSG_WINDOW_EVT_CLOSING, 0);
                 AddContactToFavorites(dat->hContact, dat->szNickname, dat->bIsMeta ? dat->szMetaProto : dat->szProto, dat->szStatus, dat->wStatus, LoadSkinnedProtoIcon(dat->bIsMeta ? dat->szMetaProto : dat->szProto, dat->bIsMeta ? dat->wMetaStatus : dat->wStatus), 1, myGlobals.g_hMenuRecent, dat->codePage);
@@ -5637,6 +5613,7 @@ verify:
             if(myGlobals.g_hMenuTrayUnread)
                 DeleteMenu(myGlobals.g_hMenuTrayUnread, (UINT_PTR)dat->hContact, MF_BYCOMMAND);
             WindowList_Remove(hMessageWindowList, hwndDlg);
+            LeaveCriticalSection(&cs_sessions);
 
             if(!dat->bWasDeleted) {
                 SendMessage(hwndDlg, DM_SAVEPERCONTACT, 0, 0);

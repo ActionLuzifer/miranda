@@ -106,121 +106,85 @@ BOOL JabberXmlSetCallback( XmlState *xmlState, int depth, XmlElemType type, JABB
 
 #define TAG_MAX_LEN 50
 #define ATTR_MAX_LEN 1024
-
-static char* skipSpaces( char* p, int* num = NULL )
+int JabberXmlParse( XmlState *xmlState, char* buffer, int datalen )
 {
-	int i;
-
-	for ( i=0; *p != 0 && isspace( BYTE( *p )); i++ )
-      p++;
-
-	if ( num != NULL )
-		num += i;
-	return p;
-}
-
-static char* findClose( char* p )
-{
-	while ( *p != 0 ) {
-		switch( *p ) {
-		case '>': return p;
-
-		case '\'':
-		case '\"':
-			p = strchr( p+1, *p );
-			if ( p == NULL )
-				return NULL;
-		}
-
-		p++;
-	}
-
-	return NULL;
-}
-
-int JabberXmlParse( XmlState *xmlState, char* buffer )
-{
-	char* r;
-	int num = 0;
+	char* p, *q, *r, *eob;
+	char* str;
+	int num;
 	char tag[TAG_MAX_LEN];
 	char attr[ATTR_MAX_LEN];
 	XmlElemType elemType;
 
-	char* p = skipSpaces( buffer, &num );
-
-	while ( *p != 0 ) {
-		// found starting bracket
-		if ( *p == '<' ) {
-			if ( memcmp( p, "<!--", 4 ) == 0 ) {
-				char* q = strstr( p+4, "-->" );
-				if ( q == NULL )
-					break;
-
-				p = q+3;
-				continue;
-			}
-
-			char* q = findClose( p+1 );
-			if ( q == NULL )
-				break;
-			
-			// found closing bracket
-			for ( r=p+1; *r!='>' && *r!=' ' && *r!='\t'; r++ );
-			if ( r-( p+1 ) > TAG_MAX_LEN ) {
-				JabberLog( "TAG_MAX_LEN too small, ignore current tag" );
-			}
-			else {
-				if ( *( p+1 ) == '/' ) {	// closing tag
-					strncpy( tag, p+2, r-( p+2 ));
-					tag[r-( p+2 )] = '\0';
-					elemType = ELEM_CLOSE;
+	eob = buffer + datalen;
+	num = 0;
+	// Skip leading whitespaces
+	for ( p=buffer; p<eob && isspace( BYTE( *p )); p++,num++ );
+	while ( num < datalen ) {
+		if ( *p == '<' ) {	// found starting bracket
+			for ( q=p+1; q<eob && *q!='>'; q++ );
+			if ( q < eob ) {	// found closing bracket
+				for ( r=p+1; *r!='>' && *r!=' ' && *r!='\t'; r++ );
+				if ( r-( p+1 ) > TAG_MAX_LEN ) {
+					JabberLog( "TAG_MAX_LEN too small, ignore current tag" );
 				}
 				else {
-					if ( *( r-1 ) == '/' ) {	// single open/close tag
-						strncpy( tag, p+1, r-( p+1 )-1 );
-						tag[r-( p+1 )-1] = '\0';
-						elemType = ELEM_OPENCLOSE;
+					if ( *( p+1 ) == '/' ) {	// closing tag
+						strncpy( tag, p+2, r-( p+2 ));
+						tag[r-( p+2 )] = '\0';
+						elemType = ELEM_CLOSE;
 					}
 					else {
-						strncpy( tag, p+1, r-( p+1 ));
-						tag[r-( p+1 )] = '\0';
-						elemType = ELEM_OPEN;
+						if ( *( r-1 ) == '/' ) {	// single open/close tag
+							strncpy( tag, p+1, r-( p+1 )-1 );
+							tag[r-( p+1 )-1] = '\0';
+							elemType = ELEM_OPENCLOSE;
+						}
+						else {
+							strncpy( tag, p+1, r-( p+1 ));
+							tag[r-( p+1 )] = '\0';
+							elemType = ELEM_OPEN;
+						}
+					}
+					for ( ;r<q && ( *r==' ' || *r=='\t' ); r++ );
+					if ( q-r > ATTR_MAX_LEN ) {
+						JabberLog( "ATTR_MAX_LEN too small, ignore current tag" );
+					}
+					else {
+						strncpy( attr, r, q-r );
+						if (( q-r )>0 && attr[q-r-1]=='/' ) {
+							attr[q-r-1] = '\0';
+							elemType = ELEM_OPENCLOSE;
+						}
+						else
+							attr[q-r] = '\0';
+						JabberXmlProcessElem( xmlState, elemType, tag, attr );
 					}
 				}
-				for ( ;r<q && ( *r==' ' || *r=='\t' ); r++ );
-				if ( q-r > ATTR_MAX_LEN ) {
-					JabberLog( "ATTR_MAX_LEN too small, ignore current tag" );
-				}
-				else {
-					strncpy( attr, r, q-r );
-					if (( q-r )>0 && attr[q-r-1]=='/' ) {
-						attr[q-r-1] = '\0';
-						elemType = ELEM_OPENCLOSE;
-					}
-					else
-						attr[q-r] = '\0';
-					JabberXmlProcessElem( xmlState, elemType, tag, attr );
+				num += ( q-p+1 );
+				p = q + 1;
+				if ( elemType==ELEM_CLOSE || elemType==ELEM_OPENCLOSE ) {
+					// Skip whitespaces after end tags
+					for ( ; p<eob && isspace( BYTE( *p )); p++,num++ );
 				}
 			}
-			num += ( q-p+1 );
-			p = q + 1;
-			if ( elemType==ELEM_CLOSE || elemType==ELEM_OPENCLOSE )
-				p = skipSpaces( p, &num );  // Skip whitespaces after end tags
+			else
+				break;
 		}
 		else {	// found inner text
-			char* q = strchr( p+1, '<' );
-			if ( q == NULL )
+			for ( q=p+1; q<eob && *q!='<'; q++ );
+			if ( q < eob ) {	// found starting bracket of the next element
+				str = ( char* )mir_alloc( q-p+1 );
+				strncpy( str, p, q-p );
+				str[q-p] = '\0';
+				JabberXmlProcessElem( xmlState, ELEM_TEXT, str, NULL );
+				mir_free( str );
+				num += ( q-p );
+				p = q;
+			}
+			else
 				break;
-
-			// found starting bracket of the next element
-			char* str = ( char* )mir_alloc( q-p+1 );
-			strncpy( str, p, q-p );
-			str[q-p] = '\0';
-			JabberXmlProcessElem( xmlState, ELEM_TEXT, str, NULL );
-			mir_free( str );
-			num += ( q-p );
-			p = q;
-	}	}
+		}
+	}
 
 	return num;
 }
@@ -238,7 +202,7 @@ static void JabberXmlParseAttr( XmlNode *node, char* text )
 	for ( p=text;; ) {
 
 		// Skip leading whitespaces
-		p = skipSpaces( p );
+		for ( ;*p!='\0' && ( *p==' ' || *p=='\t' ); p++ );
 		if ( *p == '\0' )
 			break;
 
@@ -255,7 +219,7 @@ static void JabberXmlParseAttr( XmlNode *node, char* text )
 		node->numAttr++;
 
 		// Skip possible whitespaces between key and '='
-		p = skipSpaces( p );
+		for ( ;*p!='\0' && ( *p==' ' || *p=='\t' ); p++ );
 
 		if ( *p == '\0' ) {
 			a->name = ( char* )mir_alloc( klen+1 );
@@ -277,7 +241,7 @@ static void JabberXmlParseAttr( XmlNode *node, char* text )
 		p++;
 
 		// Skip possible whitespaces between '=' and value
-		p = skipSpaces( p );
+		for ( ;*p!='\0' && ( *p==' ' || *p=='\t' ); p++ );
 
 		if ( *p == '\0' ) {
 			a->name = ( char* )mir_alloc( klen+1 );

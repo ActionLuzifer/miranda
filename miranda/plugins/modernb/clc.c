@@ -55,41 +55,37 @@ extern void SetAllExtraIcons(HWND hwndList,HANDLE hContact);
 extern void UpdateAllAvatars(struct ClcData *dat);
 extern int GetContactIndex(struct ClcGroup *group,struct ClcContact *contact);
 
-HICON listening_to_icon = NULL;
-
-HIMAGELIST hAvatarOverlays=NULL;
-
 struct AvatarOverlayIconConfig 
 {
 	char *name;
 	char *description;
 	int id;
-	int listID;
+	HICON icon;
 } avatar_overlay_icons[ID_STATUS_OUTTOLUNCH - ID_STATUS_OFFLINE + 1] = 
 {
-	{ "AVATAR_OVERLAY_OFFLINE", "Offline", IDI_AVATAR_OVERLAY_OFFLINE, -1},
-	{ "AVATAR_OVERLAY_ONLINE", "Online", IDI_AVATAR_OVERLAY_ONLINE, -1},
-	{ "AVATAR_OVERLAY_AWAY", "Away", IDI_AVATAR_OVERLAY_AWAY, -1},
-	{ "AVATAR_OVERLAY_DND", "DND", IDI_AVATAR_OVERLAY_DND, -1},
-	{ "AVATAR_OVERLAY_NA", "NA", IDI_AVATAR_OVERLAY_NA, -1},
-	{ "AVATAR_OVERLAY_OCCUPIED", "Occupied", IDI_AVATAR_OVERLAY_OCCUPIED, -1},
-	{ "AVATAR_OVERLAY_CHAT", "Free for chat", IDI_AVATAR_OVERLAY_CHAT, -1},
-	{ "AVATAR_OVERLAY_INVISIBLE", "Invisible", IDI_AVATAR_OVERLAY_INVISIBLE, -1},
-	{ "AVATAR_OVERLAY_PHONE", "On the phone", IDI_AVATAR_OVERLAY_PHONE, -1},
-	{ "AVATAR_OVERLAY_LUNCH", "Out to lunch", IDI_AVATAR_OVERLAY_LUNCH, -1}
+	{ "AVATAR_OVERLAY_OFFLINE", "Offline", IDI_AVATAR_OVERLAY_OFFLINE, NULL},
+	{ "AVATAR_OVERLAY_ONLINE", "Online", IDI_AVATAR_OVERLAY_ONLINE, NULL},
+	{ "AVATAR_OVERLAY_AWAY", "Away", IDI_AVATAR_OVERLAY_AWAY, NULL},
+	{ "AVATAR_OVERLAY_DND", "DND", IDI_AVATAR_OVERLAY_DND, NULL},
+	{ "AVATAR_OVERLAY_NA", "NA", IDI_AVATAR_OVERLAY_NA, NULL},
+	{ "AVATAR_OVERLAY_OCCUPIED", "Occupied", IDI_AVATAR_OVERLAY_OCCUPIED, NULL},
+	{ "AVATAR_OVERLAY_CHAT", "Free for chat", IDI_AVATAR_OVERLAY_CHAT, NULL},
+	{ "AVATAR_OVERLAY_INVISIBLE", "Invisible", IDI_AVATAR_OVERLAY_INVISIBLE, NULL},
+	{ "AVATAR_OVERLAY_PHONE", "On the phone", IDI_AVATAR_OVERLAY_PHONE, NULL},
+	{ "AVATAR_OVERLAY_LUNCH", "Out to lunch", IDI_AVATAR_OVERLAY_LUNCH, NULL}
 };
 struct AvatarOverlayIconConfig status_overlay_icons[ID_STATUS_OUTTOLUNCH - ID_STATUS_OFFLINE + 1] = 
 {
-	{ "STATUS_OVERLAY_OFFLINE", "Offline", IDI_STATUS_OVERLAY_OFFLINE, -1},
-	{ "STATUS_OVERLAY_ONLINE", "Online", IDI_STATUS_OVERLAY_ONLINE, -1},
-	{ "STATUS_OVERLAY_AWAY", "Away", IDI_STATUS_OVERLAY_AWAY, -1},
-	{ "STATUS_OVERLAY_DND", "DND", IDI_STATUS_OVERLAY_DND, -1},
-	{ "STATUS_OVERLAY_NA", "NA", IDI_STATUS_OVERLAY_NA, -1},
-	{ "STATUS_OVERLAY_OCCUPIED", "Occupied", IDI_STATUS_OVERLAY_OCCUPIED, -1},
-	{ "STATUS_OVERLAY_CHAT", "Free for chat", IDI_STATUS_OVERLAY_CHAT, -1},
-	{ "STATUS_OVERLAY_INVISIBLE", "Invisible", IDI_STATUS_OVERLAY_INVISIBLE, -1},
-	{ "STATUS_OVERLAY_PHONE", "On the phone", IDI_STATUS_OVERLAY_PHONE, -1},
-	{ "STATUS_OVERLAY_LUNCH", "Out to lunch", IDI_STATUS_OVERLAY_LUNCH, -1}
+	{ "STATUS_OVERLAY_OFFLINE", "Offline", IDI_STATUS_OVERLAY_OFFLINE, NULL},
+	{ "STATUS_OVERLAY_ONLINE", "Online", IDI_STATUS_OVERLAY_ONLINE, NULL},
+	{ "STATUS_OVERLAY_AWAY", "Away", IDI_STATUS_OVERLAY_AWAY, NULL},
+	{ "STATUS_OVERLAY_DND", "DND", IDI_STATUS_OVERLAY_DND, NULL},
+	{ "STATUS_OVERLAY_NA", "NA", IDI_STATUS_OVERLAY_NA, NULL},
+	{ "STATUS_OVERLAY_OCCUPIED", "Occupied", IDI_STATUS_OVERLAY_OCCUPIED, NULL},
+	{ "STATUS_OVERLAY_CHAT", "Free for chat", IDI_STATUS_OVERLAY_CHAT, NULL},
+	{ "STATUS_OVERLAY_INVISIBLE", "Invisible", IDI_STATUS_OVERLAY_INVISIBLE, NULL},
+	{ "STATUS_OVERLAY_PHONE", "On the phone", IDI_STATUS_OVERLAY_PHONE, NULL},
+	{ "STATUS_OVERLAY_LUNCH", "Out to lunch", IDI_STATUS_OVERLAY_LUNCH, NULL}
 };
 
 void UnloadAvatarOverlayIcon()
@@ -97,13 +93,17 @@ void UnloadAvatarOverlayIcon()
 	int i;
 	for (i = 0 ; i < MAX_REGS(avatar_overlay_icons) ; i++)
 	{
-		avatar_overlay_icons[i].listID=-1;
-		status_overlay_icons[i].listID=-1;
+		if (avatar_overlay_icons[i].icon) 
+		{
+			DestroyIcon(avatar_overlay_icons[i].icon);
+			avatar_overlay_icons[i].icon=NULL;
+		}
+		if (status_overlay_icons[i].icon)
+		{
+			DestroyIcon(status_overlay_icons[i].icon);
+			status_overlay_icons[i].icon=NULL;
+		}
 	}
-    ImageList_Destroy(hAvatarOverlays);
-    hAvatarOverlays=NULL;
-	DestroyIcon_protect(listening_to_icon);
-	listening_to_icon=NULL;
 }
 
 /*
@@ -111,7 +111,6 @@ void UnloadAvatarOverlayIcon()
 */
 int SmileyAddOptionsChanged(WPARAM wParam,LPARAM lParam)
 {
-    if (MirandaExiting()) return 0;
 	pcli->pfnClcBroadcast( CLM_AUTOREBUILD,0,0);
 	pcli->pfnClcBroadcast( INTM_INVALIDATE,0,0);
 	return 0;
@@ -122,7 +121,7 @@ int SmileyAddOptionsChanged(WPARAM wParam,LPARAM lParam)
 static int ClcSettingChanged(WPARAM wParam,LPARAM lParam)
 {
 	DBCONTACTWRITESETTING *cws=(DBCONTACTWRITESETTING*)lParam;
-    if (MirandaExiting()) return 0;
+
 	if ((HANDLE)wParam==NULL)
 	{
 		if (!mir_strcmp(cws->szModule,"MetaContacts"))
@@ -203,8 +202,6 @@ static int ClcSettingChanged(WPARAM wParam,LPARAM lParam)
 					pcli->pfnClcBroadcast( INTM_STATUSCHANGED,wParam,0);
 				else if (!strcmp(cws->szSetting,"Timezone"))
 					pcli->pfnClcBroadcast( INTM_TIMEZONECHANGED,wParam,0);
-				else if (!strcmp(cws->szSetting,"ListeningTo"))
-					pcli->pfnClcBroadcast( INTM_STATUSMSGCHANGED,wParam,0);
 			}
 		}
 	}
@@ -217,25 +214,11 @@ static int ClcSettingChanged(WPARAM wParam,LPARAM lParam)
 static int ReloadAvatarOverlayIcons(WPARAM wParam, LPARAM lParam) 
 {
 	int i;
-    if (MirandaExiting()) return 0;
-   	for (i = 0 ; i < MAX_REGS(avatar_overlay_icons) ; i++)
-	{
-		avatar_overlay_icons[i].listID=-1;
-		status_overlay_icons[i].listID=-1;
-	}
-    if (hAvatarOverlays) ImageList_Destroy(hAvatarOverlays);
-    hAvatarOverlays=ImageList_Create(16,16,ILC_MASK|ILC_COLOR32,MAX_REGS(avatar_overlay_icons)*2,1);
 	for (i = 0 ; i < MAX_REGS(avatar_overlay_icons) ; i++)
 	{
-        HICON hIcon=(HICON)CallService(MS_SKIN2_GETICON, 0, (LPARAM)avatar_overlay_icons[i].name);
-		avatar_overlay_icons[i].listID = ImageList_AddIcon(hAvatarOverlays,hIcon);
-        //destroy icon
-        hIcon=(HICON)CallService(MS_SKIN2_GETICON, 0, (LPARAM)status_overlay_icons[i].name);    
-		status_overlay_icons[i].listID = ImageList_AddIcon(hAvatarOverlays,hIcon);            
-        //destroy icon
+		avatar_overlay_icons[i].icon = (HICON)CallService(MS_SKIN2_GETICON, 0, (LPARAM)avatar_overlay_icons[i].name);
+		status_overlay_icons[i].icon = (HICON)CallService(MS_SKIN2_GETICON, 0, (LPARAM)status_overlay_icons[i].name);
 	}
-
-	listening_to_icon = (HICON)CallService(MS_SKIN2_GETICON, 0, (LPARAM)"LISTENING_TO_ICON");
 
 	pcli->pfnClcBroadcast( INTM_INVALIDATE,0,0);
 
@@ -249,7 +232,7 @@ static int ReloadAvatarOverlayIcons(WPARAM wParam, LPARAM lParam)
 static int ClcModulesLoaded(WPARAM wParam,LPARAM lParam) {
 	PROTOCOLDESCRIPTOR **proto;
 	int protoCount,i;
-    if (MirandaExiting()) return 0;
+
 	if (ServiceExists(MS_MC_DISABLEHIDDENGROUP));
 	CallService(MS_MC_DISABLEHIDDENGROUP, (WPARAM)TRUE, (LPARAM)0);
 
@@ -268,17 +251,10 @@ static int ClcModulesLoaded(WPARAM wParam,LPARAM lParam) {
 		GetModuleFileNameA(g_hInst, szMyPath, MAX_PATH);
 
 		sid.cbSize = sizeof(sid);
-        sid.cx=16;
+		sid.pszSection = Translate("Contact List/Avatar Overlay");
+		sid.pszDefaultFile = szMyPath;
+		sid.cx=16;
 		sid.cy=16;
-        sid.pszDefaultFile = szMyPath;
-
-        sid.pszSection = Translate("Contact List");
-		sid.pszDescription = Translate("Listening to");
-		sid.pszName = "LISTENING_TO_ICON";
-		sid.iDefaultIndex = - IDI_LISTENING_TO;
-		CallService(MS_SKIN2_ADDICON, 0, (LPARAM)&sid);
-
-        sid.pszSection = Translate("Contact List/Avatar Overlay");
 
 		for (i = 0 ; i < MAX_REGS(avatar_overlay_icons) ; i++)
 		{
@@ -297,27 +273,19 @@ static int ClcModulesLoaded(WPARAM wParam,LPARAM lParam) {
 			CallService(MS_SKIN2_ADDICON, 0, (LPARAM)&sid);
 		}
 
-
-
 		ReloadAvatarOverlayIcons(0,0);
 
 		HookEvent(ME_SKIN2_ICONSCHANGED, ReloadAvatarOverlayIcons);
 	}
 	else 
 	{
-        if (hAvatarOverlays) ImageList_Destroy(hAvatarOverlays);
-        hAvatarOverlays=ImageList_Create(16,16,ILC_MASK|ILC_COLOR32,MAX_REGS(avatar_overlay_icons)*2,1);
-	    for (i = 0 ; i < MAX_REGS(avatar_overlay_icons) ; i++)
-	    {
-            HICON hIcon=LoadSmallIcon(g_hInst, MAKEINTRESOURCE(avatar_overlay_icons[i].id));
-		    avatar_overlay_icons[i].listID = ImageList_AddIcon(hAvatarOverlays,hIcon);
-            DestroyIcon_protect(hIcon);
-            hIcon=LoadSmallIcon(g_hInst, MAKEINTRESOURCE(status_overlay_icons[i].id));
-		    status_overlay_icons[i].listID = ImageList_AddIcon(hAvatarOverlays,hIcon);            
-            DestroyIcon_protect(hIcon);
-	    }	
-		listening_to_icon = (HICON)LoadImage(g_hInst, MAKEINTRESOURCE(IDI_LISTENING_TO), IMAGE_ICON, 16, 16, 0);
-    }
+		int i;
+		for (i = 0 ; i < MAX_REGS(avatar_overlay_icons) ; i++)
+		{
+			avatar_overlay_icons[i].icon = (HICON)LoadImage(g_hInst, MAKEINTRESOURCE(avatar_overlay_icons[i].id), IMAGE_ICON, 0, 0, 0);
+			status_overlay_icons[i].icon = (HICON)LoadImage(g_hInst, MAKEINTRESOURCE(status_overlay_icons[i].id), IMAGE_ICON, 0, 0, 0);
+		}
+	}
 
 	// Register smiley category
 	if (ServiceExists(MS_SMILEYADD_REGISTERCATEGORY))
@@ -344,7 +312,7 @@ static int ClcModulesLoaded(WPARAM wParam,LPARAM lParam) {
 
 HICON GetMainStatusOverlay(int STATUS)
 {
-	return ImageList_GetIcon(hAvatarOverlays,status_overlay_icons[STATUS-ID_STATUS_OFFLINE].listID,ILD_NORMAL);
+	return status_overlay_icons[STATUS-ID_STATUS_OFFLINE].icon;
 }
 /*
 *	Proto ack hook
@@ -355,7 +323,7 @@ int ExtraToColumnNum(int extra);
 int ClcProtoAck(WPARAM wParam,LPARAM lParam)
 {
 	ACKDATA *ack=(ACKDATA*)lParam;
-    if (MirandaExiting()) return 0;
+
 	if (ack->type == ACKTYPE_STATUS) 
 	{ int i;
 	if (ack->result == ACKRESULT_SUCCESS) {
@@ -449,7 +417,6 @@ static int ClcShutdown(WPARAM wParam,LPARAM lParam)
 
 int AvatarChanged(WPARAM wParam, LPARAM lParam)
 {
-    if (MirandaExiting()) return 0;
 	pcli->pfnClcBroadcast(INTM_AVATARCHANGED, wParam, lParam);
 	return 0;
 }
@@ -542,7 +509,7 @@ void ClcOptionsChanged(void)
 void SortClcByTimer (HWND hwnd)
 {
 	KillTimer(hwnd,TIMERID_DELAYEDRESORTCLC);
-	SetTimer(hwnd,TIMERID_DELAYEDRESORTCLC,100 /*DBGetContactSettingByte(NULL,"CLUI","DELAYEDTIMER",10)*/,NULL);
+	SetTimer(hwnd,TIMERID_DELAYEDRESORTCLC,DBGetContactSettingByte(NULL,"CLUI","DELAYEDTIMER",10),NULL);
 }
 
 /*
@@ -581,7 +548,6 @@ case WM_CREATE:
 	{
 		dat=(struct ClcData*)mir_calloc(1,sizeof(struct ClcData));
 		SetWindowLong(hwnd,0,(long)dat);
-        dat->m_paintCouter=0;
 		dat->hWnd=hwnd;
 		//			dat->isStarting=TRUE;
 		InitializeCriticalSection(&dat->lockitemCS);
@@ -696,7 +662,7 @@ case WM_SIZE:
 	KillTimer(hwnd,TIMERID_RENAME);
 	cliRecalcScrollBar(hwnd,dat);
 	return 0;
-/*
+
 case INTM_ICONCHANGED:
 	{
 		struct ClcContact *contact=NULL;
@@ -707,7 +673,6 @@ case INTM_ICONCHANGED:
 		HANDLE hContact=(HANDLE)wParam;
 
 		int ret=saveContactListControlWndProc(hwnd, msg, wParam, lParam);
-        return ret;
 		cacheEntry=(pdisplayNameCacheEntry)pcli->pfnGetCacheEntry((HANDLE)wParam);
 
 		if(FindItem(hwnd,dat,(HANDLE)wParam,&contact,&group,NULL,FALSE)) 
@@ -739,128 +704,27 @@ case INTM_ICONCHANGED:
 								}
 							}
 						}
-			contact->iImage=iIcon;	
-			{
-				int ic=GetContactIconC(cacheEntry);
-				if (ic != iIcon)
-					image_is_special = TRUE;
-				else
-					image_is_special = FALSE;
-				contact->image_is_special=image_is_special;
-				}
+						contact->iImage=iIcon;	
+						{
+							int ic=GetContactIconC(cacheEntry);
+							if (ic != iIcon)
+								image_is_special = TRUE;
+							else
+								image_is_special = FALSE;
+							contact->image_is_special=image_is_special;
+						}
 		}
 
-		return 0;
-	}
-
-*/
-case INTM_ICONCHANGED:
-	{
-		struct ClcContact *contact = NULL;
-		struct ClcGroup *group = NULL;
-		int recalcScrollBar = 0, shouldShow;
-        BOOL needRepaint=FALSE;
-		WORD status;
-		char *szProto;
-        BOOL image_is_special=FALSE;
-        int contacticon=CallService(MS_CLIST_GETCONTACTICON, wParam, 0);
-
-		szProto = (char *) CallService(MS_PROTO_GETCONTACTBASEPROTO, wParam, 0);
-		if (szProto == NULL)
-			status = ID_STATUS_OFFLINE;
-		else
-			status = DBGetContactSettingWord((HANDLE) wParam, szProto, "Status", ID_STATUS_OFFLINE);
-        image_is_special=(contacticon != lParam);
-		shouldShow = (GetWindowLong(hwnd, GWL_STYLE) & CLS_SHOWHIDDEN || !DBGetContactSettingByte((HANDLE) wParam, "CList", "Hidden", 0))
-			&& (!pcli->pfnIsHiddenMode(dat, status)
-			|| contacticon != lParam);      //this means an offline msg is flashing, so the contact should be shown
-		if (!pcli->pfnFindItem(hwnd, dat, (HANDLE) wParam, &contact, &group, NULL)) 
-        {
-			if (shouldShow) 
-            {
-				pcli->pfnAddContactToTree(hwnd, dat, (HANDLE) wParam, 0, 0);
-				recalcScrollBar = 1;
-                needRepaint=TRUE;
-				pcli->pfnFindItem(hwnd, dat, (HANDLE) wParam, &contact, NULL, NULL);
-				if (contact) 
-                {
-					contact->iImage = (WORD) lParam;
-                    contact->image_is_special=image_is_special;
-					pcli->pfnNotifyNewContact(hwnd, (HANDLE) wParam);
-					dat->NeedResort = 1;
-			    }	
-            }
-		}
-		else 
-        {              //item in list already
-			DWORD style = GetWindowLong(hwnd, GWL_STYLE);
-			if (contact->iImage == (WORD) lParam)
-				return 0;
-			if (!shouldShow && !(style & CLS_NOHIDEOFFLINE) && (style & CLS_HIDEOFFLINE || group->hideOffline)) 
-            {
-				HANDLE hSelItem;
-				struct ClcContact *selcontact;
-				struct ClcGroup *selgroup;
-				if (pcli->pfnGetRowByIndex(dat, dat->selection, &selcontact, NULL) == -1)
-					hSelItem = NULL;
-				else
-					hSelItem = pcli->pfnContactToHItem(selcontact);
-				pcli->pfnRemoveItemFromGroup(hwnd, group, contact, 0);
-				if (hSelItem)
-					if (pcli->pfnFindItem(hwnd, dat, hSelItem, &selcontact, &selgroup, NULL))
-						dat->selection = pcli->pfnGetRowsPriorTo(&dat->list, selgroup, li.List_IndexOf(( SortedList* )&selgroup->cl, selcontact));
-                needRepaint=TRUE;
-				recalcScrollBar = 1;
-                dat->NeedResort = 1;
-			}
-			else if (contact)
-            {
-				contact->iImage = (WORD) lParam;
-				if (!pcli->pfnIsHiddenMode(dat, status))
-					contact->flags |= CONTACTF_ONLINE;
-				else
-					contact->flags &= ~CONTACTF_ONLINE;
-                contact->image_is_special=image_is_special;
-                if (!image_is_special) //Only if it is status changing
-                {
-                    dat->NeedResort = 1; 
-                    needRepaint=TRUE; 
-                }
-                else if (dat->m_paintCouter==contact->lastPaintCounter) //if contacts is visible
-                {
-                    needRepaint=TRUE; 
-                }
-			}
-			
-		}
-//        dat->NeedResort = 1; 
-//        SortClcByTimer(hwnd);
-        if (dat->NeedResort) SortClcByTimer(hwnd);
-        else if (needRepaint) cliInvalidateRect(hwnd,NULL,FALSE);
-        else 
-        {
-#ifdef _DEBUG
-            TRACE("Drawing should be skipped\n");
-      //      DebugBreak();
-#endif
-        }
 		return 0;
 	}
 
 case INTM_AVATARCHANGED:
 	{
 		struct ClcContact *contact;
-        lockdat;
 		if (FindItem(hwnd,dat,(HANDLE)wParam,&contact,NULL,NULL,FALSE)) 
-        {
-            Cache_GetAvatar(dat, contact); 
-            ulockdat;
-        }
+			Cache_GetAvatar(dat, contact); 
 		else if (dat->use_avatar_service && !wParam)
-        {
-            ulockdat;
 			UpdateAllAvatars(dat);
-        }
 		cliInvalidateRect(hwnd, NULL, FALSE);
 		return 0;
 	}
@@ -955,19 +819,11 @@ case INTM_STATUSCHANGED:
 					(dat->second_line_show)// && dat->second_line_type==TEXT_STATUS)
 					|| (dat->third_line_show)// && dat->third_line_type==TEXT_STATUS)
 					))
-					Cache_RenewText(pdnce->hContact);	
-
+					Cache_RenewText(pdnce->hContact);							
 			}
 		}
-		if (DBGetContactSettingByte(NULL,"CList","PlaceOfflineToRoot",0) )
-		{
-			SendMessage(hwnd,CLM_AUTOREBUILD,0,0);	
-		}
-		else
-		{
-			pcli->pfnSortContacts();
-			PostMessage(hwnd,INTM_INVALIDATE,0,0);
-		}
+		pcli->pfnSortContacts();
+		PostMessage(hwnd,INTM_INVALIDATE,0,0);
 		return ret;
 	}
 case INTM_RELOADOPTIONS:
@@ -1219,14 +1075,6 @@ case WM_TIMER:
 			break;
 		}			
 
-        else if (wParam==TIMERID_DELAYEDRESORTCLC)
-        {
-			KillTimer(hwnd,TIMERID_DELAYEDRESORTCLC);
-			pcli->pfnInvalidateRect(hwnd,NULL,FALSE);
-			pcli->pfnSortCLC(hwnd,dat,1);
-			pcli->pfnRecalcScrollBar(hwnd,dat);
-            return 0;
-        }
 		break;
 	}
 case WM_SETCURSOR: 
@@ -1792,7 +1640,7 @@ case WM_LBUTTONUP:
 			default:
 				saveContactListControlWndProc(hwnd, msg, wParam, lParam);
 				break;
-				
+				//dropee is a contact
 			}
 		}
 

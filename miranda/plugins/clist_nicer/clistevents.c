@@ -72,19 +72,13 @@ struct CListEvent* fnCreateEvent( void )
 void HideShowNotifyFrame()
 {
 	int dwVisible = CallService(MS_CLIST_FRAMES_GETFRAMEOPTIONS, MAKEWPARAM(FO_FLAGS, hNotifyFrame), 0) & F_VISIBLE;
-    int desired;
 
-    if(g_CluiData.dwFlags & CLUI_FRAME_AUTOHIDENOTIFY)
-        desired = g_CluiData.notifyActive ? TRUE : FALSE;
-    else
-        desired = dwVisible;
-
-    if(desired) {
-		if(!dwVisible)
+	if(dwVisible) {
+		if(!g_CluiData.notifyActive)
 			CallService(MS_CLIST_FRAMES_SHFRAME, (WPARAM)hNotifyFrame, 0);
 	}
 	else {
-		if(dwVisible)
+		if(g_CluiData.notifyActive)
 			CallService(MS_CLIST_FRAMES_SHFRAME, (WPARAM)hNotifyFrame, 0);
 	}
 }
@@ -267,7 +261,7 @@ struct CListEvent* AddEvent(CLISTEVENT *cle)
 	if ( p == NULL )
 		return NULL;
 
-	if (1) {
+	if (g_CluiData.dwFlags & CLUI_FRAME_USEEVENTAREA) {
 		if (p->cle.hContact != 0 && p->cle.hDbEvent != (HANDLE) 1 && !(p->cle.flags & CLEF_ONLYAFEW)) {
 			int j;
 			struct NotifyMenuItemExData *nmi = 0;
@@ -365,7 +359,7 @@ int RemoveEvent(HANDLE hContact, HANDLE hDbEvent)
 		return 1;
 
 	// remove event from the notify menu
-	if (1) {
+	if (g_CluiData.dwFlags & CLUI_FRAME_USEEVENTAREA) {
 		if (pcli->events.items[i]->menuId > 0) {
 			MENUITEMINFO mii = {0};
 			mii.cbSize = sizeof(mii);
