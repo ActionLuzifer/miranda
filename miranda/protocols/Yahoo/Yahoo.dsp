@@ -121,15 +121,15 @@ SOURCE=.\libyahoo2\yahoo2_types.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\libyahoo2\yahoo_auth.c
-# End Source File
-# Begin Source File
-
-SOURCE=.\libyahoo2\yahoo_auth.h
-# End Source File
-# Begin Source File
-
 SOURCE=.\libyahoo2\yahoo_debug.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\libyahoo2\yahoo_fn.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\libyahoo2\yahoo_fn.h
 # End Source File
 # Begin Source File
 
@@ -174,10 +174,6 @@ SOURCE=.\http_gateway.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\icolib.c
-# End Source File
-# Begin Source File
-
 SOURCE=.\im.c
 # End Source File
 # Begin Source File
@@ -187,6 +183,14 @@ SOURCE=.\main.c
 # Begin Source File
 
 SOURCE=.\options.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\pthread.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\pthread.h
 # End Source File
 # Begin Source File
 
@@ -203,6 +207,10 @@ SOURCE=.\server.c
 # Begin Source File
 
 SOURCE=.\services.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\utf8.c
 # End Source File
 # Begin Source File
 

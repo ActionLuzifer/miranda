@@ -1,6 +1,3 @@
-#ifndef modern_row_h__
-#define modern_row_h__
-
 #pragma once
 
 
@@ -77,10 +74,8 @@ typedef struct tagRowCell
 
 // —труктура дл€ доступа к контейнерам элемента контакта внутри дерева опивани€
 #ifndef _CPPCODE
-  int cppCalculateRowHeight(ROWCELL	*RowRoot);
-  void cppCalculateRowItemsPos(ROWCELL	*RowRoot, int width);
-  ROWCELL *cppInitModernRow(ROWCELL	** tabAccess);
-  void cppDeleteTree(ROWCELL	* RowRoot);
+  extern int cppCalculateRowHeight(ROWCELL	*RowRoot);
+  extern void cppCalculateRowItemsPos(ROWCELL	*RowRoot, int width);
+  extern ROWCELL *cppInitModernRow(ROWCELL	** tabAccess);
+  extern void cppDeleteTree(ROWCELL	* RowRoot);
 #endif
-
-#endif // modern_row_h__

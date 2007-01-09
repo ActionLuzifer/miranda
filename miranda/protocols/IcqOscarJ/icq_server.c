@@ -43,11 +43,13 @@ extern void handleXStatusCaps(HANDLE hContact, char* caps, int capsize);
 extern CRITICAL_SECTION connectionHandleMutex;
 extern WORD wLocalSequence;
 extern CRITICAL_SECTION localSeqMutex;
-extern int icqGoingOnlineStatus;
 HANDLE hServerConn;
 WORD wListenPort;
 WORD wLocalSequence;
+DWORD dwLocalDirectConnCookie;
+HANDLE hServerPacketRecver;
 static pthread_t serverThreadId;
+HANDLE hDirectBoundPort;
 
 static int handleServerPackets(unsigned char* buf, int len, serverthread_info* info);
 
@@ -64,6 +66,8 @@ static DWORD __stdcall icq_serverThread(serverthread_start_info* infoParam)
 
   srand(time(NULL));
 
+  dwLocalDirectConnCookie = rand() ^ (rand() << 16);
+
   ResetSettingsOnConnect();
 
   // Connect to the login server
@@ -71,7 +75,7 @@ static DWORD __stdcall icq_serverThread(serverthread_start_info* infoParam)
   {
     NETLIBOPENCONNECTION nloc = infoParam->nloc;
 
-    hServerConn = NetLib_OpenConnection(ghServerNetlibUser, NULL, &nloc);
+    hServerConn = NetLib_OpenConnection(ghServerNetlibUser, &nloc);
 
     SAFE_FREE((void**)&nloc.szHost);
   }
@@ -95,18 +99,24 @@ static DWORD __stdcall icq_serverThread(serverthread_start_info* infoParam)
 
   // Initialize direct connection ports
   {
-    DWORD dwInternalIP;
-    BYTE bConstInternalIP = ICQGetContactSettingByte(NULL, "ConstRealIP", 0);
+    NETLIBBIND nlb = {0};
 
-    info.hDirectBoundPort = NetLib_BindPort(icq_newConnectionReceived, NULL, &wListenPort, &dwInternalIP);
-    if (!info.hDirectBoundPort)
+    nlb.cbSize = sizeof(nlb);
+    nlb.pfnNewConnection = icq_newConnectionReceived;
+    hDirectBoundPort = (HANDLE)CallService(MS_NETLIB_BINDPORT, (WPARAM)ghDirectNetlibUser, (LPARAM)&nlb);
+    if (!hDirectBoundPort && (GetLastError() == 87))
+    { // this ensures old Miranda also can bind a port for a dc
+      nlb.cbSize = NETLIBBIND_SIZEOF_V1;
+      hDirectBoundPort = (HANDLE)CallService(MS_NETLIB_BINDPORT, (WPARAM)ghDirectNetlibUser, (LPARAM)&nlb);
+    }
+    if (hDirectBoundPort == NULL)
     {
       icq_LogUsingErrorCode(LOG_WARNING, GetLastError(), "Miranda was unable to allocate a port to listen for direct peer-to-peer connections between clients. You will be able to use most of the ICQ network without problems but you may be unable to send or receive files.\n\nIf you have a firewall this may be blocking Miranda, in which case you should configure your firewall to leave some ports open and tell Miranda which ports to use in M->Options->ICQ->Network.");
       wListenPort = 0;
-      if (!bConstInternalIP) ICQDeleteContactSetting(NULL, "RealIP");
     }
-    else if (!bConstInternalIP)
-      ICQWriteContactSettingDword(NULL, "RealIP", dwInternalIP);
+    wListenPort = nlb.wPort;
+    if (!ICQGetContactSettingByte(NULL, "ConstRealIP", 0))
+      ICQWriteContactSettingDword(NULL, "RealIP", nlb.dwInternalIP);
   }
 
 
@@ -115,7 +125,7 @@ static DWORD __stdcall icq_serverThread(serverthread_start_info* infoParam)
     int recvResult;
     NETLIBPACKETRECVER packetRecv = {0};
 
-    info.hPacketRecver = (HANDLE)CallService(MS_NETLIB_CREATEPACKETRECVER, (WPARAM)hServerConn, 8192);
+    hServerPacketRecver = (HANDLE)CallService(MS_NETLIB_CREATEPACKETRECVER, (WPARAM)hServerConn, 8192);
     packetRecv.cbSize = sizeof(packetRecv);
     packetRecv.dwTimeout = INFINITE;
     while(hServerConn)
@@ -128,7 +138,7 @@ static DWORD __stdcall icq_serverThread(serverthread_start_info* infoParam)
         packetRecv.dwTimeout = INFINITE;
       }
 
-      recvResult = CallService(MS_NETLIB_GETMOREPACKETS,(WPARAM)info.hPacketRecver, (LPARAM)&packetRecv);
+      recvResult = CallService(MS_NETLIB_GETMOREPACKETS,(WPARAM)hServerPacketRecver, (LPARAM)&packetRecv);
 
       if (recvResult == 0)
       {
@@ -147,21 +157,15 @@ static DWORD __stdcall icq_serverThread(serverthread_start_info* infoParam)
     }
 
     // Close the packet receiver (connection may still be open)
-    NetLib_SafeCloseHandle(&info.hPacketRecver, FALSE);
+    NetLib_SafeCloseHandle(&hServerPacketRecver, FALSE);
 
     // Close DC port
-    NetLib_SafeCloseHandle(&info.hDirectBoundPort, FALSE);
+    NetLib_SafeCloseHandle(&hDirectBoundPort, FALSE);
   }
-
-  // signal keep-alive thread to stop
-  StopKeepAlive(&info);
-
-  // disable auto info-update thread
-  icq_EnableUserLookup(FALSE);
 
   // Time to shutdown
   icq_serverDisconnect(FALSE);
-  if (gnCurrentStatus != ID_STATUS_OFFLINE && icqGoingOnlineStatus != ID_STATUS_OFFLINE)
+  if (gnCurrentStatus != ID_STATUS_OFFLINE)
   {
     if (!info.bLoggedIn)
     {
@@ -206,7 +210,6 @@ static DWORD __stdcall icq_serverThread(serverthread_start_info* infoParam)
   FlushServerIDs();         // clear server IDs list
   FlushPendingOperations(); // clear pending operations list
   FlushGroupRenames();      // clear group rename in progress list
-  ratesRelease(&gRates);
 
   NetLog_Server("%s thread ended.", "Server");
 
@@ -237,6 +240,8 @@ void icq_serverDisconnect(BOOL bBlock)
   }
   else
     LeaveCriticalSection(&connectionHandleMutex);
+
+  StopKeepAlive(); // signal keep-alive thread to stop
 }
 
 
@@ -340,10 +345,6 @@ void sendServPacket(icq_packet* pPacket)
       Sleep(1000);
     }
 
-    // Rates management
-    EnterCriticalSection(&ratesMutex);
-    ratesPacketSent(gRates, pPacket);
-    LeaveCriticalSection(&ratesMutex);
 
     // Send error
     if (nSendResult == SOCKET_ERROR)

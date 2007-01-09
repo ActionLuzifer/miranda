@@ -24,7 +24,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "m_clui.h"
 #include "clist.h"
 #include "cluiframes/cluiframes.h"
-#include "commonprototypes.h"
 
 HFONT CLCPaint_ChangeToFont(HDC hdc,struct ClcData *dat,int id,int *fontHeight);
 
@@ -33,6 +32,7 @@ HFONT CLCPaint_ChangeToFont(HDC hdc,struct ClcData *dat,int id,int *fontHeight);
 /**************************************************/
 
 /* Declarations */
+HWND g_hwndEventFrame = NULL;
 static HANDLE hNotifyFrame=NULL;
 static int EventArea_PaintCallbackProc(HWND hWnd, HDC hDC, RECT * rcPaint, HRGN rgn, DWORD dFlags, void * CallBackData);
 static int EventArea_Draw(HWND hwnd, HDC hDC);
@@ -46,6 +46,9 @@ void EventArea_ConfigureEventArea();
 
 /**************************************************/
 
+extern struct CListEvent* ( *saveAddEvent )(CLISTEVENT *cle);
+extern int ( *saveRemoveEvent )(HANDLE hContact, HANDLE hDbEvent);
+extern wndFrame *wndFrameEventArea;
 HWND g_hwndEventArea = 0;
 
 struct CListEvent {
@@ -72,7 +75,7 @@ static struct CListImlIcon *imlIcon;
 static int imlIconCount;
 static UINT flashTimerId;
 static int iconsOn;
-
+extern HIMAGELIST himlCListClc;
 
 struct NotifyMenuItemExData {
 	HANDLE hContact;
@@ -173,7 +176,7 @@ struct CListEvent* cli_AddEvent(CLISTEVENT *cle)
 				EventArea_HideShowNotifyFrame();
 			}
 		}
-		CLUI__cliInvalidateRect(g_CluiData.hwndEventFrame, NULL, FALSE);
+		CLUI__cliInvalidateRect(g_hwndEventFrame, NULL, FALSE);
 	}
 	
 	return p;
@@ -228,7 +231,7 @@ int cli_RemoveEvent(HANDLE hContact, HANDLE hDbEvent)
 
 	if (hContact == g_CluiData.hUpdateContact || (int)hDbEvent == 1)
 		g_CluiData.hUpdateContact = 0;
-    CLUI__cliInvalidateRect(g_CluiData.hwndEventFrame, NULL, FALSE);
+    CLUI__cliInvalidateRect(g_hwndEventFrame, NULL, FALSE);
 	return res;
 }
 
@@ -363,7 +366,7 @@ int EventArea_Create(HWND hCluiWnd)
     wndclass.lpszClassName = pluginname;
     RegisterClass(&wndclass);
   }
-  g_CluiData.hwndEventFrame=CreateWindow(pluginname,pluginname,WS_CHILD|WS_VISIBLE|WS_CLIPCHILDREN,
+  g_hwndEventFrame=CreateWindow(pluginname,pluginname,WS_CHILD|WS_VISIBLE|WS_CLIPCHILDREN,
     0,0,0,h,hCluiWnd,NULL,g_hInst,NULL);
   // register frame
 
@@ -371,7 +374,7 @@ int EventArea_Create(HWND hCluiWnd)
     CLISTFrame Frame;
     memset(&Frame,0,sizeof(Frame));
     Frame.cbSize=sizeof(CLISTFrame);
-    Frame.hWnd=g_CluiData.hwndEventFrame;
+    Frame.hWnd=g_hwndEventFrame;
     Frame.align=alBottom;
     Frame.hIcon=LoadSkinnedIcon (SKINICON_OTHER_MIRANDA);
     Frame.Flags=(DBGetContactSettingByte(NULL,"CLUI","ShowEventArea",1)?F_VISIBLE:0)|F_LOCKED|F_NOBORDER|F_NO_SUBCONTAINER;
@@ -482,15 +485,15 @@ static LRESULT CALLBACK EventArea_WndProc(HWND hwnd, UINT msg, WPARAM wParam, LP
 		}
 		break;
     case WM_SIZE:
-	  if (!g_CluiData.fLayered)InvalidateRect(hwnd,NULL,FALSE);
+	  if (!g_bLayered)InvalidateRect(hwnd,NULL,FALSE);
 	  return DefWindowProc(hwnd, msg, wParam, lParam);
     case WM_ERASEBKGND:
 	  return FALSE;
     case WM_PAINT:
         {
-            if (GetParent(hwnd)==pcli->hwndContactList && g_CluiData.fLayered)
+            if (GetParent(hwnd)==pcli->hwndContactList && g_bLayered)
                 SkinEngine_Service_InvalidateFrameImage((WPARAM)hwnd,0);
-            else if (GetParent(hwnd)==pcli->hwndContactList && !g_CluiData.fLayered)
+            else if (GetParent(hwnd)==pcli->hwndContactList && !g_bLayered)
 	        {
 		        HDC hdc, hdc2;
 		        HBITMAP hbmp,hbmpo;

@@ -38,16 +38,26 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define MGPROC(x) GetProcAddress(themeAPIHandle,x)
 
 
-extern OVERLAYICONINFO g_pAvatarOverlayIcons[ID_STATUS_OUTTOLUNCH - ID_STATUS_OFFLINE + 1];
-extern OVERLAYICONINFO g_pStatusOverlayIcons[];
+extern int SkinEngine_Service_DrawGlyph(WPARAM wParam,LPARAM lParam);
+extern BOOL SkinEngine_ResetTextEffect(HDC);
+extern BOOL SkinEngine_SelectTextEffect(HDC hdc, BYTE EffectID, DWORD FirstColor, DWORD SecondColor);
+extern int SkinSelector_DeleteMask(MODERNMASK * mm);
+extern int RowHeight_CalcRowHeight(struct ClcData *dat, HWND hwnd, struct ClcContact *contact, int item);
+
+extern struct tagOVERLAYICONINFO g_pAvatarOverlayIcons[ID_STATUS_OUTTOLUNCH - ID_STATUS_OFFLINE + 1];
+extern struct tagOVERLAYICONINFO g_pStatusOverlayIcons[];
+extern ROWCELL * gl_RowTabAccess[];
+extern ROWCELL * gl_RowRoot;
+extern HIMAGELIST hAvatarOverlays;
+
+static void CLCPaint_DrawStatusIcon(struct ClcContact * Drawing, struct ClcData *dat, int iImage, HDC hDC, int x, int y, int cx, int cy, DWORD colorbg,DWORD colorfg, int mode);
+static void CLCPaint_RTLRect(RECT *rect, int width, int offset);
+tPaintCallbackProc CLCPaint_PaintCallbackProc(HWND hWnd, HDC hDC, RECT * rcPaint,HRGN rgn,  DWORD dFlags, void * CallBackData);
 
 static HMODULE  themeAPIHandle = NULL; // handle to uxtheme.dll
 static HANDLE   (WINAPI *MyOpenThemeData)(HWND,LPCWSTR);
 static HRESULT  (WINAPI *MyCloseThemeData)(HANDLE);
 static HRESULT  (WINAPI *MyDrawThemeBackground)(HANDLE,HDC,int,int,const RECT *,const RECT *);
-
-static void CLCPaint_DrawStatusIcon(struct ClcContact * Drawing, struct ClcData *dat, int iImage, HDC hDC, int x, int y, int cx, int cy, DWORD colorbg,DWORD colorfg, int mode);
-static void CLCPaint_RTLRect(RECT *rect, int width, int offset);
 static enum tagenumHASHINDEX
 {
     hi_Module=0,
@@ -149,6 +159,7 @@ static char *szQuickHashText[hi_LastItem]=
 
 static DWORD dwQuickHash[hi_LastItem]={0};
 
+int g_mutex_nPaintLock=0;
 
 /************************************************************************/
 /* CLCPaint_IsForegroundWindow                                          */
@@ -180,7 +191,6 @@ HFONT CLCPaint_ChangeToFont(HDC hdc,struct ClcData *dat,int id,int *fontHeight)
     res=SelectObject(hdc,dat->fontModernInfo[id].hFont);
     SetTextColor(hdc,dat->fontModernInfo[id].colour);
     if(fontHeight) *fontHeight=dat->fontModernInfo[id].fontHeight;
-    SkinEngine_ResetTextEffect(hdc);
     if (dat->hWnd==pcli->hwndContactTree && dat->fontModernInfo[id].effect!=0)
         SkinEngine_SelectTextEffect(hdc,dat->fontModernInfo[id].effect-1,dat->fontModernInfo[id].effectColour1,dat->fontModernInfo[id].effectColour2);
     else SkinEngine_ResetTextEffect(hdc);
@@ -1103,7 +1113,7 @@ static void CLCPaint_ModernInternalPaintRowItems(HWND hwnd, HDC hdcMem, struct C
             {
                 CLCPaint_ChangeToFont(hdcMem,dat,Drawing->group->expanded?FONTID_OPENGROUPCOUNTS:FONTID_CLOSEDGROUPCOUNTS,NULL);
                 if (dat->text_rtl!=0) CLCPaint_RTLRect(&counts_rc, free_row_rc.right, dx);
-                if (InClistWindow && g_CluiData.fLayered)
+                if (InClistWindow && g_bLayered)
                     SkinEngine_DrawTextA(hdcMem,szCounts,lstrlenA(szCounts),&counts_rc,uTextFormat);
                 else
                     //88
@@ -1120,7 +1130,7 @@ static void CLCPaint_ModernInternalPaintRowItems(HWND hwnd, HDC hdcMem, struct C
                 Drawing->pos_rename_rect=rc;
             }
 
-            if ((!InClistWindow || !g_CluiData.fLayered)&& ((Drawing->type == CLCIT_DIVIDER) || (Drawing->type == CLCIT_GROUP && dat->exStyle&CLS_EX_LINEWITHGROUPS)))
+            if ((!InClistWindow || !g_bLayered)&& ((Drawing->type == CLCIT_DIVIDER) || (Drawing->type == CLCIT_GROUP && dat->exStyle&CLS_EX_LINEWITHGROUPS)))
             {
                 //???
                 RECT rc=fr_rc;
@@ -1303,7 +1313,7 @@ static void CLCPaint_ModernInternalPaintRowItems(HWND hwnd, HDC hdcMem, struct C
                             DBTIMETOSTRINGT dbtts;
                             time_t contact_time;
                             TCHAR buf[70]={0};
-                            contact_time = g_CluiData.t_now - pdnce->timediff;
+                            contact_time = time(NULL) - pdnce->timediff;
                             if (pdnce->szSecondLineText) mir_free_and_nill(pdnce->szSecondLineText);
                             pdnce->szSecondLineText=NULL;
 
@@ -1342,7 +1352,7 @@ static void CLCPaint_ModernInternalPaintRowItems(HWND hwnd, HDC hdcMem, struct C
                             DBTIMETOSTRINGT dbtts;
                             time_t contact_time;
                             TCHAR buf[70]={0};
-                            contact_time = g_CluiData.t_now- pdnce->timediff;
+                            contact_time = time(NULL) - pdnce->timediff;
                             if (pdnce->szThirdLineText) mir_free_and_nill(pdnce->szThirdLineText);
                             pdnce->szThirdLineText= NULL;
 
@@ -1536,7 +1546,7 @@ static void CLCPaint_ModernInternalPaintRowItems(HWND hwnd, HDC hdcMem, struct C
                             {
                                 int w=width;
                                 int h=height;
-                                if (!g_CluiData.fGDIPlusFail) //Use gdi+ engine
+                                if (!gl_b_GDIPlusFail) //Use gdi+ engine
                                 {
                                     DrawAvatarImageWithGDIp(hdcMem, p_rect.left, p_rect.top, w, h,Drawing->avatar_data->hbmPic,0,0,Drawing->avatar_data->bmWidth,Drawing->avatar_data->bmHeight,Drawing->avatar_data->dwFlags,blendmode);
                                 }
@@ -1747,7 +1757,7 @@ static void CLCPaint_ModernInternalPaintRowItems(HWND hwnd, HDC hdcMem, struct C
                     time_t contact_time;
                     TCHAR szResult[80];
 
-                    contact_time = g_CluiData.t_now - pdnce->timediff;
+                    contact_time = time(NULL) - pdnce->timediff;
                     szResult[0] = '\0';
 
                     dbtts.szDest = szResult;
@@ -1779,8 +1789,8 @@ static void CLCPaint_ModernInternalPaintRowItems(HWND hwnd, HDC hdcMem, struct C
 static void CLCPaint_DrawStatusIcon(struct ClcContact * Drawing, struct ClcData *dat,
                                     int iImage, HDC hdcMem, int x, int y, int cx, int cy, DWORD colorbg,DWORD colorfg, int mode)
 {
-    //int i=(dat->iconXSpace-ICON_HEIGHT)>>1;
-    //x+=i;
+    int i=(dat->iconXSpace-ICON_HEIGHT)>>1;
+    x+=i;
     if (Drawing->type!=CLCIT_CONTACT)
     {
         SkinEngine_ImageList_DrawEx(himlCListClc, iImage&0xFFFF, hdcMem,
@@ -2046,7 +2056,7 @@ static void CLCPaint_InternalPaintRowItems(HWND hwnd, HDC hdcMem, struct ClcData
                             {
                                 int w=width;
                                 int h=height;
-                                if (!g_CluiData.fGDIPlusFail) //Use gdi+ engine
+                                if (!gl_b_GDIPlusFail) //Use gdi+ engine
                                 {
                                     DrawAvatarImageWithGDIp(hdcMem, rc.left, rc.top, w, h,Drawing->avatar_data->hbmPic,0,0,Drawing->avatar_data->bmWidth,Drawing->avatar_data->bmHeight,Drawing->avatar_data->dwFlags,blendmode);
                                 }
@@ -2265,7 +2275,7 @@ static void CLCPaint_InternalPaintRowItems(HWND hwnd, HDC hdcMem, struct ClcData
                         time_t contact_time;
                         TCHAR szResult[80];
 
-                        contact_time = g_CluiData.t_now - pdnce->timediff;
+                        contact_time = time(NULL) - pdnce->timediff;
                         szResult[0] = '\0';
 
                         dbtts.szDest = szResult;
@@ -2527,7 +2537,7 @@ static void CLCPaint_InternalPaintRowItems(HWND hwnd, HDC hdcMem, struct ClcData
                     DBTIMETOSTRINGT dbtts;
                     time_t contact_time;
                     TCHAR buf[70]={0};
-                    contact_time = g_CluiData.t_now - pdnce->timediff;
+                    contact_time = time(NULL) - pdnce->timediff;
                     if (pdnce->szSecondLineText) mir_free_and_nill(pdnce->szSecondLineText);
                     pdnce->szSecondLineText=NULL;
 
@@ -2574,7 +2584,7 @@ static void CLCPaint_InternalPaintRowItems(HWND hwnd, HDC hdcMem, struct ClcData
                     DBTIMETOSTRINGT dbtts;
                     time_t contact_time;
                     TCHAR buf[70]={0};
-                    contact_time = g_CluiData.t_now - pdnce->timediff;
+                    contact_time = time(NULL) - pdnce->timediff;
                     if (pdnce->szThirdLineText) mir_free_and_nill(pdnce->szThirdLineText);
                     pdnce->szThirdLineText= NULL;
 
@@ -2671,6 +2681,7 @@ static void CLCPaint_InternalPaintRowItems(HWND hwnd, HDC hdcMem, struct ClcData
                     rc.top += (rc.bottom - rc.top) >> 1;
                     rc.bottom = rc.top + 2;
                     rc.right = rc.left + ((rc.right - rc.left - text_size.cx)>>1) - 3;
+                    //if (!g_bLayered)
                     DrawEdge(hdcMem,&rc,BDR_SUNKENOUTER,BF_RECT);
                     SkinEngine_SetRectOpaque(hdcMem,&rc);
                     trc.left = rc.right + 3;
@@ -2683,6 +2694,7 @@ static void CLCPaint_InternalPaintRowItems(HWND hwnd, HDC hdcMem, struct ClcData
 
                     rc.left = rc.right + 6 + text_size.cx;
                     rc.right = free_row_rc.right;
+                    //if (!g_bLayered)
                     DrawEdge(hdcMem,&rc,BDR_SUNKENOUTER,BF_RECT);
                     SkinEngine_SetRectOpaque(hdcMem,&rc);
                     break;
@@ -2741,7 +2753,7 @@ static void CLCPaint_InternalPaintRowItems(HWND hwnd, HDC hdcMem, struct ClcData
 
                     // Update free
 
-                    if (/*!g_CluiData.fLayered &&*/dat->exStyle&CLS_EX_LINEWITHGROUPS)
+                    if (/*!g_bLayered &&*/dat->exStyle&CLS_EX_LINEWITHGROUPS)
                     {
 
                         //	free_row_rc.right -= text_rc.right - text_rc.left;
@@ -2904,7 +2916,6 @@ static void CLCPaint_InternalPaintClc(HWND hwnd,struct ClcData *dat,HDC hdc,RECT
     DWORD currentCounter;
 
     //log0("+++ CLCPaint_InternalPaintClc +++");
-	g_CluiData.t_now = time(NULL);
     if (!IsWindowVisible(hwnd)) return;
     if(dat->greyoutFlags&pcli->pfnClcStatusToPf2(status) || style&WS_DISABLED) grey=1;
     else if(GetFocus()!=hwnd && dat->greyoutFlags&GREYF_UNFOCUS) grey=1;
@@ -2915,18 +2926,18 @@ static void CLCPaint_InternalPaintClc(HWND hwnd,struct ClcData *dat,HDC hdc,RECT
         dat->m_paintCouter++;
     currentCounter= dat->m_paintCouter;
     y=-dat->yScroll;
-    if (grey && (!g_CluiData.fLayered))
+    if (grey && (!g_bLayered))
     {
         hdcMem2=CreateCompatibleDC(hdc);
         hBmpOsb2=SkinEngine_CreateDIB32(clRect.right,clRect.bottom);//,1,GetDeviceCaps(hdc,BITSPIXEL),NULL);
         oldbmp2=(HBITMAP)  SelectObject(hdcMem2,hBmpOsb2);
     }
-    if (!(NotInMain || dat->force_in_dialog || !g_CluiData.fLayered ||grey))
+    if (!(NotInMain || dat->force_in_dialog || !g_bLayered ||grey))
         hdcMem=hdc;
     else
         hdcMem=CreateCompatibleDC(hdc);
     hdcMemOldFont=GetCurrentObject(hdcMem,OBJ_FONT);
-    if (NotInMain || dat->force_in_dialog || !g_CluiData.fLayered || grey)
+    if (NotInMain || dat->force_in_dialog || !g_bLayered || grey)
     {
         hBmpOsb=SkinEngine_CreateDIB32(clRect.right,clRect.bottom);//,1,GetDeviceCaps(hdc,BITSPIXEL),NULL);
         oldbmp=(HBITMAP)  SelectObject(hdcMem,hBmpOsb);
@@ -2952,7 +2963,7 @@ static void CLCPaint_InternalPaintClc(HWND hwnd,struct ClcData *dat,HDC hdc,RECT
     }
     else
     {
-        if (!g_CluiData.fLayered)
+        if (!g_bLayered)
             SkinEngine_BltBackImage(hwnd,grey?hdcMem2:hdcMem,rcPaint);
         SkinDrawGlyph(hdcMem,&clRect,rcPaint,"CL,ID=Background");
     }
@@ -3247,7 +3258,7 @@ static void CLCPaint_InternalPaintClc(HWND hwnd,struct ClcData *dat,HDC hdc,RECT
     }
     if(!grey)
     {
-        if (NotInMain || dat->force_in_dialog || !g_CluiData.fLayered)
+        if (NotInMain || dat->force_in_dialog || !g_bLayered)
         {
             BitBlt(hdc,rcPaint->left,rcPaint->top,rcPaint->right-rcPaint->left,rcPaint->bottom-rcPaint->top,hdcMem,rcPaint->left,rcPaint->top,SRCCOPY);
         }
@@ -3256,7 +3267,7 @@ static void CLCPaint_InternalPaintClc(HWND hwnd,struct ClcData *dat,HDC hdc,RECT
     if(grey && hdc && hdc!=hdcMem)
     {
         BLENDFUNCTION bf={AC_SRC_OVER, 0, 80, AC_SRC_ALPHA };
-        BOOL a=(grey && (!g_CluiData.fLayered));
+        BOOL a=(grey && (!g_bLayered));
         SkinEngine_AlphaBlend(a?hdcMem2:hdc,rcPaint->left,rcPaint->top,rcPaint->right-rcPaint->left,rcPaint->bottom-rcPaint->top,hdcMem,rcPaint->left,rcPaint->top,rcPaint->right-rcPaint->left,rcPaint->bottom-rcPaint->top,bf);
         if (a)
             BitBlt(hdc,rcPaint->left,rcPaint->top,rcPaint->right-rcPaint->left,rcPaint->bottom-rcPaint->top,hdcMem2,rcPaint->left,rcPaint->top,SRCCOPY);
@@ -3267,13 +3278,13 @@ static void CLCPaint_InternalPaintClc(HWND hwnd,struct ClcData *dat,HDC hdc,RECT
     if (old_stretch_mode != HALFTONE)
         SetStretchBltMode(hdcMem, old_stretch_mode);
     SelectObject(hdcMem,hdcMemOldFont);
-    if (NotInMain || dat->force_in_dialog || !g_CluiData.fLayered ||grey)
+    if (NotInMain || dat->force_in_dialog || !g_bLayered ||grey)
     {
         SelectObject(hdcMem,oldbmp);
         DeleteObject(hBmpOsb);
         mod_DeleteDC(hdcMem);
     }
-    if (grey && (!g_CluiData.fLayered))
+    if (grey && (!g_bLayered))
     {
         SelectObject(hdcMem2,oldbmp2);
         DeleteObject(hBmpOsb2);
@@ -3293,7 +3304,7 @@ void CLCPaint_cliPaintClc(HWND hwnd,struct ClcData *dat,HDC hdc,RECT *rcPaint)
         return;
     }
     if (MirandaExiting()) return;
-    g_CluiData.mutexPaintLock++;
+    g_mutex_nPaintLock++;
     CLCPaint_InternalPaintClc(hwnd,dat,hdc,rcPaint);
-    g_CluiData.mutexPaintLock--;
+    g_mutex_nPaintLock--;
 }

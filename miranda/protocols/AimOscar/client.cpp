@@ -193,37 +193,19 @@ int aim_set_caps(HANDLE hServerConn,unsigned short &seqno)
 	if (!DBGetContactSetting(NULL, AIM_PROTOCOL_NAME, AIM_KEY_PR, &dbv))
 	{
 		profile_buf=strip_linebreaks(dbv.pszVal);
-		buf=new char[SNAC_SIZE+TLV_HEADER_SIZE*3+AIM_CAPS_LENGTH*50+lstrlen(AIM_MSG_TYPE)+lstrlen(profile_buf)];
+		buf=new char[SNAC_SIZE+TLV_HEADER_SIZE*3+AIM_CAPS_LENGTH*7+lstrlen(AIM_MSG_TYPE)+lstrlen(profile_buf)];
 		DBFreeVariant(&dbv);
 	}
 	else
 	{
-		buf=new char[SNAC_SIZE+TLV_HEADER_SIZE*3+AIM_CAPS_LENGTH*50+lstrlen(AIM_MSG_TYPE)];
+		buf=new char[SNAC_SIZE+TLV_HEADER_SIZE*3+AIM_CAPS_LENGTH*7+lstrlen(AIM_MSG_TYPE)];
 	}
-	char temp[AIM_CAPS_LENGTH*50];
-	memcpy(temp,AIM_CAP_ICHAT,AIM_CAPS_LENGTH);
-	//memcpy(&temp[AIM_CAPS_LENGTH*i++],AIM_CAP_UNKNOWN3,AIM_CAPS_LENGTH);
-	//memcpy(&temp[AIM_CAPS_LENGTH*i++],AIM_CAP_UNKNOWNA,AIM_CAPS_LENGTH);
-	//memcpy(&temp[AIM_CAPS_LENGTH*i++],AIM_CAP_UNKNOWNB,AIM_CAPS_LENGTH);
-	//memcpy(&temp[AIM_CAPS_LENGTH*i++],AIM_CAP_VOICE_CHAT,AIM_CAPS_LENGTH);
-	//memcpy(&temp[AIM_CAPS_LENGTH*i++],AIM_CAP_DIRECT_PLAY,AIM_CAPS_LENGTH);
-	memcpy(&temp[AIM_CAPS_LENGTH*i++],AIM_CAP_SEND_FILES,AIM_CAPS_LENGTH);
-	//memcpy(&temp[AIM_CAPS_LENGTH*i++],AIM_CAP_ROUTER_FIND,AIM_CAPS_LENGTH);
-	//memcpy(&temp[AIM_CAPS_LENGTH*i++],AIM_CAP_DIRECT_IM,AIM_CAPS_LENGTH);
-	//memcpy(&temp[AIM_CAPS_LENGTH*i++],AIM_CAP_AVATARS,AIM_CAPS_LENGTH);
-	//memcpy(&temp[AIM_CAPS_LENGTH*i++],AIM_CAP_ADDINS,AIM_CAPS_LENGTH);
+	char temp[AIM_CAPS_LENGTH*7];
+	memcpy(temp,AIM_CAP_ICQ_SUPPORT,AIM_CAPS_LENGTH);
 	memcpy(&temp[AIM_CAPS_LENGTH*i++],AIM_CAP_RECEIVE_FILES,AIM_CAPS_LENGTH);
-	//memcpy(&temp[AIM_CAPS_LENGTH*i++],AIM_CAP_CHANNEL_TWO,AIM_CAPS_LENGTH);
-	//memcpy(&temp[AIM_CAPS_LENGTH*i++],AIM_CAP_GAMES,AIM_CAPS_LENGTH);
-	//memcpy(&temp[AIM_CAPS_LENGTH*i++],AIM_CAP_LIST_TRANSFER,AIM_CAPS_LENGTH);
-	memcpy(&temp[AIM_CAPS_LENGTH*i++],AIM_CAP_ICQ_SUPPORT,AIM_CAPS_LENGTH);
+	memcpy(&temp[AIM_CAPS_LENGTH*i++],AIM_CAP_SEND_FILES,AIM_CAPS_LENGTH);
+	memcpy(&temp[AIM_CAPS_LENGTH*i++],AIM_CAP_ICHAT,AIM_CAPS_LENGTH);
 	memcpy(&temp[AIM_CAPS_LENGTH*i++],AIM_CAP_UTF8,AIM_CAPS_LENGTH);
-	//memcpy(&temp[AIM_CAPS_LENGTH*i++],AIM_CAP_UNKNOWN4,AIM_CAPS_LENGTH);
-	//memcpy(&temp[AIM_CAPS_LENGTH*i++],AIM_CAP_UNKNOWN1,AIM_CAPS_LENGTH);
-	//memcpy(&temp[AIM_CAPS_LENGTH*i++],AIM_CAP_UNKNOWNC,AIM_CAPS_LENGTH);
-	//memcpy(&temp[AIM_CAPS_LENGTH*i++],AIM_CAP_CHAT,AIM_CAPS_LENGTH);
-	//memcpy(&temp[AIM_CAPS_LENGTH*i++],AIM_CAP_IM2,AIM_CAPS_LENGTH);
-	//memcpy(&temp[AIM_CAPS_LENGTH*i++],AIM_CAP_TRILLIAN,AIM_CAPS_LENGTH);
 	memcpy(&temp[AIM_CAPS_LENGTH*i++],AIM_CAP_MIRANDA,AIM_CAPS_LENGTH);
 	if(DBGetContactSettingByte(NULL, AIM_PROTOCOL_NAME, AIM_KEY_HF, 0))
 		memcpy(&temp[AIM_CAPS_LENGTH*i++],AIM_CAP_HIPTOP,AIM_CAPS_LENGTH);
@@ -1051,47 +1033,3 @@ int aim_request_mail(HANDLE hServerConn,unsigned short &seqno)
 	else
 		return 0;
 }
-int aim_request_avatar(HANDLE hServerConn,unsigned short &seqno,char* sn, char* hash)
-{
-	unsigned short offset=0;
-	char sn_length=(char)strlen(sn);
-	char* buf= new char[SNAC_SIZE+sn_length+22];
-	aim_writesnac(0x10,0x04,6,offset,buf);
-	aim_writegeneric(1,&sn_length,offset,buf);
-	aim_writegeneric(sn_length,sn,offset,buf);
-	aim_writegeneric(5,"\x01\0\x01\0\x10",offset,buf);
-	aim_writegeneric(16,hash,offset,buf);
-	if(aim_sendflap(hServerConn,0x02,offset,buf,seqno)==0)
-	{
-		delete[] buf;
-		return 1;
-	}
-	else
-	{
-		delete[] buf;
-		return 0;
-	}
-}
-/* See icq server relaying for retrieving client away message: http://forums.miranda-im.org/showpost.php?p=73099&postcount=939
-int aim_request_crap(HANDLE hServerConn,int &seqno)
-{
-	int offset=0;
-	char buf[SNAC_SIZE*50];
-	aim_writesnac(0x04,0x06,0x06,offset,buf);
-	char sn[]="snaphatvirgil";
-	aim_writegeneric(10,"\x69\xe8\x89\x44\xcf\0\0\0\0\x02",offset,buf);
-	char sn_len=strlen(sn);
-	aim_writegeneric(1,&sn_len,offset,buf);
-	aim_writegeneric(sn_len,sn,offset,buf);
-	aim_writegeneric(6,"\0\x05\0\x5e\0\0",offset,buf);
-	aim_writegeneric(16,"\x69\xe8\x89\x44\xcf\0\0\0\x09\x46\x13\x49\x4c\x7f\x11\xd1",offset,buf);
-	aim_writegeneric(16,"\x82\x22\x44\x45\x53\x54\0\0\0\x0a\0\x02\0\x01\0\x0f",offset,buf);
-	aim_writegeneric(16,"\0\0\x27\x11\0\x36\x1b\0\x08\0\0\0\0\0\0\0",offset,buf);
-	aim_writegeneric(16,"\0\0\0\0\0\0\0\0\0\0\0\0\x03\0\0\0",offset,buf);
-	aim_writegeneric(16,"\x04\x0d\0\x0e\0\x0d\0\0\0\0\0\0\0\0\0\0",offset,buf);
-	aim_writegeneric(12,"\0\0\0\xe8\x03\x01\0\0\x01\x01\0\0",offset,buf);
-	if(aim_sendflap(hServerConn,0x02,offset,buf,seqno)==0)
-		return 1;
-	else
-		return 0;
-}*/

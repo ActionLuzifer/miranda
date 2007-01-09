@@ -59,22 +59,6 @@ Note: For secure connections this plugin requires OpenSSL DLL
 
 5. History
 ----------
-0.0.4.0: 2006-10-23
- - Fix: Messages always have NOW timestamps unless they are OFFLINE.
-   Online messages won't be shifted in the order even user has clockskew.
-0.0.3.9: 2006-07-29
- - Configuration was put into tabs
- - Fix: Some of the configuration items were not triggering [Apply] properly.
-0.0.3.8: 2006-06-26
- - Fix: It seems that GG servers now properly handle initial status for GG.
-   This should fix issue of being detected by Inwigilator when connecting with
-   invisible status. (Spotted and fixed thanks to piopawlu)
- - Fix: New libgadu version 2006.06.21 with fixed some memory leaks
- - Fix: GG now handles PS_SETAWAYMSG without previously called PS_SETSTATUS.
-   This should fix issue with Watrack that couldn't set the status message
-   for GG protocol. (Spotted and fixed thanks to mruweq)
- - Fix: We were reading from freed variable after new account registration 
- - Fix: Possible crash when closing debug version
 0.0.3.7: 2005-12-19
  - Image sending and receiving now uses ImgDecoder if present for PNG images
  - Fix: String fix for error dialogs' titles

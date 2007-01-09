@@ -182,12 +182,6 @@
 #define IDI_ICON5                       455
 #define IDI_CHAT                        455
 #define IDI_LISTENING_TO                456
-//have to be sequenced
-#define IDI_FAVORITE_0                  500
-#define IDI_FAVORITE_1                  501
-#define IDI_FAVORITE_2                  502
-#define IDI_FAVORITE_3                  503
-//
 #define IDC_RESETPROTOCOLDATA           1000
 #define IDC_SAVE                        1001
 #define IDC_DEFBKCOLOR                  1001
@@ -754,9 +748,6 @@
 #define IDC_SC_STATIC                   1768
 #define IDC_COMBO_SAME                  1768
 #define IDC_TRANSPARENTOVERLAY          1768
-#define IDC_IDC_MULTI_COUNT             1771
-#define IDC_MULTI_COUNT                 1771
-#define IDC_MULTI_SPIN                  1772
 #define IDC_EDIT_FILENAME               1773
 #define IDC_EDIT_FILENAME2              1774
 #define IDC_EDIT_SKIN_FILENAME          1774
@@ -915,8 +906,6 @@
 #define IDC_CONTUP                      1969
 #define IDC_BUTTON3                     1970
 #define IDC_CONTDOWN                    1970
-#define IDC_MULTI                       2000
-#define IDC_MULTI_2                     2001
 #define IDC_CLSORT1                     6666
 #define IDC_CLSORT2                     6667
 #define IDC_CLSORT3                     6668
@@ -952,33 +941,6 @@
 #define IDC_EFFECT_COLOUR_SPIN2         11806
 #define IDC_LEFTMARGIN2                 12931
 #define IDC_LEFTMARGINSPIN4             12981
-#define IDD_OPT_VIEWMODES               19100
-#define IDC_VIEWMODES                   19102
-#define IDC_PROTOCOLS                   19103
-#define IDC_ADDVIEWMODE                 19104
-#define IDC_DELETEVIEWMODE              19105
-#define IDC_NEWVIEMODE                  19106
-#define IDC_GROUPS                      19107
-#define IDC_STATUSMODES                 19108
-#define IDC_CLIST                       19109
-#define IDC_CLEARALL                    19110
-#define IDC_PROTOGROUPOP                19111
-#define IDC_GROUPSTATUSOP               19112
-#define IDC_STATIC14                    19113
-#define IDC_AUTOCLEAR                   19114
-#define IDC_AUTOCLEARVAL                19115
-#define IDC_AUTOCLEARSPIN               19116
-#define IDC_STATIC15                    19117
-#define IDC_STATIC16                    19118
-#define IDC_CURVIEWMODE2                19119
-#define IDC_LASTMSG                     19120
-#define IDC_LASTMESSAGEOP               19121
-#define IDC_LASTMSGVALUE                19122
-#define IDC_LASTMESSAGEUNIT             19123
-#define IDC_STATIC1                     19124
-#define IDC_RESETMODES                  19125
-#define IDC_SELECTMODE                  19126
-#define IDC_CONFIGUREMODES              19127
 #define IDI_SEARCHALL                   32548
 #define ID_ICQ_EXIT                     40001
 #define IDM_COPY                        40001
@@ -1010,9 +972,9 @@
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        461
+#define _APS_NEXT_RESOURCE_VALUE        456
 #define _APS_NEXT_COMMAND_VALUE         40020
-#define _APS_NEXT_CONTROL_VALUE         2002
+#define _APS_NEXT_CONTROL_VALUE         2000
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

@@ -89,7 +89,7 @@ void StatusUpdaterThread(HWND hwndDlg)
 	}
 }
 
-int GetProtocolVisibility(const char* ProtoName)
+int GetProtocolVisibility(char * ProtoName)
 {
 	int i;
 	int res=0;

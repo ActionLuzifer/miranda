@@ -30,68 +30,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "msn_md5.h"
 #include "uxtheme.h"
 
-#include "m_icolib.h"
-
 #define STYLE_DEFAULTBGCOLOUR     RGB(173,206,247)
-
-/////////////////////////////////////////////////////////////////////////////////////////
-// Icons init
-
-struct
-{
-	char* szDescr;
-	char* szName;
-	int   defIconID;
-}
-static iconList[] =
-{
-	{	"Protocol icon",          "main",        IDI_MSN        },
-	{	"Hotmail Inbox",          "inbox",       IDI_INBOX      },
-	{	"Profile",                "profile",     IDI_PROFILE    },
-	{	"MSN Services",           "services",    IDI_SERVICES   },
-	{	"Set Avatar",             "avatar",      IDI_AVATAR     },
-	{	"Block user",             "block",       IDI_MSNBLOCK   },
-	{	"Invite to chat",         "invite",      IDI_INVITE     },
-	{	"Start Netmeeting",       "netmeeting",  IDI_NETMEETING },
-	{	"Contact list",           "list_fl",     IDI_LIST_FL    },
-	{	"Allowed list",           "list_al",     IDI_LIST_AL    },
-	{	"Blocked list",           "list_bl",     IDI_LIST_BL    },
-	{	"Relative list",          "list_rl",     IDI_LIST_RL    }
-};
-
-void MsnInitIcons( void )
-{
-	char szFile[MAX_PATH];
-	GetModuleFileNameA(hInst, szFile, MAX_PATH);
-
-	SKINICONDESC sid = {0};
-	sid.cbSize = sizeof(SKINICONDESC);
-	sid.pszDefaultFile = szFile;
-	sid.cx = sid.cy = 16;
-	sid.pszSection = Translate( msnProtocolName );
-
-	for ( int i = 0; i < SIZEOF(iconList); i++ ) {
-		char szSettingName[100];
-		mir_snprintf( szSettingName, sizeof( szSettingName ), "%s_%s", msnProtocolName, iconList[i].szName );
-		sid.pszName = szSettingName;
-		sid.pszDescription = Translate( iconList[i].szDescr );
-		sid.iDefaultIndex = -iconList[i].defIconID;
-		CallService(MS_SKIN2_ADDICON, 0, (LPARAM)&sid);
-}	}
-
-HICON __stdcall LoadIconEx( const char* name )
-{
-	char szSettingName[100];
-	mir_snprintf( szSettingName, sizeof( szSettingName ), "%s_%s", msnProtocolName, name );
-	return ( HICON )MSN_CallService( MS_SKIN2_GETICON, 0, (LPARAM)szSettingName );
-}
-
-void __stdcall ReleaseIconEx( const char* name )
-{
-	char szSettingName[100];
-	mir_snprintf( szSettingName, sizeof( szSettingName ), "%s_%s", msnProtocolName, name );
-	MSN_CallService( MS_SKIN2_RELEASEICON, 0, (LPARAM)szSettingName );
-}
 
 /////////////////////////////////////////////////////////////////////////////////////////
 // External data declarations
@@ -102,6 +41,20 @@ extern char *rru;
 static BOOL (WINAPI *pfnEnableThemeDialogTexture)(HANDLE, DWORD) = 0;
 
 BOOL CALLBACK DlgProcMsnServLists(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam);
+
+static void __cdecl sttUploadGroups( void* )
+{
+	HANDLE hContact = ( HANDLE )MSN_CallService( MS_DB_CONTACT_FINDFIRST, 0, 0 );
+	while ( hContact != NULL ) {
+		if ( !lstrcmpA( msnProtocolName, ( char* )MSN_CallService( MS_PROTO_GETCONTACTBASEPROTO, ( WPARAM )hContact,0 ))) {
+			DBVARIANT dbv;
+			if ( !DBGetContactSettingStringUtf( hContact, "CList", "Group", &dbv )) {
+				MSN_MoveContactToGroup( hContact, dbv.pszVal );
+				MSN_FreeVariant( &dbv );
+		}	}
+
+		hContact = ( HANDLE )MSN_CallService( MS_DB_CONTACT_FINDNEXT,( WPARAM )hContact, 0 );
+}	}
 
 /////////////////////////////////////////////////////////////////////////////////////////
 // MSN Options dialog procedure
@@ -136,7 +89,7 @@ static BOOL CALLBACK DlgProcMsnOpts(HWND hwndDlg, UINT msg, WPARAM wParam, LPARA
 		CheckDlgButton( hwndDlg, IDC_SENDFONTINFO,      MSN_GetByte( "SendFontInfo", 1 ));
 		CheckDlgButton( hwndDlg, IDC_USE_OWN_NICKNAME,  MSN_GetByte( "NeverUpdateNickname", 0 ));
 		CheckDlgButton( hwndDlg, IDC_AWAY_AS_BRB,       MSN_GetByte( "AwayAsBrb", 0 ));
-		CheckDlgButton( hwndDlg, IDC_MANAGEGROUPS,      MSN_GetByte( "ManageServer", 1 ));
+		CheckDlgButton( hwndDlg, IDC_MANAGEGROUPS,      MSN_GetByte( "ManageServer", 0 ));
 
 		int tValue = MSN_GetByte( "RunMailerOnHotmail", 0 );
 		CheckDlgButton( hwndDlg, IDC_RUN_APP_ON_HOTMAIL, tValue );
@@ -192,7 +145,7 @@ static BOOL CALLBACK DlgProcMsnOpts(HWND hwndDlg, UINT msg, WPARAM wParam, LPARA
 					if ( IDYES == MessageBox( hwndDlg,
 											TranslateT( "Server groups import may change your contact list layout after next login. Do you want to upload your groups to the server?" ),
 											TranslateT( "MSN Protocol" ), MB_YESNOCANCEL ))
-						MSN_UploadServerGroups( NULL );
+						(new ThreadData())->startThread( sttUploadGroups );
 				goto LBL_Apply;
 
 			case IDC_RUN_APP_ON_HOTMAIL: {
@@ -684,7 +637,7 @@ void __stdcall LoadOptions()
 	MyOptions.DisableMenu = MSN_GetByte( "DisableSetNickname", FALSE );
 	MyOptions.EnableAvatars = MSN_GetByte( "EnableAvatars", TRUE );
 	MyOptions.KeepConnectionAlive = MSN_GetByte( "KeepAlive", FALSE );
-	MyOptions.ManageServer = MSN_GetByte( "ManageServer", TRUE );
+	MyOptions.ManageServer = MSN_GetByte( "ManageServer", FALSE );
 	MyOptions.PopupTimeoutHotmail = MSN_GetDword( NULL, "PopupTimeout", 3 );
 	MyOptions.PopupTimeoutOther = MSN_GetDword( NULL, "PopupTimeoutOther", MyOptions.PopupTimeoutHotmail );
 	MyOptions.ShowErrorsAsPopups = MSN_GetByte( "ShowErrorsAsPopups", FALSE );
@@ -711,13 +664,15 @@ DWORD WINAPI MsnShowMailThread( LPVOID )
 		return 0;
 
 	MSN_CallService( MS_DB_CRYPT_DECODESTRING, strlen( dbv.pszVal )+1, ( LPARAM )dbv.pszVal );
+	char* passwd = ( char* )alloca( strlen( dbv.pszVal )*3 );
+	UrlEncode( dbv.pszVal, passwd, strlen( dbv.pszVal )*3 );
+	MSN_FreeVariant( &dbv );
 
 	// for hotmail access
 	int tm = time(NULL) - sl;
 
 	char hippy[ 2048 ];
-	long challen = mir_snprintf( hippy, sizeof( hippy ), "%s%lu%s", MSPAuth, tm, dbv.pszVal );
-	MSN_FreeVariant( &dbv );
+	long challen = mir_snprintf( hippy, sizeof( hippy ), "%s%lu%s", MSPAuth, tm, passwd );
 
 	//Digest it
 	unsigned char digest[16];
@@ -733,10 +688,10 @@ DWORD WINAPI MsnShowMailThread( LPVOID )
 
 		mir_snprintf(hippy, sizeof(hippy), 
 			"%s&auth=%s&creds=%08x%08x%08x%08x&sl=%d&username=%s&mode=ttl"
-			"&sid=%s&id=%s&rru=%s&svc=mail&js=yes",
+			"&sid=%s&id=2&rru=%s&svc=mail&js=yes",
 			passport, MSPAuth, htonl(*(PDWORD)(digest+0)),htonl(*(PDWORD)(digest+4)),
 			htonl(*(PDWORD)(digest+8)),htonl(*(PDWORD)(digest+12)),
-			tm, email, sid, urlId, rruenc); 
+			tm, email, sid, rruenc); 
 	}
 	else
 		strcpy( hippy, "http://go.msn.com/0/1" );

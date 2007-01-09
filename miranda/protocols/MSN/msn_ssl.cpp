@@ -23,56 +23,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "msn_global.h"
 
-static const char defaultPassportUrl[] = "https://login.live.com/RST.srf";
-
-static const char authPacket[] =
-"<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
-"<Envelope xmlns=\"http://schemas.xmlsoap.org/soap/envelope/\""
-		" xmlns:wsse=\"http://schemas.xmlsoap.org/ws/2003/06/secext\"" 
-		" xmlns:saml=\"urn:oasis:names:tc:SAML:1.0:assertion\"" 
-		" xmlns:wsp=\"http://schemas.xmlsoap.org/ws/2002/12/policy\"" 
-		" xmlns:wsu=\"http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd\"" 
-		" xmlns:wsa=\"http://schemas.xmlsoap.org/ws/2004/03/addressing\"" 
-		" xmlns:wssc=\"http://schemas.xmlsoap.org/ws/2004/04/sc\"" 
-		" xmlns:wst=\"http://schemas.xmlsoap.org/ws/2004/04/trust\">"
-	"<Header>"
-		"<ps:AuthInfo xmlns:ps=\"http://schemas.microsoft.com/Passport/SoapServices/PPCRL\" Id=\"PPAuthInfo\">"
-			"<ps:HostingApp>{7108E71A-9926-4FCB-BCC9-9A9D3F32E423}</ps:HostingApp>"
-			"<ps:BinaryVersion>3</ps:BinaryVersion>"
-			"<ps:UIVersion>1</ps:UIVersion>"
-			"<ps:Cookies></ps:Cookies>"
-			"<ps:RequestParams>AQAAAAIAAABsYwQAAAAxMDMz</ps:RequestParams>"
-		"</ps:AuthInfo>"
-		"<wsse:Security>"
-			"<wsse:UsernameToken Id=\"user\">"
-				"<wsse:Username>%s</wsse:Username>"
-				"<wsse:Password>%s</wsse:Password>"
-			"</wsse:UsernameToken>"
-		"</wsse:Security>"
-	"</Header>"
-	"<Body>"
-		"<ps:RequestMultipleSecurityTokens xmlns:ps=\"http://schemas.microsoft.com/Passport/SoapServices/PPCRL\" Id=\"RSTS\">"
-			"<wst:RequestSecurityToken Id=\"RST0\">"
-				"<wst:RequestType>http://schemas.xmlsoap.org/ws/2004/04/security/trust/Issue</wst:RequestType>"
-				"<wsp:AppliesTo>"
-					"<wsa:EndpointReference>"
-						"<wsa:Address>http://Passport.NET/tb</wsa:Address>"
-					"</wsa:EndpointReference>"
-				"</wsp:AppliesTo>"
-			"</wst:RequestSecurityToken>"
-			"<wst:RequestSecurityToken Id=\"RST1\">"
-				"<wst:RequestType>http://schemas.xmlsoap.org/ws/2004/04/security/trust/Issue</wst:RequestType>"
-				"<wsp:AppliesTo>"
-					"<wsa:EndpointReference>"
-						"<wsa:Address>messenger.msn.com</wsa:Address>"
-					"</wsa:EndpointReference>"
-				"</wsp:AppliesTo>"
-				"<wsse:PolicyReference URI=\"?%s\"></wsse:PolicyReference>"
-			"</wst:RequestSecurityToken>"
-		"</ps:RequestMultipleSecurityTokens>"
-	"</Body>"
-"</Envelope>";
-
 /////////////////////////////////////////////////////////////////////////////////////////
 // Basic SSL operation class
 
@@ -100,6 +50,7 @@ typedef BOOL  ( WINAPI *ft_InternetCloseHandle )( HINTERNET );
 typedef DWORD ( WINAPI *ft_InternetErrorDlg )( HWND, HINTERNET, DWORD, DWORD, LPVOID* );
 typedef BOOL  ( WINAPI *ft_InternetSetOption )( HINTERNET, DWORD, LPVOID, DWORD );
 typedef BOOL  ( WINAPI *ft_InternetReadFile )( HINTERNET, LPVOID, DWORD, LPDWORD );
+typedef BOOL  ( WINAPI *ft_HttpAddRequestHeaders )( HINTERNET, LPCSTR, DWORD, DWORD );
 
 typedef HINTERNET ( WINAPI *ft_HttpOpenRequest )( HINTERNET, LPCSTR, LPCSTR, LPCSTR, LPCSTR, LPCSTR*, DWORD, DWORD );
 typedef HINTERNET ( WINAPI *ft_InternetConnect )( HINTERNET, LPCSTR, INTERNET_PORT, LPCSTR, LPCSTR, DWORD, DWORD, DWORD );
@@ -127,6 +78,7 @@ struct SSL_WinInet : public SSL_Base
 	ft_HttpOpenRequest     f_HttpOpenRequest;
 	ft_HttpQueryInfo       f_HttpQueryInfo;
 	ft_HttpSendRequest     f_HttpSendRequest;
+	ft_HttpAddRequestHeaders f_HttpAddRequestHeaders;
 };
 
 /////////////////////////////////////////////////////////////////////////////////////////
@@ -145,6 +97,7 @@ int SSL_WinInet::init()
 	f_HttpOpenRequest = (ft_HttpOpenRequest)GetProcAddress( m_dll, "HttpOpenRequestA" );
 	f_HttpQueryInfo = (ft_HttpQueryInfo)GetProcAddress( m_dll, "HttpQueryInfoA" );
 	f_HttpSendRequest = (ft_HttpSendRequest)GetProcAddress( m_dll, "HttpSendRequestA" );
+	f_HttpAddRequestHeaders = (ft_HttpAddRequestHeaders)GetProcAddress( m_dll, "HttpAddRequestHeadersA" );
 	return 0;
 }
 
@@ -223,12 +176,11 @@ char* SSL_WinInet::getSslResult( char* parUrl, char* parAuthInfo )
 			mir_snprintf( tBuffer, SSL_BUF_SIZE, "https=http://%s:%d http=http://%s:%d", 
 				szProxy, tPortNumber, szProxy, tPortNumber );
 
-			tNetHandle = f_InternetOpen( MSN_USER_AGENT, INTERNET_OPEN_TYPE_PROXY, tBuffer, NULL, 0 );
+			tNetHandle = f_InternetOpen( "MSMSGS", INTERNET_OPEN_TYPE_PROXY, tBuffer, NULL, 0 );
 		}
-		else tNetHandle = f_InternetOpen( MSN_USER_AGENT, INTERNET_OPEN_TYPE_PRECONFIG, NULL, NULL, 0 );
+		else tNetHandle = f_InternetOpen( "MSMSGS", INTERNET_OPEN_TYPE_PRECONFIG, NULL, NULL, 0 );
 	}
-	else 
-		tNetHandle = f_InternetOpen( MSN_USER_AGENT, INTERNET_OPEN_TYPE_DIRECT, NULL, NULL, 0 );
+	else tNetHandle = f_InternetOpen( "MSMSGS", INTERNET_OPEN_TYPE_DIRECT, NULL, NULL, 0 );
 
 	if ( tNetHandle == NULL ) {
 		MSN_DebugLog( "InternetOpen() failed" );
@@ -264,11 +216,12 @@ char* SSL_WinInet::getSslResult( char* parUrl, char* parAuthInfo )
 	HINTERNET tUrlHandle = f_InternetConnect( tNetHandle, parUrl, INTERNET_DEFAULT_HTTPS_PORT, "", "", INTERNET_SERVICE_HTTP, 0, 0 );
 	if ( tUrlHandle != NULL ) 
 	{
-		HINTERNET tRequest = f_HttpOpenRequest( tUrlHandle, "POST", tObjectName, NULL, NULL, NULL, tFlags, NULL );
+		HINTERNET tRequest = f_HttpOpenRequest( tUrlHandle, "GET", tObjectName, 
+			parAuthInfo ? NULL: HTTP_VERSIONA, NULL, NULL, tFlags, NULL );
 		if ( tRequest != NULL ) {
 			DWORD tBufSize;
 
-			unsigned tm = 6000;
+			unsigned tm = 3000;
 			f_InternetSetOption( tRequest, INTERNET_OPTION_CONNECT_TIMEOUT, &tm, sizeof(tm));
 			f_InternetSetOption( tRequest, INTERNET_OPTION_SEND_TIMEOUT, &tm, sizeof(tm));
 			f_InternetSetOption( tRequest, INTERNET_OPTION_RECEIVE_TIMEOUT, &tm, sizeof(tm));
@@ -276,12 +229,11 @@ char* SSL_WinInet::getSslResult( char* parUrl, char* parAuthInfo )
 		if ( MyOptions.UseProxy && MSN_GetByte( "NLUseProxyAuth", 0  ))
 			applyProxy( tRequest );
 
-		static const char headers[] =  "Accept: txt/*\r\n";
-//		static const char headers[] =  "Accept: txt/*\r\nConnection: close\r\n";
+			char cclose[] =  "Connection: close";
+			f_HttpAddRequestHeaders(tRequest, cclose, strlen(cclose), HTTP_ADDREQ_FLAG_ADD );
 LBL_Restart:
 			MSN_DebugLog( "Sending request..." );
-//			MSN_DebugLog( parAuthInfo );
-			DWORD tErrorCode = f_HttpSendRequest( tRequest, headers, strlen(headers), parAuthInfo, strlen( parAuthInfo ));
+			DWORD tErrorCode = f_HttpSendRequest( tRequest, parAuthInfo, DWORD(-1), NULL, 0 );
 			if ( tErrorCode == 0 ) {
 				TWinErrorCode errCode;
 				MSN_DebugLog( "HttpSendRequest() failed with error %ld", errCode.mErrorCode );
@@ -299,23 +251,18 @@ LBL_Restart:
 
 				switch( dwCode ) {
 				case HTTP_STATUS_REDIRECT:
+					tBufSize = SSL_BUF_SIZE;
+					f_HttpQueryInfo( tRequest, HTTP_QUERY_LOCATION, tBuffer, &tBufSize, NULL );
+					MSN_DebugLog( "Redirected to '%s'", tBuffer );
+					tSslAnswer = getSslResult( tBuffer, parAuthInfo );
+					break;
+
 				case HTTP_STATUS_OK:
-					{
-						tBufSize = SSL_BUF_SIZE;
-						f_HttpQueryInfo( tRequest, HTTP_QUERY_RAW_HEADERS_CRLF, tBuffer, &tBufSize, NULL );
-
-						DWORD dwSize = 0, dwOffset = tBufSize;
-						do {
-							f_InternetReadFile( tRequest, tBuffer+dwOffset, SSL_BUF_SIZE - dwOffset, &dwSize);
-							dwOffset += dwSize;
-						}
-						while (dwSize != 0);
-						tBuffer[dwOffset] = 0;
-
-						tSslAnswer = mir_strdup( tBuffer );
-						MSN_DebugLog( "SSL response:" );
-						MSN_CallService( MS_NETLIB_LOG, ( WPARAM )hNetlibUser, ( LPARAM )tBuffer );
-					}
+				LBL_PrintHeaders:
+					tBufSize = SSL_BUF_SIZE;
+					f_HttpQueryInfo( tRequest, HTTP_QUERY_RAW_HEADERS_CRLF, tBuffer, &tBufSize, NULL );
+					MSN_DebugLog( "SSL response: '%s'", tBuffer );
+					tSslAnswer = dwCode == HTTP_STATUS_OK ? mir_strdup( tBuffer ) : NULL;
 					break;
 
 				case ERROR_INTERNET_HTTP_TO_HTTPS_ON_REDIR:
@@ -342,11 +289,7 @@ LBL_Restart:
 
 					MSN_ShowError( "Internet secure connection (SSL) failed with error %d: %s", dwCode, tBuffer );
 					MSN_DebugLog( "SSL error %d: '%s'", dwCode, tBuffer );
-
-					tBufSize = SSL_BUF_SIZE;
-					f_HttpQueryInfo( tRequest, HTTP_QUERY_RAW_HEADERS_CRLF, tBuffer, &tBufSize, NULL );
-					MSN_DebugLog( "SSL response: '%s'", tBuffer );
-					tSslAnswer = NULL;
+					goto LBL_PrintHeaders;
 			}	}
 
 			f_InternetCloseHandle( tRequest );
@@ -380,7 +323,7 @@ struct SSL_OpenSsl : public SSL_Base
 
 	static	HMODULE hLibSSL, hLibEAY;
 	static	PFN_SSL_int_void            pfn_SSL_library_init;
-	static	PFN_SSL_pvoid_void          pfn_TLSv1_client_method;
+	static	PFN_SSL_pvoid_void          pfn_SSLv23_client_method;
 	static	PFN_SSL_pvoid_pvoid         pfn_SSL_CTX_new;
 	static	PFN_SSL_void_pvoid          pfn_SSL_CTX_free;
 	static	PFN_SSL_pvoid_pvoid         pfn_SSL_new;
@@ -399,7 +342,7 @@ HMODULE	SSL_OpenSsl::hLibSSL = NULL,
 			SSL_OpenSsl::hLibEAY = NULL;
 
 PFN_SSL_int_void            SSL_OpenSsl::pfn_SSL_library_init;
-PFN_SSL_pvoid_void          SSL_OpenSsl::pfn_TLSv1_client_method;
+PFN_SSL_pvoid_void          SSL_OpenSsl::pfn_SSLv23_client_method;
 PFN_SSL_pvoid_pvoid         SSL_OpenSsl::pfn_SSL_CTX_new;
 PFN_SSL_void_pvoid          SSL_OpenSsl::pfn_SSL_CTX_free;
 PFN_SSL_pvoid_pvoid         SSL_OpenSsl::pfn_SSL_new;
@@ -428,7 +371,7 @@ int SSL_OpenSsl::init()
 	int retVal = 0;
 	if (( pfn_SSL_library_init = ( PFN_SSL_int_void )GetProcAddress( hLibSSL, "SSL_library_init" )) == NULL )
 		retVal = TRUE;
-	if (( pfn_TLSv1_client_method = ( PFN_SSL_pvoid_void )GetProcAddress( hLibSSL, "TLSv1_client_method" )) == NULL )
+	if (( pfn_SSLv23_client_method = ( PFN_SSL_pvoid_void )GetProcAddress( hLibSSL, "SSLv23_client_method" )) == NULL )
 		retVal = TRUE;
 	if (( pfn_SSL_CTX_new = ( PFN_SSL_pvoid_pvoid )GetProcAddress( hLibSSL, "SSL_CTX_new" )) == NULL )
 		retVal = TRUE;
@@ -454,7 +397,7 @@ int SSL_OpenSsl::init()
 	}
 
 	pfn_SSL_library_init();
-	sslCtx = pfn_SSL_CTX_new( pfn_TLSv1_client_method());
+	sslCtx = pfn_SSL_CTX_new( pfn_SSLv23_client_method());
 	MSN_DebugLog( "OpenSSL context successully allocated" );
 	return 0;
 }
@@ -479,7 +422,7 @@ char* SSL_OpenSsl::getSslResult( char* parUrl, char* parAuthInfo )
 	MSN_CallService(MS_NETLIB_GETUSERSETTINGS,WPARAM(hNetlibUser),LPARAM(&nls));
 	int cpType = nls.proxyType;
 
-	if (nls.useProxy && cpType == PROXYTYPE_HTTP)
+	if (cpType == PROXYTYPE_HTTP)
 	{
 		nls.proxyType = PROXYTYPE_HTTPS;
 		nls.szProxyServer = NEWSTR_ALLOCA(nls.szProxyServer);
@@ -496,7 +439,7 @@ char* SSL_OpenSsl::getSslResult( char* parUrl, char* parAuthInfo )
 	tConn.wPort = 443;
 	HANDLE h = ( HANDLE )MSN_CallService( MS_NETLIB_OPENCONNECTION, ( WPARAM )hNetlibUser, ( LPARAM )&tConn );
 	
-	if (nls.useProxy && cpType == PROXYTYPE_HTTP)
+	if (cpType == PROXYTYPE_HTTP)
 	{
 		nls.proxyType = PROXYTYPE_HTTP;
 		nls.szProxyServer = NEWSTR_ALLOCA(nls.szProxyServer);
@@ -522,32 +465,30 @@ char* SSL_OpenSsl::getSslResult( char* parUrl, char* parAuthInfo )
 				char *buf = ( char* )alloca( SSL_BUF_SIZE );
 
 				int nBytes = mir_snprintf( buf, SSL_BUF_SIZE,
-					"POST /%s HTTP/1.1\r\n"
-					"Accept: text/*\r\n"
-					"User-Agent: %s\r\n"
-					"Content-Length: %u\r\n"
+					"GET /%s HTTP/1.1\r\n"
+					"Accept: */*\r\n"
+					"Accept-Language: en;q=0.5\r\n"
+					"User-Agent: Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1; SV1; .NET CLR 1.1.4322)\r\n"
 					"Host: %s\r\n"
-					"Connection: close\r\n"
-					"Cache-Control: no-cache\r\n\r\n%s", path, MSN_USER_AGENT, strlen( parAuthInfo ), url+8, parAuthInfo );
+					"Connection: Keep-Alive\r\n", path, url+8 );
+
+				if ( parAuthInfo != NULL ) {
+					strcat( buf+nBytes, parAuthInfo );
+					strcat( buf+nBytes, "\r\n" );
+				}
+
+				strcat( buf+nBytes, "\r\n" );
 
 //				MSN_DebugLog( "Sending SSL query:\n%s", buf );
 				pfn_SSL_write( ssl, buf, strlen( buf ));
 
-				nBytes = 0;
-				unsigned dwSize;
-				do {
-					dwSize = pfn_SSL_read( ssl, buf+nBytes, SSL_BUF_SIZE );
-					nBytes += dwSize;
-				}
-				while (dwSize != 0);
-				buf[nBytes] = 0;
-
+				nBytes = pfn_SSL_read( ssl, buf, SSL_BUF_SIZE );
 				if ( nBytes > 0 ) {
 					result = ( char* )mir_alloc( nBytes+1 );
 					memcpy( result, buf, nBytes+1 );
+					result[ nBytes ] = 0;
 
-					MSN_DebugLog( "SSL read successfully read %d bytes:", nBytes );
-					MSN_CallService( MS_NETLIB_LOG, ( WPARAM )hNetlibUser, ( LPARAM )result );
+					MSN_DebugLog( "SSL read successfully read %d bytes:\n%s", nBytes, result );
 				}
 				else MSN_DebugLog( "SSL read failed" );
 			}
@@ -561,6 +502,52 @@ char* SSL_OpenSsl::getSslResult( char* parUrl, char* parAuthInfo )
 
 	MSN_CallService( MS_NETLIB_CLOSEHANDLE, ( WPARAM )h, 0 );
 	return result;
+}
+
+/////////////////////////////////////////////////////////////////////////////////////////
+// Checks the MSN Passport redirector site
+
+int MSN_CheckRedirector()
+{
+	int retVal = 0;
+	SSL_Base* pAgent;
+	if ( MSN_GetByte( "UseOpenSSL", 0 ))
+		pAgent = new SSL_OpenSsl();
+	else
+		pAgent = new SSL_WinInet();
+	if ( pAgent == NULL )
+		return 1;
+
+	if ( pAgent->init() ) {
+		delete pAgent;
+		return 2;
+	}
+
+	char* msnLoginHost = pAgent->getSslResult( "https://nexus.passport.com/rdr/pprdr.asp", NULL );
+	if ( msnLoginHost == NULL ) {
+		retVal = 1;
+LBL_Exit:
+		delete pAgent;
+		MSN_DebugLog( "MSN_CheckRedirector exited with errorCode = %d", retVal );
+		return retVal;
+	}
+
+	char* p = strstr( msnLoginHost, "DALogin=" );
+	if ( p == NULL ) {
+		mir_free( msnLoginHost ); msnLoginHost = NULL;
+		retVal = 2;
+		goto LBL_Exit;
+	}
+
+	strcpy( msnLoginHost, "https://" );
+	strdel( msnLoginHost+8, int( p-msnLoginHost ));
+	if (( p = strchr( msnLoginHost, ',' )) != 0 )
+		*p = 0;
+
+	MSN_SetString( NULL, "MsnPassportHost", msnLoginHost );
+	MSN_DebugLog( "MSN Passport login host is set to '%s'", msnLoginHost );
+	mir_free( msnLoginHost );
+	goto LBL_Exit;
 }
 
 
@@ -584,95 +571,84 @@ int MSN_GetPassportAuth( char* authChallengeInfo, char*& parResult )
 		return 2;
 	}
 
+	char tEmail[ MSN_MAX_EMAIL_LEN ];
+	strcpy( tEmail, MyOptions.szEmail );
+	char* p = strchr( tEmail, '@' );
+	if ( p != NULL ) {
+		memmove( p+3, p+1, strlen( p ));
+		memcpy( p, "%40", 3 );
+	}
+
 	char szPassword[ 100 ];
-	MSN_GetStaticString( "Password", NULL, szPassword, sizeof( szPassword ));
+	MSN_GetStaticString( "Password", NULL, szPassword, sizeof szPassword );
 	MSN_CallService( MS_DB_CRYPT_DECODESTRING, strlen( szPassword )+1, ( LPARAM )szPassword );
 	szPassword[ 16 ] = 0;
-	char* szEncPassword = HtmlEncode(szPassword);
 
-	// Replace ',' with '&' 
-	char *p = authChallengeInfo;
-	while( *p != 0 ) {
-		if ( *p == ',' ) *p = '&';
-		++p;
-	}
-	char* szEncAuthInfo = HtmlEncode(authChallengeInfo);
-
-	char* szAuthInfo = ( char* )alloca( 3072 );
-	int nBytes = mir_snprintf( szAuthInfo, 3072, authPacket, MyOptions.szEmail, szEncPassword, szEncAuthInfo );
-
-	mir_free( szEncAuthInfo );
-	mir_free( szEncPassword );
+	char* szAuthInfo = ( char* )alloca( 1024 );
+	int nBytes = mir_snprintf( szAuthInfo, 1024,
+		"Authorization: Passport1.4 OrgVerb=GET,OrgURL=http%%3A%%2F%%2Fmessenger%%2Emsn%%2Ecom,sign-in=%s,pwd=",
+		tEmail );
+	UrlEncode( szPassword, szAuthInfo+nBytes, 1024-nBytes );
+	strcat( szAuthInfo+nBytes, "," );
+	strcat( szAuthInfo+nBytes, authChallengeInfo );
 
 	char szPassportHost[ 256 ];
-	if ( MSN_GetStaticString( "MsnPassportHost", NULL, szPassportHost, sizeof( szPassportHost )) ||
-		 strstr( szPassportHost, "/RST.srf" ) == NULL )
-		strcpy( szPassportHost, defaultPassportUrl );
+	if ( MSN_GetStaticString( "MsnPassportHost", NULL, szPassportHost, sizeof( szPassportHost ))) {
+		retVal = 3;
+LBL_Exit:
+		delete pAgent;
+		MSN_DebugLog( "MSN_CheckRedirector exited with errorCode = %d", retVal );
+		return retVal;
+	}
 
-	bool defaultUrlAllow = strcmp( szPassportHost, defaultPassportUrl ) != 0;
-	char *tResult = NULL;
+	char* tResult;
 
 	for (;;)
 	{
-		mir_free( tResult );
 		tResult = pAgent->getSslResult( szPassportHost, szAuthInfo );
 		if ( tResult == NULL ) {
-			if ( defaultUrlAllow ) {
-				strcpy( szPassportHost, defaultPassportUrl );
-				defaultUrlAllow = false;
-				continue;
-			}
-			else {
-				retVal = 4;
-				break;
-		}	}
+			retVal = 4;
+			goto LBL_Exit;
+		}
 
 		int status = 0;
 		sscanf( tResult, "HTTP/1.1 %d", &status );
 		if ( status == 302 ) // Handle redirect
 		{
-			if (txtParseParam(tResult, NULL, "Location:", "\r", szPassportHost, sizeof(szPassportHost))) 
-				MSN_DebugLog( "Redirected to '%s'", szPassportHost );
-			else break;
-		}
-		else if (status == 200) 
-		{
-			if (txtParseParam(tResult, NULL, "<psf:redirectUrl>", "<", szPassportHost, sizeof(szPassportHost))) 
-				MSN_DebugLog( "Redirected to '%s'", szPassportHost );
-			else break;
-		}
-		else
-		{
-			if ( defaultUrlAllow ) {
-				strcpy( szPassportHost, defaultPassportUrl );
-				defaultUrlAllow = false;
+			if (( p = strstr( tResult, "Location:" )) == NULL )	{
+				mir_free( tResult );
+				retVal = 7;
+				goto LBL_Exit;
 			}
-			else {
-				retVal = 6;
-				break;
-	}	}	}
-
-	if ( retVal == 0 ) 	{
-		if ( txtParseParam( tResult, "<wsse:BinarySecurityToken", ">", "<", tResult, strlen( tResult ))) {
-			HtmlDecode( tResult );
-			MSN_SetString( NULL, "MsnPassportHost", szPassportHost );
-			parResult = tResult;
+			strdel( tResult, int( p-tResult )+10 );
+			if (( p = strchr( tResult, '\r' )) != NULL )
+				*p = 0;
+			strcpy(szPassportHost, tResult);
+			MSN_DebugLog( "Redirected to '%s'", tResult );
+			mir_free( tResult );
 		}
-		else
-			retVal = strstr( tResult, "wsse:FailedAuthentication" ) ? 3 : 5;
+		else if (status != 200) 
+		{
+			retVal = 6;
+			mir_free( tResult );
+			goto LBL_Exit;
+		}
+		else break;
 	}
 
-	if ( retVal != 0 ) {
+	if (( p = strstr( tResult, "from-PP=" )) == NULL )	{
 		mir_free( tResult );
-		MSN_ShowError( retVal == 3 ? "Your username or password is incorrect" : 
-			"Unable to contact MS Passport servers check proxy/firewall settings" );
-		MSN_SendBroadcast( NULL, ACKTYPE_LOGIN, ACKRESULT_FAILED, NULL, LOGINERR_WRONGPASSWORD );
+		retVal = 5;
+		goto LBL_Exit;
 	}
 
-	MSN_DebugLog( "MSN_CheckRedirector exited with errorCode = %d", retVal );
+	strdel( tResult, int( p-tResult )+9 );
 
-	delete pAgent;
-	return retVal;
+	if (( p = strchr( tResult, '\'' )) != NULL )
+		*p = 0;
+
+	parResult = tResult;
+	goto LBL_Exit;
 }
 
 void UninitSsl( void )

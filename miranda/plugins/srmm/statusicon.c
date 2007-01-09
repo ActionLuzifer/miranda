@@ -32,7 +32,7 @@ int AddStatusIcon(WPARAM wParam, LPARAM lParam) {
 }
 
 int RemoveStatusIcon(WPARAM wParam, LPARAM lParam) {
-	StatusIconData *sid = (StatusIconData *)lParam;
+	StatusIconData *sid = (StatusIconData *)lParam;	
 	struct StatusIconListNode *current = status_icon_list, *prev = 0;
 
 	while(current) {
@@ -78,8 +78,8 @@ void RemoveAllStatusIcons(void) {
 
 int ModifyStatusIcon(WPARAM wParam, LPARAM lParam) {
 	HANDLE hContact = (HANDLE)wParam;
-
-	StatusIconData *sid = (StatusIconData *)lParam;
+	
+	StatusIconData *sid = (StatusIconData *)lParam;	
 	struct StatusIconListNode *current = status_icon_list, *prev = 0;
 
 	while(current) {
@@ -104,7 +104,7 @@ int ModifyStatusIcon(WPARAM wParam, LPARAM lParam) {
 				char buff[256];
 				HWND hwnd;
 				sprintf(buff, "SRMMStatusIconFlags%d", sid->dwId);
-				DBWriteContactSettingByte(hContact, sid->szModule, buff, (BYTE)sid->flags);
+				DBWriteContactSettingByte(hContact, sid->szModule, buff, sid->flags);
 				if (hwnd = WindowList_Find(g_dat->hMessageWindowList, hContact)) {
 					PostMessage(hwnd, DM_STATUSICONCHANGE, 0, 0);
 				}
@@ -156,7 +156,6 @@ void CheckIconClick(HANDLE hContact, HWND hwndFrom, POINT pt, RECT r, int gap, i
 
 	if(current) {
 		sicd.cbSize = sizeof(StatusIconClickData);
-		ClientToScreen(hwndFrom, &pt);
 		sicd.clickLocation = pt;
 		sicd.dwId = current->sid.dwId;
 		sicd.szModule = current->sid.szModule;
@@ -182,20 +181,4 @@ int DeinitStatusIcons() {
 	for(i = 0; i < 3; i++) DestroyServiceFunction(hServiceIcon[i]);
 	RemoveAllStatusIcons();
 	return 0;
-}
-
-int GetStatusIconsCount(HANDLE hContact) {
-	char buff[256];
-	int count = 0;
-	int flags;
-	struct StatusIconListNode *current = status_icon_list;
-	while(current) {
-		sprintf(buff, "SRMMStatusIconFlags%d", (int)current->sid.dwId);
-		flags = DBGetContactSettingByte(hContact, current->sid.szModule, buff, current->sid.flags);
-		if(!(flags & MBF_HIDDEN)) {
-			count ++;
-		}
-		current = current->next;
-	}
-	return count;
 }
