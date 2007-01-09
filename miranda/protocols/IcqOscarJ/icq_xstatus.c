@@ -86,11 +86,8 @@ static DWORD requestXStatusDetails(HANDLE hContact, BOOL bAllowDelay)
 
   rr.hContact = hContact;
   rr.bType = RIT_XSTATUS_REQUEST;
-  rr.nRequestType = 0x101; // request
+  rr.rate_group = 0x101; // request
   rr.nMinDelay = 1000;    // delay at least 1s
-  EnterCriticalSection(&ratesMutex);
-  rr.wGroup = ratesGroupFromSNAC(gRates, ICQ_MSG_FAMILY, ICQ_MSG_SRV_SEND);
-  LeaveCriticalSection(&ratesMutex);
 
   if (!handleRateItem(&rr, bAllowDelay))
     return sendXStatusDetailsRequest(hContact, !bAllowDelay);
@@ -165,7 +162,7 @@ HICON GetXStatusIcon(int bStatus, UINT flags)
     HICON icon;
 
     null_snprintf(szTemp, sizeof(szTemp), "xstatus%d", bStatus - 1);
-    icon = IconLibGetIcon(szTemp);
+    icon = IconLibProcess(NULL, szTemp);
 
     if (flags & LR_SHARED)
       return icon;

@@ -2,8 +2,8 @@
 
 Miranda IM: the free IM client for Microsoft* Windows*
 
-Copyright 2000-2006 Miranda ICQ/IM project,
-all portions of this codebase are copyrighted to the people
+Copyright 2000-2007 Miranda ICQ/IM project, 
+all portions of this codebase are copyrighted to the people 
 listed in contributors.txt.
 
 This program is free software; you can redistribute it and/or
@@ -31,7 +31,7 @@ static VOID CALLBACK TrayCycleTimerProc(HWND hwnd, UINT message, UINT idEvent, D
 void fnTrayIconUpdateBase(const char *szChangedProto);
 
 extern HIMAGELIST hCListImages;
-extern int currentStatusMenuItem;
+extern int currentStatusMenuItem, currentDesiredStatusMode;
 extern BOOL(WINAPI * MySetProcessWorkingSetSize) (HANDLE, SIZE_T, SIZE_T);
 
 static UINT WM_TASKBARCREATED;
@@ -271,7 +271,7 @@ static int TrayIconUpdate(HICON hNewIcon, const TCHAR *szNewTip, const char *szP
 	int i;
 
 	nid.cbSize = ( dviShell.dwMajorVersion >= 5 ) ? sizeof(nid) : NOTIFYICONDATA_V1_SIZE;
-	nid.hWnd = cli.hwndContactList;
+	nid.hWnd = (HWND) CallService(MS_CLUI_GETHWND, 0, 0);
 	nid.uFlags = NIF_ICON | NIF_TIP;
 	nid.hIcon = hNewIcon;
 
@@ -358,7 +358,7 @@ void fnTrayIconUpdateBase(const char *szChangedProto)
 	int i, count, netProtoCount, changed = -1;
 	PROTOCOLDESCRIPTOR **protos;
 	int averageMode = 0;
-	HWND hwnd = cli.hwndContactList;
+	HWND hwnd = (HWND) CallService(MS_CLUI_GETHWND, 0, 0);
 
 	if (cycleTimerId) {
 		KillTimer(NULL, cycleTimerId);
@@ -458,8 +458,9 @@ void fnTrayIconSetToBase(char *szPreferredProto)
 
 void fnTrayIconIconsChanged(void)
 {
-	TrayIconDestroy(cli.hwndContactList);
-	TrayIconInit(cli.hwndContactList);
+	HWND hwnd = (HWND) CallService(MS_CLUI_GETHWND, 0, 0);
+	TrayIconDestroy(hwnd);
+	TrayIconInit(hwnd);
 }
 
 static int autoHideTimerId;
@@ -467,7 +468,7 @@ static VOID CALLBACK TrayIconAutoHideTimer(HWND hwnd, UINT message, UINT idEvent
 {
 	HWND hwndClui;
 	KillTimer(hwnd, idEvent);
-	hwndClui = cli.hwndContactList;
+	hwndClui = (HWND) CallService(MS_CLUI_GETHWND, 0, 0);
 	if (GetActiveWindow() == hwndClui)
 		return;
 	ShowWindow(hwndClui, SW_HIDE);
@@ -478,7 +479,7 @@ static VOID CALLBACK TrayIconAutoHideTimer(HWND hwnd, UINT message, UINT idEvent
 int fnTrayIconPauseAutoHide(WPARAM wParam, LPARAM lParam)
 {
 	if (DBGetContactSettingByte(NULL, "CList", "AutoHide", SETTING_AUTOHIDE_DEFAULT)) {
-		if ( GetActiveWindow() != cli.hwndContactList ) {
+		if (GetActiveWindow() != (HWND) CallService(MS_CLUI_GETHWND, 0, 0)) {
 			KillTimer(NULL, autoHideTimerId);
 			autoHideTimerId = SetTimer(NULL, 0, 1000 * DBGetContactSettingWord(NULL, "CList", "HideTime", SETTING_HIDETIME_DEFAULT), TrayIconAutoHideTimer);
 		}
@@ -569,7 +570,7 @@ int fnCListTrayNotify(MIRANDASYSTRAYNOTIFY *msn)
 		if (trayIcon) {
 			NOTIFYICONDATAA nid = { 0 };
 			nid.cbSize = ( dviShell.dwMajorVersion >= 5 ) ? sizeof(nid) : NOTIFYICONDATAA_V1_SIZE;
-			nid.hWnd = cli.hwndContactList;
+			nid.hWnd = (HWND) CallService(MS_CLUI_GETHWND, 0, 0);
 			if (msn->szProto) {
 				int j;
 				for (j = 0; j < trayIconCount; j++) {

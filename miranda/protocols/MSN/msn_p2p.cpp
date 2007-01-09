@@ -29,6 +29,12 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <sys/stat.h>
 #include "sha1.h"
 
+struct p2p_threadParams
+{
+	HANDLE s;
+	filetransfer* ft;
+};
+
 static char sttP2Pheader[] =
 	"Content-Type: application/x-msnmsgrp2p\r\n"
 	"P2P-Dest: %s\r\n\r\n";
@@ -260,24 +266,18 @@ static const char sttVoidSession[] = "ACHTUNG!!! an attempt made to send a messa
 
 void __stdcall p2p_sendAck( filetransfer* ft, ThreadData* info, P2P_Header* hdrdata )
 {
-	char* buf = ( char* )alloca( 1000 + MSN_MAX_EMAIL_LEN );
-
 	if ( ft == NULL ) {
-		if ( info->mJoinedCount == 0 )
-			return;
-
-		if ( MSN_GetStaticString( "e-mail", info->mJoinedContacts[0], buf, MSN_MAX_EMAIL_LEN ))
-			return;
+		MSN_DebugLog( sttVoidSession );
+		return;
 	}
-	else
-		sprintf( buf, sttP2Pheader, ft->p2p_dest );
 
-	char* p = buf + strlen( buf );
+	char* buf = ( char* )alloca( 1000 + strlen( ft->p2p_dest ));
+	char* p = buf + sprintf( buf, sttP2Pheader, ft->p2p_dest );
 
 	P2P_Header* tHdr = ( P2P_Header* )p; p += sizeof( P2P_Header );
 	memset( tHdr, 0, sizeof( P2P_Header ));
 	tHdr->mSessionID = hdrdata->mSessionID;
-	tHdr->mID = ft ? ++ft->p2p_msgid : rand();
+	tHdr->mID = ++ft->p2p_msgid;
 	tHdr->mAckDataSize = hdrdata->mTotalSize;
 	tHdr->mTotalSize = hdrdata->mTotalSize;
 	tHdr->mFlags = 2;
@@ -407,12 +407,10 @@ void __stdcall p2p_sendSlp(
 	char* pktStart = p;
 
 	switch ( iKind ) {
-		case -2:  p += sprintf( p, "INVITE MSNMSGR:%s MSNSLP/1.0", ft->p2p_dest ); break;
-		case -1:  p += sprintf( p, "BYE MSNMSGR:%s MSNSLP/1.0", ft->p2p_dest ); break;
 		case 200: p += sprintf( p, "MSNSLP/1.0 200 OK" );	break;
-		case 481: p += sprintf( p, "MSNSLP/1.0 481 No Such Call" ); break;
-		case 500: p += sprintf( p, "MSNSLP/1.0 500 Internal Error" ); break;
 		case 603: p += sprintf( p, "MSNSLP/1.0 603 DECLINE" ); break;
+		case -1:  p += sprintf( p, "BYE MSNMSGR:%s MSNSLP/1.0", ft->p2p_dest ); break;
+		case -2:  p += sprintf( p, "INVITE MSNMSGR:%s MSNSLP/1.0", ft->p2p_dest ); break;
 		default: return;
 	}
 
@@ -431,9 +429,8 @@ void __stdcall p2p_sendSlp(
 	tHdr->mTotalSize = tHdr->mPacketLen = int( p - pktStart );
 
 	switch ( iKind ) {
-		case -1:  ft->p2p_byemsgid  = ft->p2p_msgid; break;
-		case 500: ft->p2p_byemsgid  = ft->p2p_msgid; break;
 		case 603: ft->p2p_byemsgid  = ft->p2p_msgid; break;
+		case -1:  ft->p2p_byemsgid  = ft->p2p_msgid; break;
 	}
 
 	*( DWORD* )p = 0; p += sizeof( DWORD );
@@ -482,25 +479,6 @@ void __stdcall p2p_sendCancel( ThreadData* info, filetransfer* ft )
 {
 	p2p_sendBye(info, ft);
 	p2p_sendEndSession(info, ft);
-}
-
-void __stdcall p2p_sendNoCall( ThreadData* info, filetransfer* ft )
-{
-	if ( ft == NULL ) {
-		MSN_DebugLog( sttVoidSession );
-		return;
-	}
-
-	MimeHeaders tHeaders(5);
-	tHeaders.addString( "CSeq", "0 " );
-	tHeaders.addString( "Call-ID", ft->p2p_callID );
-	tHeaders.addLong( "Max-Forwards", 0 );
-	tHeaders.addString( "Content-Type", "application/x-msnmsgr-session-failure-respbody" );
-
-	char szContents[ 50 ];
-	p2p_sendSlp( info, ft, tHeaders, 481, szContents,
-		mir_snprintf( szContents, sizeof( szContents ), "SessionID: %lu\r\nSChannelState: 0\r\n\r\n%c",
-		ft->p2p_sessionid, 0 ));
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////
@@ -973,11 +951,8 @@ static void sttInitFileTransfer(
 		DBVARIANT dbv;
 		bool pictmatch = !DBGetContactSetting( NULL, msnProtocolName, "PictObject", &dbv );
 		if ( pictmatch ) {
-			char szCtBuf[32], szPtBuf[32]; 
 			UrlDecode(dbv.pszVal);
-			pictmatch &= txtParseParam( szContext,  "SHA1C=", "\"", "\"", szCtBuf, sizeof( szCtBuf ));
-			pictmatch &= txtParseParam( dbv.pszVal, "SHA1C=", "\"", "\"", szPtBuf, sizeof( szPtBuf ));
-			pictmatch = pictmatch && strcmp( szCtBuf, szPtBuf ) == 0;
+			pictmatch = szContext != NULL && strncmp(dbv.pszVal, szContext, strlen( dbv.pszVal )) == 0;
 			MSN_FreeVariant( &dbv );
 		}
 		if ( !pictmatch ) {
@@ -1177,8 +1152,7 @@ static void sttInitDirectTransfer2(
 	MimeHeaders& tFileInfo,
 	MimeHeaders& tFileInfo2 )
 {
-	const char	*szCallID = tFileInfo[ "Call-ID" ];
-	filetransfer* ft = p2p_getSessionByCallID( szCallID );
+	filetransfer* ft = p2p_getSessionByCallID( tFileInfo[ "Call-ID" ] );
 	if ( ft == NULL )
 		return;
 
@@ -1187,53 +1161,26 @@ static void sttInitDirectTransfer2(
 				*szExternalAddress = tFileInfo2[ "IPv4External-Addrs" ],
 				*szExternalPort = tFileInfo2[ "IPv4External-Port" ],
 				*szNonce = tFileInfo2[ "Nonce" ],
-				*szHashedNonce = tFileInfo2[ "Hashed-Nonce" ],
 				*szListening = tFileInfo2[ "Listening" ];
 
-	if (( szNonce == NULL && szHashedNonce == NULL ) || szListening == NULL ) {
-		MSN_DebugLog( "Ignoring invalid invitation: Listening='%s', Nonce=%s", szListening, szNonce );
+	if ( szNonce == NULL || szListening == NULL ) {
+		MSN_DebugLog( "Ignoring invalid invitation: Listening='%s', Nonce=%s", szNonce, szListening );
 		return;
 	}
-
-	directconnection* dc = p2p_getDCByCallID( szCallID );
-	if ( dc == NULL ) {
-		dc = new directconnection( ft );
-		p2p_registerDC( dc );
-	}
-
-	dc->useHashedNonce = szHashedNonce != NULL;
-	mir_free( dc->xNonce );
-	dc->xNonce = mir_strdup( szHashedNonce ? szHashedNonce : szNonce ); 
 
 	MSN_SendBroadcast( ft->std.hContact, ACKTYPE_FILE, ACKRESULT_INITIALISING, ft, 0);
 	p2p_sendAck( ft, info, hdrdata );
 
-
-	if ( !strcmp( szListening, "true" ) && strcmp( dc->xNonce, sttVoidNonce )) {
-		bool extOk = szExternalAddress != NULL && szExternalPort != NULL;
-		bool intOk = szInternalAddress != NULL && szInternalPort != NULL;
-
+	if ( !strcmp( szListening, "true" ) && strcmp( szNonce, sttVoidNonce )) {
 		ThreadData* newThread = new ThreadData;
-
-		char ipaddr[256] = "";
-		MSN_GetMyHostAsString( ipaddr, sizeof( ipaddr ));
-
-		if ( extOk && ( strcmp( szExternalAddress, ipaddr ) || !intOk ))
-			mir_snprintf( newThread->mServer, sizeof( newThread->mServer ), "%s:%s", szExternalAddress, szExternalPort );
-		else if ( intOk )
-			mir_snprintf( newThread->mServer, sizeof( newThread->mServer ), "%s:%s", szInternalAddress, szInternalPort );
-		else {
-			MSN_DebugLog( "Invalid data packet, exiting..." );
-			delete newThread;
-			return;
-		}
-
 		newThread->mType = SERVER_P2P_DIRECT;
 		newThread->mInitialContact = ft->std.hContact;
 
-		strncpy( newThread->mCookie, szCallID, sizeof( newThread->mCookie ));
+		strncpy( newThread->mCookie, szNonce, sizeof( newThread->mCookie ));
+		mir_snprintf( newThread->mServer, sizeof( newThread->mServer ), "%s:%s", szInternalAddress, szInternalPort );
 		newThread->startThread(( pThreadFunc )p2p_fileActiveThread );
 	}
+	else p2p_sendStatus( ft, info, 603 );
 }
 
 static void sttAcceptTransfer(
@@ -1338,7 +1285,8 @@ LBL_Close:
 		}
 
 		directconnection* dc = p2p_getDCByCallID( szCallID );
-		if ( dc == NULL ) return;
+		if ( dc == NULL ) 
+			goto LBL_Close;
 
 		dc->useHashedNonce = szHashedNonce != NULL;
 		dc->xNonce = mir_strdup( szHashedNonce ? szHashedNonce : szNonce ); 
@@ -1360,7 +1308,7 @@ LBL_Close:
 			else {
 				MSN_DebugLog( "Invalid data packet, exiting..." );
 				delete newThread;
-				return;
+				goto LBL_Close;
 			}
 
 			newThread->mType = SERVER_P2P_DIRECT;
@@ -1437,8 +1385,6 @@ void __stdcall p2p_processMsg( ThreadData* info, const char* msgbody )
 		else if ( !memcmp( msgbody, "BYE MSNMSGR:", 12 ))
 			iMsgType = 3;
 		else if ( !memcmp( msgbody, "MSNSLP/1.0 603 ", 15 ))
-			iMsgType = 4;
-		else if ( !memcmp( msgbody, "MSNSLP/1.0 481 ", 15 ))
 			iMsgType = 4;
 		else if ( !memcmp( msgbody, "MSNSLP/1.0 500 ", 15 ))
 			iMsgType = 4;
@@ -1517,8 +1463,6 @@ void __stdcall p2p_processMsg( ThreadData* info, const char* msgbody )
 
 	//---- receiving ack -----------
 	if ( hdrdata->mFlags == 0x02 ) {
-		ft->p2p_waitack = false;
-
 		if ( hdrdata->mAckSessionID == ft->p2p_sendmsgid ) {
 			if ( ft->p2p_appID == 2 ) {
 				ft->bCompleted = true;
@@ -1535,6 +1479,8 @@ void __stdcall p2p_processMsg( ThreadData* info, const char* msgbody )
 			p2p_sessionComplete( ft );
 			return;
 		}
+
+		ft->p2p_waitack = false;
 
 		switch( ft->p2p_ackID ) {
 		case 1000:
@@ -1624,8 +1570,8 @@ void __stdcall p2p_processMsg( ThreadData* info, const char* msgbody )
 					p2p_sendBye( info, ft );
 	}	}	}
 
-	if ( hdrdata->mFlags == 0x40 || hdrdata->mFlags == 0x80 )
-		p2p_unregisterSession( ft );
+//	if ( hdrdata->mFlags == 0x40 || hdrdata->mFlags == 0x80 )
+//		p2p_unregisterSession( ft );
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////
@@ -1682,7 +1628,7 @@ void __stdcall p2p_invite( HANDLE hContact, int iAppID, filetransfer* ft )
 	BYTE* pContext;
 	int   cbContext;
 	char* p;
-	char tBuffer[ 1024 ]; tBuffer[0] = 0;
+	char tBuffer[ 256 ]; tBuffer[0] = 0;
 
 	switch ( iAppID ) {
 	case MSN_APPID_AVATAR:
@@ -1695,10 +1641,6 @@ void __stdcall p2p_invite( HANDLE hContact, int iAppID, filetransfer* ft )
 		p = strstr( tBuffer, "Size=\"" );
 		if ( p != NULL )
 			ft->std.totalBytes = ft->std.currentFileSize = atol( p + 6 );
-
-		p = strstr( tBuffer, "SHA1C=\"" );
-		if ( p != NULL ) p = strchr( p+7, '\"' );
-		if ( p != NULL ) strcpy(p+1, "/>");
 
 		if ( ft->create() == -1 ) {
 			MSN_DebugLog( "Avatar creation failed for MSNCTX=\'%s\'", tBuffer );

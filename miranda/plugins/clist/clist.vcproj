@@ -3,10 +3,10 @@
 	ProjectType="Visual C++"
 	Version="7.10"
 	Name="clist"
-	SccProjectName="&quot;$/Miranda/miranda/plugins/clist&quot;, SKIAAAAA"
-	SccAuxPath=""
-	SccLocalPath="."
-	SccProvider="MSSCCI:Microsoft Visual SourceSafe">
+	SccProjectName="SAK"
+	SccAuxPath="SAK"
+	SccLocalPath="SAK"
+	SccProvider="SAK">
 	<Platforms>
 		<Platform
 			Name="Win32"/>
@@ -334,6 +334,9 @@
 			</File>
 			<File
 				RelativePath=".\clcpaint.c">
+			</File>
+			<File
+				RelativePath=".\clistmenus.c">
 			</File>
 			<File
 				RelativePath="clistopts.c">

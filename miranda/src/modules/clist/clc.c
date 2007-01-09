@@ -2,7 +2,7 @@
 
 Miranda IM: the free IM client for Microsoft* Windows*
 
-Copyright 2000-2006 Miranda ICQ/IM project,
+Copyright 2000-2007 Miranda ICQ/IM project,
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
 
@@ -25,14 +25,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "../database/dblists.h"
 
 #define NEWSTR_ALLOCA(A) (A==NULL)?NULL:strcpy((char*)alloca(strlen(A)+1),A)
-
-int InitGenMenu( void );
-int UnitGenMenu( void );
-
-int InitCustomMenus( void );
-int UninitCustomMenus( void );
-
-void MTG_OnmodulesLoad( void );
 
 static HANDLE hClcWindowList;
 static HANDLE hShowInfoTipEvent;
@@ -135,8 +127,6 @@ static int ClcModulesLoaded(WPARAM wParam, LPARAM lParam)
 		cli.clcProto[cli.hClcProtoCount].dwStatus = ID_STATUS_OFFLINE;
 		cli.hClcProtoCount++;
 	}
-
-	MTG_OnmodulesLoad();
 	return 0;
 }
 
@@ -202,8 +192,6 @@ static int ClcShutdown(WPARAM wParam, LPARAM lParam)
 	if (cli.clcProto) mir_free(cli.clcProto);
 	FreeFileDropping();
 	FreeDisplayNameCache();
-	UnitGenMenu();
-	UninitCustomMenus();
 	return 0;
 }
 
@@ -234,8 +222,6 @@ int LoadCLCModule(void)
 	HookEvent(ME_SKIN_ICONSCHANGED, ClcIconsChanged);
 	hAckHook = (HANDLE) HookEvent(ME_PROTO_ACK, ClcProtoAck);
 	HookEvent(ME_SYSTEM_SHUTDOWN, ClcShutdown);
-
-	InitCustomMenus();
 	return 0;
 }
 

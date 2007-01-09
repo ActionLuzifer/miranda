@@ -57,7 +57,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <m_protosvc.h>
 #include <m_skin.h>
 #include <m_system.h>
-#include <m_system_cpp.h>
 #include <m_userinfo.h>
 #include <m_utils.h>
 #include <win2k.h>
@@ -165,7 +164,6 @@ WCHAR*   __stdcall   HtmlEncodeW( const WCHAR* str );
 #else
 	#define  HtmlEncodeT HtmlEncode
 #endif
-bool txtParseParam (char* szData, char* presearch, char* start, char* finish, char* param, int size);
 
 void		__stdcall	UrlDecode( char*str );
 void		__stdcall	UrlEncode( const char* src, char* dest, int cbDest );
@@ -237,11 +235,6 @@ TCHAR* UnEscapeChatTags(TCHAR* str_in);
 VOID		CALLBACK MSNMainTimerProc( HWND hwnd, UINT uMsg, UINT idEvent, DWORD dwTime );
 LRESULT	CALLBACK NullWindowProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
 DWORD		WINAPI	MsnShowMailThread( LPVOID );
-
-HICON    __stdcall   LoadIconEx( const char* );
-void     __stdcall   ReleaseIconEx( const char* );
-void     MsnInitIcons( void );
-void     MsnInitMenus( void );
 
 int IsWinver( void );
 
@@ -521,9 +514,6 @@ directconnection* __stdcall p2p_getDCByCallID( const char* CallID );
 
 void ft_startFileSend( ThreadData* info, const char* Invcommand, const char* Invcookie );
 
-void MSN_ChatStart(ThreadData* info);
-void MSN_KillChatSession(TCHAR* id);
-
 /////////////////////////////////////////////////////////////////////////////////////////
 //	Message queue
 
@@ -572,19 +562,16 @@ void		__stdcall Lists_Wipe( void );
 //	MSN server groups
 
 bool   MSN_AddGroup( const char* pName, const char* pId );
-void   MSN_AddServerGroup( const char* pszGroupName, HANDLE hContact );
+void   MSN_AddServerGroup( const char* pszGroupName );
 void   MSN_DeleteGroup( const char* pId );
-void   MSN_FreeGroups( void );
+void	 MSN_FreeGroups( void );
 LPCSTR MSN_GetGroupById( const char* pId );
 LPCSTR MSN_GetGroupByName( const char* pName );
 LPCSTR MSN_GetGroupByNumber( int pNumber );
 void   MSN_MoveContactToGroup( HANDLE hContact, const char* grpName );
-void   MSN_RemoveEmptyGroups( void );
 void   MSN_RenameServerGroup( int iNumber, LPCSTR szId, const char* newName );
 void   MSN_SetGroupName( const char* pId, const char* pName );
 void   MSN_SetGroupNumber( const char* pId, int pNumber );
-void   MSN_SyncContactToServerGroup( HANDLE hContact, char* userId, char* groupId );
-void   MSN_UploadServerGroups( char* group );
 
 /////////////////////////////////////////////////////////////////////////////////////////
 //	MSN plugin options
@@ -665,7 +652,6 @@ extern	char*	      mailsoundname;
 extern	char*       sid;
 extern	char*       kv;
 extern	char*       passport;
-extern	char*       urlId;
 extern	char*       MSPAuth;
 
 extern	HANDLE		hNetlibUser;
@@ -673,6 +659,8 @@ extern	HINSTANCE	hInst;
 extern	int			msnOtherContactsBlocked;
 
 extern	bool			msnHaveChatDll;
+
+extern	HANDLE		hGroupAddEvent;
 
 ///////////////////////////////////////////////////////////////////////////////
 // UTF8 encode helper

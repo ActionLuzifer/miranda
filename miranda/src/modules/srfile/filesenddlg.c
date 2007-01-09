@@ -2,7 +2,7 @@
 
 Miranda IM: the free IM client for Microsoft* Windows*
 
-Copyright 2000-2006 Miranda ICQ/IM project,
+Copyright 2000-2007 Miranda ICQ/IM project,
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
 
@@ -173,7 +173,7 @@ void __cdecl ChooseFilesThread(HWND hwndDlg)
 		ofn.lpstrFilter = filter;
 		ofn.lpstrFile = buf; *buf = 0;
 		ofn.nMaxFile = 32767;
-		ofn.Flags = OFN_NOCHANGEDIR | OFN_FILEMUSTEXIST | OFN_ALLOWMULTISELECT | OFN_EXPLORER | OFN_HIDEREADONLY;
+		ofn.Flags = OFN_FILEMUSTEXIST | OFN_ALLOWMULTISELECT | OFN_EXPLORER | OFN_HIDEREADONLY;
 		if ( GetOpenFileName( &ofn ))
 			PostMessage( hwndDlg, M_FILECHOOSEDONE, 0, ( LPARAM )buf );
 		else {

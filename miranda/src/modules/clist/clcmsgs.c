@@ -2,7 +2,7 @@
 
 Miranda IM: the free IM client for Microsoft* Windows*
 
-Copyright 2000-2006 Miranda ICQ/IM project,
+Copyright 2000-2007 Miranda ICQ/IM project,
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
 
@@ -62,16 +62,16 @@ LRESULT fnProcessExternalMessages(HWND hwnd, struct ClcData *dat, UINT msg, WPAR
 				return (LRESULT) (HANDLE) NULL;
 			group = groupContact->group;
 		}
-		#if defined( _UNICODE )
-			if ( msg == CLM_ADDINFOITEMA )
-			{	WCHAR* wszText = a2u(( char* )cii->pszText );
-				i = cli.pfnAddInfoItemToGroup(group, cii->flags, wszText);
-				mir_free( wszText );
-			}
-			else i = cli.pfnAddInfoItemToGroup(group, cii->flags, cii->pszText);
-		#else
-			i = cli.pfnAddInfoItemToGroup(group, cii->flags, cii->pszText);
-		#endif
+#if defined( _UNICODE )
+		if ( msg == CLM_ADDINFOITEMA )
+		{	WCHAR* wszText = a2u(( char* )cii->pszText );
+			i = cli.pfnAddInfoItemToGroup(group, cii->flags, wszText);
+			mir_free( wszText );
+		}
+		else i = cli.pfnAddInfoItemToGroup(group, cii->flags, cii->pszText);
+#else
+		i = cli.pfnAddInfoItemToGroup(group, cii->flags, cii->pszText);
+#endif
 		cli.pfnRecalcScrollBar(hwnd, dat);
 		return (LRESULT) group->cl.items[i]->hContact | HCONTACT_ISINFO;
 	}

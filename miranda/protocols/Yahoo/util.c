@@ -114,15 +114,8 @@ DWORD __stdcall YAHOO_SetString( HANDLE hContact, const char* valueName, const c
 	return DBWriteContactSettingString( hContact, yahooProtocolName, valueName, parValue );
 }
 
-DWORD __stdcall YAHOO_SetStringUtf( HANDLE hContact, const char* valueName, const char* parValue )
+LRESULT CALLBACK PopupWindowProc( HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam )
 {
-	return DBWriteContactSettingStringUtf( hContact, yahooProtocolName, valueName, parValue );
-}
-
-static int CALLBACK PopupWindowProc( HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam )
-{
-	//YAHOO_DebugLog("[PopupWindowProc] Got Message: %d", message);
-	
 	switch( message ) {
 		case WM_COMMAND:
 				YAHOO_DebugLog("[PopupWindowProc] WM_COMMAND");
@@ -130,7 +123,7 @@ static int CALLBACK PopupWindowProc( HWND hWnd, UINT message, WPARAM wParam, LPA
 					char *szURL = (char *)PUGetPluginData( hWnd );
 					if ( szURL != NULL ) 
 						YahooOpenURL(szURL, 1);
-				
+					
 					PUDeletePopUp( hWnd );
 					return 0;
 				}
@@ -142,15 +135,15 @@ static int CALLBACK PopupWindowProc( HWND hWnd, UINT message, WPARAM wParam, LPA
 			return TRUE;
 
 		case UM_FREEPLUGINDATA: {
-				YAHOO_DebugLog("[PopupWindowProc] UM_FREEPLUGINDATA");
-				{
-					char *szURL = (char *)PUGetPluginData( hWnd );
-					if ( szURL != NULL ) 
-						free(szURL);
-				}
+			char *szURL;
+			YAHOO_DebugLog("[PopupWindowProc] UM_FREEPLUGINDATA");
+
+			szURL = (char *)PUGetPluginData( hWnd );
+			if ( szURL != NULL ) 
+				free(szURL);
 					
-				return TRUE;
-			}
+			return TRUE;
+		}
 	}
 
 	return DefWindowProc(hWnd, message, wParam, lParam);
@@ -172,14 +165,14 @@ int __stdcall	YAHOO_ShowPopup( const char* nickname, const char* msg, const char
 
 	if (szURL != NULL) {
 		if (lstrcmpi(szURL, "http://mail.yahoo.com") == 0) {
-			ppd.lchIcon = LoadIconEx( "mail" );
+			ppd.lchIcon = LoadIcon( hinstance, MAKEINTRESOURCE( IDI_INBOX ));
 		} else {
-			ppd.lchIcon = LoadIconEx( "calendar" );
+			ppd.lchIcon = LoadIcon( hinstance, MAKEINTRESOURCE( IDI_CALENDAR ));
 		}
 		
 		ppd.PluginData =  (void *)strdup( szURL );
 	} else {
-		ppd.lchIcon = LoadIconEx( "yahoo" );
+		ppd.lchIcon = LoadIcon( hinstance, MAKEINTRESOURCE( IDI_MAIN ));
 	}
 	YAHOO_DebugLog("[MS_POPUP_ADDPOPUPEX] Generating a popup for %s", nickname);
 	YAHOO_CallService( MS_POPUP_ADDPOPUPEX, (WPARAM)&ppd, 0 );
@@ -385,33 +378,6 @@ char* __stdcall Utf8EncodeUcs2( const wchar_t* src )
 	}
 
 	return result;
-}
-
-char* __stdcall Utf8EncodeANSI(const char *msg)
-{
-	wchar_t *unicode;
-	int wchars, err;
-	char *ut;
-	
-	wchars = MultiByteToWideChar(CP_ACP, MB_PRECOMPOSED, msg, lstrlen(msg), NULL, 0);
-	
-	if(wchars == 0)
-		return NULL;
-	
-	unicode = calloc(wchars + 1, sizeof(unsigned short));
-	if(unicode == NULL)
-		return NULL;
-	
-	err = MultiByteToWideChar(CP_ACP, MB_PRECOMPOSED, msg, lstrlen(msg), unicode, wchars);
-	if(err != wchars) {
-		free(unicode);
-		return NULL;
-	}
-			
-	ut = Utf8EncodeUcs2(unicode );
-	free(unicode);
-			
-	return ut;
 }
 
 void SetButtonCheck(HWND hwndDlg, int CtrlID, BOOL bCheck)

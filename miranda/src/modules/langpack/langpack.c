@@ -2,7 +2,7 @@
 
 Miranda IM: the free IM client for Microsoft* Windows*
 
-Copyright 2000-2006 Miranda ICQ/IM project, 
+Copyright 2000-2007 Miranda ICQ/IM project, 
 all portions of this codebase are copyrighted to the people 
 listed in contributors.txt.
 
@@ -359,47 +359,4 @@ int LoadLangPackModule(void)
 		LoadLangPack(szLangPack);
 	}
 	return 0;
-}
-
-/////////////////////////////////////////////////////////////////////////////////////////
-// Langpack ANSI <-> UNICODE transformation routines
-
-TCHAR* a2t( const char* str )
-{
-	if ( str == NULL )
-		return NULL;
-
-	#if defined( _UNICODE )
-		return LangPackPcharToTchar( str );
-	#else
-		return mir_strdup( str );
-	#endif
-}
-
-char* u2a( const wchar_t* src )
-{
-	int codepage = LangPackGetDefaultCodePage();
-
-	int cbLen = WideCharToMultiByte( codepage, 0, src, -1, NULL, 0, NULL, NULL );
-	char* result = ( char* )mir_alloc( cbLen+1 );
-	if ( result == NULL )
-		return NULL;
-
-	WideCharToMultiByte( codepage, 0, src, -1, result, cbLen, NULL, NULL );
-	result[ cbLen ] = 0;
-	return result;
-}
-
-wchar_t* a2u( const char* src )
-{
-	int codepage = LangPackGetDefaultCodePage();
-
-	int cbLen = MultiByteToWideChar( codepage, 0, src, -1, NULL, 0 );
-	wchar_t* result = ( wchar_t* )mir_alloc( sizeof( wchar_t )*(cbLen+1));
-	if ( result == NULL )
-		return NULL;
-
-	MultiByteToWideChar( codepage, 0, src, -1, result, cbLen );
-	result[ cbLen ] = 0;
-	return result;
 }

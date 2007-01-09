@@ -332,7 +332,7 @@ int Cache_GetTextThreadProc(void * lpParam)
     __try
     {
         BOOL exit=FALSE;
-		  HWND hwnd=pcli->hwndContactList;
+        HWND hwnd=(HWND)CallService(MS_CLUI_GETHWND,0,0);
         struct SHORTDATA data={0};
         struct SHORTDATA * dat;
         cache_CallProcSync(CLUI_SyncGetShortData,(WPARAM)pcli->hwndContactTree,(LPARAM)&data);       
@@ -979,7 +979,7 @@ void Cache_GetFirstLineText(struct ClcData *dat, struct ClcContact *contact)
 
 void Cache_GetSecondLineText(struct SHORTDATA *dat, PDNCE pdnce)
 {
-    TCHAR Text[240-MAXEXTRACOLUMNS]={0};
+    TCHAR Text[120-MAXEXTRACOLUMNS]={0};
     int type = TEXT_EMPTY;
    
     if (dat->second_line_show)	
@@ -1017,7 +1017,7 @@ void Cache_GetSecondLineText(struct SHORTDATA *dat, PDNCE pdnce)
 */
 void Cache_GetThirdLineText(struct SHORTDATA *dat, PDNCE pdnce)
 {
-    TCHAR Text[240-MAXEXTRACOLUMNS]={0};
+    TCHAR Text[120-MAXEXTRACOLUMNS]={0};
     int type = TEXT_EMPTY;
     if (dat->third_line_show)
         type = Cache_GetLineText(pdnce, dat->third_line_type,(TCHAR*)Text, SIZEOF(Text), dat->third_line_text,
@@ -1290,7 +1290,7 @@ BOOL ReduceAvatarPosition(struct ClcContact *contact, BOOL subcontact, void *par
 
 void Cache_GetAvatar(struct ClcData *dat, struct ClcContact *contact)
 {
-    if (g_CluiData.bSTATE!=STATE_NORMAL
+    if (g_bSTATE!=STATE_NORMAL
         || (dat->use_avatar_service && !ServiceExists(MS_AV_GETAVATARBITMAP)) ) // workaround for avatar service and other wich destroys service on OK_TOEXIT
     {
         contact->avatar_pos = AVATAR_POS_DONT_HAVE;

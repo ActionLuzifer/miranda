@@ -2,7 +2,7 @@
 
 Miranda IM: the free IM client for Microsoft* Windows*
 
-Copyright 2000-2006 Miranda ICQ/IM project,
+Copyright 2000-2007 Miranda ICQ/IM project,
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
 
@@ -142,11 +142,10 @@ int ClcOptInit(WPARAM wParam,LPARAM lParam);
 DWORD GetDefaultExStyle(void);
 void GetFontSetting(int i,LOGFONTA *lf,COLORREF *colour);
 
-//clistmenus.c
-int MenuProcessCommand(WPARAM wParam,LPARAM lParam);
-
 //clistsettings.c
 TCHAR* GetContactDisplayNameW( HANDLE hContact, int mode );
+char* u2a( wchar_t* src );
+wchar_t* a2u( char* src );
 
 //clcfiledrop.c
 void InitFileDropping(void);

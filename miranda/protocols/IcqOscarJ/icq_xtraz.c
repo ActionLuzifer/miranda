@@ -132,10 +132,7 @@ void handleXtrazNotify(DWORD dwUin, DWORD dwMID, DWORD dwMID2, WORD wCookie, cha
                 rr.wCookie = wCookie;
                 rr.szData = szResponse;
                 rr.bThruDC = bThruDC;
-                rr.nRequestType = 0x102;
-                EnterCriticalSection(&ratesMutex);
-                rr.wGroup = ratesGroupFromSNAC(gRates, ICQ_MSG_FAMILY, ICQ_MSG_RESPONSE);
-                LeaveCriticalSection(&ratesMutex);
+                rr.rate_group = 0x102;
                 if (bThruDC || !handleRateItem(&rr, TRUE))
                   SendXtrazNotifyResponse(dwUin, dwMID, dwMID2, wCookie, szResponse, nResponseLen, bThruDC);
               }
@@ -435,7 +432,7 @@ DWORD SendXtrazNotifyRequest(HANDLE hContact, char* szQuery, char* szNotify, int
   dwCookie = AllocateCookie(CKT_MESSAGE, 0, dwUin, (void*)pCookieData);
 
   // have we a open DC, send through that
-  if (gbDCMsgEnabled && IsDirectConnectionOpen(hContact, DIRECTCONN_STANDARD, 0))
+  if (gbDCMsgEnabled && IsDirectConnectionOpen(hContact, DIRECTCONN_STANDARD))
     icq_sendXtrazRequestDirect(dwUin, hContact, dwCookie, szBody, nBodyLen, MTYPE_SCRIPT_NOTIFY);
   else
     icq_sendXtrazRequestServ(dwUin, dwCookie, szBody, nBodyLen, pCookieData);
@@ -462,7 +459,7 @@ void SendXtrazNotifyResponse(DWORD dwUin, DWORD dwMID, DWORD dwMID2, WORD wCooki
   SAFE_FREE(&szResBody);
 
   // Was request received thru DC and have we a open DC, send through that
-  if (bThruDC && IsDirectConnectionOpen(hContact, DIRECTCONN_STANDARD, 0))
+  if (bThruDC && IsDirectConnectionOpen(hContact, DIRECTCONN_STANDARD))
     icq_sendXtrazResponseDirect(dwUin, hContact, wCookie, szBody, nBodyLen, MTYPE_SCRIPT_NOTIFY);
   else
     icq_sendXtrazResponseServ(dwUin, dwMID, dwMID2, wCookie, szBody, nBodyLen, MTYPE_SCRIPT_NOTIFY);

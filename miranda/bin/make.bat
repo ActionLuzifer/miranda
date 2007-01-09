@@ -26,7 +26,7 @@ cd ..\..\miranda\protocols\IcqOscarJ
 nmake /f IcqOscar8.mak CFG="icqoscar8 - Win32 Release"
 if errorlevel 1 goto :Error
 
-cd icons_pack
+cd icon_pack
 nmake /f ICONS.mak CFG="ICONS - Win32 Release"
 if errorlevel 1 goto :Error
 
@@ -70,10 +70,6 @@ cd ..\db3x
 nmake /f db3x.mak CFG="db3x - Win32 Release"
 if errorlevel 1 goto :Error
 
-cd ..\db3x_mmap
-nmake /f db3x_mmap.mak CFG="db3x_mmap - Win32 Release"
-if errorlevel 1 goto :Error
-
 cd ..\help
 nmake /f help.mak CFG="help - Win32 Release"
 if errorlevel 1 goto :Error
@@ -86,9 +82,9 @@ cd ..\loadavatars
 nmake /f avatars.mak CFG="loadavatars - Win32 Release"
 if errorlevel 1 goto :Error
 
-cd ..\modernb
-nmake /f modernb.mak CFG="modernb - Win32 Release"
-if errorlevel 1 goto :Error
+rem cd ..\modernb
+rem nmake /f modernb.mak CFG="modernb - Win32 Release"
+rem if errorlevel 1 goto :Error
 
 cd ..\mwclist
 nmake /f mwclist.mak CFG="mwclist - Win32 Release"
@@ -233,7 +229,6 @@ copy ..\..\plugins\chat\Release\chat.pdb               %Temp%\pdba\plugins
 copy ..\..\plugins\clist\Release\clist_classic.pdb     %Temp%\pdba\plugins
 copy ..\..\plugins\clist_nicer\Release\clist_nicer.pdb %Temp%\pdba\plugins
 copy ..\..\plugins\db3x\Release\dbx_3x.pdb             %Temp%\pdba\plugins
-copy ..\..\plugins\db3x_mmap\Release\dbx_mmap.pdb      %Temp%\pdba\plugins
 copy ..\..\plugins\help\Release\help.pdb               %Temp%\pdba\plugins
 copy ..\..\plugins\import\Release\import.pdb           %Temp%\pdba\plugins
 copy ..\..\plugins\modernb\Release\clist_modern.pdb    %Temp%\pdba\plugins

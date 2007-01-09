@@ -288,8 +288,7 @@ int IcqSetMyAvatar(WPARAM wParam, LPARAM lParam)
       DeleteObject(avt);
     }
     GetFullAvatarFileName(0, NULL, dwPaFormat, szMyFile, MAX_PATH);
-    // if not in our storage, copy
-    if (strcmpnull(szFile, szMyFile) && !CopyFile(szFile, szMyFile, FALSE))
+    if (stricmp(szFile, szMyFile) && !CopyFile(szFile, szMyFile, FALSE))
     {
       NetLog_Server("Failed to copy our avatar to local storage.");
       return iRet;
@@ -301,7 +300,7 @@ int IcqSetMyAvatar(WPARAM wParam, LPARAM lParam)
       char* ihash = (char*)_alloca(0x14);
       // upload hash to server
       ihash[0] = 0;    //unknown
-      ihash[1] = dwPaFormat == PA_FORMAT_XML ? AVATAR_HASH_FLASH : AVATAR_HASH_STATIC; //hash type
+      ihash[1] = dwPaFormat == PA_FORMAT_XML ? 8 : 1; //hash type
       ihash[2] = 1;    //hash status
       ihash[3] = 0x10; //hash len
       memcpy(ihash+4, hash, 0x10);
@@ -1024,29 +1023,37 @@ int IcqChangeInfoEx(WPARAM wParam, LPARAM lParam)
 
 
 
+static int messageRate = 0;
+static DWORD lastMessageTick = 0;
 int IcqGetInfo(WPARAM wParam, LPARAM lParam)
 {
   if (lParam && icqOnline)
-  {
+  { // TODO: add checking for SGIF_ONOPEN, otherwise max one per 10sec
     CCSDATA* ccs = (CCSDATA*)lParam;
     DWORD dwUin;
     uid_str szUid;
-    DWORD dwCookie;
 
     if (ICQGetContactSettingUID(ccs->hContact, &dwUin, &szUid))
     {
-      return 1; // Invalid contact
+      return 0; // Invalid contact
     }
 
-    if (dwUin)
-      dwCookie = icq_sendGetInfoServ(dwUin, (ccs->wParam & SGIF_MINIMAL) != 0, (ccs->wParam & SGIF_ONOPEN) != 0);
-    else // TODO: this needs something better
-      dwCookie = icq_sendGetAimProfileServ(ccs->hContact, szUid);
+    messageRate -= (GetTickCount() - lastMessageTick)/10;
+    if (messageRate<0) // TODO: this is bad, needs centralising
+      messageRate = 0;
+    lastMessageTick = GetTickCount();
+    messageRate += 67; // max 1.5 msgs/sec when rate is high
 
-    if (dwCookie)
+    // server kicks if 100 msgs sent instantly, so send max 50 instantly
+    if (messageRate < 67*50)
+    {
+      if (dwUin)
+        icq_sendGetInfoServ(dwUin, (ccs->wParam & SGIF_MINIMAL) != 0);
+      else
+        icq_sendGetAimProfileServ(ccs->hContact, szUid);
+
       return 0; // Success
-    else
-      return 1; // Failure
+    }
   }
 
   return 1; // Failure
@@ -1060,34 +1067,24 @@ int IcqFileAllow(WPARAM wParam, LPARAM lParam)
   {
     CCSDATA* ccs = (CCSDATA*)lParam;
     DWORD dwUin;
-    uid_str szUid;
 
-    if (ICQGetContactSettingUID(ccs->hContact, &dwUin, &szUid))
+    if (ICQGetContactSettingUID(ccs->hContact, &dwUin, NULL))
       return 0; // Invalid contact
 
-    if (icqOnline && ccs->hContact && ccs->lParam && ccs->wParam)
-    { // approve old fashioned file transfer
-      basic_filetransfer* ft = ((basic_filetransfer *)ccs->wParam);
+    if (dwUin && icqOnline && ccs->hContact && ccs->lParam && ccs->wParam)
+    {
+      filetransfer* ft = ((filetransfer *)ccs->wParam);
 
-      if (dwUin && ft->ft_magic == FT_MAGIC_ICQ)
-      {
-        filetransfer* ft = ((filetransfer *)ccs->wParam);
+      ft->szSavePath = null_strdup((char *)ccs->lParam);
+      AddExpectedFileRecv(ft);
 
-        ft->szSavePath = null_strdup((char *)ccs->lParam);
-        AddExpectedFileRecv(ft);
+      // Was request received thru DC and have we a open DC, send through that
+      if (ft->bDC && IsDirectConnectionOpen(ccs->hContact, DIRECTCONN_STANDARD))
+        icq_sendFileAcceptDirect(ccs->hContact, ft);
+      else
+        icq_sendFileAcceptServ(dwUin, ft, 0);
 
-        // Was request received thru DC and have we a open DC, send through that
-        if (ft->bDC && IsDirectConnectionOpen(ccs->hContact, DIRECTCONN_STANDARD, 0))
-          icq_sendFileAcceptDirect(ccs->hContact, ft);
-        else
-          icq_sendFileAcceptServ(dwUin, ft, 0);
-
-        return ccs->wParam; // Success
-      }
-      else if (ft->ft_magic == FT_MAGIC_OSCAR)
-      { // approve oscar file transfer
-        return oftFileAllow(ccs->hContact, ccs->wParam, ccs->lParam);
-      }
+      return ccs->wParam; // Success
     }
   }
 
@@ -1103,31 +1100,21 @@ int IcqFileDeny(WPARAM wParam, LPARAM lParam)
   if (lParam)
   {
     CCSDATA *ccs = (CCSDATA *)lParam;
+    filetransfer *ft = (filetransfer*)ccs->wParam;
     DWORD dwUin;
-    uid_str szUid;
 
-    if (ICQGetContactSettingUID(ccs->hContact, &dwUin, &szUid))
+    if (ICQGetContactSettingUID(ccs->hContact, &dwUin, NULL))
       return 1; // Invalid contact
 
-    if (icqOnline && ccs->wParam && ccs->hContact) 
+    if (icqOnline && dwUin && ccs->wParam && ccs->hContact) 
     {
-      basic_filetransfer *ft = (basic_filetransfer*)ccs->wParam;
+      // Was request received thru DC and have we a open DC, send through that
+      if (ft->bDC && IsDirectConnectionOpen(ccs->hContact, DIRECTCONN_STANDARD))
+        icq_sendFileDenyDirect(ccs->hContact, ft, (char*)ccs->lParam);
+      else
+        icq_sendFileDenyServ(dwUin, ft, (char*)ccs->lParam, 0);
 
-      if (dwUin && ft->ft_magic == FT_MAGIC_ICQ)
-      { // deny old fashioned file transfer
-        filetransfer *ft = (filetransfer*)ccs->wParam;
-        // Was request received thru DC and have we a open DC, send through that
-        if (ft->bDC && IsDirectConnectionOpen(ccs->hContact, DIRECTCONN_STANDARD, 0))
-          icq_sendFileDenyDirect(ccs->hContact, ft, (char*)ccs->lParam);
-        else
-          icq_sendFileDenyServ(dwUin, ft, (char*)ccs->lParam, 0);
-
-        nReturnValue = 0; // Success
-      }
-      else if (ft->ft_magic == FT_MAGIC_OSCAR)
-      { // deny oscar file transfer
-        return oftFileDeny(ccs->hContact, ccs->wParam, ccs->lParam);
-      }
+      nReturnValue = 0; // Success
     }
     /* FIXME: ft leaks (but can get double freed?) */
   }
@@ -1143,27 +1130,17 @@ int IcqFileCancel(WPARAM wParam, LPARAM lParam)
   {
     CCSDATA* ccs = (CCSDATA*)lParam;
     DWORD dwUin;
-    uid_str szUid;
 
-    if (ICQGetContactSettingUID(ccs->hContact, &dwUin, &szUid))
+    if (ICQGetContactSettingUID(ccs->hContact, &dwUin, NULL))
       return 1; // Invalid contact
 
-    if (ccs->hContact && ccs->wParam)
+    if (ccs->hContact && dwUin && ccs->wParam)
     {
-      basic_filetransfer *ft = (basic_filetransfer *)ccs->wParam;
+      filetransfer * ft = (filetransfer * ) ccs->wParam;
 
-      if (dwUin && ft->ft_magic == FT_MAGIC_ICQ)
-      { // cancel old fashioned file transfer
-        filetransfer * ft = (filetransfer * ) ccs->wParam;
+      icq_CancelFileTransfer(ccs->hContact, ft);
 
-        icq_CancelFileTransfer(ccs->hContact, ft);
-
-        return 0; // Success
-      }
-      else if (ft->ft_magic = FT_MAGIC_OSCAR)
-      { // cancel oscar file transfer
-        return oftFileCancel(ccs->hContact, ccs->wParam, ccs->lParam);
-      }
+      return 0; // Success
     }
   }
 
@@ -1177,18 +1154,8 @@ int IcqFileResume(WPARAM wParam, LPARAM lParam)
   if (icqOnline && wParam)
   {
     PROTOFILERESUME *pfr = (PROTOFILERESUME*)lParam;
-    basic_filetransfer *ft = (basic_filetransfer *)wParam;
 
-    if (ft->ft_magic == FT_MAGIC_ICQ)
-    {
-      icq_sendFileResume((filetransfer *)wParam, pfr->action, pfr->szFilename);
-    }
-    else if (ft->ft_magic == FT_MAGIC_OSCAR)
-    {
-      oftFileResume((oscar_filetransfer *)wParam, pfr->action, pfr->szFilename);
-    }
-    else
-      return 1; // Failure
+    icq_sendFileResume((filetransfer *)wParam, pfr->action, pfr->szFilename);
 
     return 0; // Success
   }
@@ -1300,7 +1267,7 @@ int IcqGetAwayMsg(WPARAM wParam,LPARAM lParam)
 
       if (wMessageType)
       {
-        if (gbDCMsgEnabled && IsDirectConnectionOpen(ccs->hContact, DIRECTCONN_STANDARD, 0))
+        if (gbDCMsgEnabled && IsDirectConnectionOpen(ccs->hContact, DIRECTCONN_STANDARD))
         {
           int iRes = icq_sendGetAwayMsgDirect(ccs->hContact, wMessageType);
           if (iRes) return iRes; // we succeded, return
@@ -1427,7 +1394,7 @@ int IcqSendMessage(WPARAM wParam, LPARAM lParam)
         NetLog_Server("Send message - Message cap is %u", CheckContactCapabilities(ccs->hContact, CAPF_SRV_RELAY));
         NetLog_Server("Send message - Contact status is %u", wRecipientStatus);
 #endif
-        if (dwUin && gbDCMsgEnabled && IsDirectConnectionOpen(ccs->hContact, DIRECTCONN_STANDARD, 0))
+        if (dwUin && gbDCMsgEnabled && IsDirectConnectionOpen(ccs->hContact, DIRECTCONN_STANDARD))
         {
           int iRes = icq_SendDirectMessage(dwUin, ccs->hContact, pszText, strlennull(pszText), 1, pCookieData, NULL);
           if (iRes) return iRes; // we succeded, return
@@ -1566,7 +1533,7 @@ int IcqSendMessageW(WPARAM wParam, LPARAM lParam)
         NetLog_Server("Send unicode message - Message cap is %u", CheckContactCapabilities(ccs->hContact, CAPF_SRV_RELAY));
         NetLog_Server("Send unicode message - Contact status is %u", wRecipientStatus);
 #endif
-        if (dwUin && gbDCMsgEnabled && IsDirectConnectionOpen(ccs->hContact, DIRECTCONN_STANDARD, 0))
+        if (dwUin && gbDCMsgEnabled && IsDirectConnectionOpen(ccs->hContact, DIRECTCONN_STANDARD))
         {
           char* utf8msg = make_utf8_string(pszText);
           int iRes;
@@ -1689,7 +1656,7 @@ int IcqSendUrl(WPARAM wParam, LPARAM lParam)
         strcpy(szBody + nDescLen + 1, szUrl);
 
 
-        if (gbDCMsgEnabled && IsDirectConnectionOpen(ccs->hContact, DIRECTCONN_STANDARD, 0))
+        if (gbDCMsgEnabled && IsDirectConnectionOpen(ccs->hContact, DIRECTCONN_STANDARD))
         {
           int iRes = icq_SendDirectMessage(dwUin, ccs->hContact, szBody, nBodyLen, 1, pCookieData, NULL);
           if (iRes) return iRes; // we succeded, return
@@ -1835,7 +1802,7 @@ int IcqSendContacts(WPARAM wParam, LPARAM lParam)
             // Set up the ack type
             pCookieData = CreateMsgCookieData(MTYPE_CONTACTS, ccs->hContact, dwUin);
 
-            if (gbDCMsgEnabled && IsDirectConnectionOpen(ccs->hContact, DIRECTCONN_STANDARD, 0))
+            if (gbDCMsgEnabled && IsDirectConnectionOpen(ccs->hContact, DIRECTCONN_STANDARD))
             {
               int iRes = icq_SendDirectMessage(dwUin, ccs->hContact, pBody, nBodyLength, 1, pCookieData, NULL);
 
@@ -1926,18 +1893,13 @@ int IcqSendFile(WPARAM wParam, LPARAM lParam)
       char** files = (char**)ccs->lParam;
       char* pszDesc = (char*)ccs->wParam;
       DWORD dwUin;
-      uid_str szUid;
 
-      if (ICQGetContactSettingUID(hContact, &dwUin, &szUid))
+      if (ICQGetContactSettingUID(hContact, &dwUin, NULL))
         return 0; // Invalid contact
 
-      if (ICQGetContactStatus(hContact) != ID_STATUS_OFFLINE)
+      if (dwUin)
       {
-        if (CheckContactCapabilities(hContact, CAPF_AIM_FILE))
-        {
-          return oftInitTransfer(hContact, dwUin, szUid, files, pszDesc);
-        }
-        else if (dwUin)
+        if (ICQGetContactStatus(hContact) != ID_STATUS_OFFLINE)
         {
           WORD wClientVersion;
 
@@ -2001,7 +1963,7 @@ int IcqSendFile(WPARAM wParam, LPARAM lParam)
               {
                 if (ft->nVersion == 7)
                 {
-                  if (gbDCMsgEnabled && IsDirectConnectionOpen(hContact, DIRECTCONN_STANDARD, 0))
+                  if (gbDCMsgEnabled && IsDirectConnectionOpen(hContact, DIRECTCONN_STANDARD))
                   {
                     int iRes = icq_sendFileSendDirectv7(ft, pszFiles); 
                     if (iRes) return (int)(HANDLE)ft; // Success
@@ -2011,7 +1973,7 @@ int IcqSendFile(WPARAM wParam, LPARAM lParam)
                 }
                 else
                 {
-                  if (gbDCMsgEnabled && IsDirectConnectionOpen(hContact, DIRECTCONN_STANDARD, 0))
+                  if (gbDCMsgEnabled && IsDirectConnectionOpen(hContact, DIRECTCONN_STANDARD))
                   {
                     int iRes = icq_sendFileSendDirectv8(ft, pszFiles); 
                     if (iRes) return (int)(HANDLE)ft; // Success
@@ -2108,8 +2070,6 @@ int IcqGrantAuthorization(WPARAM wParam, LPARAM lParam)
 
     // send without reason, do we need any ?
     icq_sendGrantAuthServ(dwUin, szUid, NULL);
-    // auth granted, remove contact menu item
-    ICQDeleteContactSetting((HANDLE)wParam, "Grant");
   }
 
   return 0;
@@ -2182,19 +2142,8 @@ static void ICQAddRecvEvent(HANDLE hContact, WORD wType, PROTORECVEVENT* pre, DW
 {
   DWORD flags = (pre->flags & PREF_CREATEREAD) ? DBEF_READ : 0;
 
-  if (hContact && DBGetContactSettingByte(hContact, "CList", "Hidden", 0))
-  {
-    DWORD dwUin;
-    uid_str szUid;
-
+  if (hContact)
     SetContactHidden(hContact, 0);
-    // if the contact was hidden, add to client-list if not in server-list authed
-    if (!ICQGetContactSettingWord(hContact, "ServerId", 0) || ICQGetContactSettingByte(hContact, "Auth", 0))
-    {
-      ICQGetContactSettingUID(hContact, &dwUin, &szUid);
-      icq_sendNewContact(dwUin, szUid);
-    }
-  }
 
   ICQAddEvent(hContact, wType, pre->timestamp, flags, cbBlob, pBlob);
 }

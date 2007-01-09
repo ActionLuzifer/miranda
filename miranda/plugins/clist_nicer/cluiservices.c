@@ -31,7 +31,9 @@ extern struct CluiData g_CluiData;
 extern int g_shutDown;
 extern PLUGININFO pluginInfo;
 extern HANDLE hStatusModeChangeEvent;
+extern int currentDesiredStatusMode;
 
+extern protoMenu *protoMenus;
 extern ButtonItem *g_ButtonItems;
 
 static int GetClistVersion(WPARAM wParam, LPARAM lParam)
@@ -237,19 +239,19 @@ void CluiProtocolStatusChanged( int parStatus, const char* szProto )
 				szMaxProto = curprotocol->szName;
 			}
 		}
-		if(pcli->menuProtos != NULL) {
+		if(protoMenus != NULL) {
 			int i;
 
-			for(i = 0; i < pcli->menuProtoCount; i++) {
-				if(!strcmp(pcli->menuProtos[i].szProto, curprotocol->szName) && pcli->menuProtos[i].menuID != 0 && pcli->menuProtos[i].hasAdded != 0) {
+			for(i = 0; protoMenus[i].protoName[0]; i++) {
+				if(!strcmp(protoMenus[i].protoName, curprotocol->szName) && protoMenus[i].menuID != 0 && protoMenus[i].added != 0) {
 					BYTE xStatus = DBGetContactSettingByte(NULL, curprotocol->szName, "XStatusId", -1);
 					CLISTMENUITEM mi = {0};
 					mi.cbSize = sizeof(mi);
 					mi.flags = CMIM_FLAGS|CMIM_NAME|CMIM_ICON;
 
-					if(pcli->menuProtos[i].hIcon) {
-						DestroyIcon(pcli->menuProtos[i].hIcon);
-						pcli->menuProtos[i].hIcon = 0;
+					if(protoMenus[i].hIcon) {
+						DestroyIcon(protoMenus[i].hIcon);
+						protoMenus[i].hIcon = 0;
 					}
 
 					if(xStatus > 0 && xStatus <= 29) {
@@ -258,7 +260,7 @@ void CluiProtocolStatusChanged( int parStatus, const char* szProto )
 						mir_snprintf(szServiceName, 128, "%s/GetXStatusIcon", curprotocol->szName);
 						if(ServiceExists(szServiceName)) {
 							mi.hIcon = (HICON)CallProtoService(curprotocol->szName, "/GetXStatusIcon", 0, 0);	// get OWN xStatus icon (if set)
-							pcli->menuProtos[i].hIcon = mi.hIcon;
+							protoMenus[i].hIcon = mi.hIcon;
 							mi.pszName = xStatusNames_ansi[xStatus - 1];
 						}
 					}
@@ -266,9 +268,9 @@ void CluiProtocolStatusChanged( int parStatus, const char* szProto )
 						mi.pszName = "None";
 						mi.flags |= CMIF_CHECKED;
 						mi.hIcon = 0;
-						pcli->menuProtos[i].hIcon = 0;
+						protoMenus[i].hIcon = 0;
 					}
-					CallService(MS_CLIST_MODIFYMENUITEM, (WPARAM)pcli->menuProtos[i].menuID, (LPARAM)&mi);
+					CallService(MS_CLIST_MODIFYMENUITEM, protoMenus[i].menuID, (LPARAM)&mi);
 					break;
 				}
 			}

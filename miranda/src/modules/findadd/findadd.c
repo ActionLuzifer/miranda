@@ -2,7 +2,7 @@
 
 Miranda IM: the free IM client for Microsoft* Windows*
 
-Copyright 2000-2006 Miranda ICQ/IM project, 
+Copyright 2000-2007 Miranda ICQ/IM project, 
 all portions of this codebase are copyrighted to the people 
 listed in contributors.txt.
 
@@ -33,6 +33,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 static HWND hwndFindAdd=NULL;
 static HANDLE hHookModulesLoaded = 0;
 static int OnSystemModulesLoaded(WPARAM wParam,LPARAM lParam);
+
+wchar_t* a2u( char* src );
 
 void ListView_SetItemTextA( HWND hwndLV, int i, int iSubItem, char* pszText )
 {

@@ -408,8 +408,7 @@ int    OptionsUnInit(void);
 void   LoadMsgDlgFont(int i, LOGFONT * lf, COLORREF * colour);
 void   LoadGlobalSettings(void);
 void   AddIcons(void);
-HICON  LoadIconEx( char* pszIcoLibName );
-void   LoadLogFonts(void);
+HICON  LoadIconEx(int iIndex, char * pszIcoLibName, int iX, int iY);
 
 //services.c
 void   HookEvents(void);
@@ -418,7 +417,20 @@ void   CreateServiceFunctions(void);
 void   DestroyServiceFunctions(void);
 void   CreateHookableEvents(void);
 void   TabsInit(void);
+int    ModulesLoaded(WPARAM wParam,LPARAM lParam);
+int    SmileyOptionsChanged(WPARAM wParam,LPARAM lParam);
+int    PreShutdown(WPARAM wParam,LPARAM lParam);
+int    IconsChanged(WPARAM wParam,LPARAM lParam);
 void   ShowRoom(SESSION_INFO* si, WPARAM wp, BOOL bSetForeground);
+int    Service_Register(WPARAM wParam, LPARAM lParam);
+int    Service_AddEvent(WPARAM wParam, LPARAM lParam);
+int    Service_GetAddEventPtr(WPARAM wParam, LPARAM lParam);
+int    Service_NewChat(WPARAM wParam, LPARAM lParam);
+int    Service_ItemData(WPARAM wParam, LPARAM lParam);
+int    Service_SetSBText(WPARAM wParam, LPARAM lParam);
+int    Service_SetVisibility(WPARAM wParam, LPARAM lParam);
+int    Service_GetCount(WPARAM wParam,LPARAM lParam);
+int    Service_GetInfo(WPARAM wParam,LPARAM lParam);
 
 //manager.c
 void          SetActiveSession(const TCHAR* pszID, const char* pszModule);

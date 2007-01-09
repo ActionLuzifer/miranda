@@ -169,6 +169,23 @@ void __stdcall MSN_AddAuthRequest( HANDLE hContact, const char *email, const cha
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////
+// MSN_AddServerGroup - adds a group to the server list
+
+void MSN_AddServerGroup( const char* pszGroupName )
+{
+	char szBuf[ 200 ];
+	UrlEncode( pszGroupName, szBuf, sizeof szBuf );
+
+	if ( hGroupAddEvent == NULL )
+		hGroupAddEvent = CreateEvent( NULL, FALSE, FALSE, NULL );
+
+	msnNsThread->sendPacket( "ADG", "%s", szBuf );
+
+	WaitForSingleObject( hGroupAddEvent, INFINITE );
+	CloseHandle( hGroupAddEvent ); hGroupAddEvent = NULL;
+}
+
+/////////////////////////////////////////////////////////////////////////////////////////
 // MSN_DebugLog - writes a line of comments to the network log
 
 void __stdcall	MSN_DebugLog( const char *fmt, ... )
@@ -364,11 +381,12 @@ void ThreadData::sendCaps( void )
 	MSN_CallService( MS_SYSTEM_GETVERSIONTEXT, sizeof( mversion ), ( LPARAM )mversion );
 
 	int nBytes = mir_snprintf( capMsg, sizeof( capMsg ),
+		"MIME-Version: 1.0\r\n"
 		"Content-Type: text/x-clientcaps\r\n\r\n"
 		"Client-Name: Miranda IM %s (MSN v.%s)\r\n",
 		mversion, __VERSION_STRING );
 
-	sendMessage( 'U', capMsg, MSG_DISABLE_HDR );
+	sendPacket( "MSG", "%c %d\r\n%s", 'N', nBytes, capMsg );
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////
@@ -626,7 +644,7 @@ void __stdcall	MSN_ShowPopup( const char* nickname, const char* msg, int flags )
 	POPUPDATAEX* ppd = ( POPUPDATAEX* )mir_calloc( sizeof( POPUPDATAEX ));
 
 	ppd->lchContact = NULL;
-	ppd->lchIcon = LoadIconEx( "main" );
+	ppd->lchIcon = LoadIcon( hInst, MAKEINTRESOURCE( IDI_MSN ));
 	strcpy( ppd->lpzContactName, nickname );
 	strcpy( ppd->lpzText, msg );
 
@@ -1144,34 +1162,3 @@ TCHAR* UnEscapeChatTags(TCHAR* str_in)
 	*d = 0;
 	return str_in;
 }
-
-bool txtParseParam (char* szData, char* presearch, char* start, char* finish, char* param, int size)
-{
-	char *cp, *cp1;
-	int len;
-	
-	if (szData == NULL) return false;
-
-	if (presearch != NULL)
-	{
-		cp1 = strstr(szData, presearch);
-		if (cp1 == NULL) return false;
-	}
-	else
-		cp1 = szData;
-
-	cp = strstr(cp1, start);
-	if (cp == NULL) return false;
-	cp += strlen(start);
-	while (*cp == ' ') ++cp;
-
-	cp1 = strstr(cp, finish);
-	if (cp1 == NULL) return FALSE;
-	while (*(cp1-1) == ' ' && cp1 > cp) --cp1;
-
-	len = min(cp1 - cp, size - 1);
-	memmove(param, cp, len);
-	param[len] = 0;
-
-	return true;
-} 

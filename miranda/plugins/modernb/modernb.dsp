@@ -187,10 +187,6 @@ SOURCE=.\CLUIFrames\protocolorder.c
 # End Group
 # Begin Source File
 
-SOURCE=.\button.c
-# End Source File
-# Begin Source File
-
 SOURCE=.\cache_funcs.c
 # End Source File
 # Begin Source File
@@ -443,6 +439,26 @@ SOURCE=.\clui.c
 # End Source File
 # Begin Source File
 
+SOURCE=.\cluiopts.c
+
+!IF  "$(CFG)" == "modernb - Win32 Release"
+
+# ADD CPP /Yu"commonheaders.h"
+
+!ELSEIF  "$(CFG)" == "modernb - Win32 Debug"
+
+!ELSEIF  "$(CFG)" == "modernb - Win32 Release Unicode"
+
+# ADD BASE CPP /Yu"commonheaders.h"
+# ADD CPP /Yu"commonheaders.h"
+
+!ELSEIF  "$(CFG)" == "modernb - Win32 Debug Unicode"
+
+!ENDIF 
+
+# End Source File
+# Begin Source File
+
 SOURCE=.\cluiservices.c
 
 !IF  "$(CFG)" == "modernb - Win32 Release"
@@ -492,8 +508,36 @@ SOURCE=.\Docking.c
 # End Source File
 # Begin Source File
 
+SOURCE=.\forkthread.c
+
+!IF  "$(CFG)" == "modernb - Win32 Release"
+
+# ADD CPP /Yu"commonheaders.h"
+
+!ELSEIF  "$(CFG)" == "modernb - Win32 Debug"
+
+!ELSEIF  "$(CFG)" == "modernb - Win32 Release Unicode"
+
+# ADD BASE CPP /Yu"commonheaders.h"
+# ADD CPP /Yu"commonheaders.h"
+
+!ELSEIF  "$(CFG)" == "modernb - Win32 Debug Unicode"
+
+!ENDIF 
+
+# End Source File
+# Begin Source File
+
 SOURCE=.\gdiplus.cpp
 # SUBTRACT CPP /YX /Yc /Yu
+# End Source File
+# Begin Source File
+
+SOURCE=.\genmenu.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\genmenuopt.c
 # End Source File
 # Begin Source File
 
@@ -562,6 +606,10 @@ SOURCE=.\modern_statusbar.c
 # End Source File
 # Begin Source File
 
+SOURCE=.\movetogroup.c
+# End Source File
+# Begin Source File
+
 SOURCE=.\rowheight_funcs.c
 # End Source File
 # Begin Source File
@@ -582,11 +630,11 @@ SOURCE=.\SkinOpt.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\utf.c
+SOURCE=.\tabbedoptions.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\viewmodes.c
+SOURCE=.\utf.c
 # End Source File
 # End Group
 # Begin Group "Header Files"
@@ -614,7 +662,15 @@ SOURCE=.\forkthread.h
 # End Source File
 # Begin Source File
 
+SOURCE=.\genmenu.h
+# End Source File
+# Begin Source File
+
 SOURCE=.\IcoLib.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\m_genmenu.h
 # End Source File
 # Begin Source File
 

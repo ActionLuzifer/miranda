@@ -2,7 +2,7 @@
 
 Miranda IM: the free IM client for Microsoft* Windows*
 
-Copyright 2000-2006 Miranda ICQ/IM project,
+Copyright 2000-2007 Miranda ICQ/IM project,
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
 
@@ -35,6 +35,7 @@ int GetContactDisplayName(WPARAM wParam, LPARAM lParam);
 int InvalidateDisplayName(WPARAM wParam, LPARAM lParam);
 int InitGroupServices(void);
 int Docking_IsDocked(WPARAM wParam, LPARAM lParam);
+int MenuProcessCommand(WPARAM wParam, LPARAM lParam);
 void InitDisplayNameCache(void);
 void FreeDisplayNameCache(void);
 void InitTray(void);
@@ -124,7 +125,7 @@ static int GetStatusModeDescription(WPARAM wParam, LPARAM lParam)
 		{
 			static char szMode[64]={0};
 			TCHAR* buf1 = (TCHAR*)cli.pfnGetStatusModeDescription(wParam,lParam);
-			char *buf2 = u2a(buf1);
+			char *buf2=u2a(buf1);
 			_snprintf(szMode,sizeof(szMode),"%s",buf2);
 			mir_free(buf2);
 			return (int)szMode;
@@ -276,7 +277,7 @@ static int CListIconsChanged(WPARAM wParam, LPARAM lParam)
 		for (j = 0; j < SIZEOF(statusModeList); j++)
 			ImageList_ReplaceIcon(hCListImages, protoIconIndex[i].iIconBase + j, LoadSkinnedProtoIcon(protoIconIndex[i].szProto, statusModeList[j]));
 	cli.pfnTrayIconIconsChanged();
-	cli.pfnInvalidateRect( cli.hwndContactList, NULL, TRUE);
+	cli.pfnInvalidateRect((HWND) CallService(MS_CLUI_GETHWND, 0, 0), NULL, TRUE);
 	return 0;
 }
 

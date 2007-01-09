@@ -2,7 +2,7 @@
 
 Miranda IM: the free IM client for Microsoft* Windows*
 
-Copyright 2000-2006 Miranda ICQ/IM project, 
+Copyright 2000-2007 Miranda ICQ/IM project, 
 all portions of this codebase are copyrighted to the people 
 listed in contributors.txt.
 
@@ -143,7 +143,7 @@ static void CombineSettingsStructs(NETLIBUSERSETTINGS *dest,DWORD *destFlags,NET
 	}
 	if(sourceFlags&NUF_INCOMING) {
 		if(*destFlags&NUF_INCOMING) {
-            if(dest->enableUPnP!=source->enableUPnP) dest->enableUPnP=2;
+			if(dest->enableUPnP!=source->enableUPnP) dest->enableUPnP=2;
 			if(dest->specifyIncomingPorts!=source->specifyIncomingPorts) dest->specifyIncomingPorts=2;
 			CombineSettingsStrings(&dest->szIncomingPorts,&source->szIncomingPorts);
 		}
@@ -217,7 +217,7 @@ static void WriteSettingsStructToDb(const char *szSettingsModule,NETLIBUSERSETTI
 		DBWriteContactSettingString(NULL,szSettingsModule,"NLOutgoingPorts",settings->szOutgoingPorts?settings->szOutgoingPorts:"");
 	}
 	if(flags&NUF_INCOMING) {
-        DBWriteContactSettingByte(NULL,szSettingsModule,"NLEnableUPnP",(BYTE)settings->enableUPnP);
+		DBWriteContactSettingByte(NULL,szSettingsModule,"NLEnableUPnP",(BYTE)settings->enableUPnP);
 		DBWriteContactSettingByte(NULL,szSettingsModule,"NLSpecifyIncomingPorts",(BYTE)settings->specifyIncomingPorts);
 		DBWriteContactSettingString(NULL,szSettingsModule,"NLIncomingPorts",settings->szIncomingPorts?settings->szIncomingPorts:"");
 	}
@@ -249,7 +249,7 @@ void NetlibSaveUserSettingsStruct(const char *szSettingsModule,NETLIBUSERSETTING
 	if(combinedSettings.useProxyAuth==2) combinedSettings.useProxyAuth=0;
 	if(combinedSettings.useProxyAuthNtlm==2) combinedSettings.useProxyAuthNtlm=0;
 	if(combinedSettings.dnsThroughProxy==2) combinedSettings.dnsThroughProxy=1;
-    if(combinedSettings.enableUPnP==2) combinedSettings.enableUPnP=1;
+	if(combinedSettings.enableUPnP==2) combinedSettings.enableUPnP=1;
 	if(combinedSettings.specifyIncomingPorts==2) combinedSettings.specifyIncomingPorts=0;
 	WriteSettingsStructToDb("Netlib",&combinedSettings,flags);
 	NetlibFreeUserSettingsStruct(&combinedSettings);
@@ -275,7 +275,7 @@ static BOOL CALLBACK DlgProcNetlibOpts(HWND hwndDlg, UINT msg, WPARAM wParam, LP
 				tempSettings[iUser].szSettingsModule=mir_strdup(netlibUser[iUser]->user.szSettingsModule);
 				CopySettingsStruct(&tempSettings[iUser].settings,&netlibUser[iUser]->settings);
 				if(netlibUser[iUser]->user.flags&NUF_NOOPTIONS) continue;
-				iItem = SendDlgItemMessage(hwndDlg,IDC_NETLIBUSERS,CB_ADDSTRING,0,(LPARAM)netlibUser[iUser]->user.ptszDescriptiveName);
+				iItem=SendDlgItemMessageA(hwndDlg,IDC_NETLIBUSERS,CB_ADDSTRING,0,(LPARAM)netlibUser[iUser]->user.szDescriptiveName);
 				SendDlgItemMessage(hwndDlg,IDC_NETLIBUSERS,CB_SETITEMDATA,iItem,iUser);
 			}
 			LeaveCriticalSection(&csNetlibUser);
@@ -431,10 +431,10 @@ static BOOL CALLBACK DlgProcNetlibOpts(HWND hwndDlg, UINT msg, WPARAM wParam, LP
 				case IDC_SPECIFYPORTSO:
 					ChangeSettingIntByCheckbox(hwndDlg,LOWORD(wParam),iUser,offsetof(NETLIBUSERSETTINGS,specifyOutgoingPorts));
 					break;
-                case IDC_ENABLEUPNP:
+				case IDC_ENABLEUPNP:
 					ChangeSettingIntByCheckbox(hwndDlg,LOWORD(wParam),iUser,offsetof(NETLIBUSERSETTINGS,enableUPnP));
-                    break;
-                case IDC_PROXYHOST:
+					break;      
+				case IDC_PROXYHOST:
 					if(HIWORD(wParam)!=EN_CHANGE || (HWND)lParam!=GetFocus()) return 0;
 					ChangeSettingStringByEdit(hwndDlg,LOWORD(wParam),iUser,offsetof(NETLIBUSERSETTINGS,szProxyServer));
 					break;

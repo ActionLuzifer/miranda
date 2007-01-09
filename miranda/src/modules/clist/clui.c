@@ -2,7 +2,7 @@
 
   Miranda IM: the free IM client for Microsoft* Windows*
 
-  Copyright 2000-2006 Miranda ICQ/IM project,
+  Copyright 2000-2007 Miranda ICQ/IM project,
   all portions of this codebase are copyrighted to the people
   listed in contributors.txt.
 
@@ -42,13 +42,10 @@ typedef struct {
 	int showgrip;
 	int transparent;
 	int alpha;
-}
-	CluiOpts;
-
+} CluiOpts;
 static CluiOpts cluiopt = {0};
 
-void fnLoadCluiGlobalOpts()
-{
+void fnLoadCluiGlobalOpts() {
 	cluiopt.showsbar = DBGetContactSettingByte(NULL, "CLUI", "ShowSBar", 1);
 	cluiopt.showgrip = DBGetContactSettingByte(NULL, "CLUI", "ShowGrip", 1);
 	cluiopt.transparent = DBGetContactSettingByte(NULL,"CList","Transparent",SETTING_TRANSPARENT_DEFAULT);
@@ -187,6 +184,7 @@ static BOOL CALLBACK AskForConfirmationDlgProc(HWND hWnd, UINT msg, WPARAM wPara
 	}
 
 	return FALSE;
+
 }
 
 static int MenuItem_DeleteContact(WPARAM wParam, LPARAM lParam)

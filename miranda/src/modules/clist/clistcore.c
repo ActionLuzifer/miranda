@@ -2,7 +2,7 @@
 
 Miranda IM: the free IM client for Microsoft* Windows*
 
-Copyright 2000-2006 Miranda ICQ/IM project,
+Copyright 2000-2007 Miranda ICQ/IM project,
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
 
@@ -23,7 +23,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "commonheaders.h"
 #include "clc.h"
-#include "genmenu.h"
 
 CLIST_INTERFACE cli = { 0 };
 
@@ -109,10 +108,6 @@ int   fnEventsProcessTrayDoubleClick( void );
 int   fnGetImlIconIndex(HICON hIcon);
 int   fnRemoveEvent( HANDLE hContact, HANDLE dbEvent );
 
-/* clistmenus.c */
-int    GetProtoIndexByPos(PROTOCOLDESCRIPTOR ** proto, int protoCnt, int Pos);
-int    MenuModulesLoaded( WPARAM, LPARAM );
-
 /* clistmod.c */
 int    fnIconFromStatusMode(const char *szProto, int status, HANDLE hContact);
 int    fnShowHide( WPARAM wParam, LPARAM lParam );
@@ -180,22 +175,12 @@ static void fnOnCreateClc( void )
 {
 }
 
-static int fnGetProtocolVisibility( const char* proto )
-{
-	return TRUE;
-}
-
-static void fnReloadProtoMenus( void )
-{
-	MenuModulesLoaded( 0, 0 );
-}
-
 static int srvRetrieveInterface( WPARAM wParam, LPARAM lParam )
 {
 	int rc;
 
 	if ( interfaceInited == 0 ) {
-		cli.version = 4;
+		cli.version = 3;
 
 		cli.pfnClcOptionsChanged               = fnClcOptionsChanged;
 		cli.pfnClcBroadcast                    = fnClcBroadcast;
@@ -311,12 +296,6 @@ static int srvRetrieveInterface( WPARAM wParam, LPARAM lParam )
 		cli.pfnHotKeysUnregister					= fnHotKeysUnregister;
 		cli.pfnHotKeysProcess						= fnHotKeysProcess;
 		cli.pfnHotkeysProcessMessage			   = fnHotkeysProcessMessage;
-
-		cli.pfnMOGetIntMenuItem                = MO_GetIntMenuItem;
-		cli.pfnMOGetMenuItemByGlobalID         = GetMenuItemByGlobalID;
-		cli.pfnGetProtocolVisibility           = fnGetProtocolVisibility;
-		cli.pfnGetProtoIndexByPos              = GetProtoIndexByPos;
-		cli.pfnReloadProtoMenus                = fnReloadProtoMenus;
 
 		cli.hInst = ( HMODULE )lParam;
 

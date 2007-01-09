@@ -26,6 +26,7 @@ extern int DefaultImageListColorDepth;
 
 int InitCustomMenus(void);
 void UninitCustomMenus(void);
+int MenuProcessCommand(WPARAM wParam,LPARAM lParam);
 int ContactSettingChanged(WPARAM wParam,LPARAM lParam);
 int CListOptInit(WPARAM wParam,LPARAM lParam);
 int ContactChangeGroup(WPARAM wParam,LPARAM lParam);
@@ -36,6 +37,7 @@ HIMAGELIST hCListImages;
 
 HANDLE hStatusModeChangeEvent,hContactIconChangedEvent;
 extern BYTE nameOrder[];
+extern int currentDesiredStatusMode;
 
 static HANDLE hSettingChanged, hProtoAckHook;
 
@@ -78,9 +80,16 @@ static int ProtocolAck(WPARAM wParam,LPARAM lParam)
 	return 0;
 }
 
+static int SetStatusMode(WPARAM wParam, LPARAM lParam)
+{
+	//todo: check wParam is valid so people can't use this to run random menu items
+	MenuProcessCommand(MAKEWPARAM(LOWORD(wParam), MPCF_MAINMENU), 0);
+	return 0;
+}
+
 static int GetStatusMode(WPARAM wParam, LPARAM lParam)
 {
-	return pcli->currentDesiredStatusMode;
+	return currentDesiredStatusMode;
 }
 
 static int ContactListShutdownProc(WPARAM wParam,LPARAM lParam)
@@ -109,6 +118,7 @@ int LoadContactListModule(void)
 	hContactIconChangedEvent=CreateHookableEvent(ME_CLIST_CONTACTICONCHANGED);
 	CreateServiceFunction(MS_CLIST_CONTACTCHANGEGROUP,ContactChangeGroup);
 	CreateServiceFunction(MS_CLIST_HOTKEYSPROCESSMESSAGE,HotkeysProcessMessage);
+	CreateServiceFunction(MS_CLIST_SETSTATUSMODE, SetStatusMode);
 	CreateServiceFunction(MS_CLIST_GETSTATUSMODE, GetStatusMode);
 
 	InitCustomMenus();

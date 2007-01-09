@@ -33,7 +33,7 @@ extern struct CluiData g_CluiData;
 extern pfnDrawAlpha pDrawAlpha;
 extern DWORD g_gdiplusToken;
 extern WNDPROC OldStatusBarProc;
-extern HANDLE hExtraImageApplying;
+extern HANDLE hPreBuildStatusMenuEvent, hExtraImageApplying;
 extern SIZE g_oldSize;
 extern POINT g_oldPos;
 extern HIMAGELIST himlExtraImages;
@@ -87,6 +87,8 @@ int CluiOptInit(WPARAM wParam, LPARAM lParam)
 	odp.nExpertOnlyControls = 0;
 	odp.expertOnlyControls = NULL;
 	CallService(MS_OPT_ADDPAGE, wParam, (LPARAM) &odp);
+
+	GenMenuOptInit(wParam, lParam);
 	return 0;
 }
 
@@ -397,8 +399,8 @@ static BOOL CALLBACK DlgProcCluiOpts(HWND hwndDlg, UINT msg, WPARAM wParam, LPAR
 						IcoLibReloadIcons();
 					else {
 						CLN_LoadAllIcons(0);
-						pcli->pfnReloadProtoMenus();
-						NotifyEventHooks(pcli->hPreBuildStatusMenuEvent, 0, 0);
+						MenuModulesLoaded(0, 0);
+					    NotifyEventHooks(hPreBuildStatusMenuEvent, 0, 0);
 						ReloadExtraIcons();
 					}
 					pcli->pfnClcBroadcast(CLM_AUTOREBUILD, 0, 0);

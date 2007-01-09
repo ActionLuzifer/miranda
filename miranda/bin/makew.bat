@@ -70,9 +70,9 @@ cd ..\loadavatars
 nmake /f avatars.mak CFG="loadavatars - Win32 Release Unicode"
 if errorlevel 1 goto :Error
 
-cd ..\modernb
-nmake /f modernb.mak CFG="modernb - Win32 Release Unicode"
-if errorlevel 1 goto :Error
+rem cd ..\modernb
+rem nmake /f modernb.mak CFG="modernb - Win32 Release Unicode"
+rem if errorlevel 1 goto :Error
 
 cd ..\mwclist
 nmake /f mwclist.mak CFG="mwclist - Win32 Release Unicode"
@@ -231,7 +231,6 @@ copy ..\..\plugins\srmm\Release_Unicode\srmm.pdb               %Temp%\pdbw\plugi
 copy ..\..\plugins\tabSRMM\Release_Unicode\tabSRMM.pdb         %Temp%\pdbw\plugins
 rem  Non-Unicode plugins
 copy ..\..\plugins\db3x\Release\dbx_3x.pdb                     %Temp%\pdbw\plugins
-copy ..\..\plugins\db3x_mmap\Release\dbx_mmap.pdb              %Temp%\pdbw\plugins
 copy ..\..\plugins\import\Release\import.pdb                   %Temp%\pdbw\plugins
 copy ..\..\plugins\png2dib\Release\png2dib.pdb                 %Temp%\pdbw\plugins
 
