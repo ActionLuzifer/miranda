@@ -5,7 +5,7 @@
 // Copyright © 2000,2001 Richard Hughes, Roland Rabien, Tristan Van de Vreede
 // Copyright © 2001,2002 Jon Keating, Richard Hughes
 // Copyright © 2002,2003,2004 Martin Öberg, Sam Kothari, Robert Rainwater
-// Copyright © 2004,2005,2006 Joe Kucera
+// Copyright © 2004,2005 Joe Kucera
 // 
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -23,7 +23,7 @@
 //
 // -----------------------------------------------------------------------------
 //
-// File name      : $Source: /cvsroot/miranda/miranda/protocols/IcqOscarJ/icq_server.h,v $
+// File name      : $Source$
 // Revision       : $Revision$
 // Last change on : $Date$
 // Last change by : $Author$
@@ -38,35 +38,17 @@
 #define __ICQ_SERVER_H
 
 typedef struct serverthread_start_info_s {
-  NETLIBOPENCONNECTION nloc;
-  WORD wPassLen;
-  char szPass[20];
+	NETLIBOPENCONNECTION nloc;
+	WORD wPassLen;
+	char szEncPass[20];
 } serverthread_start_info;
 
-typedef struct serverthread_info_s {
-  int bLoggedIn;
-  int isLoginServer;
-  BYTE szAuthKey[20];
-  WORD wAuthKeyLen;
-  WORD wServerPort;
-  char *newServer;
-  BYTE* cookieData;
-  int cookieDataLen;
-  int newServerReady;
-  int isMigrating;
-  HANDLE hPacketRecver;
-  int bReinitRecver;
-  int bMyAvatarInited;
-  //
-  HANDLE hDirectBoundPort;
-  //
-  HANDLE hKeepAliveEvent;
-  HANDLE hKeepAliveThread;
-} serverthread_info;
+int isLoginServer;
+char *migratedServer;
 
 /*---------* Functions *---------------*/
 
-void icq_serverDisconnect(BOOL bBlock);
+void icq_serverDisconnect();
 void sendServPacket(icq_packet *);
 void icq_login(const char *szPassword);
 

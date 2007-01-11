@@ -2,8 +2,8 @@
 
 Miranda IM: the free IM client for Microsoft* Windows*
 
-Copyright 2000-2007 Miranda ICQ/IM project,
-all portions of this codebase are copyrighted to the people
+Copyright 2000-2003 Miranda ICQ/IM project, 
+all portions of this codebase are copyrighted to the people 
 listed in contributors.txt.
 
 This program is free software; you can redistribute it and/or
@@ -20,22 +20,21 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
-#include "commonheaders.h"
+#include "../../core/commonheaders.h"
 #include "netlib.h"
 
 struct NetlibUser **netlibUser=NULL;
 int netlibUserCount=0;
 CRITICAL_SECTION csNetlibUser;
 HANDLE hConnectionHeaderMutex;
-DWORD g_LastConnectionTick; // protected by csNetlibUser
 
 void NetlibFreeUserSettingsStruct(NETLIBUSERSETTINGS *settings)
 {
-	if(settings->szIncomingPorts) mir_free(settings->szIncomingPorts);
-	if(settings->szOutgoingPorts) mir_free(settings->szOutgoingPorts);
-	if(settings->szProxyAuthPassword) mir_free(settings->szProxyAuthPassword);
-	if(settings->szProxyAuthUser) mir_free(settings->szProxyAuthUser);
-	if(settings->szProxyServer) mir_free(settings->szProxyServer);
+	if(settings->szIncomingPorts) free(settings->szIncomingPorts);
+	if(settings->szOutgoingPorts) free(settings->szOutgoingPorts);
+	if(settings->szProxyAuthPassword) free(settings->szProxyAuthPassword);
+	if(settings->szProxyAuthUser) free(settings->szProxyAuthUser);
+	if(settings->szProxyServer) free(settings->szProxyServer);
 }
 
 void NetlibInitializeNestedCS(struct NetlibNestedCriticalSection *nlncs)
@@ -107,7 +106,7 @@ static char *GetNetlibUserSettingString(const char *szUserModule,const char *szS
 	else {
 		char *szRet;
 		if(decode) CallService(MS_DB_CRYPT_DECODESTRING, strlen(dbv.pszVal) + 1, (LPARAM)dbv.pszVal);
-		szRet=mir_strdup(dbv.pszVal);
+		szRet=_strdup(dbv.pszVal);
 		DBFreeVariant(&dbv);
 		if(szRet==NULL) SetLastError(ERROR_OUTOFMEMORY);
 		return szRet;
@@ -129,24 +128,24 @@ static int NetlibRegisterUser(WPARAM wParam,LPARAM lParam)
 
 	EnterCriticalSection(&csNetlibUser);
 	for(i=0;i<netlibUserCount;i++)
-		if(!lstrcmpA(netlibUser[i]->user.szSettingsModule,nlu->szSettingsModule)) {
+		if(!lstrcmp(netlibUser[i]->user.szSettingsModule,nlu->szSettingsModule)) {
 			LeaveCriticalSection(&csNetlibUser);
 			SetLastError(ERROR_DUP_NAME);
 			return (int)(HANDLE)NULL;
 		}
 	LeaveCriticalSection(&csNetlibUser);
 
-	thisUser=(struct NetlibUser*)mir_calloc(sizeof(struct NetlibUser));
+	thisUser=(struct NetlibUser*)calloc(1,sizeof(struct NetlibUser));
 	thisUser->handleType=NLH_USER;
 	thisUser->user=*nlu;
-	if((thisUser->user.szSettingsModule=mir_strdup(nlu->szSettingsModule))==NULL
-	   || (nlu->szDescriptiveName && (thisUser->user.ptszDescriptiveName = a2t(nlu->szDescriptiveName))==NULL)
-	   || (nlu->szHttpGatewayUserAgent && (thisUser->user.szHttpGatewayUserAgent=mir_strdup(nlu->szHttpGatewayUserAgent))==NULL)) {
+	if((thisUser->user.szSettingsModule=_strdup(nlu->szSettingsModule))==NULL
+	   || (nlu->szDescriptiveName && (thisUser->user.szDescriptiveName=_strdup(nlu->szDescriptiveName))==NULL)
+	   || (nlu->szHttpGatewayUserAgent && (thisUser->user.szHttpGatewayUserAgent=_strdup(nlu->szHttpGatewayUserAgent))==NULL)) {
 		SetLastError(ERROR_OUTOFMEMORY);
 		return (int)(HANDLE)NULL;
 	}
-	if (nlu->szHttpGatewayHello)
-		thisUser->user.szHttpGatewayHello=mir_strdup(nlu->szHttpGatewayHello);
+	if (nlu->szHttpGatewayHello) 
+		thisUser->user.szHttpGatewayHello=_strdup(nlu->szHttpGatewayHello);
 	else
 		thisUser->user.szHttpGatewayHello=NULL;
 
@@ -170,10 +169,9 @@ static int NetlibRegisterUser(WPARAM wParam,LPARAM lParam)
 	thisUser->settings.szIncomingPorts=GetNetlibUserSettingString(thisUser->user.szSettingsModule,"NLIncomingPorts",0);
 	thisUser->settings.specifyOutgoingPorts=GetNetlibUserSettingInt(thisUser->user.szSettingsModule,"NLSpecifyOutgoingPorts",0);
 	thisUser->settings.szOutgoingPorts=GetNetlibUserSettingString(thisUser->user.szSettingsModule,"NLOutgoingPorts",0);
-	thisUser->settings.enableUPnP=GetNetlibUserSettingInt(thisUser->user.szSettingsModule,"NLEnableUPnP",1); //default to on
-    
+
 	EnterCriticalSection(&csNetlibUser);
-	netlibUser=(struct NetlibUser**)mir_realloc(netlibUser,sizeof(struct NetlibUser*)*++netlibUserCount);
+	netlibUser=(struct NetlibUser**)realloc(netlibUser,sizeof(struct NetlibUser*)*++netlibUserCount);
 	netlibUser[netlibUserCount-1]=thisUser;
 	LeaveCriticalSection(&csNetlibUser);
 	return (int)thisUser;
@@ -201,6 +199,7 @@ static int NetlibSetUserSettings(WPARAM wParam,LPARAM lParam)
 		SetLastError(ERROR_INVALID_PARAMETER);
 		return 0;
 	}
+	NetlibFreeUserSettingsStruct(&nlu->settings);
 	NetlibSaveUserSettingsStruct(nlu->user.szSettingsModule,nlus);
 	return 1;
 }
@@ -213,18 +212,18 @@ int NetlibCloseHandle(WPARAM wParam,LPARAM lParam)
 			int i;
 			EnterCriticalSection(&csNetlibUser);
 			for(i=0;i<netlibUserCount;i++)
-				if(!lstrcmpA(netlibUser[i]->user.szSettingsModule,nlu->user.szSettingsModule)) {
+				if(!lstrcmp(netlibUser[i]->user.szSettingsModule,nlu->user.szSettingsModule)) {
 					netlibUserCount--;
 					memmove(netlibUser+i,netlibUser+i+1,(netlibUserCount-i)*sizeof(struct NetlibUser*));
 					break;
 				}
 			LeaveCriticalSection(&csNetlibUser);
 			NetlibFreeUserSettingsStruct(&nlu->settings);
-			if(nlu->user.szSettingsModule) mir_free(nlu->user.szSettingsModule);
-			if(nlu->user.szDescriptiveName) mir_free(nlu->user.szDescriptiveName);
-			if(nlu->user.szHttpGatewayHello) mir_free(nlu->user.szHttpGatewayHello);
-			if(nlu->user.szHttpGatewayUserAgent) mir_free(nlu->user.szHttpGatewayUserAgent);
-			if(nlu->szStickyHeaders) mir_free(nlu->szStickyHeaders);
+			if(nlu->user.szSettingsModule) free(nlu->user.szSettingsModule);
+			if(nlu->user.szDescriptiveName) free(nlu->user.szDescriptiveName);
+			if(nlu->user.szHttpGatewayHello) free(nlu->user.szHttpGatewayHello);
+			if(nlu->user.szHttpGatewayUserAgent) free(nlu->user.szHttpGatewayUserAgent);
+			if(nlu->szStickyHeaders) free(nlu->szStickyHeaders);
 			break;
 		}
 		case NLH_CONNECTION:
@@ -233,45 +232,30 @@ int NetlibCloseHandle(WPARAM wParam,LPARAM lParam)
 			DWORD waitResult;
 
 			WaitForSingleObject(hConnectionHeaderMutex,INFINITE);
-			if (nlc->usingHttpGateway)
-			{
-				struct NetlibHTTPProxyPacketQueue *p = nlc->pHttpProxyPacketQueue;
-				while (p != NULL) {
-					struct NetlibHTTPProxyPacketQueue *t = p;
-
-					p = p->next;
-
-					mir_free(t->dataBuffer);
-					mir_free(t);
-				}
+			if(nlc->handleType!=NLH_CONNECTION || nlc->s==INVALID_SOCKET) {
+				ReleaseMutex(hConnectionHeaderMutex);
+				SetLastError(ERROR_INVALID_PARAMETER);	  //already been closed
+				return 0;
 			}
-			else
-			{
-				if(nlc->handleType!=NLH_CONNECTION || nlc->s==INVALID_SOCKET) {
-					ReleaseMutex(hConnectionHeaderMutex);
-					SetLastError(ERROR_INVALID_PARAMETER);	  //already been closed
-					return 0;
-				}
-				closesocket(nlc->s);
-				nlc->s=INVALID_SOCKET;
-			}
+			closesocket(nlc->s);
+			nlc->s=INVALID_SOCKET;
 			ReleaseMutex(hConnectionHeaderMutex);
 
 			waitHandles[0]=hConnectionHeaderMutex;
 			waitHandles[1]=nlc->hOkToCloseEvent;
 			waitHandles[2]=nlc->ncsRecv.hMutex;
 			waitHandles[3]=nlc->ncsSend.hMutex;
-			waitResult=WaitForMultipleObjects( SIZEOF(waitHandles),waitHandles,TRUE,INFINITE);
-			if(waitResult<WAIT_OBJECT_0 || waitResult >= WAIT_OBJECT_0 + SIZEOF(waitHandles)) {
+			waitResult=WaitForMultipleObjects(sizeof(waitHandles)/sizeof(waitHandles[0]),waitHandles,TRUE,INFINITE);
+			if(waitResult<WAIT_OBJECT_0 || waitResult>=WAIT_OBJECT_0+sizeof(waitHandles)/sizeof(waitHandles[0])) {
 				ReleaseMutex(hConnectionHeaderMutex);
 				SetLastError(ERROR_INVALID_PARAMETER);	  //already been closed
 				return 0;
 			}
 			nlc->handleType=0;
-			if(nlc->nlhpi.szHttpPostUrl) mir_free(nlc->nlhpi.szHttpPostUrl);
-			if(nlc->nlhpi.szHttpGetUrl) mir_free(nlc->nlhpi.szHttpGetUrl);
-			if(nlc->dataBuffer) mir_free(nlc->dataBuffer);
-			NetlibDestroySecurityProvider("NTLM", nlc->hNtlmSecurity);
+			if(nlc->nlhpi.szHttpPostUrl) free(nlc->nlhpi.szHttpPostUrl);
+			if(nlc->nlhpi.szHttpGetUrl) free(nlc->nlhpi.szHttpGetUrl);
+			if(nlc->dataBuffer) free(nlc->dataBuffer);
+			if(nlc->hInstSecurityDll) FreeLibrary(nlc->hInstSecurityDll);
 			NetlibDeleteNestedCS(&nlc->ncsRecv);
 			NetlibDeleteNestedCS(&nlc->ncsSend);
 			CloseHandle(nlc->hOkToCloseEvent);
@@ -284,14 +268,14 @@ int NetlibCloseHandle(WPARAM wParam,LPARAM lParam)
 			return NetlibFreeBoundPort((struct NetlibBoundPort*)wParam);
 		case NLH_PACKETRECVER:
 		{	struct NetlibPacketRecver *nlpr=(struct NetlibPacketRecver*)wParam;
-			mir_free(nlpr->packetRecver.buffer);
+			free(nlpr->packetRecver.buffer);
 			break;
 		}
 		default:
 			SetLastError(ERROR_INVALID_PARAMETER);
 			return 0;
 	}
-	mir_free((void*)wParam);
+	free((void*)wParam);
 	return 1;
 }
 
@@ -447,13 +431,11 @@ int NetlibBase64Decode(WPARAM wParam,LPARAM lParam)
 static int NetlibShutdown(WPARAM wParam,LPARAM lParam)
 {
 	int i;
-
-	NetlibSecurityDestroy();
-	NetlibUPnPDestroy();
+	
 	NetlibLogShutdown();
 	for(i=netlibUserCount;i>0;i--)
 		NetlibCloseHandle((WPARAM)netlibUser[i-1],0);
-	if(netlibUser) mir_free(netlibUser);
+	if(netlibUser) free(netlibUser);
 	CloseHandle(hConnectionHeaderMutex);
 	DeleteCriticalSection(&csNetlibUser);
 	WSACleanup();
@@ -476,7 +458,6 @@ int LoadNetlibModule(void)
 	WSAStartup(MAKEWORD(1,1), &wsadata);
 	InitializeCriticalSection(&csNetlibUser);
 	hConnectionHeaderMutex=CreateMutex(NULL,FALSE,NULL);
-	g_LastConnectionTick=GetTickCount();
 	NetlibLogInit();
 	CreateServiceFunction(MS_NETLIB_REGISTERUSER,NetlibRegisterUser);
 	CreateServiceFunction(MS_NETLIB_GETUSERSETTINGS,NetlibGetUserSettings);
@@ -500,9 +481,6 @@ int LoadNetlibModule(void)
 	CreateServiceFunction(MS_NETLIB_SELECTEX,NetlibSelectEx);
 	CreateServiceFunction(MS_NETLIB_CREATEPACKETRECVER,NetlibPacketRecverCreate);
 	CreateServiceFunction(MS_NETLIB_GETMOREPACKETS,NetlibPacketRecverGetMore);
-	CreateServiceFunction(MS_NETLIB_SETPOLLINGTIMEOUT,NetlibHttpSetPollingTimeout);
-
-	NetlibUPnPInit();
-	NetlibSecurityInit();
+	CreateServiceFunction(MS_NETLIB_SETPOLLINGTIMEOUT,NetlibHttpSetPollingTimeout);	
 	return 0;
 }

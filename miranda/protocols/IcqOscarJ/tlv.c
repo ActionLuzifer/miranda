@@ -5,7 +5,7 @@
 // Copyright © 2000,2001 Richard Hughes, Roland Rabien, Tristan Van de Vreede
 // Copyright © 2001,2002 Jon Keating, Richard Hughes
 // Copyright © 2002,2003,2004 Martin Öberg, Sam Kothari, Robert Rainwater
-// Copyright © 2004,2005,2006 Joe Kucera
+// Copyright © 2004,2005 Joe Kucera
 // 
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -23,14 +23,14 @@
 //
 // -----------------------------------------------------------------------------
 //
-// File name      : $Source: /cvsroot/miranda/miranda/protocols/IcqOscarJ/tlv.c,v $
+// File name      : $Source$
 // Revision       : $Revision$
 // Last change on : $Date$
 // Last change by : $Author$
 //
 // DESCRIPTION:
 //
-//  Helper functions for Oscar TLV chains
+//  Describe me here please...
 //
 // -----------------------------------------------------------------------------
 
@@ -41,58 +41,62 @@
 /* set maxTlvs<=0 to get all TLVs in length, or a positive integer to get at most the first n */
 oscar_tlv_chain* readIntoTLVChain(BYTE **buf, WORD wLen, int maxTlvs)
 {
-  oscar_tlv_chain *now, *last, *chain = NULL;
-  WORD now_tlv_len;
-  int len = wLen;
+	oscar_tlv_chain *now, *chain = NULL;
+	int len = wLen;
 
-  if (!buf || !wLen) return NULL;
+	if (!buf || !wLen) return NULL;
 
-  while (len > 0) /* don't use unsigned variable for this check */
-  {
-    now = (oscar_tlv_chain *)SAFE_MALLOC(sizeof(oscar_tlv_chain));
+	while (len > 0) /* don't use unsigned variable for this check */
+	{
+		now = (oscar_tlv_chain *)malloc(sizeof(oscar_tlv_chain));
 
-    if (!now)
-    {
-      disposeChain(&chain);
-      return NULL;
-    }
+		if (!now)
+		{
+			disposeChain(&chain);
+			return NULL;
+		}
 
-    unpackWord(buf, &(now->tlv.wType));
-    unpackWord(buf, &now_tlv_len);
-    now->tlv.wLen = now_tlv_len;
-    len -= 4;
+		now->tlv = (oscar_tlv *)malloc(sizeof(oscar_tlv));
 
-    if (now_tlv_len < 1)
-    {
-      now->tlv.pData = NULL;
-    }
-    else if (now_tlv_len <= len)
-    {
-      now->tlv.pData = (BYTE *)SAFE_MALLOC(now_tlv_len);
-      if (now->tlv.pData)
-        memcpy(now->tlv.pData, *buf, now_tlv_len);
-    }
+		if (!(now->tlv))
+		{
+			disposeChain(&chain);
+      SAFE_FREE(&now);
+			return NULL;
+		}
+
+		unpackWord(buf, &(now->tlv->wType));
+		unpackWord(buf, &(now->tlv->wLen));
+		len -= 4;
+
+		if (now->tlv->wLen < 1)
+		{
+			now->tlv->pData = NULL;
+		}
+		else if (now->tlv->wLen <= len)
+    { // TODO: here should be error given out
+			now->tlv->pData = (BYTE *)malloc(now->tlv->wLen);
+      if (now->tlv->pData)
+			  memcpy(now->tlv->pData, *buf, now->tlv->wLen);
+		}
     else
     { // the packet is shorter than it should be
+      SAFE_FREE(&now->tlv);
       SAFE_FREE(&now);
       return chain; // give at least the rest of chain
     }
 
-    if (chain) // keep the original order
-      last->next = now;
-    else
-      chain = now;
+		now->next = chain;
+		chain = now;
 
-    last = now;
+		len -= now->tlv->wLen;
+		*buf += now->tlv->wLen;
 
-    len -= now_tlv_len;
-    *buf += now_tlv_len;
+		if (--maxTlvs == 0)
+			break;
+	}
 
-    if (--maxTlvs == 0)
-      break;
-  }
-
-  return chain;
+	return chain;
 }
 
 // Returns a pointer to the TLV with type wType and number wIndex in the chain
@@ -101,32 +105,35 @@ oscar_tlv_chain* readIntoTLVChain(BYTE **buf, WORD wLen, int maxTlvs)
 // wIndex must be > 0
 oscar_tlv* getTLV(oscar_tlv_chain *list, WORD wType, WORD wIndex)
 {
-  int i = 0;
+	int i = 0;
 
-  while (list)
+	while (list)
   {
-    if (list->tlv.wType == wType)
-      i++;
-    if (i >= wIndex)
-      return &list->tlv;
-    list = list->next;
-  }
+		if (list->tlv) 
+    {
+			if (list->tlv->wType == wType)
+				i++;
+			if (i >= wIndex)
+				return list->tlv;
+			list = list->next;
+		}
+	}
 
-  return NULL;
+	return NULL;
 }
 
 WORD getLenFromChain(oscar_tlv_chain *list, WORD wType, WORD wIndex)
 {
-  oscar_tlv *tlv;
-  WORD wLen = 0;
+	oscar_tlv *tlv;
+	WORD wLen = 0;
 
-  tlv = getTLV(list, wType, wIndex);
-  if (tlv)
-  {
-    wLen = tlv->wLen;
-  }
+	tlv = getTLV(list, wType, wIndex);
+	if (tlv)
+	{
+		wLen = tlv->wLen;
+	}
 
-  return wLen;
+	return wLen;
 }
 
 /* !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! */
@@ -135,88 +142,92 @@ WORD getLenFromChain(oscar_tlv_chain *list, WORD wType, WORD wIndex)
 
 DWORD getDWordFromChain(oscar_tlv_chain *list, WORD wType, WORD wIndex)
 {
-  oscar_tlv *tlv;
-  DWORD dw = 0;
+	oscar_tlv *tlv;
+	DWORD dw = 0;
 
-  tlv = getTLV(list, wType, wIndex);
-  if (tlv && tlv->wLen >= 4)
-  {
-    dw |= (*((tlv->pData)+0) << 24);
-    dw |= (*((tlv->pData)+1) << 16);
-    dw |= (*((tlv->pData)+2) << 8);
-    dw |= (*((tlv->pData)+3));
-  }
+	tlv = getTLV(list, wType, wIndex);
+	if (tlv && tlv->wLen >= 4)
+	{
+		dw |= (*((tlv->pData)+0) << 24);
+		dw |= (*((tlv->pData)+1) << 16);
+		dw |= (*((tlv->pData)+2) << 8);
+		dw |= (*((tlv->pData)+3));
+	}
 
-  return dw;
+	return dw;
 }
 
 WORD getWordFromChain(oscar_tlv_chain *list, WORD wType, WORD wIndex)
 {
-  oscar_tlv *tlv;
-  WORD w = 0;
+	oscar_tlv *tlv;
+	WORD w = 0;
 
-  tlv = getTLV(list, wType, wIndex);
-  if (tlv && tlv->wLen >= 2)
-  {
-    w |= (*((tlv->pData)+0) << 8);
-    w |= (*((tlv->pData)+1));
-  }
+	tlv = getTLV(list, wType, wIndex);
+	if (tlv && tlv->wLen >= 2)
+	{
+		w |= (*((tlv->pData)+0) << 8);
+		w |= (*((tlv->pData)+1));
+	}
 
-  return w;
+	return w;
 }
 
 BYTE getByteFromChain(oscar_tlv_chain *list, WORD wType, WORD wIndex)
 {
-  oscar_tlv *tlv;
-  BYTE b = 0;
+	oscar_tlv *tlv;
+	BYTE b = 0;
 
-  tlv = getTLV(list, wType, wIndex);
-  if (tlv && tlv->wLen)
-  {
-    b = *(tlv->pData);
-  }
+	tlv = getTLV(list, wType, wIndex);
+	if (tlv && tlv->wLen)
+	{
+		b = *(tlv->pData);
+	}
 
-  return b;
+	return b;
 }
 
 BYTE* getStrFromChain(oscar_tlv_chain *list, WORD wType, WORD wIndex)
 {
-  oscar_tlv *tlv;
-  BYTE *str = NULL;
+	oscar_tlv *tlv;
+	BYTE *str = NULL;
 
-  tlv = getTLV(list, wType, wIndex);
-  if (tlv)
-  {
-    str = (BYTE*)SAFE_MALLOC(tlv->wLen+1); /* For \0 */
+	tlv = getTLV(list, wType, wIndex);
+	if (tlv)
+	{
+		str = malloc(tlv->wLen+1); /* For \0 */
 
-    if (!str) return NULL;
+		if (!str) return NULL;
 
-    memcpy(str, tlv->pData, tlv->wLen);
-    *(str+tlv->wLen) = '\0';
-  }
+		memcpy(str, tlv->pData, tlv->wLen);
+		*(str+tlv->wLen) = '\0';
+	}
 
-  return str;
+	return str;
 }
 
 void disposeChain(oscar_tlv_chain **list)
 {
-  oscar_tlv_chain *now;
+	oscar_tlv_chain *now;
 
-  if (!list || !*list)
-    return;
+	if (!list || !*list)
+		return;
 
-  now = *list;
-  
-  while (now)
-  {
-    oscar_tlv_chain *temp;
+	now = *list;
+	
+	while (now)
+	{
+		oscar_tlv_chain *temp;
 
-    SAFE_FREE(&now->tlv.pData);
+		if (now->tlv) /* Possibly null if malloc failed on it in readintotlvchain*/
+		{
+			SAFE_FREE(&now->tlv->pData);
+			SAFE_FREE(&now->tlv);
+		}
 
-    temp = now->next;
-    SAFE_FREE(&now);
-    now = temp;
-  }
+		temp = now->next;
+		SAFE_FREE(&now);
+		now = temp;
+	}
 
-  *list = NULL;
+	*list = NULL;
 }

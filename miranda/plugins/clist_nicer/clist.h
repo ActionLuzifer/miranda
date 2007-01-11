@@ -21,36 +21,8 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 void LoadContactTree(void);
-int IconFromStatusMode(const char *szProto, int status, HANDLE hContact, HICON *phIcon);
+int IconFromStatusMode(const char *szProto,int status);
 HTREEITEM GetTreeItemByHContact(HANDLE hContact);
+void TrayIconUpdateWithImageList(int iImage,const char *szNewTip,char *szPreferredProto);
 void SortContacts(void);
-
-#define NEWSTR_ALLOCA(A) (A==NULL)?NULL:strcpy((char*)_alloca(strlen(A)+1),A)
-
-#define CLUIINTM_REDRAW (WM_USER+100)
-#define CLUIINTM_STATUSBARUPDATE (WM_USER+101)
-#define CLUIINTM_REMOVEFROMTASKBAR (WM_USER+102)
-
-#define CLVM_FILTER_PROTOS 1
-#define CLVM_FILTER_GROUPS 2
-#define CLVM_FILTER_STATUS 4
-#define CLVM_FILTER_VARIABLES 8
-#define CLVM_STICKY_CONTACTS 16
-#define CLVM_FILTER_STICKYSTATUS 32
-#define CLVM_FILTER_LASTMSG 64
-#define CLVM_FILTER_LASTMSG_OLDERTHAN 128
-#define CLVM_FILTER_LASTMSG_NEWERTHAN 256
-
-#define CLVM_PROTOGROUP_OP 1
-#define CLVM_GROUPSTATUS_OP 2
-#define CLVM_AUTOCLEAR 4
-#define CLVM_INCLUDED_UNGROUPED 8
-#define CLVM_USELASTMSG 16
-
-#if defined(_UNICODE)
-    #define CLVM_MODULE "CLVM_W"
-#else
-    #define CLVM_MODULE "CLVM"
-#endif
-    
-
+void ChangeContactIcon(HANDLE hContact,int iIcon,int add);

@@ -4,7 +4,7 @@
 
 # TARGTYPE "Win32 (x86) Dynamic-Link Library" 0x0102
 
-CFG=srmm - Win32 Debug Unicode
+CFG=srmm - Win32 Unicode Debug
 !MESSAGE This is not a valid makefile. To build this project using NMAKE,
 !MESSAGE use the Export Makefile command and run
 !MESSAGE 
@@ -13,14 +13,14 @@ CFG=srmm - Win32 Debug Unicode
 !MESSAGE You can specify a configuration when running NMAKE
 !MESSAGE by defining the macro CFG on the command line. For example:
 !MESSAGE 
-!MESSAGE NMAKE /f "srmm.mak" CFG="srmm - Win32 Debug Unicode"
+!MESSAGE NMAKE /f "srmm.mak" CFG="srmm - Win32 Unicode Debug"
 !MESSAGE 
 !MESSAGE Possible choices for configuration are:
 !MESSAGE 
 !MESSAGE "srmm - Win32 Release" (based on "Win32 (x86) Dynamic-Link Library")
 !MESSAGE "srmm - Win32 Debug" (based on "Win32 (x86) Dynamic-Link Library")
-!MESSAGE "srmm - Win32 Release Unicode" (based on "Win32 (x86) Dynamic-Link Library")
-!MESSAGE "srmm - Win32 Debug Unicode" (based on "Win32 (x86) Dynamic-Link Library")
+!MESSAGE "srmm - Win32 Unicode Release" (based on "Win32 (x86) Dynamic-Link Library")
+!MESSAGE "srmm - Win32 Unicode Debug" (based on "Win32 (x86) Dynamic-Link Library")
 !MESSAGE 
 
 # Begin Project
@@ -42,10 +42,10 @@ RSC=rc.exe
 # PROP Use_Debug_Libraries 0
 # PROP Output_Dir "Release"
 # PROP Intermediate_Dir "Release"
-# PROP Ignore_Export_Lib 1
+# PROP Ignore_Export_Lib 0
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /MT /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "SRMM_EXPORTS" /YX /FD /c
-# ADD CPP /nologo /MD /W3 /Zi /O1 /I "../../include" /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "SRMM_EXPORTS" /YX /FD /c
+# ADD CPP /nologo /MD /W3 /O1 /I "../../include" /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "SRMM_EXPORTS" /YX /FD /c
 # ADD BASE MTL /nologo /D "NDEBUG" /mktyplib203 /win32
 # ADD MTL /nologo /D "NDEBUG" /mktyplib203 /win32
 # ADD BASE RSC /l 0x809 /d "NDEBUG"
@@ -55,8 +55,7 @@ BSC32=bscmake.exe
 # ADD BSC32 /nologo
 LINK32=link.exe
 # ADD BASE LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /dll /machine:I386
-# ADD LINK32 comctl32.lib kernel32.lib user32.lib gdi32.lib shell32.lib ole32.lib comdlg32.lib /nologo /dll /map /debug /machine:I386 /out:"../../bin/release/plugins/srmm.dll"
-# SUBTRACT LINK32 /pdb:none /incremental:yes
+# ADD LINK32 comctl32.lib kernel32.lib user32.lib gdi32.lib shell32.lib ole32.lib comdlg32.lib /nologo /dll /pdb:none /machine:I386 /out:"../../bin/release/plugins/srmm.dll"
 
 !ELSEIF  "$(CFG)" == "srmm - Win32 Debug"
 
@@ -83,9 +82,8 @@ BSC32=bscmake.exe
 LINK32=link.exe
 # ADD BASE LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /dll /debug /machine:I386 /pdbtype:sept
 # ADD LINK32 comctl32.lib kernel32.lib user32.lib gdi32.lib shell32.lib ole32.lib comdlg32.lib /nologo /dll /debug /machine:I386 /out:"../../bin/debug/Plugins/srmm.dll" /pdbtype:sept
-# SUBTRACT LINK32 /pdb:none /incremental:no
 
-!ELSEIF  "$(CFG)" == "srmm - Win32 Release Unicode"
+!ELSEIF  "$(CFG)" == "srmm - Win32 Unicode Release"
 
 # PROP BASE Use_MFC 0
 # PROP BASE Use_Debug_Libraries 0
@@ -95,13 +93,12 @@ LINK32=link.exe
 # PROP BASE Target_Dir ""
 # PROP Use_MFC 0
 # PROP Use_Debug_Libraries 0
-# PROP Output_Dir ".\Release_Unicode"
-# PROP Intermediate_Dir ".\Release_Unicode"
-# PROP Ignore_Export_Lib 1
+# PROP Output_Dir "Unicode_Release"
+# PROP Intermediate_Dir "Unicode_Release"
+# PROP Ignore_Export_Lib 0
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /MD /W3 /O1 /I "../../include" /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "SRMM_EXPORTS" /YX /FD /c
-# ADD CPP /nologo /MD /W3 /Zi /O1 /I "../../include" /D "UNICODE" /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "SRMM_EXPORTS" /YX /FD /c
-# SUBTRACT CPP /Fr
+# ADD CPP /nologo /MD /W3 /O1 /I "../../include" /D "UNICODE" /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "SRMM_EXPORTS" /YX /FD /c
 # ADD BASE MTL /nologo /D "NDEBUG" /mktyplib203 /win32
 # ADD MTL /nologo /D "NDEBUG" /mktyplib203 /win32
 # ADD BASE RSC /l 0x809 /i "../../include" /d "NDEBUG"
@@ -111,10 +108,9 @@ BSC32=bscmake.exe
 # ADD BSC32 /nologo
 LINK32=link.exe
 # ADD BASE LINK32 comctl32.lib kernel32.lib user32.lib gdi32.lib shell32.lib ole32.lib comdlg32.lib /nologo /dll /pdb:none /machine:I386 /out:"../../bin/release/plugins/srmm.dll"
-# ADD LINK32 comctl32.lib kernel32.lib user32.lib gdi32.lib shell32.lib ole32.lib comdlg32.lib /nologo /dll /map /debug /machine:I386 /out:"../../bin/Release Unicode/plugins/srmm.dll"
-# SUBTRACT LINK32 /pdb:none /incremental:yes
+# ADD LINK32 comctl32.lib kernel32.lib user32.lib gdi32.lib shell32.lib ole32.lib comdlg32.lib /nologo /dll /pdb:none /machine:I386 /out:"../../bin/release/plugins/srmm.dll"
 
-!ELSEIF  "$(CFG)" == "srmm - Win32 Debug Unicode"
+!ELSEIF  "$(CFG)" == "srmm - Win32 Unicode Debug"
 
 # PROP BASE Use_MFC 0
 # PROP BASE Use_Debug_Libraries 1
@@ -124,9 +120,9 @@ LINK32=link.exe
 # PROP BASE Target_Dir ""
 # PROP Use_MFC 0
 # PROP Use_Debug_Libraries 1
-# PROP Output_Dir ".\Debug_Unicode"
-# PROP Intermediate_Dir ".\Debug_Unicode"
-# PROP Ignore_Export_Lib 1
+# PROP Output_Dir "Unicode_Debug"
+# PROP Intermediate_Dir "Unicode_Debug"
+# PROP Ignore_Export_Lib 0
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /MDd /W3 /Gm /GX /ZI /Od /I "../../include" /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "SRMM_EXPORTS" /YX /FD /GZ /c
 # ADD CPP /nologo /MDd /W3 /Gm /GX /ZI /Od /I "../../include" /D "UNICODE" /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "SRMM_EXPORTS" /YX /FD /GZ /c
@@ -139,8 +135,7 @@ BSC32=bscmake.exe
 # ADD BSC32 /nologo
 LINK32=link.exe
 # ADD BASE LINK32 comctl32.lib kernel32.lib user32.lib gdi32.lib shell32.lib ole32.lib comdlg32.lib /nologo /dll /debug /machine:I386 /out:"../../bin/debug/Plugins/srmm.dll" /pdbtype:sept
-# ADD LINK32 comctl32.lib kernel32.lib user32.lib gdi32.lib shell32.lib ole32.lib comdlg32.lib /nologo /dll /debug /machine:I386 /out:"../../bin/Debug Unicode/Plugins/srmm.dll" /pdbtype:sept
-# SUBTRACT LINK32 /pdb:none /incremental:no
+# ADD LINK32 comctl32.lib kernel32.lib user32.lib gdi32.lib shell32.lib ole32.lib comdlg32.lib /nologo /dll /debug /machine:I386 /out:"../../bin/debug/Plugins/srmm.dll" /pdbtype:sept
 
 !ENDIF 
 
@@ -148,8 +143,8 @@ LINK32=link.exe
 
 # Name "srmm - Win32 Release"
 # Name "srmm - Win32 Debug"
-# Name "srmm - Win32 Release Unicode"
-# Name "srmm - Win32 Debug Unicode"
+# Name "srmm - Win32 Unicode Release"
+# Name "srmm - Win32 Unicode Debug"
 # Begin Group "Source Files"
 
 # PROP Default_Filter "cpp;c;cxx;rc;def;r;odl;idl;hpj;bat"
@@ -189,10 +184,6 @@ SOURCE=.\richutil.c
 
 SOURCE=.\srmm.c
 # End Source File
-# Begin Source File
-
-SOURCE=.\statusicon.c
-# End Source File
 # End Group
 # Begin Group "Header Files"
 
@@ -221,17 +212,21 @@ SOURCE=.\resource.h
 
 SOURCE=.\richutil.h
 # End Source File
-# Begin Source File
-
-SOURCE=.\statusicon.h
-# End Source File
 # End Group
 # Begin Group "Resource Files"
 
 # PROP Default_Filter "ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe"
 # Begin Source File
 
-SOURCE=.\res\add.ico
+SOURCE=.\res\add32.ico
+# End Source File
+# Begin Source File
+
+SOURCE=.\res\add8.ico
+# End Source File
+# Begin Source File
+
+SOURCE="..\..\Miranda-IM\res\addcontact.ico"
 # End Source File
 # Begin Source File
 
@@ -239,15 +234,35 @@ SOURCE=..\..\src\res\addcontact.ico
 # End Source File
 # Begin Source File
 
-SOURCE=.\res\clock.ico
+SOURCE=.\res\Clock32.ico
 # End Source File
 # Begin Source File
 
-SOURCE=.\res\details.ico
+SOURCE=.\res\Clock8.ico
 # End Source File
 # Begin Source File
 
-SOURCE=.\res\downarrow.ico
+SOURCE=.\res\Details32.ico
+# End Source File
+# Begin Source File
+
+SOURCE=.\res\Details8.ico
+# End Source File
+# Begin Source File
+
+SOURCE="..\..\Miranda-IM\res\downarrow.ico"
+# End Source File
+# Begin Source File
+
+SOURCE=.\res\Downarrow32.ico
+# End Source File
+# Begin Source File
+
+SOURCE=.\res\Downarrow8.ico
+# End Source File
+# Begin Source File
+
+SOURCE="..\..\Miranda-IM\res\dragcopy.cur"
 # End Source File
 # Begin Source File
 
@@ -255,11 +270,27 @@ SOURCE=..\..\src\res\dragcopy.cur
 # End Source File
 # Begin Source File
 
+SOURCE="..\..\Miranda-IM\res\dropuser.cur"
+# End Source File
+# Begin Source File
+
 SOURCE=..\..\src\res\dropuser.cur
 # End Source File
 # Begin Source File
 
-SOURCE=.\res\history.ico
+SOURCE="..\..\Miranda-IM\res\history.ico"
+# End Source File
+# Begin Source File
+
+SOURCE=.\res\History32.ico
+# End Source File
+# Begin Source File
+
+SOURCE=.\res\History8.ico
+# End Source File
+# Begin Source File
+
+SOURCE="..\..\Miranda-IM\res\hyperlin.cur"
 # End Source File
 # Begin Source File
 
@@ -271,6 +302,18 @@ SOURCE=.\res\incoming.ico
 # End Source File
 # Begin Source File
 
+SOURCE="..\..\Miranda-IM\res\multisend.ico"
+# End Source File
+# Begin Source File
+
+SOURCE=.\res\Multisend32.ico
+# End Source File
+# Begin Source File
+
+SOURCE=.\res\Multisend8.ico
+# End Source File
+# Begin Source File
+
 SOURCE=.\res\notice.ico
 # End Source File
 # Begin Source File
@@ -279,11 +322,35 @@ SOURCE=.\res\outgoing.ico
 # End Source File
 # Begin Source File
 
+SOURCE="..\..\Miranda-IM\res\rename.ico"
+# End Source File
+# Begin Source File
+
 SOURCE=.\resource.rc
 # End Source File
 # Begin Source File
 
-SOURCE=.\res\typing.ico
+SOURCE="..\..\Miranda-IM\res\timestamp.ico"
+# End Source File
+# Begin Source File
+
+SOURCE="..\..\Miranda-IM\res\typing.ico"
+# End Source File
+# Begin Source File
+
+SOURCE=.\res\Typing32.ico
+# End Source File
+# Begin Source File
+
+SOURCE=.\res\Typing8.ico
+# End Source File
+# Begin Source File
+
+SOURCE=.\res\unknown.bmp
+# End Source File
+# Begin Source File
+
+SOURCE="..\..\Miranda-IM\res\viewdetails.ico"
 # End Source File
 # End Group
 # End Target

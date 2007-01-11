@@ -45,8 +45,6 @@ use groupchats, this plugin is essential.
 
 SRMM (Unicode) 1.0.4.3
 (http://miranda-im.org/download/details.php?action=viewfile&id=1136)
-tabSRMM (Unicode) 0.9.9.95
-(http://hell.at.eu.org/forums)
 ----------------------
 They both are true Unicode-aware message editors. Using them you can
 send/receive Unicode messages, so you won't be dependent on the
@@ -64,11 +62,12 @@ case you can use this plugin to have no problems at all.
 Frequently asked questions.
 ================================================================================
 
-Q1. I want to use the OpenSSL libraries, but plugin can't find or load
-them. Where can I find the valid DLLs for Win32?
+Q1. There were a couple of popup options on the MSN settings page,
+but I cannot see them now. What am I doing wrong?
 
-A1. http://www.slproweb.com/products/Win32OpenSSL.html
-Use the latest stable version.
+A1. All popup settings were moved to Options/Popups/MSN. This page
+occurs automatically when you install Popup plugin (version 1.0.1.9
+or later is greatly recommended).
 
 ----------------------------------------------------------------
 

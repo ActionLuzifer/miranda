@@ -2,8 +2,8 @@
 
 Miranda IM: the free IM client for Microsoft* Windows*
 
-Copyright 2000-2007 Miranda ICQ/IM project,
-all portions of this codebase are copyrighted to the people
+Copyright 2000-2003 Miranda ICQ/IM project, 
+all portions of this codebase are copyrighted to the people 
 listed in contributors.txt.
 
 This program is free software; you can redistribute it and/or
@@ -20,7 +20,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
-#include "commonheaders.h"
+#include "../../core/commonheaders.h"
 #include "netlib.h"
 
 //mask must be 8192 bytes, returns number of bits set
@@ -67,8 +67,7 @@ int NetlibFreeBoundPort(struct NetlibBoundPort *nlbp)
 	closesocket(nlbp->s);
 	WaitForSingleObject(nlbp->hThread,INFINITE);
 	CloseHandle(nlbp->hThread);
-	NetlibUPnPDeletePortMapping(nlbp->wExPort, "TCP");
-	mir_free(nlbp);
+	free(nlbp);
 	return 1;
 }
 
@@ -79,14 +78,14 @@ static DWORD __stdcall NetlibBindAcceptThread(struct NetlibBoundPort *nlbp)
 	int sinLen;
 	struct NetlibConnection *nlc;
 
-	srand((unsigned int)time(NULL));
+	srand(time(NULL));
 	Netlib_Logf(nlbp->nlu,"(%d) Port %u opened for incoming connections",nlbp->s,nlbp->wPort);
 	for(;;) {
 		sinLen=sizeof(sin);
 		s=accept(nlbp->s,(struct sockaddr*)&sin,&sinLen);
 		if(s==INVALID_SOCKET) break;
 		Netlib_Logf(nlbp->nlu,"New incoming connection on port %u from %s (%d)",nlbp->wPort, inet_ntoa(sin.sin_addr),s);
-		nlc=(struct NetlibConnection*)mir_alloc(sizeof(struct NetlibConnection));
+		nlc=(struct NetlibConnection*)malloc(sizeof(struct NetlibConnection));
 		memset(nlc,0,sizeof(struct NetlibConnection));
 		nlc->handleType=NLH_CONNECTION;
 		nlc->nlu=nlbp->nlu;
@@ -114,21 +113,18 @@ int NetlibBindPort(WPARAM wParam,LPARAM lParam)
 		SetLastError(ERROR_INVALID_PARAMETER);
 		return (int)(HANDLE)NULL;
 	}
-	if ( nlb->cbSize != sizeof(NETLIBBIND)   &&
-		 nlb->cbSize != NETLIBBIND_SIZEOF_V2 &&
-		 nlb->cbSize != NETLIBBIND_SIZEOF_V1 )
-	{
+	if ( !(nlb->cbSize == sizeof(NETLIBBIND) || nlb->cbSize==sizeof(NETLIBBINDOLD)) ) {
 		return (int)(HANDLE)NULL;
 	}
-	nlbp=(struct NetlibBoundPort*)mir_alloc(sizeof(struct NetlibBoundPort));
+	nlbp=(struct NetlibBoundPort*)malloc(sizeof(struct NetlibBoundPort));
 	nlbp->handleType=NLH_BOUNDPORT;
 	nlbp->nlu=nlu;
 	nlbp->pfnNewConnectionV2=nlb->pfnNewConnectionV2;
 	nlbp->s=socket(AF_INET,SOCK_STREAM,0);
-	nlbp->pExtra= (nlb->cbSize != NETLIBBIND_SIZEOF_V1) ? nlb->pExtra : NULL;
+	nlbp->pExtra= (nlb->cbSize == sizeof(NETLIBBIND)) ? nlb->pExtra : NULL;
 	if(nlbp->s==INVALID_SOCKET) {
 		Netlib_Logf(nlu,"%s %d: %s() failed (%u)",__FILE__,__LINE__,"socket",WSAGetLastError());
-		mir_free(nlbp);
+		free(nlbp);
 		return (int)(HANDLE)NULL;
 	}
 	sin.sin_family=AF_INET;
@@ -144,7 +140,7 @@ int NetlibBindPort(WPARAM wParam,LPARAM lParam)
 		portsCount=StringToPortsMask(nlu->settings.szIncomingPorts,portsMask);
 		if(portsCount==0) {
 			closesocket(nlbp->s);
-			mir_free(nlbp);
+			free(nlbp);
 			SetLastError(WSAEADDRINUSE);
 			return (int)(HANDLE)NULL;
 		}
@@ -176,70 +172,46 @@ int NetlibBindPort(WPARAM wParam,LPARAM lParam)
 	else {
 		/* if ->wPort==0 then they'll get any free port, otherwise they'll
 		be asking for whatever was in nlb->wPort*/
-		if (nlb->wPort!=0) {
+		if (nlb->wPort!=0) {			
 			Netlib_Logf(nlu,"%s %d: trying to bind port %d, this 'feature' can be abused, please be sure you want to allow it.",__FILE__,__LINE__,nlb->wPort);
 			sin.sin_port=htons(nlb->wPort);
-		}
+		} 
 		if(bind(nlbp->s,(SOCKADDR *)&sin,sizeof(sin))==0) foundPort=1;
 	}
 	if(!foundPort) {
 		Netlib_Logf(nlu,"%s %d: %s() failed (%u)",__FILE__,__LINE__,"bind",WSAGetLastError());
 		closesocket(nlbp->s);
-		mir_free(nlbp);
+		free(nlbp);
 		return (int)(HANDLE)NULL;
 	}
 
 	if(listen(nlbp->s,5)) {
 		Netlib_Logf(nlu,"%s %d: %s() failed (%u)",__FILE__,__LINE__,"listen",WSAGetLastError());
 		closesocket(nlbp->s);
-		mir_free(nlbp);
+		free(nlbp);
 		return (int)(HANDLE)NULL;
 	}
 
 	{	int len;
-		DWORD extIP;
+		char hostname[64];
+		struct hostent *he;
 
 		ZeroMemory(&sin,sizeof(sin));
 		len=sizeof(sin);
 		if(getsockname(nlbp->s,(SOCKADDR *)&sin,&len)) {
 			Netlib_Logf(nlu,"%s %d: %s() failed (%u)",__FILE__,__LINE__,"getsockname",WSAGetLastError());
 			closesocket(nlbp->s);
-			mir_free(nlbp);
+			free(nlbp);
 			return (int)(HANDLE)NULL;
 		}
 		nlb->wPort=ntohs(sin.sin_port);
 		nlbp->wPort=nlb->wPort;
 		nlb->dwInternalIP=ntohl(sin.sin_addr.S_un.S_addr);
 
-		if (nlb->dwInternalIP == 0)
-		{
-			char hostname[64];
-			struct hostent *he;
-
-			gethostname(hostname,SIZEOF(hostname));
-			he=gethostbyname(hostname);
-			if(he->h_addr_list[0])
-				nlb->dwInternalIP=ntohl(*(PDWORD)he->h_addr_list[0]);
-		}
-		if (nlu->settings.enableUPnP&&NetlibUPnPAddPortMapping(nlb->wPort, "TCP", &nlbp->wExPort,
-			&extIP, nlb->cbSize > NETLIBBIND_SIZEOF_V2))
-		{
-			if (nlb->cbSize > NETLIBBIND_SIZEOF_V2)
-			{
-				nlb->wExPort = nlbp->wExPort;
-				nlb->dwExternalIP = extIP;
-			}
-		}
-		else
-		{
-			nlbp->wExPort = 0;
-			if (nlb->cbSize > NETLIBBIND_SIZEOF_V2)
-			{
-				nlb->wExPort = nlb->wPort;
-				nlb->dwExternalIP = nlb->dwInternalIP;
-			}
-		}
-
+		gethostname(hostname,sizeof(hostname));
+		he=gethostbyname(hostname);
+		if(he->h_addr_list[0])
+			nlb->dwInternalIP=ntohl(*(PDWORD)he->h_addr_list[0]);
 	}
 	nlbp->hThread=(HANDLE)forkthreadex(NULL,0,NetlibBindAcceptThread,nlbp,0,&dwThreadId);
 	return (int)nlbp;

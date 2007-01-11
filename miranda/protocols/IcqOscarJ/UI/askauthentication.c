@@ -5,7 +5,6 @@
 // Copyright © 2000,2001 Richard Hughes, Roland Rabien, Tristan Van de Vreede
 // Copyright © 2001,2002 Jon Keating, Richard Hughes
 // Copyright © 2002,2003,2004 Martin Öberg, Sam Kothari, Robert Rainwater
-// Copyright © 2004,2005,2006 Joe Kucera
 // 
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -23,7 +22,7 @@
 //
 // -----------------------------------------------------------------------------
 //
-// File name      : $Source: /cvsroot/miranda/miranda/protocols/IcqOscarJ/UI/askauthentication.c,v $
+// File name      : $Source$
 // Revision       : $Revision$
 // Last change on : $Date$
 // Last change by : $Author$
@@ -37,90 +36,92 @@
 #include "icqoscar.h"
 
 
+
+extern HANDLE hInst;
+extern int gnCurrentStatus;
+extern char gpszICQProtoName[MAX_PATH];
+
 static BOOL CALLBACK AskAuthProc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam);
+
 
 
 int icq_RequestAuthorization(WPARAM wParam, LPARAM lParam)
 {
-  DialogBoxUtf(TRUE, hInst, MAKEINTRESOURCEA(IDD_ASKAUTH), NULL, AskAuthProc, (LPARAM)wParam);
 
-  return 0;
+	DialogBoxParam(hInst, MAKEINTRESOURCE(IDD_ASKAUTH), NULL, AskAuthProc, (LPARAM)wParam);
+
+	return 0;
+
 }
 
 
 
 static BOOL CALLBACK AskAuthProc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 {
-  HANDLE hContact;
 
-  switch (msg)
-  {
+	static char szReason[256];
+	static HANDLE hContact;
 
-  case WM_INITDIALOG:
-    {
-      char str[MAX_PATH];
 
-      hContact = (HANDLE)lParam;
+	switch (msg)
+	{
 
-      if (!hContact || !icqOnline)
-        EndDialog(hwndDlg, 0);
+	case WM_INITDIALOG:
+		hContact = (HANDLE)lParam;
 
-      ICQTranslateDialog(hwndDlg);
-      SetWindowLong(hwndDlg, GWL_USERDATA, lParam);
-      SendDlgItemMessage(hwndDlg, IDC_EDITAUTH, EM_LIMITTEXT, (WPARAM)255, 0);
-      SetDlgItemTextUtf(hwndDlg, IDC_EDITAUTH, ICQTranslateUtfStatic("Please authorize me to add you to my contact list.", str));
+		if (!hContact || !icqOnline)
+			EndDialog(hwndDlg, 0);
 
-      return TRUE;
-    }
-
-  case WM_COMMAND:
-    {
-      switch (LOWORD(wParam))
-      {
-      case IDOK:
+		TranslateDialogDefault(hwndDlg);
+		SetWindowLong(hwndDlg, GWL_USERDATA, lParam);
+		SendDlgItemMessage(hwndDlg, IDC_EDITAUTH, EM_LIMITTEXT, (WPARAM)255, 0);
+		SetDlgItemText(hwndDlg, IDC_EDITAUTH, Translate("Please authorize me to add you to my contact list."));
+		
+		return TRUE;
+		
+	case WM_COMMAND:
         {
-          DWORD dwUin;
-          uid_str szUid;
-          char* szReason;
+            switch (LOWORD(wParam))
+			{
 
-          hContact = (HANDLE)GetWindowLong(hwndDlg, GWL_USERDATA);
+			case IDOK:
+                {
 
-          if (!icqOnline)
-            return TRUE;
+					DWORD dwUin;
 
-          if (ICQGetContactSettingUID(hContact, &dwUin, &szUid))
-            return TRUE; // Invalid contact
+					
+					dwUin = DBGetContactSettingDword(hContact, gpszICQProtoName, UNIQUEIDSETTING, 0);
+					
+					if (!dwUin || !icqOnline)
+						return TRUE;
+					
+					GetDlgItemText(hwndDlg, IDC_EDITAUTH, szReason, 255);
+					icq_sendAuthReqServ(dwUin, szReason);
+					EndDialog(hwndDlg, 0);
 
-          szReason = GetDlgItemTextUtf(hwndDlg, IDC_EDITAUTH);
-          icq_sendAuthReqServ(dwUin, szUid, szReason);
-          SAFE_FREE(&szReason);
+					return TRUE;
 
-          if (gbSsiEnabled && dwUin)
-          { // auth bug fix (thx Bio)
-            resetServContactAuthState(hContact, dwUin);
-          }
+                }
+				break;
 
-          EndDialog(hwndDlg, 0);
+			case IDCANCEL:
+				EndDialog(hwndDlg, 0);
+				return TRUE;
+				break;
 
-          return TRUE;
+			default:
+				break;
+
+			}
         }
-        break;
+		break;
 
-      case IDCANCEL:
-        EndDialog(hwndDlg, 0);
-        return TRUE;
+	case WM_CLOSE:
+		EndDialog(hwndDlg,0);
+		return TRUE;
 
-      default:
-        break;
+	}
+	
+	return FALSE;
 
-      }
-    }
-    break;
-
-  case WM_CLOSE:
-    EndDialog(hwndDlg,0);
-    return TRUE;
-  }
-  
-  return FALSE;
 }

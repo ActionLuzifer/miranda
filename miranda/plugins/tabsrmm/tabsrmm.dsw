@@ -1,9 +1,9 @@
 Microsoft Developer Studio Workspace File, Format Version 6.00
-# WARNUNG: DIESE ARBEITSBEREICHSDATEI DARF NICHT BEARBEITET ODER GELÖSCHT WERDEN!
+# WARNING: DO NOT EDIT OR DELETE THIS WORKSPACE FILE!
 
 ###############################################################################
 
-Project: "ICONSXP"=.\icons\ICONSXP\ICONSXP.dsp - Package Owner=<4>
+Project: "tabSRMM"=.\tabsrmm.dsp - Package Owner=<4>
 
 Package=<5>
 {{{
@@ -15,7 +15,19 @@ Package=<4>
 
 ###############################################################################
 
-Project: "tabSRMM"=.\tabsrmm.dsp - Package Owner=<4>
+Project: "ICONS"=.\icons\default\default.dsp - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "ICONSXP"=.\icons\ICONSXP\ICONSXP.dsp - Package Owner=<4>
 
 Package=<5>
 {{{

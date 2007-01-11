@@ -9,9 +9,6 @@
 #define IDD_OPT_REGISTER                105
 #define IDD_AGENTS                      106
 #define IDD_FORM                        107
-#define IDI_ADDROSTER                   108
-#define IDI_USER2ROOM                   109
-#define IDI_REFRESH                     110
 #define IDD_PASSWORD                    111
 #define IDI_TLEN                        121
 #define IDI_ADDCONTACT                  122
@@ -28,7 +25,6 @@
 #define IDD_VCARD_PHOTO                 132
 #define IDD_VCARD_NOTE                  133
 #define IDD_CHANGEPASSWORD              136
-#define IDD_OPT_JABBERMAIN              139
 #define IDD_OPT_JABBER2                 140
 #define IDI_REQUEST                     141
 #define IDD_GROUPCHAT                   141
@@ -43,13 +39,13 @@
 #define IDD_GROUPCHAT_INPUT             167
 #define IDD_ADVSEARCH_TLEN              169
 #define IDD_JIDLIST                     171
+#define IDI_GCOWNER                     173
+#define IDI_GCADMIN                     175
+#define IDI_GCMODERATOR                 176
+#define IDI_GCVOICE                     179
 #define IDD_AGENT_MANUAL_REGISTER       182
 #define IDD_GROUPCHAT_INVITE            183
 #define IDD_GROUPCHAT_INVITE_ACCEPT     184
-#define IDD_OPT_JABBER3                 185
-#define IDD_OPT_SETAVATAR               185
-#define IDI_LOGIN                       186
-#define IDI_AUTHREVOKE                  187
 #define IDC_EDIT_USERNAME               1000
 #define IDC_SAVE                        1000
 #define IDC_EDIT_PASSWORD               1001
@@ -61,8 +57,6 @@
 #define IDC_INFO_RESOURCE               1008
 #define IDC_LINK_PUBLIC_SERVER          1009
 #define IDC_NAME                        1009
-#define IDC_LINK_PUBLIC_SERVER2         1010
-#define IDC_DOWNLOAD_OPENSSL            1010
 #define IDC_PROGRESS_REG                1011
 #define IDOK2                           1012
 #define IDC_AGENT_TRANSPORT             1015
@@ -74,10 +68,8 @@
 #define IDC_AGENT_LIST                  1021
 #define IDC_AGENT_SEARCH                1022
 #define IDC_SUBMIT                      1023
-#define IDC_LOGO                        1024
 #define IDC_AGENT_BROWSE                1029
 #define IDC_INSTRUCTION                 1030
-#define IDC_DESCRIPTION                 1031
 #define IDC_FRAME                       1037
 #define IDC_FRAME_TEXT                  1038
 #define IDC_SUBSCRIPTION                1039
@@ -110,10 +102,6 @@
 #define IDC_BIRTH                       1065
 #define IDC_OCCUPATION                  1066
 #define IDC_HOMEPAGE                    1067
-#define IDC_AVATAR                      1068
-#define IDC_ENABLE_AVATARS              1069
-#define IDC_SETAVATAR                   1070
-#define IDC_DELETEAVATAR                1071
 #define IDC_MIDDLE                      1072
 #define IDC_EMAIL                       1073
 #define IDC_HOME                        1074
@@ -136,7 +124,6 @@
 #define IDC_DELETE                      1092
 #define IDC_LOAD                        1093
 #define IDC_CANVAS                      1094
-#define IDC_OPTIONSTAB                  1095
 #define IDC_GENDER                      1096
 #define IDC_JUD                         1097
 #define IDC_JUD_LABEL                   1098
@@ -197,12 +184,8 @@
 #define IDC_INVITE                      1173
 #define IDC_ACCEPT                      1174
 #define IDC_FROM                        1175
-#define IDC_AUTOJOIN                    1176
+#define IDC_CHECK1                      1177
 #define IDC_DISABLE_MAINMENU            1178
-#define IDC_USE_TLS                     1179
-#define IDC_AUTO_ACCEPT_MUC             1180
-#define IDC_DISABLE_SASL                1182
-#define IDC_UNREGISTER                  1183
 #define IDC_WHITERECT                   1221
 #define IDC_UPDATING                    1231
 #define IDC_EMAILS                      1306
@@ -230,9 +213,9 @@
 //
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        188
+#define _APS_NEXT_RESOURCE_VALUE        185
 #define _APS_NEXT_COMMAND_VALUE         40017
-#define _APS_NEXT_CONTROL_VALUE         1184
+#define _APS_NEXT_CONTROL_VALUE         1179
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

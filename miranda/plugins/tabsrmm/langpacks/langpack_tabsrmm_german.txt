@@ -22,10 +22,6 @@ Fett
 Kursiv
 [Underlined text]
 Unterstrichen
-[Select font color]
-Schriftfarbe
-[Info panel controls]
-Einstellungen für den Infobereich
 [OK]
 OK
 [Ok]
@@ -45,8 +41,10 @@ Zustellungsfehler: %s
 [The message send timed out]
 Zeitüberschreitung beim Versenden einer Nachricht
 [A message failed to send successfully.]
-[Sending typing notifications is: %s]
-Senden von Tippbenachrichtigungen ist: %s
+[Sending typing notifications disabled.]
+Tippbenachrichtigungen werden NICHT gesendet.
+[Sending typing notifications enabled.]
+Tippbenachrichtigungen werden gesendet.
 [Retrieving Avatar...]
 Avatar wird geladen...
 [MetaContact: The enforced protocol (%d) is now offline.\nReverting to default protocol selection.]
@@ -126,14 +124,6 @@ Wollen sie diese Nachrichtensitzung wirklich schließen?
 ; ------------------------
 ; ----------------- msgdialog.c  source code strings
 ; ------------------------
-[Status message for %s (%s)]
-Statusnachricht für %s (%s)
-[No status message available]
-Keine Statusnachricht verfügbar
-[Either there is no status message available, or the protocol could not retrieve it.]
-Entweder es ist keine Statusnachricht verfügbar, oder sie konnte nicht ermitteld werden.
-[Retrieving...]
-Statusnachricht ermitteln...
 [has either a wrong size (max 150 x 150) or is not a recognized image file]
 hat entweder eine unzulässige Größe (150 x 150 maximum) oder liegt in einem unbekannten Format vor
 [Close session]
@@ -276,8 +266,8 @@ Kontaktlistgruppen verwenden (ein Container pro Gruppe)
 Maximale Anzahl von Sitzungen per container
 [Use single window mode (one container per session)]
 Jede Sitzung in einem eigenen Container öffnen
-[Default window title format]
-Standardformat für den Fenstertitel
+[Set display name for the default container (instead of just "default")]
+Name für den Standardcontainer:
 [Use default container mode (manual contact assignments)]
 Standardmodus verwenden (manuelle Zuordnung von Kontakten)
 [Container flashing]
@@ -332,28 +322,26 @@ innen
 außen
 [pixels]
 pixel
-[Message tab and window creation options]
-Erzeugen von tabs und Fenstern
+[Create tabs and containers]
+Erzeugen von tabs und Containern
 [Create tabs in the background]
 Tabs im Hintergrund erzeugen
-[Automatically pop up the window/tab when a message is received (has PRIORITY!)]
+[Automatically pop up the window/tab when a message is received]
 Fenster automatisch öffnen und auf den Desktop bringen
 [Automatically switch tabs in minimized containers]
 In minimierten Fenstern, tabs automatisch umschalten
 [Popup container if minimized]
 Minimierte container auf den Desktop
-[Create containers minimized on the taskbar]
+[Create containers, but leave them minimized]
 Container mimimiert in der taskbar erzeugen
-[Setup status modes for automatic tab creation...]
-Statusmodi für automatische Tab/Fenstererzeugung...
-[Message dialog visual settings]
+[Setup status modes...]
+Statusmodi...
+[Message dialog layout]
 Layout des Nachrichtenfensters
-[Use flat toolbar buttons (classic windows theme only)]
-Flache Toolbar Schaltflächen (nur wenn klassisches Windows-Theme aktiv ist)
+[Use flat buttons]
+Flache Schaltflächen
 [Flat message log (no static edge)]
 Flache Textbereiche
-[Dim icons for idle contacts]
-Symbole für inaktive Kontakte aufhellen
 [Splitters have static edges]
 Splitter haben statische Kanten
 [Miscellaneous options]
@@ -364,17 +352,14 @@ Autolocale aktivieren
 Eingabeverlauf
 [entries]
 Einträge
-[ESC closes sessions (minimizes window, if disabled)]
-ESC schließt Sitzung (minimiert Fenster, wenn deaktiviert)
-[Use global hotkeys (configure modifiers below)]
+[Use ESC key for closing sessions]
+ESC schließt Sitzung
+[Use global hotkeys for finding message sessions]
 Globale Hotkeys verwenden
 [Modifiers]
 Modifikatoren
 [Perform version check on Icon DLL]
 Versionskontrolle für Symbol DLL
-[Force more aggressive window updates]
-Aggressiveres Neuzeichnen von Fenstern
-
 ; ------------------------
 ; ----------------- typing notify options
 ; ------------------------
@@ -541,8 +526,6 @@ Auch den letzten Tab und damit das Fenster schließen
 SHIFT + Eingabe sendet Nachricht
 [Enable event API (support for third party plugins)]
 Event API aktivieren
-[Don't send UNICODE parts for 7bit ANSI messages (saves db space)]
-Sende reine 7bit Nachrichten ohne UNICODE Teil (spart Speicherplatz in der Datenbank)
 [Delete temporary contacts on close]
 Temporäre Kontakte beim Schließen löschen
 [Display notifications with:]
@@ -576,22 +559,6 @@ Andere Einstellungen
 ; ------------------------
 ; ----------------- container options page (the per container setting stuff)
 ; ------------------------
-[Container settings are private]
-Einstellungen sind privat
-[Use private title format]
-Eigenes Format für die Titelzeile
-[Hide the tool bar]
-Symbolleiste nicht zeigen
-[Show the info panel]
-Infobereich im Nachrichtenfenster
-[Save current as global]
-Als global speichern
-[UIN in status bar]
-UIN in der Statuszeile
-[Container size and position]
-Größe und Position des containers
-[Use global]
-Globale Einstellung verwenden
 [General settings]
 Allgemeine Einstellungen
 [Hide title bar]
@@ -599,7 +566,7 @@ Keine Titelleiste
 [Only show tab bar when it's needed]
 Keine Tabs bei nur einer Sitzung
 [Enable popups if minimized]
-Popups, wenn Fenster minimiert
+[Popups, wenn Fenster minimiert
 [Container stays on top]
 Immer im Vordergrund
 [Flashing options]
@@ -614,6 +581,18 @@ Niemals blinken
 Titelzeile
 [Use static container Icon]
 Festes Symbol verwenden
+[Show contacts name]
+Kontaktname zeigen
+[Show contacts status]
+Kontaktstatus zeigen
+[Show container name in titlebar]
+Name des Containers im Tite
+[Never]
+Nie
+[As prefix]
+Als Präfix
+[As suffix]
+Als Suffix
 [Container transparency]
 Transparenz
 [Enable transparency]
@@ -622,6 +601,12 @@ Transparenz aktivieren
 aktiv
 [inactive]
 inaktiv
+[Set these values as defaults for new containers]
+Diese Werte als Standard für neue container verwenden
+[Also apply them to all existing containers]
+Diese Werte auf alle existierenden Container anwenden
+[Load defaults]
+Standard laden
 [Apply]
 Übernehmen
 [Enable popups if unfocused]
@@ -632,6 +617,8 @@ Popups immer zeigen, wenn
 tab inaktiv ist
 [Layout options]
 Layout
+[Single row tab control]
+Nur eine Zeile Tabs
 [Sync sounds with popup mode]
 Soundeffekte wie popups
 [Hide the status bar]
@@ -872,31 +859,6 @@ Kontakt hinzufügen
 [Remove Contact from Favorites]
 Kontakt entfernen
 ;
-; ---------- the info panel menu -------
-;
-[Container Setting]
-Einstellung für diesen container
-[Use Global Setting]
-Globale Einstellung verwenden
-[Always On]
-Immer aktiv
-[Always Off]
-Immer inaktiv
-[Quick Toggle\tALT-I]
-Umschalten\tALT-I
-;
-; -----------Visiblity menu
-;
-[Set your visibility for this contact]
-Sichbarkeit konfigurieren
-[Your status determines visibility to this contact]
-Aktueller Status entscheidet über Sichtbarkeit
-[You appear always offline or have this contact blocked]
-Immer offline erscheinen bzw. Kontakt blocken
-[You are always visible to this contact]
-Immer als online (sichtbar) erscheinen
-
-;
 ; option pages titles
 ;
 [General]
@@ -1027,8 +989,6 @@ Kontakt in der Liste der Favoriten
 Nur ANSI senden und empfangen
 [Enabled]
 Aktiv
-[Disabled]
-Inaktiv
 [Override message window templates]
 Private Vorlagen für diesen Kontakt verwenden
 ;
@@ -1065,7 +1025,7 @@ Gruppenstart (ausgehend)
 [Group In (Inner)]
 Eingehend, gruppiert
 [Group Out (Inner)]
-Ausgehend, gruppiert
+Ausgehend, gruppier
 [Status change]
 Statuswechsel
 [Templates]
@@ -1086,31 +1046,13 @@ Zurücksetzen
 Frei verwendbare Farben
 [Close]
 Schließen
-[Quick help on variables...]
-Hilfe zu den Variablen
-[Double click a template to edit it. Select templates in the list box to show a preview]
-Doppelklick auf eine der Vorlagen um sie zu bearbeiten. Vorlage auswählen um eine Vorschau zu zeigen.
-[Get more help on variables]
-Mehr Hilfe zu Variablen
-[Template editor help]
-Hilfe zur Vorlagenbearbeitung
 ;
 ;Event notify stuff
 ;
-[Event notifications]
+[Event popups]
 Ereignisbenachrichtigungen
 [Event notify options]
 Einstellungen für Ereignisbenachrichtigungen
-[Disable ALL event notifications (check, if you're using an external plugin for event notifications)]
-Alle Ereignisbenachrichtigungen deaktiveren (z.b. wenn externes plugin für diesen Zweck aktiv ist)
-[Remove popups under following conditions]
-Popups vom Bildschirm löschen, wenn...
-[Remove event popups for a contact when its message window becomes focused]
-Alle Popups eines Kontakts entfernen, wenn das Fenster in den Vordergrund tritt]
-[Remove event popups for a contact when you start typing a reply]
-Alle Popups eines Kontakts entfernen, wenn eine Nachricht getippt wird
-[Remove event popups for a contact when you send a reply]
-Alle Popups eines Kontakts entfernen, wenn eine Nachricht gesendet wird
 [Announce events of type...]
 Zeige Ereignisse des Typs...
 [Message events]
@@ -1139,8 +1081,6 @@ System-Tray Symbol anzeigen
 Floater ist sichtbar
 [Show the Floater]
 Floater ist sichtbar
-[When floater is enabled, only show it while the contact list is minimized]
-Floater nur sichtbar, während die Kontaktliste minimiert ist.
 [Show session list menu on the message windows status bar]
 Zeige die Liste aktiver Sitzungen in der Statuszeile des Nachrichtenfensters
 [Minimize containers to system tray or floater]
@@ -1225,47 +1165,3 @@ Verlauf einfrieren
 Verlaufsaktualisierung gestoppt
 [Message Log is frozen (%d queued)]
 Verlaufsaktualisierung gestoppt (%d ungelesene)
-;
-; tab appearance
-;
-[Configure Tab Appearance...]
-Aussehen der Tabs...
-[Tab label colors]
-Textfarben
-[Tab background colors]
-Hintergrundfarben
-[Selected]
-Aktiv
-[Unread]
-Ungelesen
-[Hot Track (mouse over)]
-Unter dem Mauszeiger
-[NOTE: Background colors will only work with FLAT (button-style) tabs.]
-HINWEIS: Hintergrundfarben funktionieren nur mit "flachen" tabs.
-[Other options]
-Diverse Einstellungen
-[Flash icon]
-Symbol blinkt
-[Flash tab label]
-Textlabel blinkt
-[Disable visual styles]
-Keine visual styles verwenden
-[Use button tabs]
-Flache tabs (Schaltflächen)
-[Tab padding vertical]
-Vertikaler Randabstand
-[Tab control margins]
-Ränder
-[inner]
-innen
-[outer]
-außen
-[NOTE: some settings will not affect open containers.]
-HINWEIS: Einige Einstellungen haben keine Wirkung auf bereits offene Fenster
-[Configure tab appearance]
-Aussehen der tabs festlegen
-[Use windows colors]
-Windows - Standardfarben verwenden
-[Default width for button-style tabs]
-Standardbreite bei Schaltflächen Stil
-

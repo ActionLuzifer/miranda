@@ -23,7 +23,7 @@
 //
 // -----------------------------------------------------------------------------
 //
-// File name      : $Source: /cvsroot/miranda/miranda/protocols/IcqOscarJ/icq_infoupdate.h,v $
+// File name      : $Source$
 // Revision       : $Revision$
 // Last change on : $Date$
 // Last change by : $Author$
@@ -53,3 +53,6 @@ void icq_InfoUpdateCleanup(void);
 
 // Enable/disable user info lookups
 void icq_EnableUserLookup(BOOL bEnable);
+
+// Pause user info lookup for 30sec
+void icq_PauseUserLookup();

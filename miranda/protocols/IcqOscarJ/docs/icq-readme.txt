@@ -13,181 +13,24 @@ instant messenger network and communicate with other ICQ users.
 Known Problems
 ______________
 
-- In Invisible mode, when other side is not in visible list messages are sometimes
+- In Invisible mode, when other side is not in visible list messages are sometimes 
   received twice from some clients (it is a problem of that clients, they do send them
   twice)
 
 - In Invisible mode, when other side is not in visible list messages are not unicode
   aware. This is because ICQ protocol does not support unicode offline messages.
-  You can partly solve this by setting proper codepage for the contact - database setting
-  WORD "CodePage" in ICQ scope
 
 - When synchronising server-list, users get added with await auth flag or receive added
-  message. The way which ICQ servers handle authorizations, we cannot do it better - when
+  message. The way which ICQ servers handle authorisations, we cannot do it better - when
   uploading contacts to server account has to be a new one, then contacts can be added
   and uploaded without auth... If the account is an old one they cannot be added without
   auth if they require one. So they are added with flag awaiting auth. With the new
-  Manage server list contacts added contacts should never receive auth requests, but
+  Manage server list contacts added contacts should never receive auth requests, but 
   if you have an old account they can receive added notification.
-
-- Some wicked firewall software can cause HTML tags (e.g. <font> </font>) to be added to
-  incoming messages.
-
-- With HTTP Proxy Mode in Connection settings, neither Avatars nor File Transfer can work.
-  This is partly a limitation of current Miranda's network module implementation. But
-  File Transfer cannot work with HTTP Proxy, that is a protocol limitation.
-
-
-TO-DO List
-__________
-
-0.3.11
-  Server-list support now groups requests - much more faster & reliable
-  Full support for sub-groups in Manage server-list dialog
-  Simple sub-groups support (optional)
-  Bigger Avatars support (like ICQ 6)
-  
-
-0.5
-  Account management (together with Miranda core changes)
-  Multi-user chat (Xtraz based)
-  Mid-NetLib module for HTTP gateway (for Avatars to work) [icq_net]
-
 
 
 Changes
 _______
-
-0.3.8 Devel builds
-
-Bugfixes:
-  Fixed peer-to-peer session cookie checking (was working only due to coincidence)
-  Fixed SMS message handling, made message parsing more consistent
-  Applied fix for re-requesting authorization (thx Bio)
-  Fixed handling of message acks & status msg replies from ICQ 6
-  Fixed handling of malformed messages acks
-  Minor protocol related tweaks
-
-New Features:
-  Oscar File Transfers - like icq5 (including: transfer thru server, resume)
-
-Improvements:
-  Client detection improvements
-  Level 1 Rate management (global) - should solve problems with many contacts in list
-  Support for Custom Profile Folders plug-in - configurable avatars cache folder
-
-
-0.3.7.5
-
-Bugfixes:
-  Fixed possible crash in avatar queue
-  Fixed special character conversion in Custom Status messages
-  Minor changes to client detection
-
-
-0.3.7.4
-
-Bugfixes:
-  Some small fixes to Custom Status API
-  Fixed possible buffer overrun problem in status change packet handling
-  Some avatar related fixes
-
-Improvements:
-  Added avatar validity checking
-
-
-0.3.7.3
-
-Bugfixes:
-  Fixed HTTP/HTTPS proxy support (removed useless gateway option), long messages are now sent properly
-  Improved status change handling (can handle broken packets)
-
-
-0.3.7.2
-
-Bugfixes:
-  Fixes possible buffer overflow with contact status change
-  Fixed migration was not working at all (should not disconnect so often on server's upgrading)
-  Fixed offline greeting cards were not processed properly
-  Fixed small protocol glitch with reverse peer-to-peer connection
-
-
-0.3.7.1
-
-Bugfixes:
-  Fixed possible hang on exit
-  Fixed avatars were not working when server port set to 0
-  Made message parser more strict (fixes bug allowing stealth invisible client detection)
-  Fixed Popup's unicode support cannot be used in ANSI mode even if available
-  
-Improvements:
-  Added new session password API - allowing plugins like Secure Login to work better
-
-
-0.3.7
-
-Bugfixes:
-  Our own contact in list now correctly handles events
-  Proxy Gateway mode is working again
-  File receiving from Trillian clients work again
-  Incorporated some bugfixes from ISee (thx Bio)
-  Message errors are now really displayed
-  Fixed memory leak in avatar code
-  File transfers with GnomeICU works now
-  Fixed changing password in ICQ Details will not save it to DB if not there
-  Fixed PING channel handling (caused connection drop)
-  Fixed bug in changeinfo with translated listbox values (thx Bio)
-  Fixed error handling in avatar code for uploading avatar
-  Fixed bug in Manage-Server list dialog, caused hang
-  Fixed occasional losing of messages (message parsing was incomplete)
-  Server-list management now stores all info - solves problems
-  Fixed unknown errors during login were not reported sometimes
-
-New Features:
-  Messaging support enhanced (P2P messaging supported)
-  Direct Connection support rewritten (with P2P messaging and reverse file-transfers)
-  Temporary Visible List support
-  New Features page in options to configure extra features
-  Custom statuses just like icq5 - needs clist_mw derivative (thx Big Muscle)
-  New custom status icons (thx Angeli-ka)
-  Enhanced Unicode & Ansi charsets support (each contact can have its own codepage)
-  AIM cross-compatability (add/remove, search by mail, status, messaging, away messages)
-  Secure MD5 login authentification
-  Revoke authorization (Advanced Feature - see further) - removes you from contact's server-list
-
-Improvements:
-  Advanced search now can use newer method (thx Bio)
-  Better protocol error handling
-  Slightly better avatar handling
-  Detects some spam bots & ability to block known spam bots
-  Merged with ChangeInfo (thx Bio)
-  Added possibility to remember password for session
-  Added possibility to retrieve away message from libgaim clients
-  Added status to UserInfo page
-  Small improvements to client detection
-  Uses newer capabilities format (cuts incoming traffic)
-  Display error messages using PopUp Plugin
-  Support for Iconlib Plugin
-  Support for unicode database module (clist data)
-  Level 2 Rate management for Status & Xtraz replies, Xtraz requests (useful with many contacts in list)
-  Full unicode/ansi support (2in1)
-  Support for Updater Plugin
-  Added support for Flash Avatars Service Plugin
-  Added ability to upload own flash avatar - XML file (thx Big Muscle)
-
-
-0.3.5.3
-
-Bugfixes:
-  Fixed losing of almost all messages (protocol change)
-
-
-0.3.5.2
-
-Bugfixes:
-  Error checking on offline messages was not working
-  Now correctly handles "import time" item (should solve some auth issues)
-
 
 0.3.5.1
 
@@ -213,7 +56,7 @@ Bugfixes:
   Added workaround for select() malfunction - caused high CPU load
 
 Improvements:
-  If Update details from server is on, user groups are also updated
+  If Update details from server is on, user group are also updated
   Changed System Uptime to Member since in my details
   Auth system recognizes & sends UTF-8 messages
   Miranda version signature improved (preparing for old signature removal in the future)
@@ -227,7 +70,7 @@ Bugfixes:
   Server-list operations is now scheduled correctly
   Newly added contact with privacy setting is not hidden anymore
   Fixed unicode message receiving from Icq2Go! (messages were corrupted)
-  Fixed Grant authorization - not showed correctly and crashing randomly
+  Fixed Grant authorisation - not showed correctly and crashing randomly
   Move to group was not working properly
   On accept/decline filetransfer miranda was sometimes disconnected
   Group with subgroups was deleted if empty, that messed up subgroups
@@ -254,7 +97,7 @@ Improvements:
 0.3.4.2 (not published)
 
 Bugfixes:
-  Fixed authorization reply
+  Fixed authorisation reply
   Fixed contact transfer ack
   Now parses URL send ack correctly, no more timeout
   Now sending ack on contacts receive
@@ -267,7 +110,7 @@ New features:
   Added support for sending and receiving Idle time.
   Added reliable client identification (if not identified, gives appropriate ICQ client)
   Added support for avatar images (downloading only).
-  Added Grant authorization option (send & recognize)
+  Added Grant authorisation option (send & recognize)
 
 Improvements:
   Server-side list support rewritten, now uses acking, partly supports groups (without sub-groups for now).
@@ -366,43 +209,15 @@ http://bugs.miranda-im.org/
 Contact
 _______
 
-Current maintainer is Joe @ Whale, jokusoftware at miranda-im.org
-
-
-
-Advanced Features
-_________________
-
-There are some features that are not widely used so there is no UI for them, if
-you want to use them you need to do manual setup using DBE++.
-
-Database items (usually at Contact\ICQ):
-(BYTE)UnicodeSend = 0 - to Disable unicode support (useful as a workaround for Trillian's bug)
-
-(WORD)CodePage - codepage for plain text encoding/decoding to/from unicode
-
-(WORD)InfoCodePage - codepage for interpreting user details
-
-Database items for Main Contact (usually at Settings\ICQ):
-(BYTE)InfoUpdate - Threshold in DAYS for updating user info (restart is needed) - default is 14 days
-
-(DWORD)KeepAliveInterval - Period in which Keep-Alive packets are send if enabled - default is one minute
-
-(BYTE)PrivacyItems = 1 - adds more privacy tools to contact menu (e.g. Revoke Authorization)
-
-
-
-Credits and Thanks
-__________________
-
-Thanks to Angeli-Ka for nice custom status icons.
+Current maintainer is Joe @ Whale, jokusoftware at users.sourceforge.net
+                      Martin Öberg, strickz at miranda-im.org
 
 
 
 License and Copyright
 _____________________
 
-Copyright (C) 2000-2006 Joe Kucera, Martin Öberg, Richard Hughes, Jon Keating
+Copyright (C) 2000-2005 Joe Kucera, Martin Öberg, Richard Hughes, Jon Keating
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License

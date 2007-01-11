@@ -22,7 +22,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
 #include "msn_global.h"
-#include "m_icolib.h"
 #include "version.h"
 
 #pragma comment( lib, "shlwapi.lib" )
@@ -30,14 +29,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 HINSTANCE hInst;
 PLUGINLINK *pluginLink;
 
-MM_INTERFACE   mmi;
-LIST_INTERFACE li;
-UTF8_INTERFACE utfi;
-
 /////////////////////////////////////////////////////////////////////////////////////////
 // Initialization routines
 int		MsnOnDetailsInit( WPARAM, LPARAM );
-int		MsnWindowEvent(WPARAM wParam, LPARAM lParam);
 
 int		LoadMsnServices( void );
 void     UnloadMsnServices( void );
@@ -49,7 +43,6 @@ void		P2pSessions_Uninit( void );
 void		P2pSessions_Init( void );
 void		Threads_Uninit( void );
 int		MsnOptInit( WPARAM wParam, LPARAM lParam );
-void		UninitSsl( void );
 
 /////////////////////////////////////////////////////////////////////////////////////////
 // Global variables
@@ -57,26 +50,18 @@ void		UninitSsl( void );
 int      uniqueEventId = 0;
 int      msnSearchID = -1;
 char*    msnExternalIP = NULL;
-char*    msnPreviousUUX = NULL;
 HANDLE   msnMainThread;
 int      msnOtherContactsBlocked = 0;
-HANDLE   hMSNNudge = NULL;
+HANDLE   hHookOnUserInfoInit = NULL;
+HANDLE   hGroupAddEvent = NULL;
+bool     msnRunningUnderNT = false;
 bool		msnHaveChatDll = false;
 
 MYOPTIONS MyOptions;
 
-MSN_StatusMessage msnModeMsgs[ MSN_NUM_MODES ] = {
-	{ ID_STATUS_ONLINE,     NULL },
-	{ ID_STATUS_AWAY,       NULL },
-	{ ID_STATUS_NA,         NULL },
-	{ ID_STATUS_DND,        NULL },
-	{ ID_STATUS_OCCUPIED,   NULL },
-	{ ID_STATUS_ONTHEPHONE, NULL },
-	{ ID_STATUS_OUTTOLUNCH, NULL } };
-
-LISTENINGTOINFO msnCurrentMedia;
-
 char* msnProtocolName = NULL;
+char* msnLoginHost = NULL;
+
 char* msnProtChallenge = NULL;
 char* msnProductID  = NULL;
 
@@ -86,11 +71,7 @@ char* ModuleName;
 PLUGININFO pluginInfo =
 {
 	sizeof(PLUGININFO),
-	#if defined( _UNICODE )
-		"MSN Protocol (Unicode)",
-	#else
-		"MSN Protocol",
-	#endif
+	"MSN Protocol",
 	__VERSION_DWORD,
 	"Adds support for communicating with users of the MSN Messenger network",
 	"George Hazan",
@@ -107,18 +88,11 @@ int				msnStatusMode,
 					msnDesiredStatus;
 HANDLE			msnMenuItems[ MENU_ITEMS_COUNT ];
 HANDLE			hNetlibUser = NULL;
-HANDLE			hInitChat = NULL;
+HANDLE         hInitChat = NULL;
+HANDLE			hEvInitChat = NULL;
 bool				msnUseExtendedPopups;
 
-int CompareHandles( const void* p1, const void* p2 )
-{	return (long)p1 - (long)p2;
-}
-static LIST<void> arHooks( 20, CompareHandles ); 
-
-int MsnContactDeleted( WPARAM wParam, LPARAM lParam );
-int MsnDbSettingChanged(WPARAM wParam,LPARAM lParam);
 int MsnOnDetailsInit( WPARAM wParam, LPARAM lParam );
-int MsnRebuildContactMenu( WPARAM wParam, LPARAM lParam );
 
 int MSN_GCEventHook( WPARAM wParam, LPARAM lParam );
 int MSN_GCMenuHook( WPARAM wParam, LPARAM lParam );
@@ -127,7 +101,7 @@ int MSN_ChatInit( WPARAM wParam, LPARAM lParam );
 /////////////////////////////////////////////////////////////////////////////////////////
 //	Main DLL function
 
-extern "C" BOOL WINAPI DllMain(HINSTANCE hinstDLL,DWORD fdwReason,LPVOID lpvReserved)
+BOOL WINAPI DllMain(HINSTANCE hinstDLL,DWORD fdwReason,LPVOID lpvReserved)
 {
 	hInst = hinstDLL;
 	return TRUE;
@@ -143,13 +117,12 @@ PBYTE msn_httpGatewayUnwrapRecv(NETLIBHTTPREQUEST *nlhr,PBYTE buf,int len,int *o
 
 static COLORREF crCols[16] = {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15};
 
+static HANDLE hChatEvent = NULL, hChatMenu = NULL;
+
+#define NEWSTR_ALLOCA(A) (A==NULL)?NULL:strcpy((char*)alloca(strlen(A)+1),A)
+
 static int OnModulesLoaded( WPARAM wParam, LPARAM lParam )
 {
-	if ( !ServiceExists( MS_DB_CONTACT_GETSETTING_STR )) {
-		MessageBox( NULL, TranslateT( "This plugin requires db3x plugin version 0.5.1.0 or later" ), _T("MSN"), MB_OK );
-		return 1;
-	}
-
 	char szBuffer[ MAX_PATH ];
 
 	WORD wPort = MSN_GetWord( NULL, "YourPort", 0xFFFF );
@@ -186,12 +159,12 @@ static int OnModulesLoaded( WPARAM wParam, LPARAM lParam )
 		MSN_CallService(MS_NETLIB_GETUSERSETTINGS,WPARAM(hNetlibUser),LPARAM(&nls));
 
 		HKEY hSettings;
-		if ( RegOpenKeyA( HKEY_CURRENT_USER, "Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings", &hSettings ))
+		if ( RegOpenKey( HKEY_CURRENT_USER, "Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings", &hSettings ))
 			return 0;
 
 		char tValue[ 256 ];
 		DWORD tType = REG_SZ, tValueLen = sizeof( tValue );
-		int tResult = RegQueryValueExA( hSettings, "ProxyServer", NULL, &tType, ( BYTE* )tValue, &tValueLen );
+		int tResult = RegQueryValueEx( hSettings, "ProxyServer", NULL, &tType, ( BYTE* )tValue, &tValueLen );
 		RegCloseKey( hSettings );
 
 		if ( !tResult )
@@ -235,24 +208,17 @@ static int OnModulesLoaded( WPARAM wParam, LPARAM lParam )
 		gcr.pszModule = msnProtocolName;
 		MSN_CallService( MS_GC_REGISTER, NULL, ( LPARAM )&gcr );
 
-		arHooks.insert( HookEvent( ME_GC_EVENT, MSN_GCEventHook ));
-		arHooks.insert( HookEvent( ME_GC_BUILDMENU, MSN_GCMenuHook ));
+		hChatEvent = HookEvent( ME_GC_EVENT, MSN_GCEventHook );
+		hChatMenu = HookEvent( ME_GC_BUILDMENU, MSN_GCMenuHook );
 
 		char szEvent[ 200 ];
 		mir_snprintf( szEvent, sizeof szEvent, "%s\\ChatInit", msnProtocolName );
 		hInitChat = CreateHookableEvent( szEvent );
-		arHooks.insert( HookEvent( szEvent, MSN_ChatInit ));
+		hEvInitChat = HookEvent( szEvent, MSN_ChatInit );
 	}
 
-	MsnInitMenus();
-
 	msnUseExtendedPopups = ServiceExists( MS_POPUP_ADDPOPUPEX ) != 0;
-	arHooks.insert( HookEvent( ME_USERINFO_INITIALISE, MsnOnDetailsInit ));
-	arHooks.insert( HookEvent( ME_MSG_WINDOWEVENT, MsnWindowEvent ));
-	//arHooks.insert( HookEvent( ME_SKIN2_ICONSCHANGED, MsnWindowEvent ));
-	arHooks.insert( HookEvent( ME_DB_CONTACT_DELETED, MsnContactDeleted ));
-	arHooks.insert( HookEvent( ME_DB_CONTACT_SETTINGCHANGED, MsnDbSettingChanged ));
-	arHooks.insert( HookEvent( ME_CLIST_PREBUILDCONTACTMENU, MsnRebuildContactMenu ));
+	hHookOnUserInfoInit = HookEvent( ME_USERINFO_INITIALISE, MsnOnDetailsInit );
 	return 0;
 }
 
@@ -268,51 +234,40 @@ static int OnPreShutdown( WPARAM wParam, LPARAM lParam )
 /////////////////////////////////////////////////////////////////////////////////////////
 // Performs a primary set of actions upon plugin loading
 
-extern "C" int __declspec(dllexport) Load( PLUGINLINK* link )
+int __declspec(dllexport) Load( PLUGINLINK* link )
 {
 	pluginLink = link;
 	DuplicateHandle( GetCurrentProcess(), GetCurrentThread(), GetCurrentProcess(), &msnMainThread, THREAD_SET_CONTEXT, FALSE, 0 );
-
-	// get the internal malloc/mir_free()
-	mir_getLI( &li );
-	mir_getMMI( &mmi );
-	mir_getUTFI( &utfi );
 
 	char path[MAX_PATH];
 	char* protocolname;
 	char* fend;
 
-	GetModuleFileNameA( hInst, path, sizeof( path ));
+	GetModuleFileName( hInst, path, sizeof( path ));
 
 	protocolname = strrchr(path,'\\');
 	protocolname++;
 	fend = strrchr(path,'.');
 	*fend = '\0';
-	CharUpperA( protocolname );
-	msnProtocolName = mir_strdup( protocolname );
+	CharUpper( protocolname );
+	msnProtocolName = strdup( protocolname );
 
 	mir_snprintf( path, sizeof( path ), "%s:HotmailNotify", protocolname );
-	ModuleName = mir_strdup( path );
-
-	mir_snprintf( path, sizeof( path ), "%s/Status", protocolname );
-	MSN_CallService( MS_DB_SETSETTINGRESIDENT, TRUE, ( LPARAM )path );
+	ModuleName = strdup( path );
 
 //	Uninstalling purposes
 //	if (ServiceExists("PluginSweeper/Add"))
 //		MSN_CallService("PluginSweeper/Add",(WPARAM)MSN_Translate(ModuleName),(LPARAM)ModuleName);
 
-	arHooks.insert( HookEvent( ME_SYSTEM_MODULESLOADED, OnModulesLoaded ));
+	HookEvent( ME_SYSTEM_MODULESLOADED, OnModulesLoaded );
 
 	srand(( unsigned int )time( NULL ));
+	msnRunningUnderNT = ( GetVersion() & 0x80000000 ) == 0;
 
 	LoadOptions();
-	arHooks.insert( HookEvent( ME_OPT_INITIALISE, MsnOptInit ));
-	arHooks.insert( HookEvent( ME_SYSTEM_PRESHUTDOWN, OnPreShutdown ));
+	HookEvent( ME_OPT_INITIALISE, MsnOptInit );
+	HookEvent( ME_SYSTEM_PRESHUTDOWN, OnPreShutdown );
 
-	char evtname[250];
-	sprintf(evtname,"%s/Nudge",protocolname);
-	hMSNNudge = CreateHookableEvent(evtname);
-	
 	MSN_InitThreads();
 
 	PROTOCOLDESCRIPTOR pd;
@@ -322,25 +277,44 @@ extern "C" int __declspec(dllexport) Load( PLUGINLINK* link )
 	pd.type = PROTOTYPE_PROTOCOL;
 	MSN_CallService( MS_PROTO_REGISTERMODULE, 0, ( LPARAM )&pd );
 
-	HANDLE hContact = ( HANDLE )MSN_CallService( MS_DB_CONTACT_FINDFIRST, 0, 0 );
-	while ( hContact != NULL ) {
-		if ( !lstrcmpA( msnProtocolName, ( char* )MSN_CallService( MS_PROTO_GETCONTACTBASEPROTO, ( WPARAM )hContact,0 )))
-			MSN_SetWord( hContact, "Status", ID_STATUS_OFFLINE );
-		hContact = ( HANDLE )MSN_CallService( MS_DB_CONTACT_FINDNEXT,( WPARAM )hContact, 0 );
+	BOOL bWasConverted = MSN_GetByte( "AvatarsNameConverted", 0 );
+	{
+		HANDLE hContact = ( HANDLE )MSN_CallService( MS_DB_CONTACT_FINDFIRST, 0, 0 );
+		while ( hContact != NULL )
+		{
+			if ( !lstrcmp( msnProtocolName, ( char* )MSN_CallService( MS_PROTO_GETCONTACTBASEPROTO, ( WPARAM )hContact,0 ))) {
+				MSN_SetWord( hContact, "Status", ID_STATUS_OFFLINE );
+
+				if ( !bWasConverted ) {
+					char tOldName[ MAX_PATH ], tNewName[ MAX_PATH ];
+					MSN_GetAvatarFileName( hContact, tOldName, MAX_PATH, true );
+					MSN_GetAvatarFileName( hContact, tNewName, MAX_PATH, false );
+					MoveFile( tOldName, tNewName );
+			}	}
+
+			hContact = ( HANDLE )MSN_CallService( MS_DB_CONTACT_FINDNEXT,( WPARAM )hContact, 0 );
+	}	}
+
+	if ( !bWasConverted ) {
+		char tOldName[ MAX_PATH ], tNewName[ MAX_PATH ];
+		MSN_GetAvatarFileName( NULL, tOldName, MAX_PATH, true );
+		MSN_GetAvatarFileName( NULL, tNewName, MAX_PATH, false );
+		MoveFile( tOldName, tNewName );
+
+		MSN_SetByte( "AvatarsNameConverted", TRUE );
 	}
 
 	char mailsoundtemp[ 64 ];
 	strcpy( mailsoundtemp, protocolname );
 	strcat( mailsoundtemp, ": " );
 	strcat( mailsoundtemp,  MSN_Translate( "Hotmail" ));
-	mailsoundname = mir_strdup( mailsoundtemp );
+	mailsoundname = strdup( mailsoundtemp );
+
 	SkinAddNewSound( mailsoundtemp, mailsoundtemp, "hotmail.wav" );
 
 	msnStatusMode = msnDesiredStatus = ID_STATUS_OFFLINE;
-	ZeroMemory(&msnCurrentMedia, sizeof(msnCurrentMedia));
-	msnLoggedIn = false;
+	msnLoggedIn = 0;
 	LoadMsnServices();
-	MsnInitIcons();
 	Lists_Init();
 	MsgQueue_Init();
 	P2pSessions_Init();
@@ -351,28 +325,22 @@ extern "C" int __declspec(dllexport) Load( PLUGINLINK* link )
 // Unload a plugin
 
 extern char* rru;
-extern char* profileURL;
 
-extern "C" int __declspec( dllexport ) Unload( void )
+int __declspec( dllexport ) Unload( void )
 {
-	int i;
-
 	if ( msnLoggedIn )
 		msnNsThread->sendPacket( "OUT", NULL );
 
-	for ( i=0; i < arHooks.getCount(); i++ )
-		UnhookEvent( arHooks[i] );
-	arHooks.destroy();
+	if ( hHookOnUserInfoInit )
+		UnhookEvent( hHookOnUserInfoInit );
+
+	if ( hChatEvent  ) UnhookEvent( hChatEvent );
+	if ( hChatMenu   ) UnhookEvent( hChatMenu );
+	if ( hEvInitChat ) UnhookEvent( hEvInitChat );
 
 	if ( hInitChat )
 		DestroyHookableEvent( hInitChat );
 
-	if ( hMSNNudge )
-		DestroyHookableEvent( hMSNNudge );
-
-	UnloadMsnServices();
-
-	UninitSsl();
 	MSN_FreeGroups();
 	Threads_Uninit();
 	MsgQueue_Uninit();
@@ -380,35 +348,32 @@ extern "C" int __declspec( dllexport ) Unload( void )
 	P2pSessions_Uninit();
 	Netlib_CloseHandle( hNetlibUser );
 
-	mir_free( mailsoundname );
-	mir_free( msnProtocolName );
-	mir_free( ModuleName );
+	UnloadMsnServices();
+
+	free( mailsoundname );
+	free( msnProtocolName );
+	free( ModuleName );
 
 	CloseHandle( msnMainThread );
 
-	for ( i=0; i < MSN_NUM_MODES; i++ )
-		if ( msnModeMsgs[ i ].m_msg )
-			mir_free( msnModeMsgs[ i ].m_msg );
+	if ( kv ) free( kv );
+	if ( sid ) free( sid );
+	if ( passport ) free( passport );
+	if ( MSPAuth ) free( MSPAuth );
+	if ( rru ) free( rru );
 
-	if ( kv ) mir_free( kv );
-	if ( sid ) mir_free( sid );
-	if ( passport ) mir_free( passport );
-	if ( MSPAuth ) mir_free( MSPAuth );
-	if ( rru ) mir_free( rru );
-	if ( profileURL ) mir_free( profileURL );
-
-	if ( msnPreviousUUX ) mir_free( msnPreviousUUX );
-	if ( msnExternalIP ) mir_free( msnExternalIP );
+	if ( msnLoginHost ) free( msnLoginHost );
+	if ( msnExternalIP ) free( msnExternalIP );
 	return 0;
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////
 // MirandaPluginInfo - returns an information about a plugin
 
-extern "C" __declspec(dllexport) PLUGININFO* MirandaPluginInfo(DWORD mirandaVersion)
+__declspec(dllexport) PLUGININFO* MirandaPluginInfo(DWORD mirandaVersion)
 {
-	if ( mirandaVersion < PLUGIN_MAKE_VERSION( 0, 7, 0, 0 )) {
-		MessageBox( NULL, _T("The MSN protocol plugin cannot be loaded. It requires Miranda IM 0.7.0.1 or later."), _T("MSN Protocol Plugin"), MB_OK|MB_ICONWARNING|MB_SETFOREGROUND|MB_TOPMOST );
+	if ( mirandaVersion < PLUGIN_MAKE_VERSION( 0, 4, 0, 0 )) {
+		MessageBox( NULL, "The MSN protocol plugin cannot be loaded. It requires Miranda IM 0.4.0 or later.", "MSN Protocol Plugin", MB_OK|MB_ICONWARNING|MB_SETFOREGROUND|MB_TOPMOST );
 		return NULL;
 	}
 

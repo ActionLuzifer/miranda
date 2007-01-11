@@ -1,7 +1,7 @@
 =================================================================================
-Yahoo 0.3.0.9 plugin for Miranda IM
+Yahoo 0.3.0.6 plugin for Miranda IM
 
-Copyright (C) 2003-6 Gennady Feldman (aka Gena01)
+Copyright (C) 2003-5 Gennady Feldman (aka Gena01)
 Copyright (C) 2003-4 Laurent Marechal (aka Peorth)
 
 Thanks to the Miranda developers for their code contributions, suggestions, ideas
@@ -23,10 +23,9 @@ Table of Contents:
 
 1. What's New:
 --------------
-+ Complete avatar support.
-+ Yahoo Calendar integration. (links in Main Menu)
-+ Yahoo Calendar Reminders via IM now work. (You need to have Popup plugin installed)
-x Lots of other fixes and improvements.
+x Fixed a crash bug.
+x Enable translations for some strings. [Missed them before]
+x Various bug fixes and improvements.
 
 2. Installation:
 ----------------

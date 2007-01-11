@@ -1,5 +1,5 @@
 //{{NO_DEPENDENCIES}}
-// Microsoft Visual C++ generated include file.
+// Microsoft Developer Studio generated include file.
 // Used by resource.rc
 //
 #define IDD_MSGSENDERROR                102
@@ -15,10 +15,15 @@
 #define IDD_OPT_MSGLOG                  245
 #define IDI_DOWNARROW                   264
 #define IDI_TYPING                      268
+#define IDI_TYPING32                    270
+#define IDI_DOWNARROW32                 271
+#define IDI_HISTORY32                   272
+#define IDI_USERDETAILS32               274
 #define IDD_OPT_MSGTYPE                 275
 #define IDI_INCOMING                    276
 #define IDI_OUTGOING                    277
 #define IDI_NOTICE                      282
+#define IDI_ADDCONTACT32                285
 #define IDC_LOG                         1001
 #define IDC_MESSAGE                     1002
 #define IDC_AUTOCLOSE                   1004
@@ -44,13 +49,15 @@
 #define IDC_LOADTIMEN                   1045
 #define IDC_LOADTIMESPIN                1046
 #define IDC_LOADTIME                    1047
+#define IDC_FONTLIST                    1048
 #define IDC_CHOOSEFONT                  1049
 #define IDC_STMINSOLD                   1051
-#define IDC_STMINSOLD2                  1052
 #define IDC_DETAILS                     1069
 #define IDC_ADD                         1070
 #define IDC_USERMENU                    1071
 #define IDC_HISTORY                     1080
+#define IDC_BKGCOLOUR                   1269
+#define IDC_FONTCOLOUR                  1282
 #define IDC_STMSGLOGGROUP               1442
 #define IDC_PROTOCOL                    1580
 #define IDC_ERRORTEXT                   1596

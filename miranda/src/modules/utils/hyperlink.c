@@ -2,7 +2,7 @@
 
 Miranda IM: the free IM client for Microsoft* Windows*
 
-Copyright 2000-2007 Miranda ICQ/IM project, 
+Copyright 2000-2003 Miranda ICQ/IM project, 
 all portions of this codebase are copyrighted to the people 
 listed in contributors.txt.
 
@@ -20,7 +20,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
-#include "commonheaders.h"
+#include "../../core/commonheaders.h"
 
 static HCURSOR hHandCursor;
 
@@ -39,7 +39,7 @@ static LRESULT CALLBACK HyperlinkWndProc(HWND hwnd,UINT message,WPARAM wParam,LP
 	dat=(struct HyperlinkWndData*)GetWindowLong(hwnd,0);
 	switch(message) {
 		case WM_CREATE:
-			dat=(struct HyperlinkWndData*)mir_alloc(sizeof(struct HyperlinkWndData));
+			dat=(struct HyperlinkWndData*)malloc(sizeof(struct HyperlinkWndData));
 			SetWindowLong(hwnd,0,(LONG)dat);
 			dat->hFont=NULL;
 			dat->hSetFont=NULL;
@@ -86,17 +86,18 @@ static LRESULT CALLBACK HyperlinkWndProc(HWND hwnd,UINT message,WPARAM wParam,LP
 			return (LRESULT)dat->hSetFont;
 		case IM_MEASURETEXT:
 		{	char text[256];
-			GetWindowTextA(hwnd,text,SIZEOF(text));
+			GetWindowText(hwnd,text,sizeof(text));
 			lParam=(LPARAM)text;
 			//fall thru
 		case WM_SETTEXT:
-		{	HFONT hoFont;
+		{	HDC hdc1;
+			HFONT hoFont;
 			SIZE textSize;
 			RECT rc;
 
-			HDC hdc1=GetDC(hwnd);
+			hdc1=GetDC(hwnd);
 			if(dat->hFont!=NULL) hoFont=(HFONT)SelectObject(hdc1,dat->hFont);
-			GetTextExtentPoint32(hdc1,(const TCHAR*)lParam,lstrlen((const TCHAR*)lParam),&textSize);
+			GetTextExtentPoint32(hdc1,(const char*)lParam,lstrlen((const char*)lParam),&textSize);
 			dat->rcText.top=0; dat->rcText.bottom=dat->rcText.top+textSize.cy;
 			GetClientRect(hwnd,&rc);
 			if(GetWindowLong(hwnd,GWL_STYLE)&SS_CENTER) dat->rcText.left=(rc.right-textSize.cx)/2;
@@ -124,15 +125,15 @@ static LRESULT CALLBACK HyperlinkWndProc(HWND hwnd,UINT message,WPARAM wParam,LP
 			break;
 		case WM_NCPAINT:
 		case WM_PAINT:
-		{	
+		{	PAINTSTRUCT ps;
+			HDC hdc1;
 			HFONT hoFont;
 			RECT rc;
-			TCHAR text[256];
+			char text[256];
 			int alignFlag;
 			DWORD textColour;
 
-			PAINTSTRUCT ps;
-			HDC hdc1=BeginPaint(hwnd,&ps);
+			hdc1=BeginPaint(hwnd,&ps);
 			if(IsWindowEnabled(hwnd)) {
 				hoFont=(HFONT)SelectObject(hdc1,dat->hFont);
 				textColour=dat->enableColor;
@@ -147,7 +148,7 @@ static LRESULT CALLBACK HyperlinkWndProc(HWND hwnd,UINT message,WPARAM wParam,LP
 			else if(GetWindowLong(hwnd,GWL_STYLE)&SS_RIGHT) alignFlag=DT_RIGHT;
 			else alignFlag=DT_LEFT;
 			GetClientRect(hwnd,&rc);
-			GetWindowText(hwnd,text,SIZEOF(text));
+			GetWindowText(hwnd,text,sizeof(text));
 			DrawText(hdc1,text,-1,&rc,alignFlag|DT_NOPREFIX|DT_SINGLELINE|DT_TOP);
 			SelectObject(hdc1,hoFont);
 			EndPaint(hwnd,&ps);
@@ -155,7 +156,7 @@ static LRESULT CALLBACK HyperlinkWndProc(HWND hwnd,UINT message,WPARAM wParam,LP
 		}
 		case WM_DESTROY:			
 			if(dat->hFont!=NULL) DeleteObject(dat->hFont);
-			mir_free(dat); dat=NULL;			
+			free(dat); dat=NULL;			
 			SetWindowLong(hwnd,0,(LONG)dat);
 			break;
 	}

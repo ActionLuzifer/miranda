@@ -21,9 +21,6 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
-#define _WIN32_WINNT 0x0501
-#include <windows.h>
-
 #include <malloc.h>
 
 #ifdef _DEBUG
@@ -34,9 +31,11 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #	include <crtdbg.h>
 #endif
 
+#define _WIN32_WINNT 0x0501
+#include <windows.h>
+
 #include <commctrl.h>
 #include <stdio.h>
-#include <string.h>
 #include <time.h>
 #include <stddef.h>
 #include <process.h>
@@ -52,7 +51,12 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 extern PLUGINLINK *pluginLink;
 
-extern struct LIST_INTERFACE li;
+
+extern struct MM_INTERFACE memoryManagerInterface;
+
+#define mir_alloc(n) memoryManagerInterface.mmi_malloc(n)
+#define mir_free(ptr) memoryManagerInterface.mmi_free(ptr)
+#define mir_realloc(ptr,size) memoryManagerInterface.mmi_realloc(ptr,size)
 
 #ifdef __GNUC__
 #define mir_i64(x) (x##LL)

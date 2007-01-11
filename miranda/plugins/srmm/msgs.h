@@ -31,7 +31,6 @@ struct NewMessageWindowLParam
 {
 	HANDLE hContact;
 	const char *szInitialText;
-	int isWchar;
 };
 
 struct MessageWindowData
@@ -65,8 +64,6 @@ struct MessageWindowData
 	WORD wOldStatus;
 	TCmdList *cmdList;
 	TCmdList *cmdListCurrent;
-	int bIsRtl, bIsFirstAppend, bIsAutoRTL;
-	int lastEventType;
 };
 
 #define HM_EVENTSENT         (WM_USER+10)
@@ -90,7 +87,6 @@ struct MessageWindowData
 #define HM_AVATARACK         (WM_USER+28)
 #define HM_ACKEVENT          (WM_USER+29)
 #define DM_GETWINDOWSTATE    (WM_USER+30)
-#define DM_STATUSICONCHANGE  (WM_USER+31)
 
 #define EVENTTYPE_STATUSCHANGE 25368
 
@@ -121,7 +117,7 @@ void FreeMsgLogIcons(void);
 #define MSGFONTID_MESSAGEAREA 8
 #define MSGFONTID_NOTICE      9
 
-void LoadMsgDlgFont(int i, LOGFONT* lf, COLORREF* colour);
+void LoadMsgDlgFont(int i, LOGFONTA * lf, COLORREF * colour);
 extern const int msgDlgFontCount;
 
 #define LOADHISTORY_UNREAD    0

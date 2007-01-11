@@ -18,18 +18,14 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
+
 #ifndef _IRCWIN_H_
 #define _IRCWIN_H_
 
-#define MIRANDA_VER 0x0600
-
-// disable a lot of warnings. It should comppile on VS 6 also
-#pragma warning( disable : 4076 ) 
-#pragma warning( disable : 4786 ) 
-#pragma warning( disable : 4996 ) 
+#pragma warning( disable : 4786 ) // limitation in MSVC's debugger.
 
 #define WIN32_LEAN_AND_MEAN	
-//#include "AggressiveOptimize.h"
+#include "AggressiveOptimize.h"
 #include <windows.h>
 #include <shlwapi.h>
 #include <shlobj.h>
@@ -40,59 +36,45 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <math.h>
 #include <winsock.h>
 #include <time.h>
-#include "newpluginapi.h"
-#include "m_system.h"
-#include "m_protocols.h"
-#include "m_protomod.h"
-#include "m_protosvc.h"
-#include "m_clist.h"
-#include "m_options.h"
-#include "m_database.h"
-#include "m_utils.h"
-#include "m_skin.h"
-#include "m_netlib.h"
-#include "m_clui.h"
-#include "m_langpack.h"
-#include "m_message.h"
-#include "m_userinfo.h"
-#include "m_addcontact.h"
-#include "m_button.h"
-#include "m_file.h"
-#include "m_ignore.h"
-#include "m_chat.h"
-#include "m_ircscript.h"
+#include "../../include/newpluginapi.h"
+#include "../../include/m_system.h"
+#include "../../include/m_protocols.h"
+#include "../../include/m_protomod.h"
+#include "../../include/m_protosvc.h"
+#include "../../include/m_clist.h"
+#include "../../include/m_options.h"
+#include "../../include/m_database.h"
+#include "../../include/m_utils.h"
+#include "../../include/m_skin.h"
+#include "../../include/m_netlib.h"
+#include "../../include/m_clui.h"
+#include "../../include/m_langpack.h"
+#include "../../include/m_message.h"
+#include "../../include/m_userinfo.h"
+#include "../../include/m_addcontact.h"
+#include "../../include/m_button.h"
+#include "../../include/m_file.h"
+#include "../../plugins/chat/m_chat.h"
 #include "resource.h"
 #include "irclib.h"
 #include "commandmonitor.h"
-#include "IcoLib.h"
+#include "m_uninstaller.h"
 
 #ifndef NDEBUG
 #include <crtdbg.h>
 #define new new(_NORMAL_BLOCK, __FILE__, __LINE__)
 #endif
 
-#define IRC_UPDATELIST        (WM_USER+1)
-#define IRC_QUESTIONAPPLY     (WM_USER+2)
-#define IRC_QUESTIONCLOSE     (WM_USER+3)
-#define IRC_ACTIVATE          (WM_USER+4)
-#define IRC_INITMANAGER       (WM_USER+5)
-#define IRC_REBUILDIGNORELIST (WM_USER+6)
-#define IRC_UPDATEIGNORELIST  (WM_USER+7)
-#define IRC_FIXIGNOREBUTTONS  (WM_USER+8)
+#define	IRC_UPDATELIST				(WM_USER+1)
+#define	IRC_QUESTIONAPPLY			(WM_USER+2)
+#define	IRC_QUESTIONCLOSE			(WM_USER+3)
+#define	IRC_ACTIVATE				(WM_USER+4)
+#define	IRC_INITMANAGER				(WM_USER+5)
 
-#define IRC_QUICKCONNECT      "/QuickConnectMenu"
-#define IRC_JOINCHANNEL       "/JoinChannelMenu"
-#define IRC_CHANGENICK        "/ChangeNickMenu"
-#define IRC_SHOWLIST          "/ShowListMenu"
-#define IRC_SHOWSERVER        "/ShowServerMenu"
-#define IRC_MENU1CHANNEL      "/Menu1ChannelMenu"
-#define IRC_MENU2CHANNEL      "/Menu2ChannelMenu"
-#define IRC_MENU3CHANNEL      "/Menu3ChannelMenu"
-
-#define STR_QUITMESSAGE  "\002Miranda IM!\002 Smaller, Faster, Easier. http://miranda-im.org"
-#define STR_USERINFO     "I'm a happy Miranda IM user! Get it here: http://miranda-im.org"
-#define STR_AWAYMESSAGE  "I'm away from the computer." // Default away
-#define DCCSTRING        " (DCC)"
+#define STR_QUITMESSAGE				"\002Miranda IM!\002 Smaller, Faster, Easier. http://miranda-im.org"
+#define STR_USERINFO				"I'm a happy Miranda IM user! Get it here: http://miranda-im.org"
+#define STR_AWAYMESSAGE				"I'm away from the computer." // Default away
+#define DCCSTRING					" (DCC)"
 
 #define DCC_CHAT		1
 #define DCC_SEND		2
@@ -181,9 +163,7 @@ typedef struct PREFERENCES_TYPE			// Preferences structure
 	char * Alias;
 	int ServerComboSelection;
 	int QuickComboSelection;
-	int OnlineNotificationTime;
-	int OnlineNotificationLimit;
-	BYTE ScriptingEnabled;
+	char OnlineNotificationTime[10];
 	BYTE IPFromServer;
 	BYTE ShowAddresses;
 	BYTE DisconnectDCCChats;
@@ -195,12 +175,12 @@ typedef struct PREFERENCES_TYPE			// Preferences structure
 	BYTE Retry;
 	BYTE DisableDefaultServer;
 	BYTE AutoOnlineNotification;
+	BYTE AutoOnlineNotifTempAlso;
 	BYTE SendKeepAlive;
 	BYTE JoinOnInvite;
 	BYTE Perform;
 	BYTE ForceVisible;
 	BYTE Ignore;
-	BYTE IgnoreChannelDefault;
 	BYTE UseServer;
 	BYTE DCCFileEnabled;
 	BYTE DCCChatEnabled;
@@ -209,16 +189,12 @@ typedef struct PREFERENCES_TYPE			// Preferences structure
 	BYTE DCCPassive;
 	BYTE ManualHost;
 	BYTE OldStyleModes;
-	BYTE ChannelAwayNotification;
-	BYTE SendNotice;
 	POINT ListSize;
 	COLORREF colors[16];
-	HICON hIcon[13];
 
 } PREFERENCES;
 
 //main.cpp
-void						UpgradeCheck(void);
 
 //services.cpp
 void						HookEvents(void);
@@ -226,19 +202,19 @@ void						UnhookEvents(void);
 void						CreateServiceFunctions(void);
 void						ConnectToServer(void);
 void						DisconnectFromServer(void);
-int							Service_GCEventHook(WPARAM wParam,LPARAM lParam);
 
 //options.cpp
 void						InitPrefs(void);
 void						UnInitOptions(void);
 int							InitOptionsPages(WPARAM wParam,LPARAM lParam);
-void						AddIcons(void);
-HICON						LoadIconEx(int iIndex, char * pszIcoLibName, int iX, int iY);
 
 //tools.cpp
 int							WCCmp(char* wild, char *string);
 char *						IrcLoadFile(char * szPath);
+void						AddToUHTemp(String sCommand);
 void						AddToJTemp(String sCommand);
+void __cdecl				forkthread_r(void *param);
+unsigned long				forkthread (	void (__cdecl *threadcode)(void*),unsigned long stacksize,void *arg);
 String						GetWord(const char * text, int index);
 String						ReplaceString (String text, char * replaceme, char * newword);
 bool						IsChannel(String sName); 
@@ -246,8 +222,7 @@ char *						GetWordAddress(const char * text, int index);
 String						RemoveLinebreaks(String Message);
 char*						my_strstri(char *s1, char *s2) ;
 char *						DoColorCodes (const char * text, bool bStrip, bool bReplacePercent);
-int							DoEvent(int iEvent, const char* pszWindow, const char * pszNick, const char* pszText, const char* pszStatus, const char* pszUserInfo, DWORD dwItemData, bool bAddToLog, bool bIsMe,time_t timestamp = 1);
-int							CallChatEvent(WPARAM wParam, LPARAM lParam);
+int							DoEvent(int iEvent, const char* pszWindow, const char * pszNick, const char* pszText, const char* pszStatus, const char* pszUserInfo, DWORD dwItemData, bool bAddToLog, bool bIsMe);
 String						ModeToStatus(char sMode) ;
 String						PrefixToStatus(char cPrefix) ;
 void						SetChatTimer(UINT_PTR &nIDEvent,UINT uElapse,TIMERPROC lpTimerFunc);
@@ -257,10 +232,6 @@ String						MakeWndID(String sWindow);
 bool						FreeWindowItemData(String window, CHANNELINFO* wis);
 bool						AddWindowItemData(String window, const char * pszLimit, const char * pszMode, const char * pszPassword, const char * pszTopic);
 void						FindLocalIP(HANDLE con);
-void						DoUserhostWithReason(int type, String reason, bool bSendCommand, String userhostparams, ...);
-String						GetNextUserhostReason(int type);
-void						ClearUserhostReasons(int type);
-String						PeekAtReasons(int type);
 //clist.cpp
 HANDLE						CList_AddContact(struct CONTACT_TYPE * user, bool InList, bool SetOnline);
 bool						CList_SetAllOffline(BYTE ChatsToo);
@@ -295,18 +266,6 @@ LRESULT CALLBACK			MgrEditSubclassProc(HWND hwnd, UINT msg, WPARAM wParam, LPARA
 //commandmonitor.cpp
 VOID CALLBACK				KeepAliveTimerProc(HWND hwnd,UINT uMsg,UINT idEvent,DWORD dwTime);
 VOID CALLBACK				OnlineNotifTimerProc(HWND hwnd,UINT uMsg,UINT idEvent,DWORD dwTime);
-VOID CALLBACK				OnlineNotifTimerProc3(HWND hwnd,UINT uMsg,UINT idEvent,DWORD dwTime);
-
-//scripting.cpp
-int Scripting_InsertRawIn(WPARAM wParam,LPARAM lParam);
-int Scripting_InsertRawOut(WPARAM wParam,LPARAM lParam);
-int Scripting_InsertGuiIn(WPARAM wParam,LPARAM lParam);
-int Scripting_InsertGuiOut(WPARAM wParam,LPARAM lParam);
-int Scripting_GetIrcData(WPARAM wparam, LPARAM lparam);
-BOOL Scripting_TriggerMSPRawIn(char ** pszRaw);
-BOOL Scripting_TriggerMSPRawOut(char ** pszRaw);
-BOOL Scripting_TriggerMSPGuiIn(WPARAM * wparam, GCEVENT * gce);
-BOOL Scripting_TriggerMSPGuiOut(GCHOOK * gch);
 
 #ifndef NDEBUG
 #include <crtdbg.h>
@@ -316,4 +275,3 @@ BOOL Scripting_TriggerMSPGuiOut(GCHOOK * gch);
 #pragma comment(lib,"comctl32.lib")
 
 #endif
-

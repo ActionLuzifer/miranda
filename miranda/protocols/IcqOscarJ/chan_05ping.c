@@ -5,7 +5,7 @@
 // Copyright © 2000,2001 Richard Hughes, Roland Rabien, Tristan Van de Vreede
 // Copyright © 2001,2002 Jon Keating, Richard Hughes
 // Copyright © 2002,2003,2004 Martin Öberg, Sam Kothari, Robert Rainwater
-// Copyright © 2004,2005,2006 Joe Kucera
+// Copyright © 2004,2005 Joe Kucera
 // 
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -23,7 +23,7 @@
 //
 // -----------------------------------------------------------------------------
 //
-// File name      : $Source: /cvsroot/miranda/miranda/protocols/IcqOscarJ/chan_05ping.c,v $
+// File name      : $Source$
 // Revision       : $Revision$
 // Last change on : $Date$
 // Last change by : $Author$
@@ -38,29 +38,28 @@
 
 
 
+extern HANDLE ghServerNetlibUser;
 extern HANDLE hServerConn;
+HANDLE hKeepAliveEvent = NULL;
 
 
 void handlePingChannel(unsigned char* buf, WORD datalen)
 {
-  NetLog_Server("Warning: Ignoring server packet on PING channel");
+  Netlib_Logf(ghServerNetlibUser, "Warning: Ignoring server packet on PING channel");
 }
 
 
-
-static DWORD __stdcall icq_keepAliveThread(void* arg)
+void __cdecl icq_keepAliveThread(void* fa)
 {
-  serverthread_info* info = (serverthread_info*)arg;
   icq_packet packet;
-  DWORD dwInterval = ICQGetContactSettingDword(NULL, "KeepAliveInterval", KEEPALIVE_INTERVAL);
 
-  NetLog_Server("Keep alive thread starting.");
+  Netlib_Logf(ghServerNetlibUser, "Keep alive thread starting.");
 
-  info->hKeepAliveEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
+  hKeepAliveEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
 
   for(;;)
   {
-    DWORD dwWait = WaitForSingleObjectEx(info->hKeepAliveEvent, dwInterval, TRUE);
+    DWORD dwWait = WaitForSingleObjectEx(hKeepAliveEvent, 57000, TRUE);
 
     if (dwWait == WAIT_OBJECT_0) break; // we should end
     else if (dwWait == WAIT_TIMEOUT)
@@ -78,40 +77,10 @@ static DWORD __stdcall icq_keepAliveThread(void* arg)
       if (Miranda_Terminated()) break;
   }
 
-  NetLog_Server("Keep alive thread shutting down.");
+  Netlib_Logf(ghServerNetlibUser, "Keep alive thread shutting down.");
 
-  CloseHandle(info->hKeepAliveEvent);
-  info->hKeepAliveEvent = NULL;
+  CloseHandle(hKeepAliveEvent);
+  hKeepAliveEvent = NULL;
 
-  return 0;
-}
-
-
-
-void StartKeepAlive(serverthread_info* info)
-{
-  if (info->hKeepAliveEvent) // start only once
-    return;
-
-  if (ICQGetContactSettingByte(NULL, "KeepAlive", 0))
-  {
-    DWORD dwThreadId;
-
-    info->hKeepAliveThread = (HANDLE)forkthreadex(NULL, 0, icq_keepAliveThread, info, 0, &dwThreadId);
-  }
-}
-
-
-
-void StopKeepAlive(serverthread_info* info)
-{ // finish keep alive thread
-  if (info->hKeepAliveEvent)
-  {
-    SetEvent(info->hKeepAliveEvent);
-
-    // wait for the thread to finish
-    WaitForSingleObjectEx(info->hKeepAliveThread, INFINITE, TRUE);
-    CloseHandle(info->hKeepAliveThread);
-    info->hKeepAliveThread = NULL;
-  }
+  return;
 }

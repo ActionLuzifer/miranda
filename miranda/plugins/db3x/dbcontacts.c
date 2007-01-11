@@ -23,6 +23,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "commonheaders.h"
 #include "database.h"
+#include "dblists.h"
+
 
 static int GetContactCount(WPARAM wParam,LPARAM lParam);
 static int FindFirstContact(WPARAM wParam,LPARAM lParam);
@@ -84,7 +86,7 @@ static int FindNextContact(WPARAM wParam,LPARAM lParam)
 	{
 		DBCachedContactValueList VLtemp;
 		VLtemp.hContact = (HANDLE)wParam;
-		if ( li.List_GetIndex(&lContacts,&VLtemp,&index)) {
+		if ( List_GetIndex(&lContacts,&VLtemp,&index)) {
 			VL = ( DBCachedContactValueList* )lContacts.items[index];
 			if ( VL->hNext != NULL ) {
 				LeaveCriticalSection(&csDbAccess);
@@ -98,7 +100,7 @@ static int FindNextContact(WPARAM wParam,LPARAM lParam)
 		if ( VL == NULL ) {
 			VL = (DBCachedContactValueList*)HeapAlloc(hCacheHeap,HEAP_NO_SERIALIZE+HEAP_ZERO_MEMORY,sizeof(DBCachedContactValueList));
 			VL->hContact = (HANDLE)wParam;
-			li.List_Insert(&lContacts,VL,index);
+			List_Insert(&lContacts,VL,index);
 		}
 		VL->hNext = (HANDLE)dbc->ofsNext;
 		ret=(int)(HANDLE)dbc->ofsNext;
@@ -136,7 +138,7 @@ static int DeleteContact(WPARAM wParam,LPARAM lParam)
 
 	{	DBCachedContactValueList VLtemp;
 		VLtemp.hContact = (HANDLE)wParam;
-		if ( li.List_GetIndex(&lContacts,&VLtemp,&index))
+		if ( List_GetIndex(&lContacts,&VLtemp,&index))
 		{
 			DBCachedContactValueList *VL = ( DBCachedContactValueList* )lContacts.items[index];
 			DBCachedContactValue* V = VL->first;
@@ -149,7 +151,7 @@ static int DeleteContact(WPARAM wParam,LPARAM lParam)
 			}
 			HeapFree( hCacheHeap, HEAP_NO_SERIALIZE, VL );
 
-			li.List_Remove(&lContacts,index);
+			List_Remove(&lContacts,index);
 	}	}
 
 	dbc=(struct DBContact*)DBRead(wParam,sizeof(struct DBContact),NULL);
@@ -190,7 +192,7 @@ static int DeleteContact(WPARAM wParam,LPARAM lParam)
 		{
 			DBCachedContactValueList VLtemp;
 			VLtemp.hContact = (HANDLE)ofsThis;
-			if ( li.List_GetIndex(&lContacts,&VLtemp,&index))
+			if(List_GetIndex(&lContacts,&VLtemp,&index))
 			{
 				DBCachedContactValueList *VL = ( DBCachedContactValueList* )lContacts.items[index];
 				VL->hNext = ( HANDLE )ofsNext;
@@ -233,8 +235,8 @@ static int AddContact(WPARAM wParam,LPARAM lParam)
 		DBCachedContactValueList *VL = (DBCachedContactValueList*)HeapAlloc(hCacheHeap,HEAP_NO_SERIALIZE+HEAP_ZERO_MEMORY,sizeof(DBCachedContactValueList));
 		VL->hContact = (HANDLE)ofsNew;
 
-		li.List_GetIndex(&lContacts,VL,&index);
-		li.List_Insert(&lContacts,VL,index);
+		List_GetIndex(&lContacts,VL,&index);
+		List_Insert(&lContacts,VL,index);
 	}
 
 	LeaveCriticalSection(&csDbAccess);
@@ -253,7 +255,7 @@ static int IsDbContact(WPARAM wParam,LPARAM lParam)
 		int index;
 		DBCachedContactValueList VLtemp,*VL;
 		VLtemp.hContact = (HANDLE)wParam;
-		if ( li.List_GetIndex(&lContacts,&VLtemp,&index))
+		if(List_GetIndex(&lContacts,&VLtemp,&index))
 			ret = TRUE;
 		else {
 			dbc=*(struct DBContact*)DBRead(ofsContact,sizeof(struct DBContact),NULL);
@@ -262,7 +264,7 @@ static int IsDbContact(WPARAM wParam,LPARAM lParam)
 			if (ret) {
 				VL = (DBCachedContactValueList*)HeapAlloc(hCacheHeap,HEAP_NO_SERIALIZE+HEAP_ZERO_MEMORY,sizeof(DBCachedContactValueList));
 				VL->hContact = (HANDLE)wParam;
-				li.List_Insert(&lContacts,VL,index);
+				List_Insert(&lContacts,VL,index);
 	}	}	}
 
 	LeaveCriticalSection(&csDbAccess);

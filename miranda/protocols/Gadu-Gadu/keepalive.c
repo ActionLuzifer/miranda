@@ -1,7 +1,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 // Gadu-Gadu Plugin for Miranda IM
 //
-// Copyright (c) 2003-2006 Adam Strzelecki <ono+miranda@java.pl>
+// Copyright (c) 2003 Adam Strzelecki <ono+miranda@java.pl>
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -24,34 +24,34 @@ static int hTimer = 0;
 
 static void CALLBACK gg_keepalive(HWND hwnd, UINT message, UINT idEvent, DWORD dwTime)
 {
-	if (gg_isonline())
-	{
+    if (gg_isonline())
+    {
 #ifdef DEBUGMODE
-		gg_netlog("Sending keep-alive");
+        gg_netlog("Sending keep-alive");
 #endif
-		gg_ping(ggThread->sess);
-	}
+        gg_ping(ggThread->sess);
+    }
 }
 
-void gg_keepalive_init()
+void gg_initkeepalive()
 {
-	if (DBGetContactSettingByte(NULL, GG_PROTO, GG_KEY_KEEPALIVE, GG_KEYDEF_KEEPALIVE)) {
-		hTimer = SetTimer(NULL, 0, 1000 * 60, gg_keepalive);
-	}
+    if (DBGetContactSettingByte(NULL, GG_PROTO, GG_KEY_KEEPALIVE, GG_KEYDEF_KEEPALIVE)) {
+        hTimer = SetTimer(NULL, 0, 1000 * 60, gg_keepalive);
+    }
 }
 
-void gg_keepalive_destroy()
+void gg_destroykeepalive()
 {
 #ifdef DEBUGMODE
-	gg_netlog("gg_destroykeepalive(): Killing Timer");
+    gg_netlog("gg_destroykeepalive(): Killing Timer");
 #endif
-	if (hTimer) {
-		KillTimer(NULL, hTimer);
+    if (hTimer) {
+        KillTimer(NULL, hTimer);
 #ifdef DEBUGMODE
-		gg_netlog("gg_destroykeepalive(): Killed Timer");
+        gg_netlog("gg_destroykeepalive(): Killed Timer");
 #endif
-	}
+    }
 #ifdef DEBUGMODE
-	gg_netlog("gg_destroykeepalive(): End");
+    gg_netlog("gg_destroykeepalive(): End");
 #endif
 }

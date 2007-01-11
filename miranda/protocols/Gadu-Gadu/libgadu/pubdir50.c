@@ -18,16 +18,20 @@
  *  USA.
  */
 
+#include <io.h>
+#include <fcntl.h>
+#include <windows.h>
+#include <sys/socket.h>
+#include <sys/ioctl.h>
+#include <sys/wait.h>
+#include <sys/stat.h>
 #include <errno.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
 
-#include "libgadu.h"
-
-/* Miranda IM fix */
-#include <sys/socket.h>
-#undef small
+#include "libgadu.h" 
+#undef small 
 
 /*
  * gg_pubdir50_new()
@@ -66,7 +70,7 @@ gg_pubdir50_t gg_pubdir50_new(int type)
  *
  * 0/-1
  */
-static int gg_pubdir50_add_n(gg_pubdir50_t req, int num, const char *field, const char *value)
+int gg_pubdir50_add_n(gg_pubdir50_t req, int num, const char *field, const char *value)
 {
 	struct gg_pubdir50_entry *tmp = NULL, *entry;
 	char *dupfield, *dupvalue;
@@ -270,7 +274,7 @@ int gg_pubdir50_handle_reply(struct gg_event *e, const char *packet, int length)
 
 	if (!e || !packet) {
 		gg_debug(GG_DEBUG_MISC, "// gg_pubdir50_handle_reply() invalid arguments\n");
-		errno = EFAULT;
+		errno = EINVAL;
 		return -1;
 	}
 

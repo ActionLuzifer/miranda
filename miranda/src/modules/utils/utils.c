@@ -2,8 +2,8 @@
 
 Miranda IM: the free IM client for Microsoft* Windows*
 
-Copyright 2000-2007 Miranda ICQ/IM project,
-all portions of this codebase are copyrighted to the people
+Copyright 2000-2003 Miranda ICQ/IM project, 
+all portions of this codebase are copyrighted to the people 
 listed in contributors.txt.
 
 This program is free software; you can redistribute it and/or
@@ -20,7 +20,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
-#include "commonheaders.h"
+#include "../../core/commonheaders.h"
 
 int ResizeDialog(WPARAM wParam,LPARAM lParam);
 int InitOpenUrl(void);
@@ -93,7 +93,7 @@ static struct CountryListEntry countries[]={
 	{385 ,"Croatia"},
 	{53  ,"Cuba"},
 	{357 ,"Cyprus"},
-	{420 ,"Czech Republic"},
+	{42  ,"Czech Republic"},
 	{45  ,"Denmark"},
 	{246 ,"Diego Garcia"},
 	{253 ,"Djibouti"},
@@ -228,7 +228,7 @@ static struct CountryListEntry countries[]={
 	{248 ,"Seychelles"},
 	{232 ,"Sierra Leone"},
 	{65  ,"Singapore"},
-	{421 ,"Slovakia"},
+	{4201,"Slovakia"},
 	{386 ,"Slovenia"},
 	{677 ,"Solomon Islands"},
 	{252 ,"Somalia"},
@@ -287,13 +287,13 @@ static int SaveWindowPosition(WPARAM wParam,LPARAM lParam)
 
 	wp.length=sizeof(wp);
 	GetWindowPlacement(swp->hwnd,&wp);
-	wsprintfA(szSettingName,"%sx",swp->szNamePrefix);
+	wsprintf(szSettingName,"%sx",swp->szNamePrefix);
 	DBWriteContactSettingDword(swp->hContact,swp->szModule,szSettingName,wp.rcNormalPosition.left);
-	wsprintfA(szSettingName,"%sy",swp->szNamePrefix);
+	wsprintf(szSettingName,"%sy",swp->szNamePrefix);
 	DBWriteContactSettingDword(swp->hContact,swp->szModule,szSettingName,wp.rcNormalPosition.top);
-	wsprintfA(szSettingName,"%swidth",swp->szNamePrefix);
+	wsprintf(szSettingName,"%swidth",swp->szNamePrefix);
 	DBWriteContactSettingDword(swp->hContact,swp->szModule,szSettingName,wp.rcNormalPosition.right-wp.rcNormalPosition.left);
-	wsprintfA(szSettingName,"%sheight",swp->szNamePrefix);
+	wsprintf(szSettingName,"%sheight",swp->szNamePrefix);
 	DBWriteContactSettingDword(swp->hContact,swp->szModule,szSettingName,wp.rcNormalPosition.bottom-wp.rcNormalPosition.top);
 	return 0;
 }
@@ -307,9 +307,9 @@ static int RestoreWindowPosition(WPARAM wParam,LPARAM lParam)
 
 	wp.length=sizeof(wp);
 	GetWindowPlacement(swp->hwnd,&wp);
-	wsprintfA(szSettingName,"%sx",swp->szNamePrefix);
+	wsprintf(szSettingName,"%sx",swp->szNamePrefix);
 	x=DBGetContactSettingDword(swp->hContact,swp->szModule,szSettingName,-1);
-	wsprintfA(szSettingName,"%sy",swp->szNamePrefix);
+	wsprintf(szSettingName,"%sy",swp->szNamePrefix);
 	y=(int)DBGetContactSettingDword(swp->hContact,swp->szModule,szSettingName,-1);
 	if(x==-1) return 1;
 	if(wParam&RWPF_NOSIZE) {
@@ -318,59 +318,15 @@ static int RestoreWindowPosition(WPARAM wParam,LPARAM lParam)
 	else {
 		wp.rcNormalPosition.left=x;
 		wp.rcNormalPosition.top=y;
-		wsprintfA(szSettingName,"%swidth",swp->szNamePrefix);
+		wsprintf(szSettingName,"%swidth",swp->szNamePrefix);
 		wp.rcNormalPosition.right=wp.rcNormalPosition.left+DBGetContactSettingDword(swp->hContact,swp->szModule,szSettingName,-1);
-		wsprintfA(szSettingName,"%sheight",swp->szNamePrefix);
+		wsprintf(szSettingName,"%sheight",swp->szNamePrefix);
 		wp.rcNormalPosition.bottom=wp.rcNormalPosition.top+DBGetContactSettingDword(swp->hContact,swp->szModule,szSettingName,-1);
 	}
 	wp.flags=0;
-	if(wParam&RWPF_NOACTIVATE)
+	if(wParam&RWPF_NOACTIVATE) {
 		wp.showCmd = SW_SHOWNOACTIVATE;
-
-	// Make sure it is inside screen
-	if (IsWinVer98Plus()) {
-		static BOOL loaded = FALSE;
-		static HMONITOR (WINAPI *MyMonitorFromRect)(LPCRECT,DWORD) = NULL;
-		static BOOL (WINAPI *MyGetMonitorInfo)(HMONITOR,LPMONITORINFO) = NULL;
-
-		if (!loaded) {
-			HMODULE hUser32 = GetModuleHandleA("user32");
-			if (hUser32) {
-				MyMonitorFromRect = (HMONITOR(WINAPI*)(LPCRECT,DWORD))GetProcAddress(hUser32,"MonitorFromRect");
-				MyGetMonitorInfo = (BOOL(WINAPI*)(HMONITOR,LPMONITORINFO))GetProcAddress(hUser32,"GetMonitorInfoA");
-				if (MyGetMonitorInfo == NULL)
-					MyGetMonitorInfo = (BOOL(WINAPI*)(HMONITOR,LPMONITORINFO))GetProcAddress(hUser32,"GetMonitorInfo");
-			}
-			loaded = TRUE;
-		}
-
-		if (MyMonitorFromRect != NULL && MyGetMonitorInfo != NULL) {
-			HMONITOR hMonitor;
-			MONITORINFO mi;
-
-			hMonitor = MyMonitorFromRect(&wp.rcNormalPosition, MONITOR_DEFAULTTONEAREST);
-			mi.cbSize = sizeof(mi);
-			MyGetMonitorInfo(hMonitor, &mi);
-
-			if (wp.rcNormalPosition.bottom > mi.rcWork.bottom)
-				OffsetRect(&wp.rcNormalPosition, 0, mi.rcWork.bottom - wp.rcNormalPosition.bottom);
-			if (wp.rcNormalPosition.bottom < mi.rcWork.top)
-				OffsetRect(&wp.rcNormalPosition, 0, mi.rcWork.top - wp.rcNormalPosition.top);
-			if (wp.rcNormalPosition.top > mi.rcWork.bottom)
-				OffsetRect(&wp.rcNormalPosition, 0, mi.rcWork.bottom - wp.rcNormalPosition.bottom);
-			if (wp.rcNormalPosition.top < mi.rcWork.top)
-				OffsetRect(&wp.rcNormalPosition, 0, mi.rcWork.top - wp.rcNormalPosition.top);
-			if (wp.rcNormalPosition.right > mi.rcWork.right)
-				OffsetRect(&wp.rcNormalPosition, mi.rcWork.right - wp.rcNormalPosition.right, 0);
-			if (wp.rcNormalPosition.right < mi.rcWork.left)
-				OffsetRect(&wp.rcNormalPosition, mi.rcWork.left - wp.rcNormalPosition.left, 0);
-			if (wp.rcNormalPosition.left > mi.rcWork.right)
-				OffsetRect(&wp.rcNormalPosition, mi.rcWork.right - wp.rcNormalPosition.right, 0);
-			if (wp.rcNormalPosition.left < mi.rcWork.left)
-				OffsetRect(&wp.rcNormalPosition, mi.rcWork.left - wp.rcNormalPosition.left, 0);
-		}
 	}
-
 	SetWindowPlacement(swp->hwnd,&wp);
 	return 0;
 }
@@ -379,14 +335,14 @@ static int GetCountryByNumber(WPARAM wParam,LPARAM lParam)
 {
 	int i;
 
-	for(i=0; i < SIZEOF(countries); i++ )
+	for(i=0;i<sizeof(countries)/sizeof(countries[0]);i++)
 		if((int)wParam==countries[i].id) return (int)countries[i].szName;
 	return (int)(char*)NULL;
 }
 
 static int GetCountryList(WPARAM wParam,LPARAM lParam)
 {
-	*(int*)wParam = SIZEOF(countries);
+	*(int*)wParam=sizeof(countries)/sizeof(countries[0]);
 	*(struct CountryListEntry**)lParam=countries;
 	return 0;
 }
@@ -403,6 +359,6 @@ int LoadUtilsModule(void)
 	InitHyperlink();
 	InitColourPicker();
 	InitBitmapFilter();
-	InitPathUtils();
+    InitPathUtils();
 	return 0;
 }

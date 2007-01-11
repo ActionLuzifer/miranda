@@ -5,7 +5,7 @@
 // Copyright © 2000,2001 Richard Hughes, Roland Rabien, Tristan Van de Vreede
 // Copyright © 2001,2002 Jon Keating, Richard Hughes
 // Copyright © 2002,2003,2004 Martin Öberg, Sam Kothari, Robert Rainwater
-// Copyright © 2004,2005,2006 Joe Kucera
+// Copyright © 2004,2005 Joe Kucera
 // 
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -23,7 +23,7 @@
 //
 // -----------------------------------------------------------------------------
 //
-// File name      : $Source: /cvsroot/miranda/miranda/protocols/IcqOscarJ/guids.h,v $
+// File name      : $Source$
 // Revision       : $Revision$
 // Last change on : $Date$
 // Last change by : $Author$
@@ -41,11 +41,6 @@
 
 typedef DWORD plugin_guid[4];
 
-// Message Capability GUIDs
-static plugin_guid MCAP_TLV2711_FMT      = {MCAP_TLV2711_FMT_s};
-static plugin_guid MCAP_REVERSE_REQ      = {MCAP_REVERSE_REQ_s};
-static plugin_guid MCAP_OSCAR_FT         = {MCAP_OSCAR_FT_s};
-
 // Plugin GUIDs
 static plugin_guid PSIG_MESSAGE          = {PSIG_MESSAGE_s};
 static plugin_guid PSIG_INFO_PLUGIN      = {PSIG_INFO_PLUGIN_s};
@@ -56,15 +51,11 @@ static plugin_guid PMSG_QUERY_INFO       = {PMSG_QUERY_INFO_s};
 static plugin_guid PMSG_QUERY_STATUS     = {PMSG_QUERY_STATUS_s};
 
 // Message GUIDs
-static plugin_guid MGTYPE_MESSAGE        = {MGTYPE_MESSAGE_s};
-static plugin_guid MGTYPE_STATUSMSGEXT   = {MGTYPE_STATUSMSGEXT_s};
 static plugin_guid MGTYPE_FILE           = {MGTYPE_FILE_s};
 static plugin_guid MGTYPE_WEBURL         = {MGTYPE_WEBURL_s};
 static plugin_guid MGTYPE_CONTACTS       = {MGTYPE_CONTACTS_s};
 static plugin_guid MGTYPE_GREETING_CARD  = {MGTYPE_GREETING_CARD_s};
 static plugin_guid MGTYPE_CHAT           = {MGTYPE_CHAT_s};
-static plugin_guid MGTYPE_SMS_MESSAGE    = {MGTYPE_SMS_MESSAGE_s};
-static plugin_guid MGTYPE_XTRAZ_SCRIPT   = {MGTYPE_XTRAZ_SCRIPT_s};
 
 
 // make GUID checks easy
@@ -75,19 +66,13 @@ static BOOL CompareGUIDs(DWORD q1,DWORD q2,DWORD q3,DWORD q4, plugin_guid guid)
 
 
 // pack entire GUID into icq packet
-static __inline void packGUID(icq_packet* packet, plugin_guid guid)
+__inline static packGUID(icq_packet* packet, plugin_guid guid)
 {
   packDWord(packet, guid[0]);
   packDWord(packet, guid[1]);
   packDWord(packet, guid[2]);
   packDWord(packet, guid[3]);
 }
-
-
-// capabilities
-typedef unsigned char capstr[0x10];
-
-capstr* MatchCap(char* buf, int bufsize, const capstr* cap, int capsize);
 
 
 #endif /* __GUIDS_H */

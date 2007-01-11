@@ -5,7 +5,7 @@
 // Copyright © 2000,2001 Richard Hughes, Roland Rabien, Tristan Van de Vreede
 // Copyright © 2001,2002 Jon Keating, Richard Hughes
 // Copyright © 2002,2003,2004 Martin Öberg, Sam Kothari, Robert Rainwater
-// Copyright © 2004,2005,2006 Joe Kucera
+// Copyright © 2004,2005 Joe Kucera
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -23,7 +23,7 @@
 //
 // -----------------------------------------------------------------------------
 //
-// File name      : $Source: /cvsroot/miranda/miranda/protocols/IcqOscarJ/init.h,v $
+// File name      : $Source$
 // Revision       : $Revision$
 // Last change on : $Date$
 // Last change by : $Author$
@@ -35,8 +35,15 @@
 // -----------------------------------------------------------------------------
 
 
+
 void UpdateGlobalSettings(void);
 
+BYTE gbAimEnabled;
+BYTE gbSsiEnabled;
+BYTE gbAvatarsEnabled;
+BYTE gbOverRate;
+DWORD gtLastRequest;
+DWORD MIRANDA_VERSION;
 
 // Debug defines
 #define DBG_CAPCH2
@@ -44,7 +51,4 @@ void UpdateGlobalSettings(void);
 #undef DBG_CAPRTF
 #define DBG_CAPMTN
 #define DBG_CAPXTRAZ
-#undef DBG_CAPXTRAZ_MUC
-#define DBG_NEWCAPS
-#define DBG_OSCARFT
-
+#define DBG_CAPAVATAR

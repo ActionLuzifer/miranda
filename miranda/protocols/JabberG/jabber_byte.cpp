@@ -2,7 +2,7 @@
 
 Jabber Protocol Plugin for Miranda IM
 Copyright ( C ) 2002-04  Santithorn Bunchua
-Copyright ( C ) 2005-06  George Hazan
+Copyright ( C ) 2005     George Hazan
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -17,11 +17,6 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
-
-File name      : $Source: /cvsroot/miranda/miranda/protocols/JabberG/jabber_byte.cpp,v $
-Revision       : $Revision$
-Last change on : $Date$
-Last change by : $Author$
 
 */
 
@@ -40,23 +35,24 @@ static int JabberByteSendParse( HANDLE hConn, JABBER_BYTE_TRANSFER *jbt, char* b
 void JabberByteFreeJbt( JABBER_BYTE_TRANSFER *jbt )
 {
 	if ( !jbt ) return;
-	if ( jbt->srcJID ) mir_free( jbt->srcJID );
-	if ( jbt->dstJID ) mir_free( jbt->dstJID );
-	if ( jbt->streamhostJID ) mir_free( jbt->streamhostJID );
-	if ( jbt->iqId ) mir_free( jbt->iqId );
-	if ( jbt->sid ) mir_free( jbt->sid );
-	if ( jbt->iqNode ) delete jbt->iqNode;
-	mir_free( jbt );
+	if ( jbt->srcJID ) free( jbt->srcJID );
+	if ( jbt->dstJID ) free( jbt->dstJID );
+	if ( jbt->streamhostJID ) free( jbt->streamhostJID );
+	if ( jbt->iqId ) free( jbt->iqId );
+	if ( jbt->sid ) free( jbt->sid );
+	if ( jbt->iqNode ) JabberXmlFreeNode( jbt->iqNode );
+	free( jbt );
 }
 
 void __cdecl JabberByteSendThread( JABBER_BYTE_TRANSFER *jbt )
 {
 	BOOL bDirect, bProxy;
+	char streamHost[256];
 	char* localAddr;
 	struct in_addr in;
 	DBVARIANT dbv;
 	NETLIBBIND nlb = {0};
-	TCHAR szPort[8];
+	char szPort[8];
 	int iqId;
 	JABBER_LIST_ITEM *item;
 	HANDLE hEvent;
@@ -66,23 +62,18 @@ void __cdecl JabberByteSendThread( JABBER_BYTE_TRANSFER *jbt )
 	bDirect = JGetByte( "BsDirect", TRUE );
 	bProxy = JGetByte( "BsProxy", FALSE );
 
-	iqId = JabberSerialNext();
-	JabberIqAdd( iqId, IQ_PROC_NONE, JabberByteInitiateResult );
-	XmlNodeIq iq( "set", iqId, jbt->dstJID );
-	XmlNode* query = iq.addQuery( "http://jabber.org/protocol/bytestreams" );
-	query->addAttr( "sid", jbt->sid );
-
+	streamHost[0] = '\0';
 	if ( bDirect ) {
 		localAddr = NULL;
 		if ( JGetByte( "BsDirectManual", FALSE ) == TRUE ) {
 			if ( !DBGetContactSetting( NULL, jabberProtoName, "BsDirectAddr", &dbv )) {
-				localAddr = mir_strdup( dbv.pszVal );
+				localAddr = _strdup( dbv.pszVal );
 				JFreeVariant( &dbv );
 			}
 		}
 		if ( localAddr == NULL ) {
 			in.S_un.S_addr = jabberLocalIP;
-			localAddr = mir_strdup( inet_ntoa( in ));
+			localAddr = _strdup( inet_ntoa( in ));
 		}
 		nlb.cbSize = sizeof( NETLIBBIND );
 		nlb.pfnNewConnection = JabberByteSendConnection;
@@ -93,16 +84,24 @@ void __cdecl JabberByteSendThread( JABBER_BYTE_TRANSFER *jbt )
 			JabberByteFreeJbt( jbt );
 			return;
 		}
-		mir_sntprintf( szPort, SIZEOF( szPort ), _T("%d"), nlb.wPort );
+		mir_snprintf( szPort, sizeof( szPort ), "%d", nlb.wPort );
 		item = JabberListAdd( LIST_BYTE, szPort );
 		item->jbt = jbt;
 		hEvent = CreateEvent( NULL, FALSE, FALSE, NULL );
 		jbt->hEvent = hEvent;
-		XmlNode* h = query->addChild( "streamhost" );
-		h->addAttr( "jid", jabberThreadInfo->fullJID ); h->addAttr( "host", localAddr ); h->addAttr( "port", nlb.wPort );
-		mir_free( localAddr );
+		mir_snprintf( streamHost, sizeof( streamHost ), "<streamhost jid='%s' host='%s' port='%d'/>", UTF8(jabberThreadInfo->fullJID), localAddr, nlb.wPort );
+		free( localAddr );
 	}
-	JabberSend( jabberThreadInfo->s, iq );
+
+	iqId = JabberSerialNext();
+	JabberIqAdd( iqId, IQ_PROC_NONE, JabberByteInitiateResult );
+	JabberSend( jabberThreadInfo->s,
+		"<iq type='set' to='%s' id='"JABBER_IQID"%d'>"
+			"<query xmlns='http://jabber.org/protocol/bytestreams' sid='%s'>"
+				"%s"
+			"</query>"
+		"</iq>",
+		UTF8(jbt->dstJID), iqId, jbt->sid, streamHost );
 
 	if ( bDirect ) {
 		WaitForSingleObject( hEvent, INFINITE );
@@ -120,12 +119,12 @@ void __cdecl JabberByteSendThread( JABBER_BYTE_TRANSFER *jbt )
 
 static void JabberByteInitiateResult( XmlNode *iqNode, void *userdata )
 {
-	TCHAR* type;
+	char* type;
 
 	if (( type=JabberXmlGetAttrValue( iqNode, "type" )) == NULL ) return;
-	if ( !lstrcmp( type, _T("result"))) {
+	if ( !strcmp( type, "result" )) {
 	}
-	else if ( !lstrcmp( type, _T("error"))) {
+	else if ( !strcmp( type, "error" )) {
 	}
 }
 
@@ -135,7 +134,7 @@ static void JabberByteSendConnection( HANDLE hConn, DWORD dwRemoteIP )
 	SOCKADDR_IN saddr;
 	int len;
 	WORD localPort;
-	TCHAR szPort[8];
+	char szPort[8];
 	JABBER_BYTE_TRANSFER *jbt;
 	int recvResult, bytesParsed;
 	HANDLE hListen;
@@ -155,8 +154,8 @@ static void JabberByteSendConnection( HANDLE hConn, DWORD dwRemoteIP )
 		return;
 	}
 
-	mir_sntprintf( szPort, SIZEOF( szPort ), _T("%d"), localPort );
-	JabberLog( "bytestream_send_connection incoming connection accepted: local_port=" TCHAR_STR_PARAM, szPort );
+	mir_snprintf( szPort, sizeof( szPort ), "%d", localPort );
+	JabberLog( "bytestream_send_connection incoming connection accepted: local_port=%s", szPort );
 
 	if (( item=JabberListGetItemPtr( LIST_BYTE, szPort )) == NULL ) {
 		JabberLog( "No bytestream session is currently active, connection closed." );
@@ -166,7 +165,7 @@ static void JabberByteSendConnection( HANDLE hConn, DWORD dwRemoteIP )
 
 	jbt = item->jbt;
 
-	if (( buffer=( char* )mir_alloc( JABBER_NETWORK_BUFFER_SIZE )) == NULL ) {
+	if (( buffer=( char* )malloc( JABBER_NETWORK_BUFFER_SIZE )) == NULL ) {
 		JabberLog( "bytestream_send cannot allocate network buffer, connection closed." );
 		jbt->state = JBT_ERROR;
 		Netlib_CloseHandle( hConn );
@@ -190,7 +189,7 @@ static void JabberByteSendConnection( HANDLE hConn, DWORD dwRemoteIP )
 	if ( jbt->hConn ) Netlib_CloseHandle( jbt->hConn );
 	JabberLog( "bytestream_send_connection closing connection" );
 	jbt->hConn = hListen;
-	mir_free( buffer );
+	free( buffer );
 
 	if ( jbt->hEvent != NULL ) SetEvent( jbt->hEvent );
 }
@@ -199,6 +198,7 @@ static int JabberByteSendParse( HANDLE hConn, JABBER_BYTE_TRANSFER *jbt, char* b
 {
 	int nMethods;
 	BYTE data[10];
+	char text[256];
 	int i;
 	char* str;
 
@@ -225,7 +225,8 @@ static int JabberByteSendParse( HANDLE hConn, JABBER_BYTE_TRANSFER *jbt, char* b
 			data[0] = 5;
 			Netlib_Send( hConn, ( char* )data, 2, 0 );
 		}
-		else jbt->state = JBT_ERROR;
+		else
+			jbt->state = JBT_ERROR;
 		break;
 	case JBT_CONNECT:
 		// received:
@@ -243,14 +244,11 @@ static int JabberByteSendParse( HANDLE hConn, JABBER_BYTE_TRANSFER *jbt, char* b
 		// 04-07 bnd.addr server bound address
 		// 08-09 bnd.port server bound port
 		if ( datalen==47 && *(( DWORD* )buffer )==0x03000105 && buffer[4]==40 && *(( WORD* )( buffer+45 ))==0 ) {
-			TCHAR text[256];
-			mir_sntprintf( text, SIZEOF( text ), _T("%s%s%s"), jbt->sid, jbt->srcJID, jbt->dstJID );
-			char* szAuthString = t2a( text );
-			JabberLog( "Auth: '%s'", szAuthString );
-			if (( str = JabberSha1( szAuthString )) != NULL ) {
+			mir_snprintf( text, sizeof( text ), "%s%s%s", jbt->sid, jbt->srcJID, jbt->dstJID );
+			JabberLog( "Auth: '%s'", text );
+			if (( str=JabberSha1( text )) != NULL ) {
 				for ( i=0; i<40 && buffer[i+5]==str[i]; i++ );
-				mir_free( str );
-
+				free( str );
 				ZeroMemory( data, 10 );
 				data[1] = ( i>=20 )?0:2;
 				data[0] = 5;
@@ -261,7 +259,6 @@ static int JabberByteSendParse( HANDLE hConn, JABBER_BYTE_TRANSFER *jbt, char* b
 				else
 					jbt->state = JBT_ERROR;
 			}
-			mir_free( szAuthString );
 		}
 		else
 			jbt->state = JBT_ERROR;
@@ -278,7 +275,7 @@ static int JabberByteReceiveParse( HANDLE hConn, JABBER_BYTE_TRANSFER *jbt, char
 void __cdecl JabberByteReceiveThread( JABBER_BYTE_TRANSFER *jbt )
 {
 	XmlNode *iqNode, *queryNode, *n;
-	TCHAR *from, *to, *sid, *szId, *szHost, *szPort, *str;
+	char* from, *sid, *szHost, *szPort, *szId, *str;
 	int i;
 	WORD port;
 	HANDLE hConn;
@@ -290,25 +287,19 @@ void __cdecl JabberByteReceiveThread( JABBER_BYTE_TRANSFER *jbt )
 	if ( jbt == NULL ) return;
 	if (( iqNode=jbt->iqNode )!=NULL &&
 		( from=JabberXmlGetAttrValue( iqNode, "from" ))!=NULL &&
-		( to=JabberXmlGetAttrValue( iqNode, "to" ))!=NULL &&
 		( queryNode=JabberXmlGetChild( iqNode, "query" ))!=NULL &&
 		( sid=JabberXmlGetAttrValue( queryNode, "sid" ))!=NULL &&
 		( n=JabberXmlGetChild( queryNode, "streamhost" ))!=NULL ) {
 
 		szId = JabberXmlGetAttrValue( iqNode, "id" );
-		jbt->iqId = ( szId ) ? mir_tstrdup( szId ):NULL;
-		jbt->srcJID = mir_tstrdup( from );
-		jbt->dstJID = mir_tstrdup( to );
-		jbt->sid = mir_tstrdup( sid );
+		jbt->iqId = ( szId )?_strdup( szId ):NULL;
+		jbt->srcJID = _strdup( JabberStringDecode( from ));
+		jbt->dstJID = _strdup( jabberThreadInfo->fullJID );
+		jbt->sid = _strdup( sid );
 
-		if (( buffer=( char* )mir_alloc( JABBER_NETWORK_BUFFER_SIZE )) == NULL ) {
+		if (( buffer=( char* )malloc( JABBER_NETWORK_BUFFER_SIZE )) == NULL ) {
 			JabberLog( "bytestream_send cannot allocate network buffer, connection closed." );
-
-			XmlNodeIq iq( "error", jbt->iqId, jbt->srcJID );
-			XmlNode* e = iq.addChild( "error" ); e->addAttr( "code", 406 ); e->addAttr( "type", "auth" );
-			XmlNode* na = e->addChild( "not-acceptable" ); na->addAttr( "xmlns", "urn:ietf:params:xml:ns:xmpp-stanzas" );
-			JabberSend( jabberThreadInfo->s, iq );
-
+			JabberSend( jabberThreadInfo->s, "<iq type='error' to='%s' id='%s'><error code='406' type='auth'><not-acceptable xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/></error></iq>", UTF8(jbt->srcJID), jbt->iqId );
 			JabberByteFreeJbt( jbt );
 			return;
 		}
@@ -320,23 +311,16 @@ void __cdecl JabberByteReceiveThread( JABBER_BYTE_TRANSFER *jbt )
 				( szPort=JabberXmlGetAttrValue( n, "port" ))!=NULL &&
 				( str=JabberXmlGetAttrValue( n, "jid" ))!=NULL ) {
 
-				port = ( WORD )_ttoi( szPort );
-				if ( jbt->streamhostJID ) mir_free( jbt->streamhostJID );
-				jbt->streamhostJID = mir_tstrdup( str );
+				port = ( WORD )atoi( szPort );
+				if ( jbt->streamhostJID ) free( jbt->streamhostJID );
+				jbt->streamhostJID = _strdup( JabberStringDecode( str ));
 
-				JabberLog( "bytestream_recv connecting to " TCHAR_STR_PARAM ":%d", szHost, port );
+				JabberLog( "bytestream_recv connecting to %s:%d", szHost, port );
 				NETLIBOPENCONNECTION nloc = { 0 };
 				nloc.cbSize = sizeof( nloc );
-				#if defined( _UNICODE )
-					nloc.szHost = u2a(szHost);
-				#else
-					nloc.szHost = szHost;
-				#endif
+				nloc.szHost = szHost;
 				nloc.wPort = port;
 				hConn = ( HANDLE ) JCallService( MS_NETLIB_OPENCONNECTION, ( WPARAM ) hNetlibUser, ( LPARAM )&nloc );
-				#if defined( _UNICODE )
-					mir_free((void*)nloc.szHost);
-				#endif
 				if ( hConn == NULL ) {
 					JabberLog( "bytestream_recv_connection connection failed ( %d ), try next streamhost", WSAGetLastError());
 					continue;
@@ -368,25 +352,26 @@ void __cdecl JabberByteReceiveThread( JABBER_BYTE_TRANSFER *jbt )
 				break;
 			JabberLog( "bytestream_recv_connection stream cannot be established, try next streamhost" );
 		}
-		mir_free( buffer );
+		free( buffer );
 		jbt->pfnFinal(( jbt->state==JBT_DONE )?TRUE:FALSE, jbt->userdata );
 		if ( !validStreamhost ) {
 			JabberLog( "bytestream_recv_connection session not completed" );
-
-			XmlNodeIq iq( "error", jbt->iqId, jbt->srcJID );
-			XmlNode* e = iq.addChild( "error" ); e->addAttr( "code", 404 ); e->addAttr( "type", _T("cancel"));
-			XmlNode* na = e->addChild( "item-not-found" ); na->addAttr( "xmlns", "urn:ietf:params:xml:ns:xmpp-stanzas" );
-			JabberSend( jabberThreadInfo->s, iq );
-	}	}
-
+			JabberSend( jabberThreadInfo->s, "<iq type='error' to='%s' id='%s'><error code='404' type='cancel'><item-not-found xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/></error></iq>", UTF8(jbt->srcJID), jbt->iqId );
+		}
+	}
 	JabberByteFreeJbt( jbt );
 	JabberLog( "Thread ended: type=bytestream_recv" );
 }
 
 static int JabberByteReceiveParse( HANDLE hConn, JABBER_BYTE_TRANSFER *jbt, char* buffer, int datalen )
 {
-	int bytesReceived, num = datalen;
+	BYTE data[47];
+	char text[256];
+	char* szHash;
+	int bytesReceived;
+	int num;
 
+	num = datalen;
 	switch ( jbt->state ) {
 	case JBT_INIT:
 		// received:
@@ -400,25 +385,20 @@ static int JabberByteReceiveParse( HANDLE hConn, JABBER_BYTE_TRANSFER *jbt, char
 		// 04-44 dst.addr ( 41 bytes: 1-byte length, 40-byte SHA1 hash of [sid,srcJID,dstJID] )
 		// 45-46 dst.port ( 0 )
 		if ( datalen==2 && buffer[0]==5 && buffer[1]==0 ) {
-			BYTE data[47];
 			ZeroMemory( data, sizeof( data ));
 			*(( DWORD* )data ) = 0x03000105;
 			data[4] = 40;
-
-			TCHAR text[256];
-			mir_sntprintf( text, SIZEOF( text ), _T("%s%s%s"), jbt->sid, jbt->srcJID, jbt->dstJID );
-			char* szAuthString = t2a( text );
-			JabberLog( "Auth: '%s'", szAuthString );
-			char* szHash = JabberSha1( szAuthString );
+			mir_snprintf( text, sizeof( text ), "%s%s%s", jbt->sid, jbt->srcJID, jbt->dstJID );
+			JabberLog( "Auth: '%s'", text );
+			szHash = JabberSha1( text );
 			strncpy(( char* )( data+5 ), szHash, 40 );
-			mir_free( szHash );
+			free( szHash );
 			Netlib_Send( hConn, ( char* )data, 47, 0 );
 			jbt->state = JBT_CONNECT;
-			mir_free( szAuthString );
 		}
-		else jbt->state = JBT_SOCKSERR;
+		else
+			jbt->state = JBT_SOCKSERR;
 		break;
-
 	case JBT_CONNECT:
 		// received:
 		// 00-00 ver ( 0x05 )
@@ -437,15 +417,11 @@ static int JabberByteReceiveParse( HANDLE hConn, JABBER_BYTE_TRANSFER *jbt, char
 				break;
 			}
 			jbt->state = JBT_RECVING;
-
-			XmlNodeIq iq( "result", jbt->iqId, jbt->srcJID );
-			XmlNode* query = iq.addQuery( "http://jabber.org/protocol/bytestreams" );
-			XmlNode* stream = query->addChild( "streamhost-used" ); stream->addAttr( "jid", jbt->streamhostJID );
-			JabberSend( jabberThreadInfo->s, iq );
+			JabberSend( jabberThreadInfo->s, "<iq type='result' to='%s' id='%s'><query xmlns='http://jabber.org/protocol/bytestreams'><streamhost-used jid='%s'/></query></iq>", UTF8(jbt->srcJID), jbt->iqId, UTF8(jbt->streamhostJID));
 		}
-		else jbt->state = JBT_SOCKSERR;
+		else
+			jbt->state = JBT_SOCKSERR;
 		break;
-
 	case JBT_RECVING:
 		bytesReceived = jbt->pfnRecv( hConn, jbt->userdata, buffer, datalen );
 		if ( bytesReceived < 0 )

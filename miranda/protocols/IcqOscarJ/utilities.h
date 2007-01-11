@@ -5,7 +5,7 @@
 // Copyright © 2000,2001 Richard Hughes, Roland Rabien, Tristan Van de Vreede
 // Copyright © 2001,2002 Jon Keating, Richard Hughes
 // Copyright © 2002,2003,2004 Martin Öberg, Sam Kothari, Robert Rainwater
-// Copyright © 2004,2005,2006 Joe Kucera
+// Copyright © 2004,2005 Joe Kucera
 // 
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -23,7 +23,7 @@
 //
 // -----------------------------------------------------------------------------
 //
-// File name      : $Source: /cvsroot/miranda/miranda/protocols/IcqOscarJ/utilities.h,v $
+// File name      : $Source$
 // Revision       : $Revision$
 // Last change on : $Date$
 // Last change by : $Author$
@@ -37,58 +37,46 @@
 #ifndef __UTILITIES_H
 #define __UTILITIES_H
 
+typedef struct icq_cookie_info_s
+{
+	DWORD dwCookie;
+	DWORD dwUin;
+	void *pvExtra;
+} icq_cookie_info;
+
 typedef struct icq_ack_args_s
 {
-  HANDLE hContact;
-  int    nAckType;
-  int    nAckResult;
-  HANDLE hSequence;
-  LPARAM pszMessage;
+	HANDLE hContact;
+	int    nAckType;
+	int    nAckResult;
+	HANDLE hSequence;
+	LPARAM pszMessage;
 } icq_ack_args;
+
 
 /*---------* Functions *---------------*/
 
-void EnableDlgItem(HWND hwndDlg, UINT control, int state);
 void icq_EnableMultipleControls(HWND hwndDlg, const UINT* controls, int cControls, int state);
 void icq_ShowMultipleControls(HWND hwndDlg, const UINT* controls, int cControls, int state);
 int IcqStatusToMiranda(WORD wStatus);
 WORD MirandaStatusToIcq(int nStatus);
 int MirandaStatusToSupported(int nMirandaStatus);
 char *MirandaStatusToString(int);
-char *MirandaStatusToStringUtf(int);
-char**MirandaStatusToAwayMsg(int nStatus);
+char *MirandaVersionToString(int, int);
 
-int AwayMsgTypeToStatus(int nMsgType);
+void InitCookies(void);
+void UninitCookies(void);
+DWORD AllocateCookie(WORD wIdent, DWORD dwUin, void *pvExtra);
+int FindCookie(DWORD wCookie, DWORD *pdwUin, void **ppvExtra);
+int FindCookieByData(void *pvExtra,DWORD *pdwCookie, DWORD *pdwUin);
+void FreeCookie(DWORD wCookie);
+DWORD GenerateCookie(WORD wIdent);
 
-void SetGatewayIndex(HANDLE hConn, DWORD dwIndex);
-DWORD GetGatewayIndex(HANDLE hConn);
-void FreeGatewayIndex(HANDLE hConn);
+HANDLE HContactFromUIN(DWORD, int);
+//HANDLE HContactFromUID(char* pszUID, int);
+char *NickFromHandle(HANDLE);
 
-void AddToSpammerList(DWORD dwUIN);
-BOOL IsOnSpammerList(DWORD dwUIN);
-
-void InitCache();
-void UninitCache();
-void DeleteFromCache(HANDLE hContact);
-HANDLE HContactFromUIN(DWORD dwUin, int *Added);
-HANDLE HContactFromUID(DWORD dwUIN, char *pszUID, int *Added);
-char *NickFromHandle(HANDLE hContact);
-char *NickFromHandleUtf(HANDLE hContact);
-char *strUID(DWORD dwUIN, char *pszUID);
-void SetContactHidden(HANDLE hContact, BYTE bHidden);
-
-size_t __fastcall strlennull(const char *string);
-int __fastcall strcmpnull(const char *str1, const char *str2);
-int null_snprintf(char *buffer, size_t count, const char* fmt, ...);
-char* __fastcall null_strdup(const char *string);
-
-void parseServerAddress(char *szServer, WORD* wPort);
-
-char *DemangleXml(const char *string, int len);
-char *MangleXml(const char *string, int len);
-char *EliminateHtml(const char *string, int len);
-char* ApplyEncoding(const char *string, const char* pszEncoding);
-
+size_t strlennull(const char *string);
 
 void ResetSettingsOnListReload(void);
 void ResetSettingsOnConnect(void);
@@ -100,8 +88,6 @@ BOOL IsStringUIN(char* pszString);
 void __cdecl icq_ProtocolAckThread(icq_ack_args* pArguments);
 void icq_SendProtoAck(HANDLE hContact, DWORD dwCookie, int nAckResult, int nAckType, char* pszMessage);
 
-void SetCurrentStatus(int nStatus);
-
 BOOL writeDbInfoSettingString(HANDLE hContact, const char* szSetting, char** buf, WORD* pwLength);
 BOOL writeDbInfoSettingWord(HANDLE hContact, const char *szSetting, char **buf, WORD* pwLength);
 BOOL writeDbInfoSettingWordWithTable(HANDLE hContact, const char *szSetting, struct fieldnames_t *table, char **buf, WORD* pwLength);
@@ -110,54 +96,22 @@ BOOL writeDbInfoSettingByteWithTable(HANDLE hContact, const char *szSetting, str
 
 int GetGMTOffset(void);
 
-BOOL validateStatusMessageRequest(HANDLE hContact, WORD byMessageType);
+BOOL validateStatusMessageRequest(HANDLE hContact, BYTE byMessageType);
 
 #define icqOnline ((gnCurrentStatus != ID_STATUS_OFFLINE) && (gnCurrentStatus != ID_STATUS_CONNECTING))
 
-void __fastcall SAFE_FREE(void** p);
-void* __fastcall SAFE_MALLOC(size_t size);
+static void __inline SAFE_FREE(void** p)
+{
+	if (*p)
+	{
+		free(*p);
+		*p = NULL;
+	}
+}
 
 void LinkContactPhotoToFile(HANDLE hContact, char* szFile);
 void ContactPhotoSettingChanged(HANDLE hContact);
 
-HANDLE NetLib_OpenConnection(HANDLE hUser, const char* szIdent, NETLIBOPENCONNECTION* nloc);
-HANDLE NetLib_BindPort(NETLIBNEWCONNECTIONPROC_V2 pFunc, void* lParam, WORD* pwPort, DWORD* pdwIntIP);
-void NetLib_SafeCloseHandle(HANDLE *hConnection, int bServerConn);
-int NetLog_Server(const char *fmt,...);
-int NetLog_Direct(const char *fmt,...);
-int NetLog_Uni(BOOL bDC, const char *fmt,...);
-
-int ICQBroadcastAck(HANDLE hContact,int type,int result,HANDLE hProcess,LPARAM lParam);
-
-int __fastcall ICQTranslateDialog(HWND hwndDlg);
-char* __fastcall ICQTranslate(const char* src);
-char* __fastcall ICQTranslateUtf(const char* src);
-char* __fastcall ICQTranslateUtfStatic(const char* src, char* buf);
-
-char* GetUserPassword(BOOL bAlways);
-WORD GetMyStatusFlags();
-
-/* Unicode FS utility functions */
-
-int FileStatUtf(const char *path, struct _stati64 *buffer);
-int MakeDirUtf(const char *dir);
-int OpenFileUtf(const char *filename, int oflag, int pmode);
-
-/* Unicode UI utility functions */
-wchar_t* GetWindowTextUcs(HWND hWnd);
-void SetWindowTextUcs(HWND hWnd, wchar_t *text);
-char* GetWindowTextUtf(HWND hWnd);
-char* GetDlgItemTextUtf(HWND hwndDlg, int iItem);
-void SetWindowTextUtf(HWND hWnd, const char* szText);
-void SetDlgItemTextUtf(HWND hwndDlg, int iItem, const char* szText);
-LONG SetWindowLongUtf(HWND hWnd, int nIndex, LONG dwNewLong);
-LRESULT CallWindowProcUtf(WNDPROC OldProc, HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
-
-int ComboBoxAddStringUtf(HWND hCombo, const char* szString, DWORD data);
-int ListBoxAddStringUtf(HWND hList, const char* szString);
-
-int MessageBoxUtf(HWND hWnd, const char* szText, const char* szCaption, UINT uType);
-HWND DialogBoxUtf(BOOL bModal, HINSTANCE hInstance, const char* szTemplate, HWND hWndParent, DLGPROC lpDialogFunc, LPARAM dwInitParam);
-HWND CreateDialogUtf(HINSTANCE hInstance, const char* lpTemplate, HWND hWndParent, DLGPROC lpDialogFunc);
+int DBWriteContactSettingBlob(HANDLE hContact,const char *szModule,const char *szSetting,const char *val, const int cbVal);
 
 #endif /* __UTILITIES_H */

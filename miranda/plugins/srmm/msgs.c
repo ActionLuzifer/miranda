@@ -1,8 +1,8 @@
 /*
 SRMM
 
-Copyright 2000-2005 Miranda ICQ/IM project,
-all portions of this codebase are copyrighted to the people
+Copyright 2000-2005 Miranda ICQ/IM project, 
+all portions of this codebase are copyrighted to the people 
 listed in contributors.txt.
 
 This program is free software; you can redistribute it and/or
@@ -20,9 +20,7 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 #include "commonheaders.h"
-#include "statusicon.h"
 #pragma hdrstop
-#include "m_fontservice.h"
 
 static void InitREOleCallback(void);
 
@@ -35,19 +33,29 @@ extern HINSTANCE g_hInst;
 
 static int SRMMStatusToPf2(int status)
 {
-	switch (status) {
-		case ID_STATUS_ONLINE:     return PF2_ONLINE;
-		case ID_STATUS_AWAY:       return PF2_SHORTAWAY;
-		case ID_STATUS_DND:        return PF2_HEAVYDND;
-		case ID_STATUS_NA:         return PF2_LONGAWAY;
-		case ID_STATUS_OCCUPIED:   return PF2_LIGHTDND;
-		case ID_STATUS_FREECHAT:   return PF2_FREECHAT;
-		case ID_STATUS_INVISIBLE:  return PF2_INVISIBLE;
-		case ID_STATUS_ONTHEPHONE: return PF2_ONTHEPHONE;
-		case ID_STATUS_OUTTOLUNCH: return PF2_OUTTOLUNCH;
-		case ID_STATUS_OFFLINE:    return MODEF_OFFLINE;
-	}
-	return 0;
+    switch (status) {
+        case ID_STATUS_ONLINE:
+            return PF2_ONLINE;
+        case ID_STATUS_AWAY:
+            return PF2_SHORTAWAY;
+        case ID_STATUS_DND:
+            return PF2_HEAVYDND;
+        case ID_STATUS_NA:
+            return PF2_LONGAWAY;
+        case ID_STATUS_OCCUPIED:
+            return PF2_LIGHTDND;
+        case ID_STATUS_FREECHAT:
+            return PF2_FREECHAT;
+        case ID_STATUS_INVISIBLE:
+            return PF2_INVISIBLE;
+        case ID_STATUS_ONTHEPHONE:
+            return PF2_ONTHEPHONE;
+        case ID_STATUS_OUTTOLUNCH:
+            return PF2_OUTTOLUNCH;
+        case ID_STATUS_OFFLINE:
+            return MODEF_OFFLINE;
+    }
+    return 0;
 }
 
 static int ReadMessageCommand(WPARAM wParam, LPARAM lParam)
@@ -65,6 +73,8 @@ static int MessageEventAdded(WPARAM wParam, LPARAM lParam)
 {
 	CLISTEVENT cle;
 	DBEVENTINFO dbei;
+	char *contactName;
+	char toolTip[256];
 	HWND hwnd;
 
 	ZeroMemory(&dbei, sizeof(dbei));
@@ -95,25 +105,20 @@ static int MessageEventAdded(WPARAM wParam, LPARAM lParam)
 			return 0;
 		}
 	}
-	{
-		TCHAR toolTip[256], *contactName;
-		ZeroMemory(&cle, sizeof(cle));
-		cle.cbSize = sizeof(cle);
-		cle.hContact = (HANDLE) wParam;
-		cle.hDbEvent = (HANDLE) lParam;
-		cle.flags = CLEF_TCHAR;
-		cle.hIcon = LoadSkinnedIcon(SKINICON_EVENT_MESSAGE);
-		cle.pszService = "SRMsg/ReadMessage";
-		contactName = (TCHAR*) CallService(MS_CLIST_GETCONTACTDISPLAYNAME, wParam, GCDNF_TCHAR);
-		mir_sntprintf(toolTip, SIZEOF(toolTip), TranslateT("Message from %s"), contactName);
-		cle.ptszTooltip = toolTip;
-		CallService(MS_CLIST_ADDEVENT, 0, (LPARAM) & cle);
-	}
+	ZeroMemory(&cle, sizeof(cle));
+	cle.cbSize = sizeof(cle);
+	cle.hContact = (HANDLE) wParam;
+	cle.hDbEvent = (HANDLE) lParam;
+	cle.hIcon = LoadSkinnedIcon(SKINICON_EVENT_MESSAGE);
+	cle.pszService = "SRMsg/ReadMessage";
+	contactName = (char *) CallService(MS_CLIST_GETCONTACTDISPLAYNAME, wParam, 0);
+	mir_snprintf(toolTip, sizeof(toolTip), Translate("Message from %s"), contactName);
+	cle.pszTooltip = toolTip;
+	CallService(MS_CLIST_ADDEVENT, 0, (LPARAM) & cle);
 	return 0;
 }
 
-#if defined(_UNICODE)
-static int SendMessageCommand_W(WPARAM wParam, LPARAM lParam)
+static int SendMessageCommand(WPARAM wParam, LPARAM lParam)
 {
 	HWND hwnd;
 	struct NewMessageWindowLParam newData = { 0 };
@@ -145,46 +150,6 @@ static int SendMessageCommand_W(WPARAM wParam, LPARAM lParam)
 	else {
 		newData.hContact = (HANDLE) wParam;
 		newData.szInitialText = (const char *) lParam;
-		newData.isWchar = 1;
-		CreateDialogParam(g_hInst, MAKEINTRESOURCE(IDD_MSG), NULL, DlgProcMessage, (LPARAM) & newData);
-	}
-	return 0;
-}
-#endif
-
-static int SendMessageCommand(WPARAM wParam, LPARAM lParam)
-{
-	HWND hwnd;
-	struct NewMessageWindowLParam newData = { 0 };
-
-	{
-		/* does the HCONTACT's protocol support IM messages? */
-		char *szProto = (char *) CallService(MS_PROTO_GETCONTACTBASEPROTO, wParam, 0);
-		if (szProto) {
-			if (!CallProtoService(szProto, PS_GETCAPS, PFLAGNUM_1, 0) & PF1_IMSEND)
-				return 1;
-		}
-		else {
-			/* unknown contact */
-			return 1;
-		}                       //if
-	}
-
-	if (hwnd = WindowList_Find(g_dat->hMessageWindowList, (HANDLE) wParam)) {
-		if (lParam) {
-			HWND hEdit;
-			hEdit = GetDlgItem(hwnd, IDC_MESSAGE);
-			SendMessage(hEdit, EM_SETSEL, -1, SendMessage(hEdit, WM_GETTEXTLENGTH, 0, 0));
-			SendMessageA(hEdit, EM_REPLACESEL, FALSE, (LPARAM) (char *) lParam);
-		}
-		ShowWindow(hwnd, SW_SHOWNORMAL);
-		SetForegroundWindow(hwnd);
-		SetFocus(hwnd);
-	}
-	else {
-		newData.hContact = (HANDLE) wParam;
-		newData.szInitialText = (const char *) lParam;
-		newData.isWchar = 0;
 		CreateDialogParam(g_hInst, MAKEINTRESOURCE(IDD_MSG), NULL, DlgProcMessage, (LPARAM) & newData);
 	}
 	return 0;
@@ -213,8 +178,8 @@ static int TypingMessage(WPARAM wParam, LPARAM lParam)
 	}
 	if ((int) lParam && !foundWin && (g_dat->flags&SMF_SHOWTYPINGTRAY)) {
 		char szTip[256];
-		mir_snprintf(szTip, SIZEOF(szTip), Translate("%s is typing a message"), (char *) CallService(MS_CLIST_GETCONTACTDISPLAYNAME, wParam, 0));
 
+		mir_snprintf(szTip, sizeof(szTip), Translate("%s is typing a message"), (char *) CallService(MS_CLIST_GETCONTACTDISPLAYNAME, wParam, 0));
 		if (ServiceExists(MS_CLIST_SYSTRAY_NOTIFY) && !(g_dat->flags&SMF_SHOWTYPINGCLIST)) {
 			MIRANDASYSTRAYNOTIFY tn;
 			tn.szProto = NULL;
@@ -258,9 +223,10 @@ static int MessageSettingChanged(WPARAM wParam, LPARAM lParam)
 static int ContactDeleted(WPARAM wParam, LPARAM lParam)
 {
 	HWND hwnd;
-	if (hwnd = WindowList_Find(g_dat->hMessageWindowList, (HANDLE) wParam))
-		SendMessage(hwnd, WM_CLOSE, 0, 0);
 
+	if (hwnd = WindowList_Find(g_dat->hMessageWindowList, (HANDLE) wParam)) {
+		SendMessage(hwnd, WM_CLOSE, 0, 0);
+	}
 	return 0;
 }
 
@@ -303,7 +269,7 @@ static void RestoreUnreadMessageAlerts(void)
 				else {
 					cle.hContact = hContact;
 					cle.hDbEvent = hDbEvent;
-					mir_snprintf(toolTip, SIZEOF(toolTip), Translate("Message from %s"), (char *) CallService(MS_CLIST_GETCONTACTDISPLAYNAME, (WPARAM) hContact, 0));
+					mir_snprintf(toolTip, sizeof(toolTip), Translate("Message from %s"), (char *) CallService(MS_CLIST_GETCONTACTDISPLAYNAME, (WPARAM) hContact, 0));
 					cle.pszTooltip = toolTip;
 					CallService(MS_CLIST_ADDEVENT, 0, (LPARAM) & cle);
 				}
@@ -314,23 +280,13 @@ static void RestoreUnreadMessageAlerts(void)
 	}
 }
 
-void RegisterSRMMFonts( void );
-
-static int FontsChanged(WPARAM wParam,LPARAM lParam)
-{
-	WindowList_Broadcast(g_dat->hMessageWindowList, DM_OPTIONSAPPLIED, 0, 0);
-	return 0;
-}
-
 static int SplitmsgModulesLoaded(WPARAM wParam, LPARAM lParam)
 {
 	CLISTMENUITEM mi;
 	PROTOCOLDESCRIPTOR **protocol;
 	int protoCount, i;
 
-	RegisterSRMMFonts();
 	LoadMsgLogIcons();
-
 	ZeroMemory(&mi, sizeof(mi));
 	mi.cbSize = sizeof(mi);
 	mi.position = -2000090000;
@@ -346,11 +302,9 @@ static int SplitmsgModulesLoaded(WPARAM wParam, LPARAM lParam)
 			mi.pszContactOwner = protocol[i]->szName;
 			hMsgMenuItem = realloc(hMsgMenuItem, (hMsgMenuItemCount + 1) * sizeof(HANDLE));
 			hMsgMenuItem[hMsgMenuItemCount++] = (HANDLE) CallService(MS_CLIST_ADDCONTACTMENUITEM, 0, (LPARAM) & mi);
-	}	}
-
-	HookEvent(ME_FONT_RELOAD, FontsChanged);
+		}
+	}
 	HookEvent(ME_CLIST_DOUBLECLICKED, SendMessageCommand);
-
 	RestoreUnreadMessageAlerts();
 	return 0;
 }
@@ -358,7 +312,6 @@ static int SplitmsgModulesLoaded(WPARAM wParam, LPARAM lParam)
 int PreshutdownSendRecv(WPARAM wParam, LPARAM lParam)
 {
 	WindowList_BroadcastAsync(g_dat->hMessageWindowList, WM_CLOSE, 0, 0);
-	DeinitStatusIcons();
 	return 0;
 }
 
@@ -407,7 +360,7 @@ static int IconsChanged(WPARAM wParam, LPARAM lParam)
 
 static int GetWindowAPI(WPARAM wParam, LPARAM lParam)
 {
-	return PLUGIN_MAKE_VERSION(0,0,0,4);
+	return PLUGIN_MAKE_VERSION(0,0,0,3);
 }
 
 static int GetWindowClass(WPARAM wParam, LPARAM lParam)
@@ -441,9 +394,9 @@ int LoadSendRecvMessageModule(void)
 	if (LoadLibraryA("riched20.dll") == NULL) {
 		if (IDYES !=
 			MessageBoxA(0,
-			Translate
-			("Miranda could not load the built-in message module, riched20.dll is missing. If you are using Windows 95 or WINE please make sure you have riched20.dll installed. Press 'Yes' to continue loading Miranda."),
-			Translate("Information"), MB_YESNO | MB_ICONINFORMATION))
+						Translate
+						("Miranda could not load the built-in message module, riched20.dll is missing. If you are using Windows 95 or WINE please make sure you have riched20.dll installed. Press 'Yes' to continue loading Miranda."),
+						Translate("Information"), MB_YESNO | MB_ICONINFORMATION))
 			return 1;
 		return 0;
 	}
@@ -461,7 +414,7 @@ int LoadSendRecvMessageModule(void)
 	HookEvent(ME_SYSTEM_PRESHUTDOWN, PreshutdownSendRecv);
 	CreateServiceFunction(MS_MSG_SENDMESSAGE, SendMessageCommand);
 #if defined(_UNICODE)
-	CreateServiceFunction(MS_MSG_SENDMESSAGE "W", SendMessageCommand_W);
+	CreateServiceFunction(MS_MSG_SENDMESSAGE "W", SendMessageCommand);
 #endif
 	CreateServiceFunction(MS_MSG_GETWINDOWAPI, GetWindowAPI);
 	CreateServiceFunction(MS_MSG_GETWINDOWCLASS, GetWindowClass);
@@ -478,8 +431,6 @@ int LoadSendRecvMessageModule(void)
 	hCurHyperlinkHand = LoadCursor(NULL, IDC_HAND);
 	if (hCurHyperlinkHand == NULL)
 		hCurHyperlinkHand = LoadCursor(g_hInst, MAKEINTRESOURCE(IDC_HYPERLINKHAND));
-
-	InitStatusIcons();
 	return 0;
 }
 
@@ -550,8 +501,8 @@ static STDMETHODIMP_(HRESULT) CREOleCallback_GetNewStorage(struct CREOleCallback
 {
 	WCHAR szwName[64];
 	char szName[64];
-	wsprintfA(szName, "s%u", lpThis->nextStgId++);
-	MultiByteToWideChar(CP_ACP, 0, szName, -1, szwName, SIZEOF(szwName));
+	wsprintfA(szName, "s%u", lpThis->nextStgId);
+	MultiByteToWideChar(CP_ACP, 0, szName, -1, szwName, sizeof(szwName) / sizeof(szwName[0]));
 	if (lpThis->pictStg == NULL)
 		return STG_E_MEDIUMFULL;
 	return lpThis->pictStg->lpVtbl->CreateStorage(lpThis->pictStg, szwName, STGM_READWRITE | STGM_SHARE_EXCLUSIVE | STGM_CREATE, 0, 0, lplpstg);

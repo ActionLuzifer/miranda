@@ -5,7 +5,7 @@
 // Copyright © 2000,2001 Richard Hughes, Roland Rabien, Tristan Van de Vreede
 // Copyright © 2001,2002 Jon Keating, Richard Hughes
 // Copyright © 2002,2003,2004 Martin Öberg, Sam Kothari, Robert Rainwater
-// Copyright © 2004,2005,2006 Joe Kucera
+// Copyright © 2004,2005 Joe Kucera
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -23,7 +23,7 @@
 //
 // -----------------------------------------------------------------------------
 //
-// File name      : $Source: /cvsroot/miranda/miranda/protocols/IcqOscarJ/chan_04close.c,v $
+// File name      : $Source$
 // Revision       : $Revision$
 // Last change on : $Date$
 // Last change by : $Author$
@@ -37,300 +37,315 @@
 #include "icqoscar.h"
 
 
-extern HANDLE hServerConn;
 
-static void handleMigration(serverthread_info *info);
-static int connectNewServer(serverthread_info *info);
+extern int gnCurrentStatus;
+extern int isMigrating;
+extern WORD wServSequence;
+extern WORD wLocalSequence;
+extern HANDLE hServerConn;
+extern HANDLE ghServerNetlibUser;
+extern char *cookieData;
+extern int cookieDataLen;
+extern char *migratedServer;
+extern int isMigrating;
+extern char gpszICQProtoName[MAX_PATH];
+extern HANDLE hServerPacketRecver;
+
+static void handleMigration();
 static void handleRuntimeError(WORD wError);
 static void handleSignonError(WORD wError);
 
 
-void handleCloseChannel(unsigned char *buf, WORD datalen, serverthread_info *info)
+
+void handleCloseChannel(unsigned char *buf, WORD datalen)
 {
-  oscar_tlv_chain* chain = NULL;
-  WORD wError;
+	WORD wCookieLen;
+	WORD i;
+	char* newServer;
+	char* cookie;
+	char servip[16];
+	oscar_tlv_chain* chain = NULL;
+	WORD wError;
+	NETLIBOPENCONNECTION nloc = {0};
 
 
-  // Parse server reply, prepare reconnection
-  if (!info->bLoggedIn && datalen && !info->newServerReady)
-    handleLoginReply(buf, datalen, info);
+  // TODO: implement proxy connection walkie - will solve gateway problems, in 0.3.6+
 
-  if (info->isMigrating)
-    handleMigration(info);
+  Netlib_CloseHandle(hServerConn);
+  hServerConn = NULL;
 
-  if ((!info->bLoggedIn || info->isMigrating) && info->newServerReady)
-  {
-    if (!connectNewServer(info))
-    { // Connecting failed
-      if (info->isMigrating)
-        icq_LogUsingErrorCode(LOG_ERROR, GetLastError(), "Unable to connect to migrated ICQ communication server");
-      else
-        icq_LogUsingErrorCode(LOG_ERROR, GetLastError(), "Unable to connect to ICQ communication server");
-
-      SetCurrentStatus(ID_STATUS_OFFLINE);
-
-      info->isMigrating = 0;
-    }
-    info->newServerReady = 0;
-
-    return;
-  }
-
-  if (chain = readIntoTLVChain(&buf, datalen, 0))
-  {
-    // TLV 9 errors (runtime errors?)
-    wError = getWordFromChain(chain, 0x09, 1);
-    if (wError)
-    {
-      SetCurrentStatus(ID_STATUS_OFFLINE);
-
-      handleRuntimeError(wError);
-    }
-
-    disposeChain(&chain);
-  }
-  // Server closed connection on error, or sign off
-  NetLib_SafeCloseHandle(&hServerConn, TRUE);
-}
+	// Todo: We really should sanity check this, maybe reset it with a timer
+	// so we don't trigger on this by mistake
+	if (isMigrating)
+	{
+		handleMigration();
+		return;
+	}
 
 
+	// Datalen is 0 if we have signed off or if server has migrated
+	if (datalen == 0)
+		return; // Signing off
 
-void handleLoginReply(unsigned char *buf, WORD datalen, serverthread_info *info)
-{
-  oscar_tlv_chain* chain = NULL;
-  WORD wError;
 
-  icq_sendCloseConnection(); // imitate icq5 behaviour
+	if (!(chain = readIntoTLVChain(&buf, datalen, 0)))
+	{
+		Netlib_Logf(ghServerNetlibUser, "Error: Missing chain on close channel");
+		return;
+	}
 
-  if (!(chain = readIntoTLVChain(&buf, datalen, 0)))
-  {
-    NetLog_Server("Error: Missing chain on close channel");
-    NetLib_SafeCloseHandle(&hServerConn, TRUE);
-    return; // Invalid data
-  }
 
-  // TLV 8 errors (signon errors?)
-  wError = getWordFromChain(chain, 0x08, 1);
-  if (wError)
-  {
-    handleSignonError(wError);
+	// TLV 8 errors (signon errors?)
+	wError = getWordFromChain(chain, 0x08, 1);
+	if (wError)
+	{
+		disposeChain(&chain);
+		handleSignonError(wError);
 
     // we return only if the server did not gave us cookie (possible to connect with soft error)
-    if (!getLenFromChain(chain, 0x06, 1)) 
-    {
-      disposeChain(&chain);
-      SetCurrentStatus(ID_STATUS_OFFLINE);
-      NetLib_SafeCloseHandle(&hServerConn, TRUE);
-      return; // Failure
-    }
+    if (getLenFromChain(chain, 0x06, 1) == 0) return;
+	}
+
+	// TLV 9 errors (runtime errors?)
+	wError = getWordFromChain(chain, 0x09, 1);
+	if (wError)
+	{
+		int oldStatus = gnCurrentStatus;
+
+		gnCurrentStatus = ID_STATUS_OFFLINE;
+		ProtoBroadcastAck(gpszICQProtoName, NULL, ACKTYPE_STATUS, ACKRESULT_SUCCESS,
+			(HANDLE)oldStatus, gnCurrentStatus);
+
+		disposeChain(&chain);
+		handleRuntimeError(wError);
+
+		return;
+	}
+
+
+	// We are in the login phase and no errors were reported.
+	// Extract communication server info.
+	newServer = getStrFromChain(chain, 0x05, 1);
+	cookie = getStrFromChain(chain, 0x06, 1);
+	wCookieLen = getLenFromChain(chain, 0x06, 1);
+
+	// We dont need this anymore
+	disposeChain(&chain);
+
+	if (!newServer || !cookie)
+	{
+		icq_LogMessage(LOG_FATAL, Translate("You could not sign on because the server returned invalid data. Try again."));
+
+		SAFE_FREE(&newServer);
+		SAFE_FREE(&cookie);
+
+		return;
+	}
+
+	Netlib_Logf(ghServerNetlibUser, "Authenticated.");
+
+	/* Get the ip and port */
+	i = 0;
+	while (newServer[i] != ':' && i < 20)
+	{
+		servip[i] = newServer[i];
+		i++;
+	}
+	servip[i++] = '\0';
+
+	nloc.cbSize = sizeof(nloc);
+	nloc.flags = 0;
+	nloc.szHost = servip;
+	nloc.wPort = (WORD)atoi(&newServer[i]);
+
+  { /* Time to release packet receiver, connection already closed */
+    Netlib_CloseHandle(hServerPacketRecver);
+    hServerPacketRecver = NULL; // clear the variable
+
+    Netlib_Logf(ghServerNetlibUser, "Closed connection to login server");
   }
 
-  // We are in the login phase and no errors were reported.
-  // Extract communication server info.
-  info->newServer = getStrFromChain(chain, 0x05, 1);
-  info->cookieData = getStrFromChain(chain, 0x06, 1);
-  info->cookieDataLen = getLenFromChain(chain, 0x06, 1);
-
-  // We dont need this anymore
-  disposeChain(&chain);
-
-  if (!info->newServer || !info->cookieData)
-  {
-    icq_LogMessage(LOG_FATAL, "You could not sign on because the server returned invalid data. Try again.");
-
-    SAFE_FREE(&info->newServer);
-    SAFE_FREE(&info->cookieData);
-    info->cookieDataLen = 0;
-
-    SetCurrentStatus(ID_STATUS_OFFLINE);
-    NetLib_SafeCloseHandle(&hServerConn, TRUE);
-    return; // Failure
+	Netlib_Logf(ghServerNetlibUser, "Connecting to %s", newServer);
+  hServerConn = (HANDLE)CallService(MS_NETLIB_OPENCONNECTION, (WPARAM)ghServerNetlibUser, (LPARAM)&nloc);
+  if (!hServerConn && (GetLastError() == 87))
+  { // this ensures that an old Miranda can also connect
+    nloc.cbSize = NETLIBOPENCONNECTION_V1_SIZE;
+    hServerConn = (HANDLE)CallService(MS_NETLIB_OPENCONNECTION, (WPARAM)ghServerNetlibUser, (LPARAM)&nloc);
   }
+	if (hServerConn == NULL)
+	{
+		SAFE_FREE(&cookie);
+		icq_LogUsingErrorCode(LOG_ERROR, GetLastError(), "Unable to connect to ICQ communication server");
+	}
+	else
+  { /* Time to recreate the packet receiver */
+		cookieData = cookie;
+		cookieDataLen = wCookieLen;
+		hServerPacketRecver = (HANDLE)CallService(MS_NETLIB_CREATEPACKETRECVER, (WPARAM)hServerConn, 8192);
+		if (!hServerPacketRecver)
+		{
+			Netlib_Logf(ghServerNetlibUser, "Error: Failed to create packet receiver.");
+		}
+	}
 
-  NetLog_Server("Authenticated.");
-  info->newServerReady = 1;
-
-  return;
+	// Free allocated memory
+	// NOTE: "cookie" will get freed when we have connected to the communication server.
+	SAFE_FREE(&newServer);
 }
 
 
 
-static int connectNewServer(serverthread_info *info)
+static void handleMigration()
 {
-  WORD servport;
-  NETLIBOPENCONNECTION nloc = {0};
-  int res = 0;
+	NETLIBOPENCONNECTION nloc = {0};
+	char servip[20];
+	unsigned int i;
+	char *port;
 
-  if (!gbGatewayMode)
-  { // close connection only if not in gateway mode
-    NetLib_SafeCloseHandle(&hServerConn, TRUE);
+
+	ZeroMemory(servip, 16);
+
+	// Check the data that was saved when the migration was announced
+	Netlib_Logf(ghServerNetlibUser, "Migrating to %s", migratedServer);
+	if (!migratedServer || !cookieData)
+	{
+		icq_LogMessage(LOG_FATAL, Translate("You have been disconnected from the ICQ network because the current server shut down."));
+
+		SAFE_FREE(&migratedServer);
+		SAFE_FREE(&cookieData);
+
+		return;
+	}
+
+
+	// Default port
+	nloc.wPort = DEFAULT_SERVER_PORT;
+
+	// Warning, sloppy coding follows. I'll clean this up
+	// when I know the migration really works
+
+	/* Get the ip */
+	for (i = 0; i < strlen(migratedServer); i++)
+	{
+		if (migratedServer[i] == ':')
+			break;
+		servip[i] = migratedServer[i];
+	}
+
+	// Use specified port if one exists
+	if (port = strrchr(migratedServer, ':'))
+		nloc.wPort = (WORD)atoi(port);
+	else
+		nloc.wPort = (WORD)DBGetContactSettingWord(NULL, gpszICQProtoName, "OscarPort", DEFAULT_SERVER_PORT);
+
+	nloc.cbSize = sizeof(nloc);
+	nloc.flags = 0;
+	nloc.szHost = servip;
+
+	// Open connection to new server
+	hServerConn = (HANDLE)CallService(MS_NETLIB_OPENCONNECTION, (WPARAM)ghServerNetlibUser, (LPARAM)&nloc);
+  if (!hServerConn && (GetLastError() == 87))
+  { // this ensures that an old Miranda can also connect
+    nloc.cbSize = NETLIBOPENCONNECTION_V1_SIZE;
+    hServerConn = (HANDLE)CallService(MS_NETLIB_OPENCONNECTION, (WPARAM)ghServerNetlibUser, (LPARAM)&nloc);
   }
+	if (hServerConn == NULL)
+	{
+		icq_LogUsingErrorCode(LOG_ERROR, GetLastError(), "Unable to connect to migrated ICQ communication server");
+		SAFE_FREE(&cookieData);
+	}
+	else
+	{
+		// Kill the old packet receiver
+		Netlib_CloseHandle(hServerPacketRecver);
+		// Create new packer receiver
+		Netlib_Logf(ghServerNetlibUser, "Created new packet receiver");
+		hServerPacketRecver = (HANDLE)CallService(MS_NETLIB_CREATEPACKETRECVER, (WPARAM)hServerConn, 8192);
+	}
 
-  /* Get the ip and port */
-  servport = info->wServerPort; // prepare default port
-  parseServerAddress(info->newServer, &servport);
+	// Clean up an exit
+	SAFE_FREE(&migratedServer);
+	isMigrating = 0;
 
-  nloc.cbSize = sizeof(nloc);
-  nloc.flags = 0;
-  nloc.szHost = info->newServer;
-  nloc.wPort = servport;
-
-  if (!gbGatewayMode)
-  {
-    { /* Time to release packet receiver, connection already closed */
-      NetLib_SafeCloseHandle(&info->hPacketRecver, FALSE);
-
-      NetLog_Server("Closed connection to login server");
-    }
-
-    hServerConn = NetLib_OpenConnection(ghServerNetlibUser, NULL, &nloc);
-    if (hServerConn)
-    { /* Time to recreate the packet receiver */
-      info->hPacketRecver = (HANDLE)CallService(MS_NETLIB_CREATEPACKETRECVER, (WPARAM)hServerConn, 8192);
-      if (!info->hPacketRecver)
-      {
-        NetLog_Server("Error: Failed to create packet receiver.");
-      }
-      else // we need to reset receiving structs
-      {
-        info->bReinitRecver = 1;
-        res = 1;
-      }
-    }
-  }
-  else
-  { // TODO: We should really do some checks here
-    NetLog_Server("Walking in Gateway to %s", info->newServer);
-    // TODO: This REQUIRES more work (most probably some kind of mid-netlib module)
-    icq_httpGatewayWalkTo(hServerConn, &nloc);
-    res = 1;
-  }
-  if (!res) SAFE_FREE(&info->cookieData);
-
-  // Free allocated memory
-  // NOTE: "cookie" will get freed when we have connected to the communication server.
-  SAFE_FREE(&info->newServer);
-
-  return res;
-}
-
-
-
-static void handleMigration(serverthread_info *info)
-{
-  // Check the data that was saved when the migration was announced
-  NetLog_Server("Migrating to %s", info->newServer);
-  if (!info->newServer || !info->cookieData)
-  {
-    icq_LogMessage(LOG_FATAL, "You have been disconnected from the ICQ network because the current server shut down.");
-
-    SAFE_FREE(&info->newServer);
-    SAFE_FREE(&info->cookieData);
-    info->newServerReady = 0;
-    info->isMigrating = 0;
-  }
 }
 
 
 
 static void handleSignonError(WORD wError)
 {
-  switch (wError)
-  {
+	char msg[256];
 
-  case 0x01: // Unregistered uin
-  case 0x04: // Incorrect uin or password
-  case 0x05: // Mismatch uin or password
-  case 0x06: // Internal Client error (bad input to authorizer)
-  case 0x07: // Invalid account
-    ICQBroadcastAck(NULL, ACKTYPE_LOGIN, ACKRESULT_FAILED, NULL, LOGINERR_WRONGPASSWORD);
-    ZeroMemory(gpszPassword, sizeof(gpszPassword));
-    icq_LogFatalParam("Connection failed.\nYour ICQ number or password was rejected (%d).", wError);
-    break;
+	switch (wError)
+	{
 
-  case 0x02: // Service temporarily unavailable
-  case 0x0D: // Bad database status
-  case 0x10: // Service temporarily offline
-  case 0x14: // Reservation map error
-  case 0x15: // Reservation link error
-  case 0x1A: // Reservation timeout
-    icq_LogFatalParam("Connection failed.\nThe server is temporarily unavailable (%d).", wError);
-    break;
+	case 0x01:
+	case 0x04:
+	case 0x05:
+	case 0x06:
+	case 0x07:
+		ProtoBroadcastAck(gpszICQProtoName, NULL, ACKTYPE_LOGIN, ACKRESULT_FAILED, NULL, LOGINERR_WRONGPASSWORD);
+		mir_snprintf(msg, 250, Translate("Connection failed.\nYour ICQ number or password was rejected (%d)."), wError);
+		icq_LogMessage(LOG_FATAL, msg);
+		break;
 
-  case 0x16: // The users num connected from this IP has reached the maximum
-  case 0x17: // The users num connected from this IP has reached the maximum (reserved)
-    icq_LogFatalParam("Connection failed.\nServer has too many connections from your IP (%d).", wError);
-    break;
+	case 0x14:
+  case 0x15:
+		mir_snprintf(msg, 250, Translate("Connection failed.\nThe server is temporally unavailable (%d)."), wError);
+		icq_LogMessage(LOG_FATAL, msg);
+		break;
 
-  case 0x18: // Reservation rate limit exceeded
-  case 0x1D: // Rate limit exceeded
-    icq_LogFatalParam("Connection failed.\nYou have connected too quickly,\nplease wait and retry 10 to 20 minutes later (%d).", wError);
-    break;
+	case 0x16:
+	case 0x17:
+		mir_snprintf(msg, 250, Translate("Connection failed.\nServer has too many connections from your IP (%d)."), wError);
+		icq_LogMessage(LOG_FATAL, msg);
+		break;
 
-  case 0x1B: // You are using an older version of ICQ. Upgrade required
-    icq_LogMessage(LOG_FATAL, "Connection failed.\nThe server did not accept this client version.");
-    break;
+	case 0x18:
+	case 0x1D:
+		mir_snprintf(msg, 250, Translate("Connection failed.\nYou have connected too quickly,\nplease wait and retry 10 to 20 minutes later (%d)."), wError);
+		icq_LogMessage(LOG_FATAL, msg);
+		break;
 
-  case 0x1C: // You are using an older version of ICQ. Upgrade recommended
-    icq_LogMessage(LOG_WARNING, "The server sent warning, this version is getting old.\nTry to look for a new one.");
-    break;
+	case 0x1B:
+		icq_LogMessage(LOG_FATAL, Translate("Connection failed.\nThe server did not accept this client version."));
+		break;
 
-  case 0x1E: // Can't register on the ICQ network
-    icq_LogMessage(LOG_FATAL, "Connection failed.\nYou were rejected by the server for an unknown reason.\nThis can happen if the UIN is already connected.");
-    break;
+  case 0x1C:
+    icq_LogMessage(LOG_WARNING, Translate("The server sent warning, this version is getting old.\nTry to look for a new one."));
 
-  case 0x0C: // Invalid database fields, MD5 login not supported
-    icq_LogMessage(LOG_FATAL, "Connection failed.\nSecure (MD5) login is not supported on this account.");
-    break;
+	case 0x1E:
+		icq_LogMessage(LOG_FATAL, Translate("Connection failed.\nYou were rejected by the server for an unknown reason.\nThis can happen if the UIN is already connected."));
+		break;
 
-  case 0:    // No error
-    break;
+	case 0:
+		break;
 
-  case 0x08: // Deleted account
-  case 0x09: // Expired account
-  case 0x0A: // No access to database
-  case 0x0B: // No access to resolver
-  case 0x0E: // Bad resolver status
-  case 0x0F: // Internal error
-  case 0x11: // Suspended account
-  case 0x12: // Database send error
-  case 0x13: // Database link error
-  case 0x19: // User too heavily warned
-  case 0x1F: // Token server timeout
-  case 0x20: // Invalid SecureID number
-  case 0x21: // MC error
-  case 0x22: // Age restriction
-  case 0x23: // RequireRevalidation
-  case 0x24: // Link rule rejected
-  case 0x25: // Missing information or bad SNAC format
-  case 0x26: // Link broken
-  case 0x27: // Invalid client IP
-  case 0x28: // Partner rejected
-  case 0x29: // SecureID missing
-  case 0x2A: // Blocked account | Bump user
-
-  default:
-    icq_LogFatalParam("Connection failed.\nUnknown error during sign on: 0x%02x", wError);
-    break;
-  }
+	default:
+		mir_snprintf(msg, 50, Translate("Connection failed.\nUnknown error during sign on: 0x%02x"), wError);
+		icq_LogMessage(LOG_FATAL, msg);
+		break;
+	}
 }
 
 
 
 static void handleRuntimeError(WORD wError)
 {
-  switch (wError)
-  {
+	char msg[256];
 
-  case 0x01:
-  {
-    ICQBroadcastAck(NULL, ACKTYPE_LOGIN, ACKRESULT_FAILED, NULL, LOGINERR_OTHERLOCATION);
-    icq_LogMessage(LOG_FATAL, "You have been disconnected from the ICQ network because you logged on from another location using the same ICQ number.");
-    break;
-  }
+	switch (wError)
+	{
 
-  default:
-    icq_LogFatalParam("Unknown runtime error: 0x%02x", wError);
-    break;
-  }
+	case 0x01:
+	{
+		ProtoBroadcastAck(gpszICQProtoName, NULL, ACKTYPE_LOGIN, ACKRESULT_FAILED, NULL, LOGINERR_OTHERLOCATION);
+		icq_LogMessage(LOG_FATAL, Translate("You have been disconnected from the ICQ network because you logged on from another location using the same ICQ number."));
+		break;
+	}
+
+	default:
+		mir_snprintf(msg, 50, Translate("Unknown runtime error: 0x%02x"), wError);
+		icq_LogMessage(LOG_FATAL, msg);
+		break;
+	}
 }

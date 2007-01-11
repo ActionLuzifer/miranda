@@ -2,7 +2,7 @@
 
 Miranda IM: the free IM client for Microsoft* Windows*
 
-Copyright 2000-2007 Miranda ICQ/IM project, 
+Copyright 2000-2003 Miranda ICQ/IM project, 
 all portions of this codebase are copyrighted to the people 
 listed in contributors.txt.
 
@@ -20,7 +20,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
-#include "commonheaders.h"
+#include "../../core/commonheaders.h"
 // TODO: Remove this
 #include <m_icq.h>
 #include "findadd.h"
@@ -32,7 +32,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define COLUMNID_EMAIL    4
 #define COLUMNID_HANDLE   5
 
-static int handleColumnAfter = COLUMNID_EMAIL;
+static int handleColumnAfter=COLUMNID_EMAIL;
 
 void SaveColumnSizes(HWND hwndResults)
 {
@@ -62,17 +62,17 @@ void SaveColumnSizes(HWND hwndResults)
 		}
 	}
 	for(i=0;i<=COLUMNID_HANDLE;i++) {
-		wsprintfA(szSetting,"ColOrder%d",i);
+		wsprintf(szSetting,"ColOrder%d",i);
 		DBWriteContactSettingByte(NULL,"FindAdd",szSetting,(BYTE)columnOrder[i]);
 		if(i>=columnCount) continue;
-		wsprintfA(szSetting,"ColWidth%d",i);
+		wsprintf(szSetting,"ColWidth%d",i);
 		DBWriteContactSettingWord(NULL,"FindAdd",szSetting,(WORD)ListView_GetColumnWidth(hwndResults,i));
 	}
 	DBWriteContactSettingByte(NULL,"FindAdd","SortColumn",(BYTE)dat->iLastColumnSortIndex);
 	DBWriteContactSettingByte(NULL,"FindAdd","SortAscending",(BYTE)dat->bSortAscending);
 }
 
-static const TCHAR *szColumnNames[] = { NULL, _T("Nick"), _T("First Name"), _T("Last Name"), _T("E-mail"), NULL };
+static const char *szColumnNames[]={NULL,"Nick","First Name","Last Name","E-mail",NULL};
 static int defaultColumnSizes[]={0,100,100,100,200,90};
 void LoadColumnSizes(HWND hwndResults,const char *szProto)
 {
@@ -83,41 +83,30 @@ void LoadColumnSizes(HWND hwndResults,const char *szProto)
 	int i;
 	struct FindAddDlgData *dat;
 	int colOrdersValid;
+	LVCOLUMN lvc;
 
 	defaultColumnSizes[COLUMNID_PROTO]=GetSystemMetrics(SM_CXSMICON)+4;
 	dat=(struct FindAddDlgData*)GetWindowLong(GetParent(hwndResults),GWL_USERDATA);
 
-	if(szProto && !lstrcmpA(szProto,"ICQ"))
+	if(szProto && !lstrcmp(szProto,"ICQ"))
 		columnCount=COLUMNID_HANDLE+1;
 	else
 		columnCount=COLUMNID_EMAIL+1;
 
 	colOrdersValid=1;
 	for(i=0;i<=COLUMNID_HANDLE;i++) {
-		LVCOLUMN lvc;
-		if( i < columnCount ) {
-			int bNeedsFree = FALSE;
-			lvc.mask = LVCF_TEXT | LVCF_WIDTH;
-			if( szColumnNames[i] != NULL )
-				lvc.pszText = TranslateTS( szColumnNames[i] );
-			else if( i == COLUMNID_HANDLE ) {
-				#if defined( _UNICODE )
-					bNeedsFree = TRUE;
-					lvc.pszText = a2u((char*)CallProtoService(szProto,PS_GETCAPS,PFLAG_UNIQUEIDTEXT,0));
-				#else
-					lvc.pszText = (char*)CallProtoService(szProto,PS_GETCAPS,PFLAG_UNIQUEIDTEXT,0);
-				#endif
-			}
-			else lvc.mask &= ~LVCF_TEXT;
-			wsprintfA(szSetting,"ColWidth%d",i);
-			lvc.cx = DBGetContactSettingWord(NULL,"FindAdd",szSetting,defaultColumnSizes[i]);
-			ListView_InsertColumn( hwndResults, i, (LPARAM)&lvc );
-			#if defined( _UNICODE )
-				if ( bNeedsFree )
-					mir_free(lvc.pszText);
-			#endif
+		if(i<columnCount) {
+			lvc.mask=LVCF_TEXT|LVCF_WIDTH;
+			if(szColumnNames[i]!=NULL)
+				lvc.pszText=Translate(szColumnNames[i]);
+			else if(i==COLUMNID_HANDLE)
+				lvc.pszText=(char*)CallProtoService(szProto,PS_GETCAPS,PFLAG_UNIQUEIDTEXT,0);
+			else lvc.mask&=~LVCF_TEXT;
+			wsprintf(szSetting,"ColWidth%d",i);
+			lvc.cx=DBGetContactSettingWord(NULL,"FindAdd",szSetting,defaultColumnSizes[i]);
+			ListView_InsertColumn(hwndResults, i, &lvc);
 		}
-		wsprintfA(szSetting,"ColOrder%d",i);
+		wsprintf(szSetting,"ColOrder%d",i);
 		columnOrder[i]=DBGetContactSettingByte(NULL,"FindAdd",szSetting,-1);
 		if(columnOrder[i]==-1) colOrdersValid=0;
 		if(columnOrder[i]==COLUMNID_HANDLE) handleColumnAfter=i?columnOrder[i-1]:-1;
@@ -156,24 +145,24 @@ int CALLBACK SearchResultsCompareFunc(LPARAM lParam1, LPARAM lParam2, LPARAM lPa
 	switch(sortCol)
 	{
 	case COLUMNID_PROTO:
-		return lstrcmpA(lsr1->szProto, lsr2->szProto)*sortMultiplier;
+		return lstrcmp(lsr1->szProto, lsr2->szProto)*sortMultiplier;
 	case COLUMNID_NICK:
-		return lstrcmpiA(lsr1->psr.nick, lsr2->psr.nick)*sortMultiplier;
+		return lstrcmpi(lsr1->psr.nick, lsr2->psr.nick)*sortMultiplier;
 	case COLUMNID_FIRST:
-		return lstrcmpiA(lsr1->psr.firstName, lsr2->psr.firstName)*sortMultiplier;
+		return lstrcmpi(lsr1->psr.firstName, lsr2->psr.firstName)*sortMultiplier;
 	case COLUMNID_LAST:
-		return lstrcmpiA(lsr1->psr.lastName, lsr2->psr.lastName)*sortMultiplier;
+		return lstrcmpi(lsr1->psr.lastName, lsr2->psr.lastName)*sortMultiplier;
 	case COLUMNID_EMAIL:
-		return lstrcmpiA(lsr1->psr.email, lsr2->psr.email)*sortMultiplier;
+		return lstrcmpi(lsr1->psr.email, lsr2->psr.email)*sortMultiplier;
 	case COLUMNID_HANDLE:
-		if(!lstrcmpA(lsr1->szProto,lsr2->szProto)) {
-			if(!lstrcmpA(lsr1->szProto,"ICQ")) {
+		if(!lstrcmp(lsr1->szProto,lsr2->szProto)) {
+			if(!lstrcmp(lsr1->szProto,"ICQ")) {
 				if(((ICQSEARCHRESULT*)&lsr1->psr)->uin<((ICQSEARCHRESULT*)&lsr2->psr)->uin) return -sortMultiplier;
 				return sortMultiplier;
 			}
 			else return 0;
 		}
-		else return lstrcmpA(lsr1->szProto, lsr2->szProto)*sortMultiplier;
+		else return lstrcmp(lsr1->szProto, lsr2->szProto)*sortMultiplier;
 	}
 	return 0;
 }
@@ -187,11 +176,11 @@ void FreeSearchResults(HWND hwndResults)
 		ListView_GetItem(hwndResults,&lvi);
 		lsr=(struct ListSearchResult*)lvi.lParam;
 		if(lsr==NULL) continue;
-		mir_free(lsr->psr.email);
-		mir_free(lsr->psr.nick);
-		mir_free(lsr->psr.firstName);
-		mir_free(lsr->psr.lastName);
-		mir_free(lsr);
+		free(lsr->psr.email);
+		free(lsr->psr.nick);
+		free(lsr->psr.firstName);
+		free(lsr->psr.lastName);
+		free(lsr);
 	}
 	ListView_DeleteAllItems(hwndResults);
 	EnableResultButtons(GetParent(hwndResults),0);
@@ -200,14 +189,13 @@ void FreeSearchResults(HWND hwndResults)
 // on its own thread
 static void BeginSearchFailed(void * arg)
 {
-	TCHAR buf[128];
-	if ( arg != NULL ) {
-		TCHAR* protoName = LangPackPcharToTchar(( const char* )arg );
-		mir_sntprintf(buf,SIZEOF(buf),TranslateT("Could not start a search on '%s', there was a problem - is %s connected?"),protoName,protoName);
-		mir_free((char*)arg);
+	char buf[128];
+	if ( arg != NULL ) { 
+		mir_snprintf(buf,sizeof(buf),Translate("Could not start a search on '%s', there was a problem - is %s connected?"),arg,arg);
+		free((char*)arg);
 	}
-	else lstrcpyn(buf,TranslateT("Could not search on any of the protocols, are you online?"),SIZEOF(buf));
-	MessageBox(0,buf,TranslateT("Problem with search"),MB_OK | MB_ICONERROR);
+	else strncpy(buf,Translate("Could not search on any of the protocols, are you online?"),sizeof(buf));
+	MessageBox(0,buf,Translate("Problem with search"),MB_OK | MB_ICONERROR);
 }
 
 int BeginSearch(HWND hwndDlg,struct FindAddDlgData *dat,const char *szProto,const char *szSearchService,DWORD requiredCapability,void *pvSearchParams)
@@ -221,7 +209,7 @@ int BeginSearch(HWND hwndDlg,struct FindAddDlgData *dat,const char *szProto,cons
 
 		CallService(MS_PROTO_ENUMPROTOCOLS,(WPARAM)&protoCount,(LPARAM)&protos);
 		dat->searchCount=0;
-		dat->search=(struct ProtoSearchInfo*)mir_calloc(sizeof(struct ProtoSearchInfo) * protoCount);
+		dat->search=(struct ProtoSearchInfo*)calloc(sizeof(struct ProtoSearchInfo),protoCount);
 		for(i=0;i<protoCount;i++) {
 			if(protos[i]->type!=PROTOTYPE_PROTOCOL) continue;
 			caps=(DWORD)CallProtoService(protos[i]->szName,PS_GETCAPS,PFLAGNUM_1,0);
@@ -234,21 +222,25 @@ int BeginSearch(HWND hwndDlg,struct FindAddDlgData *dat,const char *szProto,cons
 		if(failures) {
 			//infuriatingly vague error message. fixme.
 			if(dat->searchCount==0) {
+				//MessageBox(hwndDlg,Translate("None of the messaging protocols were able to initiate the search. Please correct the fault and try again."),Translate("Search"),MB_OK);
 				forkthread(BeginSearchFailed,0,NULL);
-				mir_free(dat->search);
+				free(dat->search);
 				dat->search=NULL;
 				return 1;
-		}	}
+			}
+			//MessageBox(hwndDlg,Translate("One or more of the messaging protocols failed to initiate the search, however some were successful. Please correct the fault if you wish to search using the other protocols."),Translate("Search"),MB_OK);
+		}
 	}
 	else {
-		dat->search=(struct ProtoSearchInfo*)mir_alloc(sizeof(struct ProtoSearchInfo));
+		dat->search=(struct ProtoSearchInfo*)malloc(sizeof(struct ProtoSearchInfo));
 		dat->searchCount=1;
 		dat->search[0].hProcess=(HANDLE)CallProtoService(szProto,szSearchService,0,(LPARAM)pvSearchParams);
 		dat->search[0].szProto=szProto;
 		if(dat->search[0].hProcess==NULL) {
 			//infuriatingly vague error message. fixme.
-			forkthread(BeginSearchFailed,0,(void*)mir_strdup(szProto));
-			mir_free(dat->search);
+			//MessageBox(hwndDlg,Translate("The messaging protocol reported an error initiating the search. Please correct the fault and try again."),Translate("Search"),MB_OK);
+			forkthread(BeginSearchFailed,0,(void*)_strdup(szProto));
+			free(dat->search);
 			dat->search=NULL;
 			dat->searchCount=0;
 			return 1;
@@ -259,29 +251,21 @@ int BeginSearch(HWND hwndDlg,struct FindAddDlgData *dat,const char *szProto,cons
 
 void SetStatusBarSearchInfo(HWND hwndStatus,struct FindAddDlgData *dat)
 {
-	TCHAR str[256];
-
-	if (dat->searchCount != 0 ) {
-		char szProtoName[64];
+	if(dat->searchCount==0)
+		SendMessage(hwndStatus,SB_SETTEXT,0,(LPARAM)Translate("Idle"));
+	else {
+		char str[256],szProtoName[64];
 		int i;
 
-		lstrcpy( str, TranslateT("Searching"));
-		for( i=0; i <dat->searchCount; i++ ) {
-			lstrcat(str, i ? _T(",") : _T( " " ));
-			CallProtoService(dat->search[i].szProto,PS_GETNAME,SIZEOF(szProtoName),(LPARAM)szProtoName);
-			#if !defined( _UNICODE )
-				lstrcatA( str, szProtoName );
-			#else
-				{	TCHAR* p = a2u(szProtoName);
-					lstrcat(str, p);
-					mir_free(p);
-				}
-			#endif
-	}	}
-	else lstrcpy(str, TranslateT("Idle"));
-		
-	SendMessage( hwndStatus, SB_SETTEXT, 0, (LPARAM)str );
-}	
+		lstrcpy(str,Translate("Searching"));
+		for(i=0;i<dat->searchCount;i++) {
+			lstrcat(str,i?",":" ");
+			CallProtoService(dat->search[i].szProto,PS_GETNAME,sizeof(szProtoName),(LPARAM)szProtoName);
+			lstrcat(str,szProtoName);
+		}
+		SendMessage(hwndStatus,SB_SETTEXT,0,(LPARAM)str);
+	}
+}
 
 struct ProtoResultsSummary {
 	const char *szProto;
@@ -296,7 +280,7 @@ void SetStatusBarResultInfo(HWND hwndDlg,struct FindAddDlgData *dat)
 	struct ProtoResultsSummary *subtotal=NULL;
 	int subtotalCount=0;
 	int i,total;
-	TCHAR str[256];
+	char str[256];
 
 	total=ListView_GetItemCount(hwndResults);
 	for(lvi.iItem=total-1;lvi.iItem>=0;lvi.iItem--) {
@@ -311,52 +295,38 @@ void SetStatusBarResultInfo(HWND hwndDlg,struct FindAddDlgData *dat)
 			}
 		}
 		if(i==subtotalCount) {
-			subtotal=(struct ProtoResultsSummary*)mir_realloc(subtotal,sizeof(struct ProtoResultsSummary)*(subtotalCount+1));
+			subtotal=(struct ProtoResultsSummary*)realloc(subtotal,sizeof(struct ProtoResultsSummary)*(subtotalCount+1));
 			subtotal[subtotalCount].szProto=lsr->szProto;
 			subtotal[subtotalCount++].count=1;
 		}
 	}
-	if ( total != 0 ) {
+	if(total==0) {
+		lstrcpy(str,Translate("No users found"));
+	}
+	else {
 		char szProtoName[64];
-		TCHAR substr[64];
-		TCHAR* ptszProto;
+		char substr[64];
 
-		CallProtoService( subtotal[0].szProto, PS_GETNAME, SIZEOF(szProtoName), (LPARAM)szProtoName );
-		#if defined( _UNICODE )
-			ptszProto = a2u( szProtoName );
-		#else
-			ptszProto = szProtoName;
-		#endif
-
-		if ( subtotalCount == 1 ) {
-			if(total==1) mir_sntprintf( str, SIZEOF(str), TranslateT("1 %s user found"), ptszProto );
-			else         mir_sntprintf( str, SIZEOF(str), TranslateT("%d %s users found"), total, ptszProto );
+		CallProtoService(subtotal[0].szProto,PS_GETNAME,sizeof(szProtoName),(LPARAM)szProtoName);
+		if(subtotalCount==1) {
+			if(total==1) wsprintf(str,Translate("1 %s user found"),szProtoName);
+			else wsprintf(str,Translate("%d %s users found"),total,szProtoName);
 		}
 		else {
-			mir_sntprintf( str, SIZEOF(str), TranslateT("%d users found ("),total);
-			for( i=0; i < subtotalCount; i++ ) {
+			wsprintf(str,Translate("%d users found ("),total);
+			for(i=0;i<subtotalCount;i++) {
 				if(i) {
-					CallProtoService(subtotal[i].szProto,PS_GETNAME,SIZEOF(szProtoName),(LPARAM)szProtoName);
-					#if defined( _UNICODE )
-						mir_free( ptszProto );
-						ptszProto = a2u( szProtoName );
-					#else
-						ptszProto = szProtoName;
-					#endif
-					lstrcat( str, _T(", "));
+					CallProtoService(subtotal[i].szProto,PS_GETNAME,sizeof(szProtoName),(LPARAM)szProtoName);
+					lstrcat(str,", ");
 				}
-				mir_sntprintf( substr, SIZEOF(substr), _T("%d %s"), subtotal[i].count, ptszProto );
-				lstrcat( str, substr );
+				wsprintf(substr,"%d %s",subtotal[i].count,szProtoName);
+				lstrcat(str,substr);
 			}
-			lstrcat( str, _T(")"));
+			lstrcat(str,")");
 		}
-		mir_free(subtotal);
-		#if defined( _UNICODE )
-			mir_free( ptszProto );
-		#endif
+		free(subtotal);
 	}
-	else lstrcpy(str, TranslateT("No users found"));
-	SendMessage(hwndStatus, SB_SETTEXT, 2, (LPARAM)str );
+	SendMessage(hwndStatus,SB_SETTEXT,2,(LPARAM)str);
 }
 
 void CreateResultsColumns(HWND hwndResults,struct FindAddDlgData *dat,char *szProto)
@@ -371,6 +341,7 @@ void ShowMoreOptionsMenu(HWND hwndDlg,int x,int y)
 {
 	struct FindAddDlgData *dat;
 	HMENU hPopupMenu,hMenu;
+	MENUITEMINFO mii={0};
 	int commandId;
 	struct ListSearchResult *lsr;
 

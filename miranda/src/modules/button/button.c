@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
-#include "commonheaders.h"
+#include "../../core/commonheaders.h"
 
 // TODO:
 // - Support for bitmap buttons (simple call to DrawIconEx())
@@ -83,7 +83,7 @@ int LoadButtonModule(void) {
 static int ThemeSupport() {
 	if (IsWinVerXPPlus()) {
 		if (!themeAPIHandle) {
-			themeAPIHandle = GetModuleHandleA("uxtheme");
+			themeAPIHandle = GetModuleHandle("uxtheme");
 			if (themeAPIHandle) {
 				MyOpenThemeData = (HANDLE (WINAPI *)(HWND,LPCWSTR))MGPROC("OpenThemeData");
 				MyCloseThemeData = (HRESULT (WINAPI *)(HANDLE))MGPROC("CloseThemeData");
@@ -127,7 +127,7 @@ static void LoadTheme(MButtonCtrl *ctl) {
 	}
 }
 
-static int TBStateConvert2Flat(int state) {
+static TBStateConvert2Flat(int state) {
 	switch(state) {
 		case PBS_NORMAL:    return TS_NORMAL;
 		case PBS_HOT:       return TS_HOT;
@@ -168,11 +168,12 @@ static void PaintWorker(MButtonCtrl *ctl, HDC hdcPaint) {
 				if (ctl->stateId==PBS_PRESSED||ctl->stateId==PBS_HOT)
 					hbr = GetSysColorBrush(COLOR_3DLIGHT);
 				else {
-					HWND hwndParent = GetParent(ctl->hwnd);
-					HDC dc = GetDC(hwndParent);
-					HBRUSH oldBrush = GetCurrentObject( dc, OBJ_BRUSH );
+					HDC dc;
+					HWND hwndParent;
+
+					hwndParent = GetParent(ctl->hwnd);
+					dc=GetDC(hwndParent);
 					hbr = (HBRUSH)SendMessage(hwndParent, WM_CTLCOLORDLG, (WPARAM)dc, (LPARAM)hwndParent);
-					SelectObject(dc,oldBrush);
 					ReleaseDC(hwndParent,dc);
 				}
 				if (hbr) {
@@ -247,13 +248,13 @@ static void PaintWorker(MButtonCtrl *ctl, HDC hdcPaint) {
 		}
 		else if (GetWindowTextLength(ctl->hwnd)) {
 			// Draw the text and optinally the arrow
-			TCHAR szText[MAX_PATH];
+			char szText[MAX_PATH];
 			SIZE sz;
 			RECT rcText;
 			HFONT hOldFont;
 
 			CopyRect(&rcText, &rcClient);
-			GetWindowText(ctl->hwnd, szText, SIZEOF(szText));
+			GetWindowText(ctl->hwnd, szText, sizeof(szText));
 			SetBkMode(hdcMem, TRANSPARENT);
 			hOldFont = SelectObject(hdcMem, ctl->hFont);
 			// XP w/themes doesn't used the glossy disabled text.  Is it always using COLOR_GRAYTEXT?  Seems so.
@@ -262,7 +263,7 @@ static void PaintWorker(MButtonCtrl *ctl, HDC hdcPaint) {
 			if (ctl->cHot) {
 				SIZE szHot;
 				
-				GetTextExtentPoint32 (hdcMem, _T("&"), 1, &szHot);
+				GetTextExtentPoint32(hdcMem, "&", 1, &szHot);
 				sz.cx -= szHot.cx;
 			}
 			if (ctl->arrow) {
@@ -286,7 +287,7 @@ static LRESULT CALLBACK MButtonWndProc(HWND hwndDlg, UINT msg,  WPARAM wParam, L
 		case WM_NCCREATE:
 		{
 			SetWindowLong(hwndDlg, GWL_STYLE, GetWindowLong(hwndDlg, GWL_STYLE)|BS_OWNERDRAW);
-			bct = mir_alloc(sizeof(MButtonCtrl));
+			bct = malloc(sizeof(MButtonCtrl));
 			if (bct==NULL) return FALSE;
 			bct->hwnd = hwndDlg;
 			bct->stateId = PBS_NORMAL;
@@ -329,7 +330,7 @@ static LRESULT CALLBACK MButtonWndProc(HWND hwndDlg, UINT msg,  WPARAM wParam, L
 				}
 				LeaveCriticalSection(&csTips);
 				DestroyTheme(bct);
-				mir_free(bct);
+				free(bct);
 			}
 			SetWindowLong(hwndDlg,0,(LONG)NULL);
 			break;	// DONT! fall thru
@@ -337,11 +338,11 @@ static LRESULT CALLBACK MButtonWndProc(HWND hwndDlg, UINT msg,  WPARAM wParam, L
 		case WM_SETTEXT:
 		{
 			bct->cHot = 0;
-			if ( lParam != 0 ) {
-				TCHAR *tmp = ( TCHAR* )lParam;
+			if ((char*)lParam) {
+				char *tmp = (char*)lParam;
 				while (*tmp) {
 					if (*tmp=='&' && *(tmp+1)) {
-						bct->cHot = _tolower(*(tmp+1));
+						bct->cHot = tolower(*(tmp+1));
 						break;
 					}
 					tmp++;
@@ -445,22 +446,22 @@ static LRESULT CALLBACK MButtonWndProc(HWND hwndDlg, UINT msg,  WPARAM wParam, L
 
 			if (!(char*)wParam) break;
             EnterCriticalSection(&csTips);
-			if (!hwndToolTips)
-				hwndToolTips = CreateWindowEx(WS_EX_TOPMOST, TOOLTIPS_CLASS, _T(""), WS_POPUP, 0, 0, 0, 0, NULL, NULL, GetModuleHandle(NULL), NULL);
-
+			if (!hwndToolTips) {
+				hwndToolTips = CreateWindowEx(WS_EX_TOPMOST, TOOLTIPS_CLASS, "", WS_POPUP, 0, 0, 0, 0, NULL, NULL, GetModuleHandle(NULL), NULL);
+			}
 			ZeroMemory(&ti, sizeof(ti));
 			ti.cbSize = sizeof(ti);
 			ti.uFlags = TTF_IDISHWND;
 			ti.hwnd = bct->hwnd;
 			ti.uId = (UINT)bct->hwnd;
-			if (SendMessage(hwndToolTips, TTM_GETTOOLINFO, 0, (LPARAM)&ti))
+			if (SendMessage(hwndToolTips, TTM_GETTOOLINFO, 0, (LPARAM)&ti)) {
 				SendMessage(hwndToolTips, TTM_DELTOOL, 0, (LPARAM)&ti);
+			}
 			ti.uFlags = TTF_IDISHWND|TTF_SUBCLASS;
 			ti.uId = (UINT)bct->hwnd;
-			ti.lpszText = a2u(( char* )wParam );
-			SendMessage( hwndToolTips, TTM_ADDTOOL, 0, (LPARAM)&ti);
-			LeaveCriticalSection(&csTips);
-			mir_free( ti.lpszText );
+			ti.lpszText=(char*)wParam;
+			SendMessage(hwndToolTips,TTM_ADDTOOL,0,(LPARAM)&ti);
+            LeaveCriticalSection(&csTips);
 			break;
 		}
 		case WM_SETFOCUS: // set keybord focus and redraw

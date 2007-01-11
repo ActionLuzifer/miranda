@@ -2,7 +2,7 @@
 
 Jabber Protocol Plugin for Miranda IM
 Copyright ( C ) 2002-04  Santithorn Bunchua
-Copyright ( C ) 2005-06  George Hazan
+Copyright ( C ) 2005     George Hazan
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -18,11 +18,6 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-File name      : $Source: /cvsroot/miranda/miranda/protocols/JabberG/jabber_iq.cpp,v $
-Revision       : $Revision$
-Last change on : $Date$
-Last change by : $Author$
-
 */
 
 #include "jabber.h"
@@ -30,8 +25,8 @@ Last change by : $Author$
 #include "jabber_xmlns.h"
 
 static JABBER_IQ_XMLNS_FUNC jabberXmlns[] = {
-	{ _T("http://jabber.org/protocol/disco"), JabberXmlnsDisco, TRUE },
-	{ _T("jabber:iq:browse"), JabberXmlnsBrowse, FALSE }
+	{ "http://jabber.org/protocol/disco", JabberXmlnsDisco, TRUE },
+	{ "jabber:iq:browse", JabberXmlnsBrowse, FALSE }
 };
 
 typedef struct {
@@ -56,7 +51,7 @@ void JabberIqInit()
 
 void JabberIqUninit()
 {
-	if ( iqList ) mir_free( iqList );
+	if ( iqList ) free( iqList );
 	iqList = NULL;
 	iqCount = 0;
 	iqAlloced = 0;
@@ -126,7 +121,7 @@ void JabberIqAdd( unsigned int iqId, JABBER_IQ_PROCID procId, JABBER_IQ_PFUNC fu
 
 	if ( i>=iqCount && iqCount>=iqAlloced ) {
 		iqAlloced = iqCount + 8;
-		iqList = ( JABBER_IQ_FUNC * )mir_realloc( iqList, sizeof( JABBER_IQ_FUNC )*iqAlloced );
+		iqList = ( JABBER_IQ_FUNC * )realloc( iqList, sizeof( JABBER_IQ_FUNC )*iqAlloced );
 	}
 
 	if ( iqList != NULL ) {
@@ -139,29 +134,29 @@ void JabberIqAdd( unsigned int iqId, JABBER_IQ_PROCID procId, JABBER_IQ_PFUNC fu
 	LeaveCriticalSection( &csIqList );
 }
 
-JABBER_IQ_PFUNC JabberIqFetchXmlnsFunc( TCHAR* xmlns )
+JABBER_IQ_PFUNC JabberIqFetchXmlnsFunc( char* xmlns )
 {
 	unsigned int len, count, i;
-	TCHAR* p, *q;
+	char* p, *q;
 
 	if ( xmlns == NULL )
 		return NULL;
 
-	p = _tcsrchr( xmlns, '/' );
-	q = _tcsrchr( xmlns, '#' );
+	p = strrchr( xmlns, '/' );
+	q = strrchr( xmlns, '#' );
 	if ( p!=NULL && q!=NULL && q>p )
 		len = q - xmlns;
 	else
-		len = _tcslen( xmlns );
+		len = strlen( xmlns );
 
 	count = sizeof( jabberXmlns ) / sizeof( jabberXmlns[0] );
 	for ( i=0; i<count; i++ ) {
 		if ( jabberXmlns[i].allowSubNs ) {
-			if ( _tcslen( jabberXmlns[i].xmlns ) == len && !_tcsncmp( jabberXmlns[i].xmlns, xmlns, len ))
+			if ( strlen( jabberXmlns[i].xmlns )==len && !strncmp( jabberXmlns[i].xmlns, xmlns, len ))
 				break;
 		}
 		else {
-			if ( !_tcscmp( jabberXmlns[i].xmlns, xmlns ))
+			if ( !strcmp( jabberXmlns[i].xmlns, xmlns ))
 				break;
 		}
 	}

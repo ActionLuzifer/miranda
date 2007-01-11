@@ -45,7 +45,7 @@ char *strchr (), *strrchr ();
 
 /* special check for MSVC compiler */
 #ifndef _MSC_VER
-#ifndef __GNUC__
+#ifndef __MINGW32__
  #include <unistd.h>
 #endif
 #endif
@@ -99,7 +99,8 @@ int yahoo_tcp_readline(char *ptr, int maxlen, int fd)
 	return (n);
 }
 
-int url_to_host_port_path(const char *url, char *host, int *port, char *path)
+static int url_to_host_port_path(const char *url,
+		char *host, int *port, char *path)
 {
 	char *urlcopy=NULL;
 	char *slash=NULL;
@@ -305,7 +306,7 @@ static void yahoo_send_http_request(int id, char *host, int port, char *request,
 	ccd->request = strdup(request);
 	ccd->user_data = data;
 	
-	YAHOO_CALLBACK(ext_yahoo_connect_async)(id, host, port, YAHOO_CONNECTION_FT, connect_complete, ccd);
+	YAHOO_CALLBACK(ext_yahoo_connect_async)(id, host, port, connect_complete, ccd);
 }
 
 void yahoo_http_post(int id, const char *url, const char *cookies, long content_length,
@@ -314,29 +315,22 @@ void yahoo_http_post(int id, const char *url, const char *cookies, long content_
 	char host[255];
 	int port = 80;
 	char path[255];
-	char ck[2048];
-	char buff[4096];
+	char buff[1024];
 	
 	if(!url_to_host_port_path(url, host, &port, path))
 		return;
 
-	if (cookies == NULL || cookies[0] == '\0') 
-		ck[0] = '\0';
-	else
-		snprintf(ck, sizeof(ck), "Cookie: %s\r\n", cookies);
-
 	snprintf(buff, sizeof(buff), 
 			"POST %s HTTP/1.0\r\n"
-			"User-Agent: Mozilla/4.0 (compatible; MSIE 5.5)\r\n"
-			"Pragma: no-cache\r\n"
-			"Host: %s\r\n"
-			"Content-Length: %ld\r\n"
-			"%s"
+			"Content-length: %ld\r\n"
+			"User-Agent: Mozilla/4.5 [en] (" PACKAGE "/" VERSION ")\r\n"
+			"Host: %s:%d\r\n"
+			"Cookie: %s\r\n"
 			"\r\n",
-			path, 
-			host, content_length, 
-			ck);
-			
+			path, content_length, 
+			host, port,
+			cookies);
+
 	yahoo_send_http_request(id, host, port, buff, callback, data);
 }
 
@@ -346,26 +340,19 @@ void yahoo_http_get(int id, const char *url, const char *cookies,
 	char host[255];
 	int port = 80;
 	char path[255];
-	char ck[2048];
-	char buff[4096];
+	char buff[1024];
 	
 	if(!url_to_host_port_path(url, host, &port, path))
 		return;
 
-	if (cookies == NULL || cookies[0] == '\0') 
-		ck[0] = '\0';
-	else
-		snprintf(ck, sizeof(ck), "Cookie: %s\r\n", cookies);
-	
 	snprintf(buff, sizeof(buff), 
 			"GET %s HTTP/1.0\r\n"
-			"User-Agent: Mozilla/4.0 (compatible; MSIE 5.5)\r\n"
-			"Pragma: no-cache\r\n"
-			"Host: %s\r\n"
-			"%s"
+			"Host: %s:%d\r\n"
+			"User-Agent: Mozilla/4.5 [en] (" PACKAGE "/" VERSION ")\r\n"
+			"Cookie: %s\r\n"
 			"\r\n",
-			path, host, ck);
-	
+			path, host, port, cookies);
+
 	yahoo_send_http_request(id, host, port, buff, callback, data);
 }
 
@@ -441,13 +428,9 @@ void yahoo_get_url_fd(int id, const char *url, const struct yahoo_data *yd,
 {
 	char buff[1024];
 	struct url_data *ud = y_new0(struct url_data, 1);
-	
-	//buff[0]='\0'; /*don't send them our cookies!! */
 	snprintf(buff, sizeof(buff), "Y=%s; T=%s", yd->cookie_y, yd->cookie_t);
-
 	ud->callback = callback;
 	ud->user_data = data;
-//	yahoo_http_get(id, url, buff, yahoo_got_url_fd, ud);
-	YAHOO_CALLBACK(ext_yahoo_send_http_request)(id, "GET", url, buff, 0, yahoo_got_url_fd, ud);
+	yahoo_http_get(id, url, buff, yahoo_got_url_fd, ud);
 }
 

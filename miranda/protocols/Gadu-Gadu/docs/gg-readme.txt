@@ -52,71 +52,14 @@ Note: For secure connections this plugin requires OpenSSL DLL
 
 4. Todo
 -------
- - Enable/disable features that need more bandwidth, i.e. image sending
+ - Use a list of GG servers instead of one address when connecting
+ - Show ignored contacts that they are blocked (aka org. GG client blocking)
  - Animated GIFs support (image sending)
  - Full Netlib integration
  - Voice chat
 
 5. History
 ----------
-0.0.4.0: 2006-10-23
- - Fix: Messages always have NOW timestamps unless they are OFFLINE.
-   Online messages won't be shifted in the order even user has clockskew.
-0.0.3.9: 2006-07-29
- - Configuration was put into tabs
- - Fix: Some of the configuration items were not triggering [Apply] properly.
-0.0.3.8: 2006-06-26
- - Fix: It seems that GG servers now properly handle initial status for GG.
-   This should fix issue of being detected by Inwigilator when connecting with
-   invisible status. (Spotted and fixed thanks to piopawlu)
- - Fix: New libgadu version 2006.06.21 with fixed some memory leaks
- - Fix: GG now handles PS_SETAWAYMSG without previously called PS_SETSTATUS.
-   This should fix issue with Watrack that couldn't set the status message
-   for GG protocol. (Spotted and fixed thanks to mruweq)
- - Fix: We were reading from freed variable after new account registration 
- - Fix: Possible crash when closing debug version
-0.0.3.7: 2005-12-19
- - Image sending and receiving now uses ImgDecoder if present for PNG images
- - Fix: String fix for error dialogs' titles
-0.0.3.6: 2005-11-15
- - Fix: String overflows (injections) that may be caused for example by too long
-   translations or too long incoming filenames
-0.0.3.5: 2005-10-28
- - Fix: Descriptions beginning with new line were not shown
- - Fix: Groupchat fixed for database locks
- - Fix: Upgrade new chat API
- - Fix: Image reception on system tray was broken
- - Fix: Image windows are now closed on Miranda exit
- - Fix: Plugin was writing junk entries to other protocols contacts
- - Image reception can now be triggered
- - Images are now scalled to their real size if possible
- - Small code formatting fixes
- - SSL connections are disabled now by default
-0.0.3.4: 2005-07-23
- - Fix: Connection server config was broken
- - Fix: Password retrieval was broken
- - Fix: Maximum image size 512KB was not accepted original GG client.
-   Miranda now can receive images upto 255KB from original GG clients.
- - Fix: Yet another image receive fix, libgadu fixes introduced ghost image
-   messages
- - Small code formatting fixes
-0.0.3.3: 2005-07-19
- - Fix: Serious multiple vulnerabilities of libgadu upto ekg version 1.6rc3
-0.0.3.2: 2005-07-14
- - Fix: libgadu event.c commit version 1.83 by szalik introduced bug that was
-   crashing Miranda on image receive, since it was designed specially for Kadu
-0.0.3.1: 2005-07-12
- - Hidden db setting "EraOmnix" for being visible as EraOmnix client
- - Fix: Temporary contacts cannot see our status when having "Friends only"
-   (Features thanks to JacekFH)
- - Fix: GG thread hanging, not going offline when cannot reconnect
-   after disconnection
-0.0.3.0: 2005-06-27
- - Status descriptions compatible with MWClist
- - GG.dll now compiles on Visual C++ 6.0 and Visual C++ 2005
- - libgadu upgraded to version 20050615
- - Binaries are now compiled with VC++ 6.0
- - Fix: Windows 95 & NT problems with GetLongPathName function missing
 0.0.2.9: 2005-04-29
  - Fix: Status descriptions were not set properly when Miranda wasn't asking
    for new status. This change may cause incompatibility with status routines

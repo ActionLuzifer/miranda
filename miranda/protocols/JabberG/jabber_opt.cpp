@@ -2,7 +2,7 @@
 
 Jabber Protocol Plugin for Miranda IM
 Copyright ( C ) 2002-04  Santithorn Bunchua
-Copyright ( C ) 2005-06  George Hazan
+Copyright ( C ) 2005     George Hazan
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -18,48 +18,61 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-File name      : $Source: /cvsroot/miranda/miranda/protocols/JabberG/jabber_opt.cpp,v $
-Revision       : $Revision$
-Last change on : $Date$
-Last change by : $Author$
-
 */
 
 #include "jabber.h"
 #include "jabber_list.h"
 #include <commctrl.h>
 #include "resource.h"
-#include <uxtheme.h>
 
 extern BOOL jabberSendKeepAlive;
 extern UINT jabberCodePage;
 
-static BOOL (WINAPI *pfnEnableThemeDialogTexture)(HANDLE, DWORD) = 0;
+static BOOL CALLBACK JabberOptDlgProc( HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam );
+static BOOL CALLBACK JabberRegisterDlgProc( HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam );
+static BOOL CALLBACK JabberAdvOptDlgProc( HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam );
 
-/////////////////////////////////////////////////////////////////////////////////////////
-// JabberRegisterDlgProc - the dialog proc for registering new account
+int JabberOptInit( WPARAM wParam, LPARAM lParam )
+{
+	OPTIONSDIALOGPAGE odp;
+	char str[33];
 
-#if defined( _UNICODE )
-	#define STR_FORMAT _T("%s %s@%S:%d?")
-#else
-	#define STR_FORMAT _T("%s %s@%s:%d?")
-#endif
+	ZeroMemory( &odp, sizeof( odp ));
+	odp.cbSize = sizeof( odp );
+	odp.position = 0;
+	odp.hInstance = hInst;
+	odp.pszGroup = JTranslate( "Network" );
+	odp.pszTemplate = MAKEINTRESOURCE( IDD_OPT_JABBER );
+	odp.pszTitle = jabberModuleName;
+	odp.flags = ODPF_BOLDGROUPS;
+	odp.pfnDlgProc = JabberOptDlgProc;
+	odp.nIDBottomSimpleControl = IDC_SIMPLE;
+	JCallService( MS_OPT_ADDPAGE, wParam, ( LPARAM )&odp );
+
+	odp.pszTemplate = MAKEINTRESOURCE( IDD_OPT_JABBER2 );
+	mir_snprintf( str, sizeof( str ), "%s %s", jabberModuleName, JTranslate( "Advanced" ));
+	str[sizeof( str )-1] = '\0';
+	odp.pszTitle = str;
+	odp.pfnDlgProc = JabberAdvOptDlgProc;
+	odp.flags = ODPF_BOLDGROUPS|ODPF_EXPERTONLY;
+	odp.nIDBottomSimpleControl = 0;
+	JCallService( MS_OPT_ADDPAGE, wParam, ( LPARAM )&odp );
+	return 0;
+}
 
 static BOOL CALLBACK JabberRegisterDlgProc( HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam )
 {
-	ThreadData *thread, *regInfo;
+	struct ThreadData *thread, *regInfo;
+	char text[128];
 
 	switch ( msg ) {
 	case WM_INITDIALOG:
-	{
 		TranslateDialogDefault( hwndDlg );
-		regInfo = ( ThreadData* ) lParam;
-		TCHAR text[256];
-		mir_sntprintf( text, SIZEOF(text), STR_FORMAT, TranslateT( "Register" ), regInfo->username, regInfo->server, regInfo->port );
+		regInfo = ( struct ThreadData * ) lParam;
+		wsprintf( text, "%s %s@%s:%d ?", JTranslate( "Register" ), regInfo->username, regInfo->server, regInfo->port );
 		SetDlgItemText( hwndDlg, IDC_REG_STATUS, text );
-		SetWindowLong( hwndDlg, GWL_USERDATA, ( LONG )regInfo );
+		SetWindowLong( hwndDlg, GWL_USERDATA, ( LONG ) regInfo );
 		return TRUE;
-	}
 	case WM_COMMAND:
 		switch ( LOWORD( wParam )) {
 		case IDOK:
@@ -67,16 +80,17 @@ static BOOL CALLBACK JabberRegisterDlgProc( HWND hwndDlg, UINT msg, WPARAM wPara
 			ShowWindow( GetDlgItem( hwndDlg, IDCANCEL ), SW_HIDE );
 			ShowWindow( GetDlgItem( hwndDlg, IDC_PROGRESS_REG ), SW_SHOW );
 			ShowWindow( GetDlgItem( hwndDlg, IDCANCEL2 ), SW_SHOW );
-			regInfo = ( ThreadData* ) GetWindowLong( hwndDlg, GWL_USERDATA );
-			thread = new ThreadData( JABBER_SESSION_REGISTER );
-			_tcsncpy( thread->username, regInfo->username, SIZEOF( thread->username ));
-			strncpy( thread->password, regInfo->password, SIZEOF( thread->password ));
-			strncpy( thread->server, regInfo->server, SIZEOF( thread->server ));
-			strncpy( thread->manualHost, regInfo->manualHost, SIZEOF( thread->manualHost ));
+			regInfo = ( struct ThreadData * ) GetWindowLong( hwndDlg, GWL_USERDATA );
+			thread = ( struct ThreadData * ) malloc( sizeof( struct ThreadData ));
+			thread->type = JABBER_SESSION_REGISTER;
+			strncpy( thread->username, regInfo->username, sizeof( thread->username ));
+			strncpy( thread->password, regInfo->password, sizeof( thread->password ));
+			strncpy( thread->server, regInfo->server, sizeof( thread->server ));
+			strncpy( thread->manualHost, regInfo->manualHost, sizeof( thread->manualHost ));
 			thread->port = regInfo->port;
 			thread->useSSL = regInfo->useSSL;
 			thread->reg_hwndDlg = hwndDlg;
-			mir_forkthread(( pThreadFunc )JabberServerThread, thread );
+			JabberForkThread(( JABBER_THREAD_FUNC )JabberServerThread, 0, thread );
 			return TRUE;
 		case IDCANCEL:
 		case IDOK2:
@@ -85,59 +99,57 @@ static BOOL CALLBACK JabberRegisterDlgProc( HWND hwndDlg, UINT msg, WPARAM wPara
 		}
 		break;
 	case WM_JABBER_REGDLG_UPDATE:	// wParam=progress ( 0-100 ), lparam=status string
-		if (( TCHAR* )lParam == NULL )
-			SetDlgItemText( hwndDlg, IDC_REG_STATUS, TranslateT( "No message" ));
+		if (( char* )lParam == NULL )
+			SetDlgItemText( hwndDlg, IDC_REG_STATUS, JTranslate( "No message" ));
 		else
-			SetDlgItemText( hwndDlg, IDC_REG_STATUS, ( TCHAR* )lParam );
+			SetDlgItemText( hwndDlg, IDC_REG_STATUS, ( char* )lParam );
 		if ( wParam >= 0 )
 			SendMessage( GetDlgItem( hwndDlg, IDC_PROGRESS_REG ), PBM_SETPOS, wParam, 0 );
 		if ( wParam >= 100 ) {
 			ShowWindow( GetDlgItem( hwndDlg, IDCANCEL2 ), SW_HIDE );
 			ShowWindow( GetDlgItem( hwndDlg, IDOK2 ), SW_SHOW );
 		}
-		else SetFocus( GetDlgItem( hwndDlg, IDC_PROGRESS_REG ));
+		else
+			SetFocus( GetDlgItem( hwndDlg, IDC_PROGRESS_REG ));
 		return TRUE;
 	}
 
 	return FALSE;
 }
 
-/////////////////////////////////////////////////////////////////////////////////////////
-// JabberOptDlgProc - main options dialog procedure
-
 static HWND msgLangListBox;
-static BOOL CALLBACK JabberMsgLangAdd( LPSTR str )
+static BOOL CALLBACK JabberMsgLangAdd( LPTSTR str )
 {
 	int i, count, index;
 	UINT cp;
-	static struct { UINT cpId; TCHAR* cpName; } cpTable[] = {
-		{	874,	_T("Thai") },
-		{	932,	_T("Japanese") },
-		{	936,	_T("Simplified Chinese") },
-		{	949,	_T("Korean") },
-		{	950,	_T("Traditional Chinese") },
-		{	1250,	_T("Central European") },
-		{	1251,	_T("Cyrillic") },
-		{	1252,	_T("Latin I") },
-		{	1253,	_T("Greek") },
-		{	1254,	_T("Turkish") },
-		{	1255,	_T("Hebrew") },
-		{	1256,	_T("Arabic") },
-		{	1257,	_T("Baltic") },
-		{	1258,	_T("Vietnamese") },
-		{	1361,	_T("Korean ( Johab )") }
+	static struct { UINT cpId; char* cpName; } cpTable[] = {
+		{	874,	"Thai" },
+		{	932,	"Japanese" },
+		{	936,	"Simplified Chinese" },
+		{	949,	"Korean" },
+		{	950,	"Traditional Chinese" },
+		{	1250,	"Central European" },
+		{	1251,	"Cyrillic" },
+		{	1252,	"Latin I" },
+		{	1253,	"Greek" },
+		{	1254,	"Turkish" },
+		{	1255,	"Hebrew" },
+		{	1256,	"Arabic" },
+		{	1257,	"Baltic" },
+		{	1258,	"Vietnamese" },
+		{	1361,	"Korean ( Johab )" }
 	};
 
 	cp = atoi( str );
 	count = sizeof( cpTable )/sizeof( cpTable[0] );
 	for ( i=0; i<count && cpTable[i].cpId!=cp; i++ );
 	if ( i < count ) {
-		if (( index=SendMessage( msgLangListBox, CB_ADDSTRING, 0, ( LPARAM )TranslateTS( cpTable[i].cpName )) ) >= 0 ) {
+		if (( index=SendMessage( msgLangListBox, CB_ADDSTRING, 0, ( LPARAM )JTranslate( cpTable[i].cpName )) ) >= 0 ) {
 			SendMessage( msgLangListBox, CB_SETITEMDATA, ( WPARAM ) index, ( LPARAM )cp );
 			if ( jabberCodePage == cp )
 				SendMessage( msgLangListBox, CB_SETCURSEL, ( WPARAM ) index, 0 );
-	}	}
-
+		}
+	}
 	return TRUE;
 }
 
@@ -145,18 +157,23 @@ static LRESULT CALLBACK JabberValidateUsernameWndProc( HWND hwndEdit, UINT msg, 
 {
 	WNDPROC oldProc = ( WNDPROC ) GetWindowLong( hwndEdit, GWL_USERDATA );
 
-	if ( msg == WM_CHAR ) {
-		switch( wParam ) {
-		case '\"':  case '&':	case '\'':	case '/':
-		case ':':	case '<':	case '>':	case '@':
+	switch ( msg ) {
+	case WM_CHAR:
+		if ( strchr( "\"&'/:<>@", wParam&0xff ) != NULL )
 			return 0;
-	}	}
-
+		break;
+	}
 	return CallWindowProc( oldProc, hwndEdit, msg, wParam, lParam );
 }
 
 static BOOL CALLBACK JabberOptDlgProc( HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam )
 {
+	char text[256];
+	WORD port;
+	WNDPROC oldProc;
+	struct ThreadData regInfo;
+	int index;
+
 	switch ( msg ) {
 	case WM_INITDIALOG:
 		{
@@ -164,55 +181,42 @@ static BOOL CALLBACK JabberOptDlgProc( HWND hwndDlg, UINT msg, WPARAM wParam, LP
 			BOOL enableRegister = TRUE;
 
 			TranslateDialogDefault( hwndDlg );
-			SetDlgItemTextA( hwndDlg, IDC_SIMPLE, jabberModuleName );
+			SetDlgItemText( hwndDlg, IDC_SIMPLE, jabberModuleName );
 			if ( !DBGetContactSetting( NULL, jabberProtoName, "LoginName", &dbv )) {
-				SetDlgItemTextA( hwndDlg, IDC_EDIT_USERNAME, dbv.pszVal );
+				SetDlgItemText( hwndDlg, IDC_EDIT_USERNAME, dbv.pszVal );
 				if ( !dbv.pszVal[0] ) enableRegister = FALSE;
 				JFreeVariant( &dbv );
 			}
 			if ( !DBGetContactSetting( NULL, jabberProtoName, "Password", &dbv )) {
 				JCallService( MS_DB_CRYPT_DECODESTRING, strlen( dbv.pszVal )+1, ( LPARAM )dbv.pszVal );
-				SetDlgItemTextA( hwndDlg, IDC_EDIT_PASSWORD, dbv.pszVal );
+				SetDlgItemText( hwndDlg, IDC_EDIT_PASSWORD, dbv.pszVal );
 				if ( !dbv.pszVal[0] ) enableRegister = FALSE;
 				JFreeVariant( &dbv );
 			}
-			if ( !DBGetContactSettingTString( NULL, jabberProtoName, "Resource", &dbv )) {
-				SetDlgItemText( hwndDlg, IDC_EDIT_RESOURCE, dbv.ptszVal );
+			if ( !DBGetContactSetting( NULL, jabberProtoName, "Resource", &dbv )) {
+				SetDlgItemText( hwndDlg, IDC_EDIT_RESOURCE, dbv.pszVal );
 				JFreeVariant( &dbv );
 			}
-			else SetDlgItemTextA( hwndDlg, IDC_EDIT_RESOURCE, "Miranda" );
+			else SetDlgItemText( hwndDlg, IDC_EDIT_RESOURCE, "Miranda" );
 
 			SendMessage( GetDlgItem( hwndDlg, IDC_PRIORITY_SPIN ), UDM_SETRANGE, 0, ( LPARAM )MAKELONG( 100, 0 ));
-
-			char text[256];
 			sprintf( text, "%d", JGetWord( NULL, "Priority", 0 ));
-			SetDlgItemTextA( hwndDlg, IDC_PRIORITY, text );
+			SetDlgItemText( hwndDlg, IDC_PRIORITY, text );
 			CheckDlgButton( hwndDlg, IDC_SAVEPASSWORD, JGetByte( "SavePassword", TRUE ));
 			if ( !DBGetContactSetting( NULL, jabberProtoName, "LoginServer", &dbv )) {
-				SetDlgItemTextA( hwndDlg, IDC_EDIT_LOGIN_SERVER, dbv.pszVal );
+				SetDlgItemText( hwndDlg, IDC_EDIT_LOGIN_SERVER, dbv.pszVal );
 				if ( !dbv.pszVal[0] ) enableRegister = FALSE;
 				JFreeVariant( &dbv );
 			}
-			else SetDlgItemTextA( hwndDlg, IDC_EDIT_LOGIN_SERVER, "jabber.org" );
+			else SetDlgItemText( hwndDlg, IDC_EDIT_LOGIN_SERVER, "jabber.org" );
 
-			WORD port = ( WORD )JGetWord( NULL, "Port", JABBER_DEFAULT_PORT );
+			port = ( WORD )JGetWord( NULL, "Port", JABBER_DEFAULT_PORT );
 			SetDlgItemInt( hwndDlg, IDC_PORT, port, FALSE );
 			if ( port <= 0 ) enableRegister = FALSE;
 
 			CheckDlgButton( hwndDlg, IDC_USE_SSL, JGetByte( "UseSSL", FALSE ));
-			CheckDlgButton( hwndDlg, IDC_USE_TLS, JGetByte( "UseTLS", FALSE ));
-			if ( !hLibSSL ) {
-				EnableWindow(GetDlgItem( hwndDlg, IDC_USE_SSL ), FALSE );
-				EnableWindow(GetDlgItem( hwndDlg, IDC_USE_TLS ), FALSE );
-				EnableWindow(GetDlgItem( hwndDlg, IDC_DOWNLOAD_OPENSSL ), TRUE );
-			}
-			else {
-				EnableWindow(GetDlgItem( hwndDlg, IDC_USE_TLS ), !JGetByte( "UseSSL", FALSE ));
-				EnableWindow(GetDlgItem( hwndDlg, IDC_DOWNLOAD_OPENSSL ), FALSE );
-			}
 
 			EnableWindow( GetDlgItem( hwndDlg, IDC_BUTTON_REGISTER ), enableRegister );
-			EnableWindow( GetDlgItem( hwndDlg, IDC_UNREGISTER ), jabberConnected );
 
 			if ( JGetByte( "ManualConnect", FALSE ) == TRUE ) {
 				CheckDlgButton( hwndDlg, IDC_MANUAL, TRUE );
@@ -221,7 +225,7 @@ static BOOL CALLBACK JabberOptDlgProc( HWND hwndDlg, UINT msg, WPARAM wParam, LP
 				EnableWindow( GetDlgItem( hwndDlg, IDC_PORT ), FALSE );
 			}
 			if ( !DBGetContactSetting( NULL, jabberProtoName, "ManualHost", &dbv )) {
-				SetDlgItemTextA( hwndDlg, IDC_HOST, dbv.pszVal );
+				SetDlgItemText( hwndDlg, IDC_HOST, dbv.pszVal );
 				JFreeVariant( &dbv );
 			}
 			SetDlgItemInt( hwndDlg, IDC_HOSTPORT, JGetWord( NULL, "ManualPort", JABBER_DEFAULT_PORT ), FALSE );
@@ -230,22 +234,22 @@ static BOOL CALLBACK JabberOptDlgProc( HWND hwndDlg, UINT msg, WPARAM wParam, LP
 			CheckDlgButton( hwndDlg, IDC_ROSTER_SYNC, JGetByte( "RosterSync", FALSE ));
 
 			if ( !DBGetContactSetting( NULL, jabberProtoName, "Jud", &dbv )) {
-				SetDlgItemTextA( hwndDlg, IDC_JUD, dbv.pszVal );
+				SetDlgItemText( hwndDlg, IDC_JUD, dbv.pszVal );
 				JFreeVariant( &dbv );
 			}
-			else SetDlgItemTextA( hwndDlg, IDC_JUD, "users.jabber.org" );
+			else SetDlgItemText( hwndDlg, IDC_JUD, "users.jabber.org" );
 
 			msgLangListBox = GetDlgItem( hwndDlg, IDC_MSGLANG );
-			TCHAR str[ 256 ];
-			mir_sntprintf( str, SIZEOF(str), _T("== %s =="), TranslateT( "System default" ));
-			SendMessage( msgLangListBox, CB_ADDSTRING, 0, ( LPARAM )str );
+			wsprintf( text, "== %s ==", JTranslate( "System default" ));
+			SendMessage( msgLangListBox, CB_ADDSTRING, 0, ( LPARAM )text );
 			SendMessage( msgLangListBox, CB_SETITEMDATA, 0, CP_ACP );
 			SendMessage( msgLangListBox, CB_SETCURSEL, 0, 0 );
-			EnumSystemCodePagesA( JabberMsgLangAdd, CP_INSTALLED );
+			EnumSystemCodePages( JabberMsgLangAdd, CP_INSTALLED );
 
-			WNDPROC oldProc = ( WNDPROC ) GetWindowLong( GetDlgItem( hwndDlg, IDC_EDIT_USERNAME ), GWL_WNDPROC );
+			oldProc = ( WNDPROC ) GetWindowLong( GetDlgItem( hwndDlg, IDC_EDIT_USERNAME ), GWL_WNDPROC );
 			SetWindowLong( GetDlgItem( hwndDlg, IDC_EDIT_USERNAME ), GWL_USERDATA, ( LONG ) oldProc );
 			SetWindowLong( GetDlgItem( hwndDlg, IDC_EDIT_USERNAME ), GWL_WNDPROC, ( LONG ) JabberValidateUsernameWndProc );
+
 			return TRUE;
 		}
 	case WM_COMMAND:
@@ -260,7 +264,6 @@ static BOOL CALLBACK JabberOptDlgProc( HWND hwndDlg, UINT msg, WPARAM wParam, LP
 		case IDC_HOSTPORT:
 		case IDC_JUD:
 		case IDC_PRIORITY:
-		{
 			if ( LOWORD( wParam ) == IDC_MANUAL ) {
 				if ( IsDlgButtonChecked( hwndDlg, IDC_MANUAL )) {
 					EnableWindow( GetDlgItem( hwndDlg, IDC_HOST ), TRUE );
@@ -278,14 +281,12 @@ static BOOL CALLBACK JabberOptDlgProc( HWND hwndDlg, UINT msg, WPARAM wParam, LP
 				if (( HWND )lParam==GetFocus() && HIWORD( wParam )==EN_CHANGE )
 					SendMessage( GetParent( hwndDlg ), PSM_CHANGED, 0, 0 );
 			}
-
-			ThreadData regInfo( JABBER_SESSION_NORMAL );
-			GetDlgItemText( hwndDlg, IDC_EDIT_USERNAME, regInfo.username, SIZEOF( regInfo.username ));
-			GetDlgItemTextA( hwndDlg, IDC_EDIT_PASSWORD, regInfo.password, SIZEOF( regInfo.password ));
-			GetDlgItemTextA( hwndDlg, IDC_EDIT_LOGIN_SERVER, regInfo.server, SIZEOF( regInfo.server ));
+			GetDlgItemText( hwndDlg, IDC_EDIT_USERNAME, regInfo.username, sizeof( regInfo.username ));
+			GetDlgItemText( hwndDlg, IDC_EDIT_PASSWORD, regInfo.password, sizeof( regInfo.password ));
+			GetDlgItemText( hwndDlg, IDC_EDIT_LOGIN_SERVER, regInfo.server, sizeof( regInfo.server ));
 			if ( IsDlgButtonChecked( hwndDlg, IDC_MANUAL )) {
 				regInfo.port = ( WORD )GetDlgItemInt( hwndDlg, IDC_HOSTPORT, NULL, FALSE );
-				GetDlgItemTextA( hwndDlg, IDC_HOST, regInfo.manualHost, SIZEOF( regInfo.manualHost ));
+				GetDlgItemText( hwndDlg, IDC_HOST, regInfo.manualHost, sizeof( regInfo.manualHost ));
 			}
 			else {
 				regInfo.port = ( WORD )GetDlgItemInt( hwndDlg, IDC_PORT, NULL, FALSE );
@@ -296,21 +297,15 @@ static BOOL CALLBACK JabberOptDlgProc( HWND hwndDlg, UINT msg, WPARAM wParam, LP
 			else
 				EnableWindow( GetDlgItem( hwndDlg, IDC_BUTTON_REGISTER ), FALSE );
 			break;
-		}
 		case IDC_LINK_PUBLIC_SERVER:
-			ShellExecuteA( hwndDlg, "open", "http://www.jabber.org/network", "", "", SW_SHOW );
-			return TRUE;
-		case IDC_DOWNLOAD_OPENSSL:
-			ShellExecuteA( hwndDlg, "open", "http://www.slproweb.com/products/Win32OpenSSL.html", "", "", SW_SHOW );
+			ShellExecute( hwndDlg, "open", "http://www.jabber.org/network", "", "", SW_SHOW );
 			return TRUE;
 		case IDC_BUTTON_REGISTER:
-		{
-			ThreadData regInfo( JABBER_SESSION_NORMAL );
-			GetDlgItemText( hwndDlg, IDC_EDIT_USERNAME, regInfo.username, SIZEOF( regInfo.username ));
-			GetDlgItemTextA( hwndDlg, IDC_EDIT_PASSWORD, regInfo.password, SIZEOF( regInfo.password ));
-			GetDlgItemTextA( hwndDlg, IDC_EDIT_LOGIN_SERVER, regInfo.server, SIZEOF( regInfo.server ));
+			GetDlgItemText( hwndDlg, IDC_EDIT_USERNAME, regInfo.username, sizeof( regInfo.username ));
+			GetDlgItemText( hwndDlg, IDC_EDIT_PASSWORD, regInfo.password, sizeof( regInfo.password ));
+			GetDlgItemText( hwndDlg, IDC_EDIT_LOGIN_SERVER, regInfo.server, sizeof( regInfo.server ));
 			if ( IsDlgButtonChecked( hwndDlg, IDC_MANUAL )) {
-				GetDlgItemTextA( hwndDlg, IDC_HOST, regInfo.manualHost, SIZEOF( regInfo.manualHost ));
+				GetDlgItemText( hwndDlg, IDC_HOST, regInfo.manualHost, sizeof( regInfo.manualHost ));
 				regInfo.port = ( WORD )GetDlgItemInt( hwndDlg, IDC_HOSTPORT, NULL, FALSE );
 			}
 			else {
@@ -323,32 +318,18 @@ static BOOL CALLBACK JabberOptDlgProc( HWND hwndDlg, UINT msg, WPARAM wParam, LP
 				DialogBoxParam( hInst, MAKEINTRESOURCE( IDD_OPT_REGISTER ), hwndDlg, JabberRegisterDlgProc, ( LPARAM )&regInfo );
 
 			return TRUE;
-		}
-		case IDC_UNREGISTER:
-			if ( MessageBox( NULL, TranslateT( "This operation will kill your account, roster and all another information stored at the server. Are you ready to do that?"),
-						TranslateT( "Account removal warning" ), MB_YESNOCANCEL ) == IDYES )
-			{
-				XmlNodeIq iq( "set", NOID, jabberJID );
-				iq.addQuery( "jabber:iq:register" )->addChild( "remove" );
-				JabberSend( jabberThreadInfo->s, iq );
-			}
-			break;
 		case IDC_MSGLANG:
 			if ( HIWORD( wParam ) == CBN_SELCHANGE )
 				SendMessage( GetParent( hwndDlg ), PSM_CHANGED, 0, 0 );
 			break;
 		case IDC_USE_SSL:
 			if ( !IsDlgButtonChecked( hwndDlg, IDC_MANUAL )) {
-				if ( IsDlgButtonChecked( hwndDlg, IDC_USE_SSL )) {
-					EnableWindow(GetDlgItem( hwndDlg, IDC_USE_TLS ), FALSE );
+				if ( IsDlgButtonChecked( hwndDlg, IDC_USE_SSL ))
 					SetDlgItemInt( hwndDlg, IDC_PORT, 5223, FALSE );
-				}
-				else {
-					EnableWindow(GetDlgItem( hwndDlg, IDC_USE_TLS ), TRUE );
+				else
 					SetDlgItemInt( hwndDlg, IDC_PORT, 5222, FALSE );
-			}	}
+			}
 			// Fall through
-		case IDC_USE_TLS:
 		case IDC_SAVEPASSWORD:
 		case IDC_KEEPALIVE:
 		case IDC_ROSTER_SYNC:
@@ -356,109 +337,99 @@ static BOOL CALLBACK JabberOptDlgProc( HWND hwndDlg, UINT msg, WPARAM wParam, LP
 			break;
 		default:
 			return 0;
+			break;
 		}
 		break;
 	case WM_NOTIFY:
-		if (( ( LPNMHDR ) lParam )->code == PSN_APPLY ) {
-			BOOL reconnectRequired = FALSE;
-			DBVARIANT dbv;
+		switch (( ( LPNMHDR ) lParam )->code ) {
+		case PSN_APPLY:
+			{
+				BOOL reconnectRequired = FALSE;
+				DBVARIANT dbv;
 
-			char userName[256], text[256];
-			TCHAR textT [256];
-			GetDlgItemTextA( hwndDlg, IDC_EDIT_USERNAME, userName, sizeof( userName ));
-			if ( DBGetContactSetting( NULL, jabberProtoName, "LoginName", &dbv ) || strcmp( userName, dbv.pszVal ))
-				reconnectRequired = TRUE;
-			if ( dbv.pszVal != NULL )	JFreeVariant( &dbv );
-			JSetString( NULL, "LoginName", userName );
-
-			if ( IsDlgButtonChecked( hwndDlg, IDC_SAVEPASSWORD )) {
-				GetDlgItemTextA( hwndDlg, IDC_EDIT_PASSWORD, text, sizeof( text ));
-				JCallService( MS_DB_CRYPT_ENCODESTRING, sizeof( text ), ( LPARAM )text );
-				if ( DBGetContactSetting( NULL, jabberProtoName, "Password", &dbv ) || strcmp( text, dbv.pszVal ))
+				GetDlgItemText( hwndDlg, IDC_EDIT_USERNAME, text, sizeof( text ));
+				if ( DBGetContactSetting( NULL, jabberProtoName, "LoginName", &dbv ) || strcmp( text, dbv.pszVal ))
 					reconnectRequired = TRUE;
 				if ( dbv.pszVal != NULL )	JFreeVariant( &dbv );
-				JSetString( NULL, "Password", text );
-			}
-			else JDeleteSetting( NULL, "Password" );
+				JSetString( NULL, "LoginName", text );
 
-			GetDlgItemText( hwndDlg, IDC_EDIT_RESOURCE, textT, SIZEOF( textT ));
-			if ( !JGetStringT( NULL, "Resource", &dbv )) {
-				if ( _tcscmp( textT, dbv.ptszVal ))
+				if ( IsDlgButtonChecked( hwndDlg, IDC_SAVEPASSWORD )) {
+					GetDlgItemText( hwndDlg, IDC_EDIT_PASSWORD, text, sizeof( text ));
+					JCallService( MS_DB_CRYPT_ENCODESTRING, sizeof( text ), ( LPARAM )text );
+					if ( DBGetContactSetting( NULL, jabberProtoName, "Password", &dbv ) || strcmp( text, dbv.pszVal ))
+						reconnectRequired = TRUE;
+					if ( dbv.pszVal != NULL )	JFreeVariant( &dbv );
+					JSetString( NULL, "Password", text );
+				}
+				else DBDeleteContactSetting( NULL, jabberProtoName, "Password" );
+
+				GetDlgItemText( hwndDlg, IDC_EDIT_RESOURCE, text, sizeof( text ));
+				if ( DBGetContactSetting( NULL, jabberProtoName, "Resource", &dbv ) || strcmp( text, dbv.pszVal ))
 					reconnectRequired = TRUE;
-				JFreeVariant( &dbv );
+				if ( dbv.pszVal != NULL )	JFreeVariant( &dbv );
+				JSetString( NULL, "Resource", text );
+
+				GetDlgItemText( hwndDlg, IDC_PRIORITY, text, sizeof( text ));
+				port = ( WORD )atoi( text );
+				if ( port > 100 ) port = 100;
+				if ( port < 0 ) port = 0;
+				if ( JGetWord( NULL, "Priority", 0 ) != port )
+					reconnectRequired = TRUE;
+				JSetWord( NULL, "Priority", ( WORD )port );
+
+				JSetByte( "SavePassword", ( BYTE ) IsDlgButtonChecked( hwndDlg, IDC_SAVEPASSWORD ));
+
+				GetDlgItemText( hwndDlg, IDC_EDIT_LOGIN_SERVER, text, sizeof( text ));
+				if ( DBGetContactSetting( NULL, jabberProtoName, "LoginServer", &dbv ) || strcmp( text, dbv.pszVal ))
+					reconnectRequired = TRUE;
+				if ( dbv.pszVal != NULL )	JFreeVariant( &dbv );
+				JSetString( NULL, "LoginServer", text );
+
+				port = ( WORD )GetDlgItemInt( hwndDlg, IDC_PORT, NULL, FALSE );
+				if ( JGetWord( NULL, "Port", JABBER_DEFAULT_PORT ) != port )
+					reconnectRequired = TRUE;
+				JSetWord( NULL, "Port", port );
+
+				JSetByte( "UseSSL", ( BYTE ) IsDlgButtonChecked( hwndDlg, IDC_USE_SSL ));
+
+				JSetByte( "ManualConnect", ( BYTE ) IsDlgButtonChecked( hwndDlg, IDC_MANUAL ));
+
+				GetDlgItemText( hwndDlg, IDC_HOST, text, sizeof( text ));
+				if ( DBGetContactSetting( NULL, jabberProtoName, "ManualHost", &dbv ) || strcmp( text, dbv.pszVal ))
+					reconnectRequired = TRUE;
+				if ( dbv.pszVal != NULL )	JFreeVariant( &dbv );
+				JSetString( NULL, "ManualHost", text );
+
+				port = ( WORD )GetDlgItemInt( hwndDlg, IDC_HOSTPORT, NULL, FALSE );
+				if ( JGetWord( NULL, "ManualPort", JABBER_DEFAULT_PORT ) != port )
+					reconnectRequired = TRUE;
+				JSetWord( NULL, "ManualPort", port );
+
+				JSetByte( "KeepAlive", ( BYTE ) IsDlgButtonChecked( hwndDlg, IDC_KEEPALIVE ));
+				jabberSendKeepAlive = IsDlgButtonChecked( hwndDlg, IDC_KEEPALIVE );
+
+				JSetByte( "RosterSync", ( BYTE ) IsDlgButtonChecked( hwndDlg, IDC_ROSTER_SYNC ));
+
+				GetDlgItemText( hwndDlg, IDC_JUD, text, sizeof( text ));
+				JSetString( NULL, "Jud", text );
+
+				index = SendMessage( GetDlgItem( hwndDlg, IDC_MSGLANG ), CB_GETCURSEL, 0, 0 );
+				if ( index >= 0 ) {
+					jabberCodePage = SendMessage( GetDlgItem( hwndDlg, IDC_MSGLANG ), CB_GETITEMDATA, ( WPARAM ) index, 0 );
+					JSetWord( NULL, "CodePage", ( WORD )jabberCodePage );
+				}
+
+				if ( reconnectRequired && jabberConnected )
+					MessageBox( hwndDlg, JTranslate( "These changes will take effect the next time you connect to the Jabber network." ), JTranslate( "Jabber Protocol Option" ), MB_OK|MB_SETFOREGROUND );
+
+				return TRUE;
 			}
-			else reconnectRequired = TRUE;
-			JSetStringT( NULL, "Resource", textT );
-
-			GetDlgItemTextA( hwndDlg, IDC_PRIORITY, text, sizeof( text ));
-			WORD port = ( WORD )atoi( text );
-			if ( port > 100 ) port = 100;
-			if ( port < 0 ) port = 0;
-			if ( JGetWord( NULL, "Priority", 0 ) != port )
-				reconnectRequired = TRUE;
-			JSetWord( NULL, "Priority", ( WORD )port );
-
-			JSetByte( "SavePassword", ( BYTE ) IsDlgButtonChecked( hwndDlg, IDC_SAVEPASSWORD ));
-
-			GetDlgItemTextA( hwndDlg, IDC_EDIT_LOGIN_SERVER, text, sizeof( text ));
-			if ( DBGetContactSetting( NULL, jabberProtoName, "LoginServer", &dbv ) || strcmp( text, dbv.pszVal ))
-				reconnectRequired = TRUE;
-			if ( dbv.pszVal != NULL )	JFreeVariant( &dbv );
-			JSetString( NULL, "LoginServer", text );
-			
-			strcat( userName, "@" );
-			strncat( userName, text, sizeof( userName ));
-			userName[ sizeof(userName)-1 ] = 0;
-			JSetString( NULL, "jid", userName );
-
-			port = ( WORD )GetDlgItemInt( hwndDlg, IDC_PORT, NULL, FALSE );
-			if ( JGetWord( NULL, "Port", JABBER_DEFAULT_PORT ) != port )
-				reconnectRequired = TRUE;
-			JSetWord( NULL, "Port", port );
-
-			JSetByte( "UseSSL", ( BYTE ) IsDlgButtonChecked( hwndDlg, IDC_USE_SSL ));
-			JSetByte( "UseTLS", ( BYTE ) IsDlgButtonChecked( hwndDlg, IDC_USE_TLS ));
-
-			JSetByte( "ManualConnect", ( BYTE ) IsDlgButtonChecked( hwndDlg, IDC_MANUAL ));
-
-			GetDlgItemTextA( hwndDlg, IDC_HOST, text, sizeof( text ));
-			if ( DBGetContactSetting( NULL, jabberProtoName, "ManualHost", &dbv ) || strcmp( text, dbv.pszVal ))
-				reconnectRequired = TRUE;
-			if ( dbv.pszVal != NULL )	JFreeVariant( &dbv );
-			JSetString( NULL, "ManualHost", text );
-
-			port = ( WORD )GetDlgItemInt( hwndDlg, IDC_HOSTPORT, NULL, FALSE );
-			if ( JGetWord( NULL, "ManualPort", JABBER_DEFAULT_PORT ) != port )
-				reconnectRequired = TRUE;
-			JSetWord( NULL, "ManualPort", port );
-
-			JSetByte( "KeepAlive", ( BYTE ) IsDlgButtonChecked( hwndDlg, IDC_KEEPALIVE ));
-			jabberSendKeepAlive = IsDlgButtonChecked( hwndDlg, IDC_KEEPALIVE );
-
-			JSetByte( "RosterSync", ( BYTE ) IsDlgButtonChecked( hwndDlg, IDC_ROSTER_SYNC ));
-
-			GetDlgItemTextA( hwndDlg, IDC_JUD, text, sizeof( text ));
-			JSetString( NULL, "Jud", text );
-
-			int index = SendMessage( GetDlgItem( hwndDlg, IDC_MSGLANG ), CB_GETCURSEL, 0, 0 );
-			if ( index >= 0 ) {
-				jabberCodePage = SendMessage( GetDlgItem( hwndDlg, IDC_MSGLANG ), CB_GETITEMDATA, ( WPARAM ) index, 0 );
-				JSetWord( NULL, "CodePage", ( WORD )jabberCodePage );
-			}
-
-			if ( reconnectRequired && jabberConnected )
-				MessageBox( hwndDlg, TranslateT( "These changes will take effect the next time you connect to the Jabber network." ), TranslateT( "Jabber Protocol Option" ), MB_OK|MB_SETFOREGROUND );
-
-			return TRUE;
 		}
 		break;
 	}
 
 	return FALSE;
 }
-
-/////////////////////////////////////////////////////////////////////////////////////////
-// JabberAdvOptDlgProc - advanced options dialog procedure
 
 static BOOL CALLBACK JabberAdvOptDlgProc( HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam )
 {
@@ -478,7 +449,7 @@ static BOOL CALLBACK JabberAdvOptDlgProc( HWND hwndDlg, UINT msg, WPARAM wParam,
 
 		DBVARIANT dbv;
 		if ( !DBGetContactSetting( NULL, jabberProtoName, "BsDirectAddr", &dbv )) {
-			SetDlgItemTextA( hwndDlg, IDC_DIRECT_ADDR, dbv.pszVal );
+			SetDlgItemText( hwndDlg, IDC_DIRECT_ADDR, dbv.pszVal );
 			JFreeVariant( &dbv );
 		}
 		if ( !bDirect )
@@ -491,7 +462,7 @@ static BOOL CALLBACK JabberAdvOptDlgProc( HWND hwndDlg, UINT msg, WPARAM wParam,
 		CheckDlgButton( hwndDlg, IDC_PROXY, bProxy );
 		CheckDlgButton( hwndDlg, IDC_PROXY_MANUAL, bManualProxy );
 		if ( !DBGetContactSetting( NULL, jabberProtoName, "BsProxyServer", &dbv )) {
-			SetDlgItemTextA( hwndDlg, IDC_PROXY_ADDR, dbv.pszVal );
+			SetDlgItemText( hwndDlg, IDC_PROXY_ADDR, dbv.pszVal );
 			JFreeVariant( &dbv );
 		}
 		if ( !bProxy )
@@ -504,10 +475,6 @@ static BOOL CALLBACK JabberAdvOptDlgProc( HWND hwndDlg, UINT msg, WPARAM wParam,
 		CheckDlgButton( hwndDlg, IDC_AUTO_ADD, JGetByte( "AutoAdd", TRUE ));
 		CheckDlgButton( hwndDlg, IDC_MSG_ACK, JGetByte( "MsgAck", FALSE ));
 		CheckDlgButton( hwndDlg, IDC_DISABLE_MAINMENU, JGetByte( "DisableMainMenu", FALSE ));
-		CheckDlgButton( hwndDlg, IDC_ENABLE_AVATARS, JGetByte( "EnableAvatars", TRUE ));
-		CheckDlgButton( hwndDlg, IDC_AUTO_ACCEPT_MUC, JGetByte( "AutoAcceptMUC", FALSE ));
-		CheckDlgButton( hwndDlg, IDC_AUTOJOIN, JGetByte( "AutoJoinConferences", FALSE ));
-		CheckDlgButton( hwndDlg, IDC_DISABLE_SASL, JGetByte( "Disable3920auth", FALSE ));
 		return TRUE;
 	}
 	case WM_COMMAND:
@@ -516,27 +483,31 @@ static BOOL CALLBACK JabberAdvOptDlgProc( HWND hwndDlg, UINT msg, WPARAM wParam,
 		case IDC_DIRECT_ADDR:
 		case IDC_PROXY_ADDR:
 			if (( HWND )lParam==GetFocus() && HIWORD( wParam )==EN_CHANGE )
-				goto LBL_Apply;
+				SendMessage( GetParent( hwndDlg ), PSM_CHANGED, 0, 0 );
 			break;
 		case IDC_DIRECT:
 			bChecked = IsDlgButtonChecked( hwndDlg, IDC_DIRECT );
 			EnableWindow( GetDlgItem( hwndDlg, IDC_DIRECT_MANUAL ), bChecked );
 			EnableWindow( GetDlgItem( hwndDlg, IDC_DIRECT_ADDR ), ( bChecked && IsDlgButtonChecked( hwndDlg, IDC_DIRECT_MANUAL )) );
-			goto LBL_Apply;
+			SendMessage( GetParent( hwndDlg ), PSM_CHANGED, 0, 0 );
+			break;
 		case IDC_DIRECT_MANUAL:
 			bChecked = IsDlgButtonChecked( hwndDlg, IDC_DIRECT_MANUAL );
 			EnableWindow( GetDlgItem( hwndDlg, IDC_DIRECT_ADDR ), bChecked );
-			goto LBL_Apply;
+			SendMessage( GetParent( hwndDlg ), PSM_CHANGED, 0, 0 );
+			break;
 		case IDC_PROXY:
 			bChecked = IsDlgButtonChecked( hwndDlg, IDC_PROXY );
 			EnableWindow( GetDlgItem( hwndDlg, IDC_PROXY_MANUAL ), bChecked );
 			EnableWindow( GetDlgItem( hwndDlg, IDC_PROXY_ADDR ), ( bChecked && IsDlgButtonChecked( hwndDlg, IDC_PROXY_MANUAL )) );
-			goto LBL_Apply;
+			SendMessage( GetParent( hwndDlg ), PSM_CHANGED, 0, 0 );
+			break;
 		case IDC_PROXY_MANUAL:
 			bChecked = IsDlgButtonChecked( hwndDlg, IDC_PROXY_MANUAL );
 			EnableWindow( GetDlgItem( hwndDlg, IDC_PROXY_ADDR ), bChecked );
+			SendMessage( GetParent( hwndDlg ), PSM_CHANGED, 0, 0 );
+			break;
 		default:
-		LBL_Apply:
 			SendMessage( GetParent( hwndDlg ), PSM_CHANGED, 0, 0 );
 			break;
 		}
@@ -547,11 +518,11 @@ static BOOL CALLBACK JabberAdvOptDlgProc( HWND hwndDlg, UINT msg, WPARAM wParam,
 			// File transfer options
 			JSetByte( "BsDirect", ( BYTE ) IsDlgButtonChecked( hwndDlg, IDC_DIRECT ));
 			JSetByte( "BsDirectManual", ( BYTE ) IsDlgButtonChecked( hwndDlg, IDC_DIRECT_MANUAL ));
-			GetDlgItemTextA( hwndDlg, IDC_DIRECT_ADDR, text, sizeof( text ));
+			GetDlgItemText( hwndDlg, IDC_DIRECT_ADDR, text, sizeof( text ));
 			JSetString( NULL, "BsDirectAddr", text );
 			JSetByte( "BsProxy", ( BYTE ) IsDlgButtonChecked( hwndDlg, IDC_PROXY ));
 			JSetByte( "BsProxyManual", ( BYTE ) IsDlgButtonChecked( hwndDlg, IDC_PROXY_MANUAL ));
-			GetDlgItemTextA( hwndDlg, IDC_PROXY_ADDR, text, sizeof( text ));
+			GetDlgItemText( hwndDlg, IDC_PROXY_ADDR, text, sizeof( text ));
 			JSetString( NULL, "BsProxyAddr", text );
 
 			// Miscellaneous options
@@ -561,7 +532,7 @@ static BOOL CALLBACK JabberAdvOptDlgProc( HWND hwndDlg, UINT msg, WPARAM wParam,
 			while (( index=JabberListFindNext( LIST_ROSTER, index )) >= 0 ) {
 				JABBER_LIST_ITEM* item = JabberListGetItemPtrFromIndex( index );
 				if ( item != NULL ) {
-					if ( _tcschr( item->jid, '@' ) == NULL ) {
+					if ( strchr( item->jid, '@' ) == NULL ) {
 						HANDLE hContact = JabberHContactFromJID( item->jid );
 						if ( hContact != NULL ) {
 							if ( bChecked ) {
@@ -574,41 +545,13 @@ static BOOL CALLBACK JabberAdvOptDlgProc( HWND hwndDlg, UINT msg, WPARAM wParam,
 				index++;
 			}
 
-			JSetByte( "AutoAdd",             ( BYTE )IsDlgButtonChecked( hwndDlg, IDC_AUTO_ADD ));
-			JSetByte( "MsgAck",              ( BYTE )IsDlgButtonChecked( hwndDlg, IDC_MSG_ACK ));
-			JSetByte( "DisableMainMenu",     ( BYTE )IsDlgButtonChecked( hwndDlg, IDC_DISABLE_MAINMENU ));
-			JSetByte( "Disable3920auth",     ( BYTE )IsDlgButtonChecked( hwndDlg, IDC_DISABLE_SASL ));
-			JSetByte( "EnableAvatars",       ( BYTE )IsDlgButtonChecked( hwndDlg, IDC_ENABLE_AVATARS ));
-			JSetByte( "AutoAcceptMUC",       ( BYTE )IsDlgButtonChecked( hwndDlg, IDC_AUTO_ACCEPT_MUC ));
-			JSetByte( "AutoJoinConferences", ( BYTE )IsDlgButtonChecked( hwndDlg, IDC_AUTOJOIN ));
+			JSetByte( "AutoAdd", ( BYTE ) IsDlgButtonChecked( hwndDlg, IDC_AUTO_ADD ));
+			JSetByte( "MsgAck", ( BYTE ) IsDlgButtonChecked( hwndDlg, IDC_MSG_ACK ));
+			JSetByte( "DisableMainMenu", ( BYTE ) IsDlgButtonChecked( hwndDlg, IDC_DISABLE_MAINMENU ));
 			return TRUE;
 		}
 		break;
 	}
 
 	return FALSE;
-}
-
-/////////////////////////////////////////////////////////////////////////////////////////
-// JabberOptInit - initializes all options dialogs
-
-int JabberOptInit( WPARAM wParam, LPARAM lParam )
-{
-	OPTIONSDIALOGPAGE odp = { 0 };
-
-	odp.cbSize      = sizeof( odp );
-	odp.hInstance   = hInst;
-	odp.pszGroup    = "Network";
-	odp.pszTab      = "Account";
-	odp.pszTemplate = MAKEINTRESOURCEA( IDD_OPT_JABBER );
-	odp.pszTitle    = jabberModuleName;
-	odp.pfnDlgProc  = JabberOptDlgProc;
-	odp.flags       = ODPF_BOLDGROUPS;
-	JCallService( MS_OPT_ADDPAGE, wParam, ( LPARAM )&odp );
-
-	odp.pszTab      = "Advanced";
-	odp.pszTemplate = MAKEINTRESOURCEA( IDD_OPT_JABBER2 );
-	odp.pfnDlgProc  = JabberAdvOptDlgProc;
-	JCallService( MS_OPT_ADDPAGE, wParam, ( LPARAM )&odp );
-	return 0;
 }

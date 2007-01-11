@@ -2,8 +2,8 @@
 
 Miranda IM: the free IM client for Microsoft* Windows*
 
-Copyright 2000-2007 Miranda ICQ/IM project,
-all portions of this codebase are copyrighted to the people
+Copyright 2000-2003 Miranda ICQ/IM project, 
+all portions of this codebase are copyrighted to the people 
 listed in contributors.txt.
 
 This program is free software; you can redistribute it and/or
@@ -20,7 +20,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
-#include "commonheaders.h"
+#include "../../core/commonheaders.h"
 
 BOOL CALLBACK DlgProcAbout(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam);
 
@@ -39,7 +39,7 @@ static int AboutCommand(WPARAM wParam,LPARAM lParam)
 
 static int IndexCommand(WPARAM wParam,LPARAM lParam)
 {
-	CallService(MS_UTILS_OPENURL,1,(LPARAM)"http://www.miranda-im.org/support/");
+	CallService(MS_UTILS_OPENURL,1,(LPARAM)"http://www.miranda-im.org/help/");
 	return 0;
 }
 
@@ -90,7 +90,7 @@ int LoadHelpModule(void)
 	CallService(MS_CLIST_ADDMAINMENUITEM,0,(LPARAM)&mi);
 	mi.hIcon=LoadIcon(GetModuleHandle(NULL),MAKEINTRESOURCE(IDI_MIRANDAWEBSITE));
 	mi.position=2000050000;
-	mi.pszName=Translate("&Miranda IM Homepage");
+	mi.pszName=Translate("&Miranda IM Website");
 	mi.hotKey=0;
 	mi.pszService="Help/WebsiteCommand";
 	CallService(MS_CLIST_ADDMAINMENUITEM,0,(LPARAM)&mi);

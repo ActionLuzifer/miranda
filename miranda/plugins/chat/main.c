@@ -21,30 +21,22 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "chat.h"
 
 //globals
-HINSTANCE   g_hInst;
-PLUGINLINK  *pluginLink;
-HANDLE      g_hWindowList;
-HMENU       g_hMenu = NULL;
+HINSTANCE		g_hInst;
+PLUGINLINK		*pluginLink;
+HANDLE			g_hWindowList;
+HMENU			g_hMenu = NULL;
 
-struct MM_INTERFACE memoryManagerInterface;
-struct UTF8_INTERFACE utfi;
+FONTINFO		aFonts[OPTIONS_FONTCOUNT];
+HICON			hIcons[OPTIONS_ICONCOUNT];
+BOOL			SmileyAddInstalled = FALSE;
+BOOL			PopUpInstalled = FALSE;
+HBRUSH			hEditBkgBrush = NULL;
 
-FONTINFO    aFonts[OPTIONS_FONTCOUNT];
-HICON       hIcons[30];
-BOOL        IEviewInstalled = FALSE;
-HBRUSH      hListBkgBrush = NULL;
-BOOL        SmileyAddInstalled = FALSE;
-BOOL        PopUpInstalled = FALSE;
-HBRUSH      hEditBkgBrush = NULL;
+HIMAGELIST		hImageList = NULL;
 
-HIMAGELIST  hImageList = NULL;
 
-HIMAGELIST  hIconsList = NULL;
-
-TCHAR*      pszActiveWndID = 0;
-char*       pszActiveWndModule = 0;
-
-struct GlobalLogSettings_t g_Settings;
+char*			pszActiveWndID = 0;
+char*			pszActiveWndModule = 0;
 
 static void InitREOleCallback(void);
 
@@ -55,14 +47,14 @@ PLUGININFO pluginInfo = {
 	#else
 		"Chat",
 	#endif
-	PLUGIN_MAKE_VERSION(0,7,0,1),
+	PLUGIN_MAKE_VERSION(0,2,1,3),
 	"Provides chat rooms for protocols supporting it",
-	"Miranda team",
-	"project-info@miranda-im.org",
-	"© 2003-2006 Miranda team",
+	"MatriX",
+	"i_am_matrix@users.sourceforge.net",
+	"© 2003 - 2005 Jörgen Persson",
 	"http://miranda-im.org/",
 	0,
-	0
+	0		
 };
 
 BOOL WINAPI DllMain(HINSTANCE hinstDLL,DWORD fdwReason,LPVOID lpvReserved)
@@ -71,9 +63,10 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL,DWORD fdwReason,LPVOID lpvReserved)
 	return TRUE;
 }
 
+
 __declspec(dllexport) PLUGININFO* MirandaPluginInfo(DWORD mirandaVersion)
 {
-	if (mirandaVersion < PLUGIN_MAKE_VERSION(0,7,0,2)) return NULL;
+	if(mirandaVersion < PLUGIN_MAKE_VERSION(0,4,0,0)) return NULL;
 	return &pluginInfo;
 }
 
@@ -82,162 +75,128 @@ int __declspec(dllexport) Load(PLUGINLINK *link)
 	BOOL bFlag = FALSE;
 	HINSTANCE hDll;
 
-#ifndef NDEBUG //mem leak detector :-) Thanks Tornado!
+	#ifndef NDEBUG //mem leak detector :-) Thanks Tornado!
 	int flag = _CrtSetDbgFlag(_CRTDBG_REPORT_FLAG); // Get current flag
 	flag |= _CRTDBG_LEAK_CHECK_DF; // Turn on leak-checking bit
 	_CrtSetDbgFlag(flag); // Set flag to the new value
-#endif
+	#endif
 
 	pluginLink = link;
 
-	// set the memory & utf8 managers
-	mir_getMMI( &memoryManagerInterface );
-	if ( mir_getUTFI( &utfi ) == CALLSERVICE_NOTFOUND )
-		return 1;
-
 	hDll = LoadLibraryA("riched20.dll");
-	if ( hDll ) {
-		char modulePath[MAX_PATH];
-		if (GetModuleFileNameA(hDll, modulePath, MAX_PATH)) {
+
+	if(hDll)
+	{
+		CHAR modulePath[MAX_PATH];
+		if (GetModuleFileName(hDll, modulePath, sizeof(modulePath)))
+		{
 			DWORD dummy;
 			VS_FIXEDFILEINFO* vsInfo;
 			UINT vsInfoSize;
-			DWORD size = GetFileVersionInfoSizeA(modulePath, &dummy);
-			BYTE* buffer = (BYTE*) mir_alloc(size);
+			DWORD size = GetFileVersionInfoSize(modulePath, &dummy);
+			BYTE* buffer = (BYTE*) malloc(size);
 
-			GetFileVersionInfoA(modulePath, 0, size, buffer);
-			VerQueryValueA(buffer, "\\", (LPVOID*) &vsInfo, &vsInfoSize);
-			if (LOWORD(vsInfo->dwFileVersionMS) != 0)
+			GetFileVersionInfo(modulePath, 0, size, buffer);
+			VerQueryValue(buffer, "\\", (LPVOID*) &vsInfo, &vsInfoSize);
+			if(LOWORD(vsInfo->dwFileVersionMS) != 0)
 				bFlag= TRUE;
 
-			mir_free(buffer);
-	}	}
+			free(buffer);
+		}
 
-	if ( !bFlag ) {
-		if (IDYES == MessageBoxA(0,Translate("Miranda could not load the Chat plugin because Microsoft Rich Edit v 3 is missing.\nIf you are using Windows 95/98/NT or WINE please upgrade your Rich Edit control.\n\nDo you want to download an update now?."),Translate("Information"),MB_YESNO|MB_ICONINFORMATION))
+	}
+
+	if (!bFlag)
+	{
+		if(IDYES == MessageBoxA(0,Translate("Miranda could not load the Chat plugin because Microsoft Rich Edit v 3 is missing.\nIf you are using Windows 95/98/NT or WINE please upgrade your Rich Edit control.\n\nDo you want to download an update now?."),Translate("Information"),MB_YESNO|MB_ICONINFORMATION))
 			CallService(MS_UTILS_OPENURL, 1, (LPARAM) "http://members.chello.se/matrix/re3/richupd.exe");
 		FreeLibrary(GetModuleHandleA("riched20.dll"));
 		return 1;
 	}
 
-	UpgradeCheck();
-
+	LoadIcons();
 	g_hMenu = LoadMenu(g_hInst, MAKEINTRESOURCE(IDR_MENU));
-	OleInitialize(NULL);
-	InitREOleCallback();
+    OleInitialize(NULL);
+    InitREOleCallback();
 	HookEvents();
 	CreateServiceFunctions();
 	CreateHookableEvents();
 	OptionsInit();
-	TabsInit();
+
+	/*
+	{ // check sizes of structures in m_chat.h
+		int iSize;
+		char szTemp[10];
+
+		iSize = sizeof(GCREGISTER);
+		mir_snprintf(szTemp, sizeof(szTemp), "%u", iSize);
+		MessageBox(NULL, szTemp, "GCREGISTER", MB_OK);
+
+		iSize = sizeof(GCWINDOW);
+		mir_snprintf(szTemp, sizeof(szTemp), "%u", iSize);
+		MessageBox(NULL, szTemp, "GCWINDOW", MB_OK);
+
+		iSize = sizeof(GCEVENT);
+		mir_snprintf(szTemp, sizeof(szTemp), "%u", iSize);
+		MessageBox(NULL, szTemp, "GCEVENT", MB_OK);
+
+	}
+	*/
 	return 0;
 }
+
 
 int __declspec(dllexport) Unload(void)
 {
-	DBWriteContactSettingWord(NULL, "Chat", "SplitterX", (WORD)g_Settings.iSplitterX);
-	DBWriteContactSettingWord(NULL, "Chat", "SplitterY", (WORD)g_Settings.iSplitterY);
-	DBWriteContactSettingDword(NULL, "Chat", "roomx", g_Settings.iX);
-	DBWriteContactSettingDword(NULL, "Chat", "roomy", g_Settings.iY);
-	DBWriteContactSettingDword(NULL, "Chat", "roomwidth" , g_Settings.iWidth);
-	DBWriteContactSettingDword(NULL, "Chat", "roomheight", g_Settings.iHeight);
+	DBWriteContactSettingWord(NULL, "Chat", "SplitterX", (WORD)g_LogOptions.iSplitterX);
+	DBWriteContactSettingWord(NULL, "Chat", "SplitterY", (WORD)g_LogOptions.iSplitterY);
+	DBWriteContactSettingDword(NULL, "Chat", "roomx", g_LogOptions.iX);
+	DBWriteContactSettingDword(NULL, "Chat", "roomy", g_LogOptions.iY);
+	DBWriteContactSettingDword(NULL, "Chat", "roomwidth" , g_LogOptions.iWidth);
+	DBWriteContactSettingDword(NULL, "Chat", "roomheight", g_LogOptions.iHeight);
 
 	CList_SetAllOffline(TRUE);
 
-	mir_free( pszActiveWndID );
-	mir_free( pszActiveWndModule );
+	if(pszActiveWndID)
+		free(pszActiveWndID);
+	if(pszActiveWndModule)
+		free(pszActiveWndModule);
 
 	DestroyMenu(g_hMenu);
-	DestroyServiceFunctions();
 	FreeIcons();
 	OptionsUnInit();
-	FreeLibrary(GetModuleHandleA("riched20.dll"));
-	OleUninitialize();
+    FreeLibrary(GetModuleHandleA("riched20.dll"));
+    OleUninitialize();
 	UnhookEvents();
 	return 0;
-}
-
-void UpgradeCheck(void)
-{
-	DWORD dwVersion = DBGetContactSettingDword(NULL, "Chat", "OldVersion", PLUGIN_MAKE_VERSION(0,2,9,9));
-	if (	pluginInfo.version > dwVersion)
-	{
-		if (dwVersion < PLUGIN_MAKE_VERSION(0,3,0,0))
-		{
-			DBDeleteContactSetting(NULL, "ChatFonts",	"Font18");
-			DBDeleteContactSetting(NULL, "ChatFonts",	"Font18Col");
-			DBDeleteContactSetting(NULL, "ChatFonts",	"Font18Set");
-			DBDeleteContactSetting(NULL, "ChatFonts",	"Font18Size");
-			DBDeleteContactSetting(NULL, "ChatFonts",	"Font18Sty");
-			DBDeleteContactSetting(NULL, "ChatFonts",	"Font19");
-			DBDeleteContactSetting(NULL, "ChatFonts",	"Font19Col");
-			DBDeleteContactSetting(NULL, "ChatFonts",	"Font19Set");
-			DBDeleteContactSetting(NULL, "ChatFonts",	"Font19Size");
-			DBDeleteContactSetting(NULL, "ChatFonts",	"Font19Sty");
-			DBDeleteContactSetting(NULL, "Chat",		"ColorNicklistLines");
-			DBDeleteContactSetting(NULL, "Chat",		"NicklistIndent");
-			DBDeleteContactSetting(NULL, "Chat",		"NicklistRowDist");
-			DBDeleteContactSetting(NULL, "Chat",		"ShowFormatButtons");
-			DBDeleteContactSetting(NULL, "Chat",		"ShowLines");
-			DBDeleteContactSetting(NULL, "Chat",		"ShowName");
-			DBDeleteContactSetting(NULL, "Chat",		"ShowTopButtons");
-			DBDeleteContactSetting(NULL, "Chat",		"SplitterX");
-			DBDeleteContactSetting(NULL, "Chat",		"SplitterY");
-			DBDeleteContactSetting(NULL, "Chat",		"IconFlags");
-			DBDeleteContactSetting(NULL, "Chat",		"LogIndentEnabled");
-	}	}
-
-	DBWriteContactSettingDword(NULL, "Chat", "OldVersion", pluginInfo.version);
-}
-
-void LoadLogIcons(void)
-{
-	hIcons[ICON_ACTION]     = LoadIconEx( "log_action" );
-	hIcons[ICON_ADDSTATUS]  = LoadIconEx( "log_addstatus" );
-	hIcons[ICON_HIGHLIGHT]  = LoadIconEx( "log_highlight" );
-	hIcons[ICON_INFO]       = LoadIconEx( "log_info" );
-	hIcons[ICON_JOIN]       = LoadIconEx( "log_join" );
-	hIcons[ICON_KICK]       = LoadIconEx( "log_kick" );
-	hIcons[ICON_MESSAGE]    = LoadIconEx( "log_message_in" );
-	hIcons[ICON_MESSAGEOUT] = LoadIconEx( "log_message_out" );
-	hIcons[ICON_NICK]       = LoadIconEx( "log_nick" );
-	hIcons[ICON_NOTICE]     = LoadIconEx( "log_notice" );
-	hIcons[ICON_PART]       = LoadIconEx( "log_part" );
-	hIcons[ICON_QUIT]       = LoadIconEx( "log_quit" );
-	hIcons[ICON_REMSTATUS]  = LoadIconEx( "log_removestatus" );
-	hIcons[ICON_TOPIC]      = LoadIconEx( "log_topic" );
-	hIcons[ICON_STATUS1]    = LoadIconEx( "status1" );
-	hIcons[ICON_STATUS2]    = LoadIconEx( "status2" );
-	hIcons[ICON_STATUS3]    = LoadIconEx( "status3" );
-	hIcons[ICON_STATUS4]    = LoadIconEx( "status4" );
-	hIcons[ICON_STATUS0]    = LoadIconEx( "status0" );
-	hIcons[ICON_STATUS5]    = LoadIconEx( "status5" );
 }
 
 void LoadIcons(void)
 {
 	int i;
 
-	for(i = 0; i < 20; i++)
-		hIcons[i] = NULL;
-
-	LoadLogIcons();
+	for(i = 0; i < OPTIONS_ICONCOUNT; i++)
+		hIcons[i] = LoadImage(g_hInst,MAKEINTRESOURCE(120+i),IMAGE_ICON,0,0,0);
 	LoadMsgLogBitmaps();
 
-	hImageList = ImageList_Create(GetSystemMetrics(SM_CXSMICON),GetSystemMetrics(SM_CYSMICON),IsWinVerXPPlus()? ILC_COLOR32 | ILC_MASK : ILC_COLOR16 | ILC_MASK,0,3);
-	hIconsList = ImageList_Create(GetSystemMetrics(SM_CXSMICON),GetSystemMetrics(SM_CYSMICON),IsWinVerXPPlus()? ILC_COLOR32 | ILC_MASK : ILC_COLOR16 | ILC_MASK,0,100);
-	ImageList_AddIcon(hIconsList,LoadSkinnedIcon( SKINICON_EVENT_MESSAGE));
-	ImageList_AddIcon(hIconsList,LoadIconEx( "overlay" ));
-	ImageList_SetOverlayImage(hIconsList, 1, 1);
+	hImageList = ImageList_Create(GetSystemMetrics(SM_CXSMICON),GetSystemMetrics(SM_CYSMICON),ILC_COLOR32|ILC_MASK,0,3);
 	ImageList_AddIcon(hImageList,LoadImage(g_hInst,MAKEINTRESOURCE(IDI_BLANK),IMAGE_ICON,0,0,0));
 	ImageList_AddIcon(hImageList,LoadImage(g_hInst,MAKEINTRESOURCE(IDI_BLANK),IMAGE_ICON,0,0,0));
+	g_LogOptions.TagIcon1 = LoadImage(g_hInst,MAKEINTRESOURCE(IDI_TAG1),IMAGE_ICON,0,0,0);
+	g_LogOptions.TagIcon2 = LoadImage(g_hInst,MAKEINTRESOURCE(IDI_TAG2),IMAGE_ICON,0,0,0);
+	return ;
 }
 
 void FreeIcons(void)
 {
+	int i;
+	for(i = 0; i < OPTIONS_ICONCOUNT; i++)
+		DeleteObject(hIcons[i]);
 	FreeMsgLogBitmaps();
 	ImageList_Destroy(hImageList);
-	ImageList_Destroy(hIconsList);
+	DeleteObject(g_LogOptions.TagIcon1);
+	DeleteObject(g_LogOptions.TagIcon2);
+	return;
 }
 
 static IRichEditOleCallbackVtbl reOleCallbackVtbl;
@@ -245,105 +204,106 @@ struct CREOleCallback reOleCallback;
 
 static STDMETHODIMP_(ULONG) CREOleCallback_QueryInterface(struct CREOleCallback *lpThis, REFIID riid, LPVOID * ppvObj)
 {
-	if (IsEqualIID(riid, &IID_IRichEditOleCallback)) {
-		*ppvObj = lpThis;
-		lpThis->lpVtbl->AddRef((IRichEditOleCallback *) lpThis);
-		return S_OK;
-	}
-	*ppvObj = NULL;
-	return E_NOINTERFACE;
+    if (IsEqualIID(riid, &IID_IRichEditOleCallback)) {
+        *ppvObj = lpThis;
+        lpThis->lpVtbl->AddRef((IRichEditOleCallback *) lpThis);
+        return S_OK;
+    }
+    *ppvObj = NULL;
+    return E_NOINTERFACE;
 }
 
 static STDMETHODIMP_(ULONG) CREOleCallback_AddRef(struct CREOleCallback *lpThis)
 {
-	if (lpThis->refCount == 0) {
-		if (S_OK != StgCreateDocfile(NULL, STGM_READWRITE | STGM_SHARE_EXCLUSIVE | STGM_CREATE | STGM_DELETEONRELEASE, 0, &lpThis->pictStg))
-			lpThis->pictStg = NULL;
-		lpThis->nextStgId = 0;
-	}
-	return ++lpThis->refCount;
+    if (lpThis->refCount == 0) {
+        if (S_OK != StgCreateDocfile(NULL, STGM_READWRITE | STGM_SHARE_EXCLUSIVE | STGM_CREATE | STGM_DELETEONRELEASE, 0, &lpThis->pictStg))
+            lpThis->pictStg = NULL;
+        lpThis->nextStgId = 0;
+    }
+    return ++lpThis->refCount;
 }
 
 static STDMETHODIMP_(ULONG) CREOleCallback_Release(struct CREOleCallback *lpThis)
 {
-	if (--lpThis->refCount == 0) {
-		if (lpThis->pictStg)
-			lpThis->pictStg->lpVtbl->Release(lpThis->pictStg);
-	}
-	return lpThis->refCount;
+    if (--lpThis->refCount == 0) {
+        if (lpThis->pictStg)
+            lpThis->pictStg->lpVtbl->Release(lpThis->pictStg);
+    }
+    return lpThis->refCount;
 }
 
 static STDMETHODIMP_(HRESULT) CREOleCallback_ContextSensitiveHelp(struct CREOleCallback *lpThis, BOOL fEnterMode)
 {
-	return S_OK;
+    return S_OK;
 }
 
 static STDMETHODIMP_(HRESULT) CREOleCallback_DeleteObject(struct CREOleCallback *lpThis, LPOLEOBJECT lpoleobj)
 {
-	return S_OK;
+    return S_OK;
 }
 
 static STDMETHODIMP_(HRESULT) CREOleCallback_GetClipboardData(struct CREOleCallback *lpThis, CHARRANGE * lpchrg, DWORD reco, LPDATAOBJECT * lplpdataobj)
 {
-	return E_NOTIMPL;
+    return E_NOTIMPL;
 }
 
 static STDMETHODIMP_(HRESULT) CREOleCallback_GetContextMenu(struct CREOleCallback *lpThis, WORD seltype, LPOLEOBJECT lpoleobj, CHARRANGE * lpchrg, HMENU * lphmenu)
 {
-	return E_INVALIDARG;
+    return E_INVALIDARG;
 }
 
 static STDMETHODIMP_(HRESULT) CREOleCallback_GetDragDropEffect(struct CREOleCallback *lpThis, BOOL fDrag, DWORD grfKeyState, LPDWORD pdwEffect)
 {
-	return S_OK;
+    return S_OK;
 }
 
 static STDMETHODIMP_(HRESULT) CREOleCallback_GetInPlaceContext(struct CREOleCallback *lpThis, LPOLEINPLACEFRAME * lplpFrame, LPOLEINPLACEUIWINDOW * lplpDoc, LPOLEINPLACEFRAMEINFO lpFrameInfo)
 {
-	return E_INVALIDARG;
+    return E_INVALIDARG;
 }
 
 static STDMETHODIMP_(HRESULT) CREOleCallback_GetNewStorage(struct CREOleCallback *lpThis, LPSTORAGE * lplpstg)
 {
-	WCHAR szwName[64];
-	char szName[64];
-	wsprintfA(szName, "s%u", lpThis->nextStgId);
-	MultiByteToWideChar(CP_ACP, 0, szName, -1, szwName, SIZEOF(szwName));
-	if (lpThis->pictStg == NULL)
-		return STG_E_MEDIUMFULL;
-	return lpThis->pictStg->lpVtbl->CreateStorage(lpThis->pictStg, szwName, STGM_READWRITE | STGM_SHARE_EXCLUSIVE | STGM_CREATE, 0, 0, lplpstg);
+    WCHAR szwName[64];
+    char szName[64];
+    wsprintfA(szName, "s%u", lpThis->nextStgId);
+    MultiByteToWideChar(CP_ACP, 0, szName, -1, szwName, sizeof(szwName) / sizeof(szwName[0]));
+    if (lpThis->pictStg == NULL)
+        return STG_E_MEDIUMFULL;
+    return lpThis->pictStg->lpVtbl->CreateStorage(lpThis->pictStg, szwName, STGM_READWRITE | STGM_SHARE_EXCLUSIVE | STGM_CREATE, 0, 0, lplpstg);
 }
 
 static STDMETHODIMP_(HRESULT) CREOleCallback_QueryAcceptData(struct CREOleCallback *lpThis, LPDATAOBJECT lpdataobj, CLIPFORMAT * lpcfFormat, DWORD reco, BOOL fReally, HGLOBAL hMetaPict)
 {
-	return S_OK;
+    return S_OK;
 }
 
 static STDMETHODIMP_(HRESULT) CREOleCallback_QueryInsertObject(struct CREOleCallback *lpThis, LPCLSID lpclsid, LPSTORAGE lpstg, LONG cp)
 {
-	return S_OK;
+    return S_OK;
 }
 
 static STDMETHODIMP_(HRESULT) CREOleCallback_ShowContainerUI(struct CREOleCallback *lpThis, BOOL fShow)
 {
-	return S_OK;
+    return S_OK;
 }
 
 static void InitREOleCallback(void)
 {
-	reOleCallback.lpVtbl = &reOleCallbackVtbl;
-	reOleCallback.lpVtbl->AddRef = (ULONG(__stdcall *) (IRichEditOleCallback *)) CREOleCallback_AddRef;
-	reOleCallback.lpVtbl->Release = (ULONG(__stdcall *) (IRichEditOleCallback *)) CREOleCallback_Release;
-	reOleCallback.lpVtbl->QueryInterface = (ULONG(__stdcall *) (IRichEditOleCallback *, REFIID, PVOID *)) CREOleCallback_QueryInterface;
-	reOleCallback.lpVtbl->ContextSensitiveHelp = (HRESULT(__stdcall *) (IRichEditOleCallback *, BOOL)) CREOleCallback_ContextSensitiveHelp;
-	reOleCallback.lpVtbl->DeleteObject = (HRESULT(__stdcall *) (IRichEditOleCallback *, LPOLEOBJECT)) CREOleCallback_DeleteObject;
-	reOleCallback.lpVtbl->GetClipboardData = (HRESULT(__stdcall *) (IRichEditOleCallback *, CHARRANGE *, DWORD, LPDATAOBJECT *)) CREOleCallback_GetClipboardData;
-	reOleCallback.lpVtbl->GetContextMenu = (HRESULT(__stdcall *) (IRichEditOleCallback *, WORD, LPOLEOBJECT, CHARRANGE *, HMENU *)) CREOleCallback_GetContextMenu;
-	reOleCallback.lpVtbl->GetDragDropEffect = (HRESULT(__stdcall *) (IRichEditOleCallback *, BOOL, DWORD, LPDWORD)) CREOleCallback_GetDragDropEffect;
-	reOleCallback.lpVtbl->GetInPlaceContext = (HRESULT(__stdcall *) (IRichEditOleCallback *, LPOLEINPLACEFRAME *, LPOLEINPLACEUIWINDOW *, LPOLEINPLACEFRAMEINFO))CREOleCallback_GetInPlaceContext;
-	reOleCallback.lpVtbl->GetNewStorage = (HRESULT(__stdcall *) (IRichEditOleCallback *, LPSTORAGE *)) CREOleCallback_GetNewStorage;
-	reOleCallback.lpVtbl->QueryAcceptData = (HRESULT(__stdcall *) (IRichEditOleCallback *, LPDATAOBJECT, CLIPFORMAT *, DWORD, BOOL, HGLOBAL)) CREOleCallback_QueryAcceptData;
-	reOleCallback.lpVtbl->QueryInsertObject = (HRESULT(__stdcall *) (IRichEditOleCallback *, LPCLSID, LPSTORAGE, LONG)) CREOleCallback_QueryInsertObject;
-	reOleCallback.lpVtbl->ShowContainerUI = (HRESULT(__stdcall *) (IRichEditOleCallback *, BOOL)) CREOleCallback_ShowContainerUI;
-	reOleCallback.refCount = 0;
+    reOleCallback.lpVtbl = &reOleCallbackVtbl;
+    reOleCallback.lpVtbl->AddRef = (ULONG(__stdcall *) (IRichEditOleCallback *)) CREOleCallback_AddRef;
+    reOleCallback.lpVtbl->Release = (ULONG(__stdcall *) (IRichEditOleCallback *)) CREOleCallback_Release;
+    reOleCallback.lpVtbl->QueryInterface = (ULONG(__stdcall *) (IRichEditOleCallback *, REFIID, PVOID *)) CREOleCallback_QueryInterface;
+    reOleCallback.lpVtbl->ContextSensitiveHelp = (HRESULT(__stdcall *) (IRichEditOleCallback *, BOOL)) CREOleCallback_ContextSensitiveHelp;
+    reOleCallback.lpVtbl->DeleteObject = (HRESULT(__stdcall *) (IRichEditOleCallback *, LPOLEOBJECT)) CREOleCallback_DeleteObject;
+    reOleCallback.lpVtbl->GetClipboardData = (HRESULT(__stdcall *) (IRichEditOleCallback *, CHARRANGE *, DWORD, LPDATAOBJECT *)) CREOleCallback_GetClipboardData;
+    reOleCallback.lpVtbl->GetContextMenu = (HRESULT(__stdcall *) (IRichEditOleCallback *, WORD, LPOLEOBJECT, CHARRANGE *, HMENU *)) CREOleCallback_GetContextMenu;
+    reOleCallback.lpVtbl->GetDragDropEffect = (HRESULT(__stdcall *) (IRichEditOleCallback *, BOOL, DWORD, LPDWORD)) CREOleCallback_GetDragDropEffect;
+    reOleCallback.lpVtbl->GetInPlaceContext = (HRESULT(__stdcall *) (IRichEditOleCallback *, LPOLEINPLACEFRAME *, LPOLEINPLACEUIWINDOW *, LPOLEINPLACEFRAMEINFO))
+        CREOleCallback_GetInPlaceContext;
+    reOleCallback.lpVtbl->GetNewStorage = (HRESULT(__stdcall *) (IRichEditOleCallback *, LPSTORAGE *)) CREOleCallback_GetNewStorage;
+    reOleCallback.lpVtbl->QueryAcceptData = (HRESULT(__stdcall *) (IRichEditOleCallback *, LPDATAOBJECT, CLIPFORMAT *, DWORD, BOOL, HGLOBAL)) CREOleCallback_QueryAcceptData;
+    reOleCallback.lpVtbl->QueryInsertObject = (HRESULT(__stdcall *) (IRichEditOleCallback *, LPCLSID, LPSTORAGE, LONG)) CREOleCallback_QueryInsertObject;
+    reOleCallback.lpVtbl->ShowContainerUI = (HRESULT(__stdcall *) (IRichEditOleCallback *, BOOL)) CREOleCallback_ShowContainerUI;
+    reOleCallback.refCount = 0;
 }

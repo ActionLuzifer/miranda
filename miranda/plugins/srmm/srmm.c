@@ -1,8 +1,8 @@
 /*
 SRMM
 
-Copyright 2000-2005 Miranda ICQ/IM project,
-all portions of this codebase are copyrighted to the people
+Copyright 2000-2005 Miranda ICQ/IM project, 
+all portions of this codebase are copyrighted to the people 
 listed in contributors.txt.
 
 This program is free software; you can redistribute it and/or
@@ -25,10 +25,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 int LoadSendRecvMessageModule(void);
 int SplitmsgShutdown(void);
 
-PLUGINLINK* pluginLink;
-HINSTANCE   g_hInst;
-
-struct MM_INTERFACE mmi;
+PLUGINLINK *pluginLink;
+HINSTANCE g_hInst;
 
 PLUGININFO pluginInfo = {
 	sizeof(PLUGININFO),
@@ -37,11 +35,11 @@ PLUGININFO pluginInfo = {
 #else
 	"Send/Receive Messages",
 #endif
-	PLUGIN_MAKE_VERSION(0, 7, 0, 0),
+	PLUGIN_MAKE_VERSION(2, 4, 0, 0),
 	"Send and receive instant messages",
 	"Miranda IM Development Team",
-	"rainwater@miranda-im.org",
-	"Copyright 2000-2006 Miranda IM project",
+	"info@miranda-im.org",
+	"Copyright © 2000-2005 Miranda ICQ/IM Project",
 	"http://www.miranda-im.org",
 	0,
 	DEFMOD_SRMESSAGE            // replace internal version (if any)
@@ -53,9 +51,10 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 	return TRUE;
 }
 
-__declspec(dllexport) PLUGININFO *MirandaPluginInfo(DWORD mirandaVersion)
+__declspec(dllexport)
+	 PLUGININFO *MirandaPluginInfo(DWORD mirandaVersion)
 {
-	if (mirandaVersion < PLUGIN_MAKE_VERSION(0, 7, 0, 2))
+	if (mirandaVersion < PLUGIN_MAKE_VERSION(0, 4, 0, 0))
 		return NULL;
 	return &pluginInfo;
 }
@@ -63,7 +62,6 @@ __declspec(dllexport) PLUGININFO *MirandaPluginInfo(DWORD mirandaVersion)
 int __declspec(dllexport) Load(PLUGINLINK * link)
 {
 	pluginLink = link;
-	mir_getMMI( &mmi );
 	return LoadSendRecvMessageModule();
 }
 

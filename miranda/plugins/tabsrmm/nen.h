@@ -33,12 +33,7 @@ Event popups for tabSRMM - most of the code taken from NewEventNotify (see copyr
 #ifndef _NEN_H_
 #define _NEN_H_
 
-#include "m_popup.h"
-//#include "m_popupw.h"
-
 #define MODULE "tabSRMM_NEN"
-
-int tabSRMM_ShowPopup(WPARAM wParam, LPARAM lParam, WORD eventType, int windowOpen, struct ContainerWindowData *pContainer, HWND hwndChild, char *szProto, struct MessageWindowData *dat);
 
 #define DEFAULT_COLBACK RGB(255,255,128)
 #define DEFAULT_COLTEXT RGB(0,0,0)
@@ -55,10 +50,6 @@ int tabSRMM_ShowPopup(WPARAM wParam, LPARAM lParam, WORD eventType, int windowOp
 #define MASK_DISMISS    0x0001
 #define MASK_OPEN       0x0002
 #define MASK_REMOVE     0x0004
-
-#define PU_REMOVE_ON_FOCUS 1
-#define PU_REMOVE_ON_TYPE 2
-#define PU_REMOVE_ON_SEND 4
 
 #define SETTING_LIFETIME_MIN		1
 #define SETTING_LIFETIME_MAX		60
@@ -100,9 +91,6 @@ int tabSRMM_ShowPopup(WPARAM wParam, LPARAM lParam, WORD eventType, int windowOp
 #define OPT_ANNOUNCEMETHOD "method"
 #define OPT_FLOATER "floater"
 #define OPT_FLOATERINWIN "floater_win"
-#define OPT_FLOATERONLYMIN "floater_onlymin"
-#define OPT_REMOVEMASK "removemask"
-#define OPT_SIMPLEOPT "simplemode"
 
 typedef struct {
     BOOL bPreview;
@@ -150,9 +138,6 @@ typedef struct {
     int  iAnnounceMethod;
     BOOL floaterMode;
     BOOL bFloaterInWin;
-    BOOL bFloaterOnlyMin;
-	BYTE bSimpleMode;
-    DWORD dwRemoveMask;
 } NEN_OPTIONS;
 
 #define FLOATER_ATTACHED 1
@@ -176,28 +161,7 @@ typedef struct {
     int  nrMerged;
     EVENT_DATA *eventData;
     int  nrEventsAlloced;
-    int  iActionTaken;
 } PLUGIN_DATA;
-
-typedef struct EVENT_DATAW {
-	HANDLE hEvent;
-    wchar_t szText[MAX_SECONDLINE + 2];
-    DWORD timestamp;
-} EVENT_DATAW;
-
-typedef struct {
-    UINT eventType;
-    HANDLE hContact;
-    NEN_OPTIONS *pluginOptions;
-	POPUPDATAW* pud;
-	HWND hWnd;
-	long iSeconds;
-    wchar_t szHeader[256];
-    int  nrMerged;
-    EVENT_DATAW *eventData;
-    int  nrEventsAlloced;
-    int  iActionTaken;
-} PLUGIN_DATAW;
 
 #define NR_MERGED 5
 

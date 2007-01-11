@@ -1,5 +1,5 @@
 ####################################################################
-# AIM TOC2 Protocol Plugin
+# AIM Protocol Plugin
 # Makefile for Mingw
 ####################################################################
 #
@@ -70,7 +70,6 @@ HDR = buddies.h \
       toc.h \
       userinfo.h \
       utils.h
-
 LIB = -lgdi32 -lversion -lcomctl32 -lwsock32 -lcomdlg32 -lole32
 
 CC = gcc

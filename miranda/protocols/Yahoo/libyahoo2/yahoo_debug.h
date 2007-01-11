@@ -51,4 +51,5 @@ extern int yahoo_log_message(char *fmt, ...);
 	yahoo_log_message(" "); }
 
 #define DEBUG_MSG1(x) if(yahoo_get_log_level() >= YAHOO_LOG_DEBUG) { \
-	yahoo_log_message x; }
+	yahoo_log_message x; \
+	yahoo_log_message(" "); }

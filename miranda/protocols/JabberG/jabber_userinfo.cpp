@@ -2,7 +2,7 @@
 
 Jabber Protocol Plugin for Miranda IM
 Copyright ( C ) 2002-04  Santithorn Bunchua
-Copyright ( C ) 2005-06  George Hazan
+Copyright ( C ) 2005     George Hazan
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -18,22 +18,41 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-File name      : $Source: /cvsroot/miranda/miranda/protocols/JabberG/jabber_userinfo.cpp,v $
-Revision       : $Revision$
-Last change on : $Date$
-Last change by : $Author$
-
 */
 
 #include "jabber.h"
-
 #include <commctrl.h>
 #include "jabber_list.h"
 #include "resource.h"
-#include "sha1.h"
 
-/////////////////////////////////////////////////////////////////////////////////////////
-// JabberUserInfoDlgProc - main user info dialog
+static BOOL CALLBACK JabberUserInfoDlgProc( HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam );
+static BOOL CALLBACK JabberUserPhotoDlgProc( HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam );
+
+int JabberUserInfoInit( WPARAM wParam, LPARAM lParam )
+{
+	if ( !JCallService( MS_PROTO_ISPROTOCOLLOADED, 0, ( LPARAM )jabberProtoName ))
+		return 0;
+
+	HANDLE hContact = ( HANDLE )lParam;
+	char* szProto = ( char* )JCallService( MS_PROTO_GETCONTACTBASEPROTO, ( WPARAM ) hContact, 0 );
+	if ( szProto != NULL && !strcmp( szProto, jabberProtoName )) {
+		OPTIONSDIALOGPAGE odp = {0};
+		odp.cbSize = sizeof( odp );
+		odp.hIcon = NULL;
+		odp.hInstance = hInst;
+		odp.pfnDlgProc = JabberUserInfoDlgProc;
+		odp.position = -2000000000;
+		odp.pszTemplate = MAKEINTRESOURCE( IDD_INFO_JABBER );
+		odp.pszTitle = jabberModuleName;
+		JCallService( MS_USERINFO_ADDPAGE, wParam, ( LPARAM )&odp );
+		odp.pfnDlgProc = JabberUserPhotoDlgProc;
+		odp.position = 2000000000;
+		odp.pszTemplate = MAKEINTRESOURCE( IDD_VCARD_PHOTO );
+		odp.pszTitle = JTranslate( "Photo" );
+		JCallService( MS_USERINFO_ADDPAGE, wParam, ( LPARAM )&odp );
+	}
+	return 0;
+}
 
 static BOOL CALLBACK JabberUserInfoDlgProc( HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam )
 {
@@ -47,48 +66,52 @@ static BOOL CALLBACK JabberUserInfoDlgProc( HWND hwndDlg, UINT msg, WPARAM wPara
 	case WM_JABBER_REFRESH:
 		{
 			DBVARIANT dbv;
+			int count, index;
 			JABBER_LIST_ITEM *item;
 			JABBER_RESOURCE_STATUS *r;
+			char* localResource;
 
 			HWND hwndList = GetDlgItem( hwndDlg, IDC_INFO_RESOURCE );
 			SendMessage( hwndList, LB_RESETCONTENT, 0, 0 );
-			SetDlgItemTextA( hwndDlg, IDC_INFO_JID, "" );
-			SetDlgItemTextA( hwndDlg, IDC_SUBSCRIPTION, "" );
-			SetDlgItemText( hwndDlg, IDC_SOFTWARE, TranslateT( "<click resource to view>" ));
-			SetDlgItemText( hwndDlg, IDC_VERSION, TranslateT( "<click resource to view>" ));
-			SetDlgItemText( hwndDlg, IDC_SYSTEM, TranslateT( "<click resource to view>" ));
+			SetDlgItemText( hwndDlg, IDC_INFO_JID, "" );
+			SetDlgItemText( hwndDlg, IDC_SUBSCRIPTION, "" );
+			SetDlgItemText( hwndDlg, IDC_SOFTWARE, JTranslate( "<click resource to view>" ));
+			SetDlgItemText( hwndDlg, IDC_VERSION, JTranslate( "<click resource to view>" ));
+			SetDlgItemText( hwndDlg, IDC_SYSTEM, JTranslate( "<click resource to view>" ));
 			EnableWindow( GetDlgItem( hwndDlg, IDC_SOFTWARE ), FALSE );
 			EnableWindow( GetDlgItem( hwndDlg, IDC_VERSION ), FALSE );
 			EnableWindow( GetDlgItem( hwndDlg, IDC_SYSTEM ), FALSE );
 
 			HANDLE hContact = ( HANDLE ) GetWindowLong( hwndDlg, GWL_USERDATA );
-			if ( !JGetStringT( hContact, "jid", &dbv )) {
-				SetDlgItemText( hwndDlg, IDC_INFO_JID, dbv.ptszVal );
-
+			if ( !DBGetContactSetting( hContact, jabberProtoName, "jid", &dbv )) {
+				char* jid = dbv.pszVal;
+				SetDlgItemText( hwndDlg, IDC_INFO_JID, jid );
 				if ( jabberOnline ) {
-					if (( item=JabberListGetItemPtr( LIST_ROSTER, dbv.ptszVal )) != NULL ) {
+					if (( item=JabberListGetItemPtr( LIST_ROSTER, jid )) != NULL ) {
 						if (( r=item->resource ) != NULL ) {
-							int count = item->resourceCount;
+							count = item->resourceCount;
 							for ( int i=0; i<count; i++ ) {
-								int index = SendMessage( hwndList, LB_ADDSTRING, 0, ( LPARAM )r[i].resourceName );
+								localResource = JabberTextDecode( r[i].resourceName );
+								index = SendMessage( hwndList, LB_ADDSTRING, 0, ( LPARAM )localResource );
 								SendMessage( hwndList, LB_SETITEMDATA, index, ( LPARAM )r[i].resourceName );
+								free( localResource );
 						}	}
 
 						switch ( item->subscription ) {
 						case SUB_BOTH:
-							SetDlgItemText( hwndDlg, IDC_SUBSCRIPTION, TranslateT( "both" ));
+							SetDlgItemText( hwndDlg, IDC_SUBSCRIPTION, JTranslate( "both" ));
 							break;
 						case SUB_TO:
-							SetDlgItemText( hwndDlg, IDC_SUBSCRIPTION, TranslateT( "to" ));
+							SetDlgItemText( hwndDlg, IDC_SUBSCRIPTION, JTranslate( "to" ));
 							break;
 						case SUB_FROM:
-							SetDlgItemText( hwndDlg, IDC_SUBSCRIPTION, TranslateT( "from" ));
+							SetDlgItemText( hwndDlg, IDC_SUBSCRIPTION, JTranslate( "from" ));
 							break;
 						default:
-							SetDlgItemText( hwndDlg, IDC_SUBSCRIPTION, TranslateT( "none" ));
+							SetDlgItemText( hwndDlg, IDC_SUBSCRIPTION, JTranslate( "none" ));
 							break;
 					}	}
-					else SetDlgItemText( hwndDlg, IDC_SUBSCRIPTION, TranslateT( "none ( not on roster )" ));
+					else SetDlgItemText( hwndDlg, IDC_SUBSCRIPTION, JTranslate( "none ( not on roster )" ));
 				}
 				else EnableWindow( hwndList, FALSE );
 				JFreeVariant( &dbv );
@@ -114,27 +137,27 @@ static BOOL CALLBACK JabberUserInfoDlgProc( HWND hwndDlg, UINT msg, WPARAM wPara
 			switch ( HIWORD( wParam )) {
 			case LBN_SELCHANGE:
 				{
+					DBVARIANT dbv;
+					char* jid;
+
 					HWND hwndList = GetDlgItem( hwndDlg, IDC_INFO_RESOURCE );
 					HANDLE hContact = ( HANDLE ) GetWindowLong( hwndDlg, GWL_USERDATA );
-
-					DBVARIANT dbv;
-					if ( !JGetStringT( hContact, "jid", &dbv )) {
-						TCHAR* jid = dbv.ptszVal;
+					if ( !DBGetContactSetting( hContact, jabberProtoName, "jid", &dbv )) {
+						jid = dbv.pszVal;
 						int nItem = SendMessage( hwndList, LB_GETCURSEL, 0, 0 );
-						TCHAR* szResource = ( TCHAR* )SendMessage( hwndList, LB_GETITEMDATA, ( WPARAM ) nItem, 0 );
+						char* szResource = ( char* )SendMessage( hwndList, LB_GETITEMDATA, ( WPARAM ) nItem, 0 );
 						JABBER_LIST_ITEM* item = JabberListGetItemPtr( LIST_ROSTER, jid );
 						JABBER_RESOURCE_STATUS *r;
 
-						if ( szResource != ( TCHAR* )LB_ERR && item != NULL && ( r=item->resource ) != NULL ) {
-							int i;
-							for ( i=0; i < item->resourceCount && _tcscmp( r[i].resourceName, szResource ); i++ );
+						if ( szResource != ( char* )LB_ERR && item != NULL && ( r=item->resource ) != NULL ) {
+							for ( int i=0; i<item->resourceCount && strcmp( r[i].resourceName, szResource ); i++ );
 							if ( i < item->resourceCount ) {
 								if ( r[i].software != NULL ) {
 									SetDlgItemText( hwndDlg, IDC_SOFTWARE, r[i].software );
 									EnableWindow( GetDlgItem( hwndDlg, IDC_SOFTWARE ), TRUE );
 								}
 								else {
-									SetDlgItemText( hwndDlg, IDC_SOFTWARE, TranslateT( "<not specified>" ));
+									SetDlgItemText( hwndDlg, IDC_SOFTWARE, JTranslate( "<not specified>" ));
 									EnableWindow( GetDlgItem( hwndDlg, IDC_SOFTWARE ), FALSE );
 								}
 								if ( r[i].version != NULL ) {
@@ -142,7 +165,7 @@ static BOOL CALLBACK JabberUserInfoDlgProc( HWND hwndDlg, UINT msg, WPARAM wPara
 									EnableWindow( GetDlgItem( hwndDlg, IDC_VERSION ), TRUE );
 								}
 								else {
-									SetDlgItemText( hwndDlg, IDC_VERSION, TranslateT( "<not specified>" ));
+									SetDlgItemText( hwndDlg, IDC_VERSION, JTranslate( "<not specified>" ));
 									EnableWindow( GetDlgItem( hwndDlg, IDC_VERSION ), FALSE );
 								}
 								if ( r[i].system != NULL ) {
@@ -150,7 +173,7 @@ static BOOL CALLBACK JabberUserInfoDlgProc( HWND hwndDlg, UINT msg, WPARAM wPara
 									EnableWindow( GetDlgItem( hwndDlg, IDC_SYSTEM ), TRUE );
 								}
 								else {
-									SetDlgItemText( hwndDlg, IDC_SYSTEM, TranslateT( "<not specified>" ));
+									SetDlgItemText( hwndDlg, IDC_SYSTEM, JTranslate( "<not specified>" ));
 									EnableWindow( GetDlgItem( hwndDlg, IDC_SYSTEM ), FALSE );
 						}	}	}
 						JFreeVariant( &dbv );
@@ -161,9 +184,6 @@ static BOOL CALLBACK JabberUserInfoDlgProc( HWND hwndDlg, UINT msg, WPARAM wPara
 	}
 	return FALSE;
 }
-
-/////////////////////////////////////////////////////////////////////////////////////////
-// JabberUserPhotoDlgProc - Jabber photo dialog
 
 typedef struct {
 	HANDLE hContact;
@@ -180,7 +200,7 @@ static BOOL CALLBACK JabberUserPhotoDlgProc( HWND hwndDlg, UINT msg, WPARAM wPar
 	case WM_INITDIALOG:
 		// lParam is hContact
 		TranslateDialogDefault( hwndDlg );
-		photoInfo = ( USER_PHOTO_INFO * ) mir_alloc( sizeof( USER_PHOTO_INFO ));
+		photoInfo = ( USER_PHOTO_INFO * ) malloc( sizeof( USER_PHOTO_INFO ));
 		photoInfo->hContact = ( HANDLE ) lParam;
 		photoInfo->hBitmap = NULL;
 		SetWindowLong( hwndDlg, GWL_USERDATA, ( LONG ) photoInfo );
@@ -204,14 +224,15 @@ static BOOL CALLBACK JabberUserPhotoDlgProc( HWND hwndDlg, UINT msg, WPARAM wPar
 		{
 			JABBER_LIST_ITEM *item;
 			DBVARIANT dbv;
+			char* jid;
 
 			if ( photoInfo->hBitmap ) {
 				DeleteObject( photoInfo->hBitmap );
 				photoInfo->hBitmap = NULL;
 			}
 			ShowWindow( GetDlgItem( hwndDlg, IDC_SAVE ), SW_HIDE );
-			if ( !JGetStringT( photoInfo->hContact, "jid", &dbv )) {
-				TCHAR* jid = dbv.ptszVal;
+			if ( !DBGetContactSetting( photoInfo->hContact, jabberProtoName, "jid", &dbv )) {
+				jid = dbv.pszVal;
 				if (( item=JabberListGetItemPtr( LIST_ROSTER, jid )) != NULL ) {
 					if ( item->photoFileName ) {
 						JabberLog( "Showing picture from %s", item->photoFileName );
@@ -232,18 +253,18 @@ static BOOL CALLBACK JabberUserPhotoDlgProc( HWND hwndDlg, UINT msg, WPARAM wPar
 				DBVARIANT dbv;
 				JABBER_LIST_ITEM *item;
 				HANDLE hFile;
-				OPENFILENAMEA ofn;
+				OPENFILENAME ofn;
 				static char szFilter[512];
 				unsigned char buffer[3];
 				char szFileName[_MAX_PATH];
+				char* jid;
 				DWORD n;
 
-				if ( JGetStringT( photoInfo->hContact, "jid", &dbv ))
+				if ( DBGetContactSetting( photoInfo->hContact, jabberProtoName, "jid", &dbv ))
 					break;
-
-				TCHAR* jid = dbv.ptszVal;
+				jid = dbv.pszVal;
 				if (( item=JabberListGetItemPtr( LIST_ROSTER, jid )) != NULL ) {
-					if (( hFile=CreateFileA( item->photoFileName, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL )) != INVALID_HANDLE_VALUE ) {
+					if (( hFile=CreateFile( item->photoFileName, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL )) != INVALID_HANDLE_VALUE ) {
 						if ( ReadFile( hFile, buffer, 3, &n, NULL ) && n==3 ) {
 							if ( !strncmp(( char* )buffer, "BM", 2 )) {
 								mir_snprintf( szFilter, sizeof( szFilter ), "BMP %s ( *.bmp )", JTranslate( "format" ));
@@ -267,7 +288,11 @@ static BOOL CALLBACK JabberUserPhotoDlgProc( HWND hwndDlg, UINT msg, WPARAM wPar
 							}
 							szFilter[sizeof( szFilter )-1] = '\0';
 
+#ifndef OPENFILENAME_SIZE_VERSION_400
+							ofn.lStructSize = sizeof( OPENFILENAME );
+#else
 							ofn.lStructSize = OPENFILENAME_SIZE_VERSION_400;
+#endif
 							ofn.hwndOwner = hwndDlg;
 							ofn.hInstance = NULL;
 							ofn.lpstrFilter = szFilter;
@@ -288,9 +313,9 @@ static BOOL CALLBACK JabberUserPhotoDlgProc( HWND hwndDlg, UINT msg, WPARAM wPar
 							ofn.lpfnHook = NULL;
 							ofn.lpTemplateName = NULL;
 							szFileName[0] = '\0';
-							if ( GetSaveFileNameA( &ofn )) {
+							if ( GetSaveFileName( &ofn )) {
 								JabberLog( "File selected is %s", szFileName );
-								CopyFileA( item->photoFileName, szFileName, FALSE );
+								CopyFile( item->photoFileName, szFileName, FALSE );
 							}
 						}
 						CloseHandle( hFile );
@@ -303,20 +328,26 @@ static BOOL CALLBACK JabberUserPhotoDlgProc( HWND hwndDlg, UINT msg, WPARAM wPar
 		}
 		break;
 	case WM_PAINT:
-		if ( !jabberOnline )
-			SetDlgItemText( hwndDlg, IDC_CANVAS, TranslateT( "<Photo not available while offline>" ));
-		else if ( !photoInfo->hBitmap )
-			SetDlgItemText( hwndDlg, IDC_CANVAS, TranslateT( "<No photo>" ));
+		if ( !jabberOnline ) {
+			SetDlgItemText( hwndDlg, IDC_CANVAS, JTranslate( "<Photo not available while offline>" ));
+		}
+		else if ( !photoInfo->hBitmap ) {
+			SetDlgItemText( hwndDlg, IDC_CANVAS, JTranslate( "<No photo>" ));
+		}
 		else {
 			BITMAP bm;
+			HDC hdcMem;
+			HWND hwndCanvas;
+			HDC hdcCanvas;
 			POINT ptSize, ptOrg, pt, ptFitSize;
 			RECT rect;
+			HBITMAP hBitmap;
 
-			SetDlgItemTextA( hwndDlg, IDC_CANVAS, "" );
-			HBITMAP hBitmap = photoInfo->hBitmap;
-			HWND hwndCanvas = GetDlgItem( hwndDlg, IDC_CANVAS );
-			HDC hdcCanvas = GetDC( hwndCanvas );
-			HDC hdcMem = CreateCompatibleDC( hdcCanvas );
+			SetDlgItemText( hwndDlg, IDC_CANVAS, "" );
+			hBitmap = photoInfo->hBitmap;
+			hwndCanvas = GetDlgItem( hwndDlg, IDC_CANVAS );
+			hdcCanvas = GetDC( hwndCanvas );
+			hdcMem = CreateCompatibleDC( hdcCanvas );
 			SelectObject( hdcMem, hBitmap );
 			SetMapMode( hdcMem, GetMapMode( hdcCanvas ));
 			GetObject( hBitmap, sizeof( BITMAP ), ( LPVOID ) &bm );
@@ -357,136 +388,8 @@ static BOOL CALLBACK JabberUserPhotoDlgProc( HWND hwndDlg, UINT msg, WPARAM wPar
 			JabberLog( "Delete bitmap" );
 			DeleteObject( photoInfo->hBitmap );
 		}
-		if ( photoInfo ) mir_free( photoInfo );
+		if ( photoInfo ) free( photoInfo );
 		break;
 	}
 	return FALSE;
-}
-
-/////////////////////////////////////////////////////////////////////////////////////////
-// JabberSetAvatarDlgProc - avatar options dialog procedure
-
-static HBITMAP hAvatar;
-
-static void sttSaveAvatar( HWND hwndDlg )
-{
-	char szFileName[ MAX_PATH ];
-	if ( JabberEnterBitmapName( szFileName ) != ERROR_SUCCESS )
-		return;
-
-	HBITMAP hBitmap = (HBITMAP)CallService(MS_UTILS_LOADBITMAP, 0, (WPARAM)szFileName );
-	if ( hBitmap == NULL )
-		return;
-
-	if (( hBitmap = JabberStretchBitmap( hBitmap )) == NULL )
-		return;
-
-	JabberBitmapToAvatar( hAvatar = hBitmap );
-
-	hBitmap = ( HBITMAP )SendDlgItemMessage(hwndDlg, IDC_AVATAR, STM_SETIMAGE, IMAGE_BITMAP, (WPARAM)hBitmap );
-	if ( hBitmap )
-		DeleteObject( hBitmap );
-
-	RedrawWindow(GetDlgItem(hwndDlg, IDC_AVATAR), NULL, NULL, RDW_INVALIDATE);
-
-	if ( jabberConnected )
-		JabberSendPresence( jabberDesiredStatus, false );
-}
-
-static BOOL CALLBACK JabberSetAvatarDlgProc( HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam )
-{
-	switch ( msg ) {
-	case WM_INITDIALOG:
-		TranslateDialogDefault( hwndDlg );
-		{
-			hAvatar = NULL;
-
-			BOOL tValue = JGetByte( "EnableAvatars", 1 );
-			CheckDlgButton( hwndDlg, IDC_ENABLE_AVATARS,	tValue );
-			if ( tValue ) {
-				char szAvatar[ MAX_PATH ];
-				JabberGetAvatarFileName( NULL, szAvatar, sizeof szAvatar );
-				hAvatar = (HBITMAP)CallService(MS_UTILS_LOADBITMAP, 0, (WPARAM)szAvatar );
-				if ( hAvatar )
-	            SendDlgItemMessage(hwndDlg, IDC_AVATAR, STM_SETIMAGE, IMAGE_BITMAP, (WPARAM)hAvatar );
-		}	}
-
-		return TRUE;
-
-	case WM_COMMAND:
-		if ( HIWORD( wParam ) == BN_CLICKED ) {
-			switch( LOWORD( wParam )) {
-			case IDC_SETAVATAR:
-				sttSaveAvatar( hwndDlg );
-				break;
-
-			case IDC_DELETEAVATAR:
-				char tFileName[ MAX_PATH ];
-				JabberGetAvatarFileName( NULL, tFileName, sizeof tFileName );
-				DeleteFileA( tFileName );
-				JDeleteSetting( NULL, "AvatarHash" );
-				JDeleteSetting( NULL, "AvatarType" );
-
-				DeleteObject( hAvatar ); hAvatar = NULL;
-            HBITMAP hBitmap = (HBITMAP)SendDlgItemMessage(hwndDlg, IDC_AVATAR, STM_SETIMAGE, IMAGE_BITMAP, (WPARAM)NULL );
-				if ( hBitmap )
-					DeleteObject( hBitmap );
-
-				if ( jabberConnected )
-					JabberSendPresence( jabberDesiredStatus, false );
-				RedrawWindow(GetDlgItem(hwndDlg, IDC_AVATAR), NULL, NULL, RDW_INVALIDATE);
-				break;
-		}	}
-		break;
-
-	case WM_DESTROY:
-		if ( hAvatar )
-			DeleteObject( hAvatar );
-	}
-
-	return 0;
-}
-
-/////////////////////////////////////////////////////////////////////////////////////////
-// JabberUserInfoInit - initializes user info option dialogs
-
-int JabberUserInfoInit( WPARAM wParam, LPARAM lParam )
-{
-	if ( !JCallService( MS_PROTO_ISPROTOCOLLOADED, 0, ( LPARAM )jabberProtoName ))
-		return 0;
-
-	OPTIONSDIALOGPAGE odp = {0};
-	odp.cbSize = sizeof( odp );
-	odp.hInstance = hInst;
-
-	HANDLE hContact = ( HANDLE )lParam;
-	if ( hContact == NULL ) {
-		if ( JGetByte( "EnableAvatars", TRUE )) {
-			char szTitle[256];
-			mir_snprintf( szTitle, sizeof( szTitle ), "%s %s", jabberProtoName, JTranslate( "Avatar" ));
-
-			odp.pfnDlgProc = JabberSetAvatarDlgProc;
-			odp.position = 2000000001;
-			odp.pszTemplate = MAKEINTRESOURCEA( IDD_OPT_SETAVATAR );
-			odp.pszTitle = szTitle;
-			JCallService( MS_USERINFO_ADDPAGE, wParam, ( LPARAM )&odp );
-		}
-      return 0;
-	}
-
-	char* szProto = ( char* )JCallService( MS_PROTO_GETCONTACTBASEPROTO, ( WPARAM ) hContact, 0 );
-	if ( szProto != NULL && !strcmp( szProto, jabberProtoName )) {
-		odp.pfnDlgProc = JabberUserInfoDlgProc;
-		odp.position = -2000000000;
-		odp.pszTemplate = MAKEINTRESOURCEA( IDD_INFO_JABBER );
-		odp.pszTitle = jabberModuleName;
-		JCallService( MS_USERINFO_ADDPAGE, wParam, ( LPARAM )&odp );
-
-		odp.pfnDlgProc = JabberUserPhotoDlgProc;
-		odp.position = 2000000000;
-		odp.pszTemplate = MAKEINTRESOURCEA( IDD_VCARD_PHOTO );
-		odp.pszTitle = JTranslate( "Photo" );
-		JCallService( MS_USERINFO_ADDPAGE, wParam, ( LPARAM )&odp );
-	}
-	return 0;
 }

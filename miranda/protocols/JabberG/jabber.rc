@@ -52,137 +52,88 @@ END
 // Dialog
 //
 
-IDD_OPT_JABBER DIALOGEX 0, 0, 304, 226
+IDD_OPT_JABBER DIALOGEX 0, 0, 258, 214
 STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD
 EXSTYLE WS_EX_CONTROLPARENT
 FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
-    GROUPBOX        "Jabber",IDC_SIMPLE,4,0,298,116
-    LTEXT           "Username:",IDC_STATIC,15,16,45,8
-    EDITTEXT        IDC_EDIT_USERNAME,66,14,86,12,ES_AUTOHSCROLL
-    LTEXT           "Password:",IDC_STATIC,15,30,45,8
-    EDITTEXT        IDC_EDIT_PASSWORD,66,28,86,12,ES_PASSWORD | 
+    GROUPBOX        "Jabber",IDC_SIMPLE,7,7,244,99
+    LTEXT           "Username:",IDC_STATIC,19,21,45,8
+    EDITTEXT        IDC_EDIT_USERNAME,70,19,86,12,ES_AUTOHSCROLL
+    LTEXT           "Password:",IDC_STATIC,19,35,45,8
+    EDITTEXT        IDC_EDIT_PASSWORD,70,33,86,12,ES_PASSWORD | 
                     ES_AUTOHSCROLL
-    LTEXT           "Resource:",IDC_RESOURCE_T,15,44,45,8
-    EDITTEXT        IDC_EDIT_RESOURCE,66,42,86,12,ES_AUTOHSCROLL
-    LTEXT           "Priority:",IDC_PRIORITY_LABEL,161,44,31,8
-    EDITTEXT        IDC_PRIORITY,195,42,42,12,ES_AUTOHSCROLL | ES_NUMBER
+    LTEXT           "Resource:",IDC_RESOURCE_T,19,49,45,8
+    EDITTEXT        IDC_EDIT_RESOURCE,70,47,86,12,ES_AUTOHSCROLL
+    LTEXT           "Priority:",IDC_PRIORITY_LABEL,165,49,31,8
+    EDITTEXT        IDC_PRIORITY,199,47,42,12,ES_AUTOHSCROLL | ES_NUMBER
     CONTROL         "Spin1",IDC_PRIORITY_SPIN,"msctls_updown32",
                     UDS_SETBUDDYINT | UDS_ALIGNRIGHT | UDS_AUTOBUDDY | 
-                    UDS_NOTHOUSANDS,236,42,11,12
+                    UDS_NOTHOUSANDS,231,47,11,12
     CONTROL         "Save password",IDC_SAVEPASSWORD,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,66,56,172,10
-    LTEXT           "Login server:",IDC_STATIC,15,70,45,8
-    EDITTEXT        IDC_EDIT_LOGIN_SERVER,66,68,86,12,ES_AUTOHSCROLL
-    LTEXT           "Port:",IDC_STATIC,15,84,45,8
-    EDITTEXT        IDC_PORT,66,82,26,12,ES_AUTOHSCROLL | ES_NUMBER
+                    BS_AUTOCHECKBOX | WS_TABSTOP,70,61,172,10
+    LTEXT           "Login server:",IDC_STATIC,19,75,45,8
+    EDITTEXT        IDC_EDIT_LOGIN_SERVER,70,73,86,12,ES_AUTOHSCROLL
+    LTEXT           "Port:",IDC_STATIC,19,89,45,8
+    EDITTEXT        IDC_PORT,70,87,26,12,ES_AUTOHSCROLL | ES_NUMBER
     CONTROL         "Use SSL",IDC_USE_SSL,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,100,83,82,10
-    CONTROL         "Use TLS",IDC_USE_TLS,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,189,83,97,10
-    PUSHBUTTON      "Register new user",IDC_BUTTON_REGISTER,156,14,78,13
-    PUSHBUTTON      "Unregister",IDC_UNREGISTER,238,14,56,13
+                    WS_TABSTOP,104,88,140,10
+    PUSHBUTTON      "Register new user",IDC_BUTTON_REGISTER,165,19,78,13
     CONTROL         "List of public servers",IDC_LINK_PUBLIC_SERVER,
-                    "Hyperlink",WS_TABSTOP,161,69,79,11
-    GROUPBOX        "Expert",IDC_STATIC,4,120,298,106
+                    "Hyperlink",WS_TABSTOP,165,74,79,11
+    GROUPBOX        "Expert",IDC_STATIC,7,108,244,99
     CONTROL         "Manually specify connection host",IDC_MANUAL,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,14,134,223,10
-    LTEXT           "Host:",IDC_STATIC,26,148,26,8
-    EDITTEXT        IDC_HOST,57,145,90,12,ES_AUTOHSCROLL | WS_DISABLED
-    LTEXT           "Port:",IDC_STATIC,161,148,21,8
-    EDITTEXT        IDC_HOSTPORT,181,145,31,12,ES_AUTOHSCROLL | ES_NUMBER | 
+                    BS_AUTOCHECKBOX | WS_TABSTOP,19,121,223,10
+    LTEXT           "Host:",IDC_STATIC,31,134,26,8
+    EDITTEXT        IDC_HOST,62,132,90,12,ES_AUTOHSCROLL | WS_DISABLED
+    LTEXT           "Port:",IDC_STATIC,161,134,21,8
+    EDITTEXT        IDC_HOSTPORT,186,132,31,12,ES_AUTOHSCROLL | ES_NUMBER | 
                     WS_DISABLED
     CONTROL         "Keep connection alive",IDC_KEEPALIVE,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,14,158,221,10
+                    BS_AUTOCHECKBOX | WS_TABSTOP,19,146,221,10
     CONTROL         "Automatically delete contacts not in my roster",
-                    IDC_ROSTER_SYNC,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,
-                    172,221,10
-    LTEXT           "User directory:",IDC_JUD_LABEL,14,188,68,8
-    EDITTEXT        IDC_JUD,87,185,103,12,ES_AUTOHSCROLL
-    LTEXT           "Messaging language:",IDC_MSGLANG_LABEL,14,203,70,8
-    COMBOBOX        IDC_MSGLANG,87,201,103,69,CBS_DROPDOWNLIST | CBS_SORT | 
+                    IDC_ROSTER_SYNC,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,19,
+                    158,221,10
+    LTEXT           "User directory:",IDC_JUD_LABEL,19,175,68,8
+    EDITTEXT        IDC_JUD,92,172,103,12,ES_AUTOHSCROLL
+    LTEXT           "Messaging language:",IDC_MSGLANG_LABEL,19,189,70,8
+    COMBOBOX        IDC_MSGLANG,92,187,103,69,CBS_DROPDOWNLIST | CBS_SORT | 
                     WS_VSCROLL | WS_TABSTOP
-    CONTROL         "Press here to download OpenSSL, required for SSL & TLS support",
-                    IDC_DOWNLOAD_OPENSSL,"Hyperlink",WS_TABSTOP,16,97,270,11
-END
-
-IDD_OPT_JABBER2 DIALOGEX 0, 0, 304, 199
-STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD
-EXSTYLE WS_EX_CONTROLPARENT
-FONT 8, "MS Shell Dlg", 0, 0, 0x1
-BEGIN
-    GROUPBOX        "File Transfer",IDC_STATIC,8,4,290,69
-    CONTROL         "Allow file sending through direct peer-to-peer connection",
-                    IDC_DIRECT,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,16,18,
-                    202,10
-    CONTROL         "Specify proxy server",IDC_PROXY_MANUAL,"Button",
-                    BS_AUTOCHECKBOX | WS_DISABLED | WS_TABSTOP,16,54,102,10
-    CONTROL         "Allow file sending through bytestream proxy server",
-                    IDC_PROXY,"Button",BS_AUTOCHECKBOX | WS_DISABLED | 
-                    WS_TABSTOP,16,42,202,10
-    EDITTEXT        IDC_PROXY_ADDR,124,53,81,12,ES_AUTOHSCROLL | WS_DISABLED | 
-                    WS_GROUP
-    CONTROL         "Specify external address",IDC_DIRECT_MANUAL,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,16,30,101,10
-    EDITTEXT        IDC_DIRECT_ADDR,124,29,81,12,ES_AUTOHSCROLL
-    GROUPBOX        "Miscellaneous",IDC_STATIC,8,75,290,116
-    CONTROL         "Automatically add contact when accept authorization",
-                    IDC_AUTO_ADD,"Button",BS_AUTOCHECKBOX | BS_TOP | 
-                    WS_TABSTOP,16,90,280,12
-    CONTROL         "Automatically join conferences on login",IDC_AUTOJOIN,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,16,102,280,10
-    CONTROL         "Autoaccept multiuser chat invitations",
-                    IDC_AUTO_ACCEPT_MUC,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,16,114,280,10
-    CONTROL         "Send messages slower, but with full acknowledgement",
-                    IDC_MSG_ACK,"Button",BS_AUTOCHECKBOX | BS_TOP | 
-                    WS_TABSTOP,16,126,269,10
-    CONTROL         "Disable main menu",IDC_DISABLE_MAINMENU,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,16,138,280,10
-    CONTROL         "Show transport agents on contact list",
-                    IDC_SHOW_TRANSPORT,"Button",BS_AUTOCHECKBOX | BS_TOP | 
-                    WS_TABSTOP,16,150,280,10
-    CONTROL         "Enable avatars",IDC_ENABLE_AVATARS,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,16,162,280,10
-    CONTROL         "Disable SASL authentication (for old servers)",
-                    IDC_DISABLE_SASL,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,
-                    16,174,279,10
 END
 
 IDD_INFO_JABBER DIALOGEX 0, 0, 221, 132
 STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD
-EXSTYLE WS_EX_CONTROLPARENT
-FONT 8, "MS Shell Dlg", 0, 0, 0x1
+FONT 8, "MS Shell Dlg", 0, 0, 0x0
 BEGIN
     LTEXT           "JID:",IDC_STATIC,7,7,19,8
     EDITTEXT        IDC_INFO_JID,31,7,183,12,ES_AUTOHSCROLL | ES_READONLY | 
-                    NOT WS_BORDER
+                    NOT WS_BORDER | NOT WS_TABSTOP
     LTEXT           "Resources:",IDC_STATIC,7,65,81,8
     LISTBOX         IDC_INFO_RESOURCE,7,75,69,50,LBS_SORT | 
                     LBS_NOINTEGRALHEIGHT | WS_VSCROLL
     LTEXT           "Subscription type:",IDC_STATIC,7,20,60,8,NOT WS_GROUP
     EDITTEXT        IDC_SUBSCRIPTION,70,20,144,12,ES_READONLY | NOT 
-                    WS_BORDER
+                    WS_BORDER | NOT WS_TABSTOP
     LTEXT           "Software:",IDC_STATIC,81,74,35,8
     LTEXT           "Version:",IDC_STATIC,81,103,35,8
     LTEXT           "System:",IDC_STATIC,81,117,35,8
     EDITTEXT        IDC_SOFTWARE,121,74,93,26,ES_MULTILINE | ES_READONLY | 
-                    WS_DISABLED | NOT WS_BORDER
+                    WS_DISABLED | NOT WS_BORDER | NOT WS_TABSTOP
     EDITTEXT        IDC_VERSION,121,103,93,12,ES_AUTOHSCROLL | ES_READONLY | 
-                    WS_DISABLED | NOT WS_BORDER
+                    WS_DISABLED | NOT WS_BORDER | NOT WS_TABSTOP
     EDITTEXT        IDC_SYSTEM,121,117,93,13,ES_AUTOHSCROLL | ES_READONLY | 
-                    WS_DISABLED | NOT WS_BORDER
+                    WS_DISABLED | NOT WS_BORDER | NOT WS_TABSTOP
 END
 
-IDD_OPT_REGISTER DIALOGEX 0, 0, 165, 61
+IDD_OPT_REGISTER DIALOG  0, 0, 165, 61
 STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | DS_CENTER | WS_POPUP | 
     WS_CAPTION
 CAPTION "Jabber Account Registration"
-FONT 8, "MS Shell Dlg", 0, 0, 0x1
+FONT 8, "MS Shell Dlg"
 BEGIN
     LTEXT           "",IDC_REG_STATUS,18,7,139,19
     CONTROL         "Progress1",IDC_PROGRESS_REG,"msctls_progress32",NOT 
-                    WS_VISIBLE | WS_BORDER | WS_TABSTOP,18,27,130,7
+                    WS_VISIBLE | WS_BORDER,18,27,130,7
     PUSHBUTTON      "OK",IDOK,29,40,50,14
     DEFPUSHBUTTON   "Cancel",IDCANCEL,85,40,50,14
     DEFPUSHBUTTON   "OK",IDOK2,55,40,50,14,NOT WS_VISIBLE
@@ -232,24 +183,24 @@ FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
     LTEXT           "Instruction:",IDC_STATIC,7,7,243,8,NOT WS_GROUP
     EDITTEXT        IDC_INSTRUCTION,7,17,243,38,ES_MULTILINE | ES_READONLY | 
-                    WS_VSCROLL
+                    WS_VSCROLL | NOT WS_TABSTOP
     LTEXT           "",IDC_FRAME,7,60,243,138,NOT WS_GROUP,WS_EX_CLIENTEDGE
     EDITTEXT        IDC_FRAME_TEXT,18,101,220,33,ES_CENTER | ES_MULTILINE | 
-                    ES_READONLY | NOT WS_BORDER
+                    ES_READONLY | NOT WS_BORDER | NOT WS_TABSTOP
     SCROLLBAR       IDC_VSCROLL,238,61,11,136,SBS_VERT | WS_DISABLED
     DEFPUSHBUTTON   "Submit",IDC_SUBMIT,146,203,50,14,WS_DISABLED
     PUSHBUTTON      "Cancel",IDCANCEL,200,203,50,14
 END
 
-IDD_PASSWORD DIALOGEX 0, 0, 286, 63
+IDD_PASSWORD DIALOG  0, 0, 151, 63
 STYLE DS_SETFONT | DS_MODALFRAME | DS_3DLOOK | DS_FIXEDSYS | DS_CENTER | 
     WS_POPUP | WS_VISIBLE | WS_CAPTION
 CAPTION "Jabber Password"
-FONT 8, "MS Shell Dlg", 0, 0, 0x1
+FONT 8, "MS Shell Dlg"
 BEGIN
-    EDITTEXT        IDC_JID,7,7,272,12,ES_READONLY | NOT WS_BORDER | NOT 
+    EDITTEXT        IDC_JID,7,7,137,12,ES_READONLY | NOT WS_BORDER | NOT 
                     WS_TABSTOP
-    EDITTEXT        IDC_PASSWORD,7,22,272,12,ES_PASSWORD | ES_AUTOHSCROLL
+    EDITTEXT        IDC_PASSWORD,7,22,137,12,ES_PASSWORD | ES_AUTOHSCROLL
     DEFPUSHBUTTON   "OK",IDOK,23,42,50,14
     PUSHBUTTON      "Cancel",IDCANCEL,77,42,50,14
 END
@@ -263,12 +214,12 @@ FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
     DEFPUSHBUTTON   "Close",IDCLOSE,188,190,45,14
     LTEXT           "",IDC_WHITERECT,0,0,238,26
-    ICON            IDI_WRITE,IDC_LOGO,7,4,20,20
+    ICON            IDI_WRITE,IDC_STATIC,7,4,20,20
     LTEXT           "",IDC_NAME,33,5,200,8,0,WS_EX_TRANSPARENT
     CONTROL         "Tab1",IDC_TABS,"SysTabControl32",TCS_HOTTRACK | 
                     TCS_MULTILINE | WS_TABSTOP,5,29,228,158
-    LTEXT           "View and update Jabber personal vCard",IDC_DESCRIPTION,
-                    44,13,189,8,0,WS_EX_TRANSPARENT
+    LTEXT           "View and update Jabber personal vCard",IDC_STATIC,44,13,
+                    189,8,0,WS_EX_TRANSPARENT
     CTEXT           "Updating",IDC_UPDATING,65,194,49,8,SS_NOPREFIX | 
                     SS_CENTERIMAGE | NOT WS_VISIBLE
     PUSHBUTTON      "Update Now",IDC_UPDATE,5,190,55,14,WS_DISABLED
@@ -354,20 +305,20 @@ BEGIN
     LTEXT           "E-mail:",IDC_STATIC,5,5,212,8
     CONTROL         "List1",IDC_EMAILS,"SysListView32",LVS_REPORT | 
                     LVS_SINGLESEL | LVS_NOLABELWRAP | LVS_AUTOARRANGE | 
-                    LVS_NOCOLUMNHEADER | LVS_NOSORTHEADER | WS_BORDER | 
-                    WS_TABSTOP,5,14,212,50
+                    LVS_NOCOLUMNHEADER | LVS_NOSORTHEADER | WS_BORDER,5,14,
+                    212,50
     LTEXT           "Phone:",IDC_STATIC,5,68,212,8
     CONTROL         "List1",IDC_PHONES,"SysListView32",LVS_REPORT | 
                     LVS_SINGLESEL | LVS_NOLABELWRAP | LVS_AUTOARRANGE | 
-                    LVS_NOCOLUMNHEADER | LVS_NOSORTHEADER | WS_BORDER | 
-                    WS_TABSTOP,5,77,212,50
+                    LVS_NOCOLUMNHEADER | LVS_NOSORTHEADER | WS_BORDER,5,77,
+                    212,50
 END
 
-IDD_VCARD_ADDEMAIL DIALOGEX 0, 0, 186, 89
+IDD_VCARD_ADDEMAIL DIALOG  0, 0, 186, 89
 STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | 
     WS_SYSMENU
 CAPTION "Jabber vCard: Add Email Address"
-FONT 8, "MS Shell Dlg", 0, 0, 0x1
+FONT 8, "MS Shell Dlg"
 BEGIN
     LTEXT           "Email address:",IDC_STATIC,7,8,52,8
     EDITTEXT        IDC_EMAIL,61,7,118,12,ES_AUTOHSCROLL
@@ -383,11 +334,11 @@ BEGIN
     PUSHBUTTON      "Cancel",IDCANCEL,96,68,50,14
 END
 
-IDD_VCARD_ADDPHONE DIALOGEX 0, 0, 186, 110
+IDD_VCARD_ADDPHONE DIALOG  0, 0, 186, 110
 STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | 
     WS_SYSMENU
 CAPTION "Jabber vCard: Add Phone Number"
-FONT 8, "MS Shell Dlg", 0, 0, 0x1
+FONT 8, "MS Shell Dlg"
 BEGIN
     LTEXT           "Phone number:",IDC_STATIC,7,8,49,8
     EDITTEXT        IDC_PHONE,61,7,118,12,ES_AUTOHSCROLL
@@ -439,11 +390,11 @@ BEGIN
     EDITTEXT        IDC_DESC,5,15,212,112,ES_MULTILINE
 END
 
-IDD_CHANGEPASSWORD DIALOGEX 0, 0, 181, 79
+IDD_CHANGEPASSWORD DIALOG  0, 0, 181, 79
 STYLE DS_SETFONT | DS_MODALFRAME | DS_SETFOREGROUND | DS_3DLOOK | 
     DS_FIXEDSYS | DS_CENTER | WS_POPUP | WS_VISIBLE | WS_CAPTION
 CAPTION "Change Password"
-FONT 8, "MS Shell Dlg", 0, 0, 0x1
+FONT 8, "MS Shell Dlg"
 BEGIN
     LTEXT           "Current Password:",IDC_STATIC,7,8,81,8
     EDITTEXT        IDC_OLDPASSWD,95,7,79,12,ES_PASSWORD | ES_AUTOHSCROLL
@@ -453,6 +404,39 @@ BEGIN
     EDITTEXT        IDC_NEWPASSWD2,95,35,79,12,ES_PASSWORD | ES_AUTOHSCROLL
     DEFPUSHBUTTON   "OK",IDOK,38,58,50,14
     PUSHBUTTON      "Cancel",IDCANCEL,92,58,50,14
+END
+
+IDD_OPT_JABBER2 DIALOGEX 0, 0, 222, 148
+STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD
+EXSTYLE WS_EX_CONTROLPARENT
+FONT 8, "MS Shell Dlg", 0, 0, 0x1
+BEGIN
+    GROUPBOX        "File Transfer",IDC_STATIC,2,3,216,71
+    CONTROL         "Allow file sending through bytestream proxy server",
+                    IDC_PROXY,"Button",BS_AUTOCHECKBOX | WS_DISABLED | 
+                    WS_TABSTOP,9,42,202,10
+    EDITTEXT        IDC_PROXY_ADDR,117,53,81,12,ES_AUTOHSCROLL | WS_DISABLED | 
+                    WS_GROUP
+    CONTROL         "Specify external address",IDC_DIRECT_MANUAL,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,9,30,101,10
+    EDITTEXT        IDC_DIRECT_ADDR,117,29,81,12,ES_AUTOHSCROLL
+    GROUPBOX        "Miscellaneous",IDC_STATIC,2,77,216,66
+    CONTROL         "Show transport agents on contact list",
+                    IDC_SHOW_TRANSPORT,"Button",BS_AUTOCHECKBOX | BS_TOP | 
+                    WS_TABSTOP,9,90,202,11
+    CONTROL         "Automatically add contact when accept authorization",
+                    IDC_AUTO_ADD,"Button",BS_AUTOCHECKBOX | BS_TOP | 
+                    WS_TABSTOP,9,103,203,12
+    CONTROL         "Send messages slower, but with full acknowledgement",
+                    IDC_MSG_ACK,"Button",BS_AUTOCHECKBOX | BS_TOP | 
+                    WS_TABSTOP,9,116,203,12
+    CONTROL         "Allow file sending through direct peer-to-peer connection",
+                    IDC_DIRECT,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,9,18,
+                    202,10
+    CONTROL         "Specify proxy server",IDC_PROXY_MANUAL,"Button",
+                    BS_AUTOCHECKBOX | WS_DISABLED | WS_TABSTOP,9,54,102,10
+    CONTROL         "Disable main menu",IDC_DISABLE_MAINMENU,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,9,128,75,10
 END
 
 IDD_GROUPCHAT DIALOGEX 0, 0, 306, 208
@@ -491,16 +475,15 @@ BEGIN
     PUSHBUTTON      "Cancel",IDCANCEL,106,75,50,14
 END
 
-IDD_GROUPCHAT_INPUT DIALOGEX 0, 0, 241, 82
+IDD_GROUPCHAT_INPUT DIALOGEX 0, 0, 275, 46
 STYLE DS_SETFONT | DS_MODALFRAME | DS_SETFOREGROUND | DS_3DLOOK | 
     DS_FIXEDSYS | DS_CENTER | WS_POPUP | WS_VISIBLE | WS_CAPTION
 EXSTYLE WS_EX_CONTROLPARENT
 FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
-    EDITTEXT        IDC_TOPIC,7,7,227,48,ES_MULTILINE | ES_AUTOVSCROLL | 
-                    ES_WANTRETURN | WS_VSCROLL
-    DEFPUSHBUTTON   "OK",IDOK,66,59,50,14
-    PUSHBUTTON      "Cancel",IDCANCEL,119,59,50,14
+    EDITTEXT        IDC_TOPIC,7,7,261,12,ES_AUTOHSCROLL
+    DEFPUSHBUTTON   "OK",IDOK,165,25,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,218,25,50,14
 END
 
 IDD_JIDLIST DIALOGEX 0, 0, 207, 112
@@ -517,12 +500,12 @@ BEGIN
                     WS_TABSTOP,7,7,193,98
 END
 
-IDD_AGENT_MANUAL_REGISTER DIALOGEX 0, 0, 186, 45
+IDD_AGENT_MANUAL_REGISTER DIALOG  0, 0, 186, 45
 STYLE DS_SETFONT | DS_MODALFRAME | DS_SETFOREGROUND | DS_3DLOOK | 
     DS_FIXEDSYS | DS_CENTER | WS_POPUP | WS_VISIBLE | WS_CAPTION | 
     WS_SYSMENU
 CAPTION "Jabber Agent Registration"
-FONT 8, "MS Shell Dlg", 0, 0, 0x1
+FONT 8, "MS Shell Dlg"
 BEGIN
     LTEXT           "JID:",IDC_STATIC,7,9,17,8
     EDITTEXT        IDC_JID,29,7,150,12,ES_AUTOHSCROLL
@@ -530,11 +513,11 @@ BEGIN
     PUSHBUTTON      "Cancel",IDCANCEL,129,24,50,14
 END
 
-IDD_GROUPCHAT_INVITE DIALOGEX 0, 0, 186, 73
+IDD_GROUPCHAT_INVITE DIALOG  0, 0, 186, 73
 STYLE DS_SETFONT | DS_MODALFRAME | DS_SETFOREGROUND | DS_FIXEDSYS | WS_POPUP | 
     WS_VISIBLE | WS_CAPTION | WS_SYSMENU
 CAPTION "Jabber Groupchat Invite a User"
-FONT 8, "MS Shell Dlg", 0, 0, 0x1
+FONT 8, "MS Shell Dlg"
 BEGIN
     LTEXT           "Room JID:",IDC_STATIC,7,6,46,8
     EDITTEXT        IDC_ROOM,57,4,122,12,ES_AUTOHSCROLL | ES_READONLY
@@ -547,11 +530,11 @@ BEGIN
     PUSHBUTTON      "Cancel",IDCANCEL,129,53,50,14
 END
 
-IDD_GROUPCHAT_INVITE_ACCEPT DIALOGEX 0, 0, 232, 112
+IDD_GROUPCHAT_INVITE_ACCEPT DIALOG  0, 0, 232, 112
 STYLE DS_SETFONT | DS_MODALFRAME | DS_SETFOREGROUND | DS_FIXEDSYS | 
     DS_CENTER | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
 CAPTION "Multi-User Conference Invitation"
-FONT 8, "MS Shell Dlg", 0, 0, 0x1
+FONT 8, "MS Shell Dlg"
 BEGIN
     DEFPUSHBUTTON   "&Accept",IDC_ACCEPT,124,93,50,14
     PUSHBUTTON      "Cancel",IDCANCEL,178,93,50,14
@@ -568,19 +551,6 @@ BEGIN
     EDITTEXT        IDC_NICK,99,74,105,12,ES_AUTOHSCROLL
 END
 
-IDD_OPT_SETAVATAR DIALOGEX 0, 0, 222, 131
-STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD
-EXSTYLE WS_EX_CONTROLPARENT
-FONT 8, "MS Shell Dlg", 0, 0, 0x1
-BEGIN
-    CONTROL         "",IDC_AVATAR,"Static",SS_BITMAP | SS_CENTERIMAGE | 
-                    SS_SUNKEN,9,11,96,96
-    LTEXT           "Note: Only JPGs and GIFs\nImage size max 64x64\nFile size max 6kB",
-                    IDC_STATIC,112,54,106,34
-    PUSHBUTTON      "Set",IDC_SETAVATAR,9,112,45,13
-    PUSHBUTTON      "Delete",IDC_DELETEAVATAR,61,112,41,13
-END
-
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -593,18 +563,10 @@ BEGIN
     IDD_OPT_JABBER, DIALOG
     BEGIN
         LEFTMARGIN, 7
-        RIGHTMARGIN, 302
+        RIGHTMARGIN, 251
+        VERTGUIDE, 19
         TOPMARGIN, 7
-        BOTTOMMARGIN, 220
-    END
-
-    IDD_OPT_JABBER2, DIALOG
-    BEGIN
-        LEFTMARGIN, 1
-        RIGHTMARGIN, 296
-        VERTGUIDE, 9
-        TOPMARGIN, 3
-        BOTTOMMARGIN, 191
+        BOTTOMMARGIN, 207
     END
 
     IDD_INFO_JABBER, DIALOG
@@ -642,7 +604,7 @@ BEGIN
     IDD_PASSWORD, DIALOG
     BEGIN
         LEFTMARGIN, 7
-        RIGHTMARGIN, 279
+        RIGHTMARGIN, 144
         TOPMARGIN, 7
         BOTTOMMARGIN, 56
     END
@@ -727,6 +689,15 @@ BEGIN
         BOTTOMMARGIN, 72
     END
 
+    IDD_OPT_JABBER2, DIALOG
+    BEGIN
+        LEFTMARGIN, 2
+        RIGHTMARGIN, 218
+        VERTGUIDE, 9
+        TOPMARGIN, 3
+        BOTTOMMARGIN, 143
+    END
+
     IDD_GROUPCHAT, DIALOG
     BEGIN
         LEFTMARGIN, 5
@@ -746,9 +717,9 @@ BEGIN
     IDD_GROUPCHAT_INPUT, DIALOG
     BEGIN
         LEFTMARGIN, 7
-        RIGHTMARGIN, 234
+        RIGHTMARGIN, 268
         TOPMARGIN, 7
-        BOTTOMMARGIN, 75
+        BOTTOMMARGIN, 39
     END
 
     IDD_JIDLIST, DIALOG
@@ -782,15 +753,6 @@ BEGIN
         TOPMARGIN, 7
         BOTTOMMARGIN, 107
     END
-
-    IDD_OPT_SETAVATAR, DIALOG
-    BEGIN
-        LEFTMARGIN, 2
-        RIGHTMARGIN, 218
-        VERTGUIDE, 9
-        TOPMARGIN, 3
-        BOTTOMMARGIN, 126
-    END
 END
 #endif    // APSTUDIO_INVOKED
 
@@ -806,20 +768,19 @@ IDI_JABBER              ICON                    "icos\\jabber.ico"
 IDI_GROUP               ICON                    "icos\\group.ico"
 IDI_KEYS                ICON                    "icos\\key.ico"
 IDI_ADDCONTACT          ICON                    "icos\\addcontact.ico"
-IDI_ADDROSTER           ICON                    "icos\\add2roster.ico"
-IDI_AGENTS              ICON                    "icos\\roster.ico"
+IDI_AGENTS              ICON                    "icos\\block.ico"
 IDI_VCARD               ICON                    "icos\\pages.ico"
 IDI_DELETE              ICON                    "icos\\delete.ico"
 IDI_EDIT                ICON                    "icos\\rename.ico"
 IDI_GRANT               ICON                    "icos\\grant.ico"
 IDI_OPEN                ICON                    "icos\\open.ico"
 IDI_REQUEST             ICON                    "icos\\request.ico"
-IDI_USER2ROOM           ICON                    "icos\\user2room.ico"
 IDI_WRITE               ICON                    "icos\\write.ico"
 IDI_SAVE                ICON                    "icos\\save.ico"
-IDI_LOGIN               ICON                    "icos\\login.ico"
-IDI_AUTHREVOKE          ICON                    "icos\\auth_revoke.ico" 
-IDI_REFRESH             ICON                    "icos\\refresh.ico" 
+IDI_GCOWNER             ICON                    "icos\\gcowner.ico"
+IDI_GCADMIN             ICON                    "icos\\gcadmin.ico"
+IDI_GCMODERATOR         ICON                    "icos\\gcmodera.ico"
+IDI_GCVOICE             ICON                    "icos\\gcvoice.ico"
 #endif    // English (U.S.) resources
 /////////////////////////////////////////////////////////////////////////////
 
@@ -834,5 +795,4 @@ IDI_REFRESH             ICON                    "icos\\refresh.ico"
 
 /////////////////////////////////////////////////////////////////////////////
 #endif    // not APSTUDIO_INVOKED
-
 

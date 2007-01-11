@@ -27,13 +27,11 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define MS_IEVIEW_UTILS   "IEVIEW/Utils"
 #define MS_IEVIEW_SHOWSMILEYSELECTION  "IEVIEW/ShowSmileySelection"
 
-#define ME_IEVIEW_OPTIONSCHANGED  "IEVIEW/OptionsChanged"
 #define ME_IEVIEW_NOTIFICATION  "IEVIEW/Notification"
 
 #define IEW_CREATE  1               // create new window (control)
 #define IEW_DESTROY 2               // destroy control
 #define IEW_SETPOS  3               // set window position and size
-#define IEW_SCROLLBOTTOM 4               // set window position and size
 
 #define IEWM_SRMM     0             // regular SRMM
 #define IEWM_TABSRMM  1             // TabSRMM-compatible HTML builder
@@ -146,3 +144,4 @@ typedef struct tagIEVIEWEVENTDATA {
 } IEVIEWEVENTDATA;
 
 #endif
+

@@ -42,8 +42,9 @@ HANDLE hNewSubGroupMenuItem;
 
 int NewGroupIconidx;
 
+extern HWND hwndContactTree;
 extern HIMAGELIST hCListImages;
-extern HICON LoadIconFromExternalFile (char *filename,int i,boolean UseLibrary,boolean registerit,char *IconName,char *SectName,char *Description,int internalidx,HICON DefIcon);
+extern HICON LoadIconFromExternalFile (char *filename,int i,boolean UseLibrary,boolean registerit,char *IconName,char *SectName,char *Description,int internalidx);
 
 void InitSubGroupMenus(void);
 
@@ -116,7 +117,7 @@ static int AddGroupMenuItem(WPARAM wParam,LPARAM lParam)
 	{
 		lpGroupMenuExecParam mmep;
 		mmep=(lpGroupMenuExecParam)mir_calloc(1,sizeof(GroupMenuExecParam));
-		if(mmep==NULL){return(0);}
+		if(mmep==NULL){return(0);};
 		
 		//we need just one parametr.
 		mmep->szServiceName=mir_strdup(mi->pszService);
@@ -145,7 +146,7 @@ static int AddGroupMenuItem(WPARAM wParam,LPARAM lParam)
 int GroupMenuCheckService(WPARAM wParam,LPARAM lParam) {
 //not used
 	return(0);
-}
+};
 
 int GroupMenuonAddService(WPARAM wParam,LPARAM lParam) {
 
@@ -173,7 +174,7 @@ int GroupMenuonAddService(WPARAM wParam,LPARAM lParam) {
 	}
 	
 	return(TRUE);
-}
+};
 
 
 //called with:
@@ -193,9 +194,9 @@ int GroupMenuExecService(WPARAM wParam,LPARAM lParam) {
 			CallService(mmep->szServiceName,mmep->Param1,mmep->Param2);	
 		}
 		
-	}
+	};
 	return(1);
-}
+};
 int FreeOwnerDataGroupMenu (WPARAM wParam,LPARAM lParam)
 {
 
@@ -207,33 +208,33 @@ int FreeOwnerDataGroupMenu (WPARAM wParam,LPARAM lParam)
 	}
 
 return(0);
-}
+};
 
 int HideGroupsHelper(WPARAM wParam,LPARAM lParam)
 {
-	int newVal=!(GetWindowLong(pcli->hwndContactTree,GWL_STYLE)&CLS_HIDEEMPTYGROUPS);
+	int newVal=!(GetWindowLong((HWND)CallService(MS_CLUI_GETHWNDTREE,0,0),GWL_STYLE)&CLS_HIDEEMPTYGROUPS);
 	DBWriteContactSettingByte(NULL,"CList","HideEmptyGroups",(BYTE)newVal);
-	SendMessage(pcli->hwndContactTree,CLM_SETHIDEEMPTYGROUPS,newVal,0);
+	SendMessage((HWND)CallService(MS_CLUI_GETHWNDTREE,0,0),CLM_SETHIDEEMPTYGROUPS,newVal,0);
 	return 0;
 }
 
 int UseGroupsHelper(WPARAM wParam,LPARAM lParam)
 {	
-	int newVal=!(GetWindowLong(pcli->hwndContactTree,GWL_STYLE)&CLS_USEGROUPS);
+	int newVal=!(GetWindowLong((HWND)CallService(MS_CLUI_GETHWNDTREE,0,0),GWL_STYLE)&CLS_USEGROUPS);
 	DBWriteContactSettingByte(NULL,"CList","UseGroups",(BYTE)newVal);
-	SendMessage(pcli->hwndContactTree,CLM_SETUSEGROUPS,newVal,0);
+	SendMessage((HWND)CallService(MS_CLUI_GETHWNDTREE,0,0),CLM_SETUSEGROUPS,newVal,0);
 	return 0;
 }
 
 int HideOfflineRootHelper(WPARAM wParam,LPARAM lParam)
 {
 SendMessage(
-			pcli->hwndContactTree,
+			(HWND)CallService(MS_CLUI_GETHWNDTREE,0,0),
 			CLM_SETHIDEOFFLINEROOT,
-			!SendMessage(pcli->hwndContactTree,CLM_GETHIDEOFFLINEROOT,0,0),
+			!SendMessage((HWND)CallService(MS_CLUI_GETHWNDTREE,0,0),CLM_GETHIDEOFFLINEROOT,0,0),
 			0);
 	return 0;
-}
+};
 
 static int OnBuildGroupMenu(WPARAM wParam,LPARAM lParam)
 {
@@ -247,28 +248,28 @@ static int OnBuildGroupMenu(WPARAM wParam,LPARAM lParam)
 
 	ZeroMemory(&mi,sizeof(mi));
 	mi.cbSize = sizeof(mi);
-	mi.flags = CMIM_FLAGS | (SendMessage(pcli->hwndContactTree,CLM_GETHIDEOFFLINEROOT,0,0)?CMIF_CHECKED:0);
+	mi.flags = CMIM_FLAGS | (SendMessage(hwndContactTree,CLM_GETHIDEOFFLINEROOT,0,0)?CMIF_CHECKED:0);
 	CallService(MS_CLIST_MODIFYMENUITEM, (WPARAM)hHideOfflineUsersOutHereMenuItem, (LPARAM)&mi);	
 	
 	ZeroMemory(&mi,sizeof(mi));
 	mi.cbSize = sizeof(mi);
-	mi.flags = CMIM_FLAGS | (GetWindowLong(pcli->hwndContactTree,GWL_STYLE)&CLS_HIDEEMPTYGROUPS?CMIF_CHECKED:0);
+	mi.flags = CMIM_FLAGS | (GetWindowLong(hwndContactTree,GWL_STYLE)&CLS_HIDEEMPTYGROUPS?CMIF_CHECKED:0);
 	CallService(MS_CLIST_MODIFYMENUITEM, (WPARAM)hHideEmptyGroupsMenuItem, (LPARAM)&mi);	
 
 	ZeroMemory(&mi,sizeof(mi));
 	mi.cbSize = sizeof(mi);
-	mi.flags = CMIM_FLAGS | (GetWindowLong(pcli->hwndContactTree,GWL_STYLE)&CLS_USEGROUPS?0:CMIF_CHECKED);
+	mi.flags = CMIM_FLAGS | (GetWindowLong(hwndContactTree,GWL_STYLE)&CLS_USEGROUPS?0:CMIF_CHECKED);
 	CallService(MS_CLIST_MODIFYMENUITEM, (WPARAM)hDisableGroupsMenuItem, (LPARAM)&mi);
 
 	return 0;
-}
+};
 
 int static OnIconLibIconChanged(WPARAM wParam,LPARAM lParam)
 {
 	HICON hicon;
 	CLISTMENUITEM clmi={0};
 
-	hicon=LoadIconFromExternalFile("clisticons.dll",2,TRUE,FALSE,"NewGroup","Contact List","New Group",-IDI_NEWGROUP,0);
+	hicon=LoadIconFromExternalFile("clisticons.dll",2,TRUE,FALSE,"NewGroup","Contact List","New Group",-IDI_NEWGROUP);
 	NewGroupIconidx=ImageList_ReplaceIcon(hCListImages,NewGroupIconidx,hicon);	
 	
 	clmi.cbSize=sizeof(clmi);
@@ -277,14 +278,14 @@ int static OnIconLibIconChanged(WPARAM wParam,LPARAM lParam)
 	CallService(MS_CLIST_MODIFYMENUITEM,(WPARAM)hNewSubGroupMenuItem,(LPARAM)&clmi);
 	CallService(MS_CLIST_MODIFYMENUITEM,(WPARAM)hNewGroupMenuItem,(LPARAM)&clmi);
 	return 0;
-}
+};
 
 void InitGroupMenus(void)
 {
 	TMenuParam tmp;
 	OptParam op;
 	HICON hicon;
-	hicon=LoadIconFromExternalFile("clisticons.dll",2,TRUE,TRUE,"NewGroup","Contact List","New Group",-IDI_NEWGROUP2,0);
+	hicon=LoadIconFromExternalFile("clisticons.dll",2,TRUE,TRUE,"NewGroup","Contact List","New Group",-IDI_NEWGROUP2);
 	NewGroupIconidx=ImageList_AddIcon(hCListImages,hicon );	
 	
 	CreateServiceFunction("CLISTMENUSGroup/ExecService",GroupMenuExecService);
@@ -382,7 +383,7 @@ void InitGroupMenus(void)
 	memset(&mi,0,sizeof(mi));
 	mi.cbSize=sizeof(mi);
 	mi.position=500000;
-	mi.hIcon=LoadIcon(GetModuleHandle(NULL),MAKEINTRESOURCE(IDI_CLIENTMIRANDA));
+	mi.hIcon=LoadIcon(GetModuleHandle(NULL),MAKEINTRESOURCE(IDI_MIRANDA));
 	mi.pszService="Help/AboutCommand";
 	mi.pszName=Translate("&About");
 	
@@ -437,7 +438,7 @@ void InitGroupMenus(void)
 	
 	//MS_CLIST_GROUPCREATE
 
-	}
+	};
 }
 
 //////////////////////////////END Group MENU/////////////////////////
@@ -487,7 +488,7 @@ static int OnBuildSubGroupMenu(WPARAM wParam,LPARAM lParam)
 	CallService(MS_CLIST_MODIFYMENUITEM, (WPARAM)hHideOfflineUsersHereMenuItem, (LPARAM)&mi);	
 	
 	return 0;
-}
+};
 static int BuildSubGroupMenu(WPARAM wParam,LPARAM lParam)
 {
 	int tick;
@@ -536,17 +537,21 @@ static int AddSubGroupMenuItem(WPARAM wParam,LPARAM lParam)
 
 	tmi.ownerdata=NULL;
 	
-	{	lpSubGroupMenuExecParam mmep = (lpSubGroupMenuExecParam)mir_calloc(1,sizeof(SubGroupMenuExecParam));
-		if ( mmep == NULL)
-			return 0;
+	{
+		lpSubGroupMenuExecParam mmep;
+		mmep=(lpSubGroupMenuExecParam)mir_calloc(1,sizeof(SubGroupMenuExecParam));
+		if(mmep==NULL){return(0);};
 		
 		//we need just one parametr.
 		mmep->szServiceName=mir_strdup(mi->pszService);
 		mmep->Param1=mi->popupPosition;
-		if ( gmp != NULL ) {
-			mmep->Param1 = gmp->wParam;
-			mmep->Param2 = gmp->lParam;
+		if (gmp!=NULL)
+		{
+			mmep->Param1=gmp->wParam;
+			mmep->Param2=gmp->lParam;
+
 		}
+		
 		
 		tmi.ownerdata=mmep;
 	}
@@ -564,7 +569,7 @@ static int AddSubGroupMenuItem(WPARAM wParam,LPARAM lParam)
 int SubGroupMenuCheckService(WPARAM wParam,LPARAM lParam) {
 //not used
 	return(0);
-}
+};
 
 int SubGroupMenuonAddService(WPARAM wParam,LPARAM lParam) {
 
@@ -594,7 +599,7 @@ int SubGroupMenuonAddService(WPARAM wParam,LPARAM lParam) {
 	}
 */	
 	return(TRUE);
-}
+};
 
 
 //called with:
@@ -614,9 +619,9 @@ int SubGroupMenuExecService(WPARAM wParam,LPARAM lParam) {
 			CallService(mmep->szServiceName,mmep->Param1,mmep->Param2);	
 		}
 		
-	}
+	};
 	return(1);
-}
+};
 int FreeOwnerDataSubGroupMenu (WPARAM wParam,LPARAM lParam)
 {
 
@@ -628,40 +633,40 @@ int FreeOwnerDataSubGroupMenu (WPARAM wParam,LPARAM lParam)
 	}
 
 return(0);
-}
+};
 /*
 int HideSubGroupsHelper(WPARAM wParam,LPARAM lParam)
 {
-	int newVal=!(GetWindowLong(pcli->hwndContactTree,GWL_STYLE)&CLS_HIDEEMPTYSubGroupS);
+	int newVal=!(GetWindowLong((HWND)CallService(MS_CLUI_GETHWNDTREE,0,0),GWL_STYLE)&CLS_HIDEEMPTYSubGroupS);
 	DBWriteContactSettingByte(NULL,"CList","HideEmptySubGroups",(BYTE)newVal);
-	SendMessage(pcli->hwndContactTree,CLM_SETHIDEEMPTYSubGroupS,newVal,0);
+	SendMessage((HWND)CallService(MS_CLUI_GETHWNDTREE,0,0),CLM_SETHIDEEMPTYSubGroupS,newVal,0);
 	return 0;
 }
 
 int UseSubGroupsHelper(WPARAM wParam,LPARAM lParam)
 {	
-	int newVal=!(GetWindowLong(pcli->hwndContactTree,GWL_STYLE)&CLS_USESubGroupS);
+	int newVal=!(GetWindowLong((HWND)CallService(MS_CLUI_GETHWNDTREE,0,0),GWL_STYLE)&CLS_USESubGroupS);
 	DBWriteContactSettingByte(NULL,"CList","UseSubGroups",(BYTE)newVal);
-	SendMessage(pcli->hwndContactTree,CLM_SETUSESubGroupS,newVal,0);
+	SendMessage((HWND)CallService(MS_CLUI_GETHWNDTREE,0,0),CLM_SETUSESubGroupS,newVal,0);
 	return 0;
 }
 
 int HideOfflineRootHelper(WPARAM wParam,LPARAM lParam)
 {
 SendMessage(
-			pcli->hwndContactTree,
+			(HWND)CallService(MS_CLUI_GETHWNDTREE,0,0),
 			CLM_SETHIDEOFFLINEROOT,
-			!SendMessage(pcli->hwndContactTree,CLM_GETHIDEOFFLINEROOT,0,0),
+			!SendMessage((HWND)CallService(MS_CLUI_GETHWNDTREE,0,0),CLM_GETHIDEOFFLINEROOT,0,0),
 			0);
 	return 0;
-}
+};
 */
 //wparam menu handle to pass to clc.c
 int GroupMenuExecProxy(WPARAM wParam,LPARAM lParam)
 {
-	SendMessage(pcli->hwndContactTree,WM_COMMAND,wParam,0);
+	SendMessage((HWND)CallService(MS_CLUI_GETHWNDTREE,0,0),WM_COMMAND,wParam,0);
 	return 0;
-}
+};
 
 void InitSubGroupMenus(void)
 {
@@ -751,7 +756,7 @@ void InitSubGroupMenus(void)
 
 	//MS_CLIST_SubGroupCREATE
 
-	}
+	};
 }
 
 //////////////////////////////END SubGroup MENU/////////////////////////

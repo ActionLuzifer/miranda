@@ -2,8 +2,8 @@
 
 Miranda IM: the free IM client for Microsoft* Windows*
 
-Copyright 2000-2007 Miranda ICQ/IM project,
-all portions of this codebase are copyrighted to the people
+Copyright 2000-2003 Miranda ICQ/IM project, 
+all portions of this codebase are copyrighted to the people 
 listed in contributors.txt.
 
 This program is free software; you can redistribute it and/or
@@ -21,15 +21,8 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
-#if defined( UNICODE ) && !defined( _UNICODE )
-#  define _UNICODE
-#endif
-
-// to enable all 0.6 core functions
-#define MIRANDA_VER 0x600
-
-#include <tchar.h>
 #include <malloc.h>
+
 
 #define _ALPHA_BASE_ 1	// defined for CVS builds
 #define _ALPHA_FUSE_ 1	// defined for fuse powered core
@@ -41,7 +34,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #endif
 
 #define _WIN32_WINNT 0x0501
-#define _WIN32_IE 0x0500
 #include <windows.h>
 #include <commctrl.h>
 #include <stdio.h>
@@ -54,16 +46,14 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "../resource.h"
 #include <win2k.h>
 #include "modules.h"
-#include "miranda.h"
 #include "forkthread.h"
 #include <m_system.h>
-#include <newpluginapi.h>
+#include <newpluginapi.h> 
 #include <m_database.h>
 #include <m_clc.h>
 #include <m_clui.h>
 #include <m_langpack.h>
 #include <m_clist.h>
-#include <m_clistint.h>
 #include <m_netlib.h>
 #include <m_button.h>
 #include <m_protosvc.h>
@@ -84,4 +74,5 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <m_awaymsg.h>
 #include <m_idle.h>
 #include <m_ignore.h>
-#include <m_utils.h>
+
+

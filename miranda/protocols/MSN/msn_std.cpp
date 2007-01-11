@@ -72,11 +72,6 @@ char* __stdcall MSN_GetContactName( HANDLE hContact )
 	return ( char* )MSN_CallService( MS_CLIST_GETCONTACTDISPLAYNAME, WPARAM( hContact), 0 );
 }
 
-TCHAR* __stdcall MSN_GetContactNameT( HANDLE hContact )
-{
-	return ( TCHAR* )MSN_CallService( MS_CLIST_GETCONTACTDISPLAYNAME, WPARAM( hContact), GCDNF_TCHAR );
-}
-
 DWORD __stdcall MSN_GetDword( HANDLE hContact, const char* valueName, DWORD parDefltValue )
 {
 	return DBGetContactSettingDword( hContact, msnProtocolName, valueName, parDefltValue );
@@ -97,11 +92,6 @@ int __stdcall MSN_GetStaticString( const char* valueName, HANDLE hContact, char*
 		return 1;
 
 	return ( dbv.type != DBVT_ASCIIZ );
-}
-
-int __stdcall MSN_GetStringT( const char* valueName, HANDLE hContact, DBVARIANT* dbv )
-{
-	return DBGetContactSettingTString( hContact, msnProtocolName, valueName, dbv );
 }
 
 WORD __stdcall MSN_GetWord( HANDLE hContact, const char* valueName, int parDefltValue )
@@ -140,16 +130,6 @@ DWORD __stdcall MSN_SetDword( HANDLE hContact, const char* valueName, DWORD parV
 DWORD __stdcall MSN_SetString( HANDLE hContact, const char* valueName, const char* parValue )
 {
 	return DBWriteContactSettingString( hContact, msnProtocolName, valueName, parValue );
-}
-
-DWORD __stdcall MSN_SetStringT( HANDLE hContact, const char* valueName, const TCHAR* parValue )
-{
-	return DBWriteContactSettingTString( hContact, msnProtocolName, valueName, parValue );
-}
-
-DWORD __stdcall MSN_SetStringUtf( HANDLE hContact, const char* valueName, char* parValue )
-{
-	return DBWriteContactSettingStringUtf( hContact, msnProtocolName, valueName, parValue );
 }
 
 DWORD __stdcall MSN_SetWord( HANDLE hContact, const char* valueName, int parValue )

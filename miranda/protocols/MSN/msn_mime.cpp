@@ -35,7 +35,7 @@ MimeHeaders::MimeHeaders() :
 MimeHeaders::MimeHeaders( int iInitCount ) :
 	mCount( 0 )
 {
-	mVals = ( MimeHeader* )mir_alloc( iInitCount * sizeof( MimeHeader ));
+	mVals = ( MimeHeader* )malloc( iInitCount * sizeof( MimeHeader ));
 }
 
 MimeHeaders::~MimeHeaders()
@@ -45,11 +45,11 @@ MimeHeaders::~MimeHeaders()
 
 	for ( int i=0; i < mCount; i++ ) {
 		MimeHeader& H = mVals[ i ];
-		mir_free( H.name );
-		mir_free( H.value );
+		free( H.name );
+		free( H.value );
 	}
 
-	mir_free( mVals );
+	free( mVals );
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////
@@ -58,18 +58,18 @@ MimeHeaders::~MimeHeaders()
 void MimeHeaders::addString( const char* name, const char* szValue )
 {
 	MimeHeader& H = mVals[ mCount++ ];
-	H.name = mir_strdup( name );
-	H.value = mir_strdup( szValue );
+	H.name = strdup( name );
+	H.value = strdup( szValue );
 }
 
 void MimeHeaders::addLong( const char* name, long lValue )
 {
 	MimeHeader& H = mVals[ mCount++ ];
-	H.name = mir_strdup( name );
+	H.name = strdup( name );
 
 	char szBuffer[ 20 ];
 	ltoa( lValue, szBuffer, 10 );
-	H.value = mir_strdup( szBuffer );
+	H.value = strdup( szBuffer );
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////
@@ -105,7 +105,7 @@ const char* MimeHeaders::readFromBuffer( const char* parString )
 	MimeHeader headers[ 100 ];
 	char		  line[ 4096 ];
 
-	while ( *parString ) {
+	while ( true ) {
 		if ( parString[0] == '\r' && parString[1] == '\n' ) {
 			parString += 2;
 			break;
@@ -113,7 +113,7 @@ const char* MimeHeaders::readFromBuffer( const char* parString )
 
 		const char* peol = strchr( parString, '\r' );
 		if ( peol == NULL )
-			peol = parString + strlen(parString);
+			break;
 
 		int cbLen = int( peol - parString );
 		if ( cbLen > sizeof( line ))
@@ -138,13 +138,13 @@ const char* MimeHeaders::readFromBuffer( const char* parString )
 			delim++;
 
 		MimeHeader& H = headers[ headerCount ];
-		H.name = mir_strdup( line );
-		H.value = mir_strdup( delim );
+		H.name = strdup( line );
+		H.value = strdup( delim );
 		headerCount++;
 	}
 
 	if (( mCount = headerCount ) != 0 ) {
-		mVals = ( MimeHeader* )mir_alloc( sizeof( MimeHeader )*headerCount );
+		mVals = ( MimeHeader* )malloc( sizeof( MimeHeader )*headerCount );
 		memcpy( mVals, headers, sizeof( MimeHeader )*headerCount );
 	}
 	return parString;

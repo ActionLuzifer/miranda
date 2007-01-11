@@ -22,24 +22,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
 #include "msn_global.h"
-#include <m_system_cpp.h>
 
+static int              sessionCount = 0;
+static filetransfer**   sessionList = NULL;
 static CRITICAL_SECTION sessionLock;
-
-static int CompareFT( const filetransfer* p1, const filetransfer* p2 )
-{
-	return int( p1 - p2 );
-}
-
-
-static int CompareDC( const directconnection* p1, const directconnection* p2 )
-{
-	return int( p1 - p2 );
-}
-
-static LIST<filetransfer> sessionList( 10, CompareFT );
-static LIST<directconnection> dcList( 10, CompareDC );
-
 
 /////////////////////////////////////////////////////////////////////////////////////////
 // add file session to a list
@@ -47,7 +33,18 @@ static LIST<directconnection> dcList( 10, CompareDC );
 void __stdcall p2p_registerSession( filetransfer* ft )
 {
 	EnterCriticalSection( &sessionLock );
-	sessionList.insert( ft );
+
+	bool bIsFirst = true;
+	for ( int i=0; i < sessionCount; i++ ) {
+		if ( sessionList[i]->std.hContact == ft->std.hContact ) {
+			bIsFirst = false;
+			break;
+	}	}
+
+	sessionList = ( filetransfer** )realloc( sessionList, sizeof( void* ) * ( sessionCount+1 ));
+	sessionList[ sessionCount++ ] = ft;
+	ft->mIsFirst = bIsFirst;
+
 	LeaveCriticalSection( &sessionLock );
 }
 
@@ -57,82 +54,76 @@ void __stdcall p2p_registerSession( filetransfer* ft )
 void __stdcall p2p_unregisterSession( filetransfer* ft )
 {
 	EnterCriticalSection( &sessionLock );
-	sessionList.remove( ft );
-	delete ft; 
+
+	for ( int i=0; i < sessionCount; i++ ) {
+		if ( sessionList[i] == ft ) {
+         delete sessionList[i];
+			while( i < sessionCount-1 ) {
+				sessionList[ i ] = sessionList[ i+1 ];
+				i++;
+			}
+			sessionCount--;
+			break;
+	}	}
+
 	LeaveCriticalSection( &sessionLock );
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////
 // get session by some parameter
 
-filetransfer* __stdcall p2p_getSessionByID( unsigned id )
+filetransfer* __stdcall p2p_getSessionByID( long ID )
 {
-	if ( id == 0 )
+	if ( ID == 0 )
 		return NULL;
 
 	filetransfer* ft = NULL;
 	EnterCriticalSection( &sessionLock );
 
-	for ( int i=0; i < sessionList.getCount(); i++ ) {
+	for ( int i=0; i < sessionCount; i++ ) {
 		filetransfer* FT = sessionList[i];
-		if ( FT->p2p_sessionid == id ) {
+		if ( FT->p2p_sessionid == ID ) {
 			ft = FT;
 			break;
 	}	}
 
 	LeaveCriticalSection( &sessionLock );
 	if ( ft == NULL )
-		MSN_DebugLog( "Ignoring unknown session id %lu", id );
+		MSN_DebugLog( "Ignoring unknown session id %ld", ID );
 
 	return ft;
 }
 
-filetransfer* __stdcall p2p_getSessionByMsgID( unsigned id )
+filetransfer* __stdcall p2p_getSessionByMsgID( long ID )
 {
-	if ( id == 0 )
+	if ( ID == 0 )
 		return NULL;
 
 	filetransfer* ft = NULL;
 	EnterCriticalSection( &sessionLock );
 
-	for ( int i=0; i < sessionList.getCount(); i++ ) {
+	for ( int i=0; i < sessionCount; i++ ) {
 		filetransfer* FT = sessionList[i];
-		if ( FT->p2p_msgid == id || FT->p2p_msgid == (id + 1) ) {
+		if ( FT->p2p_msgid-1 == ID ) {
 			ft = FT;
 			break;
 	}	}
 
 	LeaveCriticalSection( &sessionLock );
 	if ( ft == NULL )
-		MSN_DebugLog( "Ignoring unknown message id %lu", id );
+		MSN_DebugLog( "Ignoring unknown message id %ld", ID );
 
 	return ft;
 }
 
-BOOL __stdcall p2p_sessionRegistered( filetransfer* ft )
+filetransfer* __stdcall p2p_getAnotherContactSession( filetransfer* ft )
 {
-    BOOL result = FALSE;
+   filetransfer* result = NULL;
 	EnterCriticalSection( &sessionLock );
 
-	for ( int i=0; i < sessionList.getCount(); i++ ) {
+	for ( int i=0; i < sessionCount; i++ ) {
 		filetransfer* FT = sessionList[i];
-		if ( sessionList[i] == ft ) {
-			result = TRUE;
-			break;
-	}	}
-
-	LeaveCriticalSection( &sessionLock );
-	return result;
-}
-
-filetransfer* __stdcall p2p_getThreadSession( HANDLE hContact, TInfoType mType )
-{
-	EnterCriticalSection( &sessionLock );
-
-	filetransfer* result = NULL;
-	for ( int i=0; i < sessionList.getCount(); i++ ) {
-		filetransfer* FT = sessionList[i];
-		if ( FT->std.hContact == hContact && FT->tType == mType ) {
+		if ( FT->std.hContact == ft->std.hContact && FT != ft ) {
 			result = FT;
 			break;
 	}	}
@@ -141,63 +132,20 @@ filetransfer* __stdcall p2p_getThreadSession( HANDLE hContact, TInfoType mType )
 	return result;
 }
 
-void __stdcall p2p_clearDormantSessions( void )
+filetransfer* __stdcall p2p_getFirstSession( HANDLE hContact )
 {
+   filetransfer* result = NULL;
 	EnterCriticalSection( &sessionLock );
 
-	time_t ts = time( NULL );
-	for ( int i=0; i < sessionList.getCount(); i++ ) {
+	for ( int i=0; i < sessionCount; i++ ) {
 		filetransfer* FT = sessionList[i];
-		if ( FT->p2p_waitack && ( ts - FT->ts ) > 10 ) 
-		{
-			LeaveCriticalSection( &sessionLock );
-			p2p_unregisterSession( FT );
-			EnterCriticalSection( &sessionLock );
-			i = 0;
-	}	}
-
-	for ( int j=0; j < dcList.getCount(); j++ ) {
-		directconnection* DC = dcList[j];
-		if (( ts - DC->ts ) > 120 ) {
-			LeaveCriticalSection( &sessionLock );
-			p2p_unregisterDC( DC );
-			EnterCriticalSection( &sessionLock );
-			j = 0;
+		if ( FT->std.hContact == hContact && FT->mIsFirst ) {
+			result = FT;
+			break;
 	}	}
 
 	LeaveCriticalSection( &sessionLock );
-}
-
-void __stdcall p2p_redirectSessions( HANDLE hContact )
-{
-	EnterCriticalSection( &sessionLock );
-
-	ThreadData* T = MSN_GetP2PThreadByContact( hContact );
-	for ( int i=0; i < sessionList.getCount(); i++ ) {
-		filetransfer* FT = sessionList[i];
-		if ( FT->std.hContact == hContact && !FT->std.sending && 
-			( T == NULL || ( FT->tType != T->mType && FT->tType != 0 ))) 
-			p2p_sendRedirect( T, FT );
-	}
-
-	LeaveCriticalSection( &sessionLock );
-}
-
-void __stdcall p2p_cancelAllSessions( void )
-{
-	EnterCriticalSection( &sessionLock );
-
-	for ( int i=0; i < sessionList.getCount(); i++ ) {
-		filetransfer* FT = sessionList[i];
-		p2p_sendCancel( MSN_GetP2PThreadByContact( FT->std.hContact ), FT );
-	}
-
-	for ( int j=0; j < dcList.getCount(); j++ ) 
-		delete dcList[j];
-
-	dcList.destroy();
-
-	LeaveCriticalSection( &sessionLock );
+	return result;
 }
 
 filetransfer* __stdcall p2p_getSessionByCallID( const char* CallID )
@@ -205,12 +153,15 @@ filetransfer* __stdcall p2p_getSessionByCallID( const char* CallID )
 	if ( CallID == NULL )
 		return NULL;
 
+	filetransfer* ft = NULL;
 	EnterCriticalSection( &sessionLock );
 
-	filetransfer* ft = NULL;
-	for ( int i=0; i < sessionList.getCount(); i++ ) {
+	for ( int i=0; i < sessionCount; i++ ) {
 		filetransfer* FT = sessionList[i];
-		if ( FT->p2p_callID != NULL && !strcmp( FT->p2p_callID, CallID )) {
+		if ( FT->p2p_callID == NULL )
+			continue;
+
+		if ( !strcmp( FT->p2p_callID, CallID )) {
 			ft = FT;
 			break;
 	}	}
@@ -222,40 +173,21 @@ filetransfer* __stdcall p2p_getSessionByCallID( const char* CallID )
 	return ft;
 }
 
+/////////////////////////////////////////////////////////////////////////////////////////
+// push another file transfers
 
-void __stdcall p2p_registerDC( directconnection* dc )
+void __stdcall p2p_ackOtherFiles( ThreadData* info )
 {
-	EnterCriticalSection( &sessionLock );
-	dcList.insert( dc );
-	LeaveCriticalSection( &sessionLock );
-}
-
-void __stdcall p2p_unregisterDC( directconnection* dc )
-{
-	EnterCriticalSection( &sessionLock );
-	delete dc; 
-	dcList.remove( dc );
-	LeaveCriticalSection( &sessionLock );
-}
-
-directconnection* __stdcall p2p_getDCByCallID( const char* CallID )
-{
-	if ( CallID == NULL )
-		return NULL;
-
+	filetransfer* ft = info->mP2pSession;
 	EnterCriticalSection( &sessionLock );
 
-	directconnection* dc = NULL;
-	for ( int i=0; i < dcList.getCount(); i++ ) {
-		directconnection* DC = dcList[i];
-		if ( DC->callId != NULL && !strcmp( DC->callId, CallID )) {
-			dc = DC;
-			break;
-	}	}
+	for ( int i=0; i < sessionCount; i++ ) {
+		filetransfer* FT = sessionList[i];
+		if ( FT->std.hContact == ft->std.hContact && FT != ft )
+			p2p_sendStatus( FT, info->mParentThread, 200 );
+	}
 
 	LeaveCriticalSection( &sessionLock );
-
-	return dc;
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////
@@ -270,15 +202,10 @@ void P2pSessions_Uninit()
 {
 	EnterCriticalSection( &sessionLock );
 
-	for ( int i=0; i < sessionList.getCount(); i++ ) 
+	for ( int i=0; i < sessionCount; i++ )
 		delete sessionList[i];
-
-	sessionList.destroy();
-
-	for ( int j=0; j < dcList.getCount(); j++ ) 
-		delete dcList[j];
-
-	dcList.destroy();
+	if ( sessionList != NULL )
+		free( sessionList );
 
 	LeaveCriticalSection( &sessionLock );
 	DeleteCriticalSection( &sessionLock );

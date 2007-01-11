@@ -29,8 +29,13 @@ $Id$
 
 #include "commonheaders.h"
 #pragma hdrstop
+#include "msgs.h"
 
-extern      struct ContainerWindowData *pFirstContainer;
+int _log(const char *fmt, ...); // XXX debuglog
+int EnumContainers(HANDLE hContact, DWORD dwAction, const char *szTarget, const char *szNew, DWORD dwExtinfo, DWORD dwExtinfoEx);
+extern struct ContainerWindowData *pFirstContainer;
+void DeleteContainer(int iIndex), RenameContainer(int IIndex, const TCHAR *szNew);
+HMENU BuildContainerMenu();
 
 BOOL CALLBACK SelectContainerDlgProc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 {
@@ -41,7 +46,7 @@ BOOL CALLBACK SelectContainerDlgProc(HWND hwndDlg, UINT msg, WPARAM wParam, LPAR
     switch (msg) {
         case WM_INITDIALOG:
             {
-                TCHAR szNewTitle[128];
+                char szTitle[80], szNewTitle[128];
                 RECT rc, rcParent;
                 struct ContainerWindowData *pContainer = 0;
 
@@ -51,11 +56,11 @@ BOOL CALLBACK SelectContainerDlgProc(HWND hwndDlg, UINT msg, WPARAM wParam, LPAR
                 TranslateDialogDefault(hwndDlg);
 
                 if (lParam) {
-					struct MessageWindowData *dat = (struct MessageWindowData *)GetWindowLong((HWND)lParam, GWL_USERDATA);
-					if(dat) {
-						mir_sntprintf(szNewTitle, safe_sizeof(szNewTitle), TranslateT("Select container for %s"), dat->szNickname);
-                        SetWindowText(hwndDlg, szNewTitle);
-					}
+                    if (GetWindowTextLengthA(hwndMsgDlg)) {
+                        GetWindowTextA(hwndMsgDlg, szTitle, sizeof(szTitle));
+                        _snprintf(szNewTitle, sizeof(szNewTitle), Translate("Select container for %s"), szTitle);
+                        SetWindowTextA(hwndDlg, szNewTitle);
+                    }
                 }
 
                 SendMessage(hwndDlg, DM_SC_BUILDLIST, 0, 0);
@@ -192,16 +197,29 @@ BOOL CALLBACK SelectContainerDlgProc(HWND hwndDlg, UINT msg, WPARAM wParam, LPAR
             struct ContainerWindowData *pContainer = 0;
             do {
                 _snprintf(szValue, 8, "%d", iCounter);
-                if (DBGetContactSettingTString(NULL, szKey, szValue, &dbv))
+                if (DBGetContactSetting(NULL, szKey, szValue, &dbv))
                     break;          // end of list
-                if (dbv.type == DBVT_ASCIIZ || dbv.type == DBVT_WCHAR) {
-                    if (_tcsncmp(dbv.ptszVal, _T("**free**"), CONTAINER_NAMELEN)) {
-                        iItemNew = SendDlgItemMessage(hwndDlg, IDC_CNTLIST, LB_ADDSTRING, 0, (LPARAM)dbv.ptszVal);
+#if defined(_UNICODE)
+                if (dbv.type == DBVT_ASCIIZ) {
+                    WCHAR *wszString = Utf8_Decode(dbv.pszVal);
+                    if (_tcsncmp(wszString, _T("**free**"), CONTAINER_NAMELEN)) {
+                        iItemNew = SendDlgItemMessage(hwndDlg, IDC_CNTLIST, LB_ADDSTRING, 0, (LPARAM) wszString);
                         if(iItemNew != LB_ERR) 
                             SendDlgItemMessage(hwndDlg, IDC_CNTLIST, LB_SETITEMDATA, (WPARAM)iItemNew, (LPARAM)iCounter);
                     }
                     DBFreeVariant(&dbv);
+                    free(wszString);
                 }
+#else
+                if (dbv.type == DBVT_ASCIIZ) {
+                    if (strncmp(dbv.pszVal, "**free**", CONTAINER_NAMELEN)) {
+                        iItemNew = SendDlgItemMessageA(hwndDlg, IDC_CNTLIST, LB_ADDSTRING, 0, (LPARAM) dbv.pszVal);
+                        if(iItemNew != LB_ERR) 
+                            SendDlgItemMessageA(hwndDlg, IDC_CNTLIST, LB_SETITEMDATA, (WPARAM)iItemNew, (LPARAM)iCounter);
+                    }
+                    DBFreeVariant(&dbv);
+                }
+#endif                
             } while (++iCounter);
 
             /*
