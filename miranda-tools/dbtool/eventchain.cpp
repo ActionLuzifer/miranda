@@ -17,13 +17,12 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 #include "dbtool.h"
+#include <stddef.h>
 
 static DWORD ofsThisEvent,ofsPrevEvent;
 static DWORD ofsDestPrevEvent;
 static DWORD eventCount;
 static DWORD ofsFirstUnread,timestampFirstUnread;
-static DWORD memsize = 0;
-static DBEvent* memblock = NULL;
 
 static void WriteOfsNextToPrevious(DWORD ofsPrev,DBContact *dbc,DWORD ofsNext)
 {
@@ -47,11 +46,6 @@ static void FinishUp(DWORD ofsLast,DBContact *dbc)
 	else {
 		dbc->ofsFirstUnreadEvent=ofsFirstUnread;
 		dbc->timestampFirstUnread=timestampFirstUnread;
-	}
-	if (memsize && memblock) {
-		free(memblock);
-		memsize = 0;
-		memblock = NULL;
 	}
 }
 
@@ -100,9 +94,9 @@ int WorkEventChain(DWORD ofsContact,DBContact *dbc,int firstTime)
 		AddToStatus(STATUS_WARNING,"Event marked as first which is not: correcting");
 		dbeOld.flags&=~DBEF_FIRST;
 	}
-	if(dbeOld.flags&~(DBEF_FIRST|DBEF_READ|DBEF_SENT|DBEF_RTL)) {
+	if(dbeOld.flags&~(DBEF_FIRST|DBEF_READ|DBEF_SENT)) {
 		AddToStatus(STATUS_WARNING,"Extra flags found in event: removing");
-		dbeOld.flags&=(DBEF_FIRST|DBEF_READ|DBEF_SENT|DBEF_RTL);
+		dbeOld.flags&=DBEF_FIRST|DBEF_READ|DBEF_SENT;
 	}
 	if(!(dbeOld.flags&(DBEF_READ|DBEF_SENT))) {
 		if(opts.bMarkRead) dbeOld.flags|=DBEF_READ;
@@ -124,12 +118,9 @@ int WorkEventChain(DWORD ofsContact,DBContact *dbc,int firstTime)
 	if(!firstTime && dbeOld.ofsPrev!=ofsPrevEvent)
 		AddToStatus(STATUS_WARNING,"Event not backlinked correctly: fixing");
 	dbeOld.ofsPrev=ofsDestPrevEvent;
-	if (offsetof(DBEvent,blob)+dbeOld.cbBlob > memsize) {
-		memsize = offsetof(DBEvent,blob)+dbeOld.cbBlob;
-		memblock = (DBEvent*)realloc(memblock, memsize);
-	}
-	dbeNew=memblock;
+	dbeNew=(DBEvent*)malloc(offsetof(DBEvent,blob)+dbeOld.cbBlob);
 	if(ReadSegment(ofsThisEvent,dbeNew,offsetof(DBEvent,blob)+dbeOld.cbBlob)!=ERROR_SUCCESS) {
+		free(dbeNew);
 		FinishUp(ofsDestPrevEvent,dbc);
 		return ERROR_NO_MORE_ITEMS;
 	}
@@ -138,11 +129,10 @@ int WorkEventChain(DWORD ofsContact,DBContact *dbc,int firstTime)
 	dbeNew->ofsPrev=dbeOld.ofsPrev;
 	dbeNew->ofsNext=0;
 	if((ofsDestThis=WriteSegment(WSOFS_END,dbeNew,offsetof(DBEvent,blob)+dbeNew->cbBlob))==WS_ERROR) {
-		free(memblock);
-		memblock = NULL;
-		memsize=0;
+		free(dbeNew);
 		return ERROR_HANDLE_DISK_FULL;
 	}
+	free(dbeNew);
 	if(isUnread) {
 		ofsFirstUnread=ofsDestThis;
 		timestampFirstUnread=dbeOld.timestamp;

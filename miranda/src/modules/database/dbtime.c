@@ -2,7 +2,7 @@
 
 Miranda IM: the free IM client for Microsoft* Windows*
 
-Copyright 2000-2007 Miranda ICQ/IM project, 
+Copyright 2000-2003 Miranda ICQ/IM project, 
 all portions of this codebase are copyrighted to the people 
 listed in contributors.txt.
 
@@ -21,8 +21,8 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
-#include "commonheaders.h"
-//#include "database.h"
+#include "../../core/commonheaders.h"
+#include "database.h"
 
 static int daysInMonth[12]={31,28,31,30,31,30,31,31,30,31,30,31};
 static int IsLeapYear(int year)
@@ -75,51 +75,33 @@ static int TimestampToLocal(WPARAM wParam,LPARAM lParam)
 	LARGE_INTEGER liFiletime;
 	FILETIME filetime;
 	SYSTEMTIME st;
-	int iReturn = 0;
 
 	GetTimeZoneInformation(&tzInfo);
-	if(tzInfo.StandardDate.wMonth==0)
-	{
-		//no daylight savings time
-		iReturn = (int)(wParam-tzInfo.Bias*60);
+	if(tzInfo.StandardDate.wMonth==0) {	 //no daylight savings time
+		return (int)(wParam-tzInfo.Bias*60);
 	}
-	else
-	{
-		//this huge number is the difference between 1970 and 1601 in seconds
-		liFiletime.QuadPart=((__int64)11644473600+(__int64)wParam)*10000000;
-		filetime.dwHighDateTime=liFiletime.HighPart;
-		filetime.dwLowDateTime=liFiletime.LowPart;
-		FileTimeToSystemTime(&filetime,&st);
-
-		if(tzInfo.DaylightDate.wMonth<tzInfo.StandardDate.wMonth)
-		{
-			//northern hemisphere
-			if(CompareSystemTimes(&st,&tzInfo.DaylightDate)<0 ||
-			   CompareSystemTimes(&st,&tzInfo.StandardDate)>0)
-			{
-				iReturn = (int)(wParam-(tzInfo.Bias+tzInfo.StandardBias)*60);
-			}
-			else
-			{
-				iReturn = (int)(wParam-(tzInfo.Bias+tzInfo.DaylightBias)*60);
-			}
+	//this huge number is the difference between 1970 and 1601 in seconds
+	liFiletime.QuadPart=(11644473600i64+(__int64)wParam)*10000000;
+	filetime.dwHighDateTime=liFiletime.HighPart;
+	filetime.dwLowDateTime=liFiletime.LowPart;
+	FileTimeToSystemTime(&filetime,&st);
+	if(tzInfo.DaylightDate.wMonth<tzInfo.StandardDate.wMonth) {
+		//northern hemisphere
+		if(CompareSystemTimes(&st,&tzInfo.DaylightDate)<0 ||
+		   CompareSystemTimes(&st,&tzInfo.StandardDate)>0) {
+		    return (int)(wParam-(tzInfo.Bias+tzInfo.StandardBias)*60);
 		}
-		else
-		{
-			//southern hemisphere
-			if(CompareSystemTimes(&st,&tzInfo.StandardDate)<0 ||
-			   CompareSystemTimes(&st,&tzInfo.DaylightDate)>0)
-			{
-				iReturn = (int)(wParam-(tzInfo.Bias+tzInfo.DaylightBias)*60);
-			}
-			else
-			{
-				iReturn = (int)(wParam-(tzInfo.Bias+tzInfo.StandardBias)*60);
-			}
-		}
+	    return (int)(wParam-(tzInfo.Bias+tzInfo.DaylightBias)*60);
 	}
-
-	return iReturn;
+	else {
+		//southern hemisphere
+		if(CompareSystemTimes(&st,&tzInfo.StandardDate)<0 ||
+		   CompareSystemTimes(&st,&tzInfo.DaylightDate)>0) {
+		    return (int)(wParam-(tzInfo.Bias+tzInfo.DaylightBias)*60);
+		}
+	    return (int)(wParam-(tzInfo.Bias+tzInfo.StandardBias)*60);
+	}
+	return 0;
 }
 
 static int TimestampToString(WPARAM wParam,LPARAM lParam)
@@ -133,7 +115,7 @@ static int TimestampToString(WPARAM wParam,LPARAM lParam)
 	int destCharsLeft,dateTimeStrLen;
 
 	//this huge number is the difference between 1970 and 1601 in seconds
-	liFiletime.QuadPart=((__int64)11644473600+(__int64)(DWORD)TimestampToLocal(wParam,0))*10000000;
+	liFiletime.QuadPart=(11644473600i64+(__int64)(DWORD)TimestampToLocal(wParam,0))*10000000;
 	filetime.dwHighDateTime=liFiletime.HighPart;
 	filetime.dwLowDateTime=liFiletime.LowPart;
 	FileTimeToSystemTime(&filetime,&st);
@@ -141,19 +123,19 @@ static int TimestampToString(WPARAM wParam,LPARAM lParam)
 	for(pFormat=tts->szFormat,pDest=tts->szDest;*pFormat;pFormat++) {
 		switch(*pFormat) {
 			case 't':
-				GetTimeFormatA(LOCALE_USER_DEFAULT,TIME_NOSECONDS,&st,NULL,dateTimeStr,SIZEOF(dateTimeStr));
+				GetTimeFormat(LOCALE_USER_DEFAULT,TIME_NOSECONDS,&st,NULL,dateTimeStr,sizeof(dateTimeStr));
 				break;
 			case 's':
-				GetTimeFormatA(LOCALE_USER_DEFAULT,0,&st,NULL,dateTimeStr,SIZEOF(dateTimeStr));
+				GetTimeFormat(LOCALE_USER_DEFAULT,0,&st,NULL,dateTimeStr,sizeof(dateTimeStr));
 				break;
 			case 'm':
-				GetTimeFormatA(LOCALE_USER_DEFAULT,TIME_NOMINUTESORSECONDS,&st,NULL,dateTimeStr,SIZEOF(dateTimeStr));
+				GetTimeFormat(LOCALE_USER_DEFAULT,TIME_NOMINUTESORSECONDS,&st,NULL,dateTimeStr,sizeof(dateTimeStr));
 				break;
 			case 'd':
-				GetDateFormatA(LOCALE_USER_DEFAULT,DATE_SHORTDATE,&st,NULL,dateTimeStr,SIZEOF(dateTimeStr));
+				GetDateFormat(LOCALE_USER_DEFAULT,DATE_SHORTDATE,&st,NULL,dateTimeStr,sizeof(dateTimeStr));
 				break;
 			case 'D':
-				GetDateFormatA(LOCALE_USER_DEFAULT,DATE_LONGDATE,&st,NULL,dateTimeStr,SIZEOF(dateTimeStr));
+				GetDateFormat(LOCALE_USER_DEFAULT,DATE_LONGDATE,&st,NULL,dateTimeStr,sizeof(dateTimeStr));
 				break;
 			default:
 				if(destCharsLeft) {
@@ -173,67 +155,9 @@ static int TimestampToString(WPARAM wParam,LPARAM lParam)
 	return 0;
 }
 
-#if defined( _UNICODE )
-static int TimestampToStringW(WPARAM wParam,LPARAM lParam)
-{
-	DBTIMETOSTRINGT *tts = ( DBTIMETOSTRINGT* )lParam;
-	LARGE_INTEGER liFiletime;
-	FILETIME filetime;
-	SYSTEMTIME st;
-	TCHAR dateTimeStr[64];
-	TCHAR *pDest,*pFormat;
-	int destCharsLeft, dateTimeStrLen;
-
-	//this huge number is the difference between 1970 and 1601 in seconds
-	liFiletime.QuadPart = (11644473600i64+(__int64)(DWORD)TimestampToLocal(wParam,0))*10000000;
-	filetime.dwHighDateTime = liFiletime.HighPart;
-	filetime.dwLowDateTime = liFiletime.LowPart;
-	FileTimeToSystemTime(&filetime,&st);
-	destCharsLeft = tts->cbDest;
-	for ( pFormat = tts->szFormat, pDest=tts->szDest; *pFormat; pFormat++ ) {
-		switch(*pFormat) {
-		case 't':
-			GetTimeFormat(LOCALE_USER_DEFAULT,TIME_NOSECONDS,&st,NULL,dateTimeStr,SIZEOF(dateTimeStr));
-			break;
-		case 's':
-			GetTimeFormat(LOCALE_USER_DEFAULT,0,&st,NULL,dateTimeStr,SIZEOF(dateTimeStr));
-			break;
-		case 'm':
-			GetTimeFormat(LOCALE_USER_DEFAULT,TIME_NOMINUTESORSECONDS,&st,NULL,dateTimeStr,SIZEOF(dateTimeStr));
-			break;
-		case 'd':
-			GetDateFormat(LOCALE_USER_DEFAULT,DATE_SHORTDATE,&st,NULL,dateTimeStr,SIZEOF(dateTimeStr));
-			break;
-		case 'D':
-			GetDateFormat(LOCALE_USER_DEFAULT,DATE_LONGDATE,&st,NULL,dateTimeStr,SIZEOF(dateTimeStr));
-			break;
-		default:
-			if ( destCharsLeft ) {
-				*pDest++ = *pFormat;
-				destCharsLeft--;
-			}
-			continue;
-		}
-		dateTimeStrLen = _tcslen(dateTimeStr);
-		if (destCharsLeft < dateTimeStrLen) dateTimeStrLen = destCharsLeft;
-		CopyMemory(pDest, dateTimeStr, dateTimeStrLen*sizeof(TCHAR));
-		destCharsLeft -= dateTimeStrLen;
-		pDest += dateTimeStrLen;
-	}
-	if ( destCharsLeft ) *pDest=0;
-	else tts->szDest[ tts->cbDest-1 ] = 0;
-	return 0;
-}
-#endif
-
 int InitTime(void)
 {
-	CreateServiceFunction(MS_DB_TIME_TIMESTAMPTOLOCAL, TimestampToLocal);
-	CreateServiceFunction(MS_DB_TIME_TIMESTAMPTOSTRING, TimestampToString);
-	#if defined( _UNICODE )
-		CreateServiceFunction(MS_DB_TIME_TIMESTAMPTOSTRINGT, TimestampToStringW);
-	#else
-		CreateServiceFunction(MS_DB_TIME_TIMESTAMPTOSTRINGT, TimestampToString);
-	#endif
+	CreateServiceFunction(MS_DB_TIME_TIMESTAMPTOLOCAL,TimestampToLocal);
+	CreateServiceFunction(MS_DB_TIME_TIMESTAMPTOSTRING,TimestampToString);
 	return 0;
 } 

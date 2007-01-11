@@ -33,8 +33,7 @@ int msn_httpGatewayInit(HANDLE hConn, NETLIBOPENCONNECTION* nloc, NETLIBHTTPREQU
 	nlhpi.cbSize = sizeof(nlhpi);
 	nlhpi.szHttpGetUrl = NULL;
 	nlhpi.szHttpPostUrl = "messenger.hotmail.com";
-	nlhpi.flags = NLHPIF_HTTP11;
-	return MSN_CallService(MS_NETLIB_SETHTTPPROXYINFO, (WPARAM)hConn, (LPARAM)&nlhpi);
+	return CallService(MS_NETLIB_SETHTTPPROXYINFO, (WPARAM)hConn, (LPARAM)&nlhpi);
 }
 
 //=======================================================================================
@@ -82,14 +81,14 @@ PBYTE msn_httpGatewayUnwrapRecv( NETLIBHTTPREQUEST* nlhr, PBYTE buf, int len, in
 		T->applyGatewayData( nlhr->nlc, false );
 	}
 
-	if ( tIsSessionClosed || nlhr->resultCode != 200)
+	if ( tIsSessionClosed )
 	{	*outBufLen = 0;
-		buf = ( PBYTE )mir_alloc( 1 );
+		buf = ( PBYTE )malloc( 1 );
 		*buf = 0;
 	}
 	else if ( buf == NULL && len == 0 )
 	{	*outBufLen = 1;
-		buf = ( PBYTE )mir_alloc( 1 );
+		buf = ( PBYTE )malloc( 1 );
 		*buf = 0;
 	}
 

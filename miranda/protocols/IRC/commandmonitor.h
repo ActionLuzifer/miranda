@@ -53,7 +53,6 @@ public:
 	bool OnIrc_NAMES(const CIrcMessage* pmsg);
 	bool OnIrc_ENDNAMES(const CIrcMessage* pmsg);
 	bool OnIrc_INITIALTOPIC(const CIrcMessage* pmsg);
-	bool OnIrc_INITIALTOPICNAME(const CIrcMessage* pmsg);
 	bool OnIrc_TOPIC(const CIrcMessage* pmsg);
 	bool OnIrc_TRYAGAIN(const CIrcMessage* pmsg);
 	bool OnIrc_NOTICE(const CIrcMessage* pmsg);
@@ -77,7 +76,6 @@ public:
 	bool OnIrc_BACKFROMAWAY(const CIrcMessage* pmsg);
 	bool OnIrc_SETAWAY(const CIrcMessage* pmsg);
 	bool OnIrc_JOINERROR(const CIrcMessage* pmsg);
-	bool OnIrc_UNKNOWN(const CIrcMessage* pmsg);
 	bool OnIrc_ERROR(const CIrcMessage* pmsg);
 	bool OnIrc_NOOFCHANNELS(const CIrcMessage* pmsg);
 	bool OnIrc_PINGPONG(const CIrcMessage* pmsg);

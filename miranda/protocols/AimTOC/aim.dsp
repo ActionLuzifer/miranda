@@ -117,6 +117,10 @@ SOURCE=.\groupchat.c
 # End Source File
 # Begin Source File
 
+SOURCE=.\groupchatlog.c
+# End Source File
+# Begin Source File
+
 SOURCE=.\groups.c
 # End Source File
 # Begin Source File
@@ -221,6 +225,10 @@ SOURCE=.\groupchat.h
 # End Source File
 # Begin Source File
 
+SOURCE=.\groupchatlog.h
+# End Source File
+# Begin Source File
+
 SOURCE=.\groups.h
 # End Source File
 # Begin Source File
@@ -305,10 +313,6 @@ SOURCE=.\icos\blank.ico
 # End Source File
 # Begin Source File
 
-SOURCE=.\icos\delete.ico
-# End Source File
-# Begin Source File
-
 SOURCE=.\icos\groupchat.ico
 # End Source File
 # Begin Source File
@@ -318,10 +322,6 @@ SOURCE=.\icos\groupchata.ico
 # Begin Source File
 
 SOURCE=.\icos\password.ico
-# End Source File
-# Begin Source File
-
-SOURCE=.\icos\show.ico
 # End Source File
 # Begin Source File
 

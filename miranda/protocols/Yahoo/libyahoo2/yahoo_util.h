@@ -64,7 +64,6 @@ void * y_memdup(const void * addr, int n);
 char ** y_strsplit(char * str, char * sep, int nelem);
 void y_strfreev(char ** vector);
 
-/*
 int strncasecmp(const char * s1, const char * s2, size_t n);
 int strcasecmp(const char * s1, const char * s2);
 
@@ -72,7 +71,6 @@ char * strdup(const char *s);
 
 int snprintf(char *str, size_t size, const char *format, ...);
 int vsnprintf(char *str, size_t size, const char *format, va_list ap);
-*/
 
 #endif
 
@@ -97,8 +95,8 @@ int vsnprintf(char *str, size_t size, const char *format, va_list ap);
  * You must free it yourself
  */
 char * y_string_append(char * str, char * append);
-/*char * y_str_to_utf8(const char * in);
-char * y_utf8_to_str(const char * in);*/
+char * y_str_to_utf8(const char * in);
+char * y_utf8_to_str(const char * in);
 
 #endif
 

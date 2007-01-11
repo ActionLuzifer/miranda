@@ -2,8 +2,8 @@
 
 Miranda IM: the free IM client for Microsoft* Windows*
 
-Copyright 2000-2007 Miranda ICQ/IM project,
-all portions of this codebase are copyrighted to the people
+Copyright 2000-2003 Miranda ICQ/IM project, 
+all portions of this codebase are copyrighted to the people 
 listed in contributors.txt.
 
 This program is free software; you can redistribute it and/or
@@ -20,7 +20,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
-#include "commonheaders.h"
+#include "../../core/commonheaders.h"
 #include "netlib.h"
 
 extern CRITICAL_SECTION csNetlibCloseHandle;
@@ -39,10 +39,8 @@ int NetlibSend(WPARAM wParam,LPARAM lParam)
 
 	if(!NetlibEnterNestedCS(nlc,NLNCS_SEND)) return SOCKET_ERROR;
 	if(nlc->usingHttpGateway && !(nlb->flags&MSG_RAW)) {
-		if(!(nlb->flags&MSG_NOHTTPGATEWAYWRAP) && nlc->nlu->user.pfnHttpGatewayWrapSend) {
-			NetlibDumpData(nlc,nlb->buf,nlb->len,1,nlb->flags);
+		if(!(nlb->flags&MSG_NOHTTPGATEWAYWRAP) && nlc->nlu->user.pfnHttpGatewayWrapSend)
 			result=nlc->nlu->user.pfnHttpGatewayWrapSend((HANDLE)nlc,nlb->buf,nlb->len,nlb->flags|MSG_NOHTTPGATEWAYWRAP,NetlibSend);
-		}
 		else result=NetlibHttpGatewayPost(nlc,nlb->buf,nlb->len,nlb->flags);
 	}
 	else {
@@ -145,11 +143,7 @@ int NetlibSelectEx(WPARAM wParam,LPARAM lParam)
 	for (j=0; j<FD_SETSIZE; j++) {
 		conn=(struct NetlibConnection*)nls->hReadConns[j];
 		if (conn==NULL || conn==INVALID_HANDLE_VALUE) break;
-		
-		if (conn->usingHttpGateway && conn->nlhpi.szHttpGetUrl == NULL && conn->dataBuffer == NULL)
-			nls->hReadStatus[j] = (conn->pHttpProxyPacketQueue != NULL);
-		else
-			nls->hReadStatus[j] = FD_ISSET(conn->s,&readfd);
+		nls->hReadStatus[j] = FD_ISSET(conn->s,&readfd);
 	}
 	for (j=0; j<FD_SETSIZE; j++) {
 		conn=(struct NetlibConnection*)nls->hWriteConns[j];

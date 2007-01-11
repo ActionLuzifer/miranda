@@ -5,7 +5,7 @@
 // Copyright © 2000,2001 Richard Hughes, Roland Rabien, Tristan Van de Vreede
 // Copyright © 2001,2002 Jon Keating, Richard Hughes
 // Copyright © 2002,2003,2004 Martin Öberg, Sam Kothari, Robert Rainwater
-// Copyright © 2004,2005,2006 Joe Kucera
+// Copyright © 2004,2005 Joe Kucera
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -23,7 +23,7 @@
 //
 // -----------------------------------------------------------------------------
 //
-// File name      : $Source: /cvsroot/miranda/miranda/protocols/IcqOscarJ/families.h,v $
+// File name      : $Source$
 // Revision       : $Revision$
 // Last change on : $Date$
 // Last change by : $Author$
@@ -37,54 +37,57 @@
 #ifndef __FAMILIES_H
 #define __FAMILIES_H
 
+typedef struct icq_mode_messages_s
+{
+	char* szAway;
+	char* szNa;
+	char* szDnd;
+	char* szOccupied;
+	char* szFfc;
+} icq_mode_messages;
 
 typedef struct snac_header_s
 {
-  BOOL  bValid;
-  WORD  wFamily;
-  WORD  wSubtype;
-  WORD  wFlags;
-  DWORD dwRef;
-  WORD  wVersion;
+	BOOL  bValid;
+	WORD  wFamily;
+	WORD  wSubtype;
+	WORD  wFlags;
+	DWORD dwRef;
+	WORD  wVersion;
 } snac_header;
+
+
+typedef struct familyrequest_rec_s
+{
+  WORD wFamily;
+  void (*familyhandler)(HANDLE hConn, char* cookie, WORD cookieLen);
+} familyrequest_rec;
+
 
 
 /*---------* Functions *---------------*/
 
-void handleServiceFam(unsigned char *pBuffer, WORD wBufferLength, snac_header* pSnacHeader, serverthread_info *info);
+void handleServiceFam(unsigned char *pBuffer, WORD wBufferLength, snac_header* pSnacHeader);
 void handleLocationFam(unsigned char *pBuffer, WORD wBufferLength, snac_header* pSnacHeader);
-void handleBuddyFam(unsigned char *pBuffer, WORD wBufferLength, snac_header* pSnacHeader, serverthread_info *info);
+void handleBuddyFam(unsigned char *pBuffer, WORD wBufferLength, snac_header* pSnacHeader);
 void handleMsgFam(unsigned char *pBuffer, WORD wBufferLength, snac_header* pSnacHeader);
 void handleBosFam(unsigned char *pBuffer, WORD wBufferLength, snac_header* pSnacHeader);
-void handleLookupFam(unsigned char *pBuffer, WORD wBufferLength, snac_header* pSnacHeader);
 void handleStatusFam(unsigned char *pBuffer, WORD wBufferLength, snac_header* pSnacHeader);
-void handleServClistFam(unsigned char *pBuffer, WORD wBufferLength, snac_header* pSnacHeader, serverthread_info *info);
+void handleServClistFam(unsigned char *pBuffer, WORD wBufferLength, snac_header* pSnacHeader);
 void handleIcqExtensionsFam(unsigned char *pBuffer, WORD wBufferLength, snac_header* pSnacHeader);
-void handleAuthorizationFam(unsigned char *pBuffer, WORD wBufferLength, snac_header* pSnacHeader, serverthread_info *info);
 
-void sendClientAuth(const char* szKey, WORD wKeyLen, BOOL bSecure);
-void handleLoginReply(unsigned char *buf, WORD datalen, serverthread_info *info);
-
-void handleServUINSettings(int nPort, serverthread_info *info);
-int getPluginTypeIdLen(int nTypeID);
-void packPluginTypeId(icq_packet *packet, int nTypeID);
-int unpackPluginTypeId(BYTE** pBuffer, WORD* pwLen, int *pTypeId, WORD *pFunctionId, BOOL bThruDC);
-
-void handleMessageTypes(DWORD dwUin, DWORD dwTimestamp, DWORD dwMsgID, DWORD dwMsgID2, WORD wCookie, WORD wVersion, int type, int flags, WORD wAckType, DWORD dwDataLen, WORD wMsgLen, char *pMsg, BOOL bThruDC);
+void handleServUINSettings(int nPort, int nIP);
+int TypeStringToTypeId(const char* pszType);
+void handleMessageTypes(DWORD dwUin, DWORD dwTimestamp, DWORD dwRecvTimestamp, DWORD dwRecvTimestamp2, WORD wCookie, int type, int flags, WORD wAckType, DWORD dwDataLen, WORD wMsgLen, char *pMsg);
 
 #define BUL_ALLCONTACTS   0
 #define BUL_VISIBLE       1
 #define BUL_INVISIBLE     2
-#define BUL_TEMPVISIBLE   4
-void sendEntireListServ(WORD wFamily, WORD wSubtype, int listType);
+void sendEntireListServ(WORD wFamily, WORD wSubtype, WORD wFlags, int listType);
 void updateServVisibilityCode(BYTE bCode);
-void updateServAvatarHash(char* pHash, int size);
-void sendAddStart(int bImport);
+void sendAddStart(void);
 void sendAddEnd(void);
+DWORD renameServContact(HANDLE hContact, const char *szNick);
 void sendTypingNotification(HANDLE hContact, WORD wMTNCode);
-
-void makeContactTemporaryVisible(HANDLE hContact);
-void clearTemporaryVisibleList();
-
 
 #endif /* __FAMILIES_H */

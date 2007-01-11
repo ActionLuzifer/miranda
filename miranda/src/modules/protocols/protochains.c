@@ -2,8 +2,8 @@
 
 Miranda IM: the free IM client for Microsoft* Windows*
 
-Copyright 2000-2007 Miranda ICQ/IM project,
-all portions of this codebase are copyrighted to the people
+Copyright 2000-2003 Miranda ICQ/IM project, 
+all portions of this codebase are copyrighted to the people 
 listed in contributors.txt.
 
 This program is free software; you can redistribute it and/or
@@ -20,7 +20,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
-#include "commonheaders.h"
+#include "../../core/commonheaders.h"
 #include <m_protomod.h>
 
 int Proto_IsProtocolLoaded(WPARAM wParam,LPARAM lParam);
@@ -41,18 +41,18 @@ static int Proto_CallContactService(WPARAM wParam,LPARAM lParam)
 		if(DBGetContactSetting(ccs->hContact,"_Filter",str,&dbv)) break;
 		if((ret=CallProtoService(dbv.pszVal,ccs->szProtoService,i+1,lParam))!=CALLSERVICE_NOTFOUND) {
 			//chain was started, exit
-			mir_free(dbv.pszVal);
+			free(dbv.pszVal);
 			return ret;
 		}
-		mir_free(dbv.pszVal);
+		free(dbv.pszVal);
 	}
 	if(DBGetContactSetting(ccs->hContact,"Protocol","p",&dbv)) return 1;
 	if((ret=CallProtoService(dbv.pszVal,ccs->szProtoService,(WPARAM)(-1),lParam))!=CALLSERVICE_NOTFOUND) {
 		//chain was started, exit
-		mir_free(dbv.pszVal);
+		free(dbv.pszVal);
 		return ret;
 	}
-	mir_free(dbv.pszVal);
+	free(dbv.pszVal);
 	return 1;
 }
 
@@ -68,7 +68,7 @@ static int CallRecvChain(WPARAM wParam,LPARAM lParam)
 		for(;;wParam++) {
 			_itoa(wParam,str,10);
 			if(DBGetContactSetting(ccs->hContact,"_Filter",str,&dbv)) break;
-			mir_free(dbv.pszVal);
+			free(dbv.pszVal);
 		}
 	}
 	else wParam--;
@@ -77,18 +77,18 @@ static int CallRecvChain(WPARAM wParam,LPARAM lParam)
 		if(DBGetContactSetting(ccs->hContact,"_Filter",str,&dbv)) return 1; //never happens
 		if((ret=CallProtoService(dbv.pszVal,ccs->szProtoService,i+1,lParam))!=CALLSERVICE_NOTFOUND) {
 			//chain was started, exit
-			mir_free(dbv.pszVal);
+			free(dbv.pszVal);
 			return ret;
 		}
-		mir_free(dbv.pszVal);
+		free(dbv.pszVal);
 	}
 	//end of chain, call network protocol again
 	if(DBGetContactSetting(ccs->hContact,"Protocol","p",&dbv)) return 1;
 	if((ret=CallProtoService(dbv.pszVal,ccs->szProtoService,(WPARAM)(-1),lParam))!=CALLSERVICE_NOTFOUND) {
-		mir_free(dbv.pszVal);
+		free(dbv.pszVal);
 		return ret;
 	}
-	mir_free(dbv.pszVal);
+	free(dbv.pszVal);
 	return 1;
 }
 
@@ -108,7 +108,7 @@ static int Proto_GetContactBaseProto(WPARAM wParam,LPARAM lParam)
 
 	dbv.type=DBVT_ASCIIZ;
 	dbv.pszVal=name;
-	dbv.cchVal=SIZEOF(name);
+	dbv.cchVal=sizeof(name);
 	dbcgs.pValue=&dbv;
 	dbcgs.szModule="Protocol";
 	dbcgs.szSetting="p";
@@ -127,19 +127,19 @@ static int Proto_IsProtoOnContact(WPARAM wParam,LPARAM lParam)
 
 	if(!DBGetContactSetting((HANDLE)wParam,"Protocol","p",&dbv)) {
 		if(!strcmp((char*)lParam,dbv.pszVal)) {
-			mir_free(dbv.pszVal);
+			free(dbv.pszVal);
 			return -1;
 		}
-		mir_free(dbv.pszVal);
+		free(dbv.pszVal);
 	}
 	for(i=0;;i++) {
 		_itoa(i,str,10);
 		if(DBGetContactSetting((HANDLE)wParam,"_Filter",str,&dbv)) break;
 		if(!strcmp((char*)lParam,dbv.pszVal)) {
-			mir_free(dbv.pszVal);
+			free(dbv.pszVal);
 			return i+1;
 		}
-		mir_free(dbv.pszVal);
+		free(dbv.pszVal);
 	}
 	return 0;
 }
@@ -164,21 +164,21 @@ static int Proto_AddToContact(WPARAM wParam,LPARAM lParam)
 			_itoa(i,str,10);
 			if(DBGetContactSetting((HANDLE)wParam,"_Filter",str,&dbv)) break;
 			pdCompare=(PROTOCOLDESCRIPTOR*)Proto_IsProtocolLoaded(0,(LPARAM)dbv.pszVal);
-			mir_free(dbv.pszVal);
+			free(dbv.pszVal);
 			if(pdCompare==NULL) continue;
 			if(pd->type > pdCompare->type) break;
 		}
 		//put the new module at position i
-		lastProto=mir_strdup((char*)lParam);
+		lastProto=_strdup((char*)lParam);
 		for(;;i++) {
 			_itoa(i,str,10);
 			if(DBGetContactSetting((HANDLE)wParam,"_Filter",str,&dbv)) {
 				DBWriteContactSettingString((HANDLE)wParam,"_Filter",str,lastProto);
-				mir_free(lastProto);
+				free(lastProto);
 				break;
 			}
 			DBWriteContactSettingString((HANDLE)wParam,"_Filter",str,lastProto);
-			mir_free(lastProto);
+			free(lastProto);
 			lastProto=dbv.pszVal;
 		}
 	}
@@ -205,7 +205,7 @@ static int Proto_RemoveFromContact(WPARAM wParam,LPARAM lParam)
 			}
 			_itoa(i,str,10);
 			DBWriteContactSettingString((HANDLE)wParam,"_Filter",str,dbv.pszVal);
-			mir_free(dbv.pszVal);
+			free(dbv.pszVal);
 		}
 	}
 	return 0;

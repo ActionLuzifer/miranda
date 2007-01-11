@@ -17,18 +17,15 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
-#include "irc.h"
+#include "Irc.h"
 #include "tchar.h"
 #include <stdio.h>
 extern char * IRCPROTONAME;
 extern HANDLE hNetlib;
 extern HANDLE hNetlibDCC;
 extern UINT_PTR	OnlineNotifTimer;	
-extern UINT_PTR	OnlineNotifTimer3;	
 extern HMODULE m_ssleay32;
 extern PREFERENCES * prefs;
-extern MM_INTERFACE mmi;
-extern bool bMbotInstalled;
 UINT_PTR	DCCTimer;	
 CRITICAL_SECTION m_resolve;
 int i = 0;
@@ -175,7 +172,7 @@ String CIrcMessage::AsString() const
 
 	s += sCommand;
 
-	for(int i=0; i < (int)parameters.size(); i++)
+	for(int i=0; i < parameters.size(); i++)
 	{
 		s += " ";
 		if( i == parameters.size() - 1 && (strchr(parameters[i].c_str(), ' ') || parameters[i][0] == ':' ) )// is last parameter ?
@@ -189,7 +186,7 @@ String CIrcMessage::AsString() const
 }
 
 ////////////////////////////////////////////////////////////////////
-//#ifdef IRC_SSL
+#ifdef IRC_SSL
 
 int CSSLSession::SSLInit() 
 {
@@ -284,7 +281,7 @@ int CSSLSession::SSLDisconnect(void) {
 
 	return nSSLret;
 }
-//#endif
+#endif
 ////////////////////////////////////////////////////////////////////
 
 CIrcSession::CIrcSession(IIrcSessionMonitor* pMonitor)	
@@ -302,7 +299,6 @@ CIrcSession::~CIrcSession()
 	DeleteCriticalSection(&m_resolve);
 	DeleteCriticalSection(&m_dcc);
 	KillChatTimer(OnlineNotifTimer);
-	KillChatTimer(OnlineNotifTimer3);
 }
 
 
@@ -310,7 +306,7 @@ bool CIrcSession::Connect(const CIrcSessionInfo& info)
 {
 	try
 	{
-		NETLIBOPENCONNECTION ncon;
+		NETLIBOPENCONNECTION ncon = {0};
 		ncon.cbSize = sizeof(ncon);
 		ncon.szHost = info.sServer.c_str();
 		ncon.wPort = info.iPort;
@@ -321,7 +317,7 @@ bool CIrcSession::Connect(const CIrcSessionInfo& info)
 
 		FindLocalIP(con); // get the local ip used for filetransfers etc
 
-//#ifdef IRC_SSL
+#ifdef IRC_SSL
 
 		if(info.iSSL > 0)
 		{
@@ -335,18 +331,12 @@ bool CIrcSession::Connect(const CIrcSessionInfo& info)
 				return false;
 			}
 		}
-//#endif
-
-		if(Miranda_Terminated())
-		{
-			Disconnect();
-			return false;
-		}
+#endif
 
 		m_info = info;
 
 		// start receiving messages from host
-		mir_forkthread(ThreadProc, this  );
+		forkthread(ThreadProc, 0, this  );
 		Sleep(100);
 		if( info.sPassword.length() )
 			NLSend("PASS %s\r\n", info.sPassword.c_str());
@@ -391,10 +381,10 @@ void CIrcSession::Disconnect(void)
 
 	int i = 0;
 	while(
-//#ifdef IRC_SSL
+#ifdef IRC_SSL
 		
 		sslSession.nSSLConnected && sslSession.m_ssl || !sslSession.nSSLConnected && 
-//#endif		
+#endif		
 		con)
 	{
 		Sleep(50);
@@ -402,9 +392,9 @@ void CIrcSession::Disconnect(void)
 			break;
 		i++;
 	}
-//#ifdef IRC_SSL
+#ifdef IRC_SSL
 	sslSession.SSLDisconnect(); // Close SSL connection
-//#endif
+#endif
 
 	if(con)
 		Netlib_CloseHandle(con);
@@ -430,84 +420,42 @@ void CIrcSession::Notify(const CIrcMessage* pmsg)
 }
 
 int CIrcSession::NLSend( const unsigned char* buf, int cbBuf)
-{
-	if(bMbotInstalled && prefs->ScriptingEnabled)
-	{
-		int iVal = NULL;
-		char * pszTemp = 0;
-		pszTemp = (char *) mmi.mmi_malloc( lstrlen((const char *) buf ) + 1);
-		lstrcpyn(pszTemp, (const char *)buf, lstrlen ((const char *)buf) + 1);
-
-		if(	Scripting_TriggerMSPRawOut(&pszTemp) && pszTemp )
-		{
-//#ifdef IRC_SSL
-			if(sslSession.nSSLConnected == 1) 
-			{
-				iVal = pSSL_write(sslSession.m_ssl, pszTemp, lstrlen(pszTemp));	
-			} 
-			else 
-//#endif
-				if (con)
-					iVal = Netlib_Send(con, (const char*)pszTemp, lstrlen(pszTemp), MSG_DUMPASTEXT);
-		}
-		if(pszTemp)
-			mmi.mmi_free ( pszTemp );
-
-		return iVal;
-	}
-	else
 	{
 
-//#ifdef IRC_SSL
+#ifdef IRC_SSL
 		if(sslSession.nSSLConnected == 1) 
 		{
 			return pSSL_write(sslSession.m_ssl, buf, cbBuf);	
 		} 
 		else 
-//#endif
+#endif
 			if (con)
-				return Netlib_Send(con, (const char*)buf, cbBuf, MSG_DUMPASTEXT);
-	}
-	return 0;
+			return Netlib_Send(con, (const char*)buf, cbBuf, MSG_DUMPASTEXT);
+		return 0;
 
-}
+	}
 
 int CIrcSession::NLSend( const char* fmt, ...)
-{
-	va_list marker;
-	va_start(marker, fmt);
-
-	char szBuf[1024*4];
-	vsprintf(szBuf, fmt, marker);
-
-	va_end(marker);
-
-	return NLSend((unsigned char*)szBuf, strlen(szBuf));
-}
-int CIrcSession::NLSendNoScript( const unsigned char* buf, int cbBuf)
-{
-
-//#ifdef IRC_SSL
-	if(sslSession.nSSLConnected == 1) 
 	{
-		return pSSL_write(sslSession.m_ssl, buf, cbBuf);	
-	} 
-	else 
-//#endif
-		if (con)
-			return Netlib_Send(con, (const char*)buf, cbBuf, MSG_DUMPASTEXT);
+		va_list marker;
+		va_start(marker, fmt);
 
-	return 0;
+		char szBuf[1024*4];
+		vsprintf(szBuf, fmt, marker);
 
-}
+		va_end(marker);
+
+		return NLSend((unsigned char*)szBuf, strlen(szBuf));
+	}
+
 int CIrcSession::NLReceive(unsigned char* buf, int cbBuf)
 {
 	int n = 0;
-//#ifdef IRC_SSL
+#ifdef IRC_SSL
 	if(sslSession.nSSLConnected == 1) 
 		n = pSSL_read(sslSession.m_ssl, buf, cbBuf);
 	 else 
-//#endif
+#endif
 		 n = Netlib_Recv(con, (char*)buf, cbBuf, MSG_DUMPASTEXT);
 	
 	return n;
@@ -520,12 +468,6 @@ void CIrcSession::KillIdent()
 	return;
 }
 
-void CIrcSession::InsertIncomingEvent(char * pszRaw)
-{
-	CIrcMessage msg(pszRaw, true);
-	Notify(&msg);
-	return;
-}
 
 void CIrcSession::DoReceive()
 {
@@ -543,7 +485,7 @@ void CIrcSession::DoReceive()
 		if (!hBindPort || nb.wPort != m_info.iIdentServerPort)
 		{
 			char szTemp[200];
-			mir_snprintf(szTemp, sizeof(szTemp), "Error: unable to bind local port %u", m_info.iIdentServerPort);
+			_snprintf(szTemp, sizeof(szTemp), "Error: unable to bind local port %u", m_info.iIdentServerPort);
 			CallService(MS_NETLIB_LOG, (WPARAM) hNetlib , (LPARAM) szTemp );
 			KillIdent();
 		}
@@ -577,39 +519,11 @@ void CIrcSession::DoReceive()
 			while( *pEnd == '\r' || *pEnd == '\n' )
 				*pEnd++ = '\0';
 
-			// process single message by monitor objects
 			if( *pStart )
 			{
-				if(bMbotInstalled && prefs->ScriptingEnabled)
-				{
-
-					char * pszTemp = NULL;
-					pszTemp = (char *) mmi.mmi_malloc(lstrlen(pStart) + 1); 
-					lstrcpyn(pszTemp, pStart, lstrlen (pStart) + 1);
-
-					if(	Scripting_TriggerMSPRawIn(&pszTemp) && pszTemp)
-					{
-						char* p1 = pszTemp;
-						// replace end-of-line with NULLs
-						while( *p1 != '\0')
-						{
-							if( *p1 == '\r' || *p1 == '\n')
-								*p1 = '\0';
-							*p1++;
-						}
-
-						CIrcMessage msg(pszTemp, true);
-						Notify(&msg);
-					}
-
-					if(pszTemp)
-						mmi.mmi_free( pszTemp );
-				}
-				else
-				{
-					CIrcMessage msg(pStart, true);
-					Notify(&msg);
-				}
+				// process single message by monitor objects
+				CIrcMessage msg(pStart, true);
+				Notify(&msg);
 			}
 
 			cbInBuf -= pEnd - pStart;
@@ -1178,7 +1092,7 @@ int CDccSession::Connect() {
 	if(!di->bSender || di->bReverse)
 	{
 		if(!con)
-			mir_forkthread(ConnectProc, this  ); // spawn a new thread for time consuming activities, ie when connecting to a remote computer
+			forkthread(ConnectProc, 0, this  ); // spawn a new thread for time consuming activities, ie when connecting to a remote computer
 		return true;
 	}
 	else
@@ -1233,7 +1147,7 @@ int CDccSession::SetupConnection() {
 			pfts.files =				file;
 			pfts.totalProgress =		0;
 			pfts.currentFileProgress =	0;
-			pfts.currentFileTime =		(unsigned long)time(0);
+			pfts.currentFileTime =		time(0);
 
 		}
 
@@ -1266,7 +1180,7 @@ int CDccSession::SetupConnection() {
 		if(di->iType == DCC_CHAT && !di->bSender || di->iType == DCC_SEND && di->bSender && di->bReverse)
 		{
 
-			NETLIBOPENCONNECTION ncon;
+			NETLIBOPENCONNECTION ncon = {0};
 			ncon.cbSize = sizeof(ncon);
 			ncon.szHost = ConvertIntegerToIP(di->dwAdr); 
 			ncon.wPort = (WORD) di->iPort;
@@ -1379,7 +1293,7 @@ int CDccSession::SetupConnection() {
 
 
 			// connect to the remote computer from which you are receiving the file (now all actions to take (resume/overwrite etc) have been decided
-			NETLIBOPENCONNECTION ncon;
+			NETLIBOPENCONNECTION ncon = {0};
 			ncon.cbSize = sizeof(ncon);
 			ncon.szHost = ConvertIntegerToIP(di->dwAdr);
 			ncon.wPort = (WORD) di->iPort;
@@ -1399,7 +1313,7 @@ int CDccSession::SetupConnection() {
 			DBWriteContactSettingWord(di->hContact, IRCPROTONAME, "Status", ID_STATUS_ONLINE);
 
 		// spawn a new thread to handle receiving/sending of data for the new chat/filetransfer connection to the remote computer
-		mir_forkthread(ThreadProc, this  );
+		forkthread(ThreadProc, 0, this  );
 		
 	} catch( const char* ){
 		Disconnect();
@@ -1427,7 +1341,7 @@ int CDccSession::IncomingConnection(HANDLE hConnection, DWORD dwIP)
 		DBWriteContactSettingWord(di->hContact, IRCPROTONAME, "Status", ID_STATUS_ONLINE); // set chat to online
 
 	// same as above, spawn a new thread to handle receiving/sending of data for the new incoming chat/filetransfer connection  
-	mir_forkthread(ThreadProc, this  );
+	forkthread(ThreadProc, 0, this  );
 	return true;
 
 
@@ -1782,7 +1696,7 @@ void CDccSession::DoChatReceive() {
 				ccs.wParam = 0;
 				ccs.lParam = (LPARAM) &pre;
 				pre.flags = 0;
-				pre.timestamp = (DWORD)time(NULL);
+				pre.timestamp = time(NULL);
 				pre.szMessage = DoColorCodes(pStart, true, false); // remove color codes
 				pre.lParam = 0;
 				CallService(MS_PROTO_CHAINRECV, 0, (LPARAM) & ccs);
@@ -1844,14 +1758,13 @@ void DoIncomingDcc(HANDLE hConnection, DWORD dwRemoteIP, void * p1)
 void DoIdent(HANDLE hConnection, DWORD dwRemoteIP, void* extra)
 {
 	char szBuf[1024];
-	char* p;
 	int cbRead = Netlib_Recv(hConnection, szBuf, sizeof(szBuf)-1, 0);
 	if( cbRead == SOCKET_ERROR || cbRead == 0)
 		return ;
 	szBuf[cbRead] = '\0';
 
 	// strip CRLF from query
-	for(p = szBuf; *p && *p != '\r' && *p != '\n'; ++p)
+	for(char* p = szBuf; *p && *p != '\r' && *p != '\n'; ++p)
 		;
 	*p = '\0';
 

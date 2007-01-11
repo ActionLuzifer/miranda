@@ -28,10 +28,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <map>
 #include <set>
 
-//#ifdef IRC_SSL
-#include <openssl/ssl.h>
+#ifdef IRC_SSL
+#include "../../../openssl-0.9.7d/include/openssl/ssl.h"
 //#include "../../openssl-0.9.7d/include/openssl/err.h"
-//#endif
+#endif
 
 void DoIdent(HANDLE hConnection, DWORD dwRemoteIP, void* extra);
 void DoIncomingDcc(HANDLE hConnection, DWORD dwRemoteIP, void* extra);
@@ -47,25 +47,24 @@ typedef std::string String;
 
 
 typedef struct {
-	DWORD   dwAdr;
-	DWORD   dwSize;
-	DWORD   iType;
-	String  sToken;
-	int     iPort;
-	BOOL    bTurbo;
-	BOOL    bSSL;
-	BOOL    bSender;
-	BOOL    bReverse;
-	String  sPath;
-	String  sFile;
-	String  sFileAndPath;
-	String  sContactName;
-	String  sHostmask;
-	HANDLE  hContact;
-}
-	DCCINFO;
+	DWORD	dwAdr;
+	DWORD	dwSize;
+	DWORD	iType;
+	String	sToken;
+	int		iPort;
+	BOOL	bTurbo;
+	BOOL	bSSL;
+	BOOL	bSender;
+	BOOL	bReverse;
+	String	sPath;
+	String	sFile;
+	String	sFileAndPath;
+	String	sContactName;
+	String	sHostmask;
+	HANDLE	hContact;
+} DCCINFO;
 
-//#ifdef IRC_SSL
+#ifdef IRC_SSL
 // OpenSSL stuff
 typedef int			(*tSSL_library_init)		(void);
 typedef SSL_CTX*	(*tSSL_CTX_new)				(SSL_METHOD *meth);
@@ -104,7 +103,7 @@ static tSSL_free					pSSL_free;
 //static tERR_lib_error_string		pERR_lib_error_string;
 //static tERR_func_error_string		pERR_func_error_string;
 //static tERR_reason_error_string		pERR_reason_error_string;
-//#endif 
+#endif 
 
 static const char* endl = "\r\n";
 
@@ -114,9 +113,7 @@ public :
 	struct Prefix
 	{
 		String sNick, sUser, sHost;
-	}
-		prefix;
-
+	} prefix;
 	String sCommand;
 	std::vector<String> parameters;
 	bool m_bIncoming;
@@ -169,7 +166,7 @@ struct CIrcSessionInfo
 
 ////////////////////////////////////////////////////////////////////
 
-//#ifdef IRC_SSL
+#ifdef IRC_SSL
 // Handles to the SSL libraries
 static SSL_CTX* m_ssl_ctx;	// SSL context, valid for all threads	
 
@@ -188,7 +185,7 @@ public:
 
 };
 
-//#endif
+#endif
 ////////////////////////////////////////////////////////////////////
 
 class CIrcDefaultMonitor; // foreward
@@ -232,9 +229,7 @@ public :
 
 	int NLSend(const unsigned char* buf, int cbBuf);
 	int NLSend(const char* fmt, ...);
-	int NLSendNoScript( const unsigned char* buf, int cbBuf);
 	int NLReceive(unsigned char* buf, int cbBuf);
-	void InsertIncomingEvent(char * pszRaw);
 
 	operator bool() const { return con!= NULL; }
 
@@ -245,9 +240,9 @@ public :
 protected :
 //	Socket m_socket;
 	CIrcSessionInfo m_info;
-//#ifdef IRC_SSL
+#ifdef IRC_SSL
 	CSSLSession sslSession;
-//#endif
+#endif
 	HANDLE con;
 	HANDLE hBindPort;
 	void DoReceive();
@@ -303,14 +298,10 @@ public :
 
 	CIrcMonitor(CIrcSession& session);
 	virtual ~CIrcMonitor();
-	static IrcCommandsMapsListEntry m_handlersMapsListEntry;
-	static HandlersMap m_handlers;
 
-	PfnIrcMessageHandler FindMethod(const char* lpszName);
-	PfnIrcMessageHandler FindMethod(IrcCommandsMapsListEntry* pMapsList, const char* lpszName);
-
-	static void __stdcall OnCrossThreadsMessage(void * p);
 	virtual void OnIrcMessage(const CIrcMessage* pmsg);
+
+protected :
 	CIrcSession& m_session;
 
 	virtual IrcCommandsMapsListEntry* GetIrcCommandsMap() 
@@ -319,11 +310,15 @@ public :
 	virtual void OnIrcAll(const CIrcMessage* pmsg) {}
 	virtual void OnIrcDefault(const CIrcMessage* pmsg) {}
 	virtual void OnIrcDisconnected() {}
-protected :
-
 
 private :
+	static IrcCommandsMapsListEntry m_handlersMapsListEntry;
+	static HandlersMap m_handlers;
 
+	PfnIrcMessageHandler FindMethod(const char* lpszName);
+	PfnIrcMessageHandler FindMethod(IrcCommandsMapsListEntry* pMapsList, const char* lpszName);
+
+	static void __stdcall OnCrossThreadsMessage(void * p);
 };
 
 // define an IRC command-to-member map.
@@ -332,9 +327,9 @@ private :
 protected :	\
 	virtual IrcCommandsMapsListEntry* GetIrcCommandsMap()	\
 				{ return &m_handlersMapsListEntry; }	\
+private :	\
 	static CIrcMonitor::IrcCommandsMapsListEntry m_handlersMapsListEntry;	\
 	static CIrcMonitor::HandlersMap m_handlers;	\
-private :	\
 protected :
 
 // IRC command-to-member map's declaration. 

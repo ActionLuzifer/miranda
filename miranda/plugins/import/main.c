@@ -241,7 +241,7 @@ HANDLE HContactFromID(char* pszProtoName, char* pszSetting, char* pszID)
 		{
 			if (DBGetContactSetting(hContact, pszProtoName, pszSetting, &dbv) == 0)
 			{
-				if (dbv.type==DBVT_ASCIIZ && strcmp(pszID, dbv.pszVal) == 0)
+				if (strcmp(pszID, dbv.pszVal) == 0)
 				{
 					free(dbv.pszVal);
 					return hContact;
@@ -469,7 +469,7 @@ static int ImportCommand(WPARAM wParam,LPARAM lParam)
 __declspec(dllexport) PLUGININFO* MirandaPluginInfo(DWORD mirandaVersion)
 {
 
-	if (mirandaVersion < PLUGIN_MAKE_VERSION(0, 4, 0, 0))
+	if (mirandaVersion < PLUGIN_MAKE_VERSION(0, 1, 1, 0))
 		return NULL;
 	
 	return &pluginInfo;

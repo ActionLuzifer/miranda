@@ -2,8 +2,8 @@
 
 Miranda IM: the free IM client for Microsoft* Windows*
 
-Copyright 2000-2003 Miranda ICQ/IM project,
-all portions of this codebase are copyrighted to the people
+Copyright 2000-2003 Miranda ICQ/IM project, 
+all portions of this codebase are copyrighted to the people 
 listed in contributors.txt.
 
 This program is free software; you can redistribute it and/or
@@ -24,8 +24,15 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "commonheaders.h"
 
 #include "database.h"
+#include "dblists.h"
 
 DWORD GetModuleNameOfs(const char *szName);
+static int GetContactSetting(WPARAM wParam,LPARAM lParam);
+static int GetContactSettingStatic(WPARAM wParam,LPARAM lParam);
+static int FreeVariant(WPARAM wParam,LPARAM lParam);
+static int WriteContactSetting(WPARAM wParam,LPARAM lParam);
+static int DeleteContactSetting(WPARAM wParam,LPARAM lParam);
+static int EnumContactSettings(WPARAM wParam,LPARAM lParam);
 
 extern CRITICAL_SECTION csDbAccess;
 extern struct DBHeader dbHeader;
@@ -34,7 +41,8 @@ HANDLE hCacheHeap = NULL;
 SortedList lContacts;
 
 static SortedList lSettings, lGlobalSettings;
-static HANDLE hSettingChangeEvent = NULL;
+
+static HANDLE hSettingChangeEvent;
 
 #define SETTINGSGROUPOFSCOUNT    32
 struct SettingsGroupOfsCacheEntry {
@@ -44,6 +52,53 @@ struct SettingsGroupOfsCacheEntry {
 };
 static struct SettingsGroupOfsCacheEntry settingsGroupOfsCache[SETTINGSGROUPOFSCOUNT];
 static int nextSGOCacheEntry;
+
+static int stringCompare( void* p1, void* p2 )
+{
+	return strcmp(( char* )p1, ( char* )p2 );
+}
+
+static int stringCompare2( void* p1, void* p2 )
+{
+	DBCachedGlobalValue *v1 = (DBCachedGlobalValue*)p1, *v2 = (DBCachedGlobalValue*)p2;
+	return strcmp( v1->name, v2->name );
+}
+
+static int handleCompare( void* p1, void* p2 )
+{
+	if ( *( long* )p1 == *( long* )p2 )
+		return 0;
+
+	return *( long* )p1 - *( long* )p2;
+}
+
+int InitSettings(void)
+{
+	CreateServiceFunction(MS_DB_CONTACT_GETSETTING,GetContactSetting);
+	CreateServiceFunction(MS_DB_CONTACT_GETSETTINGSTATIC,GetContactSettingStatic);
+	CreateServiceFunction(MS_DB_CONTACT_FREEVARIANT,FreeVariant);
+	CreateServiceFunction(MS_DB_CONTACT_WRITESETTING,WriteContactSetting);
+	CreateServiceFunction(MS_DB_CONTACT_DELETESETTING,DeleteContactSetting);
+	CreateServiceFunction(MS_DB_CONTACT_ENUMSETTINGS,EnumContactSettings);
+	hSettingChangeEvent=CreateHookableEvent(ME_DB_CONTACT_SETTINGCHANGED);
+
+	hCacheHeap=HeapCreate(HEAP_NO_SERIALIZE,0,0);
+	lSettings.sortFunc=stringCompare;
+	lSettings.increment=50;
+	lContacts.sortFunc=handleCompare;
+	lContacts.increment=100;
+	lGlobalSettings.sortFunc=stringCompare2; 
+	lGlobalSettings.increment=100;
+	return 0;
+}
+
+void UninitSettings(void)
+{
+	HeapDestroy(hCacheHeap);
+	List_Destroy(&lContacts);
+	List_Destroy(&lSettings);
+	List_Destroy(&lGlobalSettings);
+}
 
 //this function caches results
 static DWORD GetSettingsGroupOfsByModuleNameOfs(struct DBContact *dbc,DWORD ofsContact,DWORD ofsModuleName)
@@ -90,36 +145,30 @@ static DWORD __inline GetSettingValueLength(PBYTE pSetting)
 	return pSetting[0];
 }
 
-static char* InsertCachedSetting( const char* szName, size_t cbNameLen, int index )
-{
-	char* newValue = (char*)HeapAlloc( hCacheHeap, HEAP_NO_SERIALIZE, cbNameLen );
-	*newValue = 0;
-	strcpy(newValue+1,szName+1);
-	li.List_Insert(&lSettings,newValue,index);
-	return newValue;
-}
-
 static char* GetCachedSetting(const char *szModuleName,const char *szSettingName,int settingNameLen)
 {
 	int moduleNameLen = strlen(szModuleName),index;
-	char *szFullName = (char*)alloca(moduleNameLen+settingNameLen+3);
+	char *szFullName = (char*)alloca(moduleNameLen+settingNameLen+2), *newValue;
 
-	strcpy(szFullName+1,szModuleName);
-	szFullName[moduleNameLen+1]='/';
-	strcpy(szFullName+moduleNameLen+2,szSettingName);
+	strcpy(szFullName,szModuleName);
+	szFullName[moduleNameLen]='/';
+	strcpy(szFullName+moduleNameLen+1,szSettingName);
 
-	if ( li.List_GetIndex(&lSettings, szFullName, &index))
-		return((char*)lSettings.items[index] + 1);
+	if(List_GetIndex(&lSettings,szFullName,&index))
+		return((char*)lSettings.items[index]);
 
-	return InsertCachedSetting( szFullName, moduleNameLen+settingNameLen+3, index )+1;
+	newValue = (char*)HeapAlloc(hCacheHeap,HEAP_NO_SERIALIZE,moduleNameLen+settingNameLen+2);
+	strcpy(newValue,szFullName);
+	List_Insert(&lSettings,newValue,index);
+	return(newValue);
 }
 
-static void SetCachedVariant( DBVARIANT* s /* new */, DBVARIANT* d /* cached */ )
+static void SetCachedVariant( DBVARIANT* s, DBVARIANT* d )
 {
-	char* szSave = ( d->type == DBVT_UTF8 || d->type == DBVT_ASCIIZ ) ? d->pszVal : NULL;
+	char* szSave = d->pszVal;
 
 	memcpy( d, s, sizeof( DBVARIANT ));
-	if (( s->type == DBVT_UTF8 || s->type == DBVT_ASCIIZ ) && s->pszVal != NULL ) {
+	if ( s->type == DBVT_ASCIIZ && s->pszVal != NULL ) {
 		if ( szSave != NULL )
 			d->pszVal = (char*)HeapReAlloc(hCacheHeap,HEAP_NO_SERIALIZE,szSave,strlen(s->pszVal)+1);
 		else
@@ -131,14 +180,13 @@ static void SetCachedVariant( DBVARIANT* s /* new */, DBVARIANT* d /* cached */ 
 		case DBVT_BYTE:	log1( "set cached byte: %d", d->bVal ); break;
 		case DBVT_WORD:	log1( "set cached word: %d", d->wVal ); break;
 		case DBVT_DWORD:	log1( "set cached dword: %d", d->dVal ); break;
-		case DBVT_UTF8:
 		case DBVT_ASCIIZ: log1( "set cached string: '%s'", d->pszVal ); break;
 		default:				log1( "set cached crap: %d", d->type ); break;
 }	}
 
 static void FreeCachedVariant( DBVARIANT* V )
 {
-	if (( V->type == DBVT_ASCIIZ || V->type == DBVT_UTF8 ) && V->pszVal != NULL )
+	if ( V->type == DBVT_ASCIIZ && V->pszVal != NULL )
 		HeapFree(hCacheHeap,HEAP_NO_SERIALIZE,V->pszVal);
 }
 
@@ -149,11 +197,11 @@ static DBVARIANT* GetCachedValuePtr( HANDLE hContact, char* szSetting, int bAllo
 	if ( hContact == 0 ) {
 		DBCachedGlobalValue Vtemp, *V;
 		Vtemp.name = szSetting;
-		if ( li.List_GetIndex(&lGlobalSettings,&Vtemp,&index)) {
+		if(List_GetIndex(&lGlobalSettings,&Vtemp,&index)) {
 			V = (DBCachedGlobalValue*)lGlobalSettings.items[index];
 			if ( bAllocate == -1 ) {
 				FreeCachedVariant( &V->value );
-				li.List_Remove(&lGlobalSettings,index);
+				List_Remove(&lGlobalSettings,index);
 				HeapFree(hCacheHeap,HEAP_NO_SERIALIZE,V);
 				return NULL;
 		}	}
@@ -163,7 +211,7 @@ static DBVARIANT* GetCachedValuePtr( HANDLE hContact, char* szSetting, int bAllo
 
 			V = (DBCachedGlobalValue*)HeapAlloc(hCacheHeap,HEAP_NO_SERIALIZE+HEAP_ZERO_MEMORY,sizeof(DBCachedGlobalValue));
 			V->name = szSetting;
-			li.List_Insert(&lGlobalSettings,V,index);
+			List_Insert(&lGlobalSettings,V,index);
 		}
 
 		return &V->value;
@@ -173,7 +221,7 @@ static DBVARIANT* GetCachedValuePtr( HANDLE hContact, char* szSetting, int bAllo
 		DBCachedContactValueList VLtemp,*VL;
 
 		VLtemp.hContact=hContact;
-		if ( li.List_GetIndex(&lContacts,&VLtemp,&index)) {
+		if(List_GetIndex(&lContacts,&VLtemp,&index)) {
 			VL = (DBCachedContactValueList*)lContacts.items[index];
 		}
 		else {
@@ -182,7 +230,7 @@ static DBVARIANT* GetCachedValuePtr( HANDLE hContact, char* szSetting, int bAllo
 
 			VL = (DBCachedContactValueList*)HeapAlloc(hCacheHeap,HEAP_NO_SERIALIZE+HEAP_ZERO_MEMORY,sizeof(DBCachedContactValueList));
 			VL->hContact = hContact;
-			li.List_Insert(&lContacts,VL,index);
+			List_Insert(&lContacts,VL,index);
 		}
 
 		for ( V = VL->first; V != NULL; V = V->next)
@@ -216,7 +264,6 @@ static DBVARIANT* GetCachedValuePtr( HANDLE hContact, char* szSetting, int bAllo
 
 #define NeedBytes(n)   if(bytesRemaining<(n)) pBlob=(PBYTE)DBRead(ofsBlobPtr,(n),&bytesRemaining)
 #define MoveAlong(n)   {int x=n; pBlob+=(x); ofsBlobPtr+=(x); bytesRemaining-=(x);}
-#define VLT(n) ((n==DBVT_UTF8)?DBVT_ASCIIZ:n)
 static __inline int GetContactSettingWorker(HANDLE hContact,DBCONTACTGETSETTING *dbcgs,int isStatic)
 {
 	struct DBContact dbc;
@@ -230,7 +277,7 @@ static __inline int GetContactSettingWorker(HANDLE hContact,DBCONTACTGETSETTING 
 	if ((!dbcgs->szSetting) || (!dbcgs->szModule))
 		return 1;
 	settingNameLen=strlen(dbcgs->szSetting);
-
+	
 	EnterCriticalSection(&csDbAccess);
 
 	log3("get [%08p] %s/%s",hContact,dbcgs->szModule,dbcgs->szSetting);
@@ -239,10 +286,10 @@ static __inline int GetContactSettingWorker(HANDLE hContact,DBCONTACTGETSETTING 
 	{
 		DBVARIANT* pCachedValue = GetCachedValuePtr( hContact, szCachedSettingName, 0 );
 		if ( pCachedValue != NULL ) {
-			if ( pCachedValue->type == DBVT_ASCIIZ || pCachedValue->type == DBVT_UTF8 ) {
-				int   cbOrigLen = dbcgs->pValue->cchVal;
-				char* cbOrigPtr = dbcgs->pValue->pszVal;
-				memcpy( dbcgs->pValue, pCachedValue, sizeof( DBVARIANT ));
+			int   cbOrigLen = dbcgs->pValue->cchVal;
+			char* cbOrigPtr = dbcgs->pValue->pszVal;
+			memcpy( dbcgs->pValue, pCachedValue, sizeof( DBVARIANT ));
+			if ( pCachedValue->type == DBVT_ASCIIZ ) {
 				if ( isStatic ) {
 					int cbLen = 0;
 					if ( pCachedValue->pszVal != NULL )
@@ -258,16 +305,12 @@ static __inline int GetContactSettingWorker(HANDLE hContact,DBCONTACTGETSETTING 
 				else {
 					dbcgs->pValue->pszVal = (char*)mir_alloc(strlen(pCachedValue->pszVal)+1);
 					strcpy(dbcgs->pValue->pszVal,pCachedValue->pszVal);
-				}
-			}
-			else
-				memcpy( dbcgs->pValue, pCachedValue, sizeof( DBVARIANT ));
+			}	}
 
 			switch( dbcgs->pValue->type ) {
 				case DBVT_BYTE:	log1( "get cached byte: %d", dbcgs->pValue->bVal ); break;
 				case DBVT_WORD:	log1( "get cached word: %d", dbcgs->pValue->wVal ); break;
 				case DBVT_DWORD:	log1( "get cached dword: %d", dbcgs->pValue->dVal ); break;
-				case DBVT_UTF8:
 				case DBVT_ASCIIZ: log1( "get cached string: '%s'", dbcgs->pValue->pszVal); break;
 				default:				log1( "get cached crap: %d", dbcgs->pValue->type ); break;
 			}
@@ -294,7 +337,7 @@ static __inline int GetContactSettingWorker(HANDLE hContact,DBCONTACTGETSETTING 
 			if(pBlob[0]==settingNameLen && !memcmp(pBlob+1,dbcgs->szSetting,settingNameLen)) {
 				MoveAlong(1+settingNameLen);
 				NeedBytes(5);
-				if(isStatic && pBlob[0]&DBVTF_VARIABLELENGTH && VLT(dbcgs->pValue->type) != VLT(pBlob[0])) {
+				if(isStatic && pBlob[0]&DBVTF_VARIABLELENGTH && dbcgs->pValue->type!=pBlob[0]) {
 					LeaveCriticalSection(&csDbAccess);
 					return 1;
 				}
@@ -308,7 +351,6 @@ static __inline int GetContactSettingWorker(HANDLE hContact,DBCONTACTGETSETTING 
 					case DBVT_BYTE: dbcgs->pValue->bVal=pBlob[1]; break;
 					case DBVT_WORD: dbcgs->pValue->wVal=*(PWORD)(pBlob+1); break;
 					case DBVT_DWORD: dbcgs->pValue->dVal=*(PDWORD)(pBlob+1); break;
-					case DBVT_UTF8:
 					case DBVT_ASCIIZ:
 						NeedBytes(3+*(PWORD)(pBlob+1));
 						if(isStatic) {
@@ -328,7 +370,7 @@ static __inline int GetContactSettingWorker(HANDLE hContact,DBCONTACTGETSETTING 
 						NeedBytes(3+*(PWORD)(pBlob+1));
 						if(isStatic) {
 							if(*(PWORD)(pBlob+1)<dbcgs->pValue->cpbVal) dbcgs->pValue->cpbVal=*(PWORD)(pBlob+1);
-							CopyMemory(dbcgs->pValue->pbVal,pBlob+3,dbcgs->pValue->cchVal);
+							CopyMemory(dbcgs->pValue->pszVal,pBlob+3,dbcgs->pValue->cchVal);
 						}
 						else {
 							dbcgs->pValue->pbVal=(char*)mir_alloc(*(PWORD)(pBlob+1));
@@ -372,78 +414,12 @@ static __inline int GetContactSettingWorker(HANDLE hContact,DBCONTACTGETSETTING 
 
 static int GetContactSetting(WPARAM wParam,LPARAM lParam)
 {
-	DBCONTACTGETSETTING* dgs = ( DBCONTACTGETSETTING* )lParam;
-	dgs->pValue->type = 0;
-	if ( GetContactSettingWorker(( HANDLE )wParam, dgs, 0 ))
-		return 1;
-
-	if ( dgs->pValue->type == DBVT_UTF8 ) {
-		mir_utf8decode( dgs->pValue->pszVal, NULL );
-		dgs->pValue->type = DBVT_ASCIIZ;
-	}
-
-	return 0;
-}
-
-static int GetContactSettingStr(WPARAM wParam,LPARAM lParam)
-{
-	DBCONTACTGETSETTING* dgs = (DBCONTACTGETSETTING*)lParam;
-	int iSaveType = dgs->pValue->type;
-
-	if ( GetContactSettingWorker(( HANDLE )wParam, dgs, 0 ))
-		return 1;
-
-   if ( iSaveType == 0 || iSaveType == dgs->pValue->type )
-		return 0;
-
-	if ( dgs->pValue->type != DBVT_ASCIIZ && dgs->pValue->type != DBVT_UTF8 )
-		return 0;
-
-	if ( iSaveType == DBVT_WCHAR ) {
-		if ( dgs->pValue->type != DBVT_UTF8 ) {
-			int len = MultiByteToWideChar( CP_ACP, 0, dgs->pValue->pszVal, -1, NULL, 0 );
-			wchar_t* wszResult = ( wchar_t* )mir_alloc(( len+1 )*sizeof( wchar_t ));
-			if ( wszResult == NULL )
-				return 1;
-
-			MultiByteToWideChar( CP_ACP, 0, dgs->pValue->pszVal, -1, wszResult, len );
-			wszResult[ len ] = 0;
-			mir_free( dgs->pValue->pszVal );
-			dgs->pValue->pwszVal = wszResult;
-		}
-		else {
-			char* savePtr = dgs->pValue->pszVal;
-			mir_utf8decode( dgs->pValue->pszVal, &dgs->pValue->pwszVal );
-			mir_free( savePtr );
-		}
-	}
-	else if ( iSaveType == DBVT_UTF8 ) {
-		char* tmpBuf = mir_utf8encode( dgs->pValue->pszVal );
-		if ( tmpBuf == NULL )
-			return 1;
-
-		mir_free( dgs->pValue->pszVal );
-		dgs->pValue->pszVal = tmpBuf;
-	}
-	else if ( iSaveType == DBVT_ASCIIZ )
-		mir_utf8decode( dgs->pValue->pszVal, NULL );
-
-	dgs->pValue->type = iSaveType;
-	return 0;
+	return GetContactSettingWorker((HANDLE)wParam,(DBCONTACTGETSETTING*)lParam,0);
 }
 
 static int GetContactSettingStatic(WPARAM wParam,LPARAM lParam)
 {
-	DBCONTACTGETSETTING* dgs = (DBCONTACTGETSETTING*)lParam;
-	if ( GetContactSettingWorker(( HANDLE )wParam, dgs, 1 ))
-		return 1;
-
-	if ( dgs->pValue->type == DBVT_UTF8 ) {
-		mir_utf8decode( dgs->pValue->pszVal, NULL );
-		dgs->pValue->type = DBVT_ASCIIZ;
-	}
-
-	return 0;
+	return GetContactSettingWorker((HANDLE)wParam,(DBCONTACTGETSETTING*)lParam,1);
 }
 
 static int FreeVariant(WPARAM wParam,LPARAM lParam)
@@ -452,8 +428,6 @@ static int FreeVariant(WPARAM wParam,LPARAM lParam)
 	if ( dbv == 0 ) return 1;
 	switch ( dbv->type ) {
 		case DBVT_ASCIIZ:
-		case DBVT_UTF8:
-		case DBVT_WCHAR:
 		{
 			if ( dbv->pszVal ) mir_free(dbv->pszVal);
 			dbv->pszVal=0;
@@ -470,26 +444,6 @@ static int FreeVariant(WPARAM wParam,LPARAM lParam)
 	return 0;
 }
 
-static int SetSettingResident(WPARAM wParam,LPARAM lParam)
-{
-	char*  szSetting;
-	size_t cbSettingNameLen = strlen(( char* )lParam );
-	int    idx;
-	char*  szTemp = ( char* )alloca( cbSettingNameLen+2 );
-	strcpy( szTemp+1, ( char* )lParam );
-
-	EnterCriticalSection(&csDbAccess);
-	if ( !li.List_GetIndex( &lSettings, szTemp, &idx ))
-		szSetting = InsertCachedSetting( szTemp, cbSettingNameLen+2, idx );
-	else
-		szSetting = lSettings.items[ idx ];
-
-   *szSetting = (char)wParam;
-
-	LeaveCriticalSection(&csDbAccess);
-	return 0;
-}
-
 static int WriteContactSetting(WPARAM wParam,LPARAM lParam)
 {
 	DBCONTACTWRITESETTING *dbcws=(DBCONTACTWRITESETTING*)lParam;
@@ -502,92 +456,52 @@ static int WriteContactSetting(WPARAM wParam,LPARAM lParam)
 	int settingDataLen=0;
 
 	int bytesRequired,bytesRemaining;
-	DWORD ofsContact,ofsSettingsGroup,ofsBlobPtr;
+	DWORD ofsContact,ofsSettingsGroup,ofsBlobPtr;	
 
-	if (dbcws == NULL)
+	if (dbcws == NULL) return 1;
+	if(dbcws->value.type!=DBVT_BYTE && dbcws->value.type!=DBVT_WORD && dbcws->value.type!=DBVT_DWORD && dbcws->value.type!=DBVT_ASCIIZ && dbcws->value.type!=DBVT_BLOB)
 		return 1;
-
-	if (dbcws->value.type == DBVT_WCHAR) {
-		if (dbcws->value.pszVal != NULL) {
-			char* val = mir_utf8encodeW(dbcws->value.pwszVal);
-			if ( val == NULL )
-				return 1;
-
-			dbcws->value.pszVal = ( char* )alloca( strlen( val )+1 );
-			strcpy( dbcws->value.pszVal, val );
-			mir_free(val);
-			dbcws->value.type = DBVT_UTF8;
-		}
-		else return 1;
-	}
-
-	if(dbcws->value.type!=DBVT_BYTE && dbcws->value.type!=DBVT_WORD && dbcws->value.type!=DBVT_DWORD && dbcws->value.type!=DBVT_ASCIIZ && dbcws->value.type!=DBVT_UTF8 && dbcws->value.type!=DBVT_BLOB)
-		return 1;
-	if ((!dbcws->szModule) || (!dbcws->szSetting) || ((dbcws->value.type == DBVT_ASCIIZ || dbcws->value.type == DBVT_UTF8 )&& dbcws->value.pszVal == NULL) || (dbcws->value.type == DBVT_BLOB && dbcws->value.pbVal == NULL) )
+	if ((!dbcws->szModule) || (!dbcws->szSetting) || (dbcws->value.type == DBVT_ASCIIZ && dbcws->value.pszVal == NULL) || (dbcws->value.type == DBVT_BLOB && dbcws->value.pbVal == NULL) )
 		return 1;
 	// the db format can't tolerate more than 255 bytes of space (incl. null) for settings+module name
 	settingNameLen=strlen(dbcws->szSetting);
 	moduleNameLen=strlen(dbcws->szModule);
-	if ( settingNameLen > 0xFE )
+	if ( settingNameLen > 0xFE ) 
 	{
 		#ifdef _DEBUG
 			OutputDebugString("WriteContactSetting() got a > 255 setting name length. \n");
-		#endif
+		#endif		
 		return 1;
 	}
-	if ( moduleNameLen > 0xFE )
+	if ( moduleNameLen > 0xFE ) 
 	{
 		#ifdef _DEBUG
 			OutputDebugString("WriteContactSetting() got a > 255 module name length. \n");
 		#endif
 		return 1;
 	}
-
 	// the db can not tolerate strings/blobs longer than 0xFFFF since the format writes 2 lengths
-	switch( dbcws->value.type ) {
-	case DBVT_ASCIIZ:		case DBVT_BLOB:	case DBVT_UTF8:
-		{	int len = ( dbcws->value.type != DBVT_BLOB ) ? strlen(dbcws->value.pszVal) : dbcws->value.cpbVal;
-			if ( len >= 0xFFFF ) {
-				#ifdef _DEBUG
-					OutputDebugString("WriteContactSetting() writing huge string/blob, rejecting ( >= 0xFFFF ) \n");
-				#endif
-				return 1;
-			}
+	if ( dbcws->value.type == DBVT_ASCIIZ || dbcws->value.type == DBVT_BLOB ) {
+		int len = ( dbcws->value.type == DBVT_ASCIIZ ) ? strlen(dbcws->value.pszVal) : dbcws->value.cpbVal;
+		if ( len >= 0xFFFF ) {
+			#ifdef _DEBUG
+			OutputDebugString("WriteContactSetting() writing huge string/blob, rejecting ( >= 0xFFFF ) \n");
+			#endif
+			return 1;
 		}
 	}
 
 	EnterCriticalSection(&csDbAccess);
-	{
-		char* szCachedSettingName = GetCachedSetting(dbcws->szModule, dbcws->szSetting, settingNameLen);
-		if ( dbcws->value.type != DBVT_BLOB ) {
-			DBVARIANT* pCachedValue = GetCachedValuePtr((HANDLE)wParam, szCachedSettingName, 1);
-			if ( pCachedValue != NULL ) {
-				BOOL bIsIdentical = FALSE;
-				if ( pCachedValue->type == dbcws->value.type ) {
-					switch(dbcws->value.type) {
-						case DBVT_BYTE:   bIsIdentical = pCachedValue->bVal == dbcws->value.bVal;  break;
-						case DBVT_WORD:   bIsIdentical = pCachedValue->wVal == dbcws->value.wVal;  break;
-						case DBVT_DWORD:  bIsIdentical = pCachedValue->dVal == dbcws->value.dVal;  break;
-						case DBVT_UTF8:
-						case DBVT_ASCIIZ: bIsIdentical = strcmp( pCachedValue->pszVal, dbcws->value.pszVal ) == 0; break;
-					}
-					if ( bIsIdentical ) {
-						LeaveCriticalSection(&csDbAccess);
-						return 0;
-					}
-				}
-				SetCachedVariant(&dbcws->value, pCachedValue);
-			}
-			if ( szCachedSettingName[-1] != 0 ) {
-				LeaveCriticalSection(&csDbAccess);
-				NotifyEventHooks(hSettingChangeEvent,wParam,lParam);
-				return 0;
-			}
-		}
-		else GetCachedValuePtr((HANDLE)wParam, szCachedSettingName, -1);
+
+	if ( dbcws->value.type != DBVT_BLOB ) {
+		char* szCachedSettingName = 0;
+		DBVARIANT * pCachedValue = 0;
+		szCachedSettingName = GetCachedSetting(dbcws->szModule, dbcws->szSetting, settingNameLen);
+		pCachedValue = GetCachedValuePtr((HANDLE)wParam, szCachedSettingName, 1);
+		if ( pCachedValue != NULL ) SetCachedVariant(&dbcws->value, pCachedValue);
 	}
 
-	ofsModuleName=GetModuleNameOfs(dbcws->szModule);
+	ofsModuleName=GetModuleNameOfs(dbcws->szModule);	
  	if(wParam==0) ofsContact=dbHeader.ofsUser;
 	else ofsContact=wParam;
 
@@ -601,7 +515,7 @@ static int WriteContactSetting(WPARAM wParam,LPARAM lParam)
 	ofsSettingsGroup=GetSettingsGroupOfsByModuleNameOfs(&dbc,ofsContact,ofsModuleName);
 	if(ofsSettingsGroup==0) {  //module group didn't exist - make it
 		if(dbcws->value.type&DBVTF_VARIABLELENGTH) {
-		  if(dbcws->value.type==DBVT_ASCIIZ || dbcws->value.type==DBVT_UTF8) bytesRequired=strlen(dbcws->value.pszVal)+2;
+		  if(dbcws->value.type==DBVT_ASCIIZ) bytesRequired=strlen(dbcws->value.pszVal)+2;
 		  else if(dbcws->value.type==DBVT_BLOB) bytesRequired=dbcws->value.cpbVal+2;
 		}
 		else bytesRequired=dbcws->value.type;
@@ -638,7 +552,7 @@ static int WriteContactSetting(WPARAM wParam,LPARAM lParam)
 			MoveAlong(1+settingNameLen);
 			//if different type or variable length and length is different
 			NeedBytes(3);
-			if(pBlob[0]!=dbcws->value.type || ((pBlob[0]==DBVT_ASCIIZ || pBlob[0]==DBVT_UTF8) && *(PWORD)(pBlob+1)!=strlen(dbcws->value.pszVal)) || (pBlob[0]==DBVT_BLOB && *(PWORD)(pBlob+1)!=dbcws->value.cpbVal)) {
+			if(pBlob[0]!=dbcws->value.type || (pBlob[0]==DBVT_ASCIIZ && *(PWORD)(pBlob+1)!=strlen(dbcws->value.pszVal)) || (pBlob[0]==DBVT_BLOB && *(PWORD)(pBlob+1)!=dbcws->value.cpbVal)) {
 				//bin it
 				int nameLen,valLen;
 				DWORD ofsSettingToCut;
@@ -665,7 +579,6 @@ static int WriteContactSetting(WPARAM wParam,LPARAM lParam)
 					case DBVT_BYTE: DBWrite(ofsBlobPtr,&dbcws->value.bVal,1); break;
 					case DBVT_WORD: DBWrite(ofsBlobPtr,&dbcws->value.wVal,2); break;
 					case DBVT_DWORD: DBWrite(ofsBlobPtr,&dbcws->value.dVal,4); break;
-					case DBVT_UTF8:
 					case DBVT_ASCIIZ: DBWrite(ofsBlobPtr+2,dbcws->value.pszVal,strlen(dbcws->value.pszVal)); break;
 					case DBVT_BLOB: DBWrite(ofsBlobPtr+2,dbcws->value.pbVal,dbcws->value.cpbVal); break;
 				}
@@ -682,7 +595,7 @@ static int WriteContactSetting(WPARAM wParam,LPARAM lParam)
 	//pBlob already points to end of list
 	//see if it fits
 	if(dbcws->value.type&DBVTF_VARIABLELENGTH) {
-	  if(dbcws->value.type==DBVT_ASCIIZ || dbcws->value.type==DBVT_UTF8) bytesRequired=strlen(dbcws->value.pszVal)+2;
+	  if(dbcws->value.type==DBVT_ASCIIZ) bytesRequired=strlen(dbcws->value.pszVal)+2;
 	  else if(dbcws->value.type==DBVT_BLOB) bytesRequired=dbcws->value.cpbVal+2;
 	}
 	else bytesRequired=dbcws->value.type;
@@ -737,7 +650,6 @@ static int WriteContactSetting(WPARAM wParam,LPARAM lParam)
 		case DBVT_BYTE: DBWrite(ofsBlobPtr,&dbcws->value.bVal,1); MoveAlong(1); break;
 		case DBVT_WORD: DBWrite(ofsBlobPtr,&dbcws->value.wVal,2); MoveAlong(2); break;
 		case DBVT_DWORD: DBWrite(ofsBlobPtr,&dbcws->value.dVal,4); MoveAlong(4); break;
-		case DBVT_UTF8:
 		case DBVT_ASCIIZ:
 			{	int len=strlen(dbcws->value.pszVal);
 				DBWrite(ofsBlobPtr,&len,2);
@@ -777,7 +689,7 @@ static int DeleteContactSetting(WPARAM wParam,LPARAM lParam)
 		return 1;
 
 	EnterCriticalSection(&csDbAccess);
-	ofsModuleName=GetModuleNameOfs(dbcgs->szModule);
+	ofsModuleName=GetModuleNameOfs(dbcgs->szModule);	
  	if(wParam==0) wParam=dbHeader.ofsUser;
 
 	dbc=(struct DBContact*)DBRead(wParam,sizeof(struct DBContact),NULL);
@@ -860,7 +772,7 @@ static int EnumContactSettings(WPARAM wParam,LPARAM lParam)
 	struct DBContact dbc;
 	struct DBContactSettings dbcs;
 	DWORD ofsModuleName,ofsContact,ofsBlobPtr;
-	int bytesRemaining, result;
+	int bytesRemaining;
 	PBYTE pBlob;
 	char szSetting[256];
 
@@ -889,69 +801,16 @@ static int EnumContactSettings(WPARAM wParam,LPARAM lParam)
 		LeaveCriticalSection(&csDbAccess);
 		return -1;
 	}
-	result = 0;
 	while(pBlob[0]) {
 		NeedBytes(1);
 		NeedBytes(1+pBlob[0]);
 		CopyMemory(szSetting,pBlob+1,pBlob[0]); szSetting[pBlob[0]]=0;
-		result = (dbces->pfnEnumProc)(szSetting,dbces->lParam);
+		(dbces->pfnEnumProc)(szSetting,dbces->lParam);
 		MoveAlong(1+pBlob[0]);
 		NeedBytes(3);
 		MoveAlong(1+GetSettingValueLength(pBlob));
 		NeedBytes(1);
 	}
 	LeaveCriticalSection(&csDbAccess);
-	return result;
-}
-
-/////////////////////////////////////////////////////////////////////////////////////////
-//
-//   Module initialization procedure
-
-static int stringCompare( DBCachedSettingName* p1, DBCachedSettingName* p2 )
-{
-	return strcmp( p1->name, p2->name );
-}
-
-static int stringCompare2( DBCachedGlobalValue* p1, DBCachedGlobalValue* p2 )
-{
-	return strcmp( p1->name, p2->name );
-}
-
-static int handleCompare( void* p1, void* p2 )
-{
-	if ( *( long* )p1 == *( long* )p2 )
-		return 0;
-
-	return *( long* )p1 - *( long* )p2;
-}
-
-int InitSettings(void)
-{
-	CreateServiceFunction(MS_DB_CONTACT_GETSETTING,GetContactSetting);
-	CreateServiceFunction(MS_DB_CONTACT_GETSETTING_STR,GetContactSettingStr);
-	CreateServiceFunction(MS_DB_CONTACT_GETSETTINGSTATIC,GetContactSettingStatic);
-	CreateServiceFunction(MS_DB_CONTACT_FREEVARIANT,FreeVariant);
-	CreateServiceFunction(MS_DB_CONTACT_WRITESETTING,WriteContactSetting);
-	CreateServiceFunction(MS_DB_CONTACT_DELETESETTING,DeleteContactSetting);
-	CreateServiceFunction(MS_DB_CONTACT_ENUMSETTINGS,EnumContactSettings);
-	CreateServiceFunction(MS_DB_SETSETTINGRESIDENT,SetSettingResident);
-	hSettingChangeEvent=CreateHookableEvent(ME_DB_CONTACT_SETTINGCHANGED);
-
-	hCacheHeap=HeapCreate(HEAP_NO_SERIALIZE,0,0);
-	lSettings.sortFunc=stringCompare;
-	lSettings.increment=50;
-	lContacts.sortFunc=handleCompare;
-	lContacts.increment=100;
-	lGlobalSettings.sortFunc=stringCompare2;
-	lGlobalSettings.increment=100;
 	return 0;
-}
-
-void UninitSettings(void)
-{
-	HeapDestroy(hCacheHeap);
-	li.List_Destroy(&lContacts);
-	li.List_Destroy(&lSettings);
-	li.List_Destroy(&lGlobalSettings);
 }

@@ -2,8 +2,8 @@
 
 Miranda IM: the free IM client for Microsoft* Windows*
 
-Copyright 2000-2007 Miranda ICQ/IM project,
-all portions of this codebase are copyrighted to the people
+Copyright 2000-2003 Miranda ICQ/IM project, 
+all portions of this codebase are copyrighted to the people 
 listed in contributors.txt.
 
 This program is free software; you can redistribute it and/or
@@ -30,7 +30,7 @@ sdk you can get from http://www.microsoft.com/msdownload/platformsdk/sdkupdate/
 To not need to install the whole sdk you can simply comment out the following lines.
 To make myself clear, you are supposed to use the sdk, this is just a work around.
 
-All constants are normally declared in winuser.h
+All constants are normally declared in winuser.h 
 
 File created by Christian Kästner, and tweaked a bit by Richard Hughes*/
 
@@ -42,7 +42,6 @@ File created by Christian Kästner, and tweaked a bit by Richard Hughes*/
 #define WinVerMajor()      LOBYTE(LOWORD(GetVersion()))
 #define WinVerMinor()      HIBYTE(LOWORD(GetVersion()))
 #define IsWinVerNT()       ((GetVersion()&0x80000000)==0)
-// IsWinVerNT4Plus() is buggy, Windows 98 is 4.10.1998
 #define IsWinVerNT4Plus()  (WinVerMajor()>=5 || WinVerMinor()>0 || IsWinVerNT())
 #define IsWinVer98Plus()   (LOWORD(GetVersion())!=4)
 #define IsWinVerMEPlus()   (WinVerMajor()>=5 || WinVerMinor()>10)
@@ -51,10 +50,31 @@ File created by Christian Kästner, and tweaked a bit by Richard Hughes*/
 
 // put stuff that's not apart of any SDKs but is used nonetheless
 
-#define SIZEOF(X) (sizeof(X)/sizeof(X[0]))
-
 //mii was extended for NT5/Win98, so need the old length for some stuff
 #define MENUITEMINFO_V4_SIZE (offsetof(MENUITEMINFO,cch)+sizeof((*((MENUITEMINFO*)0)).cch))
+
+// uxtheme.h defines
+#ifndef THEMEAPI
+	#define WM_THEMECHANGED		0x031A // when windows changes themes 
+	#define BP_PUSHBUTTON		1  // Push Button Type
+	#define PBS_NORMAL			1
+	#define PBS_HOT				2
+	#define PBS_PRESSED			3
+	#define PBS_DISABLED		4
+	#define PBS_DEFAULTED		5
+	#define BP_CHECKBOX			3  // CheckBox Type
+	#define TP_BUTTON           1
+    #define TS_NORMAL           1
+    #define TS_HOT              2
+    #define TS_PRESSED          3
+    #define TS_DISABLED         4
+    #define TS_CHECKED          5
+    #define TS_HOTCHECKED       6
+	#define CBS_UNCHECKEDNORMAL 1
+	#define CBS_UNCHECKEDHOT    2
+	#define CBS_CHECKEDNORMAL   5
+	#define CBS_CHECKEDHOT      6
+#endif
 
 #if _MSC_VER >= 1300
 #define NOWIN2K
@@ -70,77 +90,14 @@ File created by Christian Kästner, and tweaked a bit by Richard Hughes*/
 #define BIGI(x) x##LL
 #endif
 
-#if _MSC_VER
-	// uxtheme.h defines
-	#ifndef THEMEAPI
-		#define WM_THEMECHANGED		0x031A // when windows changes themes
-		#define BP_PUSHBUTTON		1  // Push Button Type
-		#define PBS_NORMAL			1
-		#define PBS_HOT				2
-		#define PBS_PRESSED			3
-		#define PBS_DISABLED		4
-		#define PBS_DEFAULTED		5
-		#define BP_CHECKBOX			3  // CheckBox Type
-		#define TP_BUTTON           1
-		#define TS_NORMAL           1
-		#define TS_HOT              2
-		#define TS_PRESSED          3
-		#define TS_DISABLED         4
-		#define TS_CHECKED          5
-		#define TS_HOTCHECKED       6
-		#define CBS_UNCHECKEDNORMAL 1
-		#define CBS_UNCHECKEDHOT    2
-		#define CBS_CHECKEDNORMAL   5
-		#define CBS_CHECKEDHOT      6
-	#endif
-#endif
-
 #if defined (__GNUC__)
-	#define SECURITY_ENTRYPOINTA "InitSecurityInterfaceA"
-	#define SECURITY_ENTRYPOINT SECURITY_ENTRYPOINTA
-	#define FreeCredentialsHandle FreeCredentialsHandle
-	#ifndef CDSIZEOF_STRUCT
-		#define CDSIZEOF_STRUCT(structname, member)  (((int)((LPBYTE)(&((structname*)0)->member) - ((LPBYTE)((structname*)0)))) + sizeof(((structname*)0)->member))
-	#endif
-	#ifndef OPENFILENAME_SIZE_VERSION_400
-		#define OPENFILENAME_SIZE_VERSION_400 CDSIZEOF_STRUCT(OPENFILENAME,lpTemplateName)
-	#endif
-	#ifndef NOTIFYICONDATAA_V1_SIZE
-		#define NOTIFYICONDATAA_V1_SIZE     CDSIZEOF_STRUCT(NOTIFYICONDATAA, szTip[64])
-	#endif
-	#ifndef NOTIFYICONDATA_V1_SIZE
-		#define NOTIFYICONDATA_V1_SIZE      CDSIZEOF_STRUCT(NOTIFYICONDATA, szTip[64])
-	#endif
-	typedef struct tagNMKEY {
-		NMHDR hdr;
-		UINT nVKey;
-		UINT uFlags;
-	} NMKEY, *LPNMKEY;
-	#define ODS_HOTLIGHT        0x0040
-	#define ODS_INACTIVE        0x0080
-	#define SPI_GETFLATMENU		0x1022
-	#define COLOR_HOTLIGHT		26
-	#define COLOR_MENUBAR		30
-	#define COLOR_MENUHILIGHT   29
-	#define COLOR_HIGHLIGHT		13
-	#define BP_PUSHBUTTON		1  // Push Button Type
-	#define PBS_NORMAL			1
-	#define PBS_HOT				2
-	#define PBS_PRESSED			3
-	#define PBS_DISABLED		4
-	#define PBS_DEFAULTED		5
-	#define BP_CHECKBOX			3  // CheckBox Type
-	#define TP_BUTTON           1
-	#define TS_NORMAL           1
-	#define TS_HOT              2
-	#define TS_PRESSED          3
-	#define TS_DISABLED         4
-	#define TS_CHECKED          5
-	#define TS_HOTCHECKED       6
-	#define CBS_UNCHECKEDNORMAL 1
-	#define CBS_UNCHECKEDHOT    2
-	#define CBS_CHECKEDNORMAL   5
-	#define CBS_CHECKEDHOT      6
+    #define SECURITY_ENTRYPOINTA "InitSecurityInterfaceA"
+    #define SECURITY_ENTRYPOINT SECURITY_ENTRYPOINTA
+    #define FreeCredentialsHandle FreeCredentialsHandle
+    #ifndef OPENFILENAME_SIZE_VERSION_400
+        #define OPENFILENAME_SIZE_VERSION_400 sizeof(OPENFILENAME)
+    #endif
+    #define CDRF_NOTIFYSUBITEMDRAW  0x00000020
 // SDK isn't present or some older VC compiler was used, include missing things.
 #elif !defined(NOWIN2K) && (!defined WS_EX_LAYERED || !defined IDC_HAND)
 
@@ -151,7 +108,7 @@ File created by Christian Kästner, and tweaked a bit by Richard Hughes*/
 	#define PSDK_WORKAROUND
 
 	#define MONITOR_DEFAULTTONEAREST 2
-
+	
 	#ifndef EM_SETTEXTEX
 		#define EM_SETTEXTEX	(WM_USER + 97)
 		#define ST_DEFAULT		0
@@ -163,7 +120,7 @@ File created by Christian Kästner, and tweaked a bit by Richard Hughes*/
 			DWORD	flags;
 			UINT	codepage;
 		} SETTEXTEX;
-	#endif
+	#endif	
 
 	#if(_WIN32_WINNT >= 0x0500)
 		#define WS_EX_LAYERED		0x00080000
@@ -174,7 +131,7 @@ File created by Christian Kästner, and tweaked a bit by Richard Hughes*/
 		#define ODS_HOTLIGHT        0x0040
 		#define ODS_INACTIVE        0x0080
 		#define IDC_HAND            MAKEINTRESOURCE(32649)
-		#define COLOR_HOTLIGHT		26
+		#define COLOR_HOTLIGHT		26  
 		#define COLOR_MENUBAR		30
 		#define COLOR_MENUHILIGHT   29
 		#define COLOR_HIGHLIGHT		13
@@ -262,25 +219,25 @@ File created by Christian Kästner, and tweaked a bit by Richard Hughes*/
 			STDMETHOD_(ULONG, Release) ( THIS ) PURE;
 
 		    // IDropTargetHelper
-			STDMETHOD (DragEnter)(THIS_ HWND hwndTarget, IDataObject* pDataObject,
+			STDMETHOD (DragEnter)(THIS_ HWND hwndTarget, IDataObject* pDataObject, 
                           POINT* ppt, DWORD dwEffect) PURE;
 			STDMETHOD (DragLeave)(THIS) PURE;
 			STDMETHOD (DragOver)(THIS_ POINT* ppt, DWORD dwEffect) PURE;
-			STDMETHOD (Drop)(THIS_ IDataObject* pDataObject, POINT* ppt,
+			STDMETHOD (Drop)(THIS_ IDataObject* pDataObject, POINT* ppt, 
                      DWORD dwEffect) PURE;
 			STDMETHOD (Show)(THIS_ BOOL fShow) PURE;
-
+    
 		};
 	#endif /* IDropTargetHelper */
 
 	#define WM_MENURBUTTONUP                0x0122
-
+	
 // tabsrmm uses these
-
+	
 #define SES_EXTENDBACKCOLOR	4
 #define EM_SETEDITSTYLE (WM_USER + 204)
 #define EM_SETSCROLLPOS (WM_USER + 222)
-#define SF_USECODEPAGE 0x00000020
+#define SF_USECODEPAGE 0x00000020	
 
 #define TreeView_SetItemState(hwndTV, hti, data, _mask) \
 { TVITEM _TVi; \
@@ -290,6 +247,7 @@ File created by Christian Kästner, and tweaked a bit by Richard Hughes*/
   _TVi.state = data; \
   SendMessage((hwndTV), TVM_SETITEM, 0, (LPARAM)(TV_ITEM *)&_TVi); \
 }
-
+	
 #endif /* SDK check */
 #endif // WIN2K_H__
+

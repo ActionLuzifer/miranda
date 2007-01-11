@@ -21,7 +21,8 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
-#include "commonheaders.h"
+#include "../../core/commonheaders.h"
+#include "../database/dblists.h"
 
 #if 0
 
@@ -182,7 +183,7 @@ void contactDir_Proto_Walk(contactDir * cd)
 		// and how we'll get the reset
 		dbvProto.type=DBVT_ASCIIZ;
 		dbvProto.pszVal = (char *) &buf;
-		dbvProto.cchVal = SIZEOF(buf);
+		dbvProto.cchVal = sizeof(buf);
 		// figure out what hContact/Protocol/p is
 		if ( CallService(MS_DB_CONTACT_GETSETTINGSTATIC,(WPARAM)hContact, (LPARAM)&gsProto) == 0 ) {
 			contactDir_Contact_Add(cd, hContact, buf, NULL);
@@ -239,7 +240,7 @@ void UninitContactDir(void)
 		for ( j = 0; j< condir.protoCache.realCount; j++) {
 			char buf[128];
 			contactEntry * p = condir.protoCache.items[j];
-			mir_snprintf(buf,SIZEOF(buf)," [%s] %s @ %x \n", p->proto, p->id ? p->id : "", p->hContact);
+			_snprintf(buf,sizeof(buf)," [%s] %s @ %x \n", p->proto, p->id ? p->id : "", p->hContact);
 			OutputDebugString(buf);
 		}
 	}

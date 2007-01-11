@@ -11,10 +11,8 @@
  * and for answering some of my questions during development of this plugin.
  */
 #include <windows.h>
-#include <windowsx.h>
 #include <stdio.h>
 #include <shlwapi.h>
-#include <malloc.h>
 
 #include "yahoo.h"
 #include <m_popup.h>
@@ -46,7 +44,7 @@ int __stdcall YAHOO_CallService( const char* szSvcName, WPARAM wParam, LPARAM lP
 }
 
 
-int YAHOO_DebugLog( const char *fmt, ... )
+void __stdcall	YAHOO_DebugLog( const char *fmt, ... )
 {
 	char		str[ 4096 ];
 	va_list	vararg;
@@ -58,9 +56,8 @@ int YAHOO_DebugLog( const char *fmt, ... )
 	if ( tBytes > 0 )
 		str[ tBytes ] = 0;
 
+	YAHOO_CallService( MS_NETLIB_LOG, ( WPARAM )hNetlibUser, ( LPARAM )str );
 	va_end( vararg );
-	
-	return CallService( MS_NETLIB_LOG, ( WPARAM )hNetlibUser, ( LPARAM )str );
 }
 
 DWORD __stdcall YAHOO_GetByte( const char* valueName, int parDefltValue )
@@ -114,107 +111,113 @@ DWORD __stdcall YAHOO_SetString( HANDLE hContact, const char* valueName, const c
 	return DBWriteContactSettingString( hContact, yahooProtocolName, valueName, parValue );
 }
 
-DWORD __stdcall YAHOO_SetStringUtf( HANDLE hContact, const char* valueName, const char* parValue )
+LRESULT CALLBACK NullWindowProc( HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam )
 {
-	return DBWriteContactSettingStringUtf( hContact, yahooProtocolName, valueName, parValue );
+	switch( message )
+	{
+		case WM_COMMAND:
+		{
+			/*void* tData = PUGetPluginData( hWnd );
+			if ( tData != NULL )
+			{
+				DWORD tThreadID;
+				CreateThread( NULL, 0, MsnShowMailThread, hWnd, 0, &tThreadID );
+				PUDeletePopUp( hWnd );
+			}*/
+			break;
+		}
+
+		case WM_CONTEXTMENU:
+			PUDeletePopUp( hWnd ); 
+			break;
+	}
+
+	return DefWindowProc(hWnd, message, wParam, lParam);
 }
 
-static int CALLBACK PopupWindowProc( HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam )
+static int CALLBACK YahooMailPopupDlgProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
-	//YAHOO_DebugLog("[PopupWindowProc] Got Message: %d", message);
-	
-	switch( message ) {
+	switch( message )
+	{
 		case WM_COMMAND:
-				YAHOO_DebugLog("[PopupWindowProc] WM_COMMAND");
-				if ( HIWORD( wParam ) == STN_CLICKED) {
-					char *szURL = (char *)PUGetPluginData( hWnd );
-					if ( szURL != NULL ) 
-						YahooOpenURL(szURL, 1);
-				
-					PUDeletePopUp( hWnd );
-					return 0;
-				}
-				break;
-				
-		case WM_CONTEXTMENU:
-			YAHOO_DebugLog("[PopupWindowProc] WM_CONTEXTMENU");
-			PUDeletePopUp( hWnd ); 
-			return TRUE;
+		{
+    			if ( HIWORD( wParam ) == STN_CLICKED) 
+    			{
+	char tUrl[ 4096 ];
+	DBVARIANT dbv;
+	if ( DBGetContactSetting(( HANDLE )wParam, yahooProtocolName, "yahoo_id", &dbv ))
+		return 0;
+		
+	_snprintf( tUrl, sizeof( tUrl ), "http://mail.yahoo.com/", dbv.pszVal  );
+	DBFreeVariant( &dbv );
+	CallService( MS_UTILS_OPENURL, TRUE, ( LPARAM )tUrl );    
 
-		case UM_FREEPLUGINDATA: {
-				YAHOO_DebugLog("[PopupWindowProc] UM_FREEPLUGINDATA");
-				{
-					char *szURL = (char *)PUGetPluginData( hWnd );
-					if ( szURL != NULL ) 
-						free(szURL);
-				}
-					
+				PUDeletePopUp( hWnd );
 				return TRUE;
-			}
+				}
+			break;
+		}
 	}
 
 	return DefWindowProc(hWnd, message, wParam, lParam);
 }
 
 
-int __stdcall	YAHOO_ShowPopup( const char* nickname, const char* msg, const char *szURL )
+void __stdcall	YAHOO_ShowPopup( const char* nickname, const char* msg, int flags )
 {
+	if ( !ServiceExists( MS_POPUP_ADDPOPUP ))
+	{	
+		if ( flags & YAHOO_ALLOW_MSGBOX )
+			MessageBox( NULL, msg, "Yahoo Protocol", MB_OK | MB_ICONINFORMATION );
+
+		return;
+	}
+
 	POPUPDATAEX ppd;
 
-	if ( !ServiceExists( MS_POPUP_ADDPOPUPEX )) 
-		return 0;
-
 	ZeroMemory(&ppd, sizeof(ppd) );
+	ppd.lchContact = NULL;
+	ppd.lchIcon = LoadIcon( hinstance, MAKEINTRESOURCE( IDI_MAIN ));
 	lstrcpy( ppd.lpzContactName, nickname );
 	lstrcpy( ppd.lpzText, msg );
 
-	ppd.PluginWindowProc = ( WNDPROC )PopupWindowProc;
-
-	if (szURL != NULL) {
-		if (lstrcmpi(szURL, "http://mail.yahoo.com") == 0) {
-			ppd.lchIcon = LoadIconEx( "mail" );
-		} else {
-			ppd.lchIcon = LoadIconEx( "calendar" );
-		}
+	ppd.colorBack =  YAHOO_GetByte( "UseWinColors", FALSE  ) ? GetSysColor( COLOR_BTNFACE ) : YAHOO_GetDword( "BackgroundColour", STYLE_DEFAULTBGCOLOUR) ;
+	ppd.colorText =  YAHOO_GetByte( "UseWinColors", FALSE  ) ? GetSysColor( COLOR_WINDOWTEXT ) : YAHOO_GetDword( "TextColour", GetSysColor( COLOR_WINDOWTEXT ));
+	ppd.PluginWindowProc = ( WNDPROC )NullWindowProc;
+	ppd.PluginData = ( flags & YAHOO_ALLOW_ENTER ) ? &ppd : NULL;
 		
-		ppd.PluginData =  (void *)strdup( szURL );
-	} else {
-		ppd.lchIcon = LoadIconEx( "yahoo" );
-	}
-	YAHOO_DebugLog("[MS_POPUP_ADDPOPUPEX] Generating a popup for %s", nickname);
-	YAHOO_CallService( MS_POPUP_ADDPOPUPEX, (WPARAM)&ppd, 0 );
-	
-	return 1;
+	if ( !ServiceExists( MS_POPUP_ADDPOPUPEX )) {
+		   if (flags & YAHOO_MAIL_POPUP)
+		        {
+		        YAHOO_CallService( MS_POPUP_ADDPOPUP, (WPARAM)&ppd, 0 );
+                ppd.PluginWindowProc = (WNDPROC)YahooMailPopupDlgProc;		        
+		        }
+    } else {	
+	    int tTimeout = 5;   
+	    ppd.iSeconds = YAHOO_GetDword( "PopupTimeoutOther",tTimeout);
+	    if (flags & YAHOO_MAIL_POPUP)	         
+	         {
+             ppd.iSeconds = YAHOO_GetDword( "PopupTimeout", tTimeout );
+             ppd.PluginWindowProc = (WNDPROC)YahooMailPopupDlgProc;
+             }
+		YAHOO_CallService( MS_POPUP_ADDPOPUPEX, (WPARAM)&ppd, 0 );
+     }	
 }
 
 int YAHOO_shownotification(const char *title, const char *info, DWORD flags)
 {
     if (ServiceExists(MS_CLIST_SYSTRAY_NOTIFY)) {
         MIRANDASYSTRAYNOTIFY err;
-		int ret;
-		
         err.szProto = yahooProtocolName;
         err.cbSize = sizeof(err);
         err.szInfoTitle = (char *)title;
         err.szInfo = (char *)info;
         err.dwInfoFlags = flags;
         err.uTimeout = 1000 * 3;
-        ret = CallService(MS_CLIST_SYSTRAY_NOTIFY, 0, (LPARAM) & err);
-		
-        if (ret == 0)
-			return 1;
-    } 
-	
-	MessageBox(NULL, info, title, MB_OK | MB_ICONINFORMATION);
-	
+        CallService(MS_CLIST_SYSTRAY_NOTIFY, 0, (LPARAM) & err);
+        return 1;
+    }
     return 0;
-}
-
-void YAHOO_ShowError(const char *title, const char *buff)
-{
-	if (YAHOO_GetByte( "ShowErrors", 1 )) 
-		if (!YAHOO_ShowPopup(title, buff, NULL))
-				YAHOO_shownotification(title, buff, NIIF_ERROR);
 }
 
 int YAHOO_util_dbsettingchanged(WPARAM wParam, LPARAM lParam)
@@ -226,7 +229,7 @@ int YAHOO_util_dbsettingchanged(WPARAM wParam, LPARAM lParam)
     if (!yahooLoggedIn)
         return 0;
         
-    if (!strcmp(cws->szModule, "CList") && !strcmp(cws->szModule, yahooProtocolName)) {
+    if (!strcmp(cws->szModule, "CList")) {
         // A temporary contact has been added permanently
         if (!strcmp(cws->szSetting, "NotOnList")) {
             if (DBGetContactSettingByte((HANDLE) wParam, "CList", "Hidden", 0))
@@ -238,28 +241,15 @@ int YAHOO_util_dbsettingchanged(WPARAM wParam, LPARAM lParam)
                 szProto = (char *) CallService(MS_PROTO_GETCONTACTBASEPROTO, wParam, 0);
                 if (szProto==NULL || strcmp(szProto, yahooProtocolName)) return 0;
 
-                if ( !DBGetContactSetting( (HANDLE) wParam, yahooProtocolName, YAHOO_LOGINID, &dbv )){
-						YAHOO_DebugLog("Adding Permanently %s to list.", dbv.pszVal);
+                YAHOO_DebugLog("Adding Permanently %s to list.");
+           
+           		if ( !DBGetContactSetting( (HANDLE) wParam, yahooProtocolName, YAHOO_LOGINID, &dbv )){
                         YAHOO_add_buddy(dbv.pszVal, "miranda", NULL);
            		 		DBFreeVariant(&dbv);
            		}
 
             }
         }
-    }else if (!strcmp(cws->szModule, yahooProtocolName) && !strcmp(cws->szSetting, "ApparentMode")) {
-		DBVARIANT dbv;
-		
-        YAHOO_DebugLog("DB Setting changed.  YAHOO user's visible setting changed.");
-		
-		if ( !DBGetContactSetting( (HANDLE) wParam, yahooProtocolName, YAHOO_LOGINID, &dbv )){
-			int iAdd;
-			
-			
-			iAdd = (ID_STATUS_OFFLINE == DBGetContactSettingWord((HANDLE) wParam, yahooProtocolName, "ApparentMode", 0));
-			yahoo_stealth(dbv.pszVal, iAdd);
-			DBFreeVariant(&dbv);
-		}
-        
     }
     return 0;
 }
@@ -385,39 +375,5 @@ char* __stdcall Utf8EncodeUcs2( const wchar_t* src )
 	}
 
 	return result;
-}
-
-char* __stdcall Utf8EncodeANSI(const char *msg)
-{
-	wchar_t *unicode;
-	int wchars, err;
-	char *ut;
-	
-	wchars = MultiByteToWideChar(CP_ACP, MB_PRECOMPOSED, msg, lstrlen(msg), NULL, 0);
-	
-	if(wchars == 0)
-		return NULL;
-	
-	unicode = calloc(wchars + 1, sizeof(unsigned short));
-	if(unicode == NULL)
-		return NULL;
-	
-	err = MultiByteToWideChar(CP_ACP, MB_PRECOMPOSED, msg, lstrlen(msg), unicode, wchars);
-	if(err != wchars) {
-		free(unicode);
-		return NULL;
-	}
-			
-	ut = Utf8EncodeUcs2(unicode );
-	free(unicode);
-			
-	return ut;
-}
-
-void SetButtonCheck(HWND hwndDlg, int CtrlID, BOOL bCheck)
-{
-	HWND hwndCtrl = GetDlgItem(hwndDlg, CtrlID);
-	
-	Button_SetCheck(hwndCtrl, (bCheck)?BST_CHECKED:BST_UNCHECKED);
 }
 

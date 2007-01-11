@@ -7,6 +7,7 @@
 //
 // Generated from the TEXTINCLUDE 2 resource.
 //
+#include <windows.h>
 #include <winres.h>
 /////////////////////////////////////////////////////////////////////////////
 #undef APSTUDIO_READONLY_SYMBOLS
@@ -54,14 +55,14 @@ FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
     LTEXT           "Database settings are being imported from",IDC_STATIC,5,
                     5,177,8
-    CONTROL         "",IDC_ININAME,"Static",SS_SIMPLE | SS_NOPREFIX |
+    CONTROL         "",IDC_ININAME,"Static",SS_SIMPLE | SS_NOPREFIX | 
                     WS_GROUP,5,13,177,8
     LTEXT           "This file wishes to change the setting",IDC_STATIC,5,24,
                     177,8
-    CONTROL         "",IDC_SETTINGNAME,"Static",SS_SIMPLE | SS_NOPREFIX |
+    CONTROL         "",IDC_SETTINGNAME,"Static",SS_SIMPLE | SS_NOPREFIX | 
                     WS_GROUP,12,33,170,8
     LTEXT           "to the value",IDC_STATIC,5,42,177,8
-    CONTROL         "",IDC_NEWVALUE,"Static",SS_SIMPLE | SS_NOPREFIX |
+    CONTROL         "",IDC_NEWVALUE,"Static",SS_SIMPLE | SS_NOPREFIX | 
                     WS_GROUP,12,51,170,8
     LTEXT           "",IDC_SECURITYINFO,5,60,177,8
     LTEXT           "Do you want to allow this change?",IDC_STATIC,5,71,177,
@@ -82,7 +83,7 @@ CAPTION "Database Import Complete"
 FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
     LTEXT           "The import has completed from",IDC_STATIC,5,5,176,8
-    CONTROL         "",IDC_ININAME,"Static",SS_SIMPLE | SS_NOPREFIX |
+    CONTROL         "",IDC_ININAME,"Static",SS_SIMPLE | SS_NOPREFIX | 
                     WS_GROUP,5,13,176,8
     LTEXT           "What do you want to do with the file now?",IDC_STATIC,5,
                     24,176,8
@@ -142,6 +143,7 @@ END
 
 2 TEXTINCLUDE DISCARDABLE 
 BEGIN
+    "#include <windows.h>\r\n"
     "#include <winres.h>\0"
 END
 
@@ -152,6 +154,52 @@ BEGIN
 END
 
 #endif    // APSTUDIO_INVOKED
+
+
+#ifndef _MAC
+/////////////////////////////////////////////////////////////////////////////
+//
+// Version
+//
+
+VS_VERSION_INFO VERSIONINFO
+ FILEVERSION 0,3,4,0
+ PRODUCTVERSION 0,3,4,0
+ FILEFLAGSMASK 0x3fL
+#ifdef _DEBUG
+ FILEFLAGS 0x1L
+#else
+ FILEFLAGS 0x0L
+#endif
+ FILEOS 0x40004L
+ FILETYPE 0x1L
+ FILESUBTYPE 0x0L
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "000004b0"
+        BEGIN
+            VALUE "Comments", "Licensed under the terms of the GNU General Public License\0"
+            VALUE "CompanyName", " \0"
+            VALUE "FileDescription", "Miranda IM 0.3.xx Database Driver\0"
+            VALUE "FileVersion", "0.3.4 alpha\0"
+            VALUE "InternalName", "db3x\0"
+            VALUE "LegalCopyright", "Copyright © 2000-2005 Richard Hughes, Roland Rabien, Tristan Van de Vreede, Martin Öberg, Robert Rainwater, Sam Kothari and Lyon Lim\0"
+            VALUE "LegalTrademarks", "\0"
+            VALUE "OriginalFilename", "db3x.dll\0"
+            VALUE "PrivateBuild", "\0"
+            VALUE "ProductName", "Miranda IM 0.3.xx Database driver\0"
+            VALUE "ProductVersion", "0.3.4 alpha\0"
+            VALUE "SpecialBuild", "\0"
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x0, 1200
+    END
+END
+
+#endif    // !_MAC
 
 #endif    // English (U.S.) resources
 /////////////////////////////////////////////////////////////////////////////
@@ -167,3 +215,4 @@ END
 
 /////////////////////////////////////////////////////////////////////////////
 #endif    // not APSTUDIO_INVOKED
+

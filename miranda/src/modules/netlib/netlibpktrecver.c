@@ -2,8 +2,8 @@
 
 Miranda IM: the free IM client for Microsoft* Windows*
 
-Copyright 2000-2007 Miranda ICQ/IM project,
-all portions of this codebase are copyrighted to the people
+Copyright 2000-2003 Miranda ICQ/IM project, 
+all portions of this codebase are copyrighted to the people 
 listed in contributors.txt.
 
 This program is free software; you can redistribute it and/or
@@ -20,7 +20,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
-#include "commonheaders.h"
+#include "../../core/commonheaders.h"
 #include "netlib.h"
 
 int NetlibPacketRecverCreate(WPARAM wParam,LPARAM lParam)
@@ -32,7 +32,7 @@ int NetlibPacketRecverCreate(WPARAM wParam,LPARAM lParam)
 		SetLastError(ERROR_INVALID_PARAMETER);
 		return (int)(struct NetlibPacketRecver*)NULL;
 	}
-	nlpr=(struct NetlibPacketRecver*)mir_calloc(sizeof(struct NetlibPacketRecver));
+	nlpr=(struct NetlibPacketRecver*)calloc(1,sizeof(struct NetlibPacketRecver));
 	if(nlpr==NULL) {
 		SetLastError(ERROR_OUTOFMEMORY);
 		return (int)(struct NetlibPacketRecver*)NULL;
@@ -41,7 +41,7 @@ int NetlibPacketRecverCreate(WPARAM wParam,LPARAM lParam)
 	nlpr->nlc=nlc;
 	nlpr->packetRecver.cbSize=sizeof(nlpr->packetRecver);
 	nlpr->packetRecver.bufferSize=lParam;
-	nlpr->packetRecver.buffer=(PBYTE)mir_alloc(nlpr->packetRecver.bufferSize);
+	nlpr->packetRecver.buffer=(PBYTE)malloc(nlpr->packetRecver.bufferSize);
 	nlpr->packetRecver.bytesUsed=0;
 	nlpr->packetRecver.bytesAvailable=0;
 	return (int)nlpr;

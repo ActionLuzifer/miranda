@@ -5,7 +5,7 @@
 // Copyright © 2000,2001 Richard Hughes, Roland Rabien, Tristan Van de Vreede
 // Copyright © 2001,2002 Jon Keating, Richard Hughes
 // Copyright © 2002,2003,2004 Martin Öberg, Sam Kothari, Robert Rainwater
-// Copyright © 2004,2005,2006 Joe Kucera
+// Copyright © 2004,2005 Joe Kucera
 // 
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -23,7 +23,7 @@
 //
 // -----------------------------------------------------------------------------
 //
-// File name      : $Source: /cvsroot/miranda/miranda/protocols/IcqOscarJ/icq_filerequests.c,v $
+// File name      : $Source$
 // Revision       : $Revision$
 // Last change on : $Date$
 // Last change by : $Author$
@@ -39,176 +39,175 @@
 
 
 extern WORD wListenPort;
+extern HANDLE hDirectNetlibUser;
+extern char gpszICQProtoName[MAX_PATH];
+
+
 
 void handleFileAck(PBYTE buf, WORD wLen, DWORD dwUin, DWORD dwCookie, WORD wStatus, char* pszText)
 {
-  char* pszFileName = NULL;
-  DWORD dwFileSize;
-  DWORD dwCookieUin;
-  WORD wPort;
-  WORD wFilenameLength;
-  filetransfer* ft;
 
-  
-  // Find the filetransfer that belongs to this response
-  if (!FindCookie(dwCookie, &dwCookieUin, &ft))
-  {
-    NetLog_Direct("Error: Received unexpected file transfer request response");
-    return;
-  }
+	char* pszFileName = NULL;
+	DWORD dwFileSize;
+	DWORD dwCookieUin;
+	WORD wPort;
+	WORD wFilenameLength;
+	filetransfer* ft;
 
-  FreeCookie(dwCookie);
-  
-  if (dwCookieUin != dwUin)
-  {
-    NetLog_Direct("Error: UINs do not match in file transfer request response");
-    return;
-  }
+	
+	// Find the filetransfer that belongs to this response
+	if (!FindCookie(dwCookie, &dwCookieUin, &ft))
+	{
+		Netlib_Logf(hDirectNetlibUser, "Error: Received unexpected file transfer request response");
+		return;
+	}
 
-  // If status != 0, a request has been denied
-  if (wStatus != 0)
-  {
-    NetLog_Direct("File transfer denied by %u.", dwUin);
-    ICQBroadcastAck(ft->hContact, ACKTYPE_FILE, ACKRESULT_DENIED, (HANDLE)ft, 0);
+	FreeCookie(dwCookie);
+	
+	if (dwCookieUin != dwUin)
+	{
+		Netlib_Logf(hDirectNetlibUser, "Error: UINs do not match in file transfer request response");
+		return;
+	}
 
-    FreeCookie(dwCookie);
+	
+	// If status != 0, a request has been denied
+	if (wStatus != 0)
+	{
+		Netlib_Logf(hDirectNetlibUser, "File transfer denied by %u,", dwUin);
+		ProtoBroadcastAck(gpszICQProtoName, HContactFromUIN(dwUin, 1), ACKTYPE_FILE, ACKRESULT_DENIED, (HANDLE)ft, 0);
 
-    return;
-  }
+		FreeCookie(dwCookie);
 
-  // Port to connect to
-  unpackWord(&buf, &wPort);
-  ft->dwRemotePort = wPort;
-  wLen -= 2;
-  
-  // Unknown
-  buf += 2;
-  wLen -= 2;
-  
-  // Filename
-  unpackLEWord(&buf, &wFilenameLength);
-  if (wFilenameLength > 0)
-  {
-    pszFileName = _alloca(wFilenameLength+1);
-    unpackString(&buf, pszFileName, wFilenameLength);
-    pszFileName[wFilenameLength] = '\0';
-  }
-  wLen = wLen - 2 - wFilenameLength;
-  
-  // Total filesize
-  unpackLEDWord(&buf, &dwFileSize);
-  wLen -= 4;
-  
-  NetLog_Direct("File transfer ack from %u, port %u, name %s, size %u", dwUin, ft->dwRemotePort, pszFileName, dwFileSize);
+		return;
+	}
 
-  ICQBroadcastAck(ft->hContact, ACKTYPE_FILE, ACKRESULT_CONNECTING, (HANDLE)ft, 0);
+	// Port to connect to
+	unpackWord(&buf, &wPort);
+	ft->dwRemotePort = wPort;
+	wLen -= 2;
+	
+	// Unknown
+	buf += 2;
+	wLen -= 2;
+	
+	// Filename
+	unpackLEWord(&buf, &wFilenameLength);
+	if (wFilenameLength > 0)
+	{
+		pszFileName = malloc(wFilenameLength+1);
+		unpackString(&buf, pszFileName, wFilenameLength);
+		pszFileName[wFilenameLength] = '\0';
+	}
+	wLen = wLen - 2 - wFilenameLength;
+	
+	// Total filesize
+	unpackLEDWord(&buf, &dwFileSize);
+	wLen -= 4;
+	
+	Netlib_Logf(hDirectNetlibUser, "File transfer ack from %u, port %u, name %s, size %u", dwUin, ft->dwRemotePort, pszFileName, dwFileSize);
+	
+	OpenDirectConnection(ft->hContact, DIRECTCONN_FILE, ft);
 
-  OpenDirectConnection(ft->hContact, DIRECTCONN_FILE, ft);
+	SAFE_FREE(&pszFileName);
+
 }
 
 
-
-filetransfer *CreateFileTransfer(HANDLE hContact, DWORD dwUin, int nVersion)
-{
-  filetransfer *ft;
-
-  ft = (filetransfer*)SAFE_MALLOC(sizeof(filetransfer));
-  if (ft)
-  {
-    ft->dwUin = dwUin;
-    ft->hContact = hContact;
-    ft->nVersion = nVersion;
-    ft->pMessage.bMessageType = MTYPE_FILEREQ;
-    InitMessageCookie(&ft->pMessage);
-  }
-  return ft;
-}
 
 // pszDescription points to a string with the reason
 // buf points to the first data after the string
-void handleFileRequest(PBYTE buf, WORD wLen, DWORD dwUin, DWORD dwCookie, DWORD dwID1, DWORD dwID2, char* pszDescription, int nVersion, BOOL bDC)
+void handleFileRequest(PBYTE buf, WORD wLen, DWORD dwUin, DWORD dwCookie, DWORD dwID1, DWORD dwID2, char* pszDescription, int nVersion)
 {
-  char* pszFileName = NULL;
-  DWORD dwFileSize;
-  WORD wFilenameLength;
-  BOOL bEmptyDesc = FALSE;
+
+	char* pszFileName = NULL;
+	DWORD dwFileSize;
+	WORD wFilenameLength;
 
 
-  if (strlennull(pszDescription) == 0)
-  {
-    pszDescription = ICQTranslate("No description given");
-    bEmptyDesc = TRUE;
-  }
-  
-  // Empty port+pad
-  buf += 4;
-  wLen -= 4;
+	if (!pszDescription || (strlen(pszDescription) == 0))
+		pszDescription = Translate("No description given");
 
-  
-  // Filename
-  unpackLEWord(&buf, &wFilenameLength);
-  if (wFilenameLength > 0)
-  {
-    pszFileName = _alloca(wFilenameLength + 1);
-    unpackString(&buf, pszFileName, wFilenameLength);
-    pszFileName[wFilenameLength] = '\0';
-  }
-  else
-  {
-    NetLog_Direct("Ignoring malformed file send request");
-    return;
-  }
+	
+	// Empty port+pad
+	buf += 4;
+	wLen -= 4;
 
-  wLen = wLen - 2 - wFilenameLength;
+	
+	// Filename
+	unpackLEWord(&buf, &wFilenameLength);
+	if (wFilenameLength > 0)
+	{
+		pszFileName = malloc(wFilenameLength + 1);
+		unpackString(&buf, pszFileName, wFilenameLength);
+		pszFileName[wFilenameLength] = '\0';
+	}
+	else
+	{
+		Netlib_Logf(hDirectNetlibUser, "Ignoring malformed file send request");
+		return;
+	}
 
-  // Total filesize
-  unpackLEDWord(&buf, &dwFileSize);
-  wLen -= 4;
+	wLen = wLen - 2 - wFilenameLength;
 
-  {
-    CCSDATA ccs;
-    PROTORECVEVENT pre;
-    char* szBlob;
-    filetransfer* ft;
-    int bAdded;
-    HANDLE hContact = HContactFromUIN(dwUin, &bAdded);
-    
-    // Initialize a filetransfer struct
-    ft = CreateFileTransfer(hContact, dwUin, nVersion);
-    ft->dwCookie = dwCookie;
-    ft->szFilename = null_strdup(pszFileName);
-    ft->szDescription = null_strdup(pszDescription);
-    ft->fileId = -1;
-    ft->dwTotalSize = dwFileSize;
-    ft->pMessage.dwMsgID1 = dwID1;
-    ft->pMessage.dwMsgID2 = dwID2;
-    ft->bDC = bDC;
-    ft->bEmptyDesc = bEmptyDesc;
-    
-    
-    // Send chain event
-    szBlob = (char*)_alloca(sizeof(DWORD) + strlennull(pszFileName) + strlennull(pszDescription) + 2);
-    *(PDWORD)szBlob = (DWORD)ft;
-    strcpy(szBlob + sizeof(DWORD), pszFileName);
-    strcpy(szBlob + sizeof(DWORD) + strlennull(pszFileName) + 1, pszDescription);
-    ccs.szProtoService = PSR_FILE;
-    ccs.hContact = hContact;
-    ccs.wParam = 0;
-    ccs.lParam = (LPARAM)&pre;
-    pre.flags = 0;
-    pre.timestamp = time(NULL);
-    pre.szMessage = szBlob;
-    pre.lParam = 0;
+	// Total filesize
+	unpackLEDWord(&buf, &dwFileSize);
+	wLen -= 4;
 
-    CallService(MS_PROTO_CHAINRECV, 0, (LPARAM)&ccs);
-  }
+	{
+
+		CCSDATA ccs;
+		PROTORECVEVENT pre;
+		char* szBlob;
+		filetransfer* ft;
+		
+		// Initialize a filetransfer struct
+		ft = (filetransfer*)malloc(sizeof(filetransfer));
+		memset(ft, 0, sizeof(filetransfer));
+		ft->status = 0;
+		ft->dwCookie = dwCookie;
+		ft->szFilename = _strdup(pszFileName);
+		ft->szDescription = _strdup(pszDescription);
+		ft->dwUin = dwUin;
+		ft->fileId = -1;
+		ft->dwTotalSize = dwFileSize;
+		ft->nVersion = nVersion;
+		ft->TS1 = dwID1;
+		ft->TS2 = dwID2;
+		
+		
+		// Send chain event
+		szBlob = (char*)malloc(sizeof(DWORD) + strlen(pszFileName) + strlen(pszDescription) + 2);
+		*(PDWORD)szBlob = (DWORD)ft;
+		strcpy(szBlob + sizeof(DWORD), pszFileName);
+		strcpy(szBlob + sizeof(DWORD) + strlen(pszFileName) + 1, pszDescription);
+		ccs.szProtoService = PSR_FILE;
+		ccs.hContact = HContactFromUIN(dwUin, 1);
+		ccs.wParam = 0;
+		ccs.lParam = (LPARAM)&pre;
+		pre.flags = 0;
+		pre.timestamp = time(NULL);
+		pre.szMessage = szBlob;
+		pre.lParam = 0;
+
+		CallService(MS_PROTO_CHAINRECV, 0, (LPARAM)&ccs);
+
+		SAFE_FREE(&szBlob);
+
+	}
+	
+
+	SAFE_FREE(&pszFileName);
+	
 }
 
 
 
 void handleDirectCancel(directconnect *dc, PBYTE buf, WORD wLen, WORD wCommand, DWORD dwCookie, WORD wMessageType, WORD wStatus, WORD wFlags, char* pszText)
 {
-  NetLog_Direct("handleDirectCancel: Unhandled cancel");
+
+	Netlib_Logf(hDirectNetlibUser, "handleDirectCancel: Unhandled cancel");
+
 }
 
 
@@ -217,19 +216,71 @@ void handleDirectCancel(directconnect *dc, PBYTE buf, WORD wLen, WORD wCommand, 
 
 
 
+void icq_sendFileAcceptDirect(HANDLE hContact, filetransfer* ft)
+{
+
+	icq_packet packet;
+
+	
+	buildDirectPacketHeader(&packet, 20, DIRECT_ACK, ft->dwCookie, MTYPE_FILEREQ, 0, 0);
+	packLEWord(&packet, 0);	   // modifier 
+	packLEWord(&packet, 1);	  // description
+	packByte(&packet, 0);
+	packWord(&packet, wListenPort);
+	packLEWord(&packet, 0);
+	packLEWord(&packet, 1);	  // filename
+	packByte(&packet, 0);
+	packLEDWord(&packet, 0);  // file size 
+	packLEDWord(&packet, wListenPort);		// FIXME: ideally we want to open a new port for this
+
+	OpenDirectConnection(hContact, DIRECTCONN_STANDARD, &packet);
+
+	Netlib_Logf(hDirectNetlibUser, "accepted dc");
+
+}
+
+
+
 void icq_CancelFileTransfer(HANDLE hContact, filetransfer* ft)
 {
-  DWORD dwCookie;
 
-  if (FindCookieByData(ft, &dwCookie, NULL))
-    FreeCookie(dwCookie);      /* this bit stops a send that's waiting for acceptance */
+	DWORD dwCookie;
 
-  NetLib_SafeCloseHandle(&ft->hConnection, FALSE);
+	if (FindCookieByData(ft, &dwCookie, NULL))
+		FreeCookie(dwCookie);      /* this bit stops a send that's waiting for acceptance */
 
-  ICQBroadcastAck(ft->hContact, ACKTYPE_FILE, ACKRESULT_FAILED, ft, 0);
+	if (ft->hConnection)
+	{
+		ProtoBroadcastAck(gpszICQProtoName, ft->hContact, ACKTYPE_FILE, ACKRESULT_FAILED, ft, 0);
+		Netlib_CloseHandle(ft->hConnection);
+		ft->hConnection = NULL;
+	}
+	/* FIXME: Do not free ft, or anything therein, it is freed inside DC thread ! */
+	#ifdef _DEBUG
+		Netlib_Logf(hDirectNetlibUser, "icq_CancelFileTransfer: OK");
+	#endif
 
-  /* FIXME: Do not free ft, or anything therein, it is freed inside DC thread ! */
-  #ifdef _DEBUG
-    NetLog_Direct("icq_CancelFileTransfer: OK");
-  #endif
+}
+
+
+
+void icq_sendFileSendDirectv7(DWORD dwUin, HANDLE hContact, WORD wCookie, char* pszFiles, char* pszDescription, DWORD dwTotalSize)
+{
+
+	icq_packet packet;
+
+	
+	buildDirectPacketHeader(&packet, (WORD)(20 + strlen(pszDescription) + strlen(pszFiles)), DIRECT_MESSAGE, wCookie, MTYPE_FILEREQ, 0, 0);
+	packLEWord(&packet, 0);	   // modifier
+	packLEWord(&packet, (WORD)(strlen(pszDescription) + 1));
+	packBuffer(&packet, pszDescription, (WORD)(strlen(pszDescription) + 1));
+	packLEDWord(&packet, 0);	 // listen port
+	packLEWord(&packet, (WORD)(strlen(pszFiles) + 1));
+	packBuffer(&packet, pszFiles, (WORD)(strlen(pszFiles) + 1));
+	packLEDWord(&packet, dwTotalSize);
+	packLEDWord(&packet, 0);		// listen port (again)
+
+	Netlib_Logf(hDirectNetlibUser, "Sending v7 file request direct");
+	OpenDirectConnection(hContact, DIRECTCONN_STANDARD, &packet);
+
 }

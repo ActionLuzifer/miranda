@@ -2,8 +2,8 @@
 
 Miranda IM: the free IM client for Microsoft* Windows*
 
-Copyright 2000-2007 Miranda ICQ/IM project,
-all portions of this codebase are copyrighted to the people
+Copyright 2000-2003 Miranda ICQ/IM project, 
+all portions of this codebase are copyrighted to the people 
 listed in contributors.txt.
 
 This program is free software; you can redistribute it and/or
@@ -97,9 +97,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //the status modes that the protocol supports
 //away-style messages for. Uses the PF2_ flags.
 // PFLAGNUM_3 is implemented by protocol services that support away messages
-// there may be no support and 0 will be returned, if there is
+// there may be no support and 0 will be returned, if there is 
 // support it will consist of a set of PF2_* bits
-#define PFLAGNUM_3   3
+#define PFLAGNUM_3   3                           
 
 // given a status will return what bit flags to test for
 static __inline unsigned long Proto_Status2Flag(int status)
@@ -127,7 +127,6 @@ static __inline unsigned long Proto_Status2Flag(int status)
 #define PF4_SUPPORTTYPING 0x00000008 // protocol supports user is typing messages v0.3.3+
 #define PF4_SUPPORTIDLE   0x00000010 // protocol understands idle, added during v0.3.4+ (2004/09/13)
 #define PF4_AVATARS		  0x00000020 // protocol has avatar support, added during v0.3.4 (2004/09/13)
-#define PF4_OFFLINEFILES  0x00000040 // protocols supports sending files to offline users (v0.5.2)
 
 #define PFLAG_UNIQUEIDTEXT  100    //returns a static buffer of text describing the unique field by which this protocol identifies users (already translated), or NULL
 
@@ -158,7 +157,7 @@ static __inline unsigned long Proto_Status2Flag(int status)
 
 Added during 0.3.4 (2004/09/14)
 */
-#define PFLAGNUM_5 5
+#define PFLAGNUM_5 5 
 
 /* Deleting contacts from protocols that store the contact list on the server:
 If a contact is deleted while the protocol is online, it is expected that the
@@ -215,7 +214,7 @@ will pick this up and everything will be good.
 //If the new mode requires that the protocol switch from offline to online then
 //it will do so, but errors will be reported in the form of an additional ack:
 //type=ACKTYPE_LOGIN, result=ACKRESULT_FAILURE, hProcess=NULL, lParam=LOGINERR_
-// (added during 0.3.4.3) the protocol will send LOGINERR_OTHERLOCATION if the login
+// (added during 0.3.4.3) the protocol will send LOGINERR_OTHERLOCATION if the login 
 // was disconnected because of a login at another location
 #define LOGINERR_WRONGPASSWORD  1
 #define LOGINERR_NONETWORK      2
@@ -430,7 +429,6 @@ typedef struct {
 //been received. All other numbering is arbitrary.
 #define SGIF_MINIMAL   1     //get only the most basic information. This should
                              //contain at least a Nick and e-mail.
-#define SGIF_ONOPEN    2     //set when the User Info form is being opened
 #define PSS_GETINFO      "/GetInfo"
 
 //Send an instant message
@@ -576,15 +574,8 @@ typedef struct {
 	LPARAM lParam;     //extra space for the network level protocol module
 } PROTORECVEVENT;
 #define PREF_CREATEREAD   1     //create the database event with the 'read' flag set
-#define PREF_UNICODE	     2
-#define PREF_RTL          4     // 0.5+ addition: support for right-to-left messages
+#define PREF_UNICODE	  2
 #define PSR_MESSAGE   "/RecvMessage"
-
-#if defined( _UNICODE )
-	#define PREF_TCHAR PREF_UNICODE
-#else
-	#define PREF_TCHAR 0
-#endif
 
 //An URL has been received
 //wParam=0
@@ -640,3 +631,5 @@ typedef struct {
 #define PSR_AUTH		"/RecvAuth"
 
 #endif  // M_PROTOSVC_H__
+
+

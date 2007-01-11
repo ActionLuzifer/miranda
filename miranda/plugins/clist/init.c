@@ -2,8 +2,8 @@
 
 Miranda IM: the free IM client for Microsoft* Windows*
 
-Copyright 2000-2005 Miranda ICQ/IM project,
-all portions of this codebase are copyrighted to the people
+Copyright 2000-2005 Miranda ICQ/IM project, 
+all portions of this codebase are copyrighted to the people 
 listed in contributors.txt.
 
 This program is free software; you can redistribute it and/or
@@ -24,28 +24,22 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "commonheaders.h"
 
 HINSTANCE g_hInst = 0;
-PLUGINLINK *pluginLink;
-CLIST_INTERFACE* pcli = NULL;
-HIMAGELIST himlCListClc = NULL;
-HANDLE hStatusModeChangeEvent;
+PLUGINLINK * pluginLink;
+struct MM_INTERFACE memoryManagerInterface;
+extern HWND hwndContactList;
 
-extern int currentDesiredStatusMode;
-
-struct MM_INTERFACE mmi;
-BOOL(WINAPI * MySetLayeredWindowAttributes) (HWND, COLORREF, BYTE, DWORD) = NULL;
-
-/////////////////////////////////////////////////////////////////////////////////////////
-// external functions
-
-void InitCustomMenus( void );
-void PaintClc(HWND hwnd, struct ClcData *dat, HDC hdc, RECT * rcPaint);
-
-int ClcOptInit(WPARAM wParam, LPARAM lParam);
-int CluiOptInit(WPARAM wParam, LPARAM lParam);
-int CListOptInit(WPARAM wParam, LPARAM lParam);
-
-/////////////////////////////////////////////////////////////////////////////////////////
-// dll stub
+PLUGININFO pluginInfo = {
+	sizeof(PLUGININFO),
+	"Classic contact list",
+	PLUGIN_MAKE_VERSION(0,3,4,5),
+	"Display contacts, event notifications, protocol status",
+	"Miranda IM project",
+	"egodust@users.sourceforge.net",
+	"Copyright 2000-2005 Miranda-IM project",
+	"http://www.miranda-im.org",
+	0,
+	DEFMOD_CLISTALL
+};
 
 BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD dwReason, LPVOID reserved)
 {
@@ -54,102 +48,49 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD dwReason, LPVOID reserved)
 	return TRUE;
 }
 
-/////////////////////////////////////////////////////////////////////////////////////////
-// returns the plugin information
 
-PLUGININFO pluginInfo = {
-	sizeof(PLUGININFO),
-	#if defined( _UNICODE )
-		"Classic contact list (Unicode)",
-	#else
-		"Classic contact list",
-	#endif
-	PLUGIN_MAKE_VERSION(0, 5, 1, 1),
-
-	"Display contacts, event notifications, protocol status",
-	"Miranda IM project",
-	"ghazan@miranda-im.org",
-	"Copyright 2000-2006 Miranda IM project",
-	"http://www.miranda-im.org",
-	UNICODE_AWARE,
-	DEFMOD_CLISTALL
-};
-
-__declspec(dllexport) PLUGININFO *MirandaPluginInfo(DWORD mirandaVersion)
+__declspec(dllexport) PLUGININFO* MirandaPluginInfo(DWORD mirandaVersion)
 {
-	if (mirandaVersion < PLUGIN_MAKE_VERSION(0, 4, 3, 0))
-		return NULL;
+	if ( mirandaVersion < PLUGIN_MAKE_VERSION(0,3,4,0) ) return NULL;
 	return &pluginInfo;
 }
 
-/////////////////////////////////////////////////////////////////////////////////////////
-// called when all modules got loaded
+int LoadContactListModule(void);
+int LoadCLCModule(void); 
+int LoadCLUIModule(); 
 
-static int OnModulesLoaded( WPARAM wParam, LPARAM lParam )
+static int systemModulesLoaded(WPARAM wParam, LPARAM lParam)
 {
-	himlCListClc = (HIMAGELIST) CallService(MS_CLIST_GETICONSIMAGELIST, 0, 0);
+	LoadCLUIModule();
 	return 0;
 }
-
-/////////////////////////////////////////////////////////////////////////////////////////
-// options iniatialization
-
-static int OnOptsInit(WPARAM wParam, LPARAM lParam)
-{
-	ClcOptInit(wParam, lParam);
-	CluiOptInit(wParam, lParam);
-	CListOptInit(wParam, lParam);
-	return 0;
-}
-
-/////////////////////////////////////////////////////////////////////////////////////////
-// main clist initialization routine
 
 int __declspec(dllexport) CListInitialise(PLUGINLINK * link)
 {
-	int rc = 0;
-	pluginLink = link;
-	#ifdef _DEBUG
-		_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
-	#endif
-
+	int rc=0;
+	pluginLink=link;
+#ifdef _DEBUG
+	_CrtSetDbgFlag( _CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
+#endif	
 	// get the internal malloc/free()
-	mir_getMMI( &mmi );
-
-	pcli = ( CLIST_INTERFACE* )CallService(MS_CLIST_RETRIEVE_INTERFACE, 0, (LPARAM)g_hInst);
-	if ( (int)pcli == CALLSERVICE_NOTFOUND ) {
-LBL_Error:
-		MessageBoxA( NULL, "This version of plugin requires Miranda IM 0.7.0.8 or later", "Fatal error", MB_OK );
-		return 1;
-	}
-	if ( pcli->version < 4 )
-		goto LBL_Error;
-
-	pcli->pfnPaintClc = PaintClc;
-
-	MySetLayeredWindowAttributes = (BOOL(WINAPI *) (HWND, COLORREF, BYTE, DWORD)) GetProcAddress(
-		LoadLibraryA("user32.dll"), "SetLayeredWindowAttributes");
-
-	HookEvent(ME_SYSTEM_MODULESLOADED, OnModulesLoaded);
-	HookEvent(ME_OPT_INITIALISE, OnOptsInit);
-
-	hStatusModeChangeEvent = CreateHookableEvent( ME_CLIST_STATUSMODECHANGE );
-	InitCustomMenus();
-	return 0;
+	memset(&memoryManagerInterface,0,sizeof(memoryManagerInterface));
+	memoryManagerInterface.cbSize = sizeof(memoryManagerInterface);
+	CallService(MS_SYSTEM_GET_MMI, 0, (LPARAM)&memoryManagerInterface);
+	rc=LoadContactListModule();
+	if (rc==0) rc=LoadCLCModule();
+	HookEvent(ME_SYSTEM_MODULESLOADED, systemModulesLoaded);
+	return rc;
 }
 
-/////////////////////////////////////////////////////////////////////////////////////////
 // a plugin loader aware of CList exports will never call this.
-
 int __declspec(dllexport) Load(PLUGINLINK * link)
 {
 	return 1;
 }
 
-/////////////////////////////////////////////////////////////////////////////////////////
-// a plugin unloader
-
 int __declspec(dllexport) Unload(void)
 {
+	if (IsWindow(hwndContactList)) DestroyWindow(hwndContactList);
 	return 0;
 }
+

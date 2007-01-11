@@ -21,365 +21,512 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "chat.h"
 
 extern HBRUSH		hEditBkgBrush;
-extern HBRUSH		hListBkgBrush;
 extern HANDLE		hSendEvent;
+extern HANDLE		hBuildMenuEvent ;
 extern HINSTANCE	g_hInst;
-extern HICON		hIcons[30];
+extern HICON		hIcons[OPTIONS_ICONCOUNT];
 extern struct		CREOleCallback reOleCallback;
 extern HIMAGELIST	hImageList;
 extern HMENU		g_hMenu;
 extern BOOL			SmileyAddInstalled;
-extern TABLIST *	g_TabList;
-extern HIMAGELIST	hIconsList;
 
 static WNDPROC OldSplitterProc;
 static WNDPROC OldMessageProc;
 static WNDPROC OldNicklistProc;
-static WNDPROC OldTabProc;
 static WNDPROC OldFilterButtonProc;
 static WNDPROC OldLogProc;
-static HKL hkl = NULL;
-
 typedef struct
 {
 	time_t lastEnterTime;
-	TCHAR  szTabSave[20];
+	char szTabSave[20];
 } MESSAGESUBDATA;
 
+struct FilterList
+{
+    char *szDescr;
+	int iEvent;
+	HTREEITEM hItem;
 
+// this one should also be in Translate( ) template
+} static filterList[] = {
+	{"Actions", GC_EVENT_ACTION, NULL},
+	{"Messages", GC_EVENT_MESSAGE, NULL},
+	{"Nick changes", GC_EVENT_NICK, NULL},
+	{"Users joining", GC_EVENT_JOIN, NULL},
+	{"Users leaving", GC_EVENT_PART, NULL},
+	{"Topic changes", GC_EVENT_TOPIC, NULL},
+	{"Status changes", GC_EVENT_ADDSTATUS, NULL},
+	{"Information ", GC_EVENT_INFORMATION, NULL},
+	{"Disconnects", GC_EVENT_QUIT, NULL},
+	{"User kicks", GC_EVENT_KICK, NULL},
+	{"Notices", GC_EVENT_NOTICE, NULL}
+};
 static LRESULT CALLBACK SplitterSubclassProc(HWND hwnd,UINT msg,WPARAM wParam,LPARAM lParam)
 {
 	switch(msg) {
-	case WM_NCHITTEST:
-		return HTCLIENT;
-
-	case WM_SETCURSOR:
-	{	RECT rc;
-		GetClientRect(hwnd,&rc);
-		SetCursor(rc.right>rc.bottom?LoadCursor(NULL, IDC_SIZENS):LoadCursor(NULL, IDC_SIZEWE));
-		return TRUE;
-	}
-	case WM_LBUTTONDOWN:
-		SetCapture(hwnd);
-		return 0;
-
-	case WM_MOUSEMOVE:
-		if (GetCapture()==hwnd) {
-			RECT rc;
+		case WM_NCHITTEST:
+			return HTCLIENT;
+		case WM_SETCURSOR:
+		{	RECT rc;
 			GetClientRect(hwnd,&rc);
-			SendMessage(GetParent(hwnd),GC_SPLITTERMOVED,rc.right>rc.bottom?(short)HIWORD(GetMessagePos())+rc.bottom/2:(short)LOWORD(GetMessagePos())+rc.right/2,(LPARAM)hwnd);
+			SetCursor(rc.right>rc.bottom?LoadCursor(NULL, IDC_SIZENS):LoadCursor(NULL, IDC_SIZEWE));
+			return TRUE;
 		}
-		return 0;
-
-	case WM_LBUTTONUP:
-		ReleaseCapture();
-		PostMessage(GetParent(hwnd),WM_SIZE, 0, 0);
-		return 0;
+		case WM_LBUTTONDOWN:
+			SetCapture(hwnd);
+			return 0;
+		case WM_MOUSEMOVE:
+			if(GetCapture()==hwnd) {
+				RECT rc;
+				GetClientRect(hwnd,&rc);
+				SendMessage(GetParent(hwnd),GC_SPLITTERMOVED,rc.right>rc.bottom?(short)HIWORD(GetMessagePos())+rc.bottom/2:(short)LOWORD(GetMessagePos())+rc.right/2,(LPARAM)hwnd);
+			}
+			return 0;
+		case WM_LBUTTONUP:
+			ReleaseCapture();
+			return 0;
 	}
 	return CallWindowProc(OldSplitterProc,hwnd,msg,wParam,lParam);
 }
 
-static void	InitButtons(HWND hwndDlg, SESSION_INFO* si)
+static void	InitButtons(HWND hwndDlg, CHATWINDOWDATA* dat)
 {
-	MODULEINFO * pInfo = MM_FindModule(si->pszModule);
+	MODULE * pInfo = MM_FindModule(dat->pszModule);
 
-	SendDlgItemMessage( hwndDlg, IDC_SMILEY,       BM_SETIMAGE, IMAGE_ICON, (LPARAM)LoadIconEx( "smiley"    ));
-	SendDlgItemMessage( hwndDlg, IDC_BOLD,         BM_SETIMAGE, IMAGE_ICON, (LPARAM)LoadIconEx( "bold"      ));
-	SendDlgItemMessage( hwndDlg, IDC_ITALICS,      BM_SETIMAGE, IMAGE_ICON, (LPARAM)LoadIconEx( "italics"   ));
-	SendDlgItemMessage( hwndDlg, IDC_UNDERLINE,    BM_SETIMAGE, IMAGE_ICON, (LPARAM)LoadIconEx( "underline" ));
-	SendDlgItemMessage( hwndDlg, IDC_COLOR,        BM_SETIMAGE, IMAGE_ICON, (LPARAM)LoadIconEx( "fgcol"     ));
-	SendDlgItemMessage( hwndDlg, IDC_BKGCOLOR,     BM_SETIMAGE, IMAGE_ICON, (LPARAM)LoadIconEx( "bkgcol"    ));
-	SendDlgItemMessage( hwndDlg, IDC_HISTORY,      BM_SETIMAGE, IMAGE_ICON, (LPARAM)LoadIconEx( "history"   ));
-	SendDlgItemMessage( hwndDlg, IDC_CHANMGR,      BM_SETIMAGE, IMAGE_ICON, (LPARAM)LoadIconEx( "settings"  ));
-	SendDlgItemMessage( hwndDlg, IDC_CLOSE,        BM_SETIMAGE, IMAGE_ICON, (LPARAM)LoadIconEx( "close"     ));
-	SendDlgItemMessage( hwndDlg, IDC_SHOWNICKLIST, BM_SETIMAGE, IMAGE_ICON, (LPARAM)LoadIconEx( si->bNicklistEnabled ? "nicklist" : "nicklist2" ));
-	SendDlgItemMessage( hwndDlg, IDC_FILTER,       BM_SETIMAGE, IMAGE_ICON, (LPARAM)LoadIconEx( si->bFilterEnabled ? "filter" : "filter2" ));
+	/* why the hell does this crash??????
+	//	HICON hSmileyIcon = NULL;
 
-	SendDlgItemMessage( hwndDlg, IDC_SMILEY,       BUTTONSETASFLATBTN, 0, 0 );
-	SendDlgItemMessage( hwndDlg, IDC_BOLD,         BUTTONSETASFLATBTN, 0, 0 );
-	SendDlgItemMessage( hwndDlg, IDC_ITALICS,      BUTTONSETASFLATBTN, 0, 0 );
-	SendDlgItemMessage( hwndDlg, IDC_UNDERLINE,    BUTTONSETASFLATBTN, 0, 0 );
-	SendDlgItemMessage( hwndDlg, IDC_BKGCOLOR,     BUTTONSETASFLATBTN, 0, 0 );
-	SendDlgItemMessage( hwndDlg, IDC_COLOR,        BUTTONSETASFLATBTN, 0, 0 );
-	SendDlgItemMessage( hwndDlg, IDC_HISTORY,      BUTTONSETASFLATBTN, 0, 0 );
-	SendDlgItemMessage( hwndDlg, IDC_SHOWNICKLIST, BUTTONSETASFLATBTN, 0, 0 );
-	SendDlgItemMessage( hwndDlg, IDC_CHANMGR,      BUTTONSETASFLATBTN, 0, 0 );
-	SendDlgItemMessage( hwndDlg, IDC_FILTER,       BUTTONSETASFLATBTN, 0, 0 );
-	SendDlgItemMessage( hwndDlg, IDC_CLOSE,        BUTTONSETASFLATBTN, 0, 0 );
+	if(SmileyAddInstalled )
+	{
+		SMADD_GETICON smgi;
+		SMADD_INFO smainfo;
+
+        smainfo.cbSize = sizeof(smainfo);
+        smainfo.Protocolname = "OOBI"; //dat->pszModule;
+        CallService(MS_SMILEYADD_GETINFO, 0, (LPARAM)&smainfo);
+
+		smgi.cbSize = sizeof(smgi);
+		smgi.Protocolname = "OOBI"; //dat->pszModule;
+		smgi.SmileySequence = ":)";
+		smgi.SmileyIcon = NULL;
+		smgi.Smileylength = 0;
+		CallService(MS_SMILEYADD_GETSMILEYICON, 0, (LPARAM)&smgi);
+		if (smgi.SmileyIcon)
+			hSmileyIcon = smgi.SmileyIcon;
+	}
+*/
+	SendDlgItemMessage(hwndDlg,IDC_SMILEY,BM_SETIMAGE,IMAGE_ICON,(LPARAM)/*hSmileyIcon?hSmileyIcon:*/hIcons[3]);
+	SendDlgItemMessage(hwndDlg,IDC_BOLD,BM_SETIMAGE,IMAGE_ICON,(LPARAM)hIcons[1]);
+	SendDlgItemMessage(hwndDlg,IDC_ITALICS,BM_SETIMAGE,IMAGE_ICON,(LPARAM)hIcons[2]);
+	SendDlgItemMessage(hwndDlg,IDC_UNDERLINE,BM_SETIMAGE,IMAGE_ICON,(LPARAM)hIcons[0]);
+	SendDlgItemMessage(hwndDlg,IDC_COLOR,BM_SETIMAGE,IMAGE_ICON,(LPARAM)hIcons[7]);
+	SendDlgItemMessage(hwndDlg,IDC_BKGCOLOR,BM_SETIMAGE,IMAGE_ICON,(LPARAM)hIcons[5]);
+	SendDlgItemMessage(hwndDlg,IDC_HISTORY,BM_SETIMAGE,IMAGE_ICON,(LPARAM)hIcons[9]);
+	SendDlgItemMessage(hwndDlg,IDC_SHOWNICKLIST,BM_SETIMAGE,IMAGE_ICON,(LPARAM)hIcons[10]);
+	SendDlgItemMessage(hwndDlg,IDC_CHANMGR,BM_SETIMAGE,IMAGE_ICON,(LPARAM)hIcons[4]);
+	SendDlgItemMessage(hwndDlg,IDC_FILTER,BM_SETIMAGE,IMAGE_ICON,(LPARAM)hIcons[8]);
+
+	SendDlgItemMessage(hwndDlg,IDC_SMILEY, BUTTONSETASFLATBTN, 0, 0);
+	SendDlgItemMessage(hwndDlg,IDC_BOLD, BUTTONSETASFLATBTN, 0, 0);
+	SendDlgItemMessage(hwndDlg,IDC_ITALICS, BUTTONSETASFLATBTN, 0, 0);
+	SendDlgItemMessage(hwndDlg,IDC_UNDERLINE, BUTTONSETASFLATBTN, 0, 0);
+	SendDlgItemMessage(hwndDlg,IDC_BKGCOLOR, BUTTONSETASFLATBTN, 0, 0);
+	SendDlgItemMessage(hwndDlg,IDC_COLOR, BUTTONSETASFLATBTN, 0, 0);
+	SendDlgItemMessage(hwndDlg,IDC_HISTORY, BUTTONSETASFLATBTN, 0, 0);
+	SendDlgItemMessage(hwndDlg,IDC_SHOWNICKLIST, BUTTONSETASFLATBTN, 0, 0);
+	SendDlgItemMessage(hwndDlg,IDC_CHANMGR, BUTTONSETASFLATBTN, 0, 0);
+	SendDlgItemMessage(hwndDlg,IDC_FILTER, BUTTONSETASFLATBTN, 0, 0);
 
 	SendMessage(GetDlgItem(hwndDlg,IDC_SMILEY), BUTTONADDTOOLTIP, (WPARAM)Translate("Insert a smiley"), 0);
-	SendMessage(GetDlgItem(hwndDlg,IDC_BOLD), BUTTONADDTOOLTIP, (WPARAM)Translate("Make the text bold (CTRL+B)"), 0);
-	SendMessage(GetDlgItem(hwndDlg,IDC_ITALICS), BUTTONADDTOOLTIP, (WPARAM)Translate("Make the text italicized (CTRL+I)"), 0);
-	SendMessage(GetDlgItem(hwndDlg,IDC_UNDERLINE), BUTTONADDTOOLTIP, (WPARAM)Translate("Make the text underlined (CTRL+U)"), 0);
-	SendMessage(GetDlgItem(hwndDlg,IDC_BKGCOLOR), BUTTONADDTOOLTIP, (WPARAM)Translate("Select a background color for the text (CTRL+L)"), 0);
-	SendMessage(GetDlgItem(hwndDlg,IDC_COLOR), BUTTONADDTOOLTIP, (WPARAM)Translate("Select a foreground color for the text (CTRL+K)"), 0);
-	SendMessage(GetDlgItem(hwndDlg,IDC_HISTORY), BUTTONADDTOOLTIP, (WPARAM)Translate("Show the history (CTRL+H)"), 0);
-	SendMessage(GetDlgItem(hwndDlg,IDC_SHOWNICKLIST), BUTTONADDTOOLTIP, (WPARAM)Translate("Show/hide the nicklist (CTRL+N)"), 0);
-	SendMessage(GetDlgItem(hwndDlg,IDC_CHANMGR), BUTTONADDTOOLTIP, (WPARAM)Translate("Control this room (CTRL+O)"), 0);
-	SendMessage(GetDlgItem(hwndDlg,IDC_FILTER), BUTTONADDTOOLTIP, (WPARAM)Translate("Enable/disable the event filter (CTRL+F)"), 0);
-	SendMessage(GetDlgItem(hwndDlg,IDC_CLOSE), BUTTONADDTOOLTIP, (WPARAM)Translate("Close current tab (CTRL+F4)"), 0);
+	SendMessage(GetDlgItem(hwndDlg,IDC_BOLD), BUTTONADDTOOLTIP, (WPARAM)Translate("Make the text bold"), 0);
+	SendMessage(GetDlgItem(hwndDlg,IDC_ITALICS), BUTTONADDTOOLTIP, (WPARAM)Translate("Make the text italicized"), 0);
+	SendMessage(GetDlgItem(hwndDlg,IDC_UNDERLINE), BUTTONADDTOOLTIP, (WPARAM)Translate("Make the text underlined"), 0);
+	SendMessage(GetDlgItem(hwndDlg,IDC_BKGCOLOR), BUTTONADDTOOLTIP, (WPARAM)Translate("Select a background color for the text"), 0);
+	SendMessage(GetDlgItem(hwndDlg,IDC_COLOR), BUTTONADDTOOLTIP, (WPARAM)Translate("Select a foreground color for the text"), 0);
+	SendMessage(GetDlgItem(hwndDlg,IDC_HISTORY), BUTTONADDTOOLTIP, (WPARAM)Translate("Show the history"), 0);
+	SendMessage(GetDlgItem(hwndDlg,IDC_SHOWNICKLIST), BUTTONADDTOOLTIP, (WPARAM)Translate("Show/hide the nicklist"), 0);
+	SendMessage(GetDlgItem(hwndDlg,IDC_CHANMGR), BUTTONADDTOOLTIP, (WPARAM)Translate("Control this room"), 0);
+	SendMessage(GetDlgItem(hwndDlg,IDC_FILTER), BUTTONADDTOOLTIP, (WPARAM)Translate("Enable/disable the event filter"), 0);
 	SendDlgItemMessage(hwndDlg, IDC_BOLD, BUTTONSETASPUSHBTN, 0, 0);
 	SendDlgItemMessage(hwndDlg, IDC_ITALICS, BUTTONSETASPUSHBTN, 0, 0);
 	SendDlgItemMessage(hwndDlg, IDC_UNDERLINE, BUTTONSETASPUSHBTN, 0, 0);
 	SendDlgItemMessage(hwndDlg, IDC_COLOR, BUTTONSETASPUSHBTN, 0, 0);
 	SendDlgItemMessage(hwndDlg, IDC_BKGCOLOR, BUTTONSETASPUSHBTN, 0, 0);
-	//	SendDlgItemMessage(hwndDlg, IDC_SHOWNICKLIST, BUTTONSETASPUSHBTN, 0, 0);
-	//	SendDlgItemMessage(hwndDlg, IDC_FILTER, BUTTONSETASPUSHBTN, 0, 0);
-
-	if (pInfo) {
+	SendDlgItemMessage(hwndDlg, IDC_SHOWNICKLIST, BUTTONSETASPUSHBTN, 0, 0);
+	SendDlgItemMessage(hwndDlg, IDC_FILTER, BUTTONSETASPUSHBTN, 0, 0);
+                        
+	if (pInfo)
+	{
 		EnableWindow(GetDlgItem(hwndDlg, IDC_BOLD), pInfo->bBold);
 		EnableWindow(GetDlgItem(hwndDlg, IDC_ITALICS), pInfo->bItalics);
 		EnableWindow(GetDlgItem(hwndDlg, IDC_UNDERLINE), pInfo->bUnderline);
 		EnableWindow(GetDlgItem(hwndDlg, IDC_COLOR), pInfo->bColor);
 		EnableWindow(GetDlgItem(hwndDlg, IDC_BKGCOLOR), pInfo->bBkgColor);
-		if (si->iType == GCW_CHATROOM)
-			EnableWindow(GetDlgItem(hwndDlg, IDC_CHANMGR), pInfo->bChanMgr);
-}	}
+		EnableWindow(GetDlgItem(hwndDlg, IDC_CHANMGR), pInfo->bChanMgr);
+	}
+	CheckDlgButton(hwndDlg, IDC_FILTER,  dat->bFilterEnabled?BST_CHECKED:BST_UNCHECKED);
+}
 
+
+static UINT CreateGCMenu(HWND hwndDlg, HMENU *hMenu, int iIndex, POINT pt, CHATWINDOWDATA * dat, char * pszUID)
+{
+	GCMENUITEMS gcmi = {0};
+	int i;
+	HMENU hSubMenu = 0;
+
+	*hMenu = GetSubMenu(g_hMenu, iIndex);
+	CallService(MS_LANGPACK_TRANSLATEMENU, (WPARAM) *hMenu, 0);
+	gcmi.pszID = dat->pszID;
+	gcmi.pszModule = dat->pszModule;
+	gcmi.pszUID = pszUID;
+
+	if(iIndex == 1)
+	{
+		int i = GetRichTextLength(GetDlgItem(hwndDlg, IDC_LOG));
+
+		EnableMenuItem(*hMenu, ID_CLEARLOG, MF_ENABLED);
+		EnableMenuItem(*hMenu, ID_COPYALL, MF_ENABLED);
+		if (!i)
+		{
+			EnableMenuItem(*hMenu, ID_COPYALL, MF_BYCOMMAND | MF_GRAYED);
+			EnableMenuItem(*hMenu, ID_CLEARLOG, MF_BYCOMMAND | MF_GRAYED);
+		}
+		gcmi.Type = MENU_ON_LOG;
+	}
+	else if(iIndex == 0)
+		gcmi.Type = MENU_ON_NICKLIST;
+
+	NotifyEventHooks(hBuildMenuEvent, 0, (WPARAM)&gcmi);
+	if (gcmi.nItems > 0)
+		AppendMenu(*hMenu, MF_SEPARATOR, 0, 0);
+	for(i = 0; i < gcmi.nItems; i++)
+	{
+		if(gcmi.Item[i].uType == MENU_NEWPOPUP)
+		{
+			hSubMenu = CreateMenu();
+			AppendMenu(*hMenu, gcmi.Item[i].bDisabled?MF_POPUP|MF_GRAYED:MF_POPUP, (UINT)hSubMenu, gcmi.Item[i].pszDesc);
+		}
+		else if(gcmi.Item[i].uType == MENU_POPUPITEM)
+			AppendMenu(hSubMenu==0?*hMenu:hSubMenu, gcmi.Item[i].bDisabled?MF_STRING|MF_GRAYED:MF_STRING, gcmi.Item[i].dwID, gcmi.Item[i].pszDesc);
+		else if(gcmi.Item[i].uType == MENU_POPUPSEPARATOR)
+			AppendMenu(hSubMenu==0?*hMenu:hSubMenu, MF_SEPARATOR, 0, gcmi.Item[i].pszDesc);
+		else if(gcmi.Item[i].uType == MENU_SEPARATOR)
+			AppendMenu(*hMenu, MF_SEPARATOR, 0, gcmi.Item[i].pszDesc);
+		else if(gcmi.Item[i].uType == MENU_ITEM)
+			AppendMenu(*hMenu, gcmi.Item[i].bDisabled?MF_STRING|MF_GRAYED:MF_STRING, gcmi.Item[i].dwID, gcmi.Item[i].pszDesc);
+	}
+	return TrackPopupMenu(*hMenu, TPM_RETURNCMD, pt.x, pt.y, 0, hwndDlg, NULL);
+
+}
+static void DestroyGCMenu(HMENU *hMenu, int iIndex)
+{
+	MENUITEMINFO mi;
+	mi.cbSize = sizeof(mi);
+	mi.fMask = MIIM_SUBMENU;
+	while(GetMenuItemInfo(*hMenu, iIndex, TRUE, &mi)) 
+	{
+		if(mi.hSubMenu != NULL)
+			DestroyMenu(mi.hSubMenu);
+		RemoveMenu(*hMenu, iIndex, MF_BYPOSITION);
+	}
+}
+static BOOL DoEventHookAsync(HWND hwnd, char * pszID, char * pszModule, int iType, char * pszUID, char * pszText, DWORD dwItem)
+{
+	GCHOOK * gch = malloc(sizeof(GCHOOK));
+	GCDEST * gcd = malloc(sizeof(GCDEST));
+
+	if (pszID)
+	{
+		gcd->pszID = malloc(lstrlen(pszID)+1);
+		lstrcpy(gcd->pszID, pszID);
+	} else gcd->pszID = NULL;
+	if (pszModule)
+	{
+		gcd->pszModule = malloc(lstrlen(pszModule)+1);
+		lstrcpy(gcd->pszModule, pszModule);
+	}else gcd->pszModule = NULL;
+	if (pszUID)
+	{
+		gch->pszUID = malloc(lstrlen(pszUID)+1);
+		lstrcpy(gch->pszUID, pszUID);
+	}else gch->pszUID = NULL;
+	if (pszText)
+	{
+		gch->pszText = malloc(lstrlen(pszText)+1);
+		lstrcpy(gch->pszText, pszText);
+	}else gch->pszText = NULL;
+
+	gcd->iType = iType;
+	gch->dwData = dwItem;
+	gch->pDest = gcd;
+	PostMessage(hwnd, GC_FIREHOOK, 0, (LPARAM) gch);
+	return TRUE;
+}
+static BOOL DoEventHook(HWND hwnd, char * pszID, char * pszModule, int iType, char * pszUID, char * pszText, DWORD dwItem)
+{
+	GCHOOK gch = {0};
+	GCDEST gcd = {0};
+
+	gcd.pszID = pszID;
+	gcd.pszModule = pszModule;
+	gcd.iType = iType;
+	gch.pDest = &gcd;
+	gch.pszText = pszText;
+	gch.pszUID = pszUID;
+	gch.dwData = dwItem;
+	NotifyEventHooks(hSendEvent,0,(WPARAM)&gch);
+	return TRUE;
+}
+
+static BOOL IsHighlighted(CHATWINDOWDATA * dat, char * pszText)
+{
+	if(g_LogOptions.HighlightEnabled && g_LogOptions.pszHighlightWords && pszText)
+	{
+
+		char* p1 = g_LogOptions.pszHighlightWords;
+		char* p2 = NULL;
+		char* p3 = pszText;
+		static char szWord1[1000];
+		static char szWord2[1000];
+		static char szTrimString[] = ":,.!?;\'>)";
+		
+		// compare word for word
+		while (*p1 != '\0')
+		{
+			// find the next/first word in the highlight word string
+			// skip 'spaces' be4 the word
+			while(*p1 == ' ' && *p1 != '\0') 
+				p1 += 1;
+			
+			//find the end of the word
+			p2 = strchr(p1, ' '); 
+			if (!p2)
+				p2 = strchr(p1, '\0');
+			if (p1 == p2)
+				return FALSE;
+
+			// copy the word into szWord1
+			lstrcpyn(szWord1, p1, p2-p1>998?999:p2-p1+1); 
+			p1 = p2;
+			
+			// replace %m with the users nickname
+			p2 = strchr(szWord1, '%');
+			if (p2 && p2[1] == 'm' && dat->pMe)
+			{
+				char szTemp[50];
+
+				p2[1] = 's';
+				lstrcpyn(szTemp, szWord1, 999);
+				_snprintf(szWord1, sizeof(szWord1), szTemp, dat->pMe->pszNick);
+			}
+
+			// time to get the next/first word in the incoming text string
+			while(*p3 != '\0') 
+			{
+				// skip 'spaces' be4 the word
+				while(*p3 == ' ' && *p3 != '\0')
+					p3 += 1;
+				
+				//find the end of the word
+				p2 = strchr(p3, ' ');
+				if (!p2)
+					p2 = strchr(p3, '\0');
+
+
+				if (p3 != p2)
+				{
+					// eliminate ending character if needed
+					if(p2-p3 > 1 && strchr(szTrimString, p2[-1]))
+						p2 -= 1;
+
+					// copy the word into szWord2 and remove formatting
+					lstrcpyn(szWord2, p3, p2-p3>998?999:p2-p3+1); 
+
+					// reset the pointer if it was touched because of an ending character
+					if(*p2 != '\0' && *p2 != ' ')
+						p2 += 1;
+					p3 = p2;
+
+					CharLower(szWord1);
+					CharLower(szWord2);
+					
+					// compare the words, using wildcards
+					if (WCCmp(szWord1, RemoveFormatting(szWord2)))
+						return TRUE;
+				}
+			}
+			p3 = pszText;
+		}
+
+	}
+	return FALSE;
+}
 static int RoomWndResize(HWND hwndDlg,LPARAM lParam,UTILRESIZECONTROL *urc)
 {
-	RECT rc, rcTabs;
-	SESSION_INFO* si = (SESSION_INFO*)lParam;
-	int			TabHeight;
-	BOOL		bControl = (BOOL)DBGetContactSettingByte(NULL, "Chat", "ShowTopButtons", 1);
-	BOOL		bFormat = (BOOL)DBGetContactSettingByte(NULL, "Chat", "ShowFormatButtons", 1);
-	BOOL		bToolbar = bFormat || bControl;
-	BOOL		bSend = (BOOL)DBGetContactSettingByte(NULL, "Chat", "ShowSend", 0);
-	BOOL		bNick = si->iType!=GCW_SERVER && si->bNicklistEnabled;
-	BOOL		bTabs = g_Settings.TabsEnable;
-	BOOL		bTabBottom = g_Settings.TabsAtBottom;
+	CHATWINDOWDATA *dat=(CHATWINDOWDATA*)lParam;
+	RECT rc;
 
-	GetClientRect(GetDlgItem(hwndDlg, IDC_TAB), &rcTabs);
-	TabHeight = rcTabs.bottom - rcTabs.top;
-	TabCtrl_AdjustRect(GetDlgItem(hwndDlg, IDC_TAB), FALSE, &rcTabs);
-	TabHeight -= (rcTabs.bottom - rcTabs.top);
-	ShowWindow(GetDlgItem(hwndDlg, IDC_SMILEY), SmileyAddInstalled&&bFormat?SW_SHOW:SW_HIDE);
+	BOOL		bTop = (BOOL)DBGetContactSettingByte(NULL, "Chat", "ShowTopButtons", 1);
+	BOOL		bFormat = (BOOL)DBGetContactSettingByte(NULL, "Chat", "ShowFormatButtons", 1);
+	BOOL		bSend = (BOOL)DBGetContactSettingByte(NULL, "Chat", "ShowSend", 0);
+	BOOL		bNick = IsWindowVisible(GetDlgItem(hwndDlg, IDC_NICKLIST));
+	ShowWindow(GetDlgItem(hwndDlg, IDC_SMILEY), bFormat?SW_SHOW:SW_HIDE);
 	ShowWindow(GetDlgItem(hwndDlg, IDC_BOLD), bFormat?SW_SHOW:SW_HIDE);
 	ShowWindow(GetDlgItem(hwndDlg, IDC_UNDERLINE), bFormat?SW_SHOW:SW_HIDE);
 	ShowWindow(GetDlgItem(hwndDlg, IDC_ITALICS), bFormat?SW_SHOW:SW_HIDE);
 	ShowWindow(GetDlgItem(hwndDlg, IDC_COLOR), bFormat?SW_SHOW:SW_HIDE);
 	ShowWindow(GetDlgItem(hwndDlg, IDC_BKGCOLOR), bFormat?SW_SHOW:SW_HIDE);
-	ShowWindow(GetDlgItem(hwndDlg, IDC_HISTORY), bControl?SW_SHOW:SW_HIDE);
-	ShowWindow(GetDlgItem(hwndDlg, IDC_SHOWNICKLIST), bControl?SW_SHOW:SW_HIDE);
-	ShowWindow(GetDlgItem(hwndDlg, IDC_FILTER), bControl?SW_SHOW:SW_HIDE);
-	ShowWindow(GetDlgItem(hwndDlg, IDC_CHANMGR), bControl?SW_SHOW:SW_HIDE);
+	ShowWindow(GetDlgItem(hwndDlg, IDC_HISTORY), bTop?SW_SHOW:SW_HIDE);
+	ShowWindow(GetDlgItem(hwndDlg, IDC_SHOWNICKLIST), bTop?SW_SHOW:SW_HIDE);
+	ShowWindow(GetDlgItem(hwndDlg, IDC_FILTER), bTop?SW_SHOW:SW_HIDE);
+	ShowWindow(GetDlgItem(hwndDlg, IDC_CHANMGR), bTop?SW_SHOW:SW_HIDE);
 	ShowWindow(GetDlgItem(hwndDlg, IDOK), bSend?SW_SHOW:SW_HIDE);
 	ShowWindow(GetDlgItem(hwndDlg, IDC_SPLITTERX), bNick?SW_SHOW:SW_HIDE);
-	ShowWindow(GetDlgItem(hwndDlg, IDC_CLOSE), g_Settings.TabsEnable?SW_SHOW:SW_HIDE);
-	ShowWindow(GetDlgItem(hwndDlg, IDC_TAB), g_Settings.TabsEnable?SW_SHOW:SW_HIDE);
-	if (si->iType != GCW_SERVER)
-		ShowWindow(GetDlgItem(hwndDlg, IDC_LIST), si->bNicklistEnabled?SW_SHOW:SW_HIDE);
-	else
-		ShowWindow(GetDlgItem(hwndDlg, IDC_LIST), SW_HIDE);
-
-	if (si->iType == GCW_SERVER) {
-		EnableWindow(GetDlgItem(hwndDlg, IDC_SHOWNICKLIST), FALSE);
-		EnableWindow(GetDlgItem(hwndDlg, IDC_FILTER), FALSE);
-		EnableWindow(GetDlgItem(hwndDlg, IDC_CHANMGR), FALSE);
-	}
-	else {
-		EnableWindow(GetDlgItem(hwndDlg, IDC_SHOWNICKLIST), TRUE);
-		EnableWindow(GetDlgItem(hwndDlg, IDC_FILTER), TRUE);
-		if (si->iType == GCW_CHATROOM)
-			EnableWindow(GetDlgItem(hwndDlg, IDC_CHANMGR), MM_FindModule(si->pszModule)->bChanMgr);
-	}
 
 	switch(urc->wId) {
-	case IDOK:
-		GetWindowRect(si->hwndStatus, &rc);
-		urc->rcItem.left = bSend?315:urc->dlgNewSize.cx ;
-		urc->rcItem.top = urc->dlgNewSize.cy - si->iSplitterY+23;
-		urc->rcItem.bottom = urc->dlgNewSize.cy - (rc.bottom-rc.top)-1;
-		return RD_ANCHORX_RIGHT|RD_ANCHORY_CUSTOM;
-
-	case IDC_TAB:
-		urc->rcItem.top = 1;
-		urc->rcItem.left = 0;
-		urc->rcItem.right = urc->dlgNewSize.cx- 24;
-		urc->rcItem.bottom = bToolbar?(urc->dlgNewSize.cy - si->iSplitterY):(urc->dlgNewSize.cy - si->iSplitterY+20);
-		return RD_ANCHORX_CUSTOM|RD_ANCHORY_CUSTOM;
-
-	case IDC_LOG:
-		urc->rcItem.top = bTabs?(bTabBottom?0:rcTabs.top-1):0;
-		urc->rcItem.left = 0;
-		urc->rcItem.right = bNick?urc->dlgNewSize.cx - si->iSplitterX:urc->dlgNewSize.cx;
-		urc->rcItem.bottom = bToolbar?(bTabs&&bTabBottom?urc->dlgNewSize.cy - si->iSplitterY-TabHeight + 6:urc->dlgNewSize.cy - si->iSplitterY):(bTabs&&bTabBottom?urc->dlgNewSize.cy - si->iSplitterY-TabHeight+26:urc->dlgNewSize.cy - si->iSplitterY+20);
-		return RD_ANCHORX_CUSTOM|RD_ANCHORY_CUSTOM;
-
-	case IDC_LIST:
-		urc->rcItem.top = bTabs?(bTabBottom?0:rcTabs.top-1):0;
-		urc->rcItem.right = urc->dlgNewSize.cx ;
-		urc->rcItem.left = urc->dlgNewSize.cx - si->iSplitterX + 2;
-		urc->rcItem.bottom = bToolbar?(bTabs&&bTabBottom?urc->dlgNewSize.cy - si->iSplitterY-TabHeight + 6:urc->dlgNewSize.cy - si->iSplitterY):(bTabs&&bTabBottom?urc->dlgNewSize.cy - si->iSplitterY-TabHeight+26:urc->dlgNewSize.cy - si->iSplitterY+20);
-		return RD_ANCHORX_CUSTOM|RD_ANCHORY_CUSTOM;
-
-	case IDC_SPLITTERX:
-		urc->rcItem.right = urc->dlgNewSize.cx - si->iSplitterX+2;
-		urc->rcItem.left = urc->dlgNewSize.cx - si->iSplitterX;
-		urc->rcItem.bottom = bToolbar?(bTabs&&bTabBottom?urc->dlgNewSize.cy - si->iSplitterY-TabHeight + 6:urc->dlgNewSize.cy - si->iSplitterY):(bTabs&&bTabBottom?urc->dlgNewSize.cy - si->iSplitterY-TabHeight+26:urc->dlgNewSize.cy - si->iSplitterY+20);
-		urc->rcItem.top = bTabs ?rcTabs.top:1;
-		return RD_ANCHORX_CUSTOM|RD_ANCHORY_CUSTOM;
-
-	case IDC_SPLITTERY:
-		urc->rcItem.top = bToolbar?urc->dlgNewSize.cy - si->iSplitterY:urc->dlgNewSize.cy - si->iSplitterY+20;
-		urc->rcItem.bottom = bToolbar?(urc->dlgNewSize.cy - si->iSplitterY+2):(urc->dlgNewSize.cy - si->iSplitterY+22);
-		return RD_ANCHORX_WIDTH|RD_ANCHORY_CUSTOM;
-
-	case IDC_MESSAGE:
-		GetWindowRect(si->hwndStatus, &rc);
-		urc->rcItem.right = bSend?urc->dlgNewSize.cx - 64:urc->dlgNewSize.cx ;
-		urc->rcItem.top = urc->dlgNewSize.cy - si->iSplitterY+22;
-		urc->rcItem.bottom = urc->dlgNewSize.cy - (rc.bottom-rc.top)-1 ;
-		return RD_ANCHORX_LEFT|RD_ANCHORY_CUSTOM;
-
-	case IDC_SMILEY:
-	case IDC_ITALICS:
-	case IDC_BOLD:
-	case IDC_UNDERLINE:
-	case IDC_COLOR:
-	case IDC_BKGCOLOR:
-		urc->rcItem.top = urc->dlgNewSize.cy - si->iSplitterY+3;
-		urc->rcItem.bottom = urc->dlgNewSize.cy - si->iSplitterY+19;
-		return RD_ANCHORX_LEFT|RD_ANCHORY_CUSTOM;
-
-	case IDC_HISTORY:
-	case IDC_CHANMGR:
-	case IDC_SHOWNICKLIST:
-	case IDC_FILTER:
-		urc->rcItem.top = urc->dlgNewSize.cy - si->iSplitterY+3;
-		urc->rcItem.bottom = urc->dlgNewSize.cy - si->iSplitterY+19;
-		return RD_ANCHORX_RIGHT|RD_ANCHORY_CUSTOM;
-
-	case IDC_CLOSE:
-		urc->rcItem.right = urc->dlgNewSize.cx-3;
-		urc->rcItem.left = urc->dlgNewSize.cx - 19;
-		urc->rcItem.bottom = bTabBottom?(bToolbar?urc->dlgNewSize.cy - si->iSplitterY-2:urc->dlgNewSize.cy - si->iSplitterY-2+20):19;
-		urc->rcItem.top = bTabBottom?(bToolbar?urc->dlgNewSize.cy - si->iSplitterY-18:urc->dlgNewSize.cy - si->iSplitterY-18+20):3;
-		return RD_ANCHORX_CUSTOM|RD_ANCHORY_CUSTOM;
+		case IDOK:
+			GetWindowRect(dat->hwndStatus, &rc);
+			urc->rcItem.top = urc->dlgNewSize.cy - dat->iSplitterY+27;
+			urc->rcItem.bottom = urc->dlgNewSize.cy - (rc.bottom-rc.top)-1;
+			return RD_ANCHORX_RIGHT|RD_ANCHORY_CUSTOM;
+		case IDC_HISTORY:
+		case IDC_CHANMGR:
+		case IDC_SHOWNICKLIST:
+		case IDC_FILTER:
+			return RD_ANCHORX_RIGHT|RD_ANCHORY_TOP;
+		case IDC_LOG:
+			urc->rcItem.top = bTop|g_LogOptions.bShowName?27:0;
+			urc->rcItem.right = bNick?urc->dlgNewSize.cx - dat->iSplitterX:urc->dlgNewSize.cx;
+			urc->rcItem.bottom = bFormat?(urc->dlgNewSize.cy - dat->iSplitterY):(urc->dlgNewSize.cy - dat->iSplitterY+25);
+			return RD_ANCHORX_LEFT|RD_ANCHORY_CUSTOM;
+		case IDC_SPLITTERY:
+			urc->rcItem.top = bFormat?urc->dlgNewSize.cy - dat->iSplitterY:urc->dlgNewSize.cy - dat->iSplitterY+25;
+			urc->rcItem.bottom = bFormat?(urc->dlgNewSize.cy - dat->iSplitterY+2):(urc->dlgNewSize.cy - dat->iSplitterY+27);
+			return RD_ANCHORX_WIDTH|RD_ANCHORY_CUSTOM;
+		case IDC_MESSAGE:
+			GetWindowRect(dat->hwndStatus, &rc);
+			urc->rcItem.right = bSend?urc->dlgNewSize.cx - 64:urc->dlgNewSize.cx ;
+			urc->rcItem.top = urc->dlgNewSize.cy - dat->iSplitterY+27;
+			urc->rcItem.bottom = urc->dlgNewSize.cy - (rc.bottom-rc.top)-1 ;
+			return RD_ANCHORX_LEFT|RD_ANCHORY_CUSTOM;
+		case IDC_SMILEY:
+		case IDC_ITALICS:
+		case IDC_BOLD:
+		case IDC_UNDERLINE:
+		case IDC_COLOR:
+		case IDC_BKGCOLOR:
+			urc->rcItem.top = urc->dlgNewSize.cy - dat->iSplitterY+2;
+			urc->rcItem.bottom = urc->dlgNewSize.cy - dat->iSplitterY+26;
+			return RD_ANCHORX_LEFT|RD_ANCHORY_CUSTOM;
+		case IDC_SPLITTERX:
+			urc->rcItem.right = urc->dlgNewSize.cx - dat->iSplitterX+3;
+			urc->rcItem.left = urc->dlgNewSize.cx - dat->iSplitterX;
+			urc->rcItem.bottom = bFormat?urc->dlgNewSize.cy - dat->iSplitterY-3:urc->dlgNewSize.cy - dat->iSplitterY+20;
+			urc->rcItem.top = bTop || g_LogOptions.bShowName?25:0;
+			return RD_ANCHORX_CUSTOM|RD_ANCHORY_CUSTOM;
+		case IDC_NICKLIST:
+			urc->rcItem.top = bTop|g_LogOptions.bShowName?27:0;
+			urc->rcItem.right = urc->dlgNewSize.cx ;
+			urc->rcItem.left = urc->dlgNewSize.cx - dat->iSplitterX + 3;
+			urc->rcItem.bottom = bFormat?urc->dlgNewSize.cy - dat->iSplitterY:urc->dlgNewSize.cy - dat->iSplitterY+25;
+			return RD_ANCHORX_CUSTOM|RD_ANCHORY_CUSTOM;
+	
 	}
 	return RD_ANCHORX_LEFT|RD_ANCHORY_TOP;
+	
 }
 
-static LRESULT CALLBACK MessageSubclassProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
-{
-	MESSAGESUBDATA *dat;
-	SESSION_INFO* Parentsi;
+static LRESULT CALLBACK MessageSubclassProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) 
+{ 
+    MESSAGESUBDATA *dat;
+	CHATWINDOWDATA *Parentdat;
 
-	Parentsi=(SESSION_INFO*)GetWindowLong(GetParent(hwnd),GWL_USERDATA);
-	dat = (MESSAGESUBDATA *) GetWindowLong(hwnd, GWL_USERDATA);
-	switch (msg) {
-	case EM_SUBCLASSED:
-		dat = (MESSAGESUBDATA *) mir_alloc(sizeof(MESSAGESUBDATA));
+	Parentdat=(CHATWINDOWDATA *)GetWindowLong(GetParent(hwnd),GWL_USERDATA);
+    dat = (MESSAGESUBDATA *) GetWindowLong(hwnd, GWL_USERDATA);
+    switch (msg) {
+        case EM_SUBCLASSED:
+			dat = (MESSAGESUBDATA *) malloc(sizeof(MESSAGESUBDATA));
 
-		SetWindowLong(hwnd, GWL_USERDATA, (LONG) dat);
-		dat->szTabSave[0] = '\0';
-		dat->lastEnterTime = 0;
-		return 0;
-
-	case WM_MOUSEWHEEL:
-		SendMessage(GetDlgItem(GetParent(hwnd), IDC_LOG), WM_MOUSEWHEEL, wParam, lParam);
-		dat->lastEnterTime = 0;
-		return TRUE;
-
-	case EM_REPLACESEL:
-		PostMessage(hwnd, EM_ACTIVATE, 0, 0);
-		break;
-
-	case EM_ACTIVATE:
-		SetActiveWindow(GetParent(hwnd));
-		break;
-
-	case WM_CHAR:
-		{
-			BOOL isShift = GetKeyState(VK_SHIFT) & 0x8000;
-			BOOL isCtrl = GetKeyState(VK_CONTROL) & 0x8000;
-			BOOL isAlt = GetKeyState(VK_MENU) & 0x8000;
-
+			SetWindowLong(hwnd, GWL_USERDATA, (LONG) dat);
+			dat->szTabSave[0] = '\0';
+			dat->lastEnterTime = 0;
+			return 0;
+		case WM_MOUSEWHEEL:
+			SendMessage(GetDlgItem(GetParent(hwnd), IDC_LOG), WM_MOUSEWHEEL, wParam, lParam);
+			dat->lastEnterTime = 0;
+			return TRUE;
+			break;
+		case EM_REPLACESEL:
+			PostMessage(hwnd, EM_ACTIVATE, 0, 0);
+			break;
+		case EM_ACTIVATE:
+			SetActiveWindow(GetParent(hwnd));
+			break;
+ 		case WM_CHAR:
 			if (GetWindowLong(hwnd, GWL_STYLE) & ES_READONLY)
 				break;
 
-			if (wParam == 9 && isCtrl && !isAlt) // ctrl-i (italics)
+			if (wParam == 9 && GetKeyState(VK_CONTROL) & 0x8000 && !(GetKeyState(VK_MENU) & 0x8000)) // ctrl-i (italics)
+			{
 				return TRUE;
-
-			if (wParam == VK_SPACE && isCtrl && !isAlt) // ctrl-space (paste clean text)
+			}
+			if (wParam == VK_SPACE && GetKeyState(VK_CONTROL) & 0x8000 && !(GetKeyState(VK_MENU) & 0x8000)) // ctrl-space (paste clean text)
+			{
 				return TRUE;
+			}
 
-    		if (wParam == '\n' || wParam == '\r') {
-	       		if ((isCtrl != 0) ^ (0 != DBGetContactSettingByte(NULL, "Chat", "SendOnEnter", 1))) {
-		      		PostMessage(GetParent(hwnd), WM_COMMAND, IDOK, 0);
-			     	return 0;
-			    }
-			    if (DBGetContactSettingByte(NULL, "Chat", "SendOnDblEnter", 0)) {
-				    if (dat->lastEnterTime + 2 < time(NULL))
-					   dat->lastEnterTime = time(NULL);
-				    else {
+			if (wParam == '\n' || wParam == '\r') 
+			{
+				if (((GetKeyState(VK_CONTROL) & 0x8000) != 0) ^ (0 != DBGetContactSettingByte(NULL, "Chat", "SendOnEnter", 1))) 
+				{
+
+					PostMessage(GetParent(hwnd), WM_COMMAND, IDOK, 0);
+					return 0;
+				}
+				if (DBGetContactSettingByte(NULL, "Chat", "SendOnDblEnter", 0)) 
+				{
+					if (dat->lastEnterTime + 2 < time(NULL))
+						dat->lastEnterTime = time(NULL);
+					else 
+					{
 						SendMessage(hwnd, WM_KEYDOWN, VK_BACK, 0);
 						SendMessage(hwnd, WM_KEYUP, VK_BACK, 0);
 						PostMessage(GetParent(hwnd), WM_COMMAND, IDOK, 0);
 						return 0;
-				    }
-			    }
-		    }
-		    else
-		        dat->lastEnterTime = 0;
+					}
+				}
+			}
+			else
+				dat->lastEnterTime = 0;
 
-			if (wParam == 1 && isCtrl && !isAlt) {      //ctrl-a
+			if (wParam == 1 && GetKeyState(VK_CONTROL) & 0x8000 && !(GetKeyState(VK_MENU) & 0x8000)) {      //ctrl-a
 				SendMessage(hwnd, EM_SETSEL, 0, -1);
 				return 0;
-		}	}
+			}
 		break;
-
-	case WM_KEYDOWN:
-		{
+		case WM_KEYDOWN:
+			{
 			static int start, end;
-			BOOL isShift = GetKeyState(VK_SHIFT) & 0x8000;
-			BOOL isCtrl = GetKeyState(VK_CONTROL) & 0x8000;
-			BOOL isAlt = GetKeyState(VK_MENU) & 0x8000;
-			if (wParam == VK_RETURN) {
+ 			if (wParam == VK_RETURN) 
+			{
 				dat->szTabSave[0] = '\0';
-				if ((isCtrl != 0) ^ (0 != DBGetContactSettingByte(NULL, "Chat", "SendOnEnter", 1)))
+				if (((GetKeyState(VK_CONTROL) & 0x8000) != 0) ^ (0 != DBGetContactSettingByte(NULL, "Chat", "SendOnEnter", 1))) 
+				{
 					return 0;
-
-				if (DBGetContactSettingByte(NULL, "Chat", "SendOnDblEnter", 0))
+				}
+				if (DBGetContactSettingByte(NULL, "Chat", "SendOnDblEnter", 0)) 
+				{
 					if (dat->lastEnterTime + 2 >= time(NULL))
+					{
 						return 0;
-
+					}
+					break;
+				}
 				break;
 			}
-
-			if (wParam == VK_TAB && isShift && !isCtrl) { // SHIFT-TAB (go to nick list)
-				SetFocus(GetDlgItem(GetParent(hwnd), IDC_LIST));
-				return TRUE;
-			}
-
-			if (wParam == VK_TAB && isCtrl && !isShift) { // CTRL-TAB (switch tab/window)
-				if (g_Settings.TabsEnable)
-					SendMessage(GetParent(hwnd), GC_SWITCHNEXTTAB, 0, 0);
-				else
-					ShowRoom(SM_GetNextWindow(Parentsi), WINDOW_VISIBLE, TRUE);
-				return TRUE;
-			}
-
-			if (wParam == VK_TAB && isCtrl && isShift) { // CTRL_SHIFT-TAB (switch tab/window)
-				if (g_Settings.TabsEnable)
-					SendMessage(GetParent(hwnd), GC_SWITCHPREVTAB, 0, 0);
-				else
-					ShowRoom(SM_GetPrevWindow(Parentsi), WINDOW_VISIBLE, TRUE);
-				return TRUE;
-			}
-
-			if (wParam <= '9' && wParam >= '1' && isCtrl && !isAlt) { // CTRL + 1 -> 9 (switch tab)
-				if (g_Settings.TabsEnable)
-					SendMessage(GetParent(hwnd), GC_SWITCHTAB, 0, (LPARAM)((int)wParam - (int)'1'));
-			}
-
-			if (wParam <= VK_NUMPAD9 && wParam >= VK_NUMPAD1 && isCtrl && !isAlt) // CTRL + 1 -> 9 (switch tab)
-				if (g_Settings.TabsEnable)
-					SendMessage(GetParent(hwnd), GC_SWITCHTAB, 0, (LPARAM)((int)wParam - (int)VK_NUMPAD1));
-
-			if (wParam == VK_TAB && !isCtrl && !isShift) {    //tab-autocomplete
-				TCHAR* pszText = NULL;
-				int iLen;
+           if (wParam == VK_TAB && !(GetKeyState(VK_CONTROL) & 0x8000)) {    //tab-autocomplete
+                char *pszText = NULL;
+                int iLen;
 				GETTEXTLENGTHEX gtl = {0};
 				GETTEXTEX gt = {0};
 				LRESULT lResult = (LRESULT)SendMessage(hwnd, EM_GETSEL, (WPARAM)NULL, (LPARAM)NULL);
@@ -391,18 +538,15 @@ static LRESULT CALLBACK MessageSubclassProc(HWND hwnd, UINT msg, WPARAM wParam, 
 				gtl.flags = GTL_PRECISE;
 				gtl.codepage = CP_ACP;
 				iLen = SendMessage(hwnd, EM_GETTEXTLENGTHEX, (WPARAM)&gtl, (LPARAM)NULL);
-				if (iLen >0) {
-					TCHAR *pszName = NULL;
-					TCHAR *pszSelName = NULL;
-					pszText = mir_alloc(sizeof(TCHAR)*(iLen+100));
+				if (iLen >0)
+				{
+					char *pszName = NULL;
+					char *pszSelName = NULL;
+					pszText = malloc(iLen+100);
 
 					gt.cb = iLen+99;
 					gt.flags = GT_DEFAULT;
-					#if defined( _UNICODE )
-						gt.codepage = 1200;
-					#else
-						gt.codepage = CP_ACP;
-					#endif
+					gt.codepage = CP_ACP;
 
 					SendMessage(hwnd, EM_GETTEXTEX, (WPARAM)&gt, (LPARAM)pszText);
 					while ( start >0 && pszText[start-1] != ' ' && pszText[start-1] != 13 && pszText[start-1] != VK_TAB)
@@ -410,72 +554,82 @@ static LRESULT CALLBACK MessageSubclassProc(HWND hwnd, UINT msg, WPARAM wParam, 
 					while (end < iLen && pszText[end] != ' ' && pszText[end] != 13 && pszText[end-1] != VK_TAB)
 						end ++;
 
-					if ( dat->szTabSave[0] =='\0')
-						lstrcpyn( dat->szTabSave, pszText+start, end-start+1 );
-
-					pszSelName = mir_alloc( sizeof(TCHAR)*( end-start+1 ));
-					lstrcpyn( pszSelName, pszText+start, end-start+1);
-					pszName = UM_FindUserAutoComplete(Parentsi->pUsers, dat->szTabSave, pszSelName);
-					if (pszName == NULL) {
+					if( dat->szTabSave[0] =='\0')
+					{
+						lstrcpyn(dat->szTabSave, pszText+start, end-start+1);
+					}
+					pszSelName= malloc(end-start+1);
+					lstrcpyn(pszSelName, pszText+start, end-start+1);
+					pszName = UM_FindUserAutoComplete(Parentdat->pUserList, dat->szTabSave, pszSelName);
+					if(pszName == NULL)
+					{
 						pszName = dat->szTabSave;
 						SendMessage(hwnd, EM_SETSEL, start, end);
 						if (end !=start)
 							SendMessage(hwnd, EM_REPLACESEL, FALSE, (LPARAM) pszName);
 						dat->szTabSave[0] = '\0';
 					}
-					else {
+					else
+					{
 						SendMessage(hwnd, EM_SETSEL, start, end);
 						if (end !=start)
 							SendMessage(hwnd, EM_REPLACESEL, FALSE, (LPARAM) pszName);
 					}
-					mir_free(pszText);
-					mir_free(pszSelName);
+					free(pszText);
+					free(pszSelName);
+					SendMessage(hwnd, WM_SETREDRAW, TRUE, 0);
+					RedrawWindow(hwnd, NULL, NULL, RDW_INVALIDATE);
+
+					return 0;
 				}
 
 				SendMessage(hwnd, WM_SETREDRAW, TRUE, 0);
 				RedrawWindow(hwnd, NULL, NULL, RDW_INVALIDATE);
-				return 0;
 			}
+			else
+			{
+				if(dat->szTabSave[0] != '\0' && wParam != VK_RIGHT && wParam != VK_LEFT 
+					&& wParam != VK_SPACE && wParam != VK_RETURN && wParam != VK_BACK 
+					&& wParam != VK_DELETE )
+				{
 
-			if (dat->szTabSave[0] != '\0' && wParam != VK_RIGHT && wParam != VK_LEFT
-					&& wParam != VK_SPACE && wParam != VK_RETURN && wParam != VK_BACK
-					&& wParam != VK_DELETE ) {
-				if (g_Settings.AddColonToAutoComplete && start == 0)
-					SendMessageA(hwnd, EM_REPLACESEL, FALSE, (LPARAM) ": ");
-
+					if(g_LogOptions.AddColonToAutoComplete && start == 0)
+					{
+						SendMessage(hwnd, EM_REPLACESEL, FALSE, (LPARAM) ": ");
+					}
+				}
 				dat->szTabSave[0] = '\0';
 			}
-
-			if (wParam == VK_F4 && isCtrl && !isAlt) { // ctrl-F4 (close tab)
-				SendMessage(GetParent(hwnd), WM_COMMAND, MAKEWPARAM(IDC_CLOSE, BN_CLICKED), 0);
-				return TRUE;
 			}
-
-			if (wParam == 0x49 && isCtrl && !isAlt) { // ctrl-i (italics)
+			if (wParam == 0x49 && GetKeyState(VK_CONTROL) & 0x8000 && !(GetKeyState(VK_MENU) & 0x8000)) // ctrl-i (italics)
+			{
 				CheckDlgButton(GetParent(hwnd), IDC_ITALICS, IsDlgButtonChecked(GetParent(hwnd), IDC_ITALICS) == BST_UNCHECKED?BST_CHECKED:BST_UNCHECKED);
 				SendMessage(GetParent(hwnd), WM_COMMAND, MAKEWPARAM(IDC_ITALICS, 0), 0);
-				return TRUE;
-			}
-
-			if (wParam == 0x42 && isCtrl && !isAlt) { // ctrl-b (bold)
+				return TRUE;		
+			}			
+			if (wParam == 0x42 && GetKeyState(VK_CONTROL) & 0x8000 && !(GetKeyState(VK_MENU) & 0x8000) ) // ctrl-b (bold)
+			{
 				CheckDlgButton(GetParent(hwnd), IDC_BOLD, IsDlgButtonChecked(GetParent(hwnd), IDC_BOLD) == BST_UNCHECKED?BST_CHECKED:BST_UNCHECKED);
 				SendMessage(GetParent(hwnd), WM_COMMAND, MAKEWPARAM(IDC_BOLD, 0), 0);
 				return TRUE;
-			}
-
-			if (wParam == 0x55 && isCtrl && !isAlt) { // ctrl-u (paste clean text)
+		
+			}			
+			if (wParam == 0x55 && GetKeyState(VK_CONTROL) & 0x8000 && !(GetKeyState(VK_MENU) & 0x8000)) // ctrl-u (paste clean text)
+			{
 				CheckDlgButton(GetParent(hwnd), IDC_UNDERLINE, IsDlgButtonChecked(GetParent(hwnd), IDC_UNDERLINE) == BST_UNCHECKED?BST_CHECKED:BST_UNCHECKED);
 				SendMessage(GetParent(hwnd), WM_COMMAND, MAKEWPARAM(IDC_UNDERLINE, 0), 0);
 				return TRUE;
-			}
-
-			if (wParam == 0x4b && isCtrl && !isAlt) { // ctrl-k (paste clean text)
+		
+			}			
+			if (wParam == 0x4b && GetKeyState(VK_CONTROL) & 0x8000 && !(GetKeyState(VK_MENU) & 0x8000)) // ctrl-k (paste clean text)
+			{
 				CheckDlgButton(GetParent(hwnd), IDC_COLOR, IsDlgButtonChecked(GetParent(hwnd), IDC_COLOR) == BST_UNCHECKED?BST_CHECKED:BST_UNCHECKED);
 				SendMessage(GetParent(hwnd), WM_COMMAND, MAKEWPARAM(IDC_COLOR, 0), 0);
 				return TRUE;
-			}
-
-			if (wParam == VK_SPACE && isCtrl && !isAlt) { // ctrl-space (paste clean text)
+		
+			}			
+			if (wParam == VK_SPACE && GetKeyState(VK_CONTROL) & 0x8000 && !(GetKeyState(VK_MENU) & 0x8000)) // ctrl-space (paste clean text)
+			{
 				CheckDlgButton(GetParent(hwnd), IDC_BKGCOLOR, BST_UNCHECKED);
 				CheckDlgButton(GetParent(hwnd), IDC_COLOR, BST_UNCHECKED);
 				CheckDlgButton(GetParent(hwnd), IDC_BOLD, BST_UNCHECKED);
@@ -487,70 +641,77 @@ static LRESULT CALLBACK MessageSubclassProc(HWND hwnd, UINT msg, WPARAM wParam, 
 				SendMessage(GetParent(hwnd), WM_COMMAND, MAKEWPARAM(IDC_UNDERLINE, 0), 0);
 				SendMessage(GetParent(hwnd), WM_COMMAND, MAKEWPARAM(IDC_ITALICS, 0), 0);
 				return TRUE;
-			}
-
-			if (wParam == 0x4c && isCtrl && !isAlt) { // ctrl-l (paste clean text)
+		
+			}			
+			if (wParam == 0x4c && GetKeyState(VK_CONTROL) & 0x8000 && !(GetKeyState(VK_MENU) & 0x8000)) // ctrl-l (paste clean text)
+			{
 				CheckDlgButton(GetParent(hwnd), IDC_BKGCOLOR, IsDlgButtonChecked(GetParent(hwnd), IDC_BKGCOLOR) == BST_UNCHECKED?BST_CHECKED:BST_UNCHECKED);
 				SendMessage(GetParent(hwnd), WM_COMMAND, MAKEWPARAM(IDC_BKGCOLOR, 0), 0);
 				return TRUE;
-			}
-
-			if (wParam == 0x46 && isCtrl && !isAlt) { // ctrl-f (paste clean text)
-				if (IsWindowEnabled(GetDlgItem(GetParent(hwnd), IDC_FILTER)))
-					SendMessage(GetParent(hwnd), WM_COMMAND, MAKEWPARAM(IDC_FILTER, 0), 0);
+		
+			}			
+			if (wParam == 0x46 && GetKeyState(VK_CONTROL) & 0x8000 && !(GetKeyState(VK_MENU) & 0x8000)) // ctrl-f (paste clean text)
+			{
+				CheckDlgButton(GetParent(hwnd), IDC_FILTER, IsDlgButtonChecked(GetParent(hwnd), IDC_FILTER) == BST_UNCHECKED?BST_CHECKED:BST_UNCHECKED);
+				SendMessage(GetParent(hwnd), WM_COMMAND, MAKEWPARAM(IDC_FILTER, 0), 0);
 				return TRUE;
-			}
-
-			if (wParam == 0x4e && isCtrl && !isAlt) { // ctrl-n (nicklist)
-				if (IsWindowEnabled(GetDlgItem(GetParent(hwnd), IDC_SHOWNICKLIST)))
-					SendMessage(GetParent(hwnd), WM_COMMAND, MAKEWPARAM(IDC_SHOWNICKLIST, 0), 0);
+		
+			}			
+			if (wParam == 0x4e && GetKeyState(VK_CONTROL) & 0x8000 && !(GetKeyState(VK_MENU) & 0x8000)) // ctrl-n (paste clean text)
+			{
+				CheckDlgButton(GetParent(hwnd), IDC_SHOWNICKLIST, IsDlgButtonChecked(GetParent(hwnd), IDC_SHOWNICKLIST) == BST_UNCHECKED?BST_CHECKED:BST_UNCHECKED);
+				SendMessage(GetParent(hwnd), WM_COMMAND, MAKEWPARAM(IDC_SHOWNICKLIST, 0), 0);
 				return TRUE;
-			}
-
-			if (wParam == 0x48 && isCtrl && !isAlt) { // ctrl-h (history)
+		
+			}			
+			if (wParam == 0x48 && GetKeyState(VK_CONTROL) & 0x8000 && !(GetKeyState(VK_MENU) & 0x8000)) // ctrl-h (paste clean text)
+			{
 				SendMessage(GetParent(hwnd), WM_COMMAND, MAKEWPARAM(IDC_HISTORY, 0), 0);
 				return TRUE;
-			}
-
-			if (wParam == 0x4f && isCtrl && !isAlt) { // ctrl-o (options)
-				if (IsWindowEnabled(GetDlgItem(GetParent(hwnd), IDC_CHANMGR)))
-					SendMessage(GetParent(hwnd), WM_COMMAND, MAKEWPARAM(IDC_CHANMGR, 0), 0);
+		
+			}			
+			if (wParam == 0x4f && GetKeyState(VK_CONTROL) & 0x8000 && !(GetKeyState(VK_MENU) & 0x8000)) // ctrl-o (paste clean text)
+			{
+				SendMessage(GetParent(hwnd), WM_COMMAND, MAKEWPARAM(IDC_CHANMGR, 0), 0);
 				return TRUE;
-			}
-
-			if ((wParam == 45 && isShift || wParam == 0x56 && isCtrl )&& !isAlt) { // ctrl-v (paste clean text)
+		
+			}			
+			if ((wParam == 45 && GetKeyState(VK_SHIFT) & 0x8000 || wParam == 0x56 && GetKeyState(VK_CONTROL) & 0x8000 )&& !(GetKeyState(VK_MENU) & 0x8000)) // ctrl-v (paste clean text)
+			{
 				SendMessage(hwnd, EM_PASTESPECIAL, CF_TEXT, 0);
 				return TRUE;
-			}
-
-			if (wParam == 0x57 && isCtrl && !isAlt) { // ctrl-w (close window)
+		
+			}			
+			if (wParam == 0x57 && GetKeyState(VK_CONTROL) & 0x8000 && !(GetKeyState(VK_MENU) & 0x8000)) // ctrl-w (close window)
+			{
 				PostMessage(GetParent(hwnd), WM_CLOSE, 0, 0);
 				return TRUE;
-			}
-
-			if (wParam == VK_NEXT || wParam == VK_PRIOR) {
+		
+			}			
+			if (wParam == VK_NEXT || wParam == VK_PRIOR)
+			{
 				HWND htemp = GetParent(hwnd);
 				SendDlgItemMessage(htemp, IDC_LOG, msg, wParam, lParam);
-				dat->lastEnterTime = 0;
+		        dat->lastEnterTime = 0;
 				return TRUE;
 			}
-
-			if (wParam == VK_UP && isCtrl && !isAlt) {
-				int iLen;
+			if (wParam == VK_UP && (GetKeyState(VK_CONTROL) & 0x8000) && !(GetKeyState(VK_MENU) & 0x8000))
+			{
+			    int iLen;
 				GETTEXTLENGTHEX gtl = {0};
 				SETTEXTEX ste;
 				LOGFONT lf;
-				char* lpPrevCmd = SM_GetPrevCommand(Parentsi->ptszID, Parentsi->pszModule);
+				char *lpPrevCmd = WM_GetPrevCommand(Parentdat->pszID, Parentdat->pszModule);
 
 				SendMessage(hwnd, WM_SETREDRAW, FALSE, 0);
 
 				LoadMsgDlgFont(17, &lf, NULL);
 				ste.flags = ST_DEFAULT;
 				ste.codepage = CP_ACP;
-				if (lpPrevCmd)
+				if(lpPrevCmd)
 					SendMessage(hwnd, EM_SETTEXTEX, (WPARAM)&ste, (LPARAM)lpPrevCmd);
 				else
-					SetWindowText(hwnd, _T(""));
+					SetWindowText(hwnd, "");
 
 				gtl.flags = GTL_PRECISE;
 				gtl.codepage = CP_ACP;
@@ -559,24 +720,25 @@ static LRESULT CALLBACK MessageSubclassProc(HWND hwnd, UINT msg, WPARAM wParam, 
 				SendMessage(hwnd, WM_SETREDRAW, TRUE, 0);
 				RedrawWindow(hwnd, NULL, NULL, RDW_INVALIDATE);
 				SendMessage(hwnd, EM_SETSEL,iLen,iLen);
-				dat->lastEnterTime = 0;
+		        dat->lastEnterTime = 0;
 				return TRUE;
 			}
+			if (wParam == VK_DOWN && (GetKeyState(VK_CONTROL) & 0x8000) && !(GetKeyState(VK_MENU) & 0x8000))
+			{
 
-			if (wParam == VK_DOWN && isCtrl && !isAlt) {
 				int iLen;
 				GETTEXTLENGTHEX gtl = {0};
 				SETTEXTEX ste;
 
-				char* lpPrevCmd = SM_GetNextCommand(Parentsi->ptszID, Parentsi->pszModule);
+				char *lpPrevCmd = WM_GetNextCommand(Parentdat->pszID, Parentdat->pszModule);
 				SendMessage(hwnd, WM_SETREDRAW, FALSE, 0);
 
 				ste.flags = ST_DEFAULT;
 				ste.codepage = CP_ACP;
-				if (lpPrevCmd)
+				if(lpPrevCmd)
 					SendMessage(hwnd, EM_SETTEXTEX, (WPARAM)&ste, (LPARAM) lpPrevCmd);
 				else
-					SetWindowText(hwnd, _T(""));
+					SetWindowText(hwnd, "");
 
 				gtl.flags = GTL_PRECISE;
 				gtl.codepage = CP_ACP;
@@ -585,523 +747,426 @@ static LRESULT CALLBACK MessageSubclassProc(HWND hwnd, UINT msg, WPARAM wParam, 
 				SendMessage(hwnd, WM_SETREDRAW, TRUE, 0);
 				RedrawWindow(hwnd, NULL, NULL, RDW_INVALIDATE);
 				SendMessage(hwnd, EM_SETSEL,iLen,iLen);
-				dat->lastEnterTime = 0;
+		        dat->lastEnterTime = 0;
 				return TRUE;
+
 			}
-
 			if (wParam == VK_RETURN)
-				break;
-		}
-		//fall through
-
-	case WM_LBUTTONDOWN:
-	case WM_MBUTTONDOWN:
-	case WM_KILLFOCUS:
-		dat->lastEnterTime = 0;
-		break;
-
-	case WM_RBUTTONDOWN:
-		{
-			CHARRANGE sel, all = { 0, -1 };
-			POINT pt;
-			UINT uID = 0;
-			HMENU hSubMenu;
-
-			hSubMenu = GetSubMenu(g_hMenu, 4);
-			CallService(MS_LANGPACK_TRANSLATEMENU, (WPARAM) hSubMenu, 0);
-			SendMessage(hwnd, EM_EXGETSEL, 0, (LPARAM) & sel);
-
-			EnableMenuItem(hSubMenu, ID_MESSAGE_UNDO, SendMessage(hwnd, EM_CANUNDO, 0,0)?MF_ENABLED:MF_GRAYED);
-			EnableMenuItem(hSubMenu, ID_MESSAGE_REDO, SendMessage(hwnd, EM_CANREDO, 0,0)?MF_ENABLED:MF_GRAYED);
-			EnableMenuItem(hSubMenu, ID_MESSAGE_COPY, sel.cpMax!=sel.cpMin?MF_ENABLED:MF_GRAYED);
-			EnableMenuItem(hSubMenu, ID_MESSAGE_CUT, sel.cpMax!=sel.cpMin?MF_ENABLED:MF_GRAYED);
+                break;
+            //fall through
+        case WM_LBUTTONDOWN:
+        case WM_MBUTTONDOWN:
+        case WM_KILLFOCUS:
 
 			dat->lastEnterTime = 0;
+            break;
+		case WM_RBUTTONDOWN:
+			{
+				CHARRANGE sel, all = { 0, -1 };
+				POINT pt;
+				UINT uID = 0;
+				HMENU hSubMenu;
 
-			pt.x = (short) LOWORD(lParam);
-			pt.y = (short) HIWORD(lParam);
-			ClientToScreen(hwnd, &pt);
+				hSubMenu = GetSubMenu(g_hMenu, 4);
+				CallService(MS_LANGPACK_TRANSLATEMENU, (WPARAM) hSubMenu, 0);
+				SendMessage(hwnd, EM_EXGETSEL, 0, (LPARAM) & sel);
 
-			uID = TrackPopupMenu(hSubMenu, TPM_RETURNCMD, pt.x, pt.y, 0, hwnd, NULL);
-			switch (uID) {
-			case 0:
-				break;
+				EnableMenuItem(hSubMenu, ID_MESSAGE_UNDO, SendMessage(hwnd, EM_CANUNDO, 0,0)?MF_ENABLED:MF_GRAYED);
+				EnableMenuItem(hSubMenu, ID_MESSAGE_REDO, SendMessage(hwnd, EM_CANREDO, 0,0)?MF_ENABLED:MF_GRAYED);
+				EnableMenuItem(hSubMenu, ID_MESSAGE_COPY, sel.cpMax!=sel.cpMin?MF_ENABLED:MF_GRAYED);
+				EnableMenuItem(hSubMenu, ID_MESSAGE_CUT, sel.cpMax!=sel.cpMin?MF_ENABLED:MF_GRAYED);
 
-			case ID_MESSAGE_UNDO:
-				SendMessage(hwnd, EM_UNDO, 0, 0);
-				break;
+				dat->lastEnterTime = 0;
 
-			case ID_MESSAGE_REDO:
-				SendMessage(hwnd, EM_REDO, 0, 0);
-				break;
+				pt.x = (short) LOWORD(lParam);
+				pt.y = (short) HIWORD(lParam);
+				ClientToScreen(hwnd, &pt);
+				
+				uID = TrackPopupMenu(hSubMenu, TPM_RETURNCMD, pt.x, pt.y, 0, hwnd, NULL);
+				switch (uID) 
+				{
+				case 0:
+					break;
+               case ID_MESSAGE_UNDO:
+					{
+                    SendMessage(hwnd, EM_UNDO, 0, 0);
+                    }break;
+               case ID_MESSAGE_REDO:
+					{
+                    SendMessage(hwnd, EM_REDO, 0, 0);
+                    }break;
+                case ID_MESSAGE_COPY:
+					{
+                    SendMessage(hwnd, WM_COPY, 0, 0);
+                    }break;
+               case ID_MESSAGE_CUT:
+					{
+                    SendMessage(hwnd, WM_CUT, 0, 0);
+                    }break;
+               case ID_MESSAGE_PASTE:
+					{
+                    SendMessage(hwnd, EM_PASTESPECIAL, CF_TEXT, 0);
+                    }break;
+                 case ID_MESSAGE_SELECTALL:
+					{
+                    SendMessage(hwnd, EM_EXSETSEL, 0, (LPARAM) & all);
+                    }break;
+                case ID_MESSAGE_CLEAR:
+					{
+                    SetWindowText(hwnd, "");
+                    }break;
+			   default:
+					break;
 
-			case ID_MESSAGE_COPY:
-				SendMessage(hwnd, WM_COPY, 0, 0);
-				break;
+				}
+				PostMessage(hwnd, WM_KEYUP, 0, 0 );
 
-			case ID_MESSAGE_CUT:
-				SendMessage(hwnd, WM_CUT, 0, 0);
-				break;
-
-			case ID_MESSAGE_PASTE:
-				SendMessage(hwnd, EM_PASTESPECIAL, CF_TEXT, 0);
-				break;
-
-			case ID_MESSAGE_SELECTALL:
-				SendMessage(hwnd, EM_EXSETSEL, 0, (LPARAM) & all);
-				break;
-
-			case ID_MESSAGE_CLEAR:
-				SetWindowText(hwnd, _T( "" ));
-				break;
-			}
-			PostMessage(hwnd, WM_KEYUP, 0, 0 );
-		}
-		break;
-
-	case WM_KEYUP:
-	case WM_LBUTTONUP:
-	case WM_RBUTTONUP:
-	case WM_MBUTTONUP:
-		{
+			}break;
+			
+        case WM_KEYUP:
+        case WM_LBUTTONUP:
+        case WM_RBUTTONUP:
+        case WM_MBUTTONUP:
+			{
 			CHARFORMAT2 cf;
 			UINT u = 0;
 			UINT u2 = 0;
 			COLORREF cr;
 
 			LoadMsgDlgFont(17, NULL, &cr);
-
+			
 			cf.cbSize = sizeof(CHARFORMAT2);
 			cf.dwMask = CFM_BOLD|CFM_ITALIC|CFM_UNDERLINE|CFM_BACKCOLOR|CFM_COLOR;
 			SendMessage(hwnd, EM_GETCHARFORMAT, SCF_SELECTION, (LPARAM)&cf);
 
-			if (MM_FindModule(Parentsi->pszModule) && MM_FindModule(Parentsi->pszModule)->bColor) {
-				int index = GetColorIndex(Parentsi->pszModule, cf.crTextColor);
+			if(MM_FindModule(Parentdat->pszModule) && MM_FindModule(Parentdat->pszModule)->bColor)
+			{
+				int index = GetColorIndex(Parentdat->pszModule, cf.crTextColor);
 				u = IsDlgButtonChecked(GetParent(hwnd), IDC_COLOR);
 
-				if (index >= 0) {
-					Parentsi->bFGSet = TRUE;
-					Parentsi->iFG = index;
+				if(index >= 0)
+				{
+					Parentdat->bFGSet = TRUE;
+					Parentdat->iFG = index;
 				}
 
-				if (u == BST_UNCHECKED && cf.crTextColor != cr)
+				if(u == BST_UNCHECKED && cf.crTextColor != cr)
 					CheckDlgButton(GetParent(hwnd), IDC_COLOR, BST_CHECKED);
-				else if (u == BST_CHECKED && cf.crTextColor == cr)
+				else if(u == BST_CHECKED && cf.crTextColor == cr)
 					CheckDlgButton(GetParent(hwnd), IDC_COLOR, BST_UNCHECKED);
 			}
-
-			if (MM_FindModule(Parentsi->pszModule) && MM_FindModule(Parentsi->pszModule)->bBkgColor) {
-				int index = GetColorIndex(Parentsi->pszModule, cf.crBackColor);
+			if(MM_FindModule(Parentdat->pszModule) && MM_FindModule(Parentdat->pszModule)->bBkgColor)
+			{
+				int index = GetColorIndex(Parentdat->pszModule, cf.crBackColor);
 				COLORREF crB = (COLORREF)DBGetContactSettingDword(NULL, "Chat", "ColorMessageBG", GetSysColor(COLOR_WINDOW));
 				u = IsDlgButtonChecked(GetParent(hwnd), IDC_BKGCOLOR);
-
-				if (index >= 0) {
-					Parentsi->bBGSet = TRUE;
-					Parentsi->iBG = index;
-				}
-				if (u == BST_UNCHECKED && cf.crBackColor != crB)
+				
+				if(index >= 0)
+				{
+					Parentdat->bBGSet = TRUE;
+					Parentdat->iBG = index;
+				}		
+				if(u == BST_UNCHECKED && cf.crBackColor != crB)
 					CheckDlgButton(GetParent(hwnd), IDC_BKGCOLOR, BST_CHECKED);
-				else if (u == BST_CHECKED && cf.crBackColor == crB)
+				else if(u == BST_CHECKED && cf.crBackColor == crB)
 					CheckDlgButton(GetParent(hwnd), IDC_BKGCOLOR, BST_UNCHECKED);
 			}
-
-			if (MM_FindModule(Parentsi->pszModule) && MM_FindModule(Parentsi->pszModule)->bBold) {
+			if(MM_FindModule(Parentdat->pszModule) && MM_FindModule(Parentdat->pszModule)->bBold)
+			{
 				u = IsDlgButtonChecked(GetParent(hwnd), IDC_BOLD);
 				u2 = cf.dwEffects;
 				u2 &= CFE_BOLD;
-				if (u == BST_UNCHECKED && u2)
+				if(u == BST_UNCHECKED && u2)
 					CheckDlgButton(GetParent(hwnd), IDC_BOLD, BST_CHECKED);
-				else if (u == BST_CHECKED && u2 == 0)
+				else if(u == BST_CHECKED && u2 == 0)
 					CheckDlgButton(GetParent(hwnd), IDC_BOLD, BST_UNCHECKED);
 			}
-
-			if (MM_FindModule(Parentsi->pszModule) && MM_FindModule(Parentsi->pszModule)->bItalics) {
+				
+			if(MM_FindModule(Parentdat->pszModule) && MM_FindModule(Parentdat->pszModule)->bItalics)
+			{
 				u = IsDlgButtonChecked(GetParent(hwnd), IDC_ITALICS);
 				u2 = cf.dwEffects;
 				u2 &= CFE_ITALIC;
-				if (u == BST_UNCHECKED && u2)
+				if(u == BST_UNCHECKED && u2)
 					CheckDlgButton(GetParent(hwnd), IDC_ITALICS, BST_CHECKED);
-				else if (u == BST_CHECKED && u2 == 0)
+				else if(u == BST_CHECKED && u2 == 0)
 					CheckDlgButton(GetParent(hwnd), IDC_ITALICS, BST_UNCHECKED);
 			}
-
-			if (MM_FindModule(Parentsi->pszModule) && MM_FindModule(Parentsi->pszModule)->bUnderline) {
+			if(MM_FindModule(Parentdat->pszModule) && MM_FindModule(Parentdat->pszModule)->bUnderline)
+			{
 				u = IsDlgButtonChecked(GetParent(hwnd), IDC_UNDERLINE);
 				u2 = cf.dwEffects;
 				u2 &= CFE_UNDERLINE;
-				if (u == BST_UNCHECKED && u2)
+				if(u == BST_UNCHECKED && u2)
 					CheckDlgButton(GetParent(hwnd), IDC_UNDERLINE, BST_CHECKED);
-				else if (u == BST_CHECKED && u2 == 0)
+				else if(u == BST_CHECKED && u2 == 0)
 					CheckDlgButton(GetParent(hwnd), IDC_UNDERLINE, BST_UNCHECKED);
-		}	}
-		break;
+			}
 
-	case EM_UNSUBCLASSED:
-		mir_free(dat);
-		return 0;
-	}
+            }break;
 
-	return CallWindowProc(OldMessageProc, hwnd, msg, wParam, lParam);
-}
+        case EM_UNSUBCLASSED:
+			free(dat);
+			return 0;
+		default:break;
+	} 
+
+	return CallWindowProc(OldMessageProc, hwnd, msg, wParam, lParam); 
+
+} 
+static LRESULT CALLBACK NicklistSubclassProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) 
+{ 
+    switch (msg) 
+	{
+	case WM_RBUTTONDOWN:
+			PostMessage(hwnd, WM_RBUTTONUP, wParam, lParam);
+			break;
+	case WM_KEYDOWN:
+			if ((wParam == 0x57 && GetKeyState(VK_CONTROL) & 0x8000)) // ctrl-w (close window)
+			{
+				PostMessage(GetParent(hwnd), WM_CLOSE, 0, 0);
+				return TRUE;
+		
+			}
+			break;
+
+	case WM_RBUTTONUP:
+		{
+			TVHITTESTINFO hti;
+			CHATWINDOWDATA *parentdat =(CHATWINDOWDATA *)GetWindowLong(GetParent(hwnd),GWL_USERDATA);
+
+
+			hti.pt.x = (short) LOWORD(lParam);
+			hti.pt.y = (short) HIWORD(lParam);
+			if(TreeView_HitTest(hwnd,&hti))
+			{
+				if(hti.flags&TVHT_ONITEM) 
+				{
+					TVITEM tvi = {0};
+					tvi.mask=TVIF_PARAM|TVIF_HANDLE;
+					tvi.hItem=hti.hItem;
+					TreeView_GetItem(hwnd,&tvi);
+					if (tvi.lParam)
+					{
+						HMENU hMenu = 0;
+						UINT uID;
+						
+						ClientToScreen(hwnd, &hti.pt);
+						uID = CreateGCMenu(hwnd, &hMenu, 0, hti.pt, parentdat, ((USERINFO *)tvi.lParam)->pszUID); 
+
+						switch (uID) 
+						{
+						case 0:
+							break;
+                        case ID_MESS:
+							{
+								DoEventHookAsync(GetParent(hwnd), parentdat->pszID, parentdat->pszModule, GC_USER_PRIVMESS, ((USERINFO *)tvi.lParam)->pszUID, NULL, (LPARAM)NULL);
+							}break;
+ 						default:
+							DoEventHookAsync(GetParent(hwnd), parentdat->pszID, parentdat->pszModule, GC_USER_NICKLISTMENU, ((USERINFO *)tvi.lParam)->pszUID, NULL, (LPARAM)uID);
+							break;
+
+						}
+						DestroyGCMenu(&hMenu, 1);
+					}
+				}
+			}
+
+
+		}break;
+		default:break;
+	} 
+
+	return CallWindowProc(OldNicklistProc, hwnd, msg, wParam, lParam); 
+
+} 
 
 static BOOL CALLBACK FilterWndProc(HWND hwndDlg,UINT uMsg,WPARAM wParam,LPARAM lParam)
 {
-	static SESSION_INFO* si = NULL;
-	switch (uMsg) {
+	static CHATWINDOWDATA* dat = NULL;
+	switch (uMsg)
+	{	
 	case WM_INITDIALOG:
-		si = (SESSION_INFO*)lParam;
-		CheckDlgButton(hwndDlg, IDC_1, si->iLogFilterFlags&GC_EVENT_ACTION);
-		CheckDlgButton(hwndDlg, IDC_2, si->iLogFilterFlags&GC_EVENT_MESSAGE);
-		CheckDlgButton(hwndDlg, IDC_3, si->iLogFilterFlags&GC_EVENT_NICK);
-		CheckDlgButton(hwndDlg, IDC_4, si->iLogFilterFlags&GC_EVENT_JOIN);
-		CheckDlgButton(hwndDlg, IDC_5, si->iLogFilterFlags&GC_EVENT_PART);
-		CheckDlgButton(hwndDlg, IDC_6, si->iLogFilterFlags&GC_EVENT_TOPIC);
-		CheckDlgButton(hwndDlg, IDC_7, si->iLogFilterFlags&GC_EVENT_ADDSTATUS);
-		CheckDlgButton(hwndDlg, IDC_8, si->iLogFilterFlags&GC_EVENT_INFORMATION);
-		CheckDlgButton(hwndDlg, IDC_9, si->iLogFilterFlags&GC_EVENT_QUIT);
-		CheckDlgButton(hwndDlg, IDC_10, si->iLogFilterFlags&GC_EVENT_KICK);
-		CheckDlgButton(hwndDlg, IDC_11, si->iLogFilterFlags&GC_EVENT_NOTICE);
-		break;
+	{	
+		TVINSERTSTRUCT tvis;
+		int i;
 
+		SetWindowLong(GetDlgItem(hwndDlg,IDC_FILTERLIST),GWL_STYLE,GetWindowLong(GetDlgItem(hwndDlg,IDC_FILTERLIST),GWL_STYLE)|TVS_NOHSCROLL|TVS_CHECKBOXES);
+		dat = (CHATWINDOWDATA *)lParam;
+		tvis.hParent=TVI_ROOT;
+		tvis.hInsertAfter=TVI_LAST;
+		tvis.item.mask=TVIF_TEXT;
+		for (i = 0; i < sizeof(filterList) / sizeof(filterList[0]); i++) {
+			tvis.item.pszText=Translate(filterList[i].szDescr);
+			filterList[i].hItem = TreeView_InsertItem(GetDlgItem(hwndDlg, IDC_FILTERLIST),&tvis);
+		}
+	}break;
 	case WM_CTLCOLOREDIT:
 	case WM_CTLCOLORSTATIC:
-		SetTextColor((HDC)wParam,RGB(60,60,150));
-		SetBkColor((HDC)wParam,GetSysColor(COLOR_WINDOW));
-		return (BOOL)GetSysColorBrush(COLOR_WINDOW);
-
-	case WM_ACTIVATE:
-		if (LOWORD(wParam) == WA_INACTIVE) {
-			int iFlags = 0;
-
-			if (IsDlgButtonChecked(hwndDlg, IDC_1) == BST_CHECKED)
-				iFlags |= GC_EVENT_ACTION;
-			if (IsDlgButtonChecked(hwndDlg, IDC_2) == BST_CHECKED)
-				iFlags |= GC_EVENT_MESSAGE;
-			if (IsDlgButtonChecked(hwndDlg, IDC_3) == BST_CHECKED)
-				iFlags |= GC_EVENT_NICK;
-			if (IsDlgButtonChecked(hwndDlg, IDC_4) == BST_CHECKED)
-				iFlags |= GC_EVENT_JOIN;
-			if (IsDlgButtonChecked(hwndDlg, IDC_5) == BST_CHECKED)
-				iFlags |= GC_EVENT_PART;
-			if (IsDlgButtonChecked(hwndDlg, IDC_6) == BST_CHECKED)
-				iFlags |= GC_EVENT_TOPIC;
-			if (IsDlgButtonChecked(hwndDlg, IDC_7) == BST_CHECKED)
-				iFlags |= GC_EVENT_ADDSTATUS;
-			if (IsDlgButtonChecked(hwndDlg, IDC_8) == BST_CHECKED)
-				iFlags |= GC_EVENT_INFORMATION;
-			if (IsDlgButtonChecked(hwndDlg, IDC_9) == BST_CHECKED)
-				iFlags |= GC_EVENT_QUIT;
-			if (IsDlgButtonChecked(hwndDlg, IDC_10) == BST_CHECKED)
-				iFlags |= GC_EVENT_KICK;
-			if (IsDlgButtonChecked(hwndDlg, IDC_11) == BST_CHECKED)
-				iFlags |= GC_EVENT_NOTICE;
-
-			if (iFlags&GC_EVENT_ADDSTATUS)
-				iFlags |= GC_EVENT_REMOVESTATUS;
-
-			SendMessage(GetParent(hwndDlg), GC_CHANGEFILTERFLAG, 0, (LPARAM)iFlags);
-			if (si->bFilterEnabled)
-				SendMessage(GetParent(hwndDlg), GC_REDRAWLOG, 0, 0);
-			PostMessage(hwndDlg, WM_CLOSE, 0, 0);
+	{
+		if((HWND)lParam==GetDlgItem(hwndDlg,IDC_TEXTO))
+		{
+			SetTextColor((HDC)wParam,RGB(60,60,150));
+			SetBkColor((HDC)wParam,GetSysColor(COLOR_WINDOW));
+			return (BOOL)GetSysColorBrush(COLOR_WINDOW);
 		}
-		break;
+	}break;
+	case GC_FILTERFIX:
+	{	
+		int i;
+		for (i = 0; i < sizeof(filterList) / sizeof(filterList[0]); i++) {
+			BOOL bSet = (dat->iLogFilterFlags&filterList[i].iEvent)?TRUE:FALSE;
+			TreeView_SetCheckState(GetDlgItem(hwndDlg, IDC_FILTERLIST), filterList[i].hItem, bSet);
+		}
+	}break;
+	case WM_NOTIFY:
+	{
+		LPNMHDR pNmhdr = (LPNMHDR)lParam;
+		switch (pNmhdr->code)
+		{
+		case NM_CUSTOMDRAW:
+		{
+			if (pNmhdr->idFrom = IDC_FILTERLIST)
+			{
+				LPNMTVCUSTOMDRAW pCustomDraw = (LPNMTVCUSTOMDRAW)lParam;
+				switch (pCustomDraw->nmcd.dwDrawStage)
+				{
+					case CDDS_PREPAINT:
+					SetWindowLongPtr(hwndDlg,DWL_MSGRESULT,CDRF_NOTIFYITEMDRAW); 
+					return(TRUE); 
 
+					case CDDS_ITEMPREPAINT:
+						{
+						switch (pCustomDraw->iLevel)
+						{
+							case 0:
+								{
+								pCustomDraw->clrTextBk = GetSysColor(COLOR_WINDOW);
+								pCustomDraw->clrText = RGB(0,0,0);
+								break;
+								}
+							default:break;
+						}
+						SetWindowLongPtr(hwndDlg,DWL_MSGRESULT, CDRF_NEWFONT); 
+						return (TRUE); 
+					}
+				}
+			}
+		}break;
+		}
+	}
+	case WM_ACTIVATE:
+		{	
+			if(LOWORD(wParam) == WA_INACTIVE)
+			{
+				TVITEM tvi;
+				int iFlags = 0;
+				int i;
+
+				tvi.mask=TVIF_HANDLE|TVIF_STATE;
+				for (i = 0; i < sizeof(filterList) / sizeof(filterList[0]); i++) {
+					tvi.hItem = filterList[i].hItem;
+					TreeView_GetItem(GetDlgItem(hwndDlg, IDC_FILTERLIST),&tvi);
+					if(!((tvi.state&TVIS_STATEIMAGEMASK)>>12==1)) 
+						iFlags |= filterList[i].iEvent;
+				}
+				if (iFlags&GC_EVENT_ADDSTATUS)
+					iFlags |= GC_EVENT_REMOVESTATUS;
+				SendMessage(GetParent(hwndDlg), GC_CHANGEFILTERFLAG, 0, (LPARAM)iFlags);
+				if(IsDlgButtonChecked(GetParent(hwndDlg),IDC_SHOWNICKLIST)== BST_CHECKED)
+					SendMessage(GetParent(hwndDlg), GC_REDRAWLOG, 0, 0);
+				PostMessage(hwndDlg, WM_CLOSE, 0, 0);
+			}
+		}break;
 	case WM_CLOSE:
 		DestroyWindow(hwndDlg);
 		break;
+		default:break;
 	}
-
 	return(FALSE);
 }
-
-static LRESULT CALLBACK ButtonSubclassProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
-{
-	switch (msg) {
+static LRESULT CALLBACK ButtonSubclassProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) 
+{ 
+    switch (msg) 
+	{
 	case WM_RBUTTONUP:
 		{
 			HWND hFilter = GetDlgItem(GetParent(hwnd), IDC_FILTER);
 			HWND hColor = GetDlgItem(GetParent(hwnd), IDC_COLOR);
 			HWND hBGColor = GetDlgItem(GetParent(hwnd), IDC_BKGCOLOR);
 
-			if (DBGetContactSettingByte(NULL, "Chat", "RightClickFilter", 0) != 0) {
-				if (hFilter == hwnd)
+			if (DBGetContactSettingByte(NULL, "Chat", "RightClickFilter", 0) != 0)
+			{
+				if(hFilter == hwnd)
 					SendMessage(GetParent(hwnd), GC_SHOWFILTERMENU, 0, 0);
-				if (hColor == hwnd)
+				if(hColor == hwnd)
 					SendMessage(GetParent(hwnd), GC_SHOWCOLORCHOOSER, 0, (LPARAM)IDC_COLOR);
-				if (hBGColor == hwnd)
+				if(hBGColor == hwnd)
 					SendMessage(GetParent(hwnd), GC_SHOWCOLORCHOOSER, 0, (LPARAM)IDC_BKGCOLOR);
-		}	}
-		break;
-	}
+			}
+		}break;
 
-	return CallWindowProc(OldFilterButtonProc, hwnd, msg, wParam, lParam);
-}
+		default:break;
+	} 
 
-static LRESULT CALLBACK LogSubclassProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
-{
-	switch (msg) {
+	return CallWindowProc(OldFilterButtonProc, hwnd, msg, wParam, lParam); 
+
+} 
+static LRESULT CALLBACK LogSubclassProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) 
+{ 
+    switch (msg) 
+	{
+
 	case WM_LBUTTONUP:
 		{
 			CHARRANGE sel;
 
 			SendMessage(hwnd, EM_EXGETSEL, 0, (LPARAM) &sel);
-			if (sel.cpMin != sel.cpMax)
+			if(sel.cpMin != sel.cpMax)
 			{
 				SendMessage(hwnd, WM_COPY, 0, 0);
 				sel.cpMin = sel.cpMax ;
 				SendMessage(hwnd, EM_EXSETSEL, 0, (LPARAM) & sel);
 			}
-			SetFocus(GetDlgItem(GetParent(hwnd), IDC_MESSAGE));
+			PostMessage(GetDlgItem(GetParent(hwnd), IDC_MESSAGE), WM_MOUSEACTIVATE, 0, 0);
 			break;
+
+
 		}
 	case WM_KEYDOWN:
-		if (wParam == 0x57 && GetKeyState(VK_CONTROL) & 0x8000) { // ctrl-w (close window)
-			PostMessage(GetParent(hwnd), WM_CLOSE, 0, 0);
-			return TRUE;
-		}
-		break;
-
-	case WM_ACTIVATE:
-		if (LOWORD(wParam) == WA_INACTIVE) {
-			CHARRANGE sel;
-			SendMessage(hwnd, EM_EXGETSEL, 0, (LPARAM) &sel);
-			if (sel.cpMin != sel.cpMax) {
-				sel.cpMin = sel.cpMax ;
-				SendMessage(hwnd, EM_EXSETSEL, 0, (LPARAM) & sel);
-		}	}
-		break;
-
-	case WM_CHAR:
-		SetFocus(GetDlgItem(GetParent(hwnd), IDC_MESSAGE));
-		SendMessage(GetDlgItem(GetParent(hwnd), IDC_MESSAGE), WM_CHAR, wParam, lParam);
-		break;
-	}
-
-	return CallWindowProc(OldLogProc, hwnd, msg, wParam, lParam);
-}
-
-static LRESULT CALLBACK TabSubclassProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
-{
-	static BOOL bDragging = FALSE;
-	static int iBeginIndex = 0;
-	switch (msg) {
-	case WM_LBUTTONDOWN:
-		{
-			TCHITTESTINFO tci = {0};
-			tci.pt.x=(short)LOWORD(GetMessagePos());
-			tci.pt.y=(short)HIWORD(GetMessagePos());
-			if (DragDetect(hwnd, tci.pt) && TabCtrl_GetItemCount(hwnd) > 1 ) {
-				int i;
-				tci.flags = TCHT_ONITEM;
-
-				ScreenToClient(hwnd, &tci.pt);
-				i= TabCtrl_HitTest(hwnd, &tci);
-				if (i != -1) {
-					TCITEM tc;
-					SESSION_INFO* s = NULL;
-
-					tc.mask = TCIF_PARAM;
-					TabCtrl_GetItem(hwnd, i, &tc);
-					s = (SESSION_INFO* ) tc.lParam;
-					if (s)
-					{
-						BOOL bOnline = DBGetContactSettingWord(s->hContact, s->pszModule, "Status", ID_STATUS_OFFLINE) == ID_STATUS_ONLINE?TRUE:FALSE;
-						bDragging = TRUE;
-						iBeginIndex = i;
-						ImageList_BeginDrag(hIconsList, bOnline?(MM_FindModule(s->pszModule))->OnlineIconIndex:(MM_FindModule(s->pszModule))->OfflineIconIndex, 8, 8);
-						ImageList_DragEnter(hwnd,tci.pt.x, tci.pt.y);
-						SetCapture(hwnd);
-					}
-					return TRUE;
-			}	}
-			else PostMessage(GetParent(hwnd), GC_TABCLICKED, 0, 0 );
-		}
-		break;
-	case WM_CAPTURECHANGED:
-		bDragging = FALSE;
-		ImageList_DragLeave(hwnd);
-		ImageList_EndDrag();
-		break;
-
-	case WM_MOUSEMOVE:
-		if (bDragging) {
-			TCHITTESTINFO tci = {0};
-			tci.pt.x=(short)LOWORD(GetMessagePos());
-			tci.pt.y=(short)HIWORD(GetMessagePos());
-			ScreenToClient(hwnd, &tci.pt);
-			ImageList_DragMove(tci.pt.x, tci.pt.y);
-		}
-		break;
-
-	case WM_LBUTTONUP:
-		if (bDragging && ReleaseCapture()) {
-			TCHITTESTINFO tci = {0};
-			int i;
-			tci.pt.x=(short)LOWORD(GetMessagePos());
-			tci.pt.y=(short)HIWORD(GetMessagePos());
-			tci.flags = TCHT_ONITEM;
-			bDragging = FALSE;
-			ImageList_DragLeave(hwnd);
-			ImageList_EndDrag();
-
-			ScreenToClient(hwnd, &tci.pt);
-			i= TabCtrl_HitTest(hwnd, &tci);
-			if (i != -1 && i != iBeginIndex)
-				SendMessage(GetParent(hwnd), GC_DROPPEDTAB, (WPARAM)i, (LPARAM)iBeginIndex);
-		}
-		break;
-
-	case WM_LBUTTONDBLCLK:
-		{
-			TCHITTESTINFO tci = {0};
-			int i = 0;
-
-			tci.pt.x=(short)LOWORD(GetMessagePos());
-			tci.pt.y=(short)HIWORD(GetMessagePos());
-			tci.flags = TCHT_ONITEM;
-
-			ScreenToClient(hwnd, &tci.pt);
-			i = TabCtrl_HitTest(hwnd, &tci);
-			if (i != -1 && g_Settings.TabCloseOnDblClick)
-				PostMessage(GetParent(hwnd), WM_COMMAND, MAKEWPARAM(IDC_CLOSE, BN_CLICKED), 0);
-		}
-		break;
-
-	case WM_MBUTTONUP:
-		{
-			TCHITTESTINFO tci = {0};
-			int i = 0;
-
-			tci.pt.x=(short)LOWORD(GetMessagePos());
-			tci.pt.y=(short)HIWORD(GetMessagePos());
-			tci.flags = TCHT_ONITEM;
-
-			ScreenToClient(hwnd, &tci.pt);
-			i = TabCtrl_HitTest(hwnd, &tci);
-			if (i != -1 ) {
-				TCITEM tc;
-				SESSION_INFO* si ;
-
-				tc.mask = TCIF_PARAM;
-				TabCtrl_GetItem(hwnd, i, &tc);
-				si = (SESSION_INFO* ) tc.lParam;
-				if (si)
-					SendMessage(GetParent(hwnd), GC_REMOVETAB, 1, (LPARAM) si );
-		}	}
-		break;
-	}
-
-	return CallWindowProc(OldTabProc, hwnd, msg, wParam, lParam);
-}
-
-static LRESULT CALLBACK NicklistSubclassProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
-{
-	switch (msg) {
-	case WM_ERASEBKGND:
-		{
-			HDC dc = (HDC)wParam;
-			SESSION_INFO* parentdat =(SESSION_INFO*)GetWindowLong(GetParent(hwnd),GWL_USERDATA);
-			if (dc) {
-				int height, index, items = 0;
-
-				index = SendMessage(hwnd, LB_GETTOPINDEX, 0, 0);
-				if (index == LB_ERR || parentdat->nUsersInNicklist <= 0)
-					return 0;
-
-				items = parentdat->nUsersInNicklist - index;
-				height = SendMessage(hwnd, LB_GETITEMHEIGHT, 0, 0);
-
-				if (height != LB_ERR) {
-					RECT rc = {0};
-					GetClientRect(hwnd, &rc);
-
-					if (rc.bottom-rc.top > items * height) {
-						rc.top = items*height;
-						FillRect(dc, &rc, hListBkgBrush);
-		}	}	}	}
-		return 1;
-
-	case WM_KEYDOWN:
-		if (wParam == 0x57 && GetKeyState(VK_CONTROL) & 0x8000) { // ctrl-w (close window)
-			PostMessage(GetParent(hwnd), WM_CLOSE, 0, 0);
-			return TRUE;
-		}
-		break;
-
-	case WM_RBUTTONDOWN:
-		SendMessage(hwnd, WM_LBUTTONDOWN, wParam, lParam);
-		break;
-
-	case WM_RBUTTONUP:
-		SendMessage(hwnd, WM_LBUTTONUP, wParam, lParam);
-		break;
-
-	case WM_CONTEXTMENU:
-		{
-			TVHITTESTINFO hti;
-			int item;
-			int height;
-			USERINFO * ui;
-			SESSION_INFO* parentdat =(SESSION_INFO*)GetWindowLong(GetParent(hwnd),GWL_USERDATA);
-
-			hti.pt.x = (short) LOWORD(lParam);
-			hti.pt.y = (short) HIWORD(lParam);
-			if (hti.pt.x == -1 && hti.pt.y == -1) {
-				int index = SendMessage(hwnd, LB_GETCURSEL, 0, 0);
-				int top = SendMessage(hwnd, LB_GETTOPINDEX, 0, 0);
-				height = SendMessage(hwnd, LB_GETITEMHEIGHT, 0, 0);
-				hti.pt.x = 4;
-				hti.pt.y = (index - top)*height + 1;
-			}
-			else ScreenToClient(hwnd,&hti.pt);
-
-			item = LOWORD(SendMessage(GetDlgItem(GetParent(hwnd), IDC_LIST), LB_ITEMFROMPOINT, 0, MAKELPARAM(hti.pt.x, hti.pt.y)));
-			ui = SM_GetUserFromIndex(parentdat->ptszID, parentdat->pszModule, item);
-			// ui = (USERINFO *)SendMessage(GetDlgItem(GetParent(hwnd), IDC_LIST), LB_GETITEMDATA, item, 0);
-			if (ui) {
-				HMENU hMenu = 0;
-				UINT uID;
-				USERINFO uinew;
-
-				memcpy(&uinew, ui, sizeof(USERINFO));
-				if (hti.pt.x == -1 && hti.pt.y == -1)
-					hti.pt.y += height - 4;
-				ClientToScreen(hwnd, &hti.pt);
-				uID = CreateGCMenu(hwnd, &hMenu, 0, hti.pt, parentdat, uinew.pszUID, NULL);
-
-				switch (uID) {
-				case 0:
-					break;
-
-				case ID_MESS:
-					DoEventHookAsync(GetParent(hwnd), parentdat->ptszID, parentdat->pszModule, GC_USER_PRIVMESS, ui->pszUID, NULL, (LPARAM)NULL);
-					break;
-
-				default:
-					DoEventHookAsync(GetParent(hwnd), parentdat->ptszID, parentdat->pszModule, GC_USER_NICKLISTMENU, ui->pszUID, NULL, (LPARAM)uID);
-					break;
-				}
-				DestroyGCMenu(&hMenu, 1);
+			if (wParam == 0x57 && GetKeyState(VK_CONTROL) & 0x8000) // ctrl-w (close window)
+			{
+				PostMessage(GetParent(hwnd), WM_CLOSE, 0, 0);
 				return TRUE;
-		}	}
-		break;
-
-	case WM_MOUSEMOVE:
+		
+			}
+			break;
+	case WM_ACTIVATE:
 		{
-			SESSION_INFO* parentdat =(SESSION_INFO*)GetWindowLong(GetParent(hwnd),GWL_USERDATA);
-			if ( parentdat ) {
-				POINT p;
-				GetCursorPos(&p);
-				SendMessage( parentdat->hwndTooltip,TTM_TRACKPOSITION,0,(LPARAM)MAKELPARAM(p.x + 15,p.y + 15));
-//				SendMessage( parentdat->hwndTooltip, TTM_ACTIVATE, TRUE, 0 );
-		}	}
-		break;
+			if(LOWORD(wParam) == WA_INACTIVE)
+			{
+				CHARRANGE sel;
+				SendMessage(hwnd, EM_EXGETSEL, 0, (LPARAM) &sel);
+				if(sel.cpMin != sel.cpMax)
+				{
+					sel.cpMin = sel.cpMax ;
+					SendMessage(hwnd, EM_EXSETSEL, 0, (LPARAM) & sel);
+				}
 
-	}
+			}
+		}break;
+	case WM_CHAR:
+		{
+			SetFocus(GetDlgItem(GetParent(hwnd), IDC_MESSAGE));
+			SendMessage(GetDlgItem(GetParent(hwnd), IDC_MESSAGE), WM_CHAR, wParam, lParam);
+		}break;
 
-	return CallWindowProc(OldNicklistProc, hwnd, msg, wParam, lParam);
-}
+		default:break;
+	} 
 
+	return CallWindowProc(OldLogProc, hwnd, msg, wParam, lParam); 
+
+} 
 static int RestoreWindowPosition(HWND hwnd, HANDLE hContact, char * szModule, char * szNamePrefix, UINT showCmd)
 {
 	WINDOWPLACEMENT wp;
@@ -1110,16 +1175,26 @@ static int RestoreWindowPosition(HWND hwnd, HANDLE hContact, char * szModule, ch
 
 	wp.length=sizeof(wp);
 	GetWindowPlacement(hwnd,&wp);
-	wsprintfA(szSettingName,"%sx",szNamePrefix);
-	x=DBGetContactSettingDword(hContact,szModule,szSettingName,-1);
-	wsprintfA(szSettingName,"%sy",szNamePrefix);
-	y=(int)DBGetContactSettingDword(hContact,szModule,szSettingName,-1);
-	wsprintfA(szSettingName,"%swidth",szNamePrefix);
-	width=DBGetContactSettingDword(hContact,szModule,szSettingName,-1);
-	wsprintfA(szSettingName,"%sheight",szNamePrefix);
-	height=DBGetContactSettingDword(hContact,szModule,szSettingName,-1);
+	if (hContact)
+	{
+		wsprintf(szSettingName,"%sx",szNamePrefix);
+		x=DBGetContactSettingDword(hContact,szModule,szSettingName,-1);
+		wsprintf(szSettingName,"%sy",szNamePrefix);
+		y=(int)DBGetContactSettingDword(hContact,szModule,szSettingName,-1);
+		wsprintf(szSettingName,"%swidth",szNamePrefix);
+		width=DBGetContactSettingDword(hContact,szModule,szSettingName,-1);
+		wsprintf(szSettingName,"%sheight",szNamePrefix);
+		height=DBGetContactSettingDword(hContact,szModule,szSettingName,-1);
+	}
+	else
+	{
+		x = g_LogOptions.iX;
+		y = g_LogOptions.iY;
+		width = g_LogOptions.iWidth;
+		height = g_LogOptions.iHeight;
 
-	if (x==-1)
+	}
+	if(x==-1) 
 		return 0;
 	wp.rcNormalPosition.left=x;
 	wp.rcNormalPosition.top=y;
@@ -1129,9 +1204,8 @@ static int RestoreWindowPosition(HWND hwnd, HANDLE hContact, char * szModule, ch
 	SetWindowPlacement(hwnd,&wp);
 	return 1;
 }
-
-int GetTextPixelSize( TCHAR* pszText, HFONT hFont, BOOL bWidth)
-{
+int GetTextPixelSize(char * pszText, HFONT hFont, BOOL bWidth)
+{ 
 	HDC hdc;
 	HFONT hOldFont;
 	RECT rc = {0};
@@ -1139,139 +1213,210 @@ int GetTextPixelSize( TCHAR* pszText, HFONT hFont, BOOL bWidth)
 
 	if (!pszText || !hFont)
 		return 0;
-
-	hdc = GetDC(NULL);
+	hdc=GetDC(NULL);
 	hOldFont = SelectObject(hdc, hFont);
 	i = DrawText(hdc, pszText , -1, &rc, DT_CALCRECT);
+//GetTextExtentPoint32(hdc,pszText,lstrlen(pszText),&textSize);
 	SelectObject(hdc, hOldFont);
 	ReleaseDC(NULL,hdc);
-	return bWidth ? rc.right - rc.left : rc.bottom - rc.top;
-}
-
-struct FORK_ARG {
-	HANDLE hEvent;
-	void (__cdecl *threadcode)(void*);
-	unsigned (__stdcall *threadcodeex)(void*);
-	void *arg;
-};
-
-static void __cdecl phase2(void * lParam)
-{
-	SESSION_INFO* si = (SESSION_INFO*) lParam;
-	Sleep(30);
-	if (si && si->hWnd)
-		PostMessage(si->hWnd, GC_REDRAWLOG3, 0, 0);
+	return bWidth?rc.right-rc.left:i;
 }
 
 BOOL CALLBACK RoomWndProc(HWND hwndDlg,UINT uMsg,WPARAM wParam,LPARAM lParam)
 {
-	SESSION_INFO* si;
-	si = (SESSION_INFO*)GetWindowLong(hwndDlg,GWL_USERDATA);
-	switch (uMsg) {
-	case WM_INITDIALOG:
-		{
-			SESSION_INFO* psi = (SESSION_INFO*)lParam;
+	CHATWINDOWDATA *dat;
+	dat=(CHATWINDOWDATA *)GetWindowLong(hwndDlg,GWL_USERDATA);
+	switch (uMsg)
+	{	
+		case WM_INITDIALOG:
+		{	
+			NEWCHATWINDOWLPARAM *newData=(NEWCHATWINDOWLPARAM*)lParam;
+			MODULE *min;
 			int mask;
-			HWND hNickList = GetDlgItem(hwndDlg,IDC_LIST);
 
 			TranslateDialogDefault(hwndDlg);
-			SetWindowLong(hwndDlg,GWL_USERDATA,(LONG)psi);
+
+			dat=(CHATWINDOWDATA*)malloc(sizeof(CHATWINDOWDATA));
+			SetWindowLong(hwndDlg,GWL_USERDATA,(LONG)dat);
+
+			SendMessage(hwndDlg, WM_SETREDRAW, FALSE, 0);
 			OldSplitterProc=(WNDPROC)SetWindowLong(GetDlgItem(hwndDlg,IDC_SPLITTERX),GWL_WNDPROC,(LONG)SplitterSubclassProc);
 			SetWindowLong(GetDlgItem(hwndDlg,IDC_SPLITTERY),GWL_WNDPROC,(LONG)SplitterSubclassProc);
-			OldNicklistProc=(WNDPROC)SetWindowLong(hNickList,GWL_WNDPROC,(LONG)NicklistSubclassProc);
-			OldTabProc=(WNDPROC)SetWindowLong(GetDlgItem(hwndDlg,IDC_TAB),GWL_WNDPROC,(LONG)TabSubclassProc);
+			OldNicklistProc=(WNDPROC)SetWindowLong(GetDlgItem(hwndDlg,IDC_NICKLIST),GWL_WNDPROC,(LONG)NicklistSubclassProc);
 			OldLogProc=(WNDPROC)SetWindowLong(GetDlgItem(hwndDlg,IDC_LOG),GWL_WNDPROC,(LONG)LogSubclassProc);
 			OldFilterButtonProc=(WNDPROC)SetWindowLong(GetDlgItem(hwndDlg,IDC_FILTER),GWL_WNDPROC,(LONG)ButtonSubclassProc);
 			SetWindowLong(GetDlgItem(hwndDlg,IDC_COLOR),GWL_WNDPROC,(LONG)ButtonSubclassProc);
 			SetWindowLong(GetDlgItem(hwndDlg,IDC_BKGCOLOR),GWL_WNDPROC,(LONG)ButtonSubclassProc);
-			OldMessageProc = (WNDPROC)SetWindowLong(GetDlgItem(hwndDlg, IDC_MESSAGE), GWL_WNDPROC,(LONG)MessageSubclassProc);
-			SendDlgItemMessage(hwndDlg, IDC_MESSAGE, EM_SUBCLASSED, 0, 0);
+			OldMessageProc = (WNDPROC)SetWindowLong(GetDlgItem(hwndDlg, IDC_MESSAGE), GWL_WNDPROC,(LONG)MessageSubclassProc); 
+            SendDlgItemMessage(hwndDlg, IDC_MESSAGE, EM_SUBCLASSED, 0, 0);
+			SetWindowLong(GetDlgItem(hwndDlg,IDC_NICKLIST),GWL_STYLE,GetWindowLong(GetDlgItem(hwndDlg,IDC_NICKLIST),GWL_STYLE)|TVS_NOHSCROLL);
+			
+			SendMessage(hwndDlg,WM_SETICON,ICON_BIG,(LPARAM)hIcons[6]); // Tell the dialog to use it
+			
+			dat->pszID = malloc(lstrlen(newData->pszID)+1);
+			lstrcpy(dat->pszID, newData->pszID);
+			dat->pszModule = malloc(lstrlen(newData->pszModule)+1);
+			lstrcpy(dat->pszModule, newData->pszModule);
+			dat->pszName = malloc(lstrlen(newData->pszName)+1);
+			lstrcpy(dat->pszName, newData->pszName);
+			min = MM_FindModule(dat->pszModule);
+			dat->iSplitterX = g_LogOptions.iSplitterX;
+			dat->iSplitterY = g_LogOptions.iSplitterY;
+			dat->iLogFilterFlags = (int)DBGetContactSettingDword(NULL, "Chat", "FilterFlags", 0xFFFF);
+			dat->iType = newData->iType;
+			dat->iEventCount = 0;
+			dat->nFlash = 0;
+			dat->pStatusList = NULL;
+			dat->pUserList = NULL;
+			dat->pEventListStart = NULL;
+			dat->pEventListEnd = NULL;
+			dat->pszTopic = NULL;
+			dat->pMe = NULL;
+            dat->windowWasCascaded = 0;
+			dat->nUsersInNicklist = 0;
+			dat->ItemData = 0;
+			dat->LastTime = 0;
+			dat->bBGSet = FALSE;
+			dat->bFGSet = FALSE;
+			dat->hwndStatus = CreateWindowEx(0, STATUSCLASSNAME, NULL, WS_CHILD | WS_VISIBLE | SBARS_SIZEGRIP| SBT_TOOLTIPS , 0, 0, 0, 0, hwndDlg, NULL, g_hInst, NULL);
+			dat->bFilterEnabled = DBGetContactSettingByte(NULL, "Chat", "FilterEnabled", 0);
+
 			SendDlgItemMessage(hwndDlg, IDC_LOG, EM_AUTOURLDETECT, 1, 0);
 			mask = (int)SendDlgItemMessage(hwndDlg, IDC_LOG, EM_GETEVENTMASK, 0, 0);
 			SendDlgItemMessage(hwndDlg, IDC_LOG, EM_SETEVENTMASK, 0, mask | ENM_LINK | ENM_MOUSEEVENTS);
 			SendDlgItemMessage(hwndDlg, IDC_LOG, EM_LIMITTEXT, (WPARAM)sizeof(TCHAR)*0x7FFFFFFF, 0);
 			SendDlgItemMessage(hwndDlg, IDC_LOG, EM_SETOLECALLBACK, 0, (LPARAM) & reOleCallback);
-
-			//			RichUtil_SubClass(GetDlgItem(hwndDlg, IDC_MESSAGE));
-			//			RichUtil_SubClass(GetDlgItem(hwndDlg, IDC_LOG));
-
-			psi->hwndStatus = CreateWindowEx(0, STATUSCLASSNAME, NULL, WS_CHILD | WS_VISIBLE | SBARS_SIZEGRIP| SBT_TOOLTIPS , 0, 0, 0, 0, hwndDlg, NULL, g_hInst, NULL);
-			SendMessage(psi->hwndStatus,SB_SETMINHEIGHT,GetSystemMetrics(SM_CYSMICON),0);
-			TabCtrl_SetMinTabWidth(GetDlgItem(hwndDlg, IDC_TAB), 80);
-			TabCtrl_SetImageList(GetDlgItem(hwndDlg, IDC_TAB), hIconsList);
-
-			// enable tooltips
-			psi->iOldItemID = -1;
-			psi->hwndTooltip = CreateWindow(TOOLTIPS_CLASS,NULL,TTS_ALWAYSTIP,CW_USEDEFAULT,CW_USEDEFAULT,CW_USEDEFAULT,CW_USEDEFAULT,hNickList,(HMENU)NULL,g_hInst,NULL);
-			SetWindowPos(psi->hwndTooltip, HWND_TOPMOST,0, 0, 0, 0,SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
 			{
-				TOOLINFO ti = {0};
-				ti.cbSize = sizeof(TOOLINFO);
-				ti.uFlags = TTF_IDISHWND | TTF_SUBCLASS | TTF_TRANSPARENT;
-				ti.hwnd   = hwndDlg;
-				ti.hinst  = g_hInst;
-				ti.uId    = (UINT)hNickList;
-				ti.lpszText  = LPSTR_TEXTCALLBACK;
-				//GetClientRect( hNickList, &ti.rect );
-				SendMessage( psi->hwndTooltip, TTM_ADDTOOL, 0, ( LPARAM )&ti );
-				SendMessage( psi->hwndTooltip, TTM_SETDELAYTIME, TTDT_AUTOPOP, 20000 );
-				SendMessage( psi->hwndTooltip, TTM_SETMAXTIPWIDTH, 0, 300);
+				char szTemp[256];
+				if(dat->iType == GCW_SERVER)
+					_snprintf(szTemp, sizeof(szTemp), "Server: %s", newData->pszName);
+				else
+					_snprintf(szTemp, sizeof(szTemp), "%s", newData->pszName);
 
-				//SendMessage( psi->hwndTooltip, TTM_TRACKACTIVATE, TRUE, ( LPARAM )&ti );
+				dat->hContact = CList_AddRoom(newData->pszModule, newData->pszID, szTemp, newData->iType); 
 			}
 
-			// restore previous tabs
-			if (g_Settings.TabsEnable && DBGetContactSettingByte(NULL, "Chat", "TabRestore", 0)) {
-				TABLIST * node = g_TabList;
-				while (node) {
-					SESSION_INFO* s = SM_FindSession(node->pszID, node->pszModule);
-					if (s)
-						SendMessage(hwndDlg, GC_ADDTAB, -1, (LPARAM)s);
+			DBWriteContactSettingString(dat->hContact, dat->pszModule , "Topic", "");
+			DBWriteContactSettingString(dat->hContact, dat->pszModule, "StatusBar", "");
+//			DBWriteContactSettingDword(dat->hContact, dat->pszModule, "Count", 0);
 
-					node = node->next;
-			}	}
+			{ //set statusbar
+				int x = 12;
+				int iStatusbarParts[2];
+				char *pszDispName = MM_FindModule(dat->pszModule)->pszModDispName;
 
-			TabM_RemoveAll();
+				x += GetTextPixelSize(pszDispName, (HFONT)SendMessage(dat->hwndStatus,WM_GETFONT,0,0), TRUE);
+				x+=GetSystemMetrics(SM_CXSMICON);
+				iStatusbarParts[0] = x; iStatusbarParts[1] = -1;
+				SendMessage(dat->hwndStatus,SB_SETMINHEIGHT,GetSystemMetrics(SM_CYSMICON),0);
+				SendMessage(dat->hwndStatus,SB_SETPARTS,2 ,(LPARAM)&iStatusbarParts);
+				SendMessage(dat->hwndStatus, SB_SETTEXT,0,(LPARAM)pszDispName);
+				SendMessage(dat->hwndStatus, SB_SETICON, 0,(LPARAM)MM_FindModule(dat->pszModule)->hOfflineIcon);
+				if(newData->pszStatusbarText != 0)
+				{
+					dat->pszStatusbarText = malloc(lstrlen(newData->pszStatusbarText)+1);
+					lstrcpy(dat->pszStatusbarText, newData->pszStatusbarText);
+					SendMessage(dat->hwndStatus, SB_SETTEXT,1,(LPARAM)dat->pszStatusbarText);
+					SendMessage(dat->hwndStatus, SB_SETTIPTEXT,1,(LPARAM)dat->pszStatusbarText);
+					DBWriteContactSettingString(dat->hContact, dat->pszModule, "StatusBar", dat->pszStatusbarText);
+				}
+				else
+					dat->pszStatusbarText = NULL;
+			}
 
-			EnableWindow(GetDlgItem(hwndDlg, IDC_SMILEY), TRUE);
+			InitButtons(hwndDlg, dat);
+		
+			SendDlgItemMessage(hwndDlg,IDC_NICKLIST, CCM_SETVERSION,(WPARAM)5,0);
+			TreeView_SetImageList(GetDlgItem(hwndDlg, IDC_NICKLIST), hImageList, TVSIL_STATE);
+			if(dat->iType == GCW_SERVER || dat->iType == GCW_PRIVMESS)
+			{
+				EnableWindow(GetDlgItem(hwndDlg, IDC_SHOWNICKLIST), FALSE);
+				EnableWindow(GetDlgItem(hwndDlg, IDC_FILTER), FALSE);
+				if(dat->iType == GCW_SERVER)
+					EnableWindow(GetDlgItem(hwndDlg, IDC_CHANMGR), FALSE);
+			}
+			
+			{
+				int savePerContact = DBGetContactSettingByte(NULL, "Chat", "SavePosition", 0);
+				if (!RestoreWindowPosition(hwndDlg, dat->hContact, "Chat", "room", SW_HIDE)) 
+				{
+					if (savePerContact) 
+					{
+						if (!RestoreWindowPosition(hwndDlg, NULL, "Chat", "room", SW_HIDE))
+							SetWindowPos(hwndDlg, 0, 0, 0, 550, 400, SWP_NOZORDER | SWP_NOMOVE|SWP_HIDEWINDOW);
+					}
+					else
+						SetWindowPos(hwndDlg, 0, 0, 0, 550, 400, SWP_NOZORDER | SWP_NOMOVE|SWP_HIDEWINDOW);
 
+					if (DBGetContactSettingByte(NULL, "Chat", "CascadeWindows", 1))
+						WM_BroadcastMessage(NULL, GC_CASCADENEWWINDOW, (WPARAM) hwndDlg, (LPARAM) & dat->windowWasCascaded, FALSE);
+				}
+				else if (!savePerContact && DBGetContactSettingByte(NULL, "Chat", "CascadeWindows", 1))
+					WM_BroadcastMessage(NULL, GC_CASCADENEWWINDOW, (WPARAM) hwndDlg, (LPARAM) & dat->windowWasCascaded, FALSE);
+			}
+			
+			if(SmileyAddInstalled)
+				EnableWindow(GetDlgItem(hwndDlg, IDC_SMILEY), TRUE);
+		
 			SendMessage(GetDlgItem(hwndDlg, IDC_LOG), EM_HIDESELECTION, TRUE, 0);
 
+			SendMessage(hwndDlg, GC_UPDATEWINDOW, 0, 0);
 			SendMessage(hwndDlg, GC_SETWNDPROPS, 0, 0);
-			SendMessage(hwndDlg, GC_UPDATESTATUSBAR, 0, 0);
-			SendMessage(hwndDlg, GC_UPDATETITLE, 0, 0);
-			SendMessage(hwndDlg, GC_SETWINDOWPOS, 0, 0);
-		}
-		break;
 
-	case GC_SETWNDPROPS:
+		
+		} break;
+		case GC_SETWNDPROPS:
 		{
-			HICON hIcon;
+			BOOL bFlag = FALSE;
+
+			if(IsWindowVisible(hwndDlg))
+			{
+				SendMessage(hwndDlg, WM_SETREDRAW, FALSE, 0);
+				bFlag = TRUE;
+			}
+
 			LoadGlobalSettings();
-			InitButtons(hwndDlg, si);
+			dat->nFlashMax = DBGetContactSettingByte(NULL, "Chat", "FlashMax", 4);
+			SendMessage(GetDlgItem(hwndDlg, IDC_LOG), EM_SETBKGNDCOLOR , 0, g_LogOptions.crLogBackground);
 
-			hIcon = si->wStatus==ID_STATUS_ONLINE?MM_FindModule(si->pszModule)->hOnlineIcon:MM_FindModule(si->pszModule)->hOfflineIcon;
-			// stupid hack to make icons show. I dunno why this is needed currently
-			if (!hIcon) {
-				MM_IconsChanged();
-				hIcon = si->wStatus==ID_STATUS_ONLINE?MM_FindModule(si->pszModule)->hOnlineIcon:MM_FindModule(si->pszModule)->hOfflineIcon;
-			}
+			{ //nicklist
+				int Height1, Height2;
+				LOGFONT lf;
+				HFONT hFont;
+				LONG lStyle = GetWindowLong(GetDlgItem(hwndDlg, IDC_NICKLIST),GWL_STYLE);
 
-			SendMessage(hwndDlg, GC_FIXTABICONS, 0, 0);
-			SendMessage(si->hwndStatus, SB_SETICON, 0,(LPARAM)hIcon);
-			SendMessage(hwndDlg,WM_SETICON,ICON_BIG,(LPARAM)LoadIconEx( "window" ));
+				Height1 = (int)DBGetContactSettingByte(NULL, "Chat", "NicklistRowDist", 16);
+				LoadMsgDlgFont(18, &lf, NULL);
+				hFont =CreateFontIndirect(&lf);
+				Height2 = GetTextPixelSize("ABC123gq", hFont, FALSE);
+				if (Height2 > 22)
+					Height2 = (int)(Height2*(10+ Height2-22))/10;
+				if(Height1 < Height2)
+					Height1 = Height2;
+				DeleteObject(hFont);
+				LoadMsgDlgFont(19, &lf, NULL);
+				hFont =CreateFontIndirect(&lf);
+				Height2 = GetTextPixelSize("ABC123gq", hFont, FALSE);
+				if (Height2 > 22)
+					Height2 = (int)(Height2*(10+ Height2-22))/10;
+				if(Height1 < Height2)
+					Height1 = Height2;
+				DeleteObject(hFont);
+				TreeView_SetItemHeight(GetDlgItem(hwndDlg, IDC_NICKLIST), Height1);
 
-			SendMessage(GetDlgItem(hwndDlg, IDC_LOG), EM_SETBKGNDCOLOR , 0, g_Settings.crLogBackground);
-
-			if (g_Settings.TabsEnable) {
-				int mask = (int)GetWindowLong(GetDlgItem(hwndDlg, IDC_TAB), GWL_STYLE);
-				if (g_Settings.TabsAtBottom)
-					mask |= TCS_BOTTOM;
+				if(DBGetContactSettingByte(NULL, "Chat", "ShowLines", 1))
+					lStyle |= TVS_HASLINES;
 				else
-					mask &= ~TCS_BOTTOM;
-				SetWindowLong(GetDlgItem(hwndDlg, IDC_TAB), GWL_STYLE, (LONG)mask);
+					lStyle &= ~TVS_HASLINES;
+				SetWindowLong(GetDlgItem(hwndDlg, IDC_NICKLIST),GWL_STYLE, lStyle);
+				TreeView_SetLineColor(GetDlgItem(hwndDlg, IDC_NICKLIST), DBGetContactSettingDword(NULL, "Chat", "ColorNicklistLines", GetSysColor(COLOR_INACTIVEBORDER)));
+				TreeView_SetBkColor(GetDlgItem(hwndDlg, IDC_NICKLIST), g_LogOptions.crUserListBGColor);
+				TreeView_SetIndent(GetDlgItem(hwndDlg, IDC_NICKLIST), DBGetContactSettingByte(NULL, "Chat", "NicklistIndent", 18));
+				if(dat->iType == GCW_CHATROOM)
+					ShowWindow(GetDlgItem(hwndDlg, IDC_NICKLIST), DBGetContactSettingByte(NULL, "Chat", "ShowNicklist", 1)==1?SW_SHOW:SW_HIDE);
+				else
+					ShowWindow(GetDlgItem(hwndDlg, IDC_NICKLIST), SW_HIDE);
 			}
-
 			{ //messagebox
 				COLORREF	crFore;
 
@@ -1283,1410 +1428,1222 @@ BOOL CALLBACK RoomWndProc(HWND hwndDlg,UINT uMsg,WPARAM wParam,LPARAM lParam)
 				cf.crTextColor = crFore;
 				cf.crBackColor = (COLORREF)DBGetContactSettingDword(NULL, "Chat", "ColorMessageBG", GetSysColor(COLOR_WINDOW));
 				SendMessage(GetDlgItem(hwndDlg, IDC_MESSAGE), EM_SETBKGNDCOLOR , 0, DBGetContactSettingDword(NULL, "Chat", "ColorMessageBG", GetSysColor(COLOR_WINDOW)));
-				SendDlgItemMessage(hwndDlg, IDC_MESSAGE, WM_SETFONT, (WPARAM) g_Settings.MessageBoxFont, MAKELPARAM(TRUE, 0));
+				SendDlgItemMessage(hwndDlg, IDC_MESSAGE, WM_SETFONT, (WPARAM) g_LogOptions.MessageBoxFont, MAKELPARAM(TRUE, 0));
 				SendDlgItemMessage(hwndDlg, IDC_MESSAGE, EM_SETCHARFORMAT, (WPARAM)SCF_ALL , (LPARAM)&cf);
 			}
-			{ // nicklist
-				int ih;
-				int ih2;
-				int font;
-				int height;
 
-				ih = GetTextPixelSize( _T("AQGglö"), g_Settings.UserListFont,FALSE);
-				ih2 = GetTextPixelSize( _T("AQGglö"), g_Settings.UserListHeadingsFont,FALSE);
-				height = DBGetContactSettingByte(NULL, "Chat", "NicklistRowDist", 12);
-				font = ih > ih2?ih:ih2;
+			SendMessage(hwndDlg, GC_REDRAWLOG, 0, 0);
+			if(bFlag)
+				SendMessage(hwndDlg, WM_SETREDRAW, TRUE, 0);
+			PostMessage(hwndDlg, WM_SIZE, 0, 0);
+			InvalidateRect(hwndDlg, NULL, TRUE);
 
-				SendMessage(GetDlgItem(hwndDlg, IDC_LIST), LB_SETITEMHEIGHT, 0, (LPARAM)height > font ? height : font);
-				InvalidateRect(GetDlgItem(hwndDlg, IDC_LIST), NULL, TRUE);
-			}
-			SendMessage(hwndDlg, WM_SIZE, 0, 0);
-			SendMessage(hwndDlg, GC_REDRAWLOG2, 0, 0);
 		}
-		break;
+		case GC_REDRAWLOG:
+		{	
+			dat->LastTime = 0;
+			if(dat->pEventListEnd)
+				Log_StreamInEvent(hwndDlg, dat->pEventListEnd, dat, TRUE); 
+		} break;
 
-	case GC_UPDATETITLE:
-		{
-			TCHAR szTemp [100];
-			switch(si->iType) {
+		case GC_UPDATEWINDOW:
+		{	
+			char szTemp [100];
+			switch(dat->iType)
+			{
 			case GCW_CHATROOM:
-				mir_sntprintf(szTemp, SIZEOF(szTemp),
-					(si->nUsersInNicklist ==1) ? TranslateT("%s: Chat Room (%u user)") : TranslateT("%s: Chat Room (%u users)"),
-					si->ptszName, si->nUsersInNicklist);
+				_snprintf(szTemp, sizeof(szTemp), dat->nUsersInNicklist ==1?Translate("%s: Chat Room (%u user)"):Translate("%s: Chat Room (%u users)"), dat->pszName, dat->nUsersInNicklist);
+//				removed due to excessive disk writes on busy channels
+//				DBWriteContactSettingDword(dat->hContact, dat->pszModule , "Count", dat->nUsersInNicklist);
 				break;
 			case GCW_PRIVMESS:
-				mir_sntprintf(szTemp, SIZEOF(szTemp),
-					(si->nUsersInNicklist ==1) ? TranslateT("%s: Message Session") : TranslateT("%s: Message Session (%u users)"),
-					si->ptszName, si->nUsersInNicklist);
+				_snprintf(szTemp, sizeof(szTemp), dat->nUsersInNicklist ==1?Translate("%s: Message Session"):Translate("%s: Message Session (%u users)"), dat->pszName, dat->nUsersInNicklist);
 				break;
 			case GCW_SERVER:
-				mir_sntprintf(szTemp, SIZEOF(szTemp), _T("%s: Server"), si->ptszName);
+				_snprintf(szTemp, sizeof(szTemp), "%s: Server", dat->pszName);
 				break;
+			default:break;
 			}
 			SetWindowText(hwndDlg, szTemp);
-		}
-		break;
+		} break;
+		case GC_UPDATENICKLIST:
+		{	
+			RedrawWindow(hwndDlg, NULL, NULL, RDW_INVALIDATE|RDW_ALLCHILDREN);
+		} break;
 
-	case GC_UPDATESTATUSBAR:
-		{
-			HICON hIcon;
-			int iStatusbarParts[2];
-			TCHAR* ptszDispName = a2tf((TCHAR*)MM_FindModule(si->pszModule)->pszModDispName, 0);
-			int x = 12;
-
-			x += GetTextPixelSize(ptszDispName, (HFONT)SendMessage(si->hwndStatus,WM_GETFONT,0,0), TRUE);
-			x += GetSystemMetrics(SM_CXSMICON);
-			iStatusbarParts[0] = x; iStatusbarParts[1] = -1;
-			SendMessage(si->hwndStatus,SB_SETPARTS,2 ,(LPARAM)&iStatusbarParts);
-
-			hIcon = si->wStatus==ID_STATUS_ONLINE?MM_FindModule(si->pszModule)->hOnlineIcon:MM_FindModule(si->pszModule)->hOfflineIcon;
-
-			// stupid hack to make icons show. I dunno why this is needed currently
-			if (!hIcon) {
-				MM_IconsChanged();
-				hIcon = si->wStatus==ID_STATUS_ONLINE?MM_FindModule(si->pszModule)->hOnlineIcon:MM_FindModule(si->pszModule)->hOfflineIcon;
-			}
-
-			SendMessage(si->hwndStatus, SB_SETICON, 0,(LPARAM)hIcon);
-			SendMessage(hwndDlg, GC_FIXTABICONS, 0, 0);
-
-			SendMessage(si->hwndStatus, SB_SETTEXT,0,(LPARAM)ptszDispName);
-
-			SendMessage(si->hwndStatus, SB_SETTEXT,1,(LPARAM)(si->ptszStatusbarText ? si->ptszStatusbarText : _T("")));
-			SendMessage(si->hwndStatus, SB_SETTIPTEXT,1,(LPARAM)(si->ptszStatusbarText ? si->ptszStatusbarText : _T("")));
-			mir_free( ptszDispName );
-			return TRUE;
-		}
-		break;
-
-	case GC_SETWINDOWPOS:
-		{
-			SESSION_INFO* pActive = GetActiveSession();
-			WINDOWPLACEMENT wp;
-			RECT screen;
-			int savePerContact = DBGetContactSettingByte(NULL, "Chat", "SavePosition", 0);
-
-			wp.length=sizeof(wp);
-			GetWindowPlacement(hwndDlg,&wp);
-			SystemParametersInfo(SPI_GETWORKAREA, 0,  &screen, 0);
-
-			if (si->iX) {
-				wp.rcNormalPosition.left = si->iX;
-				wp.rcNormalPosition.top = si->iY;
-				wp.rcNormalPosition.right = wp.rcNormalPosition.left + si->iWidth;
-				wp.rcNormalPosition.bottom = wp.rcNormalPosition.top + si->iHeight;
-				wp.showCmd = SW_HIDE;
-				SetWindowPlacement(hwndDlg,&wp);
-				//				SetWindowPos(hwndDlg, 0, si->iX,si->iY, si->iWidth, si->iHeight, SWP_NOZORDER |SWP_HIDEWINDOW|SWP_NOACTIVATE);
-				break;
-			}
-			if (savePerContact) {
-				if (RestoreWindowPosition(hwndDlg, g_Settings.TabsEnable?NULL:si->hContact, "Chat", "room", SW_HIDE))
-					break;
-				SetWindowPos(hwndDlg, 0, (screen.right-screen.left)/2- (550)/2,(screen.bottom-screen.top)/2- (400)/2, (550), (400), SWP_NOZORDER |SWP_HIDEWINDOW|SWP_NOACTIVATE);
-			}
-			else SetWindowPos(hwndDlg, 0, (screen.right-screen.left)/2- (550)/2,(screen.bottom-screen.top)/2- (400)/2, (550), (400), SWP_NOZORDER |SWP_HIDEWINDOW|SWP_NOACTIVATE);
-
-			if (!g_Settings.TabsEnable && pActive && pActive->hWnd && DBGetContactSettingByte(NULL, "Chat", "CascadeWindows", 1)) {
-				RECT rcThis, rcNew;
-				int dwFlag = SWP_NOZORDER|SWP_NOACTIVATE;
-				if (!IsWindowVisible ((HWND)wParam))
-					dwFlag |= SWP_HIDEWINDOW;
-
-				GetWindowRect(hwndDlg, &rcThis);
-				GetWindowRect(pActive->hWnd, &rcNew);
-
-				{
-					int offset = GetSystemMetrics(SM_CYCAPTION) + GetSystemMetrics(SM_CYFRAME);
-					SetWindowPos((HWND) hwndDlg, 0, rcNew.left + offset, rcNew.top + offset, rcNew.right-rcNew.left, rcNew.bottom-rcNew.top, dwFlag);
-		}	}	}
-		break;
-
-	case GC_SAVEWNDPOS:
-		{
-			WINDOWPLACEMENT wp = { 0 };
-
-			wp.length = sizeof(wp);
-			GetWindowPlacement(hwndDlg, &wp);
-			g_Settings.iX = wp.rcNormalPosition.left;
-			g_Settings.iY = wp.rcNormalPosition.top;
-			g_Settings.iWidth = wp.rcNormalPosition.right - wp.rcNormalPosition.left;
-			g_Settings.iHeight = wp.rcNormalPosition.bottom - wp.rcNormalPosition.top;
-
-			if (!lParam) {
-				si->iX = g_Settings.iX;
-				si->iY = g_Settings.iY;
-				si->iWidth = g_Settings.iWidth;
-				si->iHeight = g_Settings.iHeight;
-		}	}
-		break;
-
-	case WM_SIZE:
-		{
+		case WM_SIZE:
+		{	
+			RECT rc;
 			UTILRESIZEDIALOG urd;
 
-			if (wParam == SIZE_MAXIMIZED)
-				PostMessage(hwndDlg, GC_SCROLLTOBOTTOM, 0, 0);
-
-			if (IsIconic(hwndDlg)) break;
-			SendMessage(si->hwndStatus, WM_SIZE, 0, 0);
+			if(IsIconic(hwndDlg)) break;
+			if(!IsWindowVisible(hwndDlg)) break;
+			SendMessage(dat->hwndStatus, WM_SIZE, 0, 0);
 			ZeroMemory(&urd,sizeof(urd));
 			urd.cbSize=sizeof(urd);
 			urd.hInstance=g_hInst;
 			urd.hwndDlg=hwndDlg;
-			urd.lParam=(LPARAM)si;
+			urd.lParam=(LPARAM)dat;
 			urd.lpTemplate=MAKEINTRESOURCEA(IDD_CHANNEL);
 			urd.pfnResizer=RoomWndResize;
+			if(IsWindowVisible(GetDlgItem(hwndDlg, IDC_NICKLIST)))
+			{
+				if(IsDlgButtonChecked(hwndDlg,IDC_SHOWNICKLIST)!= BST_CHECKED)
+					CheckDlgButton(hwndDlg, IDC_SHOWNICKLIST,  BST_CHECKED);
+			}
+			else
+				if(IsDlgButtonChecked(hwndDlg,IDC_SHOWNICKLIST)== BST_CHECKED)
+					CheckDlgButton(hwndDlg, IDC_SHOWNICKLIST,  BST_UNCHECKED);
+
 			CallService(MS_UTILS_RESIZEDIALOG,0,(LPARAM)&urd);
-
-			InvalidateRect(si->hwndStatus, NULL, TRUE);
-			RedrawWindow(GetDlgItem(hwndDlg,IDC_MESSAGE), NULL, NULL, RDW_INVALIDATE);
+			
 			RedrawWindow(GetDlgItem(hwndDlg,IDOK), NULL, NULL, RDW_INVALIDATE);
+			RedrawWindow(GetDlgItem(hwndDlg,IDC_MESSAGE), NULL, NULL, RDW_INVALIDATE);
+			GetClientRect(hwndDlg, &rc);
+			rc.top = 0; rc.right -= 60; rc.bottom = 28; rc.left= 105;
+			if(g_LogOptions.bShowName && GetTextPixelSize(dat->pszName, g_LogOptions.NameFont, TRUE) >80)
+				InvalidateRect(hwndDlg, &rc, TRUE);
 			SendMessage(hwndDlg,GC_SAVEWNDPOS,0,1);
-		}
-		break;
 
-	case GC_REDRAWWINDOW:
-		InvalidateRect(hwndDlg, NULL, TRUE);
-		break;
+		} break;
+		case GC_EVENT_ADDGROUP + WM_USER+500:
+			{
+			NEWEVENTLPARAM *nlu = (NEWEVENTLPARAM *)lParam;
+			TVINSERTSTRUCT tvis;
+			TVITEM tvi = {0};
+			HTREEITEM hItem;
 
-	case GC_REDRAWLOG:
-		si->LastTime = 0;
-		if (si->pLog) {
-			LOGINFO * pLog = si->pLog;
-			if (si->iEventCount > 60) {
-				int index = 0;
-				while ( index < 59) {
-					if (pLog->next == NULL)
-						break;
-
-					pLog = pLog->next;
-					if (si->iType != GCW_CHATROOM || !si->bFilterEnabled || (si->iLogFilterFlags&pLog->iType) != 0)
-						index++;
-				}
-				Log_StreamInEvent(hwndDlg, pLog, si, TRUE, FALSE);
-				mir_forkthread(phase2, si);
-			}
-			else Log_StreamInEvent(hwndDlg, si->pLogEnd, si, TRUE, FALSE);
-		}
-		else SendMessage(hwndDlg, GC_EVENT_CONTROL + WM_USER+500, WINDOW_CLEARLOG, 0);
-		break;
-
-	case GC_REDRAWLOG2:
-		si->LastTime = 0;
-		if (si->pLog)
-			Log_StreamInEvent(hwndDlg, si->pLogEnd, si, TRUE, FALSE);
-		break;
-
-	case GC_REDRAWLOG3:
-		si->LastTime = 0;
-		if (si->pLog)
-			Log_StreamInEvent(hwndDlg, si->pLogEnd, si, TRUE, TRUE);
-		break;
-
-	case GC_ADDLOG:
-		if (si->pLogEnd)
-			Log_StreamInEvent(hwndDlg, si->pLog, si, FALSE, FALSE);
-		else
-			SendMessage(hwndDlg, GC_EVENT_CONTROL + WM_USER+500, WINDOW_CLEARLOG, 0);
-		break;
-
-	case GC_SWITCHNEXTTAB:
-		{
-			int total = TabCtrl_GetItemCount(GetDlgItem(hwndDlg, IDC_TAB));
-			int i = TabCtrl_GetCurSel(GetDlgItem(hwndDlg, IDC_TAB));
-			if (i != -1 && total != -1 && total != 1) {
-				if (i < total -1)
-					i++;
-				else
-					i=0;
-				TabCtrl_SetCurSel(GetDlgItem(hwndDlg, IDC_TAB), i);
-				PostMessage(hwndDlg, GC_TABCLICKED, 0, 0 );
-		}	}
-		break;
-
-	case GC_SWITCHPREVTAB:
-		{
-			int total = TabCtrl_GetItemCount(GetDlgItem(hwndDlg, IDC_TAB));
-			int i = TabCtrl_GetCurSel(GetDlgItem(hwndDlg, IDC_TAB));
-			if (i != -1 && total != -1 && total != 1) {
-				if (i > 0)
-					i--;
-				else
-					i=total-1;
-				TabCtrl_SetCurSel(GetDlgItem(hwndDlg, IDC_TAB), i);
-				PostMessage(hwndDlg, GC_TABCLICKED, 0, 0 );
-		}	}
-		break;
-
-	case GC_SWITCHTAB:
-		{
-			int total = TabCtrl_GetItemCount(GetDlgItem(hwndDlg, IDC_TAB));
-			int i = TabCtrl_GetCurSel(GetDlgItem(hwndDlg, IDC_TAB));
-			if (i != -1 && total != -1 && total != 1 && i != lParam && total > lParam) {
-				TabCtrl_SetCurSel(GetDlgItem(hwndDlg, IDC_TAB), lParam);
-				PostMessage(hwndDlg, GC_TABCLICKED, 0, 0 );
-		}	}
-		break;
-
-	case GC_REMOVETAB:
-		{
-			SESSION_INFO* s2;
-			int i = -1;
-			int tabId = 0;
-			SESSION_INFO* s1 = (SESSION_INFO*) lParam;
-
-			tabId = TabCtrl_GetItemCount(GetDlgItem(hwndDlg, IDC_TAB));
-
-			if (s1) {
-				if (tabId) {
-					for (i = 0; i < tabId; i++) {
-						int ii;
-						TCITEM tci = {0};
-						tci.mask = TCIF_PARAM ;
-						ii = TabCtrl_GetItem(GetDlgItem(hwndDlg, IDC_TAB), i, &tci);
-						if (ii != -1) {
-							s2 = (SESSION_INFO*)tci.lParam;
-							if (s1 == s2)
-								goto END_REMOVETAB;
-				}	}	}
-			}
-			else i = TabCtrl_GetCurSel(GetDlgItem(hwndDlg, IDC_TAB));
-
-END_REMOVETAB:
-			if (i != -1 && i < tabId) {
-				TCITEM id = {0};
-				SESSION_INFO* s;
-				TabCtrl_DeleteItem(GetDlgItem(hwndDlg, IDC_TAB), i);
-				id.mask = TCIF_PARAM;
-				if (!TabCtrl_GetItem(GetDlgItem(hwndDlg, IDC_TAB), i, &id)) {
-					if (!TabCtrl_GetItem(GetDlgItem(hwndDlg, IDC_TAB), i-1, &id)) {
-						SendMessage(hwndDlg, WM_CLOSE, 0, 0);
-						break;
-				}	}
-
-				s = (SESSION_INFO*)id.lParam;
-				if (s)
-					ShowRoom(s, (WPARAM)WINDOW_VISIBLE, wParam == 1?FALSE:TRUE);
-		}	}
-		break;
-
-	case GC_ADDTAB:
-		{
-			TCITEM tci;
-			int tabId;
-			WORD w = 0;
-			int i = 0;
-			int indexfound = -1;
-			int lastlocked = -1;
-			BOOL bFound = FALSE;
-			SESSION_INFO* s2;
-			SESSION_INFO* s1 = (SESSION_INFO*) lParam;
-
-			tci.mask = TCIF_PARAM ;
-			tabId = TabCtrl_GetItemCount(GetDlgItem(hwndDlg, IDC_TAB));
-
-			// does the tab already exist?
-			for (i = 0; i < tabId; i++) {
-				TabCtrl_GetItem(GetDlgItem(hwndDlg, IDC_TAB), i, &tci);
-				s2 = (SESSION_INFO*)tci.lParam;
-				if (s2) {
-					if (s1 == s2 && !bFound) {
-						if (!bFound) {
-							bFound = TRUE;
-							indexfound = i;
-					}	}
-
-					w = DBGetContactSettingWord(s2->hContact, s2->pszModule, "TabPosition", 0);
-					if (w)
-						lastlocked = (int)w;
-			}	}
-
-			w = 0;
-
-			if (!bFound) { // create a new tab
-				int insertat;
-				TCHAR szTemp [30];
-
-				lstrcpyn(szTemp, s1->ptszName, 21);
-				if (lstrlen(s1->ptszName) >20)
-					lstrcpyn(szTemp+20, _T("..."), 4);
-
-				tci.mask = TCIF_TEXT|TCIF_PARAM ;
-				tci.pszText = szTemp;
-				tci.lParam = lParam;
-
-				// determine insert position
-				w = DBGetContactSettingWord(s1->hContact, s1->pszModule, "TabPosition", 0);
-				if (wParam == -1)
-					insertat = w == 0?tabId:(int)w-1;
-				else
-					insertat = (int)wParam;
-
-				w = TabCtrl_InsertItem( GetDlgItem(hwndDlg, IDC_TAB), insertat, &tci );
-				SendMessage(hwndDlg, GC_FIXTABICONS, 0, (LPARAM)s1);
-			}
-
-			if (wParam == -1) {
-				if (bFound)
-					TabCtrl_SetCurSel(GetDlgItem(hwndDlg, IDC_TAB), indexfound);
-				else
-					TabCtrl_SetCurSel(GetDlgItem(hwndDlg, IDC_TAB), w);
-		}	}
-		break;
-
-	case GC_FIXTABICONS:
-		{
-			SESSION_INFO* s = (SESSION_INFO*) lParam;
-			SESSION_INFO* s2;
-			int i;
-			if (s) {
-				TCITEM tci;
-				int tabId;
-
-				tabId = TabCtrl_GetItemCount(GetDlgItem(hwndDlg, IDC_TAB));
-				for (i = 0; i < tabId; i++) {
-					tci.mask = TCIF_PARAM|TCIF_IMAGE ;
-					TabCtrl_GetItem(GetDlgItem(hwndDlg, IDC_TAB), i, &tci);
-					s2 = (SESSION_INFO*)tci.lParam;
-					if (s2 && s == s2) {
-						int image = 0;
-						if (!(s2->wState&GC_EVENT_HIGHLIGHT)) {
-							image = s2->wStatus==ID_STATUS_ONLINE?MM_FindModule(s2->pszModule)->OnlineIconIndex:MM_FindModule(s2->pszModule)->OfflineIconIndex;
-							if (s2->wState&STATE_TALK)
-								image++;
-						}
-
-						if (tci.iImage != image) {
-							tci.mask = TCIF_IMAGE ;
-							tci.iImage = image;
-							TabCtrl_SetItem(GetDlgItem(hwndDlg, IDC_TAB), i, &tci);
-				}	}	}
-			}
-			else RedrawWindow(GetDlgItem(hwndDlg, IDC_TAB), NULL, NULL, RDW_INVALIDATE);
-		}
-		break;
-
-	case GC_SETMESSAGEHIGHLIGHT:
-		{
-			SESSION_INFO* s = (SESSION_INFO*) lParam;
-			SESSION_INFO* s2;
-			int i;
-			if (s) {
-				TCITEM tci;
-				int tabId;
-
-				tabId = TabCtrl_GetItemCount(GetDlgItem(hwndDlg, IDC_TAB));
-				for (i = 0; i < tabId; i++) {
-					tci.mask = TCIF_PARAM ;
-					TabCtrl_GetItem(GetDlgItem(hwndDlg, IDC_TAB), i, &tci);
-					s2 = (SESSION_INFO*)tci.lParam;
-					if (s2 && s == s2) { // highlight
-						s2->wState |= GC_EVENT_HIGHLIGHT;
-						if (SM_FindSession(si->ptszID, si->pszModule) == s2)
-							si->wState = s2->wState;
-						SendMessage(hwndDlg, GC_FIXTABICONS, 0, (LPARAM)s2);
-						if (DBGetContactSettingByte(NULL, "Chat", "FlashWindowHighlight", 0) != 0 && GetActiveWindow() != hwndDlg && GetForegroundWindow() != hwndDlg)
-							SetTimer(hwndDlg, TIMERID_FLASHWND, 900, NULL);
-						break;
-				}	}
-			}
-			else RedrawWindow(GetDlgItem(hwndDlg, IDC_TAB), NULL, NULL, RDW_INVALIDATE);
-		}
-		break;
-
-	case GC_SETTABHIGHLIGHT:
-		{
-			SESSION_INFO* s = (SESSION_INFO*) lParam;
-			SESSION_INFO* s2;
-			int i;
-			if (s) {
-				TCITEM tci;
-				int tabId;
-
-				tabId = TabCtrl_GetItemCount(GetDlgItem(hwndDlg, IDC_TAB));
-				for (i = 0; i < tabId; i++) {
-					tci.mask = TCIF_PARAM ;
-					TabCtrl_GetItem(GetDlgItem(hwndDlg, IDC_TAB), i, &tci);
-					s2 = (SESSION_INFO*)tci.lParam;
-					if (s2 && s == s2) { // highlight
-						SendMessage(hwndDlg, GC_FIXTABICONS, 0, (LPARAM)s2);
-						if (g_Settings.FlashWindow && GetActiveWindow() != hwndDlg && GetForegroundWindow() != hwndDlg)
-							SetTimer(hwndDlg, TIMERID_FLASHWND, 900, NULL);
-						break;
-				}	}
-			}
-			else RedrawWindow(GetDlgItem(hwndDlg, IDC_TAB), NULL, NULL, RDW_INVALIDATE);
-		}
-		break;
-
-	case GC_TABCHANGE:
-		SetWindowLong(hwndDlg,GWL_USERDATA,(LONG)lParam);
-		PostMessage(hwndDlg, GC_SCROLLTOBOTTOM, 0, 0);
-		break;
-
-	case GC_TABCLICKED:
-		{
-			int i;
-			i = TabCtrl_GetCurSel(GetDlgItem(hwndDlg, IDC_TAB));
-			if (i != -1) {
-				SESSION_INFO* s;
-				TCITEM id = {0};
-
-				id.mask = TCIF_PARAM;
-				TabCtrl_GetItem(GetDlgItem(hwndDlg, IDC_TAB), i, &id);
-				s = (SESSION_INFO*)id.lParam;
-				if (s) {
-					if (s->wState&STATE_TALK) {
-						s->wState &= ~STATE_TALK;
-						DBWriteContactSettingWord(s->hContact, s->pszModule ,"ApparentMode",(LPARAM) 0);
-					}
-
-					if (s->wState&GC_EVENT_HIGHLIGHT) {
-						s->wState &= ~GC_EVENT_HIGHLIGHT;
-
-						if (CallService(MS_CLIST_GETEVENT, (WPARAM)s->hContact, (LPARAM)0))
-							CallService(MS_CLIST_REMOVEEVENT, (WPARAM)s->hContact, (LPARAM)"chaticon");
-					}
-
-					SendMessage(hwndDlg, GC_FIXTABICONS, 0, (LPARAM)s);
-					if (!s->hWnd) {
-						ShowRoom(s, (WPARAM)WINDOW_VISIBLE, TRUE);
-						SendMessage(hwndDlg, WM_MOUSEACTIVATE, 0, 0 );
-		}	}	}	}
-		break;
-
-	case GC_DROPPEDTAB:
-		{
-			TCITEM tci;
-			SESSION_INFO* s;
-			int begin = (int)lParam;
-			int end = (int) wParam;
-			int i, tabId;
-			if (begin == end)
-				break;
-
-			tci.mask = TCIF_PARAM ;
-			TabCtrl_GetItem(GetDlgItem(hwndDlg, IDC_TAB),begin,  &tci);
-			s = (SESSION_INFO*)tci.lParam;
-			if (s) {
-				TabCtrl_DeleteItem(GetDlgItem(hwndDlg, IDC_TAB), begin);
-
-				SendMessage(hwndDlg, GC_ADDTAB, end, (LPARAM)s);
-
-				// fix the "fixed" positions
-				tabId = TabCtrl_GetItemCount(GetDlgItem(hwndDlg, IDC_TAB));
-				for (i = 0; i< tabId ; i++) {
-					TabCtrl_GetItem(GetDlgItem(hwndDlg, IDC_TAB),i,  &tci);
-					s = (SESSION_INFO*)tci.lParam;
-					if (s && s->hContact && DBGetContactSettingWord(s->hContact, s->pszModule, "TabPosition", 0) != 0)
-						DBWriteContactSettingWord(s->hContact, s->pszModule, "TabPosition", (WORD)(i + 1));
-		}	}	}
-		break;
-
-	case GC_SESSIONNAMECHANGE:
-		{
-			TCITEM tci;
-			int i;
-			int tabId;
-			SESSION_INFO* s2;
-			SESSION_INFO* s1 = (SESSION_INFO* ) lParam;
-
-			tabId = TabCtrl_GetItemCount(GetDlgItem(hwndDlg, IDC_TAB));
-			for (i = 0; i < tabId; i++) {
-				int j;
-				tci.mask = TCIF_PARAM ;
-				j = TabCtrl_GetItem(GetDlgItem(hwndDlg, IDC_TAB), i, &tci);
-				if (j != -1) {
-					s2 = (SESSION_INFO*)tci.lParam;
-					if (s1 == s2) {
-						tci.mask = TCIF_TEXT ;
-						tci.pszText = s1->ptszName;
-						TabCtrl_SetItem(GetDlgItem(hwndDlg, IDC_TAB), i, &tci);
-		}	}	}	}
-		break;
-
-	case GC_ACKMESSAGE:
-		SendDlgItemMessage(hwndDlg,IDC_MESSAGE,EM_SETREADONLY,FALSE,0);
-		SendDlgItemMessage(hwndDlg,IDC_MESSAGE,WM_SETTEXT,0, (LPARAM)"");
-		return TRUE;
-
-	case WM_CTLCOLORLISTBOX:
-		SetBkColor((HDC) wParam, g_Settings.crUserListBGColor);
-		return (BOOL) hListBkgBrush;
-
-	case WM_MEASUREITEM:
-		{
-			MEASUREITEMSTRUCT *mis = (MEASUREITEMSTRUCT *) lParam;
-			int ih = GetTextPixelSize( _T("AQGgl'"), g_Settings.UserListFont,FALSE);
-			int ih2 = GetTextPixelSize( _T("AQGg'"), g_Settings.UserListHeadingsFont,FALSE);
-			int font = ih > ih2?ih:ih2;
-			int height = DBGetContactSettingByte(NULL, "Chat", "NicklistRowDist", 12);
-
-			mis->itemHeight = height > font?height:font;
+			tvi.mask= TVIF_TEXT|TVIF_STATE|TVIF_PARAM;
+			tvi.pszText = nlu->pszStatus;
+			tvi.lParam = 0;
+			tvi.state = TVIS_EXPANDED|INDEXTOSTATEIMAGEMASK(1);
+			tvi.stateMask = TVIS_EXPANDED|TVIS_STATEIMAGEMASK ;
+			tvis.hInsertAfter = TVI_LAST;
+			tvis.hParent = NULL;
+			tvis.item = tvi;
+			hItem = TreeView_InsertItem(GetDlgItem(hwndDlg, IDC_NICKLIST), &tvis);
+			SM_AddStatus(&dat->pStatusList, nlu->pszStatus, hItem);
 			return TRUE;
-		}
+			}break;
 
-	case WM_DRAWITEM:
-		{
-			DRAWITEMSTRUCT *dis = (DRAWITEMSTRUCT *) lParam;
-			if (dis->CtlID == IDC_LIST) {
-				HFONT  hFont, hOldFont;
-				HICON  hIcon;
-				int offset;
-				int height;
-				int index = dis->itemID;
-				USERINFO * ui = SM_GetUserFromIndex(si->ptszID, si->pszModule, index);
-				if (ui) {
-					height = dis->rcItem.bottom - dis->rcItem.top;
+		case GC_EVENT_JOIN + WM_USER+500:
+			{
+			NEWEVENTLPARAM *nlu = (NEWEVENTLPARAM *)lParam;
+			TVINSERTSTRUCT tvis;
+			TVITEM tvi = {0};
+			HTREEITEM hItem = 0;
+			HTREEITEM h;
+			USERINFO * uin = NULL;
 
-					if (height&1)
-						height++;
-					if (height == 10)
-						offset = 0;
+			if(dat->pStatusList == 0)
+				return 0;			
+			if (nlu->pszStatus)
+				hItem = SM_FindTVGroup(dat->pStatusList, nlu->pszStatus);
+			if(hItem == 0 && dat->pStatusList)
+				hItem = dat->pStatusList->hItem;
+			tvi.mask= TVIF_TEXT;
+			tvi.pszText = nlu->pszName;
+			tvis.hInsertAfter = TVI_SORT;
+			tvis.hParent = hItem;
+			tvis.item = tvi;
+			h =TreeView_InsertItem(GetDlgItem(hwndDlg, IDC_NICKLIST), &tvis);
+			uin = UM_AddUser(dat->pStatusList, &dat->pUserList, nlu->pszName, nlu->pszUID, nlu->pszStatus, h);
+			tvi.mask = TVIF_PARAM|TVIF_HANDLE;
+			tvi.hItem = h;
+			tvi.lParam = (LPARAM)uin;
+			TreeView_SetItem(GetDlgItem(hwndDlg, IDC_NICKLIST), &tvi);
+			dat->nUsersInNicklist += 1;
+			SendMessage(hwndDlg, GC_UPDATEWINDOW, 0, 0);
+			if(nlu->bIsMe)
+			{
+				dat->pMe = uin;
+			}
+
+			if( nlu->bAddLog) {
+				if(!LM_AddEvent(&dat->pEventListStart, &dat->pEventListEnd, nlu->pszName, uMsg, nlu->pszText, nlu->pszStatus, nlu->pszUserInfo, nlu->bIsMe, FALSE, nlu->time, &dat->iEventCount, g_LogOptions.iEventLimit))
+					PostMessage(hwndDlg, GC_REDRAWLOG, 0, 0);
+				Log_StreamInEvent(hwndDlg, dat->pEventListStart, dat, FALSE); 
+				SkinPlaySound("ChatJoin");
+				DoPopupAndTrayIcon(hwndDlg, uMsg-WM_USER-500, dat, nlu);
+			}
+			return TRUE;
+			}break;
+
+		case GC_EVENT_PART + WM_USER+500:
+		case GC_EVENT_QUIT + WM_USER+500:
+		case GC_EVENT_KICK + WM_USER+500:
+			{
+			NEWEVENTLPARAM *nlu = (NEWEVENTLPARAM *)lParam;
+			USERINFO *uin;
+
+			if(nlu->pszUID)
+				uin = UM_FindUser(dat->pUserList, nlu->pszUID);
+			else
+				uin = dat->pMe;
+			if(uin)
+			{
+				TreeView_DeleteItem(GetDlgItem(hwndDlg, IDC_NICKLIST), uin->hItem);
+				UM_RemoveUser(&dat->pUserList, nlu->pszUID);
+				dat->nUsersInNicklist -= 1;
+				SendMessage(hwndDlg, GC_UPDATEWINDOW, 0, 0);
+				if( nlu->bAddLog) {
+					if(uMsg == GC_EVENT_PART + WM_USER+500)
+						SkinPlaySound("ChatPart");
+					else if(uMsg == GC_EVENT_QUIT + WM_USER+500)
+						SkinPlaySound("ChatQuit");
 					else
-						offset = height/2 - 4;
-					hIcon = SM_GetStatusIcon(si, ui);
-					hFont = (ui->iStatusEx == 0) ? g_Settings.UserListFont : g_Settings.UserListHeadingsFont;
-					hOldFont = (HFONT) SelectObject(dis->hDC, hFont);
-					SetBkMode(dis->hDC, TRANSPARENT);
-
-					if (dis->itemAction == ODA_FOCUS && dis->itemState & ODS_SELECTED)
-						FillRect(dis->hDC, &dis->rcItem, GetSysColorBrush(COLOR_HIGHLIGHT));
-					else //if (dis->itemState & ODS_INACTIVE)
-						FillRect(dis->hDC, &dis->rcItem, hListBkgBrush);
-					DrawIconEx(dis->hDC,2, dis->rcItem.top + offset,hIcon,10,10,0,NULL, DI_NORMAL);
-
-					SetTextColor(dis->hDC, ui->iStatusEx == 0?g_Settings.crUserListColor:g_Settings.crUserListHeadingsColor);
-					TextOut(dis->hDC, dis->rcItem.left+14, dis->rcItem.top, ui->pszNick, lstrlen(ui->pszNick));
-					SelectObject(dis->hDC, hOldFont);
+						SkinPlaySound("ChatKick");
+					if(!LM_AddEvent(&dat->pEventListStart, &dat->pEventListEnd, nlu->pszName, uMsg, nlu->pszText, nlu->pszStatus, nlu->pszUserInfo, nlu->bIsMe, FALSE, nlu->time, &dat->iEventCount, g_LogOptions.iEventLimit))
+						PostMessage(hwndDlg, GC_REDRAWLOG, 0, 0);
+					Log_StreamInEvent(hwndDlg, dat->pEventListStart, dat, FALSE); 
+					DoPopupAndTrayIcon(hwndDlg, uMsg-WM_USER-500, dat, nlu);
 				}
 				return TRUE;
-		}	}
-
-	case GC_UPDATENICKLIST:
-		{
-			int i = SendMessage(GetDlgItem(hwndDlg, IDC_LIST), LB_GETTOPINDEX, 0, 0);
-			SendMessage(GetDlgItem(hwndDlg, IDC_LIST), LB_SETCOUNT, si->nUsersInNicklist, 0);
-			SendMessage(GetDlgItem(hwndDlg, IDC_LIST), LB_SETTOPINDEX, i, 0);
-			SendMessage(hwndDlg, GC_UPDATETITLE, 0, 0);
-		}
-		break;
-
-	case GC_EVENT_CONTROL + WM_USER+500:
-		{
-			switch(wParam) {
-			case SESSION_OFFLINE:
-				SendMessage(hwndDlg, GC_UPDATESTATUSBAR, 0, 0);
-				SendMessage(si->hWnd, GC_UPDATENICKLIST, (WPARAM)0, (LPARAM)0);
+			}
+			}break;
+		case GC_NICKLISTREINIT:
+			{
+				CList_SetOffline(dat->hContact, FALSE);
+				SendMessage(dat->hwndStatus, SB_SETICON, 0,(LPARAM)MM_FindModule(dat->pszModule)->hOfflineIcon);
+				TreeView_DeleteAllItems(GetDlgItem(hwndDlg, IDC_NICKLIST));
+				UM_RemoveAll(&dat->pUserList);
+				SM_RemoveAll(&dat->pStatusList);
+				dat->pMe = NULL;
+				dat->nUsersInNicklist = 0;
+				SendMessage(hwndDlg, GC_UPDATEWINDOW, 0, 0);
 				return TRUE;
+			}break;
 
-			case SESSION_ONLINE:
-				SendMessage(hwndDlg, GC_UPDATESTATUSBAR, 0, 0);
-				return TRUE;
+		case GC_EVENT_TOPIC + WM_USER+500:
+			{
+			NEWEVENTLPARAM *nlu = (NEWEVENTLPARAM *)lParam;
+			dat->pszTopic = realloc(dat->pszTopic, lstrlen(nlu->pszText)+1);
+			lstrcpy(dat->pszTopic, nlu->pszText);
+			if( nlu->bAddLog) {
+				if(!LM_AddEvent(&dat->pEventListStart, &dat->pEventListEnd, nlu->pszName, uMsg, nlu->pszText, nlu->pszStatus, nlu->pszUserInfo, nlu->bIsMe, FALSE, nlu->time, &dat->iEventCount, g_LogOptions.iEventLimit))
+					PostMessage(hwndDlg, GC_REDRAWLOG, 0, 0);
+				Log_StreamInEvent(hwndDlg, dat->pEventListStart, dat, FALSE); 
+				SkinPlaySound("ChatTopic");
+				DoPopupAndTrayIcon(hwndDlg, uMsg-WM_USER-500, dat, nlu);
+				DBWriteContactSettingString(dat->hContact, dat->pszModule , "Topic", dat->pszTopic);
+			}
+			return TRUE;
+			}break;
 
-			case WINDOW_HIDDEN:
-				SendMessage(hwndDlg, GC_CLOSEWINDOW, 0, 0);
-				return TRUE;
+		case GC_EVENT_NOTICE + WM_USER+500:
+			{
+			NEWEVENTLPARAM *nlu = (NEWEVENTLPARAM *)lParam;
+			if( nlu->bAddLog) {
+				if(!LM_AddEvent(&dat->pEventListStart, &dat->pEventListEnd, nlu->pszName, uMsg, nlu->pszText, nlu->pszStatus, nlu->pszUserInfo, nlu->bIsMe, FALSE, nlu->time, &dat->iEventCount, g_LogOptions.iEventLimit))
+					PostMessage(hwndDlg, GC_REDRAWLOG, 0, 0);
+				Log_StreamInEvent(hwndDlg, dat->pEventListStart, dat, FALSE); 
+				SkinPlaySound("ChatNotice");
+				DoPopupAndTrayIcon(hwndDlg, uMsg-WM_USER-500, dat, nlu);
+			}
+			return TRUE;
+			}break;
+		case GC_EVENT_MESSAGE + WM_USER+500:
+		case GC_EVENT_ACTION + WM_USER+500:
+			{
+			NEWEVENTLPARAM *nlu = (NEWEVENTLPARAM *)lParam;
+			BOOL bHighl = FALSE;
+			if( nlu->bAddLog) 
+			{
+				if(!nlu->bIsMe)
+					bHighl = IsHighlighted(dat, nlu->pszText);
+				if(!LM_AddEvent(&dat->pEventListStart, &dat->pEventListEnd, nlu->pszName, uMsg, nlu->pszText, nlu->pszStatus, nlu->pszUserInfo, nlu->bIsMe, bHighl, nlu->time, &dat->iEventCount, g_LogOptions.iEventLimit))
+					PostMessage(hwndDlg, GC_REDRAWLOG, 0, 0);
+				Log_StreamInEvent(hwndDlg, dat->pEventListStart, dat, FALSE); 
+				if(!nlu->bIsMe)
+				{
+					if(bHighl)
+						SkinPlaySound("ChatHighlight");
 
-			case WINDOW_CLEARLOG:
-				SetDlgItemText(hwndDlg, IDC_LOG, _T(""));
-				return TRUE;
+					if(GetActiveWindow() != hwndDlg || GetForegroundWindow() != hwndDlg)
+					{
+						if(uMsg == GC_EVENT_MESSAGE + WM_USER+500)
+						{
 
-			case SESSION_TERMINATE:
-				SendMessage(hwndDlg,GC_SAVEWNDPOS,0,0);
-				if (DBGetContactSettingByte(NULL, "Chat", "SavePosition", 0)) {
-					DBWriteContactSettingDword(si->hContact, "Chat", "roomx", si->iX);
-					DBWriteContactSettingDword(si->hContact, "Chat", "roomy", si->iY);
-					DBWriteContactSettingDword(si->hContact, "Chat", "roomwidth" , si->iWidth);
-					DBWriteContactSettingDword(si->hContact, "Chat", "roomheight", si->iHeight);
+							if(g_LogOptions.FlashWindow)
+								SetTimer(hwndDlg, TIMERID_FLASHWND, 900, NULL);
+							if(DBGetContactSettingWord(dat->hContact, dat->pszModule,"ApparentMode",(WORD) 0) != 40071)
+								DBWriteContactSettingWord(dat->hContact, dat->pszModule,"ApparentMode",(LPARAM)(WORD) 40071);
+						}
+						if(bHighl)
+						{
+							char szTemp[256];
+							_snprintf(szTemp, 256, Translate("%s wants your attention in room %s"), nlu->pszName, dat->pszName);
+							SendMessage(hwndDlg, GC_HIGHLIGHT, 0, (LPARAM)&szTemp);
+						}
+						else
+							SkinPlaySound("ChatMessage");
+
+					}
 				}
-				if (CallService(MS_CLIST_GETEVENT, (WPARAM)si->hContact, (LPARAM)0))
-					CallService(MS_CLIST_REMOVEEVENT, (WPARAM)si->hContact, (LPARAM)"chaticon");
-				si->wState &= ~STATE_TALK;
-				DBWriteContactSettingWord(si->hContact, si->pszModule ,"ApparentMode",(LPARAM) 0);
-				SendMessage(hwndDlg, GC_CLOSEWINDOW, 0, 0);
-				return TRUE;
-
-			case WINDOW_MINIMIZE:
-				ShowWindow(hwndDlg, SW_MINIMIZE);
-				goto LABEL_SHOWWINDOW;
-
-			case WINDOW_MAXIMIZE:
-				ShowWindow(hwndDlg, SW_MAXIMIZE);
-				goto LABEL_SHOWWINDOW;
-
-			case SESSION_INITDONE:
-				if (DBGetContactSettingByte(NULL, "Chat", "PopupOnJoin", 0)!=0)
+				else
+					if(!nlu->bIsMe)
+						SkinPlaySound("ChatAction");
+				uMsg -= WM_USER;
+				uMsg -= 500;
+				if (bHighl)
+					uMsg |= GC_EVENT_HIGHLIGHT;
+				DoPopupAndTrayIcon(hwndDlg, uMsg, dat, nlu);
+			}
+			return TRUE;
+			}break;
+		case GC_EVENT_INFORMATION + WM_USER+500:
+			{
+			NEWEVENTLPARAM *nlu = (NEWEVENTLPARAM *)lParam;
+			if( nlu->bAddLog) 
+			{
+				if(!LM_AddEvent(&dat->pEventListStart, &dat->pEventListEnd, nlu->pszName, uMsg, nlu->pszText, nlu->pszStatus, nlu->pszUserInfo, nlu->bIsMe, FALSE, nlu->time, &dat->iEventCount, g_LogOptions.iEventLimit))
+					PostMessage(hwndDlg, GC_REDRAWLOG, 0, 0);
+				Log_StreamInEvent(hwndDlg, dat->pEventListStart, dat, FALSE); 
+				DoPopupAndTrayIcon(hwndDlg, uMsg-WM_USER-500, dat, nlu);
+			}
+			return TRUE;
+			}break;
+		case GC_EVENT_CONTROL + WM_USER+500:
+			{
+			NEWEVENTLPARAM *nlu = (NEWEVENTLPARAM *)lParam;
+			switch(wParam) 
+			{
+			case WINDOW_INITDONE:
+				if(DBGetContactSettingByte(NULL, "Chat", "PopupOnJoin", 0)!=0)
+				{
+					nlu->dwItemData = 1; // stupid fix
 					return TRUE;
+				}
 				// fall through
 			case WINDOW_VISIBLE:
-				if (IsIconic(hwndDlg))
-					ShowWindow(hwndDlg, SW_NORMAL);
-LABEL_SHOWWINDOW:
-				SendMessage(hwndDlg, WM_SIZE, 0, 0);
-				SendMessage(hwndDlg, GC_REDRAWLOG, 0, 0);
-				SendMessage(hwndDlg, GC_UPDATENICKLIST, 0, 0);
-				SendMessage(hwndDlg, GC_UPDATESTATUSBAR, 0, 0);
-				ShowWindow(hwndDlg, SW_SHOW);
-				SendMessage(hwndDlg, WM_SIZE, 0, 0);
-				SetForegroundWindow(hwndDlg);
-				return TRUE;
-		}	}
-		break;
+				{
+					BOOL bRedrawFlag = FALSE;
+					SetActiveChatWindow(dat->pszID, dat->pszModule);
+					if(!IsWindowVisible(hwndDlg))
+						bRedrawFlag = TRUE;
+					SendMessage(hwndDlg, WM_SETREDRAW, TRUE, 0);
+					if (IsIconic(hwndDlg))
+						ShowWindow(hwndDlg, SW_NORMAL);
+					SendMessage(hwndDlg, WM_SIZE, 0, 0);
+					ShowWindow(hwndDlg, SW_SHOW);
+					if(bRedrawFlag)
+					{
+						InvalidateRect(hwndDlg, NULL, TRUE);
+						SendMessage(hwndDlg, GC_REDRAWLOG, 0, 0);
+					}
+					SetWindowPos(hwndDlg, 0, 0, 0, 0, 0, SWP_NOZORDER | SWP_NOMOVE| SWP_NOSIZE | SWP_FRAMECHANGED);
+					SetActiveWindow(hwndDlg);
 
-	case GC_SPLITTERMOVED:
+				}
+				nlu->dwItemData = 1; // stupid fix
+				return TRUE;
+			case WINDOW_HIDDEN:
+				ShowWindow(hwndDlg, SW_HIDE); 
+				SendMessage(hwndDlg, WM_SETREDRAW, FALSE, 0);
+				nlu->dwItemData = 1; // stupid fix
+				return TRUE;
+			case WINDOW_MAXIMIZE:
+				ShowWindow(hwndDlg, SW_MAXIMIZE); 
+				nlu->dwItemData = 1; // stupid fix
+				return TRUE;
+			case WINDOW_MINIMIZE:
+				ShowWindow(hwndDlg, SW_MINIMIZE); 
+				nlu->dwItemData = 1; // stupid fix
+				return TRUE;
+			case WINDOW_CLEARLOG:
+				SetDlgItemText(hwndDlg, IDC_LOG, "");
+				LM_RemoveAll(&dat->pEventListStart, &dat->pEventListEnd);
+				dat->iEventCount = 0;
+				dat->LastTime = 0;
+				nlu->dwItemData = 1; // stupid fix
+				return TRUE;
+			case WINDOW_TERMINATE:
+				if(dat->iType == GCW_CHATROOM)
+					PostMessage(hwndDlg, GC_CLOSEWINDOW, 0, 0);
+				nlu->dwItemData = 1; // stupid fix
+				return TRUE;
+			case WINDOW_OFFLINE:
+					SendMessage(hwndDlg, GC_NICKLISTREINIT, 0, 0);
+				nlu->dwItemData = 1; // stupid fix
+				return TRUE;
+			case WINDOW_ONLINE:
+				SendMessage(dat->hwndStatus, SB_SETICON, 0,(LPARAM)MM_FindModule(dat->pszModule)->hOnlineIcon);
+				DBWriteContactSettingWord(dat->hContact, dat->pszModule, "Status", ID_STATUS_ONLINE);
+				nlu->dwItemData = 1; // stupid fix
+				return TRUE;
+			default:break;
+			}
+
+			return TRUE;
+			}break;
+
+		case GC_EVENT_SETSBTEXT + WM_USER+500:
+			{	
+			NEWEVENTLPARAM *nlu = (NEWEVENTLPARAM *)lParam;
+			dat->pszStatusbarText = realloc(dat->pszStatusbarText, lstrlen(nlu->pszText)+1);
+			lstrcpy(dat->pszStatusbarText, RemoveFormatting(nlu->pszText));
+			SendMessage(dat->hwndStatus, SB_SETTEXT, 1, (LPARAM)dat->pszStatusbarText);
+			SendMessage(dat->hwndStatus, SB_SETTIPTEXT, 1, (LPARAM)dat->pszStatusbarText);
+			DBWriteContactSettingString(dat->hContact, dat->pszModule, "StatusBar", dat->pszStatusbarText);
+			return TRUE;
+			} break;
+		case GC_EVENT_GETITEMDATA + WM_USER+500:
+			{
+			NEWEVENTLPARAM *nlu = (NEWEVENTLPARAM *)lParam;
+			nlu->dwItemData = dat->ItemData;
+			return TRUE;
+			} break;
+		case GC_EVENT_SETITEMDATA + WM_USER+500:
+			{	
+			NEWEVENTLPARAM *nlu = (NEWEVENTLPARAM *)lParam;
+			dat->ItemData = nlu->dwItemData;
+			return TRUE;
+			} break;
+		case GC_EVENT_SENDMESSAGE + WM_USER+500:
+			{	
+			NEWEVENTLPARAM *nlu = (NEWEVENTLPARAM *)lParam;
+			if(dat->iType != GCW_SERVER)
+				DoEventHookAsync(hwndDlg, dat->pszID, dat->pszModule, GC_USER_MESSAGE, NULL, nlu->pszText, (LPARAM)NULL);
+			return TRUE;
+			} break;
+
+
+		case GC_EVENT_NICK + WM_USER+500:
+			{
+			NEWEVENTLPARAM *nlu = (NEWEVENTLPARAM *)lParam;
+			TVITEM tvi ={0};
+			USERINFO * uin;
+
+			uin = UM_FindUser(dat->pUserList, nlu->pszUID);
+			if (uin)
+			{ 
+				HTREEITEM hParent;
+				HWND hwnd=GetDlgItem(hwndDlg, IDC_NICKLIST);
+
+				tvi.mask = TVIF_TEXT;
+				tvi.pszText = nlu->pszText;
+				tvi.hItem = uin->hItem;
+				TreeView_SetItem(hwnd, &tvi);
+				hParent = TreeView_GetParent(hwnd, uin->hItem);
+				TreeView_SortChildren(hwnd, hParent, FALSE);
+				uin->pszNick = realloc(uin->pszNick, lstrlen(nlu->pszText)+1);
+				lstrcpy(uin->pszNick, nlu->pszText);
+				if( nlu->bAddLog) {
+					if(!LM_AddEvent(&dat->pEventListStart, &dat->pEventListEnd, nlu->pszName, uMsg, nlu->pszText, nlu->pszStatus, nlu->pszUserInfo, nlu->bIsMe, FALSE, nlu->time, &dat->iEventCount, g_LogOptions.iEventLimit))
+						PostMessage(hwndDlg, GC_REDRAWLOG, 0, 0);
+					Log_StreamInEvent(hwndDlg, dat->pEventListStart, dat, FALSE); 
+					SkinPlaySound("ChatNick");
+					DoPopupAndTrayIcon(hwndDlg, uMsg-WM_USER-500, dat, nlu);
+				}
+				return TRUE;
+			}
+			}break;
+		case GC_EVENT_CHID + WM_USER+500:
+			{
+			NEWEVENTLPARAM *nlu = (NEWEVENTLPARAM *)lParam;
+			USERINFO * uin = UM_FindUser(dat->pUserList, nlu->pszUID);
+			if(uin)
+			{
+				uin->pszUID = realloc(uin->pszUID, lstrlen(nlu->pszText)+1);
+				lstrcpy(uin->pszUID, nlu->pszText);
+				return TRUE;
+			}
+			
+			}break;
+		case GC_EVENT_CHWINNAME + WM_USER+500:
+			{
+			NEWEVENTLPARAM *nlu = (NEWEVENTLPARAM *)lParam;
+			char szTemp[256];
+			dat->pszName = realloc(dat->pszName, lstrlen(nlu->pszText)+1);
+			lstrcpyn(dat->pszName, nlu->pszText, lstrlen(nlu->pszText)+1);
+			if(dat->iType == GCW_SERVER)
+				_snprintf(szTemp, sizeof(szTemp), "Server: %s", nlu->pszText);
+			else
+				_snprintf(szTemp, sizeof(szTemp), "%s", nlu->pszText);
+
+			DBWriteContactSettingString(dat->hContact,dat->pszModule , "Nick", szTemp);
+			SendMessage(hwndDlg, GC_UPDATEWINDOW, 0, 0);
+			InvalidateRect(hwndDlg, NULL, TRUE);
+			return TRUE;
+			}break;
+		case GC_EVENT_ACK + WM_USER+500:
+			{
+				SendDlgItemMessage(hwndDlg,IDC_MESSAGE,EM_SETREADONLY,FALSE,0);
+				SendDlgItemMessage(hwndDlg,IDC_MESSAGE,WM_SETTEXT,0, (LPARAM)"");
+			return TRUE;
+			}break;
+		case GC_EVENT_ADDSTATUS + WM_USER+500:
+		case GC_EVENT_REMOVESTATUS + WM_USER+500:
+			{
+			NEWEVENTLPARAM *nlu = (NEWEVENTLPARAM *)lParam;
+			TVINSERTSTRUCT tvis;
+			TVITEM tvi = {0};
+			WORD wOldStatus ;
+			WORD wNewStatus;
+			char * pszNewStatus;
+			USERINFO * uin = UM_FindUser(dat->pUserList, nlu->pszUID);
+			
+			if(uin)
+			{
+				wNewStatus = SM_StringToWord(dat->pStatusList, nlu->pszStatus);
+				wOldStatus = uin->Status;
+				if(uMsg == GC_EVENT_ADDSTATUS + WM_USER+500)
+					wNewStatus |= wOldStatus;
+				else
+				{
+					wNewStatus ^= 0xFFFF;
+					wNewStatus &= wOldStatus;
+					if(wNewStatus == 0)
+						wNewStatus = SM_StringToWord(dat->pStatusList, "");
+				}
+				uin->Status = wNewStatus;
+				pszNewStatus = SM_WordToString(dat->pStatusList, wNewStatus);
+				TreeView_DeleteItem(GetDlgItem(hwndDlg, IDC_NICKLIST), uin->hItem);
+				tvi.mask = TVIF_TEXT|TVIF_PARAM;
+				tvi.lParam = (LPARAM)uin;
+				tvi.pszText = uin->pszNick;
+				tvis.hInsertAfter = TVI_SORT;
+				tvis.hParent = SM_FindTVGroup(dat->pStatusList, pszNewStatus);
+				tvis.item = tvi;
+				uin->hItem =TreeView_InsertItem(GetDlgItem(hwndDlg, IDC_NICKLIST), &tvis);
+				if( nlu->bAddLog) {
+					if(!LM_AddEvent(&dat->pEventListStart, &dat->pEventListEnd, nlu->pszName, uMsg, nlu->pszText, nlu->pszStatus, nlu->pszUserInfo, nlu->bIsMe, FALSE, nlu->time, &dat->iEventCount, g_LogOptions.iEventLimit))
+						PostMessage(hwndDlg, GC_REDRAWLOG, 0, 0);
+					Log_StreamInEvent(hwndDlg, dat->pEventListStart, dat, FALSE); 
+					SkinPlaySound("ChatMode");
+					DoPopupAndTrayIcon(hwndDlg, uMsg-WM_USER-500, dat, nlu);
+				}
+				return TRUE;
+			}
+			}break;
+		case GC_HIGHLIGHT:
+			if(DBGetContactSettingByte(NULL, "Chat", "FlashWindowHighlight", 0) != 0)
+				SetTimer(hwndDlg, TIMERID_FLASHWND, 900, NULL);
+			break;
+
+		case GC_SPLITTERMOVED:
 		{	POINT pt;
 			RECT rc;
 			RECT rcLog;
 			BOOL bFormat = IsWindowVisible(GetDlgItem(hwndDlg,IDC_SMILEY));
 
-			static int x = 0;
-
 			GetWindowRect(GetDlgItem(hwndDlg,IDC_LOG),&rcLog);
-			if ((HWND)lParam==GetDlgItem(hwndDlg,IDC_SPLITTERX)) {
+			if((HWND)lParam==GetDlgItem(hwndDlg,IDC_SPLITTERX)) {
 				int oldSplitterX;
 				GetClientRect(hwndDlg,&rc);
 				pt.x=wParam; pt.y=0;
 				ScreenToClient(hwndDlg,&pt);
 
-				oldSplitterX=si->iSplitterX;
-				si->iSplitterX=rc.right-pt.x+1;
-				if (si->iSplitterX < 35)
-					si->iSplitterX=35;
-				if (si->iSplitterX > rc.right-rc.left-35)
-					si->iSplitterX = rc.right-rc.left-35;
-				g_Settings.iSplitterX = si->iSplitterX;
+				oldSplitterX=dat->iSplitterX;
+				dat->iSplitterX=rc.right-pt.x+1;
+				if(dat->iSplitterX < 35) 
+					dat->iSplitterX=35;
+				if(dat->iSplitterX > rc.right-rc.left-35) 
+					dat->iSplitterX = rc.right-rc.left-35;
+				g_LogOptions.iSplitterX = dat->iSplitterX;
 			}
-			else if ((HWND)lParam==GetDlgItem(hwndDlg,IDC_SPLITTERY)) {
+			else if((HWND)lParam==GetDlgItem(hwndDlg,IDC_SPLITTERY)) {
 				int oldSplitterY;
 				GetClientRect(hwndDlg,&rc);
 				pt.x=0; pt.y=wParam;
 				ScreenToClient(hwndDlg,&pt);
 
-				oldSplitterY=si->iSplitterY;
-				si->iSplitterY=bFormat?rc.bottom-pt.y+1:rc.bottom-pt.y+20;
-				if (si->iSplitterY<63)
-					si->iSplitterY=63;
-				if (si->iSplitterY>rc.bottom-rc.top-40)
-					si->iSplitterY = rc.bottom-rc.top-40;
-				g_Settings.iSplitterY = si->iSplitterY;
+				oldSplitterY=dat->iSplitterY;
+				dat->iSplitterY=bFormat?rc.bottom-pt.y+1:rc.bottom-pt.y+26;
+				if(dat->iSplitterY<67) 
+					dat->iSplitterY=67;
+				if(dat->iSplitterY>rc.bottom-rc.top-40) 
+					dat->iSplitterY = rc.bottom-rc.top-40;
+				g_LogOptions.iSplitterY = dat->iSplitterY;
 			}
-			if (x==2) {
-				PostMessage(hwndDlg,WM_SIZE,0,0);
-				x = 0;
-			}
-			else x++;
-		}
-		break;
+			PostMessage(hwndDlg,WM_SIZE,0,0);
+		}break;
+       case GC_CASCADENEWWINDOW:
+            if ((HWND) wParam == hwndDlg)
+                break;
+            {
+                RECT rcThis, rcNew;
+				DWORD dwFlag;
 
-	case GC_FIREHOOK:
-		if (lParam) {
-			GCHOOK* gch = (GCHOOK *) lParam;
-			NotifyEventHooks(hSendEvent,0,(WPARAM)gch);
-			if ( gch->pDest ) {
-				mir_free( gch->pDest->pszID );
-				mir_free( gch->pDest->pszModule );
-				mir_free( gch->pDest );
-			}
-			mir_free( gch->ptszText );
-			mir_free( gch->ptszUID );
-			mir_free( gch );
-		}
-		break;
+				dwFlag = SWP_NOZORDER | SWP_NOSIZE;
+				if(!IsWindowVisible ((HWND)wParam))
+					dwFlag |= SWP_HIDEWINDOW;
 
-	case GC_CHANGEFILTERFLAG:
-		si->iLogFilterFlags = lParam;
-		break;
-
-	case GC_SHOWFILTERMENU:
+                GetWindowRect(hwndDlg, &rcThis);
+                GetWindowRect((HWND) wParam, &rcNew);
+                if (abs(rcThis.left - rcNew.left) < 3 && abs(rcThis.top - rcNew.top) < 3) {
+                    int offset = GetSystemMetrics(SM_CYCAPTION) + GetSystemMetrics(SM_CYFRAME);
+                    SetWindowPos((HWND) wParam, 0, rcNew.left + offset, rcNew.top + offset, 0, 0, dwFlag);
+                    *(int *) lParam = 1;
+                }
+            }
+            break;
+		case GC_FIREHOOK:
 		{
+			if (lParam)
+			{
+				GCHOOK * gch = (GCHOOK *) lParam;
+				NotifyEventHooks(hSendEvent,0,(WPARAM)gch);
+				if (gch->pDest)
+				{
+					if (gch->pDest->pszID)
+						free(gch->pDest->pszID);
+					if (gch->pDest->pszModule)
+						free((char*)gch->pDest->pszModule);
+					free(gch->pDest);
+				}
+				if (gch->pszText)
+					free(gch->pszText);
+				if (gch->pszUID)
+					free(gch->pszUID);
+				free(gch);
+			}
+		}	break;
+		case GC_CHANGEFILTERFLAG:
+		{
+			dat->iLogFilterFlags = lParam;
+		}	break;
+		case GC_SHOWFILTERMENU:
+			{
 			RECT rc;
-			HWND hwnd = CreateDialogParam(g_hInst, MAKEINTRESOURCE(IDD_FILTER), hwndDlg, FilterWndProc, (LPARAM)si);
+    		HWND hwnd = CreateDialogParam(g_hInst, MAKEINTRESOURCE(IDD_FILTER), hwndDlg, FilterWndProc, (LPARAM)dat);
 			GetWindowRect(GetDlgItem(hwndDlg, IDC_FILTER), &rc);
-			SetWindowPos(hwnd, HWND_TOP, rc.left-85, (IsWindowVisible(GetDlgItem(hwndDlg, IDC_FILTER))||IsWindowVisible(GetDlgItem(hwndDlg, IDC_BOLD)))?rc.top-206:rc.top-186, 0, 0, SWP_NOSIZE|SWP_SHOWWINDOW);
-		}
-		break;
+			SetWindowPos(hwnd, HWND_TOP, rc.left-78, (IsWindowVisible(GetDlgItem(hwndDlg, IDC_FILTER))||g_LogOptions.bShowName)?rc.bottom+1:rc.bottom-19, 0, 0, SWP_NOSIZE|SWP_SHOWWINDOW);
+			SendMessage(hwnd, GC_FILTERFIX, 0, 0);
+			}break;
+		case GC_SHOWCOLORCHOOSER:
+			{
+				HWND ColorWindow;
+				RECT rc;
+				BOOL bFG = lParam == IDC_COLOR?TRUE:FALSE;
+				COLORCHOOSER * pCC = malloc(sizeof(COLORCHOOSER));
 
-	case GC_SHOWCOLORCHOOSER:
+				GetWindowRect(GetDlgItem(hwndDlg, bFG?IDC_COLOR:IDC_BKGCOLOR), &rc);
+				pCC->hWndTarget = GetDlgItem(hwndDlg, IDC_MESSAGE);
+				pCC->pModule = MM_FindModule(dat->pszModule);
+				pCC->xPosition = rc.left+3;
+				pCC->yPosition = IsWindowVisible(GetDlgItem(hwndDlg, IDC_COLOR))?rc.top-1:rc.top+20;
+				pCC->bForeground = bFG;
+				pCC->dat = dat;
+				
+				ColorWindow= CreateDialogParam(g_hInst, MAKEINTRESOURCE(IDD_COLORCHOOSER), hwndDlg, DlgProcColorToolWindow, (LPARAM) pCC);
+
+			}break;
+		
+        case WM_TIMER:
+			if (wParam == TIMERID_FLASHWND) {
+				FlashWindow(hwndDlg, TRUE);
+				if (dat->nFlash > dat->nFlashMax) {
+					KillTimer(hwndDlg, TIMERID_FLASHWND);
+					FlashWindow(hwndDlg, FALSE);
+					dat->nFlash = 0;
+				}
+				dat->nFlash++;
+			}break;
+		case WM_ACTIVATE:
 		{
-			HWND ColorWindow;
-			RECT rc;
-			BOOL bFG = lParam == IDC_COLOR?TRUE:FALSE;
-			COLORCHOOSER * pCC = mir_alloc(sizeof(COLORCHOOSER));
-
-			GetWindowRect(GetDlgItem(hwndDlg, bFG?IDC_COLOR:IDC_BKGCOLOR), &rc);
-			pCC->hWndTarget = GetDlgItem(hwndDlg, IDC_MESSAGE);
-			pCC->pModule = MM_FindModule(si->pszModule);
-			pCC->xPosition = rc.left+3;
-			pCC->yPosition = IsWindowVisible(GetDlgItem(hwndDlg, IDC_COLOR))?rc.top-1:rc.top+20;
-			pCC->bForeground = bFG;
-			pCC->si = si;
-
-			ColorWindow= CreateDialogParam(g_hInst, MAKEINTRESOURCE(IDD_COLORCHOOSER), hwndDlg, DlgProcColorToolWindow, (LPARAM) pCC);
-		}
-		break;
-
-	case GC_SCROLLTOBOTTOM:
-		{
-			SCROLLINFO si = { 0 };
-			if ((GetWindowLong(GetDlgItem(hwndDlg, IDC_LOG), GWL_STYLE) & WS_VSCROLL) != 0) {
-				CHARRANGE sel;
-				si.cbSize = sizeof(si);
-				si.fMask = SIF_PAGE | SIF_RANGE;
-				GetScrollInfo(GetDlgItem(hwndDlg, IDC_LOG), SB_VERT, &si);
-				si.fMask = SIF_POS;
-				si.nPos = si.nMax - si.nPage + 1;
-				SetScrollInfo(GetDlgItem(hwndDlg, IDC_LOG), SB_VERT, &si, TRUE);
-				sel.cpMin = sel.cpMax = GetRichTextLength(GetDlgItem(hwndDlg, IDC_LOG));
-				SendMessage(GetDlgItem(hwndDlg, IDC_LOG), EM_EXSETSEL, 0, (LPARAM) & sel);
-				PostMessage(GetDlgItem(hwndDlg, IDC_LOG), WM_VSCROLL, MAKEWPARAM(SB_BOTTOM, 0), 0);
-		}	}
-		break;
-
-	case WM_TIMER:
-		if (wParam == TIMERID_FLASHWND)
-			FlashWindow(hwndDlg, TRUE);
-		break;
-
-	case WM_ACTIVATE:
-		if (LOWORD(wParam) != WA_ACTIVE)
-			break;
-
+			if (LOWORD(wParam) != WA_ACTIVE)
+				break;
+ 		} 
 		//fall through
-	case WM_MOUSEACTIVATE:
-		{
-			WINDOWPLACEMENT wp = { 0 };
+		case WM_MOUSEACTIVATE:
+			{
+//			InvalidateRect(GetDlgItem(hwndDlg,IDC_LOG), NULL, TRUE);
+			CHARRANGE sel;
 
-			wp.length = sizeof(wp);
-			GetWindowPlacement(hwndDlg, &wp);
-			g_Settings.iX = wp.rcNormalPosition.left;
-			g_Settings.iY = wp.rcNormalPosition.top;
-			g_Settings.iWidth = wp.rcNormalPosition.right - wp.rcNormalPosition.left;
-			g_Settings.iHeight = wp.rcNormalPosition.bottom - wp.rcNormalPosition.top;
+			SendMessage(GetDlgItem(hwndDlg, IDC_LOG), EM_EXGETSEL, 0, (LPARAM) & sel);
+			sel.cpMin = sel.cpMax;
+			SendMessage(GetDlgItem(hwndDlg, IDC_LOG), EM_EXSETSEL, 0, (LPARAM) & sel);
 
-			if (g_Settings.TabsEnable) {
-				int i = TabCtrl_GetCurSel(GetDlgItem(hwndDlg, IDC_TAB));
-				if (i != -1) {
-					SESSION_INFO* s;
-					TCITEM tci;
-
-					tci.mask = TCIF_PARAM;
-					TabCtrl_GetItem(GetDlgItem(hwndDlg, IDC_TAB), i, &tci);
-					s = (SESSION_INFO*) tci.lParam;
-					if (s) {
-						s->wState &= ~GC_EVENT_HIGHLIGHT;
-						s->wState &= ~STATE_TALK;
-						SendMessage(hwndDlg, GC_FIXTABICONS, 0, (LPARAM)s);
-			}	}	}
-
-			if (uMsg != WM_ACTIVATE)
-				SetFocus(GetDlgItem(hwndDlg,IDC_MESSAGE));
-
-			SetActiveSession(si->ptszID, si->pszModule);
-
+			SetFocus(GetDlgItem(hwndDlg,IDC_MESSAGE));
 			if (KillTimer(hwndDlg, TIMERID_FLASHWND))
 				FlashWindow(hwndDlg, FALSE);
-			if (DBGetContactSettingWord(si->hContact, si->pszModule ,"ApparentMode", 0) != 0)
-				DBWriteContactSettingWord(si->hContact, si->pszModule ,"ApparentMode",(LPARAM) 0);
-			if (CallService(MS_CLIST_GETEVENT, (WPARAM)si->hContact, (LPARAM)0))
-				CallService(MS_CLIST_REMOVEEVENT, (WPARAM)si->hContact, (LPARAM)"chaticon");
-		}
-		break;
+			SetActiveChatWindow(dat->pszID, dat->pszModule);
+			if(DBGetContactSettingWord(dat->hContact, dat->pszModule ,"ApparentMode", 0) != 0)
+				DBWriteContactSettingWord(dat->hContact, dat->pszModule ,"ApparentMode",(LPARAM) 0);
 
-	case WM_NOTIFY:
+			if(CallService(MS_CLIST_GETEVENT, (WPARAM)dat->hContact, (LPARAM)0))
+				CallService(MS_CLIST_REMOVEEVENT, (WPARAM)dat->hContact, (LPARAM)"chaticon");
+			}break;
+		case WM_NOTIFY:
 		{
-			LPNMHDR pNmhdr;
-
-			pNmhdr = (LPNMHDR)lParam;
-			switch (pNmhdr->code) {
+			LPNMHDR pNmhdr = (LPNMHDR)lParam;
+			switch (pNmhdr->code)
+			{
+			case NM_DBLCLK:
 			case NM_RCLICK:
-				if (pNmhdr->idFrom == IDC_TAB  ) {
-					int i = TabCtrl_GetCurSel(pNmhdr->hwndFrom);
+//			case NM_CLICK:
+				{
+					if (pNmhdr->idFrom = IDC_NICKLIST)
+					{
+						TVHITTESTINFO hti;
+						hti.pt.x=(short)LOWORD(GetMessagePos());
+						hti.pt.y=(short)HIWORD(GetMessagePos());
+						ScreenToClient(pNmhdr->hwndFrom,&hti.pt);
+						if(pNmhdr->code == NM_CLICK && TreeView_HitTest(pNmhdr->hwndFrom,&hti))// && hti.flags&TVHT_ONITEMICON)
+						{
+							BOOL bExpanded;							
+							TVITEM tvi = {0};
 
-					if (i != -1) {
-						SESSION_INFO* s;
-						HMENU hSubMenu;
-						TCHITTESTINFO tci = {0};
-						TCITEM id = {0};
-						int i = 0;
-						id.mask = TCIF_PARAM;
+							tvi.mask=TVIF_PARAM|TVIF_HANDLE|TVIF_STATE;
+							tvi.hItem=hti.hItem;
+							TreeView_GetItem(pNmhdr->hwndFrom,&tvi);
 
-						tci.pt.x=(short)LOWORD(GetMessagePos());
-						tci.pt.y=(short)HIWORD(GetMessagePos());
-						tci.flags = TCHT_ONITEM;
+							bExpanded = tvi.state&TVIS_EXPANDED?TRUE:FALSE;
+							if(!tvi.lParam)
+								TreeView_SetItemState(pNmhdr->hwndFrom, tvi.hItem, bExpanded?INDEXTOSTATEIMAGEMASK(1):INDEXTOSTATEIMAGEMASK(1)|TVIS_EXPANDED,  bExpanded?TVIS_STATEIMAGEMASK:TVIS_EXPANDED|TVIS_STATEIMAGEMASK);
+							InvalidateRect(pNmhdr->hwndFrom, NULL, TRUE);
+						}
+						else if(TreeView_HitTest(pNmhdr->hwndFrom,&hti) && hti.flags&TVHT_ONITEM)
+						{
+							TVITEM tvi = {0};
+							tvi.mask=TVIF_PARAM|TVIF_HANDLE;
+							tvi.hItem=hti.hItem;
+							TreeView_GetItem(pNmhdr->hwndFrom,&tvi);
+							if(pNmhdr->code == NM_DBLCLK && tvi.lParam)
+							{
+								if(GetKeyState(VK_SHIFT) & 0x8000)
+								{	
+									
+									LRESULT lResult = (LRESULT)SendMessage(GetDlgItem(hwndDlg, IDC_MESSAGE), EM_GETSEL, (WPARAM)NULL, (LPARAM)NULL);
+									int start = LOWORD(lResult);
+									char * pszName = (char *) malloc(lstrlen(((USERINFO *)tvi.lParam)->pszUID) + 3);
+									if(start == 0)
+										_snprintf(pszName, lstrlen(((USERINFO *)tvi.lParam)->pszUID)+3, "%s: ", ((USERINFO *)tvi.lParam)->pszUID);
+									else
+										_snprintf(pszName, lstrlen(((USERINFO *)tvi.lParam)->pszUID)+2, "%s ", ((USERINFO *)tvi.lParam)->pszUID);
 
-						ScreenToClient(GetDlgItem(hwndDlg, IDC_TAB), &tci.pt);
-						i = TabCtrl_HitTest(pNmhdr->hwndFrom, &tci);
-						if (i != -1) {
-							TabCtrl_GetItem(GetDlgItem(hwndDlg, IDC_TAB), i, &id);
-							s = (SESSION_INFO*)id.lParam;
-
-							ClientToScreen(GetDlgItem(hwndDlg, IDC_TAB), &tci.pt);
-							hSubMenu = GetSubMenu(g_hMenu, 5);
-							if (s) {
-								WORD w = DBGetContactSettingWord(s->hContact, s->pszModule, "TabPosition", 0);
-								if ( w == 0)
-									CheckMenuItem(hSubMenu, ID_LOCKPOSITION, MF_BYCOMMAND|MF_UNCHECKED);
-								else
-									CheckMenuItem(hSubMenu, ID_LOCKPOSITION, MF_BYCOMMAND|MF_CHECKED);
-							}
-							else CheckMenuItem(hSubMenu, ID_LOCKPOSITION, MF_BYCOMMAND|MF_UNCHECKED);
-
-							switch (TrackPopupMenu(hSubMenu, TPM_RETURNCMD, tci.pt.x, tci.pt.y, 0, hwndDlg, NULL)) {
-							case ID_CLOSE:
-								if (TabCtrl_GetCurSel(GetDlgItem(hwndDlg, IDC_TAB)) == i)
-									PostMessage(hwndDlg, WM_COMMAND, MAKEWPARAM(IDC_CLOSE, BN_CLICKED), 0);
-								else
-									TabCtrl_DeleteItem(GetDlgItem(hwndDlg, IDC_TAB), i);
-								break;
-
-							case ID_CLOSEOTHER:
-								{
-									int tabId = TabCtrl_GetItemCount(GetDlgItem(hwndDlg, IDC_TAB)) - 1;
-									if (tabId > 0) {
-										if (TabCtrl_GetCurSel(GetDlgItem(hwndDlg, IDC_TAB)) != i)
-											if (s)
-												ShowRoom(s, WINDOW_VISIBLE, TRUE);
-
-										for(tabId; tabId >= 0; tabId --) {
-											if (tabId == i)
-												continue;
-
-											TabCtrl_DeleteItem(GetDlgItem(hwndDlg, IDC_TAB), tabId);
-								}	}	}
-								break;
-
-							case ID_LOCKPOSITION:
-								TabCtrl_GetItem(GetDlgItem(hwndDlg, IDC_TAB), i, &id);
-								if (!(GetMenuState(hSubMenu, ID_LOCKPOSITION, MF_BYCOMMAND)&MF_CHECKED)) {
-									if (s->hContact)
-										DBWriteContactSettingWord(s->hContact, s->pszModule, "TabPosition", (WORD)(i + 1));
+									SendMessage(GetDlgItem(hwndDlg, IDC_MESSAGE), EM_REPLACESEL, FALSE, (LPARAM) pszName);
+									PostMessage(hwndDlg, WM_MOUSEACTIVATE, 0, 0);
+	
 								}
-								else DBDeleteContactSetting(s->hContact, s->pszModule, "TabPosition");
-								break;
-				}	}	}	}
-				break;
+								else
+									DoEventHookAsync(hwndDlg, dat->pszID, dat->pszModule, GC_USER_PRIVMESS, ((USERINFO *)tvi.lParam)->pszUID, NULL, (LPARAM)NULL);
+							}
+							else
+							{
+								TreeView_SelectItem(pNmhdr->hwndFrom, hti.hItem);
+							}
+						}
+
+					}
+
+
+				}break;
 
 			case EN_MSGFILTER:
-				if (pNmhdr->idFrom == IDC_LOG && ((MSGFILTER *) lParam)->msg == WM_RBUTTONUP) {
-					CHARRANGE sel, all = { 0, -1 };
-					POINT pt;
-					UINT uID = 0;
-					HMENU hMenu = 0;
-					TCHAR pszWord[4096];
+				{
+					if (pNmhdr->idFrom = IDC_LOG && ((MSGFILTER *) lParam)->msg == WM_RBUTTONUP)
+					{
+						CHARRANGE sel, all = { 0, -1 };
+						POINT pt;
+						UINT uID = 0;
+						HMENU hMenu = 0;
 
-					pt.x = (short) LOWORD(((ENLINK *) lParam)->lParam);
-					pt.y = (short) HIWORD(((ENLINK *) lParam)->lParam);
-					ClientToScreen(pNmhdr->hwndFrom, &pt);
-
-					{ // fixing stuff for searches
-						long iCharIndex, iLineIndex, iChars, start, end, iRes;
-						POINTL ptl;
-
-						pszWord[0] = '\0';
-						ptl.x = (LONG)pt.x;
-						ptl.y = (LONG)pt.y;
-						ScreenToClient(GetDlgItem(hwndDlg, IDC_LOG), (LPPOINT)&ptl);
-						iCharIndex = SendMessage(GetDlgItem(hwndDlg, IDC_LOG), EM_CHARFROMPOS, 0, (LPARAM)&ptl);
-						if (iCharIndex < 0)
+						pt.x = (short) LOWORD(((ENLINK *) lParam)->lParam);
+						pt.y = (short) HIWORD(((ENLINK *) lParam)->lParam);
+						ClientToScreen(pNmhdr->hwndFrom, &pt);
+						
+						uID = CreateGCMenu(hwndDlg, &hMenu, 1, pt, dat, NULL);
+						switch (uID) 
+						{
+						case 0:
 							break;
-						iLineIndex = SendMessage(GetDlgItem(hwndDlg, IDC_LOG), EM_EXLINEFROMCHAR, 0, (LPARAM)iCharIndex);
-						iChars = SendMessage(GetDlgItem(hwndDlg, IDC_LOG), EM_LINEINDEX, (WPARAM)iLineIndex, 0 );
-						start = SendMessage(GetDlgItem(hwndDlg, IDC_LOG), EM_FINDWORDBREAK, WB_LEFT, iCharIndex);//-iChars;
-						end = SendMessage(GetDlgItem(hwndDlg, IDC_LOG), EM_FINDWORDBREAK, WB_RIGHT, iCharIndex);//-iChars;
-
-						if (end - start > 0) {
-							TEXTRANGE tr;
-							CHARRANGE cr;
-							static TCHAR szTrimString[] = _T(":;,.!?\'\"><()[]- \r\n");
-							ZeroMemory(&tr, sizeof(TEXTRANGE));
-
-							cr.cpMin = start;
-							cr.cpMax = end;
-							tr.chrg = cr;
-							tr.lpstrText = pszWord;
-							iRes = SendMessage( GetDlgItem(hwndDlg, IDC_LOG), EM_GETTEXTRANGE, 0, (LPARAM)&tr);
-
-							if (iRes > 0) {
-								int iLen = lstrlen(pszWord)-1;
-								while(iLen >= 0 && _tcschr(szTrimString, pszWord[iLen])) {
-									pszWord[iLen] = _T('\0');
-									iLen--;
-					}	}	}	}
-
-					uID = CreateGCMenu(hwndDlg, &hMenu, 1, pt, si, NULL, pszWord);
-					switch (uID) {
-					case 0:
-						PostMessage(hwndDlg, WM_MOUSEACTIVATE, 0, 0 );
-						break;
-
-					case ID_COPYALL:
-						SendMessage(pNmhdr->hwndFrom, EM_EXGETSEL, 0, (LPARAM) & sel);
-						SendMessage(pNmhdr->hwndFrom, EM_EXSETSEL, 0, (LPARAM) & all);
-						SendMessage(pNmhdr->hwndFrom, WM_COPY, 0, 0);
-						SendMessage(pNmhdr->hwndFrom, EM_EXSETSEL, 0, (LPARAM) & sel);
-						PostMessage(hwndDlg, WM_MOUSEACTIVATE, 0, 0 );
-						break;
-
-					case ID_CLEARLOG:
-						{
-							SESSION_INFO* s = SM_FindSession(si->ptszID, si->pszModule);
-							if (s)
+                         case ID_COPYALL:
 							{
-								SetDlgItemText(hwndDlg, IDC_LOG, _T(""));
-								LM_RemoveAll(&s->pLog, &s->pLogEnd);
-								s->iEventCount = 0;
-								s->LastTime = 0;
-								si->iEventCount = 0;
-								si->LastTime = 0;
-								si->pLog = s->pLog;
-								si->pLogEnd = s->pLogEnd;
-								PostMessage(hwndDlg, WM_MOUSEACTIVATE, 0, 0 );
-						}	}
-						break;
-
-					case ID_SEARCH_GOOGLE:
-						{
-							char szURL[4096];
-							if (pszWord[0]) {
-								mir_snprintf( szURL, sizeof( szURL ), "http://www.google.com/search?q=" TCHAR_STR_PARAM, pszWord );
-								CallService(MS_UTILS_OPENURL, 1, (LPARAM) szURL);
-							}
+                             SendMessage(pNmhdr->hwndFrom, EM_EXGETSEL, 0, (LPARAM) & sel);
+							SendMessage(pNmhdr->hwndFrom, EM_EXSETSEL, 0, (LPARAM) & all);
+                            SendMessage(pNmhdr->hwndFrom, WM_COPY, 0, 0);
+							SendMessage(pNmhdr->hwndFrom, EM_EXSETSEL, 0, (LPARAM) & sel);
+        					PostMessage(hwndDlg, WM_MOUSEACTIVATE, 0, 0 );
+                            }break;
+                         case ID_CLEARLOG:
+							{
+                            SetDlgItemText(hwndDlg, IDC_LOG, "");
+							LM_RemoveAll(&dat->pEventListStart, &dat->pEventListEnd);
+							dat->iEventCount = 0;
+							dat->LastTime = 0;
 							PostMessage(hwndDlg, WM_MOUSEACTIVATE, 0, 0 );
-						}
-						break;
-
-					case ID_SEARCH_WIKIPEDIA:
-						{
-							char szURL[4096];
-							if (pszWord[0]) {
-								mir_snprintf( szURL, sizeof( szURL ), "http://en.wikipedia.org/wiki/" TCHAR_STR_PARAM, pszWord );
-								CallService(MS_UTILS_OPENURL, 1, (LPARAM) szURL);
-							}
+                            }break;
+					   default:
 							PostMessage(hwndDlg, WM_MOUSEACTIVATE, 0, 0 );
-						}
-						break;
+							DoEventHookAsync(hwndDlg, dat->pszID, dat->pszModule, GC_USER_LOGMENU, NULL, NULL, (LPARAM)uID);
+							break;
 
-					default:
-						PostMessage(hwndDlg, WM_MOUSEACTIVATE, 0, 0 );
-						DoEventHookAsync(hwndDlg, si->ptszID, si->pszModule, GC_USER_LOGMENU, NULL, NULL, (LPARAM)uID);
-						break;
+						}
+						DestroyGCMenu(&hMenu, 3);
 					}
-					DestroyGCMenu(&hMenu, 5);
+				}break;
+
+			case NM_CUSTOMDRAW:
+			{
+				if (pNmhdr->idFrom = IDC_NICKLIST)
+				{
+					LPNMTVCUSTOMDRAW pCustomDraw = (LPNMTVCUSTOMDRAW)lParam;
+					switch (pCustomDraw->nmcd.dwDrawStage)
+					{
+						case CDDS_PREPAINT:
+						SetWindowLongPtr(hwndDlg,DWL_MSGRESULT,CDRF_NOTIFYITEMDRAW); 
+						return(TRUE); 
+
+						case CDDS_ITEMPREPAINT:
+							{
+							switch (pCustomDraw->iLevel)
+							{
+								case 0:
+									{
+									TVITEM tvi = { 0 };
+									RECT rc = pCustomDraw->nmcd.rc;
+									HBRUSH hBr;
+									LOGBRUSH br;
+									HICON hIcon;
+
+									tvi.mask = TVIF_HANDLE | TVIF_STATE;
+									tvi.hItem = (HTREEITEM)pCustomDraw->nmcd.dwItemSpec;
+									TreeView_GetItem(pNmhdr->hwndFrom, &tvi);
+									rc.right = rc.left + GetSystemMetrics(SM_CXSMICON);
+									rc.bottom = rc.top + GetSystemMetrics(SM_CYSMICON);
+									hBr = CreateSolidBrush( g_LogOptions.crUserListBGColor ) ;
+									FillRect(pCustomDraw->nmcd.hdc, &rc, hBr);
+									hIcon = (tvi.state&TVIS_EXPANDED)?g_LogOptions.GroupOpenIcon:g_LogOptions.GroupClosedIcon ;
+									DrawIconEx(pCustomDraw->nmcd.hdc,pCustomDraw->nmcd.rc.left,pCustomDraw->nmcd.rc.top,hIcon,GetSystemMetrics(SM_CXSMICON),GetSystemMetrics(SM_CYSMICON),0,NULL,DI_NORMAL);
+									SelectObject(pCustomDraw->nmcd.hdc, g_LogOptions.UserListHeadingsFont);
+									GetObject(hBr, sizeof(br), &br); 
+									if (pCustomDraw->nmcd.uItemState == (CDIS_FOCUS | CDIS_SELECTED) && br.lbStyle==BS_SOLID) // selected
+										pCustomDraw->clrTextBk = br.lbColor;
+									pCustomDraw->clrText = g_LogOptions.crUserListHeadingsColor;
+									DeleteObject(hBr);
+									break;
+									}
+								case 1:
+
+									SelectObject(pCustomDraw->nmcd.hdc, g_LogOptions.UserListFont);
+									if (pCustomDraw->nmcd.uItemState == (CDIS_FOCUS | CDIS_SELECTED)) // selected
+										pCustomDraw->clrText = RGB(255, 255, 255);
+									else	
+										pCustomDraw->clrText = g_LogOptions.crUserListColor;
+									break;
+									default:break;
+							}
+							SetWindowLongPtr(hwndDlg,DWL_MSGRESULT, CDRF_NEWFONT); 
+							return (TRUE); 
+						}
+					}
 				}
-				break;
+			}break;
 
 			case EN_LINK:
-				if (pNmhdr->idFrom == IDC_LOG) {
-					switch (((ENLINK *) lParam)->msg) {
+			if(pNmhdr->idFrom = IDC_LOG)
+				switch (((ENLINK *) lParam)->msg) 
+				{
 					case WM_RBUTTONDOWN:
 					case WM_LBUTTONUP:
-					case WM_LBUTTONDBLCLK:
-						{
-							TEXTRANGE tr;
-							CHARRANGE sel;
-							char* pszUrl;
+					{
+						TEXTRANGE tr;
+						CHARRANGE sel;
 
-							SendMessage(pNmhdr->hwndFrom, EM_EXGETSEL, 0, (LPARAM) & sel);
-							if (sel.cpMin != sel.cpMax)
-								break;
-							tr.chrg = ((ENLINK *) lParam)->chrg;
-							tr.lpstrText = mir_alloc(sizeof(TCHAR)*(tr.chrg.cpMax - tr.chrg.cpMin + 1));
-							SendMessage(pNmhdr->hwndFrom, EM_GETTEXTRANGE, 0, (LPARAM) & tr);
-							pszUrl = t2a( tr.lpstrText );
-
-							if (((ENLINK *) lParam)->msg == WM_RBUTTONDOWN) {
-								HMENU hSubMenu;
-								POINT pt;
-
-								hSubMenu = GetSubMenu(g_hMenu, 2);
-								CallService(MS_LANGPACK_TRANSLATEMENU, (WPARAM) hSubMenu, 0);
-								pt.x = (short) LOWORD(((ENLINK *) lParam)->lParam);
-								pt.y = (short) HIWORD(((ENLINK *) lParam)->lParam);
-								ClientToScreen(((NMHDR *) lParam)->hwndFrom, &pt);
-								switch (TrackPopupMenu(hSubMenu, TPM_RETURNCMD, pt.x, pt.y, 0, hwndDlg, NULL)) {
-								case ID_NEW:
-									CallService(MS_UTILS_OPENURL, 1, (LPARAM) pszUrl);
-									break;
-
-								case ID_CURR:
-									CallService(MS_UTILS_OPENURL, 0, (LPARAM) pszUrl);
-									break;
-
-								case ID_COPY:
-									{
-										HGLOBAL hData;
-										if (!OpenClipboard(hwndDlg))
-											break;
-										EmptyClipboard();
-										hData = GlobalAlloc(GMEM_MOVEABLE, sizeof(TCHAR)*(lstrlen(tr.lpstrText) + 1));
-										lstrcpy(( TCHAR* )GlobalLock(hData), tr.lpstrText);
-										GlobalUnlock(hData);
-										#if defined( _UNICODE )
-											SetClipboardData(CF_UNICODETEXT, hData);
-										#else
-											SetClipboardData(CF_TEXT, hData);
-										#endif
-										CloseClipboard();
-										SetFocus(GetDlgItem(hwndDlg, IDC_MESSAGE));
-										break;
-								}	}
-								mir_free(tr.lpstrText);
-								mir_free(pszUrl);
-								return TRUE;
-							}
-
-							CallService(MS_UTILS_OPENURL, 1, (LPARAM) pszUrl);
-							SetFocus(GetDlgItem(hwndDlg, IDC_MESSAGE));
-							mir_free(tr.lpstrText);
-							mir_free(pszUrl);
+						SendMessage(pNmhdr->hwndFrom, EM_EXGETSEL, 0, (LPARAM) & sel);
+						if (sel.cpMin != sel.cpMax)
 							break;
-				}	}	}
-				break;
+						tr.chrg = ((ENLINK *) lParam)->chrg;
+						tr.lpstrText = malloc(tr.chrg.cpMax - tr.chrg.cpMin + 1);
+						SendMessage(pNmhdr->hwndFrom, EM_GETTEXTRANGE, 0, (LPARAM) & tr);
+						
+						if (((ENLINK *) lParam)->msg == WM_RBUTTONDOWN) 
+						{
+							HMENU hSubMenu;
+							POINT pt;
 
-			case TTN_NEEDTEXT:
-				if (pNmhdr->idFrom == (UINT)GetDlgItem(hwndDlg,IDC_LIST))
-				{
-					LPNMTTDISPINFO lpttd = (LPNMTTDISPINFO)lParam;
-					POINT p;
-					int item;
-					USERINFO * ui;
-					SESSION_INFO* parentdat =(SESSION_INFO*)GetWindowLong(hwndDlg,GWL_USERDATA);
+							hSubMenu = GetSubMenu(g_hMenu, 2);
+							CallService(MS_LANGPACK_TRANSLATEMENU, (WPARAM) hSubMenu, 0);
+							pt.x = (short) LOWORD(((ENLINK *) lParam)->lParam);
+							pt.y = (short) HIWORD(((ENLINK *) lParam)->lParam);
+							ClientToScreen(((NMHDR *) lParam)->hwndFrom, &pt);
+							switch (TrackPopupMenu(hSubMenu, TPM_RETURNCMD, pt.x, pt.y, 0, hwndDlg, NULL)) 
+							{
+								case ID_NEW:
+									CallService(MS_UTILS_OPENURL, 1, (LPARAM) tr.lpstrText);
+									break;
+								case ID_CURR:
+									CallService(MS_UTILS_OPENURL, 0, (LPARAM) tr.lpstrText);
+									break;
+								case ID_COPY:
+								{
+									HGLOBAL hData;
+									if (!OpenClipboard(hwndDlg))
+										break;
+									EmptyClipboard();
+									hData = GlobalAlloc(GMEM_MOVEABLE, lstrlen(tr.lpstrText) + 1);
+									lstrcpy((char *) GlobalLock(hData), tr.lpstrText);
+									GlobalUnlock(hData);
+									SetClipboardData(CF_TEXT, hData);
+									CloseClipboard();
+									PostMessage(hwndDlg, WM_ACTIVATE, 0, 0 );
+									break;
+								}
+								default:break;
+							}
+							free(tr.lpstrText);
+							return TRUE;
+						} 
+						else  
+						{
+							CallService(MS_UTILS_OPENURL, 1, (LPARAM) tr.lpstrText);
+							SetFocus(GetDlgItem(hwndDlg, IDC_MESSAGE));
+						}
 
-					GetCursorPos( &p );
-					ScreenToClient( hwndDlg, &p );
-					item = LOWORD(SendMessage(GetDlgItem(hwndDlg, IDC_LIST), LB_ITEMFROMPOINT, 0, MAKELPARAM(p.x, p.y)));
-					ui = SM_GetUserFromIndex(parentdat->ptszID, parentdat->pszModule, item);
-					if ( ui != NULL ) {
-						static TCHAR ptszBuf[ 1024 ];
-						mir_sntprintf( ptszBuf, SIZEOF(ptszBuf), _T("%s: %s\r\n%s: %s\r\n%s: %s"),
-							TranslateT( "Nick name" ), ui->pszNick,
-							TranslateT( "Unique id" ), ui->pszUID,
-							TranslateT( "Status" ), TM_WordToString( parentdat->pStatuses, ui->Status ));
-						lpttd->lpszText = ptszBuf;
-				}	}
-				break;
-		}	}
-		break;
-
-	case WM_COMMAND:
-		switch (LOWORD(wParam)) {
-		case IDC_LIST:
-			if (HIWORD(wParam) == LBN_DBLCLK) {
-				TVHITTESTINFO hti;
-				int item;
-				USERINFO * ui;
-
-				hti.pt.x=(short)LOWORD(GetMessagePos());
-				hti.pt.y=(short)HIWORD(GetMessagePos());
-				ScreenToClient(GetDlgItem(hwndDlg, IDC_LIST),&hti.pt);
-
-				item = LOWORD(SendMessage(GetDlgItem(hwndDlg, IDC_LIST), LB_ITEMFROMPOINT, 0, MAKELPARAM(hti.pt.x, hti.pt.y)));
-				ui = SM_GetUserFromIndex(si->ptszID, si->pszModule, item);
-				if (ui) {
-					if (GetKeyState(VK_SHIFT) & 0x8000) {
-						LRESULT lResult = (LRESULT)SendMessage(GetDlgItem(hwndDlg, IDC_MESSAGE), EM_GETSEL, (WPARAM)NULL, (LPARAM)NULL);
-						int start = LOWORD(lResult);
-						TCHAR* pszName = (TCHAR*)alloca(sizeof(TCHAR)*(lstrlen(ui->pszUID) + 3));
-						if (start == 0)
-							mir_sntprintf(pszName, lstrlen(ui->pszUID)+3, _T("%s: "), ui->pszUID);
-						else
-							mir_sntprintf(pszName, lstrlen(ui->pszUID)+2, _T("%s "), ui->pszUID);
-
-						SendMessage( GetDlgItem(hwndDlg, IDC_MESSAGE), EM_REPLACESEL, FALSE, (LPARAM) pszName );
-						PostMessage( hwndDlg, WM_MOUSEACTIVATE, 0, 0 );
+						free(tr.lpstrText);
+						break;
 					}
-					else DoEventHookAsync(hwndDlg, si->ptszID, si->pszModule, GC_USER_PRIVMESS, ui->pszUID, NULL, (LPARAM)NULL);
 				}
-
-				return TRUE;
+				break;
 			}
-
-			if ( HIWORD(wParam) == LBN_KILLFOCUS )
-				RedrawWindow(GetDlgItem(hwndDlg, IDC_LIST), NULL, NULL, RDW_INVALIDATE);
-			break;
-
-		case IDOK:
+	
+		}break;
+		case WM_COMMAND:
+		{
+			switch (LOWORD(wParam))
 			{
-				char*  pszRtf;
-				TCHAR* ptszText, *p1;
-				if (!IsWindowEnabled(GetDlgItem(hwndDlg,IDOK)))
+			case IDOK:
+				{
+                char *pszText = NULL;
+				if(!IsWindowEnabled(GetDlgItem(hwndDlg,IDOK))) 
 					break;
 
-				pszRtf = Message_GetFromStream(hwndDlg, si);
-				SM_AddCommand(si->ptszID, si->pszModule, pszRtf);
-				ptszText = DoRtfToTags(pszRtf, si);
-				p1 = _tcschr(ptszText, '\0');
+				pszText = Message_GetFromStream(hwndDlg, dat);
 
-				//remove trailing linebreaks
-				while ( p1 > ptszText && (*p1 == '\0' || *p1 == '\r' || *p1 == '\n')) {
-					*p1 = '\0';
-					p1--;
-				}
+//				MessageBox(hwndDlg, pszText, "text with RTF", 0);
 
-				if ( MM_FindModule(si->pszModule)->bAckMsg ) {
+				WM_AddCommand(dat->pszID, dat->pszModule, pszText);
+
+				DoRtfToTags(pszText, dat); // TRUE if success
+
+//				MessageBox(hwndDlg, pszText, "text with tags", 0);
+
+
+				if(MM_FindModule(dat->pszModule)->bAckMsg) 
+				{
 					EnableWindow(GetDlgItem(hwndDlg,IDC_MESSAGE),FALSE);
 					SendDlgItemMessage(hwndDlg,IDC_MESSAGE,EM_SETREADONLY,TRUE,0);
 				}
-				else SendDlgItemMessage(hwndDlg,IDC_MESSAGE,WM_SETTEXT,0,(LPARAM)"");
+				else
+					SendDlgItemMessage(hwndDlg,IDC_MESSAGE,WM_SETTEXT,0,(LPARAM)"");
 
 				EnableWindow(GetDlgItem(hwndDlg,IDOK),FALSE);
 
-				DoEventHookAsync(hwndDlg, si->ptszID, si->pszModule, GC_USER_MESSAGE, NULL, ptszText, (LPARAM)NULL);
-				mir_free(pszRtf);
-				#if defined( _UNICODE )
-					mir_free(ptszText);
-				#endif
+				DoEventHookAsync(hwndDlg, dat->pszID, dat->pszModule, GC_USER_MESSAGE, NULL, pszText, (LPARAM)NULL);
+				free(pszText);
 				SetFocus(GetDlgItem(hwndDlg, IDC_MESSAGE));
-			}
-			break;
 
-		case IDC_SHOWNICKLIST:
-			if (!IsWindowEnabled(GetDlgItem(hwndDlg,IDC_SHOWNICKLIST)))
-				break;
-			if (si->iType == GCW_SERVER)
-				break;
+				}break;
+			case IDC_SHOWNICKLIST:
+				{
+					if(!IsWindowEnabled(GetDlgItem(hwndDlg,IDC_SHOWNICKLIST))) 
+						break;
+					ShowWindow(GetDlgItem(hwndDlg, IDC_NICKLIST), IsWindowVisible(GetDlgItem(hwndDlg, IDC_NICKLIST))?SW_HIDE:SW_SHOW);
+					SendMessage(hwndDlg, WM_SIZE, 0, 0);
+				}break;
+			case IDC_MESSAGE:
+				{
+					EnableWindow(GetDlgItem(hwndDlg, IDOK), GetRichTextLength(GetDlgItem(hwndDlg, IDC_MESSAGE)) != 0);
+				}break;
+			case IDC_SMILEY:
+				{
+					SMADD_SHOWSEL smaddInfo;
+					RECT rc;
 
-			si->bNicklistEnabled = !si->bNicklistEnabled;
+					GetWindowRect(GetDlgItem(hwndDlg, IDC_SMILEY), &rc);
+					
+					smaddInfo.cbSize = sizeof(SMADD_SHOWSEL);
+					smaddInfo.hwndTarget = GetDlgItem(hwndDlg, IDC_MESSAGE);
+					smaddInfo.targetMessage = EM_REPLACESEL;
+					smaddInfo.targetWParam = TRUE;
+					smaddInfo.Protocolname = dat->pszModule;
+					smaddInfo.Direction = 3;
+					smaddInfo.xPosition = rc.left+3;
+					smaddInfo.yPosition = rc.top-1;
 
-			SendDlgItemMessage(hwndDlg,IDC_SHOWNICKLIST,BM_SETIMAGE,IMAGE_ICON,(LPARAM)LoadIconEx( si->bNicklistEnabled ? "nicklist" : "nicklist2" ));
-			SendMessage(hwndDlg, GC_SCROLLTOBOTTOM, 0, 0);
-			SendMessage(hwndDlg, WM_SIZE, 0, 0);
-			break;
+					if(SmileyAddInstalled)
+						CallService(MS_SMILEYADD_SHOWSELECTION, 0, (LPARAM) &smaddInfo);
 
-		case IDC_MESSAGE:
-			EnableWindow(GetDlgItem(hwndDlg, IDOK), GetRichTextLength(GetDlgItem(hwndDlg, IDC_MESSAGE)) != 0);
-			break;
+				}break;
+			case IDC_HISTORY:
+				{
+					char szFile[MAX_PATH];
+					char szName[MAX_PATH];
+					char szFolder[MAX_PATH];
+					MODULE * pInfo = MM_FindModule(dat->pszModule);
 
-		case IDC_SMILEY:
-			{
-				SMADD_SHOWSEL smaddInfo;
-				RECT rc;
+					if(!IsWindowEnabled(GetDlgItem(hwndDlg,IDC_HISTORY))) 
+						break;
 
-				GetWindowRect(GetDlgItem(hwndDlg, IDC_SMILEY), &rc);
+					if (pInfo)
+					{
 
-				smaddInfo.cbSize = sizeof(SMADD_SHOWSEL);
-				smaddInfo.hwndTarget = GetDlgItem(hwndDlg, IDC_MESSAGE);
-				smaddInfo.targetMessage = EM_REPLACESEL;
-				smaddInfo.targetWParam = TRUE;
-				smaddInfo.Protocolname = si->pszModule;
-				smaddInfo.Direction = 3;
-				smaddInfo.xPosition = rc.left+3;
-				smaddInfo.yPosition = rc.top-1;
+						_snprintf(szName, MAX_PATH,"%s",pInfo->pszModDispName?pInfo->pszModDispName:dat->pszModule);
+						ValidateFilename(szName);
+						_snprintf(szFolder, MAX_PATH,"%s\\%s", g_LogOptions.pszLogDir, szName );
+											
+						_snprintf(szName, MAX_PATH,"%s.log",dat->pszID);
+						ValidateFilename(szName);
 
-				if (SmileyAddInstalled)
-					CallService(MS_SMILEYADD_SHOWSELECTION, 0, (LPARAM) &smaddInfo);
-			}
-			break;
+						_snprintf(szFile, MAX_PATH,"%s\\%s", szFolder, szName ); 
+						
+						ShellExecute(hwndDlg, "open", szFile, NULL, NULL, SW_SHOW);
+					}
 
-		case IDC_HISTORY:
-			{
-				char szFile[MAX_PATH];
-				char szName[MAX_PATH];
-				char szFolder[MAX_PATH];
-				MODULEINFO * pInfo = MM_FindModule(si->pszModule);
-
-				if (!IsWindowEnabled(GetDlgItem(hwndDlg,IDC_HISTORY)))
+				}break;
+			case IDC_CHANMGR:
+				{
+				if(!IsWindowEnabled(GetDlgItem(hwndDlg,IDC_CHANMGR))) 
 					break;
-
-				if ( pInfo ) {
-					mir_snprintf(szName, MAX_PATH,"%s",pInfo->pszModDispName?pInfo->pszModDispName:si->pszModule);
-					ValidateFilename(szName);
-					mir_snprintf(szFolder, MAX_PATH,"%s\\%s", g_Settings.pszLogDir, szName );
-#if defined(_UNICODE)
-                    {
-                        wchar_t wszName[MAX_PATH];
-                        mir_sntprintf(wszName, MAX_PATH,_T("%s.log"),si->ptszID);
-                        WideCharToMultiByte(CP_ACP, 0, wszName, -1, szName, MAX_PATH, 0, 0);
-                        szName[MAX_PATH - 1] = 0;
-                    }
-#else
-                    mir_snprintf(szName, MAX_PATH,"%s.log",si->ptszID);
-#endif
-					ValidateFilename(szName);
-					mir_snprintf(szFile, MAX_PATH,"%s\\%s", szFolder, szName );
-					ShellExecuteA(hwndDlg, "open", szFile, NULL, NULL, SW_SHOW);
-			}	}
-			break;
-
-		case IDC_CLOSE:
-			SendMessage(hwndDlg, GC_REMOVETAB, 0, 0);
-			break;
-
-		case IDC_CHANMGR:
-			if (!IsWindowEnabled(GetDlgItem(hwndDlg,IDC_CHANMGR)))
-				break;
-			DoEventHookAsync(hwndDlg, si->ptszID, si->pszModule, GC_USER_CHANMGR, NULL, NULL, (LPARAM)NULL);
-			break;
-
-		case IDC_FILTER:
-			if (!IsWindowEnabled(GetDlgItem(hwndDlg,IDC_FILTER)))
-				break;
-
-			si->bFilterEnabled = !si->bFilterEnabled;
-			SendDlgItemMessage(hwndDlg,IDC_FILTER,BM_SETIMAGE,IMAGE_ICON,(LPARAM)LoadIconEx( si->bFilterEnabled ? "filter" : "filter2" ));
-			if (si->bFilterEnabled && DBGetContactSettingByte(NULL, "Chat", "RightClickFilter", 0) == 0) {
-				SendMessage(hwndDlg, GC_SHOWFILTERMENU, 0, 0);
-				break;
-			}
-			SendMessage(hwndDlg, GC_REDRAWLOG, 0, 0);
-			break;
-
-		case IDC_BKGCOLOR:
-			{
-				CHARFORMAT2 cf;
-
-				cf.cbSize = sizeof(CHARFORMAT2);
-				cf.dwEffects = 0;
-
-				if (!IsWindowEnabled(GetDlgItem(hwndDlg,IDC_BKGCOLOR)))
+				DoEventHookAsync(hwndDlg, dat->pszID, dat->pszModule, GC_USER_CHANMGR, NULL, NULL, (LPARAM)NULL);
+				}break;
+			case IDC_FILTER:
+				{
+				if(!IsWindowEnabled(GetDlgItem(hwndDlg,IDC_FILTER))) 
 					break;
+				dat->bFilterEnabled = IsDlgButtonChecked(hwndDlg, IDC_FILTER);
+				if (dat->bFilterEnabled && DBGetContactSettingByte(NULL, "Chat", "RightClickFilter", 0) == 0)
+				{
+					SendMessage(hwndDlg, GC_SHOWFILTERMENU, 0, 0);
+					break;
+				}
+				SendMessage(hwndDlg, GC_REDRAWLOG, 0, 0);
+				}break;
+			case IDC_BKGCOLOR:
+				{
+					CHARFORMAT2 cf;
 
-				if (IsDlgButtonChecked(hwndDlg, IDC_BKGCOLOR )) {
-					if (DBGetContactSettingByte(NULL, "Chat", "RightClickFilter", 0) == 0)
-						SendMessage(hwndDlg, GC_SHOWCOLORCHOOSER, 0, (LPARAM)IDC_BKGCOLOR);
-					else if (si->bBGSet) {
+					cf.cbSize = sizeof(CHARFORMAT2);
+					cf.dwEffects = 0;
+	
+					if(!IsWindowEnabled(GetDlgItem(hwndDlg,IDC_BKGCOLOR))) 
+						break;
+					if (IsDlgButtonChecked(hwndDlg, IDC_BKGCOLOR) )
+					{
+						if(DBGetContactSettingByte(NULL, "Chat", "RightClickFilter", 0) == 0)
+						{
+							SendMessage(hwndDlg, GC_SHOWCOLORCHOOSER, 0, (LPARAM)IDC_BKGCOLOR);
+						}
+						else if (dat->bBGSet)
+						{
+							cf.dwMask = CFM_BACKCOLOR;
+							cf.crBackColor = MM_FindModule(dat->pszModule)->crColors[dat->iBG];
+							SendDlgItemMessage(hwndDlg, IDC_MESSAGE, EM_SETCHARFORMAT, SCF_SELECTION, (LPARAM)&cf);
+						}
+							
+					}
+					else
+					{
 						cf.dwMask = CFM_BACKCOLOR;
-						cf.crBackColor = MM_FindModule(si->pszModule)->crColors[si->iBG];
+						cf.crBackColor = (COLORREF)DBGetContactSettingDword(NULL, "Chat", "ColorMessageBG", GetSysColor(COLOR_WINDOW));
 						SendDlgItemMessage(hwndDlg, IDC_MESSAGE, EM_SETCHARFORMAT, SCF_SELECTION, (LPARAM)&cf);
-				}	}
-				else {
-					cf.dwMask = CFM_BACKCOLOR;
-					cf.crBackColor = (COLORREF)DBGetContactSettingDword(NULL, "Chat", "ColorMessageBG", GetSysColor(COLOR_WINDOW));
-					SendDlgItemMessage(hwndDlg, IDC_MESSAGE, EM_SETCHARFORMAT, SCF_SELECTION, (LPARAM)&cf);
-			}	}
-			break;
 
-		case IDC_COLOR:
-			{
-				CHARFORMAT2 cf;
-				cf.cbSize = sizeof(CHARFORMAT2);
-				cf.dwEffects = 0;
+					}
+				}break;
+			case IDC_COLOR:
+				{
+					CHARFORMAT2 cf;
 
-				if (!IsWindowEnabled(GetDlgItem(hwndDlg,IDC_COLOR)))
-					break;
-
-				if (IsDlgButtonChecked(hwndDlg, IDC_COLOR )) {
-					if (DBGetContactSettingByte(NULL, "Chat", "RightClickFilter", 0) == 0)
-						SendMessage(hwndDlg, GC_SHOWCOLORCHOOSER, 0, (LPARAM)IDC_COLOR);
-					else if (si->bFGSet) {
+					cf.cbSize = sizeof(CHARFORMAT2);
+					cf.dwEffects = 0;
+	
+					if(!IsWindowEnabled(GetDlgItem(hwndDlg,IDC_COLOR))) 
+						break;
+					if (IsDlgButtonChecked(hwndDlg, IDC_COLOR) )
+					{
+						if(DBGetContactSettingByte(NULL, "Chat", "RightClickFilter", 0) == 0)
+						{
+							SendMessage(hwndDlg, GC_SHOWCOLORCHOOSER, 0, (LPARAM)IDC_COLOR);
+						}
+						else if (dat->bFGSet)
+						{
+							cf.dwMask = CFM_COLOR;
+							cf.crTextColor = MM_FindModule(dat->pszModule)->crColors[dat->iFG];
+							SendDlgItemMessage(hwndDlg, IDC_MESSAGE, EM_SETCHARFORMAT, SCF_SELECTION, (LPARAM)&cf);
+						}
+							
+					}
+					else
+					{
+						COLORREF cr;
+							
+						LoadMsgDlgFont(17, NULL, &cr);
 						cf.dwMask = CFM_COLOR;
-						cf.crTextColor = MM_FindModule(si->pszModule)->crColors[si->iFG];
+						cf.crTextColor = cr;
 						SendDlgItemMessage(hwndDlg, IDC_MESSAGE, EM_SETCHARFORMAT, SCF_SELECTION, (LPARAM)&cf);
-				}	}
-				else {
-					COLORREF cr;
 
-					LoadMsgDlgFont(17, NULL, &cr);
-					cf.dwMask = CFM_COLOR;
-					cf.crTextColor = cr;
+					}
+				}break;
+			case IDC_BOLD:
+			case IDC_ITALICS:
+			case IDC_UNDERLINE:
+				{
+					CHARFORMAT2 cf;
+					cf.cbSize = sizeof(CHARFORMAT2);
+					cf.dwMask = CFM_BOLD|CFM_ITALIC|CFM_UNDERLINE;
+					cf.dwEffects = 0;
+
+					if(LOWORD(wParam) == IDC_BOLD && !IsWindowEnabled(GetDlgItem(hwndDlg,IDC_BOLD))) 
+						break;
+					if(LOWORD(wParam) == IDC_ITALICS && !IsWindowEnabled(GetDlgItem(hwndDlg,IDC_ITALICS))) 
+						break;
+					if(LOWORD(wParam) == IDC_UNDERLINE && !IsWindowEnabled(GetDlgItem(hwndDlg,IDC_UNDERLINE))) 
+						break;
+					if (IsDlgButtonChecked(hwndDlg, IDC_BOLD))
+						cf.dwEffects |= CFE_BOLD;
+					if (IsDlgButtonChecked(hwndDlg, IDC_ITALICS))
+						cf.dwEffects |= CFE_ITALIC;
+					if (IsDlgButtonChecked(hwndDlg, IDC_UNDERLINE))
+						cf.dwEffects |= CFE_UNDERLINE;
+
 					SendDlgItemMessage(hwndDlg, IDC_MESSAGE, EM_SETCHARFORMAT, SCF_SELECTION, (LPARAM)&cf);
-			}	}
-			break;
 
-		case IDC_BOLD:
-		case IDC_ITALICS:
-		case IDC_UNDERLINE:
+				}break;
+
+			default:break;
+			}
+		} break;
+		case WM_KEYDOWN:
+			SetFocus(GetDlgItem(hwndDlg, IDC_MESSAGE));
+		case WM_MOVE:
 			{
-				CHARFORMAT2 cf;
-				cf.cbSize = sizeof(CHARFORMAT2);
-				cf.dwMask = CFM_BOLD|CFM_ITALIC|CFM_UNDERLINE;
-				cf.dwEffects = 0;
+				SendMessage(hwndDlg,GC_SAVEWNDPOS,0,1);
+			}break;
+		case GC_SAVEWNDPOS:
+		{
+			WINDOWPLACEMENT wp = { 0 };
+			HANDLE hContact;
 
-				if (LOWORD(wParam) == IDC_BOLD && !IsWindowEnabled(GetDlgItem(hwndDlg,IDC_BOLD)))
-					break;
-				if (LOWORD(wParam) == IDC_ITALICS && !IsWindowEnabled(GetDlgItem(hwndDlg,IDC_ITALICS)))
-					break;
-				if (LOWORD(wParam) == IDC_UNDERLINE && !IsWindowEnabled(GetDlgItem(hwndDlg,IDC_UNDERLINE)))
-					break;
-				if (IsDlgButtonChecked(hwndDlg, IDC_BOLD))
-					cf.dwEffects |= CFE_BOLD;
-				if (IsDlgButtonChecked(hwndDlg, IDC_ITALICS))
-					cf.dwEffects |= CFE_ITALIC;
-				if (IsDlgButtonChecked(hwndDlg, IDC_UNDERLINE))
-					cf.dwEffects |= CFE_UNDERLINE;
+			wp.length = sizeof(wp);
+			GetWindowPlacement(hwndDlg, &wp);
+			if(!lParam) // window destroyed
+			{
+				if (dat && DBGetContactSettingByte(NULL, "Chat", "SavePosition", 0))
+				{
+					hContact = dat->hContact;
+					DBWriteContactSettingDword(hContact, "Chat", "roomx", wp.rcNormalPosition.left);
+					DBWriteContactSettingDword(hContact, "Chat", "roomy", wp.rcNormalPosition.top);
+					DBWriteContactSettingDword(hContact, "Chat", "roomwidth" , wp.rcNormalPosition.right - wp.rcNormalPosition.left);
+					DBWriteContactSettingDword(hContact, "Chat", "roomheight", wp.rcNormalPosition.bottom - wp.rcNormalPosition.top);
+				}
+			}
+			else
+			{
 
-				SendDlgItemMessage(hwndDlg, IDC_MESSAGE, EM_SETCHARFORMAT, SCF_SELECTION, (LPARAM)&cf);
-		}	}
-		break;
+				g_LogOptions.iX = wp.rcNormalPosition.left;
+				g_LogOptions.iY = wp.rcNormalPosition.top;
+				g_LogOptions.iWidth = wp.rcNormalPosition.right - wp.rcNormalPosition.left;
+				g_LogOptions.iHeight = wp.rcNormalPosition.bottom - wp.rcNormalPosition.top;
 
-	case WM_KEYDOWN:
-		SetFocus(GetDlgItem(hwndDlg, IDC_MESSAGE));
-		break;
+			}
+		}break;
+		case WM_PAINT:
+		{
+			// this is where the magic begins
+			if(g_LogOptions.bShowName && GetUpdateRect(hwndDlg, NULL, FALSE))
+			{
+				PAINTSTRUCT		ps;
+				HFONT			hOldFont;
+				int				iWidth, i;
+				RECT			rc = {0};
+				HDC				hdc = BeginPaint (hwndDlg, &ps);
 
-	case WM_MOVE:
-		SendMessage(hwndDlg,GC_SAVEWNDPOS,0,1);
-		break;
+				GetClientRect(hwndDlg, &rc);
 
-	case WM_GETMINMAXINFO:
+				rc.right -= 130;
+				hOldFont = SelectObject(hdc, g_LogOptions.NameFont);
+				iWidth = GetTextPixelSize(dat->pszName, (HFONT)g_LogOptions.NameFont, TRUE) + 18;
+				if (iWidth > rc.right)
+					iWidth = rc.right;
+				i = iWidth;
+				while (i > 0)
+				{
+					DrawIconEx(hdc,i - 24,rc.top,g_LogOptions.TagIcon1,24,28,0,NULL,DI_NORMAL);
+					i -= 24;
+				}
+				DrawIconEx(hdc, iWidth ,rc.top,g_LogOptions.TagIcon2,24,28,0,NULL,DI_NORMAL);
+				rc.top = 2; rc.left += 12; rc.bottom = rc.top +22; 
+				SetBkMode(hdc, TRANSPARENT);
+				SetTextColor(hdc, GetSysColor(COLOR_GRAYTEXT));
+				DrawText(hdc ,dat->pszName ,   -1, &rc, DT_SINGLELINE | DT_LEFT | DT_VCENTER|DT_NOPREFIX|DT_END_ELLIPSIS );
+				SelectObject(hdc, hOldFont);
+				
+				EndPaint(hwndDlg, &ps);
+			}
+			
+		} break;
+
+		case WM_GETMINMAXINFO:
 		{
 			MINMAXINFO* mmi = (MINMAXINFO*)lParam;
-			mmi->ptMinTrackSize.x = si->iSplitterX + 43;
-			if (mmi->ptMinTrackSize.x < 350)
-				mmi->ptMinTrackSize.x = 350;
+			mmi->ptMinTrackSize.x = dat->iSplitterX + 43;
+			if(mmi->ptMinTrackSize.x < 238)
+				mmi->ptMinTrackSize.x = 238;
 
-			mmi->ptMinTrackSize.y = si->iSplitterY + 80;
-		}
-		break;
+			mmi->ptMinTrackSize.y = dat->iSplitterY + 74;
 
-	case WM_LBUTTONDBLCLK:
-		if (LOWORD(lParam) < 30)
-			PostMessage(hwndDlg, GC_SCROLLTOBOTTOM, 0, 0);
-		break;
+			
+		} break;
+		case WM_CLOSE:
+		{
+			ShowWindow(hwndDlg, SW_HIDE);
+			SendMessage(hwndDlg, WM_SETREDRAW, FALSE, 0);
+		} break;
 
-	case WM_CLOSE:
-		if (g_Settings.TabsEnable && g_Settings.TabRestore && lParam != 1) {
-			SESSION_INFO* s;
-			TCITEM id = {0};
-			int j = TabCtrl_GetItemCount(GetDlgItem(hwndDlg, IDC_TAB)) - 1;
-			id.mask = TCIF_PARAM;
-			for(j; j >= 0; j--) {
-				TabCtrl_GetItem(GetDlgItem(hwndDlg, IDC_TAB), j, &id);
-				s = (SESSION_INFO*)id.lParam;
-				if (s)
-					TabM_AddTab(s->ptszID, s->pszModule);
-		}	}
+		case GC_CLOSEWINDOW:
+		{	
+			WM_RemoveWindow(dat->pszID, dat->pszModule);
+			if(dat->hContact)
+				CList_SetOffline(dat->hContact, dat->iType == GCW_CHATROOM?TRUE:FALSE);
+			DestroyWindow(hwndDlg);
+		} break;
 
-		SendMessage(hwndDlg, GC_CLOSEWINDOW, 0, 0);
-		break;
+		case WM_DESTROY:
+		{
+			SendMessage(hwndDlg,GC_SAVEWNDPOS,0,0);
 
-	case GC_CLOSEWINDOW:
-		if (g_Settings.TabsEnable)
-			SM_SetTabbedWindowHwnd(0, 0);
-		DestroyWindow(hwndDlg);
-		break;
+			DBWriteContactSettingString(dat->hContact, dat->pszModule , "Topic", "");
+			DBWriteContactSettingString(dat->hContact, dat->pszModule, "StatusBar", "");
+//			DBWriteContactSettingDword(dat->hContact, dat->pszModule, "Count", 0);
 
-	case WM_DESTROY:
-		SendMessage(hwndDlg,GC_SAVEWNDPOS,0,0);
+			DoEventHook(hwndDlg, dat->pszID, dat->pszModule, GC_USER_TERMINATE, NULL, NULL, (DWORD)dat->ItemData);
 
-		si->hWnd = NULL;
-		DestroyWindow(si->hwndStatus);
-		si->hwndStatus = NULL;
+			if(CallService(MS_CLIST_GETEVENT, (WPARAM)dat->hContact, (LPARAM)0))
+				CallService(MS_CLIST_REMOVEEVENT, (WPARAM)dat->hContact, (LPARAM)"chaticon");
+			DBWriteContactSettingWord(dat->hContact, dat->pszModule ,"ApparentMode",(LPARAM) 0);
 
-		if (si->hwndTooltip != NULL) {
-			HWND hNickList = GetDlgItem(hwndDlg,IDC_LIST);
-			TOOLINFO ti = { 0 };
-			ti.cbSize = sizeof(TOOLINFO);
-			ti.uId = (UINT)hNickList;
-			ti.hwnd = hNickList;
-			SendMessage( si->hwndTooltip, TTM_DELTOOL, 0, (LPARAM)(LPTOOLINFO)&ti );
-		}
-		DestroyWindow( si->hwndTooltip );
-		si->hwndTooltip = NULL;
+			DestroyWindow(dat->hwndStatus);
+			LM_RemoveAll(&dat->pEventListStart, &dat->pEventListEnd);
+			UM_RemoveAll(&dat->pUserList);
+			SM_RemoveAll(&dat->pStatusList);
+			if(dat->pszID)
+				free(dat->pszID);
+			if(dat->pszModule)
+				free(dat->pszModule);
+			if(dat->pszName)
+				free(dat->pszName);
+			if(dat->pszStatusbarText)
+				free(dat->pszStatusbarText);
+			if(dat->pszTopic)
+				free(dat->pszTopic);
+			free(dat);
+			SetWindowLong(hwndDlg,GWL_USERDATA,0);
+			SetWindowLong(GetDlgItem(hwndDlg,IDC_SPLITTERX),GWL_WNDPROC,(LONG)OldSplitterProc);
+			SetWindowLong(GetDlgItem(hwndDlg,IDC_SPLITTERY),GWL_WNDPROC,(LONG)OldSplitterProc);
+            SendDlgItemMessage(hwndDlg, IDC_MESSAGE, EM_UNSUBCLASSED, 0, 0);
+			SetWindowLong(GetDlgItem(hwndDlg,IDC_MESSAGE),GWL_WNDPROC,(LONG)OldMessageProc);
+			SetWindowLong(GetDlgItem(hwndDlg,IDC_NICKLIST),GWL_WNDPROC,(LONG)OldNicklistProc);
+			SetWindowLong(GetDlgItem(hwndDlg,IDC_LOG),GWL_WNDPROC,(LONG)OldLogProc);
+			SetWindowLong(GetDlgItem(hwndDlg,IDC_FILTER),GWL_WNDPROC,(LONG)OldFilterButtonProc);
+			SetWindowLong(GetDlgItem(hwndDlg,IDC_COLOR),GWL_WNDPROC,(LONG)OldFilterButtonProc);
+			SetWindowLong(GetDlgItem(hwndDlg,IDC_BKGCOLOR),GWL_WNDPROC,(LONG)OldFilterButtonProc);
+		}break;
 
-		SetWindowLong(hwndDlg,GWL_USERDATA,0);
-		SetWindowLong(GetDlgItem(hwndDlg,IDC_SPLITTERX),GWL_WNDPROC,(LONG)OldSplitterProc);
-		SetWindowLong(GetDlgItem(hwndDlg,IDC_SPLITTERY),GWL_WNDPROC,(LONG)OldSplitterProc);
-		SetWindowLong(GetDlgItem(hwndDlg,IDC_LIST),GWL_WNDPROC,(LONG)OldNicklistProc);
-		SetWindowLong(GetDlgItem(hwndDlg,IDC_TAB),GWL_WNDPROC,(LONG)OldTabProc);
-		SendDlgItemMessage(hwndDlg, IDC_MESSAGE, EM_UNSUBCLASSED, 0, 0);
-		SetWindowLong(GetDlgItem(hwndDlg,IDC_MESSAGE),GWL_WNDPROC,(LONG)OldMessageProc);
-		SetWindowLong(GetDlgItem(hwndDlg,IDC_LOG),GWL_WNDPROC,(LONG)OldLogProc);
-		SetWindowLong(GetDlgItem(hwndDlg,IDC_FILTER),GWL_WNDPROC,(LONG)OldFilterButtonProc);
-		SetWindowLong(GetDlgItem(hwndDlg,IDC_COLOR),GWL_WNDPROC,(LONG)OldFilterButtonProc);
-		SetWindowLong(GetDlgItem(hwndDlg,IDC_BKGCOLOR),GWL_WNDPROC,(LONG)OldFilterButtonProc);
-		break;
+		default:break;
 	}
 	return(FALSE);
 }
+
+

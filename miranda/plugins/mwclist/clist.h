@@ -24,37 +24,31 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define _CLIST_H_
 
 void LoadContactTree(void);
-int ExtIconFromStatusMode(HANDLE hContact, const char *szProto,int status);
+int IconFromStatusMode(const char *szProto,int status);
 HTREEITEM GetTreeItemByHContact(HANDLE hContact);
 void TrayIconUpdateWithImageList(int iImage,const char *szNewTip,char *szPreferredProto);
 void SortContacts(void);
 void ChangeContactIcon(HANDLE hContact,int iIcon,int add);
-int GetContactInfosForSort(HANDLE hContact,char **Proto,TCHAR **Name,int *Status);
-int GetProtocolVisibility(const char* ProtoName);
+int GetContactInfosForSort(HANDLE hContact,char **Proto,char **Name,int *Status);
+
 
 typedef struct  {
 	HANDLE hContact;
-	TCHAR *name;
-	#if defined( _UNICODE )
-		char *szName;
-	#endif
-	TCHAR* szGroup;
-	int Hidden;
-	int noHiddenOffline;
-
+	char *name;
+	int NameHash;
 	char *szProto;
 	boolean protoNotExists;
+	int ProtoHash;
 	int	  status;
-
+	int Hidden;
+	char *szGroup;
 	int i;
 	int ApparentMode;
 	int NotOnList;
 	int IdleTS;
 	void *ClcContact;
-	BYTE IsExpanded;
-	boolean isUnknown;
-}
-	displayNameCacheEntry,*pdisplayNameCacheEntry;
+
+} displayNameCacheEntry,*pdisplayNameCacheEntry;
 
 pdisplayNameCacheEntry GetContactFullCacheEntry(HANDLE hContact);
 

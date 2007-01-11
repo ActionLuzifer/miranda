@@ -97,18 +97,16 @@ void yahoo_chat_keepalive(int id);
 
 /* from is the identity you're sending from.  if NULL, the default is used */
 /* utf8 is whether msg is a utf8 string or not. */
-void yahoo_send_im(int id, const char *from, const char *who, const char *msg, int utf8, int buddy_icon);
+void yahoo_send_im(int id, const char *from, const char *who, const char *msg, int utf8);
 /* if type is true, send typing notice, else send stopped typing notice */
 void yahoo_send_typing(int id, const char *from, const char *who, int typ);
 
 /* used to set away/back status. */
 /* away says whether the custom message is an away message or a sig */
 void yahoo_set_away(int id, enum yahoo_status state, const char *msg, int away);
-void yahoo_set_stealth(int id, const char *buddy, int add);
 
 void yahoo_add_buddy(int id, const char *who, const char *group, const char *msg);
 void yahoo_remove_buddy(int id, const char *who, const char *group);
-void yahoo_accept_buddy(int id, const char *who);
 void yahoo_reject_buddy(int id, const char *who, const char *msg);
 /* if unignore is true, unignore, else ignore */
 void yahoo_ignore_buddy(int id, const char *who, int unignore);
@@ -158,9 +156,6 @@ void yahoo_webcam_invite(int id, const char *who);
 void yahoo_send_file(int id, const char *who, const char *msg, const char *name, unsigned long size,
 		yahoo_get_fd_callback callback, void *data);
 
-void yahoo_send_avatar(int id, const char *name, unsigned long size, 
-		yahoo_get_fd_callback callback, void *data);
-		
 /* send a search request
  */
 void yahoo_search(int id, enum yahoo_search_type t, const char *text, enum yahoo_search_gender g, enum yahoo_search_agerange ar,
@@ -196,18 +191,6 @@ const char  * yahoo_get_cookie(int id, const char *which);
 /* You'll have to do urlencoding yourself, but see yahoo_httplib.h first */
 const char  * yahoo_get_profile_url( void );
 
-void yahoo_request_buddy_avatar(int id, const char *buddy);
-void yahoo_send_picture_checksum(int id, const char* who, int cksum);
-void yahoo_send_picture_info(int id, const char *who, int type, const char *pic_url, int cksum);
-void yahoo_send_picture_status(int id, int buddy_icon);
-void yahoo_send_picture_update(int id, const char *who, int type);
-
-void yahoo_ftdc_cancel(int id, const char *buddy, const char *filename, const char *ft_token, int command);
-void yahoo_ft7dc_accept(int id, const char *buddy, const char *ft_token);
-void yahoo_ft7dc_cancel(int id, const char *buddy, const char *ft_token);
-void yahoo_ft7dc_relay(int id, const char *buddy, const char *ft_token);
-char *yahoo_webmessenger_idle_packet(int id, int* len);
-void yahoo_send_idle_packet(int id);
 #include "yahoo_httplib.h"
 
 #ifdef __cplusplus

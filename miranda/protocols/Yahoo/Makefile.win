@@ -1,11 +1,9 @@
-SRC = http_gateway.c main.c options.c pthread.c server.c services.c util.c yahoo.c avatar.c \
-	  chat.c webcam.c icolib.c \
-	  libyahoo2/crypt.c libyahoo2/libyahoo2.c libyahoo2/md5.c libyahoo2/sha.c libyahoo2/yahoo_auth.c \
-	  libyahoo2/yahoo_httplib.c libyahoo2/yahoo_list.c libyahoo2/yahoo_util.c
+SRC = http_gateway.c main.c options.c pthread.c server.c services.c util.c yahoo.c \
+	  libyahoo2/crypt.c libyahoo2/libyahoo2.c libyahoo2/md5.c libyahoo2/sha.c libyahoo2/yahoo_fn.c libyahoo2/yahoo_httplib.c libyahoo2/yahoo_list.c libyahoo2/yahoo_util.c
 OBJ = $(SRC:.c=.o)
 RES = Yahoo.res
 
-LIB = -lcomdlg32 -lgdi32
+LIB = 
 
 CC = gcc
 RC = windres
@@ -17,7 +15,7 @@ else
 BIN = ../../bin/release/plugins/Yahoo.dll
 endif
 
-DEFINES = -DHAVE_CONFIG_H
+DEFINES = -DHAVE_CONFIG_H -DUSE_STRUCT_CALLBACKS
 ifdef DEBUG
 DEFINES := $(DEFINES) -D_DEBUG
 endif

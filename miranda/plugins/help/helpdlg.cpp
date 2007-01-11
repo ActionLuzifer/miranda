@@ -18,26 +18,24 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 #define _WIN32_WINNT 0x0500
 #include <windows.h>
-#include <stdio.h>
+#include <richedit.h>
+#include "resource.h"
 #include <win2k.h>
 #include <newpluginapi.h>
 #include <m_utils.h>
 #include <m_langpack.h>
 #include "help.h"
 
-#include <richedit.h>
-#include "resource.h"
-
 extern HINSTANCE hInst;
 HWND hwndHelpDlg;
 
 HWND GetControlDialog(HWND hwndCtl)
 {
-	TCHAR szClassName[32];
+	char szClassName[32];
 	HWND hwndDlg=hwndCtl;
 	while(hwndDlg) {
 		GetClassName(hwndDlg,szClassName,sizeof(szClassName));
-		if(!lstrcmp(szClassName,_T("#32770"))) return hwndDlg;
+		if(!lstrcmp(szClassName,"#32770")) return hwndDlg;
 		hwndDlg=GetParent(hwndDlg);
 	}
 	return NULL;
@@ -61,7 +59,7 @@ BOOL CALLBACK ShadowDlgProc(HWND hwndDlg,UINT message,WPARAM wParam,LPARAM lPara
 	switch(message) {
 		case WM_INITDIALOG:
 		{	BOOL (WINAPI *MySetLayeredWindowAttributes)(HWND,COLORREF,BYTE,DWORD);
-			MySetLayeredWindowAttributes=(BOOL (WINAPI *)(HWND,COLORREF,BYTE,DWORD))GetProcAddress(GetModuleHandleA("USER32"),"SetLayeredWindowAttributes");
+			MySetLayeredWindowAttributes=(BOOL (WINAPI *)(HWND,COLORREF,BYTE,DWORD))GetProcAddress(GetModuleHandle("USER32"),"SetLayeredWindowAttributes");
 			if(!MySetLayeredWindowAttributes) {
 				DestroyWindow(hwndDlg);
 				return TRUE;
@@ -112,7 +110,7 @@ BOOL CALLBACK HelpDlgProc(HWND hwndDlg,UINT message,WPARAM wParam,LPARAM lParam)
 			urd.hInstance=hInst;
 			urd.hwndDlg=hwndDlg;
 			urd.lParam=0;
-			urd.lpTemplate=MAKEINTRESOURCEA(IDD_HELP);
+			urd.lpTemplate=MAKEINTRESOURCE(IDD_HELP);
 			urd.pfnResizer=HelpDialogResize;
 			CallService(MS_UTILS_RESIZEDIALOG,0,(LPARAM)&urd);
 			InvalidateRect(hwndDlg,NULL,TRUE);
@@ -151,7 +149,7 @@ BOOL CALLBACK HelpDlgProc(HWND hwndDlg,UINT message,WPARAM wParam,LPARAM lParam)
 		case M_CHANGEHELPCONTROL:
 			SetWindowLong(hwndDlg,GWL_USERDATA,lParam);
 			hwndCtl=(HWND)lParam;
-			SetDlgItemText(hwndDlg,IDC_CTLTEXT,_T(""));
+			SetDlgItemText(hwndDlg,IDC_CTLTEXT,"");
 			#ifdef EDITOR
 			{	char text[4096],szModule[512];
 				char *szDlgId;
@@ -177,7 +175,7 @@ BOOL CALLBACK HelpDlgProc(HWND hwndDlg,UINT message,WPARAM wParam,LPARAM lParam)
 				SetDlgItemText(hwndDlg,IDC_MODULE,text);
 			}
 			#endif	  //defined EDITOR
-			SetDlgItemText(hwndDlg,IDC_TEXT,_T(""));
+			SetDlgItemText(hwndDlg,IDC_TEXT,"");
 			SendMessage(hwndDlg,M_LOADHELP,0,0);
 #ifdef EDITOR
 			ShowWindow(hwndDlg,SW_SHOWNORMAL);
@@ -194,9 +192,9 @@ BOOL CALLBACK HelpDlgProc(HWND hwndDlg,UINT message,WPARAM wParam,LPARAM lParam)
 				SetDlgItemText(hwndDlg,IDC_CTLTEXT,text);
 			}
 #else
-			SetDlgItemText(hwndDlg,IDC_CTLTEXT,TranslateT("No help available"));
+			SetDlgItemText(hwndDlg,IDC_CTLTEXT,Translate("No help available"));
 #endif
-			SetDlgItemText(hwndDlg,IDC_TEXT,_T(""));
+			SetDlgItemText(hwndDlg,IDC_TEXT,"");
 			break;
 #ifdef EDITOR
 		case M_UPLOADCOMPLETE:
@@ -212,32 +210,32 @@ BOOL CALLBACK HelpDlgProc(HWND hwndDlg,UINT message,WPARAM wParam,LPARAM lParam)
 #endif
 			szDlgId=CreateDialogIdString(GetControlDialog(hwndCtl));
 			if(szDlgId==NULL) break;
-			GetModuleFileNameA((HINSTANCE)GetWindowLong(hwndCtl,GWL_HINSTANCE),szModule,sizeof(szModule));
+			GetModuleFileName((HINSTANCE)GetWindowLong(hwndCtl,GWL_HINSTANCE),szModule,sizeof(szModule));
 			pszModuleName=strrchr(szModule,'\\');
 			if(pszModuleName==NULL) pszModuleName=szModule;
 			else pszModuleName++;
 			downloading=GetControlHelp(szDlgId,pszModuleName,GetWindowLong(hwndCtl,GWL_ID),&pszTitle,&pszText,NULL,message==M_HELPDOWNLOADED?GCHF_DONTDOWNLOAD:0);
 			free(szDlgId);
 			if(!downloading) {
-				if(pszTitle) SetDlgItemTextA(hwndDlg,IDC_CTLTEXT,pszTitle);
-				else SetDlgItemText(hwndDlg,IDC_CTLTEXT,_T(""));
+				if(pszTitle) SetDlgItemText(hwndDlg,IDC_CTLTEXT,pszTitle);
+				else SetDlgItemText(hwndDlg,IDC_CTLTEXT,"");
 				if(pszText) StreamInHtml(GetDlgItem(hwndDlg,IDC_TEXT),pszText);
-				else SetDlgItemText(hwndDlg,IDC_TEXT,_T(""));
+				else SetDlgItemText(hwndDlg,IDC_TEXT,"");
 			}
 			else {
 				if(message==M_HELPDOWNLOADED) {
-					SetDlgItemText(hwndDlg,IDC_TEXT,_T(""));
+					SetDlgItemText(hwndDlg,IDC_TEXT,"");
 #ifndef EDITOR
-					SetDlgItemText(hwndDlg,IDC_CTLTEXT,TranslateT("No help available"));
+					SetDlgItemText(hwndDlg,IDC_CTLTEXT,Translate("No help available"));
 #endif
 				}
 				else {
 #ifdef EDITOR
 					EnableWindow(GetDlgItem(hwndDlg,IDC_TEXT),FALSE);
-					SetDlgItemText(hwndDlg,IDC_TEXT,TranslateT("Downloading..."));
+					SetDlgItemText(hwndDlg,IDC_TEXT,Translate("Downloading..."));
 #else
-					SetDlgItemText(hwndDlg,IDC_CTLTEXT,TranslateT("Downloading..."));
-					SetDlgItemText(hwndDlg,IDC_TEXT,_T(""));
+					SetDlgItemText(hwndDlg,IDC_CTLTEXT,Translate("Downloading..."));
+					SetDlgItemText(hwndDlg,IDC_TEXT,"");
 #endif
 				}
 			}

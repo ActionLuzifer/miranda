@@ -17,8 +17,8 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
-// $Id$
-// code taken partly from public example on the internet, source unknown.
+//imagedataobject
+//code taken partly from public example on the internet, source unknown.
 
 #define __TSR_CXX
 #include "commonheaders.h"
@@ -35,7 +35,7 @@ extern "C" void ImageDataInsertBitmap(IRichEditOle *ole, HBITMAP hBm)
     CImageDataObject::InsertBitmap(ole, hBm);
 }
 
-extern "C" void GetIconSize(HICON hIcon, int* sizeX, int* sizeY)
+void GetIconSize(HICON hIcon, int* sizeX, int* sizeY)
 {
     ICONINFO ii;
     BITMAP bm;
@@ -59,9 +59,11 @@ extern "C" int CacheIconToBMP(struct MsgLogIcon *theIcon, HICON hIcon, COLORREF 
         if (sizeX != 0) IconSizeX = sizeX;
         if (sizeY != 0) IconSizeY = sizeY;
     }
+
     RECT rc;
     BITMAPINFOHEADER bih = {0};
     int widthBytes;
+
     theIcon->hBkgBrush = CreateSolidBrush(backgroundColor);
     bih.biSize = sizeof(bih);
     bih.biBitCount = 24;
@@ -96,15 +98,13 @@ extern "C" void DeleteCachedIcon(struct MsgLogIcon *theIcon)
 bool CImageDataObject::InsertBitmap(IRichEditOle* pRichEditOle, HBITMAP hBitmap)
 {
     SCODE sc;
-    BITMAP bminfo;
-    
+
     // Get the image data object
     //
     CImageDataObject *pods = new CImageDataObject;
     LPDATAOBJECT lpDataObject;
     pods->QueryInterface(IID_IDataObject, (void **)&lpDataObject);
 
-    GetObject(hBitmap, sizeof(bminfo), &bminfo);
     pods->SetBitmap(hBitmap);
 
     // Get the RichEdit container site
@@ -122,6 +122,7 @@ bool CImageDataObject::InsertBitmap(IRichEditOle* pRichEditOle, HBITMAP hBitmap)
         pOleClientSite->Release();
         return false; 
     }
+
     sc = ::StgCreateDocfileOnILockBytes(lpLockBytes,
                                         STGM_SHARE_EXCLUSIVE|STGM_CREATE|STGM_READWRITE, 0, &pStorage);
     if (sc != S_OK) {
@@ -164,7 +165,7 @@ bool CImageDataObject::InsertBitmap(IRichEditOle* pRichEditOle, HBITMAP hBitmap)
     reobject.poleobj = pOleObject;
     reobject.polesite = pOleClientSite;
     reobject.pstg = pStorage;
-    reobject.dwFlags = bminfo.bmHeight <= 12 ? 0 : REO_BELOWBASELINE;
+    reobject.dwFlags = REO_BELOWBASELINE;
 
     // Insert the bitmap at the current location in the richedit control
     //

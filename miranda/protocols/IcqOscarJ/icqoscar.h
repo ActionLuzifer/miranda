@@ -5,7 +5,7 @@
 // Copyright © 2000,2001 Richard Hughes, Roland Rabien, Tristan Van de Vreede
 // Copyright © 2001,2002 Jon Keating, Richard Hughes
 // Copyright © 2002,2003,2004 Martin Öberg, Sam Kothari, Robert Rainwater
-// Copyright © 2004,2005,2006 Joe Kucera
+// Copyright © 2004 Joe Kucera
 // 
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -23,7 +23,7 @@
 //
 // -----------------------------------------------------------------------------
 //
-// File name      : $Source: /cvsroot/miranda/miranda/protocols/IcqOscarJ/icqoscar.h,v $
+// File name      : $Source$
 // Revision       : $Revision$
 // Last change on : $Date$
 // Last change by : $Author$
@@ -51,13 +51,11 @@
 #include <fcntl.h>
 #include <crtdbg.h>
 #include <process.h>
-#include <malloc.h>
 
 // Miranda IM SDK includes
 #include <newpluginapi.h> // This must be included first
 #include <m_clc.h>
 #include <m_clist.h>
-#include <m_clui.h>
 #include <m_database.h>
 #include <m_langpack.h>
 #include <m_message.h>
@@ -70,35 +68,26 @@
 #include <m_userinfo.h>
 #include <m_utils.h>
 #include <m_idle.h>
-#include <m_popup.h>
-#include <m_clistint.h>
 
 // Project resources
 #include "resource.h"
 
 // ICQ plugin includes
-#include "globals.h"
-#include "icq_db.h"
-#include "i18n.h"
-#include "cookies.h"
 #include "capabilities.h"
+#include "i18n.h"
 #include "icq_packet.h"
 #include "icq_direct.h"
-#include "oscar_filetransfer.h"
 #include "icq_server.h"
 #include "icqosc_svcs.h"
-#include "icq_xtraz.h"
 #include "icq_opts.h"
 #include "icq_servlist.h"
 #include "icq_http.h"
 #include "icq_fieldnames.h"
 #include "icq_constants.h"
-#include "guids.h"
 #include "icq_infoupdate.h"
 #include "icq_avatar.h"
 #include "init.h"
 #include "stdpackets.h"
-#include "directpackets.h"
 #include "tlv.h"
 #include "families.h"
 #include "utilities.h"
@@ -108,17 +97,9 @@
 #include "log.h"
 #include "channels.h"
 #include "forkthread.h"
-#include "UI/askauthentication.h"
-#include "UI/userinfotab.h"
-#include "UI/loginpassword.h"
-
-#include "icq_rates.h"
-
-#include "changeinfo/changeinfo.h"
-#include "icq_popups.h"
-#include "iconlib.h"
-
-#include "md5.h"
+#include "ui/askauthentication.h"
+#include "ui/userinfotab.h"
+#include "ui/loginpassword.h"
 
 // :TODO: This should not be here :p
 void icq_FirstRunCheck(void);

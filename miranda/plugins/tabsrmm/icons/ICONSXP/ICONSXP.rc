@@ -1,11 +1,11 @@
-// Microsoft Visual C++ generated resource script.
+// In Microsoft Visual C++ generiertes Ressourcenskript.
 //
 #include "resource.h"
 
 #define APSTUDIO_READONLY_SYMBOLS
 /////////////////////////////////////////////////////////////////////////////
 //
-// Generated from the TEXTINCLUDE 2 resource.
+// Von der Ressource TEXTINCLUDE 2 generiert.
 //
 #include "afxres.h"
 
@@ -13,125 +13,81 @@
 #undef APSTUDIO_READONLY_SYMBOLS
 
 /////////////////////////////////////////////////////////////////////////////
-// Deutsch (Deutschland) resources
+// Englisch Ressourcen (U.S.)
 
-#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_DEU)
-#ifdef _WIN32
-LANGUAGE LANG_GERMAN, SUBLANG_GERMAN
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
+LANGUAGE 7, 1
 #pragma code_page(1252)
-#endif //_WIN32
 
 /////////////////////////////////////////////////////////////////////////////
 //
 // Icon
 //
 
+#define IDI_HISTORY 1
+#define IDI_TIMESTAMP 2
+#define IDI_ADDCONTACT 3
+#define IDI_MULTISEND 4
+#define IDI_TYPING 5
+#define IDI_QUOTE 6
+#define IDI_SAVE 7
+#define IDI_CHECK 8
+#define IDI_CONTACTPIC 9
+#define IDI_CLOSEMSGDLG 10
+#define IDI_USERMENU 11
+#define IDI_MSGERROR 12
+#define IDI_ICONIN 13
+#define IDI_ICONOUT 14
+#define IDI_SMILEYICON 15
+#define IDI_RESERVED1 16
+#define IDI_RESERVED2 17
+#define IDI_RESERVED3 18
+#define IDI_RESERVED4 19
+
+#define IDB_UNKNOWNAVATAR 100
+
 // Icon with lowest ID value placed first to ensure application icon
 // remains consistent on all systems.
-IDI_HISTORY             ICON                    "..\\..\\res\\proxal\\history.ico"
-IDI_MSGLOGOPT           ICON                    "..\\..\\res\\proxal\\options.ico"
-IDI_ADDCONTACT          ICON                    "..\\..\\res\\proxal\\plus.ico"
-IDI_MULTISEND           ICON                    "..\\..\\res\\proxal\\multisend.ico"
-IDI_TYPING              ICON                    "..\\..\\res\\proxal\\pencil.ico"
-IDI_QUOTE               ICON                    "..\\..\\res\\proxal\\quote.ico"
-IDI_SAVE                ICON                    "..\\..\\res\\proxal\\file.ico"
-IDI_SEND                ICON                    "..\\..\\res\\proxal\\check.ico"
-IDI_CONTACTPIC          ICON                    "..\\..\\res\\proxal\\avatar.ico"
-IDI_USERMENU            ICON                    "..\\..\\res\\proxal\\info.ico"
-IDI_MSGERROR            ICON                    "..\\..\\res\\proxal\\block.ico"
-IDI_CLOSEMSGDLG         ICON                    "..\\..\\res\\proxal\\delete.ico"
-IDI_ICONIN              ICON                    "..\\..\\res\\proxal\\Incom.ico"
-IDI_ICONOUT             ICON                    "..\\..\\res\\proxal\\outg.ico"
-IDI_SMILEYICON          ICON                    "..\\..\\res\\proxal\\emoticon.ico"
-IDI_SELFTYPING_ON       ICON                    "..\\..\\res\\proxal\\mtn.ico"
-IDI_SELFTYPING_OFF      ICON                    "..\\..\\res\\proxal\\nomtn.ico"
-IDI_CONTAINER           ICON                    "..\\..\\res\\proxal\\message.ico"
-IDI_SECUREIM_ENABLED    ICON                    "..\\..\\res\\proxal\\secureOn.ico"
-IDI_SECUREIM_DISABLED   ICON                    "..\\..\\res\\proxal\\secureOff.ico"
-IDI_STATUSCHANGE        ICON                    "..\\..\\res\\proxal\\Status change.ico"
-IDI_FONTBOLD            ICON                    "..\\..\\res\\proxal\\bold.ico"
-IDI_FONTITALIC          ICON                    "..\\..\\res\\proxal\\italic.ico"
-IDI_FONTUNDERLINE       ICON                    "..\\..\\res\\proxal\\underline.ico"
-IDI_FONTFACE            ICON                    "..\\..\\res\\proxal\\font.ico"
-IDI_FONTCOLOR           ICON                    "..\\..\\res\\proxal\\font2.ico"
-IDI_SOUNDSON            ICON                    "..\\..\\res\\proxal\\sounds_on.ico"
-IDI_SOUNDSOFF           ICON                    "..\\..\\res\\proxal\\sounds_off.ico"
-IDI_EMPTY               ICON                    "..\\..\\res\\empty.ico"
-IDI_RESERVED10          ICON                    "..\\..\\res\\empty.ico"
+IDI_HISTORY             ICON                    "..\\..\\res\\angeli-icons\\HistoryXP.ico"
+IDI_TIMESTAMP           ICON                    "..\\..\\res\\angeli-icons\\optXP.ico"
+IDI_ADDCONTACT          ICON                    "..\\..\\res\\angeli-icons\\AddXP.ico"
+IDI_MULTISEND           ICON                    "..\\..\\res\\angeli-icons\\MultiXP.ico"
+IDI_TYPING              ICON                    "..\\..\\res\\angeli-icons\\Pencil.ico"
+IDI_QUOTE               ICON                    "..\\..\\res\\angeli-icons\\quote02.ico"
+IDI_SAVE                ICON                    "..\\..\\res\\angeli-icons\\saveXP.ico"
+IDI_CHECK               ICON                    "..\\..\\res\\angeli-icons\\Send.ico"
+IDI_CONTACTPIC          ICON                    "..\\..\\res\\angeli-icons\\PicXP.ico"
+IDI_USERMENU            ICON                    "..\\..\\res\\angeli-icons\\InfoXP.ico"
+IDI_MSGERROR            ICON                    "..\\..\\res\\error.ico"
+IDI_CLOSEMSGDLG         ICON                    "..\\..\\res\\angeli-icons\\CloseXP.ico"
+IDI_ICONIN              ICON                    "..\\..\\res\\angeli-icons\\Incom.ico"
+IDI_ICONOUT             ICON                    "..\\..\\res\\angeli-icons\\outg.ico"
+IDI_SMILEYICON          ICON                    "..\\..\\res\\smbutton.ico"
+IDI_RESERVED1			ICON					"..\\..\\res\\typing32.ico"
+IDI_RESERVED2			ICON					"..\\..\\res\\delete.ico"
+IDI_RESERVED3			ICON					"..\\..\\res\\empty.ico"
+IDI_RESERVED4			ICON					"..\\..\\res\\empty.ico"
 
-IDI_SESSIONLIST         ICON                    "..\\..\\res\\proxal\\slist.ico"
-IDI_CONFIGSIDEBAR       ICON                    "..\\..\\res\\proxal\\sbaroptions.ico"
-IDI_FAVLIST             ICON                    "..\\..\\res\\proxal\\favlist.ico"
-IDI_RECENTLIST          ICON                    "..\\..\\res\\proxal\\recentlist.ico"
-IDI_USERPREFS           ICON                    "..\\..\\res\\proxal\\userprefs.ico"
+IDB_UNKNOWNAVATAR		BITMAP					"..\\..\\res\\unknown.bmp"
 
-IDI_TRAYANIM1           ICON                    "..\\..\\res\\MessAnim\\m1.ico"
-IDI_TRAYANIM2           ICON                    "..\\..\\res\\MessAnim\\m2.ico"
-IDI_TRAYANIM3           ICON                    "..\\..\\res\\MessAnim\\m3.ico"
-IDI_TRAYANIM4           ICON                    "..\\..\\res\\MessAnim\\m4.ico"
-
-IDI_TAG1                ICON                    "..\\..\\chat\\Icons\\tag1.ico"
-IDI_TAG2                ICON                    "..\\..\\chat\\Icons\\tag2.ico"
-IDI_TOPICBUT            ICON                    "..\\..\\chat\\Icons\\topicbut.ico"
-IDI_JOIN                ICON                    "..\\..\\chat\\Icons\\join.ico"
-IDI_TOPIC               ICON                    "..\\..\\chat\\Icons\\topic.ico"
-IDI_ADDSTATUS           ICON                    "..\\..\\chat\\Icons\\addmode.ico"
-IDI_INFO                ICON                    "..\\..\\chat\\Icons\\info.ico"
-IDI_KICK                ICON                    "..\\..\\chat\\Icons\\kick.ico"
-IDI_MESSAGE             ICON                    "..\\..\\chat\\Icons\\message.ico"
-IDI_NICK                ICON                    "..\\..\\chat\\Icons\\nick.ico"
-IDI_NOTICE              ICON                    "..\\..\\chat\\Icons\\notice.ico"
-IDI_PART                ICON                    "..\\..\\chat\\Icons\\part.ico"
-IDI_QUIT                ICON                    "..\\..\\chat\\Icons\\quit.ico"
-IDI_REMSTATUS           ICON                    "..\\..\\chat\\Icons\\removestatus.ico"
-IDI_HIGHLIGHT           ICON                    "..\\..\\chat\\Icons\\highlight.ico"
-IDI_MESSAGEOUT          ICON                    "..\\..\\chat\\Icons\\messageout.ico"
-IDI_ACTION              ICON                    "..\\..\\chat\\Icons\\action.ico"
-IDI_BKGCOLOR            ICON                    "..\\..\\chat\\Icons\\bkgcolor.ico"
-IDI_CHANMGR             ICON                    "..\\..\\chat\\Icons\\window.ico"
-IDI_FILTER              ICON                    "..\\..\\chat\\Icons\\filter.ico"
-IDI_BLANK               ICON                    "..\\..\\chat\\Icons\\blank.ico"
-IDI_STATUS3             ICON                    "..\\..\\chat\\Icons\\4.ico"
-IDI_STATUS2             ICON                    "..\\..\\chat\\Icons\\3.ico"
-IDI_STATUS4             ICON                    "..\\..\\chat\\Icons\\5.ico"
-IDI_STATUS1             ICON                    "..\\..\\chat\\Icons\\2.ico"
-IDI_STATUS0             ICON                    "..\\..\\chat\\Icons\\blank.ico"
-IDI_STATUS5             ICON                    "..\\..\\chat\\Icons\\6.ico"
-IDI_OVERLAY             ICON                    "..\\..\\chat\\Icons\\overlay.ico"
-IDI_FILTER2             ICON                    "..\\..\\chat\\Icons\\filter2.ico"
-IDI_SHOWNICKLIST	    ICON                    "..\\..\\chat\\icons\\nicklist_show.ico"
-IDI_HIDENICKLIST	    ICON                    "..\\..\\chat\\icons\\nicklist_hide.ico"
-
-IDI_PULLDOWNARROW       ICON                    "..\\..\\res/pulldown.ico"
-IDI_LEFTARROW           ICON                    "..\\..\\res/leftarrow.ico"
-IDI_PULLUPARROW         ICON                    "..\\..\\res/pullup.ico"
-IDI_RIGHTARROW          ICON                    "..\\..\\res/rightarrow.ico"
-
-
-/////////////////////////////////////////////////////////////////////////////
-//
-// Bitmap
-//
-
-IDB_UNKNOWNAVATAR       BITMAP                  "..\\..\\res\\unknown.bmp"
 #ifdef APSTUDIO_INVOKED
 /////////////////////////////////////////////////////////////////////////////
 //
 // TEXTINCLUDE
 //
 
-1 TEXTINCLUDE 
+1 TEXTINCLUDE  
 BEGIN
     "resource.h\0"
 END
 
-2 TEXTINCLUDE 
+2 TEXTINCLUDE  
 BEGIN
     "#include ""afxres.h""\r\n"
     "\0"
 END
 
-3 TEXTINCLUDE 
+3 TEXTINCLUDE  
 BEGIN
     "\r\n"
     "\0"
@@ -139,30 +95,7 @@ END
 
 #endif    // APSTUDIO_INVOKED
 
-#endif    // Deutsch (Deutschland) resources
-/////////////////////////////////////////////////////////////////////////////
-
-
-/////////////////////////////////////////////////////////////////////////////
-// Deutsch (Österreich) resources
-
-#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_DEA)
-#ifdef _WIN32
-LANGUAGE LANG_GERMAN, SUBLANG_GERMAN_AUSTRIAN
-#pragma code_page(1252)
-#endif //_WIN32
-
-/////////////////////////////////////////////////////////////////////////////
-//
-// String Table
-//
-
-STRINGTABLE 
-BEGIN
-    IDS_IDENTIFY            "__tabSRMM_ICONPACK 3.0__"
-END
-
-#endif    // Deutsch (Österreich) resources
+#endif    // Englische Ressourcen (U.S.)
 /////////////////////////////////////////////////////////////////////////////
 
 
@@ -170,10 +103,10 @@ END
 #ifndef APSTUDIO_INVOKED
 /////////////////////////////////////////////////////////////////////////////
 //
-// Generated from the TEXTINCLUDE 3 resource.
+// Von der Ressource TEXTINCLUDE 3 generiert.
 //
 
 
 /////////////////////////////////////////////////////////////////////////////
-#endif    // not APSTUDIO_INVOKED
+#endif    // nicht APSTUDIO_INVOKED
 

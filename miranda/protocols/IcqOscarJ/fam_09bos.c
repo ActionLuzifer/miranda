@@ -5,7 +5,6 @@
 // Copyright © 2000,2001 Richard Hughes, Roland Rabien, Tristan Van de Vreede
 // Copyright © 2001,2002 Jon Keating, Richard Hughes
 // Copyright © 2002,2003,2004 Martin Öberg, Sam Kothari, Robert Rainwater
-// Copyright © 2004,2005,2006 Joe Kucera
 // 
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -23,7 +22,7 @@
 //
 // -----------------------------------------------------------------------------
 //
-// File name      : $Source: /cvsroot/miranda/miranda/protocols/IcqOscarJ/fam_09bos.c,v $
+// File name      : $Source$
 // Revision       : $Revision$
 // Last change on : $Date$
 // Last change by : $Author$
@@ -40,93 +39,61 @@
 
 static void handlePrivacyRightsReply(unsigned char *pBuffer, WORD wBufferLength);
 
+extern HANDLE ghServerNetlibUser;
+
 void handleBosFam(unsigned char *pBuffer, WORD wBufferLength, snac_header* pSnacHeader)
 {
-  switch (pSnacHeader->wSubtype)
-  {
 
-  case ICQ_PRIVACY_RIGHTS_REPLY: // Reply to CLI_REQBOS
-    handlePrivacyRightsReply(pBuffer, wBufferLength);
-    break;
+	switch (pSnacHeader->wSubtype)
+	{
 
-  case ICQ_ERROR:
-  {
-    WORD wError;
+	case SRV_PRIVACY_RIGHTS_REPLY: // Reply to CLI_REQBOS
+		handlePrivacyRightsReply(pBuffer, wBufferLength);
+		break;
 
-    if (wBufferLength >= 2)
-      unpackWord(&pBuffer, &wError);
-    else 
-      wError = 0;
+	default:
+		Netlib_Logf(ghServerNetlibUser, "Warning: Ignoring SNAC(x09,x%02x) - Unknown SNAC (Flags: %u, Ref: %u", pSnacHeader->wSubtype, pSnacHeader->wFlags, pSnacHeader->dwRef);
+		break;
 
-    LogFamilyError(ICQ_BOS_FAMILY, wError);
-    break;
-  }
-
-  default:
-    NetLog_Server("Warning: Ignoring SNAC(x%02x,x%02x) - Unknown SNAC (Flags: %u, Ref: %u)", ICQ_BOS_FAMILY, pSnacHeader->wSubtype, pSnacHeader->wFlags, pSnacHeader->dwRef);
-    break;
-
-  }
+	}
+	
 }
 
 
 
 static void handlePrivacyRightsReply(unsigned char *pBuffer, WORD wBufferLength)
 {
-  if (wBufferLength >= 12)
-  {
-    oscar_tlv_chain* pChain;
+
+	if (wBufferLength >= 12)
+	{
+
+		oscar_tlv_chain* pChain;
 
 
-    pChain = readIntoTLVChain(&pBuffer, wBufferLength, 0);
+		pChain = readIntoTLVChain(&pBuffer, wBufferLength, 0);
 
-    if (pChain)
-    {
-      WORD wMaxVisibleContacts;
-      WORD wMaxInvisibleContacts;
+		if (pChain)
+		{
 
-
-      wMaxVisibleContacts = getWordFromChain(pChain, 0x0001, 1);
-      wMaxInvisibleContacts = getWordFromChain(pChain, 0x0001, 1);
-
-      disposeChain(&pChain);
-
-      NetLog_Server("PRIVACY: Max visible %u, max invisible %u items.", wMaxVisibleContacts, wMaxInvisibleContacts);
-
-      // Success
-      return;
-    }
-  }
-
-  // Failure
-  NetLog_Server("Warning: Malformed SRV_PRIVACY_RIGHTS_REPLY");
-}
+			WORD wMaxVisibleContacts;
+			WORD wMaxInvisibleContacts;
 
 
+			wMaxVisibleContacts = getWordFromChain(pChain, 0x0001, 1);
+			wMaxInvisibleContacts = getWordFromChain(pChain, 0x0001, 1);
 
-void makeContactTemporaryVisible(HANDLE hContact)
-{
-  DWORD dwUin;
-  uid_str szUid;
+			disposeChain(&pChain);
 
-  if (ICQGetContactSettingByte(hContact, "TemporaryVisible", 0))
-    return; // already there
+			Netlib_Logf(ghServerNetlibUser, "SRV_PRIVACY_RIGHTS_REPLY: Max visible %u, max invisible %u", wMaxVisibleContacts, wMaxInvisibleContacts);
 
-  if (ICQGetContactSettingUID(hContact, &dwUin, &szUid))
-    return; // Invalid contact
+			// Success
+			return;
+		}
 
-  icq_sendGenericContact(dwUin, szUid, ICQ_BOS_FAMILY, ICQ_CLI_ADDTEMPVISIBLE);
-
-  ICQWriteContactSettingByte(hContact, "TemporaryVisible", 1);
-
-#ifdef _DEBUG
-  NetLog_Server("Added contact %s to temporary visible list", strUID(dwUin, szUid));
-#endif
-}
+	}
 
 
-
-void clearTemporaryVisibleList()
-{ // remove all temporary visible contacts
-  sendEntireListServ(ICQ_BOS_FAMILY, ICQ_CLI_REMOVETEMPVISIBLE, BUL_TEMPVISIBLE);
+	// Failure
+	Netlib_Logf(ghServerNetlibUser, "Warning: Malformed SRV_PRIVACY_RIGHTS_REPLY");
+		
 }

@@ -2,8 +2,8 @@
 
 Miranda IM: the free IM client for Microsoft* Windows*
 
-Copyright 2000-2007 Miranda ICQ/IM project,
-all portions of this codebase are copyrighted to the people
+Copyright 2000-2003 Miranda ICQ/IM project, 
+all portions of this codebase are copyrighted to the people 
 listed in contributors.txt.
 
 This program is free software; you can redistribute it and/or
@@ -21,7 +21,7 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 //Modules Core - Richard
-#ifndef MODULES_H_
+#ifndef MODULES_H_ 
 #define MODULES_H_
 
 /* MAXMODULELABELLENGTH
@@ -79,7 +79,7 @@ int NotifyEventHooks(HANDLE hEvent,WPARAM wParam,LPARAM lParam);
 	Affect:  This core service allows hooks to have a 'default' hook which is called
 		when no one has hooked the given event, this allows hook creators to add default
 		processing which is ONLY CALLED when no one else has HookEvent()'d
-	Notes:	 The return value from pfnHook() is returned to NotifyEventHooks()
+	Notes:	 The return value from pfnHook() is returned to NotifyEventHooks() 
 	Returns: 0 on success, non zero on failure
 	Version: 0.3.4+ (2004/09/15)
 */
@@ -89,7 +89,7 @@ int SetHookDefaultForHookableEvent(HANDLE hEvent, MIRANDAHOOK pfnHook);
 Adds a new hook to the chain 'name', to be called when the hook owner calls
 NotifyEventHooks(). Returns NULL if name is not a valid event or a handle
 referring to the hook otherwise. Note that debug builds will warn with a
-MessageBoxA if a hook is attempted on an unknown event. All hooks will be
+MessageBox if a hook is attempted on an unknown event. All hooks will be
 automatically destroyed when their parent event is destroyed or the programme
 ends, but can be unhooked earlier using UnhookEvent(). hookProc() is defined as
   int HookProc(WPARAM wParam,LPARAM lParam)
@@ -172,7 +172,7 @@ just a wrapper around QueueUserAPC() and other workarounds to make APC
 work even if there are non APC message loops, this allows plugins who
 need this feature to get it without recoding it themselves.
 
-The function 'func' will always be called from the main thread in idle time even
+The function 'func' will always be called from the main thread in idle time even 
 if it is invokved from a worker thread, 'arg' must not be on the stack.
 
 Returns nonzero on success, zero on failure

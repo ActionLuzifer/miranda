@@ -2,8 +2,8 @@
 
 Miranda IM: the free IM client for Microsoft* Windows*
 
-Copyright 2000-2007 Miranda ICQ/IM project,
-all portions of this codebase are copyrighted to the people
+Copyright 2000-2003 Miranda ICQ/IM project, 
+all portions of this codebase are copyrighted to the people 
 listed in contributors.txt.
 
 This program is free software; you can redistribute it and/or
@@ -20,7 +20,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
-#include "commonheaders.h"
+#include "../../core/commonheaders.h"
 
 static WINDOWLISTENTRY *windowList=NULL;
 static int windowListCount=0;
@@ -33,7 +33,7 @@ static int AllocWindowList(WPARAM wParam,LPARAM lParam)
 
 static int AddToWindowList(WPARAM wParam,LPARAM lParam)
 {
-	windowList=(WINDOWLISTENTRY*)mir_realloc(windowList,sizeof(WINDOWLISTENTRY)*(windowListCount+1));
+	windowList=(WINDOWLISTENTRY*)realloc(windowList,sizeof(WINDOWLISTENTRY)*(windowListCount+1));
 	windowList[windowListCount++]=*(WINDOWLISTENTRY*)lParam;
 	return 0;
 }
@@ -81,7 +81,7 @@ static int BroadcastToWindowListAsync(WPARAM wParam,LPARAM lParam)
 
 static int FreeWindowList(WPARAM wParam,LPARAM lParam)
 {
-	if (windowList) mir_free(windowList);
+	if (windowList) free(windowList);
 	windowList=NULL;
 	windowListCount=0;
 	nextWindowListId=1;
@@ -102,6 +102,6 @@ int InitWindowList(void)
 	CreateServiceFunction(MS_UTILS_BROADCASTTOWINDOWLIST,BroadcastToWindowList);
 	CreateServiceFunction(MS_UTILS_BROADCASTTOWINDOWLIST_ASYNC,BroadcastToWindowListAsync);
 	CreateServiceFunction(MS_UTILS_FINDWINDOWINLIST,FindInWindowList);
-	HookEvent(ME_SYSTEM_MODULESLOADED,HookShutdown);
+	HookEvent(ME_SYSTEM_MODULESLOADED,HookShutdown);	
 	return 0;
 }

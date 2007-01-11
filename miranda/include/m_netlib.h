@@ -2,7 +2,7 @@
 
 Miranda IM: the free IM client for Microsoft* Windows*
 
-Copyright 2000-2007 Miranda ICQ/IM project, 
+Copyright 2000-2003 Miranda ICQ/IM project, 
 all portions of this codebase are copyrighted to the people 
 listed in contributors.txt.
 
@@ -23,8 +23,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #ifndef M_NETLIB_H__
 #define M_NETLIB_H__ 1
-
-#include "m_utils.h"
 
 //this module was created in 0.1.2.2
 //All error codes are returned via GetLastError() (or WSAGetLastError():
@@ -62,10 +60,7 @@ typedef PBYTE (*NETLIBHTTPGATEWAYUNWRAPRECVPROC)(NETLIBHTTPREQUEST *nlhr,PBYTE b
 typedef struct {
 	int cbSize;
 	char *szSettingsModule;         //used for db settings and log
-	union {
-		char *szDescriptiveName;          //used in options dialog, already translated
-		TCHAR *ptszDescriptiveName;
-	};
+	char *szDescriptiveName;          //used in options dialog, already translated
 	DWORD flags;
 	char *szHttpGatewayHello;
 	char *szHttpGatewayUserAgent;		 //can be NULL to send no user-agent, also used by HTTPS proxies
@@ -189,7 +184,6 @@ typedef struct {
 	char *szIncomingPorts;   //can be NULL. Of form "1024-1050,1060-1070,2000"
 	int specifyOutgoingPorts; // 0.3.3a+
 	char *szOutgoingPorts; // 0.3.3a+
-    int enableUPnP; //0.6.1+ only for NUF_INCOMING
 } NETLIBUSERSETTINGS;
 #define MS_NETLIB_GETUSERSETTINGS  "Netlib/GetUserSettings"
 
@@ -247,7 +241,6 @@ __inline static int Netlib_CloseHandle(HANDLE h) {return CallService(MS_NETLIB_C
 it shouldnt matter */
 
 #define NETLIBBIND_SIZEOF_V1 16 // sizeof(NETLIBBIND) prior to 0.3.4+ (2004/08/05)
-#define NETLIBBIND_SIZEOF_V2 20 // sizeof(NETLIBBIND) prior to 0.6+ (2006/07/03)
 
 typedef void (*NETLIBNEWCONNECTIONPROC_V2)(HANDLE hNewConnection,DWORD dwRemoteIP, void * pExtra);
 typedef void (*NETLIBNEWCONNECTIONPROC)(HANDLE hNewConnection,DWORD dwRemoteIP);
@@ -277,8 +270,6 @@ typedef struct {
 	DWORD dwInternalIP;   //set on return, host byte order
 	WORD wPort;			  //set on return, host byte order
 	void * pExtra;		  //argument is sent to callback, added during 0.3.4+
-	DWORD dwExternalIP;   //set on return, host byte order
-	WORD wExPort;		  //set on return, host byte order
 } NETLIBBIND;
 #define MS_NETLIB_BINDPORT     "Netlib/BindPort"
 
@@ -344,7 +335,6 @@ struct NETLIBOPENCONNECTION_tag {
 #define NLHPIF_USEGETSEQUENCE      0x0001   //append sequence numbers to GET requests
 #define NLHPIF_USEPOSTSEQUENCE     0x0002   //append sequence numbers to POST requests
 #define NLHPIF_GETPOSTSAMESEQUENCE 0x0004	//GET and POST use the same sequence
-#define NLHPIF_HTTP11              0x0008	//HTTP 1.1 proxy
 typedef struct {
 	int cbSize;
 	DWORD flags;
@@ -428,12 +418,10 @@ typedef struct {
 #define REQUEST_GET      1
 #define REQUEST_POST     2
 #define REQUEST_CONNECT  3
-#define REQUEST_HEAD  	 4	// new in 0.5.1
 #define NLHRF_GENERATEHOST    0x00000001   //auto-generate a "Host" header from szUrl
 #define NLHRF_REMOVEHOST      0x00000002   //remove any host and/or protocol portion of szUrl before sending it
 #define NLHRF_SMARTREMOVEHOST 0x00000004   //removes host and/or protocol from szUrl unless the connection was opened through an HTTP or HTTPS proxy.
 #define NLHRF_SMARTAUTHHEADER 0x00000008   //if the connection was opened through an HTTP or HTTPS proxy then send a Proxy-Authorization header if required.
-#define NLHRF_HTTP11          0x00000010   //use HTTP 1.1
 #define NLHRF_NODUMP          0x00010000   //never dump this to the log
 #define NLHRF_NODUMPHEADERS   0x00020000   //don't dump http headers (only useful for POSTs and MS_NETLIB_HTTPTRANSACTION)
 #define NLHRF_DUMPPROXY       0x00040000   //this transaction is a proxy communication. For dump filtering only.
@@ -659,47 +647,94 @@ typedef struct {
 //here's a handy piece of code to let you log using printf-style specifiers:
 //#include <stdarg.h> and <stdio.h> before including this header in order to
 //use it.
-#if defined va_start && (defined _STDIO_DEFINED || defined _STDIO_H_) && (!defined NETLIB_NOLOGGING)
-static __inline int Netlib_Logf(HANDLE hUser,const char *fmt,...)
+#if defined va_start && (defined _STDIO_DEFINED || defined _STDIO_H_)
+static int Netlib_Logf(HANDLE hUser,const char *fmt,...)
 {
 	va_list va;
 	char szText[1024];
 
 	va_start(va,fmt);
-	mir_vsnprintf(szText,sizeof(szText),fmt,va);
+	_vsnprintf(szText,sizeof(szText),fmt,va);
 	va_end(va);
 	return CallService(MS_NETLIB_LOG,(WPARAM)hUser,(LPARAM)szText);
 }
 #endif //defined va_start
 
-/////////////////////////////////////////////////////////////////////////////////////////
-// Security providers (0.6+)
+/* Notes on being backwards compatible with 0.1.2.1
+One way to do back compatibility is to create your own mini netlib that only
+supports a minimal set of features. Here's some sample code:
 
-// Inits a required security provider. Right now only NTLM is supported
-// Returns HANDLE = NULL on error or non-null value on success
-#define MS_NETLIB_INITSECURITYPROVIDER "Netlib/InitSecurityProvider"
-
-static __inline HANDLE Netlib_InitSecurityProvider( char* szProviderName )
+//This function is called during the ME_SYSTEM_MODULESLOADED hook
+int MyPluginModulesLoaded(WPARAM wParam,LPARAM lParam)
 {
-	return (HANDLE)CallService( MS_NETLIB_INITSECURITYPROVIDER, 0, (LPARAM)szProviderName );
+	//if this is executed on a version of Miranda with netlib then all
+	//these calls will fail and the proper netlib will be used.
+	CreateServiceFunction(MS_NETLIB_CLOSEHANDLE,MiniNetlibCloseHandle);
+	CreateServiceFunction(MS_NETLIB_OPENCONNECTION,MiniNetlibOpenConnection);
+	CreateServiceFunction(MS_NETLIB_SEND,MiniNetlibSend);
+	CreateServiceFunction(MS_NETLIB_RECV,MiniNetlibRecv);
+	CreateServiceFunction(MS_NETLIB_SELECT,MiniNetlibSelect);
+	return 0;
 }
 
-// Destroys a security provider's handle, provided by Netlib_InitSecurityProvider.
-// Right now only NTLM is supported
-#define MS_NETLIB_DESTROYSECURITYPROVIDER "Netlib/DestroySecurityProvider"
-
-static __inline void Netlib_DestroySecurityProvider( char* szProviderName, HANDLE hProvider )
+int MiniNetlibCloseHandle(WPARAM wParam,LPARAM lParam)
 {
-	CallService( MS_NETLIB_DESTROYSECURITYPROVIDER, (WPARAM)szProviderName, (LPARAM)hProvider );
+	closesocket((SOCKET)wParam);
+	return 1;
 }
 
-// Returns the NTLM response string. The result value should be freed using mir_free
-#define MS_NETLIB_NTLMCREATERESPONSE "Netlib/NtlmCreateResponse"
-
-static __inline char* Netlib_NtlmCreateResponse( HANDLE hProvider, char* szChallenge )
+int MiniNetlibOpenConnection(WPARAM wParam,LPARAM lParam)
 {
-	return (char*)CallService( MS_NETLIB_NTLMCREATERESPONSE, (WPARAM)hProvider, (LPARAM)szChallenge );
+	NETLIBOPENCONNECTION *nloc=(NETLIBOPENCONNECTION*)lParam;
+	SOCKADDR_IN sin;
+	SOCKET s;
+
+	sin.s_addr=inet_addr(szHost);
+	if(sin.sin_addr.S_un.S_addr==INADDR_NONE) {
+		HOSTENT *host=gethostbyname(szHost);
+		if(host) sin.sin_addr.S_un.S_addr=*(u_long *)host->h_addr_list[0];
+		else return (int)INVALID_SOCKET;
+	}
+	s=socket(AF_INET,SOCK_STREAM,0);
+	sin.sin_family=AF_INET;
+	sin.sin_port=(short)htons(nloc->wPort);
+	if(connect(s,(SOCKADDR*)sin,sizeof(sin))==SOCKET_ERROR) {
+		closesocket(s);
+		return (int)INVALID_SOCKET;
+	}
+	return (int)s;
 }
+
+int MiniNetlibSend(WPARAM wParam,LPARAM lParam)
+{
+	NETLIBBUFFER *nlb=(NETLIBBUFFER*)lParam;
+	return send((SOCKET)wParam,nlb->buf,nlb->len,nlb->flags);
+}
+
+int MiniNetlibRecv(WPARAM wParam,LPARAM lParam)
+{
+	NETLIBBUFFER *nlb=(NETLIBBUFFER*)lParam;
+	return recv((SOCKET)wParam,nlb->buf,nlb->len,nlb->flags);
+}
+
+int MiniNetlibSelect(WPARAM wParam,LPARAM lParam)
+{
+	NETLIBSELECT *nls=(NETLIBSELECT*)lParam;
+	fd_set readfd,writefd,exceptfd;
+	TIMEVAL tv;
+	int i;
+
+	tv.tv_sec=nls->dwTimeout/1000;
+	tv.tv_usec=(nls->dwTimeout%1000)*1000;
+	FD_ZERO(&readfd); for(i=0;nls->hReadConns[i];i++) FD_SET((SOCKET)nls->hReadConns[i],&readfd);
+	FD_ZERO(&writefd); for(i=0;nls->hWriteConns[i];i++) FD_SET((SOCKET)nls->hWriteConns[i],&writefd);
+	FD_ZERO(&exceptfd); for(i=0;nls->hExceptConns[i];i++) FD_SET((SOCKET)nls->hExceptConns[i],&exceptfd);
+	return select(0,&readfd,&writefd,&exceptfd,nls->dwTimeout==INFINITE?NULL:&tv);
+}
+
+///
+NB: I haven't actually tested that this even compiles.
+*/
 
 #endif // M_NETLIB_H__
 

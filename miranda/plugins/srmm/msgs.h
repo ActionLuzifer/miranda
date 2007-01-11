@@ -1,7 +1,7 @@
 /*
 SRMM
 
-Copyright 2000-2005 Miranda ICQ/IM project, 
+Copyright 2000-2003 Miranda ICQ/IM project, 
 all portions of this codebase are copyrighted to the people 
 listed in contributors.txt.
 
@@ -29,44 +29,52 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 struct NewMessageWindowLParam
 {
-	HANDLE hContact;
-	const char *szInitialText;
-	int isWchar;
+    HANDLE hContact;
+    const char *szInitialText;
+};
+
+struct MessageSendInfo
+{
+    HANDLE hSendId;
 };
 
 struct MessageWindowData
 {
-	HANDLE hContact;
-	HANDLE hDbEventFirst, hDbEventLast;
-	HANDLE hSendId;
-	int sendCount;
-	HBRUSH hBkgBrush;
-	int splitterPos, originalSplitterPos;
-	char *sendBuffer;
-	SIZE minEditBoxSize;
-	RECT minEditInit;
-	int lineHeight;
-	int windowWasCascaded;
-	int nFlash;
-	int nFlashMax;
-	int nLabelRight;
-	int nTypeSecs;
-	int nTypeMode;
-	int avatarWidth;
-	int avatarHeight;
-	int limitAvatarH;
-	HBITMAP avatarPic;
-	DWORD nLastTyping;
-	int showTyping;
-	HWND hwndStatus;
-	DWORD lastMessage;
-	char *szProto;
-	WORD wStatus;
-	WORD wOldStatus;
-	TCmdList *cmdList;
-	TCmdList *cmdListCurrent;
-	int bIsRtl, bIsFirstAppend, bIsAutoRTL;
-	int lastEventType;
+    HANDLE hContact;
+    HANDLE hDbEventFirst, hDbEventLast;
+    struct MessageSendInfo *sendInfo;
+    int sendCount;
+    HANDLE hAckEvent;
+    HANDLE hNewEvent;
+    int showTime;
+    HBRUSH hBkgBrush;
+    int splitterY, originalSplitterY;
+    char *sendBuffer;
+    HICON hIcons[6];
+    SIZE minEditBoxSize;
+    int showInfo;
+    int showButton;
+    int lineHeight;
+    int windowWasCascaded;
+    int nFlash;
+    int nFlashMax;
+    int nLabelRight;
+    int nTypeSecs;
+    int nTypeMode;
+    int showSend;
+    DWORD nLastTyping;
+    int showTyping;
+    int showTypingWin;
+    HWND hwndStatus;
+    DWORD lastMessage;
+    int showIcons;
+    int showDate;
+    int hideNames;
+    char *szProto;
+    WORD wStatus;
+    WORD wOldStatus;
+    TCmdList *cmdList;
+    TCmdList *cmdListCurrent;
 };
 
 #define HM_EVENTSENT         (WM_USER+10)
@@ -82,24 +90,15 @@ struct MessageWindowData
 #define DM_TYPING            (WM_USER+20)
 #define DM_UPDATEWINICON     (WM_USER+21)
 #define DM_UPDATELASTMESSAGE (WM_USER+22)
-#define DM_USERNAMETOCLIP    (WM_USER+23)
-#define DM_AVATARSIZECHANGE  (WM_USER+24)
-#define DM_AVATARCALCSIZE    (WM_USER+25)
-#define DM_GETAVATAR         (WM_USER+26)
-#define DM_UPDATESIZEBAR     (WM_USER+27)
-#define HM_AVATARACK         (WM_USER+28)
-#define HM_ACKEVENT          (WM_USER+29)
-#define DM_GETWINDOWSTATE    (WM_USER+30)
-#define DM_STATUSICONCHANGE  (WM_USER+31)
 
 #define EVENTTYPE_STATUSCHANGE 25368
 
 struct CREOleCallback
 {
-	IRichEditOleCallbackVtbl *lpVtbl;
-	unsigned refCount;
-	IStorage *pictStg;
-	int nextStgId;
+    IRichEditOleCallbackVtbl *lpVtbl;
+    unsigned refCount;
+    IStorage *pictStg;
+    int nextStgId;
 };
 
 BOOL CALLBACK DlgProcMessage(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam);
@@ -121,7 +120,7 @@ void FreeMsgLogIcons(void);
 #define MSGFONTID_MESSAGEAREA 8
 #define MSGFONTID_NOTICE      9
 
-void LoadMsgDlgFont(int i, LOGFONT* lf, COLORREF* colour);
+void LoadMsgDlgFont(int i, LOGFONTA * lf, COLORREF * colour);
 extern const int msgDlgFontCount;
 
 #define LOADHISTORY_UNREAD    0
@@ -130,12 +129,12 @@ extern const int msgDlgFontCount;
 
 #define SRMMMOD                    "SRMM"
 
-#define SRMSGSET_POPFLAGS          "PopupFlags"
-#define SRMSGDEFSET_POPFLAGS       0
 #define SRMSGSET_SHOWBUTTONLINE    "ShowButtonLine"
 #define SRMSGDEFSET_SHOWBUTTONLINE 1
 #define SRMSGSET_SHOWINFOLINE      "ShowInfoLine"
 #define SRMSGDEFSET_SHOWINFOLINE   1
+#define SRMSGSET_AUTOPOPUP         "AutoPopup"
+#define SRMSGDEFSET_AUTOPOPUP      0
 #define SRMSGSET_AUTOMIN           "AutoMin"
 #define SRMSGDEFSET_AUTOMIN        0
 #define SRMSGSET_AUTOCLOSE         "AutoClose"
@@ -161,8 +160,6 @@ extern const int msgDlgFontCount;
 #define SRMSGSET_MSGTIMEOUT        "MessageTimeout"
 #define SRMSGDEFSET_MSGTIMEOUT     10000
 #define SRMSGSET_MSGTIMEOUT_MIN    4000 // minimum value (4 seconds)
-#define SRMSGSET_FLASHCOUNT        "FlashMax"
-#define SRMSGDEFSET_FLASHCOUNT     5
 
 #define SRMSGSET_LOADHISTORY       "LoadHistory"
 #define SRMSGDEFSET_LOADHISTORY    LOADHISTORY_UNREAD
@@ -177,8 +174,6 @@ extern const int msgDlgFontCount;
 #define SRMSGDEFSET_HIDENAMES      1
 #define SRMSGSET_SHOWTIME          "ShowTime"
 #define SRMSGDEFSET_SHOWTIME       1
-#define SRMSGSET_SHOWSECS          "ShowSeconds"
-#define SRMSGDEFSET_SHOWSECS       1
 #define SRMSGSET_SHOWDATE          "ShowDate"
 #define SRMSGDEFSET_SHOWDATE       0
 #define SRMSGSET_SHOWSTATUSCH      "ShowStatusChanges"
@@ -199,14 +194,5 @@ extern const int msgDlgFontCount;
 #define SRMSGDEFSET_SHOWTYPINGNOWIN 0
 #define SRMSGSET_SHOWTYPINGCLIST    "ShowTypingClist"
 #define SRMSGDEFSET_SHOWTYPINGCLIST 1
-
-
-#define SRMSGSET_AVATARENABLE       "AvatarEnable"
-#define SRMSGDEFSET_AVATARENABLE    1
-#define SRMSGSET_LIMITAVHEIGHT      "AvatarLimitHeight"
-#define SRMSGDEFSET_LIMITAVHEIGHT   1
-#define SRMSGSET_AVHEIGHT          "AvatarHeight"
-#define SRMSGDEFSET_AVHEIGHT        60
-#define SRMSGSET_AVATAR             "Avatar"
 
 #endif

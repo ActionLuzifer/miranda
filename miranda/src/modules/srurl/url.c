@@ -2,7 +2,7 @@
 
 Miranda IM: the free IM client for Microsoft* Windows*
 
-Copyright 2000-2007 Miranda ICQ/IM project, 
+Copyright 2000-2003 Miranda ICQ/IM project, 
 all portions of this codebase are copyrighted to the people 
 listed in contributors.txt.
 
@@ -20,7 +20,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
-#include "commonheaders.h"
+#include "../../core/commonheaders.h"
 #include <m_url.h>
 #include "url.h"
 
@@ -60,7 +60,7 @@ static int UrlEventAdded(WPARAM wParam,LPARAM lParam)
 	cle.hIcon=LoadSkinnedIcon(SKINICON_EVENT_URL);
 	cle.pszService="SRUrl/ReadUrl";
 	contactName=(char*)CallService(MS_CLIST_GETCONTACTDISPLAYNAME,wParam,0);
-	mir_snprintf(szTooltip,SIZEOF(szTooltip),Translate("URL from %s"),contactName);
+	_snprintf(szTooltip,sizeof(szTooltip),Translate("URL from %s"),contactName);
 	cle.pszTooltip=szTooltip;
 	CallService(MS_CLIST_ADDEVENT,0,(LPARAM)&cle);
 	return 0;
@@ -93,7 +93,7 @@ static void RestoreUnreadUrlAlerts(void)
 			if(!(dbei.flags&(DBEF_SENT|DBEF_READ)) && dbei.eventType==EVENTTYPE_URL) {
 				cle.hContact=hContact;
 				cle.hDbEvent=hDbEvent;
-				mir_snprintf(toolTip,SIZEOF(toolTip),Translate("URL from %s"),(char*)CallService(MS_CLIST_GETCONTACTDISPLAYNAME,(WPARAM)hContact,0));
+				_snprintf(toolTip,sizeof(toolTip),Translate("URL from %s"),(char*)CallService(MS_CLIST_GETCONTACTDISPLAYNAME,(WPARAM)hContact,0));
 				cle.pszTooltip=toolTip;
 				CallService(MS_CLIST_ADDEVENT,0,(LPARAM)&cle);
 			}
@@ -109,7 +109,7 @@ static int ContactSettingChanged(WPARAM wParam, LPARAM lParam)
 	char *szProto;
 
 	szProto=(char*)CallService(MS_PROTO_GETCONTACTBASEPROTO,wParam,0);
-	if(lstrcmpA(cws->szModule,"CList") && (szProto==NULL || lstrcmpA(cws->szModule,szProto))) return 0;
+	if(lstrcmp(cws->szModule,"CList") && (szProto==NULL || lstrcmp(cws->szModule,szProto))) return 0;
 	WindowList_Broadcast(hUrlWindowList,DM_UPDATETITLE,0,0);
 	return 0;
 }
@@ -132,7 +132,7 @@ static int SRUrlModulesLoaded(WPARAM wParam,LPARAM lParam)
 		if(protocol[i]->type!=PROTOTYPE_PROTOCOL) continue;
 		if(CallProtoService(protocol[i]->szName,PS_GETCAPS,PFLAGNUM_1,0)&PF1_URLSEND) {
 			mi.pszContactOwner=protocol[i]->szName;
-			hUrlContactMenu=mir_realloc(hUrlContactMenu,(hUrlContactMenuCount+1)*sizeof(HANDLE));
+			hUrlContactMenu=realloc(hUrlContactMenu,(hUrlContactMenuCount+1)*sizeof(HANDLE));
 			hUrlContactMenu[hUrlContactMenuCount++]=(HANDLE)CallService(MS_CLIST_ADDCONTACTMENUITEM,0,(LPARAM)&mi);
 		}
 	}
@@ -169,7 +169,7 @@ static int SRUrlShutdown(WPARAM wParam,LPARAM lParam)
 		WindowList_BroadcastAsync(hUrlWindowList,WM_CLOSE,0,0);
 	}
 	if (hUrlContactMenu) {
-		mir_free(hUrlContactMenu); hUrlContactMenu=NULL;
+		free(hUrlContactMenu); hUrlContactMenu=NULL;
 		hUrlContactMenuCount=0;
 	}
 	return 0;

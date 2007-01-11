@@ -29,8 +29,8 @@ static void __cdecl aim_im_sendackfail(HANDLE hContact)
     char buf[256], *contactName;
 
     contactName = (char *) CallService(MS_CLIST_GETCONTACTDISPLAYNAME, (WPARAM) hContact, 0);
-    mir_snprintf(buf, sizeof(buf), Translate("%s is currently offline.  Please try again later when the user is online."),
-                 contactName ? contactName : Translate("User"));
+    _snprintf(buf, sizeof(buf), Translate("%s is currently offline.  Please try again later when the user is online."),
+              contactName ? contactName : Translate("User"));
     SleepEx(1000, TRUE);
     ProtoBroadcastAck(AIM_PROTO, hContact, ACKTYPE_MESSAGE, ACKRESULT_FAILED, (HANDLE) 1, (int) buf);
 }
@@ -51,12 +51,11 @@ int aim_im_sendmessage(HANDLE hContact, char *msg, int automsg)
         return (int) (HANDLE) 1;
     }
     lastIMTime = timenow;
- //   if (DBGetContactSettingWord(hContact, AIM_PROTO, AIM_KEY_ST, ID_STATUS_OFFLINE) == ID_STATUS_OFFLINE && !automsg) {
-   //     if (!automsg) {
-	//		pthread_create(aim_im_sendackfail, hContact);
-     //   return (int) (HANDLE) 1;
-   // }
-    if (!DBGetContactSetting(hContact, AIM_PROTO, AIM_KEY_UN, &dbv)) {
+    if (DBGetContactSettingWord(hContact, AIM_PROTO, AIM_KEY_ST, ID_STATUS_OFFLINE) == ID_STATUS_OFFLINE && !automsg) {
+        pthread_create(aim_im_sendackfail, hContact);
+        return (int) (HANDLE) 1;
+    }
+    else if (!DBGetContactSetting(hContact, AIM_PROTO, AIM_KEY_UN, &dbv)) {
         char buf[MSG_LEN * 2];
         char *tmp = malloc(strlen(msg) * 4 + 1);
 
@@ -70,7 +69,7 @@ int aim_im_sendmessage(HANDLE hContact, char *msg, int automsg)
             DBFreeVariant(&dbv);
             return (int) (HANDLE) 1;
         }
-        mir_snprintf(buf, MSG_LEN - 8, "toc2_send_im %s \"%s\"%s", dbv.pszVal, tmp, automsg ? " auto" : "");
+        _snprintf(buf, MSG_LEN - 8, "toc_send_im %s \"%s\"%s", dbv.pszVal, tmp, automsg ? " auto" : "");
         aim_toc_sflapsend(buf, -1, TYPE_DATA);
         free(tmp);
         DBFreeVariant(&dbv);

@@ -25,46 +25,47 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 static char sttGatewayHeader[] =
 	"POST %s HTTP/1.1\r\n"
-	"Accept: */*\r\n"
-	"Content-Type: text/xml; charset=utf-8\r\n"
-	"Content-Length: %d\r\n"
 	"User-Agent: %s\r\n"
 	"Host: %s\r\n"
-	"Connection: Keep-Alive\r\n"
-	"Cache-Control: no-cache\r\n\r\n";
+	"Connection: keep-alive\r\n"
+	"Content-Length: %d\r\n\r\n%s";
 
 //=======================================================================================
 
-int ThreadData::send( char* data, int datalen )
+int __stdcall MSN_WS_Send( HANDLE s, char* data, int datalen )
 {
-	if ( this == NULL )
-		return 0;
-
 	NETLIBBUFFER nlb = { data, datalen, 0 };
 
-	mWaitPeriod = mJoinedCount ? 60 : 15;
+	if ( MyOptions.UseGateway ) {
+		ThreadData* T = MSN_GetThreadByConnection( s );
+		if ( T == NULL ) {
+			MSN_DebugLog( "Send failed: no owning thread" );
+			return FALSE;
+		}
 
-	if ( MyOptions.UseGateway && !( mType == SERVER_FILETRANS || mType == SERVER_P2P_DIRECT )) {
-		mGatewayTimeout = 2;
+		if ( datalen != 5 && memcmp( data, "PNG\r\n", 5 ) != 0 )
+			T->mGatewayTimeout = 2;
 
 		if ( !MyOptions.UseProxy ) {
-			TQueueItem* tNewItem = ( TQueueItem* )mir_alloc( datalen + sizeof( void* ) + sizeof( int ) + 1 );
+			TQueueItem* tNewItem = ( TQueueItem* )malloc( datalen + sizeof( void* ) + sizeof( int ) + 1 );
 			tNewItem->datalen = datalen;
 			memcpy( tNewItem->data, data, datalen );
 			tNewItem->data[datalen] = 0;
+
+			TQueueItem* p = T->mFirstQueueItem;
+			if ( p != NULL ) {
+				while ( p->next != NULL )
+					p = p->next;
+
+				p ->next = tNewItem;
+			}
+			else T->mFirstQueueItem = tNewItem;
+
 			tNewItem->next = NULL;
-
-			WaitForSingleObject( hQueueMutex, INFINITE );
-			TQueueItem **p = &mFirstQueueItem;
-			while ( *p != NULL ) p = &(*p)->next;
-			*p = tNewItem;
-			++numQueueItems;
-			ReleaseMutex( hQueueMutex );
-
 			return TRUE;
 		}
 
-		MSN_CallService( MS_NETLIB_SETPOLLINGTIMEOUT, WPARAM( s ), mGatewayTimeout );
+		MSN_CallService( MS_NETLIB_SETPOLLINGTIMEOUT, WPARAM( s ), T->mGatewayTimeout );
 	}
 
 	int rlen = MSN_CallService( MS_NETLIB_SEND, ( WPARAM )s, ( LPARAM )&nlb );
@@ -77,56 +78,25 @@ int ThreadData::send( char* data, int datalen )
 	return TRUE;
 }
 
-bool ThreadData::isTimeout( void )
-{
-	bool res = false;
-
-	if ( --mWaitPeriod > 0 ) return false;
-
-	if ( !mIsMainThread && ( mJoinedCount <= 1 || mChatID[0] == 0 )) {
-		if ( mJoinedCount == 0 )
-			res = true;
-		else if ( p2p_getThreadSession( mJoinedContacts[0], mType ) != NULL )
-			res = false;
-		else if ( mType == SERVER_SWITCHBOARD ) {
-			MessageWindowInputData msgWinInData = { 
-				sizeof( MessageWindowInputData ), mJoinedContacts[0], MSG_WINDOW_UFLAG_MSG_BOTH 
-			};
-			MessageWindowData msgWinData;
-			msgWinData.cbSize = sizeof( MessageWindowData );
-
-			res = MSN_CallService( MS_MSG_GETWINDOWDATA, ( WPARAM )&msgWinInData, ( LPARAM )&msgWinData ) != 0;
-			res = res || msgWinData.hwndWindow == NULL;
-		}
-		else
-			res = true;
-	}
-
-	if ( res ) 
-		MSN_DebugLog( "Dropping the idle %s due to inactivity",
-			mType == SERVER_SWITCHBOARD ? "switchboard" : "p2p");
-	else
-		mWaitPeriod = 60;
-
-	return res;
-}
-
-
 //=======================================================================================
 // Receving data
 //=======================================================================================
 
-int ThreadData::recv_dg( char* data, long datalen )
+static int MSN_WS_DG_Recv( HANDLE s, char* data, long datalen )
 {
-	if ( mReadAheadBuffer != NULL ) {
-		int tBytesToCopy = ( datalen >= mEhoughData ) ? mEhoughData : datalen;
-		memcpy( data, mReadAheadBuffer, tBytesToCopy );
-		mEhoughData -= tBytesToCopy;
-		if ( mEhoughData == 0 ) {
-			mir_free( mReadAheadBuffer );
-			mReadAheadBuffer = NULL;
+	ThreadData* T = MSN_GetThreadByConnection( s );
+	if ( T == NULL )
+		return 0;
+
+	if ( T->mReadAheadBuffer != NULL ) {
+		int tBytesToCopy = ( datalen >= T->mEhoughData ) ? T->mEhoughData : datalen;
+		memcpy( data, T->mReadAheadBuffer, tBytesToCopy );
+		T->mEhoughData -= tBytesToCopy;
+		if ( T->mEhoughData == 0 ) {
+			free( T->mReadAheadBuffer );
+			T->mReadAheadBuffer = NULL;
 		}
-		else memmove( mReadAheadBuffer, mReadAheadBuffer + tBytesToCopy, mEhoughData );
+		else memmove( T->mReadAheadBuffer, T->mReadAheadBuffer + tBytesToCopy, T->mEhoughData );
 
 		return tBytesToCopy;
 	}
@@ -134,89 +104,60 @@ int ThreadData::recv_dg( char* data, long datalen )
 	bool bCanPeekMsg = true;
 
 LBL_RecvAgain:
-	int ret = 0;
+	int ret;
 	{
 		NETLIBSELECT tSelect = {0};
 		tSelect.cbSize = sizeof( tSelect );
 		tSelect.dwTimeout = 1000;
 		tSelect.hReadConns[ 0 ] = ( HANDLE )s;
 
-		for ( int i=0; i < mGatewayTimeout || !bCanPeekMsg; i++ ) {
-			if ( bCanPeekMsg && numQueueItems > 0) {
-				unsigned np = 0, dlen = 0;
-				
-				WaitForSingleObject( hQueueMutex, INFINITE );
-				TQueueItem* QI = mFirstQueueItem;
-				while ( QI != NULL && np < 5) { ++np; dlen += QI->datalen;  QI = QI->next;}
+		for ( int i=0; i < T->mGatewayTimeout; i++ ) {
+			if ( bCanPeekMsg ) {
+				TQueueItem* QI = T->mFirstQueueItem;
+				if ( QI != NULL )
+				{
+					char szHttpPostUrl[300];
+					T->getGatewayUrl( szHttpPostUrl, sizeof( szHttpPostUrl ), QI->datalen == 0 );
 
-				if ( np == 0 ) { 
-					ReleaseMutex( hQueueMutex );
-					continue;
-				}
-
-				char szHttpPostUrl[300];
-				getGatewayUrl( szHttpPostUrl, sizeof( szHttpPostUrl ), mFirstQueueItem->datalen == 0 );
-
-				char* tBuffer = ( char* )alloca( 8192 );
-				int cbBytes = mir_snprintf( tBuffer, 8192, sttGatewayHeader,
-					szHttpPostUrl, dlen, MSN_USER_AGENT, mGatewayIP);
-				
-				QI = mFirstQueueItem;
-				for ( unsigned i=0; i<np; ++i ) {
+					char* tBuffer = ( char* )alloca( QI->datalen+400 );
+					int cbBytes = _snprintf( tBuffer, QI->datalen+400, sttGatewayHeader,
+						szHttpPostUrl, MSN_USER_AGENT, T->mGatewayIP, QI->datalen, "" );
 					memcpy( tBuffer+cbBytes, QI->data, QI->datalen );
 					cbBytes += QI->datalen;
-					QI = QI->next;
-				}
-				ReleaseMutex( hQueueMutex );
+					tBuffer[ cbBytes ] = 0;
 
-				tBuffer[ cbBytes ] = 0;
+					NETLIBBUFFER nlb = { tBuffer, cbBytes, 0 };
+					ret = MSN_CallService( MS_NETLIB_SEND, ( WPARAM )s, ( LPARAM )&nlb );
+					if ( ret == SOCKET_ERROR ) {
+						MSN_DebugLog( "Send failed: %d", WSAGetLastError() );
+						return 0;
+					}
 
-				NETLIBBUFFER nlb = { tBuffer, cbBytes, 0 };
-				ret = MSN_CallService( MS_NETLIB_SEND, ( WPARAM )s, ( LPARAM )&nlb );
-				if ( ret == SOCKET_ERROR ) {
-					MSN_DebugLog( "Send failed: %d", WSAGetLastError() );
-					return 0;
-				}
+					T->mFirstQueueItem = QI->next;
+					free( QI );
 
-				WaitForSingleObject( hQueueMutex, INFINITE );
-				for ( unsigned j=0; j<np && mFirstQueueItem != NULL; ++j ) {
-					QI = mFirstQueueItem;
-					mFirstQueueItem = QI->next;
-					mir_free( QI );
-					--numQueueItems;
-				}
-
-				if ( numQueueItems < 5 )
-					SetEvent( hWaitEvent );
-
-				ReleaseMutex( hQueueMutex );
-
-				ret = 1;
-				break;
-			}
+					ret = 1;
+					break;
+			}	}
 
 			ret = MSN_CallService( MS_NETLIB_SELECT, 0, ( LPARAM )&tSelect );
 			if ( ret != 0 )
 				break;
-			
-			// Timeout switchboard session if inactive
-			if ( isTimeout() ) return 0;
-		}	
-	}
+	}	}
 
 	bCanPeekMsg = false;
 
 	if ( ret == 0 ) {
-		mGatewayTimeout += 2;
-		if ( mGatewayTimeout > 8 ) 
-			mGatewayTimeout = 8;
+		T->mGatewayTimeout *= 2;
+		if ( T->mGatewayTimeout > 30 )
+			T->mGatewayTimeout = 30;
 
 		char szHttpPostUrl[300];
-		getGatewayUrl( szHttpPostUrl, sizeof( szHttpPostUrl ), true );
+		T->getGatewayUrl( szHttpPostUrl, sizeof( szHttpPostUrl ), true );
 
 		char szCommand[ 400 ];
-		int cbBytes = mir_snprintf( szCommand, sizeof( szCommand ),
-			sttGatewayHeader, szHttpPostUrl, 0, MSN_USER_AGENT, mGatewayIP);
+		int cbBytes = _snprintf( szCommand, sizeof( szCommand ),
+			sttGatewayHeader, szHttpPostUrl, MSN_USER_AGENT, T->mGatewayIP, 0, "" );
 
 		NETLIBBUFFER nlb = { szCommand, cbBytes, 0 };
 		MSN_CallService( MS_NETLIB_SEND, ( WPARAM )s, ( LPARAM )&nlb );
@@ -235,19 +176,15 @@ LBL_RecvAgain:
 		return ret;
 	}
 
-	bCanPeekMsg = true;
-
 	char* p = strstr( data, "\r\n" );
-	if ( p == NULL ) {
-		MSN_DebugLog( "ACHTUNG! it's not a valid header: '%s'", data );
-		goto LBL_RecvAgain;
+	if ( p != NULL )
+	{	int status = 0;
+		sscanf( data, "HTTP/1.1 %d", &status );
+		if ( status == 100 )
+			goto LBL_RecvAgain;
 	}
 
-	int status = 0;
-	sscanf( data, "HTTP/1.1 %d", &status );
-	if ( status == 100 )
-		goto LBL_RecvAgain;
-	
+	bool  tIsSessionClosed = false;
 	int   tContentLength = 0, hdrLen;
 	{
 		MimeHeaders tHeaders;
@@ -261,10 +198,11 @@ LBL_RecvAgain:
 
 			if ( stricmp( H.name, "X-MSN-Messenger" ) == 0 ) {
 				if ( strstr( H.value, "Session=close" ) != 0 ) {
-					return 0;
+					tIsSessionClosed = true;
+					break;
 				}
 
-				processSessionData( H.value );
+				T->processSessionData( H.value );
 			}
 
 			if ( stricmp( H.name, "Content-Length" ) == 0 )
@@ -274,13 +212,10 @@ LBL_RecvAgain:
 		hdrLen = int( rest - data );
 	}
 
+	bCanPeekMsg = true;
+
 	if ( tContentLength == 0 )
 		goto LBL_RecvAgain;
-	else
-	{
-		mGatewayTimeout = 1;
-		mWaitPeriod = mJoinedCount ? 60 : 15;
-	}
 
 	ret -= hdrLen;
 	if ( ret <= 0 ) {
@@ -295,17 +230,17 @@ LBL_RecvAgain:
 	if ( tContentLength > ret ) {
 		tContentLength -= ret;
 
-		mReadAheadBuffer = ( char* )mir_calloc( tContentLength+1 );
-		mReadAheadBuffer[ tContentLength ] = 0;
-		mEhoughData = tContentLength;
-		nlb.buf = mReadAheadBuffer;
+		T->mReadAheadBuffer = ( char* )calloc( tContentLength+1, 1 );
+		T->mReadAheadBuffer[ tContentLength ] = 0;
+		T->mEhoughData = tContentLength;
+		nlb.buf = T->mReadAheadBuffer;
 
 		while ( tContentLength > 0 ) {
 			nlb.len = tContentLength;
 			int ret2 = MSN_CallService( MS_NETLIB_RECV, ( WPARAM )s, ( LPARAM )&nlb );
 			if ( ret2 <= 0 )
-			{	mir_free( mReadAheadBuffer );
-				mReadAheadBuffer = NULL;
+			{	free( T->mReadAheadBuffer );
+				T->mReadAheadBuffer = NULL;
 				return ret2;
 			}
 
@@ -316,28 +251,14 @@ LBL_RecvAgain:
 	return ret;
 }
 
-int ThreadData::recv( char* data, long datalen )
+int __stdcall MSN_WS_Recv( HANDLE s, char* data, long datalen )
 {
 	if ( MyOptions.UseGateway && !MyOptions.UseProxy )
-		if ( mType != SERVER_FILETRANS && mType != SERVER_P2P_DIRECT )
-			return recv_dg( data, datalen );
+		return MSN_WS_DG_Recv( s, data, datalen );
 
 	NETLIBBUFFER nlb = { data, datalen, 0 };
 
 LBL_RecvAgain:
-	if ( !mIsMainThread && !MyOptions.UseGateway && !MyOptions.UseProxy ) {
-		mWaitPeriod = mJoinedCount ? 60 : 15;
-		for ( ;; ) {
-			NETLIBSELECT nls = { 0 };
-			nls.cbSize = sizeof( nls );
-			nls.dwTimeout = 1000;
-			nls.hReadConns[0] = s;
-			if ( MSN_CallService( MS_NETLIB_SELECT, 0, ( LPARAM )&nls ) != 0 )
-				break;
-
-			if ( isTimeout() ) return 0;
-	}	}
-
 	int ret = MSN_CallService( MS_NETLIB_RECV, ( WPARAM )s, ( LPARAM )&nlb );
 	if ( ret == 0 ) {
 		MSN_DebugLog( "Connection closed gracefully" );
@@ -349,19 +270,14 @@ LBL_RecvAgain:
 		return ret;
 	}
 
-	if ( MyOptions.UseGateway)
-	{
-		if ( ret == 1 && *data == 0 ) 
-		{
-			int tOldTimeout = MSN_CallService( MS_NETLIB_SETPOLLINGTIMEOUT, WPARAM( s ), 2 );
-			tOldTimeout += 2;
-			if ( tOldTimeout > 8 )
-				tOldTimeout = 8;
+	if ( MyOptions.UseGateway && ret == 1 && *data == 0 ) {
+		int tOldTimeout = MSN_CallService( MS_NETLIB_SETPOLLINGTIMEOUT, WPARAM( s ), 100 );
+		tOldTimeout *= 2;
+		if ( tOldTimeout > 30 )
+			tOldTimeout = 30;
 
-			MSN_CallService( MS_NETLIB_SETPOLLINGTIMEOUT, WPARAM( s ), tOldTimeout );
-			goto LBL_RecvAgain;
-		}
-		else MSN_CallService( MS_NETLIB_SETPOLLINGTIMEOUT, WPARAM( s ), 1 );
+		MSN_CallService( MS_NETLIB_SETPOLLINGTIMEOUT, WPARAM( s ), tOldTimeout );
+		goto LBL_RecvAgain;
 	}
 
 	return ret;

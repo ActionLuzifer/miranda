@@ -2,8 +2,8 @@
 
 Miranda IM: the free IM client for Microsoft* Windows*
 
-Copyright 2000-2007 Miranda ICQ/IM project,
-all portions of this codebase are copyrighted to the people
+Copyright 2000-2003 Miranda ICQ/IM project, 
+all portions of this codebase are copyrighted to the people 
 listed in contributors.txt.
 
 This program is free software; you can redistribute it and/or
@@ -20,7 +20,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
-#include "commonheaders.h"
+#include "../../core/commonheaders.h"
 #include <sys/types.h>
 #include <sys/stat.h>
 #include "file.h"
@@ -29,7 +29,7 @@ static void SetFileListAndSizeControls(HWND hwndDlg,struct FileDlgData *dat)
 {
 	int fileCount=0,dirCount=0,totalSize=0,i;
 	struct _stat statbuf;
-	TCHAR str[64];
+	char str[64];
 
 	for(i=0;dat->files[i];i++) {
 		if(_stat(dat->files[i],&statbuf)==0) {
@@ -38,148 +38,126 @@ static void SetFileListAndSizeControls(HWND hwndDlg,struct FileDlgData *dat)
 			totalSize+=statbuf.st_size;
 		}
 	}
-	GetSensiblyFormattedSize(totalSize,str,SIZEOF(str),0,1,NULL);
+	GetSensiblyFormattedSize(totalSize,str,sizeof(str),0,1,NULL);
 	SetDlgItemText(hwndDlg,IDC_TOTALSIZE,str);
 	if(i>1) {
-		TCHAR szFormat[32];
+		char szFormat[32];
 		if(fileCount && dirCount) {
-			mir_sntprintf(szFormat,SIZEOF(szFormat),_T("%s, %s"),TranslateTS(fileCount==1?_T("%d file"):_T("%d files")),TranslateTS(dirCount==1?_T("%d directory"):_T("%d directories")));
-			mir_sntprintf(str,SIZEOF(str),szFormat,fileCount,dirCount);
+			wsprintf(szFormat,"%s, %s",Translate(fileCount==1?"%d file":"%d files"),Translate(dirCount==1?"%d directory":"%d directories"));
+			wsprintf(str,szFormat,fileCount,dirCount);
 		}
 		else if(fileCount) {
-			lstrcpy(szFormat,TranslateT("%d files"));
-			mir_sntprintf(str,SIZEOF(str),szFormat,fileCount);
+			lstrcpy(szFormat,Translate("%d files"));
+			wsprintf(str,szFormat,fileCount);
 		}
 		else {
-			lstrcpy(szFormat,TranslateT("%d directories"));
-			mir_sntprintf(str,SIZEOF(str),szFormat,dirCount);
+			lstrcpy(szFormat,Translate("%d directories"));
+			wsprintf(str,szFormat,dirCount);
 		}
 		SetDlgItemText(hwndDlg,IDC_FILE,str);
 	}
-	else SetDlgItemTextA(hwndDlg,IDC_FILE,dat->files[0]);
+	else SetDlgItemText(hwndDlg,IDC_FILE,dat->files[0]);
 }
 
-static void FilenameToFileList(HWND hwndDlg, struct FileDlgData* dat, const TCHAR* buf)
+static void FilenameToFileList(HWND hwndDlg, struct FileDlgData *dat, const char *buf)
 {
+
 	DWORD dwFileAttributes;
 
 	// Make sure that the file matrix is empty (the user may select files several times)
 	FreeFilesMatrix(&dat->files);
 
 	// Get the file attributes of selection
-	dwFileAttributes = GetFileAttributes( buf );
-	if (dwFileAttributes == INVALID_FILE_ATTRIBUTES)
-		return;
-
-	// Check if the selection is a directory or a file
-	if ( GetFileAttributes( buf ) & FILE_ATTRIBUTE_DIRECTORY ) {
-		const TCHAR* pBuf;
-		int nNumberOfFiles = 0;
-		int nTemp;
-		int fileOffset;
-
-		// :NOTE: The first string in the buffer is the directory, followed by a
-		// NULL separated list of all files
-
-		// fileOffset is the offset to the first file.
-		fileOffset = lstrlen(buf) + 1;
-
-		// Count number of files
-		pBuf = buf + fileOffset;
-		while ( *pBuf ) {
-			pBuf += lstrlen(pBuf) + 1;
-			nNumberOfFiles++;
-		}
-
-		// Allocate memory for a pointer array
-		if (( dat->files = (char**)mir_alloc((nNumberOfFiles + 1) * sizeof(char*))) == NULL )
-			return;
-
-		// Fill the array
-		pBuf = buf + fileOffset;
-		nTemp = 0;
-		while(*pBuf)
-		{
-			// Allocate space for path+filename
-			int cbFileNameLen = lstrlen( pBuf );
-			dat->files[nTemp] = mir_alloc(fileOffset + cbFileNameLen + 1);
-
-			// Add path to filename and copy into array
-			#if defined( _UNICODE )
-				WideCharToMultiByte( CP_ACP, 0, buf, fileOffset-1, dat->files[nTemp], fileOffset - 1, 0, 0 );
-				dat->files[nTemp][fileOffset-1] = '\\';
-				WideCharToMultiByte( CP_ACP, 0, pBuf, -1, dat->files[nTemp] + fileOffset - (buf[fileOffset-2]=='\\'?1:0), cbFileNameLen+1, 0, 0 );
-			#else
-				CopyMemory(dat->files[nTemp], buf, fileOffset-1 );
-				dat->files[nTemp][fileOffset-1] = '\\';
-				strcpy(dat->files[nTemp] + fileOffset - (buf[fileOffset-2]=='\\'?1:0), pBuf);
-			#endif
-			// Move pointers to next file...
-			pBuf += cbFileNameLen + 1;
-			nTemp++;
-		}
-		// Terminate array
-		dat->files[nNumberOfFiles] = NULL;
-	}
-	// ...the selection is a single file
-	else
+	dwFileAttributes = GetFileAttributes(buf);
+	if (dwFileAttributes != INVALID_FILE_ATTRIBUTES)
 	{
-		if (( dat->files = (char**)mir_alloc(2 * sizeof(char*))) == NULL ) // Leaks when aborted
-			return;
-
-		#if defined( _UNICODE )
+		// Check if the selection is a directory or a file
+		if (GetFileAttributes(buf) & FILE_ATTRIBUTE_DIRECTORY)
 		{
-			char szFileName[ MAX_PATH ];
-			BOOL bUsed;
-			WideCharToMultiByte( CP_ACP, 0, buf, -1, szFileName, MAX_PATH, NULL, &bUsed );
-			if ( bUsed ) {
-				WIN32_FIND_DATA dat;
-				HANDLE hSearch = FindFirstFile( buf, &dat );
-				if ( hSearch != INVALID_HANDLE_VALUE ) {
-					WideCharToMultiByte( CP_ACP, 0, dat.cAlternateFileName, -1, szFileName, MAX_PATH, 0, 0 );
-					FindClose( hSearch );
-			}	}
+			char *pBuf;
+			int nNumberOfFiles = 0;
+			int nTemp;
+			int fileOffset;
+			
+			// :NOTE: The first string in the buffer is the directory, followed by a
+			// NULL separated list of all files
 
-			dat->files[0] = mir_strdup(szFileName);
+			// fileOffset is the offset to the first file.
+			fileOffset = lstrlen(buf) + 1;
+
+			// Count number of files
+			pBuf = (char*)buf + fileOffset;
+			while (*pBuf)
+			{
+				pBuf += lstrlen(pBuf) + 1;
+				nNumberOfFiles++;
+			}
+
+			// Allocate memory for a pointer array
+			dat->files = (char**)malloc((nNumberOfFiles + 1) * sizeof(char*));
+
+			// Fill the array
+			pBuf = (char*)buf + fileOffset;
+			nTemp = 0;
+			while(*pBuf)
+			{
+				// Allocate space for path+filename
+				dat->files[nTemp] = malloc(fileOffset + lstrlen(pBuf) + 1);
+
+				// Add path to filename and copy into array
+				CopyMemory(dat->files[nTemp], buf, fileOffset - 1);
+				dat->files[nTemp][fileOffset-1] = '\\';
+				strcpy(dat->files[nTemp] + fileOffset, pBuf);
+
+				// Move pointers to next file...
+				pBuf += lstrlen(pBuf) + 1;
+				nTemp++;
+			}
+			// Teminate array
+			dat->files[nNumberOfFiles] = NULL;
 		}
-		#else
-			dat->files[0] = mir_strdup(buf);
-		#endif
-
-		dat->files[1] = NULL;
+		// ...the selection is a single file
+		else
+		{
+			dat->files = (char**)malloc(2 * sizeof(char*)); // Leaks when aborted
+			dat->files[0] = _strdup(buf);
+			dat->files[1] = NULL;
+		}
 	}
 
 	// Update dialog text with new file selection
 	SetFileListAndSizeControls(hwndDlg, dat);
+
 }
 
 #define M_FILECHOOSEDONE  (WM_USER+100)
 void __cdecl ChooseFilesThread(HWND hwndDlg)
 {
-	TCHAR filter[128], *pfilter;
-	TCHAR* buf = ( TCHAR* )mir_alloc( sizeof(TCHAR)*32767 );
-	if ( buf == NULL )
-		PostMessage( hwndDlg, M_FILECHOOSEDONE, 0, ( LPARAM )( TCHAR* )NULL );
+	char *buf;
+	OPENFILENAME ofn={0};
+	char filter[128],*pfilter;
+
+	buf=(char*)malloc(32767);
+	buf[0]=0;
+	ofn.lStructSize=OPENFILENAME_SIZE_VERSION_400;
+	ofn.hwndOwner=hwndDlg;
+	lstrcpy(filter,Translate("All Files"));
+	lstrcat(filter," (*)");
+	pfilter=filter+strlen(filter)+1;
+	lstrcpy(pfilter,"*");
+	pfilter=filter+strlen(filter)+1;
+	pfilter[0]='\0';
+	ofn.lpstrFilter=filter;
+	ofn.lpstrFile=buf;
+	ofn.nMaxFile=32767;
+	ofn.Flags=OFN_FILEMUSTEXIST | OFN_ALLOWMULTISELECT | OFN_EXPLORER | OFN_HIDEREADONLY;
+	if(GetOpenFileName(&ofn))
+		PostMessage(hwndDlg,M_FILECHOOSEDONE,0,(LPARAM)buf);
 	else {
-		OPENFILENAME ofn = {0};
-		ofn.lStructSize = OPENFILENAME_SIZE_VERSION_400;
-		ofn.hwndOwner   = hwndDlg;
-		lstrcpy( filter, TranslateT( "All Files" ));
-		lstrcat( filter, _T(" (*)" ));
-		pfilter = filter + lstrlen( filter )+1;
-		lstrcpy( pfilter, _T( "*" ));
-		pfilter = filter + lstrlen( filter )+1;
-		pfilter[ 0 ] = '\0';
-		ofn.lpstrFilter = filter;
-		ofn.lpstrFile = buf; *buf = 0;
-		ofn.nMaxFile = 32767;
-		ofn.Flags = OFN_NOCHANGEDIR | OFN_FILEMUSTEXIST | OFN_ALLOWMULTISELECT | OFN_EXPLORER | OFN_HIDEREADONLY;
-		if ( GetOpenFileName( &ofn ))
-			PostMessage( hwndDlg, M_FILECHOOSEDONE, 0, ( LPARAM )buf );
-		else {
-			mir_free( buf );
-			PostMessage( hwndDlg, M_FILECHOOSEDONE, 0, ( LPARAM )( TCHAR* )NULL );
-}	}	}
+		free(buf);
+		PostMessage(hwndDlg,M_FILECHOOSEDONE,0,(LPARAM)(char*)NULL);
+	}
+}
 
 static BOOL CALLBACK ClipSiblingsChildEnumProc(HWND hwnd,LPARAM lParam)
 {
@@ -212,12 +190,13 @@ BOOL CALLBACK DlgProcSendFile(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lPar
 	struct FileDlgData *dat;
 
 	dat=(struct FileDlgData*)GetWindowLong(hwndDlg,GWL_USERDATA);
-	switch (msg) {
+	switch (msg)
+	{
 		case WM_INITDIALOG:
-		{
+		{	char *contactName;
 			struct FileSendData *fsd=(struct FileSendData*)lParam;
 
-			dat=(struct FileDlgData*)mir_alloc(sizeof(struct FileDlgData));
+			dat=(struct FileDlgData*)malloc(sizeof(struct FileDlgData));
 			memset(dat,0,sizeof(struct FileDlgData));
 			SetWindowLong(hwndDlg,GWL_USERDATA,(long)dat);
 			dat->hContact=fsd->hContact;
@@ -247,16 +226,17 @@ BOOL CALLBACK DlgProcSendFile(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lPar
 			if(fsd->ppFiles!=NULL && fsd->ppFiles[0]!=NULL) {
 				int totalCount,i;
 				for(totalCount=0;fsd->ppFiles[totalCount];totalCount++);
-				dat->files=(char**)mir_alloc(sizeof(char*)*(totalCount+1)); // Leaks
+				dat->files=(char**)malloc(sizeof(char*)*(totalCount+1)); // Leaks
 				for(i=0;i<totalCount;i++)
-					dat->files[i]=mir_strdup(fsd->ppFiles[i]);
+					dat->files[i]=_strdup(fsd->ppFiles[i]);
 				dat->files[totalCount]=NULL;
 				SetFileListAndSizeControls(hwndDlg,dat);
 			}
+
+			contactName=(char*)CallService(MS_CLIST_GETCONTACTDISPLAYNAME,(WPARAM)dat->hContact,0);
+			SetDlgItemText(hwndDlg,IDC_TO,contactName);
 			{
 				char *szProto;
-				TCHAR* contactName=(TCHAR*)CallService(MS_CLIST_GETCONTACTDISPLAYNAME,(WPARAM)dat->hContact,GCDNF_TCHAR);
-				SetDlgItemText(hwndDlg,IDC_TO,contactName);
 
 				szProto=(char*)CallService(MS_PROTO_GETCONTACTBASEPROTO,(WPARAM)dat->hContact,0);
 				if (szProto) {
@@ -273,19 +253,16 @@ BOOL CALLBACK DlgProcSendFile(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lPar
 						switch(ci.type) {
 							case CNFT_ASCIIZ:
 								hasName = 1;
-								mir_snprintf(buf, SIZEOF(buf), "%s", ci.pszVal);
-								mir_free(ci.pszVal);
+								_snprintf(buf, sizeof(buf), "%s", ci.pszVal);
+								free(ci.pszVal);
 								break;
 							case CNFT_DWORD:
 								hasName = 1;
-								mir_snprintf(buf, SIZEOF(buf),"%u",ci.dVal);
+								_snprintf(buf, sizeof(buf),"%u",ci.dVal);
 								break;
 						}
 					}
-					if ( hasName )
-						SetDlgItemTextA(hwndDlg,IDC_NAME,buf);
-					else
-						SetDlgItemText(hwndDlg,IDC_NAME,contactName);
+					SetDlgItemText(hwndDlg,IDC_NAME,hasName?buf:contactName);
 				}
 			}
 			if(fsd->ppFiles==NULL) {
@@ -306,21 +283,18 @@ BOOL CALLBACK DlgProcSendFile(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lPar
 					HICON hIcon;
 
 					hIcon=(HICON)CallProtoService(szProto,PS_LOADICON,PLI_PROTOCOL|PLIF_SMALL,0);
-					if (hIcon) {
-						DrawIconEx(dis->hDC,dis->rcItem.left,dis->rcItem.top,hIcon,GetSystemMetrics(SM_CXSMICON),GetSystemMetrics(SM_CYSMICON),0,NULL,DI_NORMAL);
-						DestroyIcon(hIcon);
-					}
+					if (hIcon) DrawIconEx(dis->hDC,dis->rcItem.left,dis->rcItem.top,hIcon,GetSystemMetrics(SM_CXSMICON),GetSystemMetrics(SM_CYSMICON),0,NULL,DI_NORMAL);
 				}
 			}
 			return CallService(MS_CLIST_MENUDRAWITEM,wParam,lParam);
 		}
 		case M_FILECHOOSEDONE:
-			if( lParam != 0 ) {
-				FilenameToFileList( hwndDlg, dat, ( TCHAR* )lParam );
-				mir_free(( TCHAR* )lParam );
-				dat->closeIfFileChooseCancelled = 0;
+			if((char*)lParam) {
+				FilenameToFileList(hwndDlg,dat,(char*)lParam);
+				free((char*)lParam);
 			}
 			else if(dat->closeIfFileChooseCancelled) DestroyWindow(hwndDlg);
+			dat->closeIfFileChooseCancelled=0;
 			EnableWindow(hwndDlg,TRUE);
 			break;
 		case WM_COMMAND:
@@ -367,13 +341,12 @@ BOOL CALLBACK DlgProcSendFile(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lPar
 		}
 		case WM_DESTROY:
 			if(dat->hPreshutdownEvent) UnhookEvent(dat->hPreshutdownEvent);
-			if(dat->hwndTransfer) DestroyWindow(dat->hwndTransfer);
+			if(dat->hwndTransfer) DestroyWindow(dat->hwndTransfer);	
 			FreeFilesMatrix(&dat->files);
 			SetWindowLong(GetDlgItem(hwndDlg,IDC_MSG),GWL_WNDPROC,(LONG)OldSendEditProc);
-			DestroyIcon(dat->hUIIcons[2]);
 			DestroyIcon(dat->hUIIcons[1]);
-			DestroyIcon(dat->hUIIcons[0]);
-			mir_free(dat);
+			DestroyIcon(dat->hUIIcons[0]);			
+			free(dat);
 			return TRUE;
 	}
 	return FALSE;

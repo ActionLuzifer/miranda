@@ -2,7 +2,7 @@
 
 Miranda IM: the free IM client for Microsoft* Windows*
 
-Copyright 2000-2007 Miranda ICQ/IM project, 
+Copyright 2000-2003 Miranda ICQ/IM project, 
 all portions of this codebase are copyrighted to the people 
 listed in contributors.txt.
 
@@ -20,14 +20,14 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
-#include "commonheaders.h"
+#include "../../core/commonheaders.h"
 
 static HANDLE hEMailMenuItem;
 
 void SendEmailThread(char *szUrl)
 {
-	ShellExecuteA(NULL,"open",szUrl,"","",SW_SHOW);
-	mir_free(szUrl);	
+	ShellExecute(NULL,"open",szUrl,"","",SW_SHOW);
+	free(szUrl);	
 	return;
 }
 
@@ -40,14 +40,14 @@ static int SendEMailCommand(WPARAM wParam,LPARAM lParam)
 	szProto=(char*)CallService(MS_PROTO_GETCONTACTBASEPROTO,wParam,0);
 	if(szProto==NULL || DBGetContactSetting((HANDLE)wParam,szProto,"e-mail",&dbv)) {
 		if(DBGetContactSetting((HANDLE)wParam,"UserInfo","Mye-mail0",&dbv)) {
-			MessageBox((HWND)lParam,TranslateT("User has not registered an e-mail address"),TranslateT("Send e-mail"),MB_OK);
+			MessageBox((HWND)lParam,Translate("User has not registered an e-mail address"),Translate("Send e-mail"),MB_OK);
 			return 1;
 		}
 	}
-	szUrl=(char*)mir_alloc(lstrlenA(dbv.pszVal)+8);
-	lstrcpyA(szUrl,"mailto:");
-	lstrcatA(szUrl,dbv.pszVal);
-	mir_free(dbv.pszVal);
+	szUrl=(char*)malloc(lstrlen(dbv.pszVal)+8);
+	lstrcpy(szUrl,"mailto:");
+	lstrcat(szUrl,dbv.pszVal);
+	free(dbv.pszVal);
 	forkthread(SendEmailThread,0,szUrl);
 	return 0;
 }
@@ -55,9 +55,9 @@ static int SendEMailCommand(WPARAM wParam,LPARAM lParam)
 static int EMailPreBuildMenu(WPARAM wParam, LPARAM lParam)
 {
 	CLISTMENUITEM mi;
-	DBVARIANT dbv = { 0 };
+	DBVARIANT dbv;
 	char *szProto;
-	
+
 	ZeroMemory(&mi,sizeof(mi));
 	mi.cbSize = sizeof(mi);
 	mi.flags = CMIM_FLAGS;
@@ -67,8 +67,9 @@ static int EMailPreBuildMenu(WPARAM wParam, LPARAM lParam)
 		if (DBGetContactSetting((HANDLE)wParam, "UserInfo", "Mye-mail0", &dbv))
 			mi.flags = CMIM_FLAGS | CMIF_HIDDEN;
 	}
+
 	CallService(MS_CLIST_MODIFYMENUITEM, (WPARAM)hEMailMenuItem, (LPARAM)&mi);
-	if (dbv.pszVal) DBFreeVariant(&dbv);
+
 	return 0;
 }
 

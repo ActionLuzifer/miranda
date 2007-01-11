@@ -22,19 +22,13 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
 #include "commonheaders.h"
+#include "m_popup.h"
 
 int LoadSendRecvMessageModule(void);
 int SplitmsgShutdown(void);
-int LogErrorMessage(HWND hwndDlg, struct MessageWindowData *dat, int i, char *szMsg);
-void Chat_Load(PLUGINLINK *link);
-void Chat_Unload();
-
-DWORD g_mirandaVersion = 0;
 
 PLUGINLINK *pluginLink;
 HINSTANCE g_hInst;
-extern MYGLOBALS myGlobals;
-struct MM_INTERFACE memoryManagerInterface;
 
 PLUGININFO pluginInfo = {
     sizeof(PLUGININFO),
@@ -51,11 +45,11 @@ PLUGININFO pluginInfo = {
         "tabSRMsg",
     #endif    
 #endif
-    PLUGIN_MAKE_VERSION(1, 1, 0, 15),
-    "Chat module for instant messaging and group chat, offering a tabbed interface and many advanced features.",
-    "The Miranda developers team",
+    PLUGIN_MAKE_VERSION(0, 9, 9, 1),
+    "Send and receive instant messages, using a split mode interface and tab containers.",
+    "SRMM by Miranda Team, tab UI by Nightwish",
     "silvercircle@gmail.com",
-    "© 2000-2006 Miranda Project",
+    "© 2000-2004 Miranda Project",
     "http://tabsrmm.sourceforge.net",
     0,
     DEFMOD_SRMESSAGE            // replace internal version (if any)
@@ -70,8 +64,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 __declspec(dllexport)
      PLUGININFO *MirandaPluginInfo(DWORD mirandaVersion)
 {
-    g_mirandaVersion = mirandaVersion;
-	if (mirandaVersion < PLUGIN_MAKE_VERSION(0, 4, 0, 0))
+    if (mirandaVersion < PLUGIN_MAKE_VERSION(0, 3, 3, 0))
         return NULL;
     return &pluginInfo;
 }
@@ -79,74 +72,12 @@ __declspec(dllexport)
 int __declspec(dllexport) Load(PLUGINLINK * link)
 {
     pluginLink = link;
-
-#ifdef _DEBUG //mem leak detector :-) Thanks Tornado!
-    {
-        int flag = _CrtSetDbgFlag(_CRTDBG_REPORT_FLAG); // Get current flag
-        flag |= (_CRTDBG_LEAK_CHECK_DF | _CRTDBG_ALLOC_MEM_DF | _CRTDBG_CHECK_CRT_DF); // Turn on leak-checking bit
-        _CrtSetDbgFlag(flag); // Set flag to the new value
-    }
-#endif
-
-    memset(&memoryManagerInterface, 0, sizeof(memoryManagerInterface));
-    memoryManagerInterface.cbSize = sizeof(memoryManagerInterface);
-    CallService(MS_SYSTEM_GET_MMI, 0, (LPARAM) &memoryManagerInterface);
-    
-	Chat_Load(pluginLink);
-	return LoadSendRecvMessageModule();
+    return LoadSendRecvMessageModule();
 }
 
 int __declspec(dllexport) Unload(void)
 {
-    Chat_Unload();
-	return SplitmsgShutdown();
-}
-
-#ifdef _DEBUG
-#if defined(_UNICODE)
-int _DebugTraceW(const wchar_t *fmt, ...)
-{
-    wchar_t debug[2048];
-    int     ibsize = 2047;
-    va_list va;
-    va_start(va, fmt);
-
-	lstrcpyW(debug, L"TABSRMM: ");
-
-    _vsnwprintf(&debug[9], ibsize - 10, fmt, va);
-    OutputDebugStringW(debug);
-	return 0;
-}
-#endif
-#endif
-
-int _DebugTraceA(const char *fmt, ...)
-{
-    char    debug[2048];
-    int     ibsize = 2047;
-    va_list va;
-    va_start(va, fmt);
-
-	lstrcpyA(debug, "TABSRMM: ");
-	_vsnprintf(&debug[9], ibsize - 10, fmt, va);
-#ifdef _DEBUG
-    OutputDebugStringA(debug);
-#else
-    {
-        char szLogFileName[MAX_PATH], szDataPath[MAX_PATH];
-        FILE *f;
-
-        CallService(MS_DB_GETPROFILEPATH, MAX_PATH, (LPARAM)szDataPath);
-        mir_snprintf(szLogFileName, MAX_PATH, "%s\\%s", szDataPath, "tabsrmm_debug.log");
-        f = fopen(szLogFileName, "a+");
-        if(f) {
-            fputs(debug, f);
-            fputs("\n", f);
-            fclose(f);
-        }
-    }
-#endif
-	return 0;
+    return SplitmsgShutdown();
 }
 
 /*
@@ -160,121 +91,48 @@ int _DebugTraceA(const char *fmt, ...)
 
 int _DebugPopup(HANDLE hContact, const char *fmt, ...)
 {
+    POPUPDATA ppd;
     va_list va;
     char    debug[1024];
     int     ibsize = 1023;
-
+    BYTE want_debuginfo = DBGetContactSettingByte(NULL, "Tab_SRMsg", "debuginfo", 0);
+    
+    if(!want_debuginfo)
+        return 0;
+    
     va_start(va, fmt);
     _vsnprintf(debug, ibsize, fmt, va);
     
-    if (ServiceExists(MS_CLIST_SYSTRAY_NOTIFY)) {
-        MIRANDASYSTRAYNOTIFY tn;
-        char szTitle[128];
-        
-        tn.szProto = NULL;
-        tn.cbSize = sizeof(tn);
-        _snprintf(szTitle, sizeof(szTitle), Translate("tabSRMM Message (%s)"), (hContact != 0) ? (char *)CallService(MS_CLIST_GETCONTACTDISPLAYNAME, (WPARAM)hContact, 0) : Translate("Global"));
-        tn.szInfoTitle = szTitle;
-        tn.szInfo = debug;
-        tn.dwInfoFlags = NIIF_INFO;
-        tn.uTimeout = 1000 * 4;
-        CallService(MS_CLIST_SYSTRAY_NOTIFY, 0, (LPARAM) & tn);
+    if(want_debuginfo == 2 && CallService(MS_POPUP_QUERY, PUQS_GETSTATUS, 0) == 1) {
+        ZeroMemory((void *)&ppd, sizeof(ppd));
+        ppd.lchContact = hContact;
+        ppd.lchIcon = LoadSkinnedIcon(SKINICON_EVENT_MESSAGE);
+        if(hContact != 0)
+            strncpy(ppd.lpzContactName, (char*)CallService(MS_CLIST_GETCONTACTDISPLAYNAME,(WPARAM)hContact,0), MAX_CONTACTNAME);
+        else
+            strncpy(ppd.lpzContactName, Translate("Global"), MAX_CONTACTNAME);
+        strcpy(ppd.lpzText, "tabSRMM: ");
+        strncat(ppd.lpzText, debug, MAX_SECONDLINE - 20);
+        ppd.colorText = RGB(0,0,0);
+        ppd.colorBack = RGB(255,0,0);
+        CallService(MS_POPUP_ADDPOPUP, (WPARAM)&ppd, 0);
+    }
+    else {
+        if (ServiceExists(MS_CLIST_SYSTRAY_NOTIFY)) {
+            MIRANDASYSTRAYNOTIFY tn;
+            char szTitle[128];
+            
+            tn.szProto = NULL;
+            tn.cbSize = sizeof(tn);
+            _snprintf(szTitle, sizeof(szTitle), Translate("tabSRMM Message (%s)"), (hContact != 0) ? (char *)CallService(MS_CLIST_GETCONTACTDISPLAYNAME, (WPARAM)hContact, 0) : Translate("Global"));
+            tn.szInfoTitle = szTitle;
+            tn.szInfo = debug;
+            tn.dwInfoFlags = NIIF_INFO;
+            tn.uTimeout = 1000 * 4;
+            CallService(MS_CLIST_SYSTRAY_NOTIFY, 0, (LPARAM) & tn);
+        }
     }
     return 0;
-}
-
-BOOL CALLBACK DlgProcAbout(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam)
-{
-    COLORREF url_visited = RGB(128, 0, 128);
-    COLORREF url_unvisited = RGB(0, 0, 255);
-    
-    switch (msg)
-	{
-		case WM_INITDIALOG:
-			TranslateDialogDefault(hwndDlg);
-			{	int h;
-                HFONT hFont;
-				LOGFONT lf;
-                
-				hFont=(HFONT)SendDlgItemMessage(hwndDlg,IDC_TABSRMM,WM_GETFONT,0,0);
-				GetObject(hFont,sizeof(lf),&lf);
-                h=lf.lfHeight;
-				lf.lfHeight=(int)(lf.lfHeight*1.5);
-				lf.lfWeight=FW_BOLD;
-				hFont=CreateFontIndirect(&lf);
-				SendDlgItemMessage(hwndDlg,IDC_TABSRMM,WM_SETFONT,(WPARAM)hFont,0);
-				lf.lfHeight=h;
-				hFont=CreateFontIndirect(&lf);
-				SendDlgItemMessage(hwndDlg,IDC_VERSION,WM_SETFONT,(WPARAM)hFont,0);
-			}
-			{	char str[64];
-                DWORD v = pluginInfo.version;
-				char szVersion[512], *found = NULL, buildstr[50] = "";
-				UINT build_nr = 0;
-
-				CallService(MS_SYSTEM_GETVERSIONTEXT, 500, (LPARAM)szVersion);
-				if((found = strchr(szVersion, '#')) != NULL) {
-					build_nr = atoi(found + 1);
-					mir_snprintf(buildstr, 50, "[Build #%d]", build_nr);
-				}
-#if defined(_UNICODE)
-				mir_snprintf(str,sizeof(str),"%s %d.%d.%d.%d (Unicode) %s", Translate("Version"), HIBYTE(HIWORD(v)), LOBYTE(HIWORD(v)), HIBYTE(LOWORD(v)), LOBYTE(LOWORD(v)), buildstr);
-#else
-				mir_snprintf(str,sizeof(str),"%s %d.%d.%d.%d %s", Translate("Version"), HIBYTE(HIWORD(v)), LOBYTE(HIWORD(v)), HIBYTE(LOWORD(v)), LOBYTE(LOWORD(v)), buildstr);
-#endif                
-				SetDlgItemTextA(hwndDlg,IDC_VERSION,str);
-				mir_snprintf(str,sizeof(str),Translate("Built %s %s"),__DATE__,__TIME__);
-				SetDlgItemTextA(hwndDlg,IDC_BUILDTIME,str);
-			}
-            //hIcon = LoadIcon(GetModuleHandleA("miranda32.exe"), MAKEINTRESOURCE(102));
-            //SendDlgItemMessage(hwndDlg, IDC_LOGO, STM_SETICON, (WPARAM)hIcon, 0);
-			SendMessage(hwndDlg, WM_SETICON, ICON_BIG, (LPARAM)myGlobals.g_iconContainer);
-            //DestroyIcon(hIcon);
-			return TRUE;
-		case WM_COMMAND:
-			switch(LOWORD(wParam))
-			{
-				case IDOK:
-				case IDCANCEL:
-					DestroyWindow(hwndDlg);
-					return TRUE;
-				case IDC_SUPPORT:
-					CallService(MS_UTILS_OPENURL, 1, (LPARAM)"http://miranda.or.at/");
-					break;
-			}
-			break;
-		case WM_CTLCOLOREDIT:
-		case WM_CTLCOLORSTATIC:
-			if((HWND)lParam==GetDlgItem(hwndDlg,IDC_WHITERECT)
-					|| (HWND)lParam==GetDlgItem(hwndDlg,IDC_TABSRMM)
-					|| (HWND)lParam==GetDlgItem(hwndDlg,IDC_VERSION)
-					|| (HWND)lParam==GetDlgItem(hwndDlg,IDC_BUILDTIME)
-                    || (HWND)lParam==GetDlgItem(hwndDlg,IDC_COPYRIGHT)
-                    || (HWND)lParam==GetDlgItem(hwndDlg,IDC_SUPPORT)
-					|| (HWND)lParam==GetDlgItem(hwndDlg,IDC_LOGO)) {
-                if((HWND)lParam==GetDlgItem(hwndDlg,IDC_TABSRMM))
-				    SetTextColor((HDC)wParam,RGB(180,10,10));
-                else if((HWND)lParam==GetDlgItem(hwndDlg,IDC_VERSION))
-				    SetTextColor((HDC)wParam,RGB(70,70,70));
-                else
-				    SetTextColor((HDC)wParam,RGB(0,0,0));
-				SetBkColor((HDC)wParam,RGB(255,255,255));
-				return (BOOL)GetStockObject(WHITE_BRUSH);
-			}
-			break;
-		case WM_DESTROY:
-			{	HFONT hFont;
-            
-				hFont=(HFONT)SendDlgItemMessage(hwndDlg,IDC_TABSRMM,WM_GETFONT,0,0);
-				SendDlgItemMessage(hwndDlg,IDC_TABSRMM,WM_SETFONT,SendDlgItemMessage(hwndDlg,IDOK,WM_GETFONT,0,0),0);
-				DeleteObject(hFont);				
-                hFont=(HFONT)SendDlgItemMessage(hwndDlg,IDC_VERSION,WM_GETFONT,0,0);
-                SendDlgItemMessage(hwndDlg,IDC_VERSION,WM_SETFONT,SendDlgItemMessage(hwndDlg,IDOK,WM_GETFONT,0,0),0);
-                DeleteObject(hFont);				
-			}
-			break;
-	}
-	return FALSE;
 }
 
 int _DebugMessage(HWND hwndDlg, struct MessageWindowData *dat, const char *fmt, ...)

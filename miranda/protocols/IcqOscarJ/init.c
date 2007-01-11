@@ -4,8 +4,8 @@
 //
 // Copyright © 2000,2001 Richard Hughes, Roland Rabien, Tristan Van de Vreede
 // Copyright © 2001,2002 Jon Keating, Richard Hughes
-// Copyright © 2002,2003,2004 Martin Öberg, Sam Kothari, Robert Rainwater
-// Copyright © 2004,2005,2006 Joe Kucera
+// Copyright © 2002,2003,2004 Martin  berg, Sam Kothari, Robert Rainwater
+// Copyright © 2004,2005 Joe Kucera
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -23,7 +23,7 @@
 //
 // -----------------------------------------------------------------------------
 //
-// File name      : $Source: /cvsroot/miranda/miranda/protocols/IcqOscarJ/init.c,v $
+// File name      : $Source$
 // Revision       : $Revision$
 // Last change on : $Date$
 // Last change by : $Author$
@@ -36,556 +36,379 @@
 
 #include "icqoscar.h"
 
-#include "m_updater.h"
 
 
 PLUGINLINK* pluginLink;
+HINSTANCE hInst;
+char gpszICQProtoName[MAX_PATH];
 HANDLE hHookUserInfoInit = NULL;
 HANDLE hHookOptionInit = NULL;
 HANDLE hHookUserMenu = NULL;
 HANDLE hHookIdleEvent = NULL;
-HANDLE hHookIconsChanged = NULL;
-static HANDLE hUserMenuAuth = NULL;
-static HANDLE hUserMenuGrant = NULL;
-static HANDLE hUserMenuRevoke = NULL;
-static HANDLE hUserMenuXStatus = NULL;
+static HANDLE hUserMenu = NULL;
 
 extern HANDLE hServerConn;
+extern int gnCurrentStatus;
+extern icq_mode_messages modeMsgs;
+extern CRITICAL_SECTION modeMsgsMutex;
 CRITICAL_SECTION localSeqMutex;
 CRITICAL_SECTION connectionHandleMutex;
+HANDLE ghServerNetlibUser;
+HANDLE hDirectNetlibUser;
 HANDLE hsmsgrequest;
-HANDLE hxstatusiconchanged;
-
-extern int bHideXStatusUI;
 
 PLUGININFO pluginInfo = {
-  sizeof(PLUGININFO),
-  NULL,
-  PLUGIN_MAKE_VERSION(0,3,8,8),
-  "Support for ICQ network, enhanced.",
-  "Joe Kucera, Bio, Martin Öberg, Richard Hughes, Jon Keating, etc",
-  "jokusoftware@miranda-im.org",
-  "(C) 2000-2006 M.Öberg, R.Hughes, J.Keating, Bio, Angeli-Ka, J.Kucera",
-  "http://addons.miranda-im.org/details.php?action=viewfile&id=1683",
-  0,  //not transient
-  0   //doesn't replace anything built-in
+	sizeof(PLUGININFO),
+	"ICQ Oscar v8 / Joe",
+	PLUGIN_MAKE_VERSION(0,3,4,0),
+	"Support for ICQ network, slightly enhanced.",
+	"Joe Kucera, Martin Öberg, Richard Hughes, Jon Keating, etc",
+	"jokusoftware@users.sourceforge.net",
+	"(C) 2000-2005 M.Öberg, R.Hughes, J.Keating, J.Kucera",
+	"Built and Maintained by Joe @ Whale.",
+	0,		//not transient
+	0		//doesn't replace anything built-in
 };
 
-static char pluginName[64];
-
 static int OnSystemModulesLoaded(WPARAM wParam,LPARAM lParam);
-static int OnSystemPreShutdown(WPARAM wParam,LPARAM lParam);
 static int icq_PrebuildContactMenu(WPARAM wParam, LPARAM lParam);
-static int IconLibIconsChanged(WPARAM wParam, LPARAM lParam);
 
 
 
 PLUGININFO __declspec(dllexport) *MirandaPluginInfo(DWORD mirandaVersion)
 {
-  // Only load for 0.4.0.1 or greater
-  // Miranda IM v0.4.0.1 contained important DB bug fix
-  if (mirandaVersion < PLUGIN_MAKE_VERSION(0, 4, 0, 1)) 
-  {
-    return NULL;
-  }
-  else
-  {
-    // Are we running under Unicode Windows version ?
-    gbUnicodeAPI = (GetVersion() & 0x80000000) == 0;
-    strcpy(pluginName, "IcqOscarJ Protocol");
-    if (gbUnicodeAPI)
-      strcat(pluginName, " (Unicode)");
-    pluginInfo.shortName = pluginName;
-    MIRANDA_VERSION = mirandaVersion;
-    return &pluginInfo;
-  }
+
+	// Only load for 0.3.3 or greater
+	// Miranda IM v0.3.3 contained several netlib struct changes requiring a forced upgrade
+	if (mirandaVersion < PLUGIN_MAKE_VERSION(0, 3, 3, 0))
+	{
+		return NULL;
+	}
+	else
+	{
+		return &pluginInfo;
+	}
+
 }
 
 
 
 BOOL WINAPI DllMain(HINSTANCE hinstDLL,DWORD fdwReason,LPVOID lpvReserved)
 {
-  hInst = hinstDLL;
 
-  return TRUE;
-}
+	hInst = hinstDLL;
 
+	return TRUE;
 
-
-static HANDLE ICQCreateServiceFunction(const char* szService,  MIRANDASERVICE serviceProc)
-{
-  char str[MAX_PATH + 32];
-  strcpy(str, gpszICQProtoName);
-  strcat(str, szService);
-  return CreateServiceFunction(str, serviceProc);
 }
 
 
 
 int __declspec(dllexport) Load(PLUGINLINK *link)
 {
-  PROTOCOLDESCRIPTOR pd = {0};
 
-  pluginLink = link;
+	PROTOCOLDESCRIPTOR pd;
 
-  ghServerNetlibUser = NULL;
 
-  // Are we running under Unicode Windows version ?
-  gbUnicodeAPI = (GetVersion() & 0x80000000) == 0;
-  // Do we have new LangPack module ready ?
-  gbUtfLangpack = ServiceExists(MS_LANGPACK_GETCODEPAGE);
-  { // Are we running under unicode Miranda core ?
-    char szVer[MAX_PATH];
+	pluginLink = link;
 
-    CallService(MS_SYSTEM_GETVERSIONTEXT, MAX_PATH, (LPARAM)szVer);
-    gbUnicodeCore = (strstr(szVer, "Unicode") != NULL);
-  }
+	srand(time(NULL));
+	_tzset();
 
-  srand(time(NULL));
-  _tzset();
 
-  // Get module name from DLL file name
-  {
-    char* str1;
-    char str2[MAX_PATH];
-    int nProtoNameLen;
-
-    GetModuleFileName(hInst, str2, MAX_PATH);
-    str1 = strrchr(str2, '\\');
-    nProtoNameLen = strlennull(str1);
-    if (str1 != NULL && (nProtoNameLen > 5))
+	// Get module name from DLL file name
     {
-      strncpy(gpszICQProtoName, str1+1, nProtoNameLen-5);
-      gpszICQProtoName[nProtoNameLen-4] = 0;
+
+		char* str1;
+        char str2[MAX_PATH];
+
+
+		GetModuleFileName(hInst, str2, MAX_PATH);
+        str1 = strrchr(str2, '\\');
+        if (str1 != NULL && (strlen(str1+1) > 4))
+		{
+			strncpy(gpszICQProtoName, str1+1, strlen(str1+1)-4);
+			gpszICQProtoName[strlen(str1+1)-3] = 0;
+        }
+		CharUpper(gpszICQProtoName);
     }
-    CharUpper(gpszICQProtoName);
-  }
 
-  ZeroMemory(gpszPassword, sizeof(gpszPassword));
+	icq_FirstRunCheck();
 
-  icq_FirstRunCheck();
+	HookEvent(ME_SYSTEM_MODULESLOADED, OnSystemModulesLoaded);
 
-  HookEvent(ME_SYSTEM_MODULESLOADED, OnSystemModulesLoaded);
-  HookEvent(ME_SYSTEM_PRESHUTDOWN, OnSystemPreShutdown);
+	InitializeCriticalSection(&connectionHandleMutex);
+	InitializeCriticalSection(&localSeqMutex);
+	InitializeCriticalSection(&modeMsgsMutex);
+	InitCookies();
 
-  InitializeCriticalSection(&connectionHandleMutex);
-  InitializeCriticalSection(&localSeqMutex);
-  InitializeCriticalSection(&modeMsgsMutex);
+	// Register the module
+	ZeroMemory(&pd, sizeof(pd));
+	pd.cbSize = sizeof(pd);
+	pd.szName = gpszICQProtoName;
+	pd.type   = PROTOTYPE_PROTOCOL;
+	CallService(MS_PROTO_REGISTERMODULE, 0, (LPARAM)&pd);
 
-  // Initialize core modules
-  InitDB();       // DB interface
-  InitCookies();  // cookie utils
-  InitCache();    // contacts cache
-  InitRates();    // rate management
+	// Initialize status message struct
+	ZeroMemory(&modeMsgs, sizeof(icq_mode_messages));
 
-  // Register the module
-  pd.cbSize = sizeof(pd);
-  pd.szName = gpszICQProtoName;
-  pd.type   = PROTOTYPE_PROTOCOL;
-  CallService(MS_PROTO_REGISTERMODULE, 0, (LPARAM)&pd);
 
-  // Initialize status message struct
-  ZeroMemory(&modeMsgs, sizeof(icq_mode_messages));
+	// Reset a bunch of session specific settings
+	ResetSettingsOnLoad();
 
-  // Initialize temporary DB settings
-  ICQCreateResidentSetting("Status"); // NOTE: XStatus cannot be temporary
-  ICQCreateResidentSetting("TemporaryVisible");
-  ICQCreateResidentSetting("TickTS");
-  ICQCreateResidentSetting("IdleTS");
-  ICQCreateResidentSetting("LogonTS");
 
-  // Reset a bunch of session specific settings
-  ResetSettingsOnLoad();
+	// Setup services
+	{
 
-  // Setup services
-  ICQCreateServiceFunction(PS_GETCAPS, IcqGetCaps);
-  ICQCreateServiceFunction(PS_GETNAME, IcqGetName);
-  ICQCreateServiceFunction(PS_LOADICON, IcqLoadIcon);
-  ICQCreateServiceFunction(PS_SETSTATUS, IcqSetStatus);
-  ICQCreateServiceFunction(PS_GETSTATUS, IcqGetStatus);
-  ICQCreateServiceFunction(PS_SETAWAYMSG, IcqSetAwayMsg);
-  ICQCreateServiceFunction(PS_AUTHALLOW, IcqAuthAllow);
-  ICQCreateServiceFunction(PS_AUTHDENY, IcqAuthDeny);
-  ICQCreateServiceFunction(PS_BASICSEARCH, IcqBasicSearch);
-  ICQCreateServiceFunction(PS_SEARCHBYEMAIL, IcqSearchByEmail);
-  ICQCreateServiceFunction(MS_ICQ_SEARCHBYDETAILS, IcqSearchByDetails);
-  ICQCreateServiceFunction(PS_SEARCHBYNAME, IcqSearchByDetails);
-  ICQCreateServiceFunction(PS_CREATEADVSEARCHUI, IcqCreateAdvSearchUI);
-  ICQCreateServiceFunction(PS_SEARCHBYADVANCED, IcqSearchByAdvanced);
-  ICQCreateServiceFunction(MS_ICQ_SENDSMS, IcqSendSms);
-  ICQCreateServiceFunction(PS_ADDTOLIST, IcqAddToList);
-  ICQCreateServiceFunction(PS_ADDTOLISTBYEVENT, IcqAddToListByEvent);
-  ICQCreateServiceFunction(PS_FILERESUME, IcqFileResume);
-  ICQCreateServiceFunction(PS_SET_NICKNAME, IcqSetNickName);
-  ICQCreateServiceFunction(PSS_GETINFO, IcqGetInfo);
-  ICQCreateServiceFunction(PSS_MESSAGE, IcqSendMessage);
-  ICQCreateServiceFunction(PSS_MESSAGE"W", IcqSendMessageW);
-  ICQCreateServiceFunction(PSS_URL, IcqSendUrl);
-  ICQCreateServiceFunction(PSS_CONTACTS, IcqSendContacts);
-  ICQCreateServiceFunction(PSS_SETAPPARENTMODE, IcqSetApparentMode);
-  ICQCreateServiceFunction(PSS_GETAWAYMSG, IcqGetAwayMsg);
-  ICQCreateServiceFunction(PSS_FILEALLOW, IcqFileAllow);
-  ICQCreateServiceFunction(PSS_FILEDENY, IcqFileDeny);
-  ICQCreateServiceFunction(PSS_FILECANCEL, IcqFileCancel);
-  ICQCreateServiceFunction(PSS_FILE, IcqSendFile);
-  ICQCreateServiceFunction(PSR_AWAYMSG, IcqRecvAwayMsg);
-  ICQCreateServiceFunction(PSR_FILE, IcqRecvFile);
-  ICQCreateServiceFunction(PSR_MESSAGE, IcqRecvMessage);
-  ICQCreateServiceFunction(PSR_URL, IcqRecvUrl);
-  ICQCreateServiceFunction(PSR_CONTACTS, IcqRecvContacts);
-  ICQCreateServiceFunction(PSR_AUTH, IcqRecvAuth);
-  ICQCreateServiceFunction(PSS_AUTHREQUEST, IcqSendAuthRequest);
-  ICQCreateServiceFunction(PSS_ADDED, IcqSendYouWereAdded);
-  ICQCreateServiceFunction(PSS_USERISTYPING, IcqSendUserIsTyping);
-  ICQCreateServiceFunction(PS_GETAVATARINFO, IcqGetAvatarInfo);
-  // Session password API
-  ICQCreateServiceFunction(PS_ICQ_SETPASSWORD, IcqSetPassword);
-  // ChangeInfo API
-  ICQCreateServiceFunction(PS_CHANGEINFOEX, IcqChangeInfoEx);
-  // My Avatar API
-  ICQCreateServiceFunction(PS_ICQ_GETMYAVATARMAXSIZE, IcqGetMaxAvatarSize);
-  ICQCreateServiceFunction(PS_ICQ_ISAVATARFORMATSUPPORTED, IcqAvatarFormatSupported);
-  ICQCreateServiceFunction(PS_ICQ_GETMYAVATAR, IcqGetMyAvatar);
-  ICQCreateServiceFunction(PS_ICQ_SETMYAVATAR, IcqSetMyAvatar);
-  // Custom Status API
-  ICQCreateServiceFunction(PS_ICQ_SETCUSTOMSTATUS, IcqSetXStatus); // obsolete (remove in next version)
-  ICQCreateServiceFunction(PS_ICQ_GETCUSTOMSTATUS, IcqGetXStatus); // obsolete
-  ICQCreateServiceFunction(PS_ICQ_SETCUSTOMSTATUSEX, IcqSetXStatusEx);
-  ICQCreateServiceFunction(PS_ICQ_GETCUSTOMSTATUSEX, IcqGetXStatusEx);
-  ICQCreateServiceFunction(PS_ICQ_GETCUSTOMSTATUSICON, IcqGetXStatusIcon);
-  ICQCreateServiceFunction(PS_ICQ_REQUESTCUSTOMSTATUS, IcqRequestXStatusDetails);
+		char pszServiceName[MAX_PATH+30];
 
-  {
-    char pszServiceName[MAX_PATH + 32];
 
-    strcpy(pszServiceName, gpszICQProtoName); strcat(pszServiceName, ME_ICQ_STATUSMSGREQ);
-    hsmsgrequest = CreateHookableEvent(pszServiceName);
+		strcpy(pszServiceName, gpszICQProtoName); strcat(pszServiceName, PS_GETCAPS);
+		CreateServiceFunction(pszServiceName , IcqGetCaps);
+		strcpy(pszServiceName, gpszICQProtoName); strcat(pszServiceName, PS_GETNAME);
+		CreateServiceFunction(pszServiceName , IcqGetName);
+		strcpy(pszServiceName, gpszICQProtoName); strcat(pszServiceName, PS_LOADICON);
+		CreateServiceFunction(pszServiceName , IcqLoadIcon);
+		strcpy(pszServiceName, gpszICQProtoName); strcat(pszServiceName, PS_SETSTATUS);
+		CreateServiceFunction(pszServiceName , IcqSetStatus);
+		strcpy(pszServiceName, gpszICQProtoName); strcat(pszServiceName, PS_GETSTATUS);
+		CreateServiceFunction(pszServiceName , IcqGetStatus);
+		strcpy(pszServiceName, gpszICQProtoName); strcat(pszServiceName, PS_SETAWAYMSG);
+		CreateServiceFunction(pszServiceName , IcqSetAwayMsg);
+		strcpy(pszServiceName, gpszICQProtoName); strcat(pszServiceName, PS_AUTHALLOW);
+		CreateServiceFunction(pszServiceName , IcqAuthAllow);
+		strcpy(pszServiceName, gpszICQProtoName); strcat(pszServiceName, PS_AUTHDENY);
+		CreateServiceFunction(pszServiceName , IcqAuthDeny);
+		strcpy(pszServiceName, gpszICQProtoName); strcat(pszServiceName, PS_BASICSEARCH);
+		CreateServiceFunction(pszServiceName , IcqBasicSearch);
+		strcpy(pszServiceName, gpszICQProtoName); strcat(pszServiceName, PS_SEARCHBYEMAIL);
+		CreateServiceFunction(pszServiceName , IcqSearchByEmail);
+		strcpy(pszServiceName, gpszICQProtoName); strcat(pszServiceName, MS_ICQ_SEARCHBYDETAILS);
+		CreateServiceFunction(pszServiceName, IcqSearchByDetails);
+		strcpy(pszServiceName, gpszICQProtoName); strcat(pszServiceName, PS_SEARCHBYNAME);
+		CreateServiceFunction(pszServiceName , IcqSearchByDetails);
+		strcpy(pszServiceName, gpszICQProtoName); strcat(pszServiceName, PS_CREATEADVSEARCHUI);
+		CreateServiceFunction(pszServiceName , IcqCreateAdvSearchUI);
+		strcpy(pszServiceName, gpszICQProtoName); strcat(pszServiceName, PS_SEARCHBYADVANCED);
+		CreateServiceFunction(pszServiceName , IcqSearchByAdvanced);
+		strcpy(pszServiceName, gpszICQProtoName); strcat(pszServiceName, MS_ICQ_SENDSMS);
+		CreateServiceFunction(pszServiceName, IcqSendSms);
+		strcpy(pszServiceName, gpszICQProtoName); strcat(pszServiceName, PS_ADDTOLIST);
+		CreateServiceFunction(pszServiceName , IcqAddToList);
+		strcpy(pszServiceName, gpszICQProtoName); strcat(pszServiceName, PS_ADDTOLISTBYEVENT);
+		CreateServiceFunction(pszServiceName , IcqAddToListByEvent);
+		strcpy(pszServiceName, gpszICQProtoName); strcat(pszServiceName, PS_CHANGEINFO);
+		CreateServiceFunction(pszServiceName , IcqChangeInfo);
+		strcpy(pszServiceName, gpszICQProtoName); strcat(pszServiceName, PS_FILERESUME);
+		CreateServiceFunction(pszServiceName , IcqFileResume);
+		strcpy(pszServiceName, gpszICQProtoName); strcat(pszServiceName, PSS_GETINFO);
+		CreateServiceFunction(pszServiceName , IcqGetInfo);
+		strcpy(pszServiceName, gpszICQProtoName); strcat(pszServiceName, PSS_MESSAGE);
+		CreateServiceFunction(pszServiceName , IcqSendMessage);
+		strcpy(pszServiceName, gpszICQProtoName); strcat(pszServiceName, PSS_MESSAGE"W");
+		CreateServiceFunction(pszServiceName , IcqSendMessageW);
+		strcpy(pszServiceName, gpszICQProtoName); strcat(pszServiceName, PSS_URL);
+		CreateServiceFunction(pszServiceName , IcqSendUrl);
+		strcpy(pszServiceName, gpszICQProtoName); strcat(pszServiceName, PSS_CONTACTS);
+		CreateServiceFunction(pszServiceName , IcqSendContacts);
+		strcpy(pszServiceName, gpszICQProtoName); strcat(pszServiceName, PSS_SETAPPARENTMODE);
+		CreateServiceFunction(pszServiceName , IcqSetApparentMode);
+		strcpy(pszServiceName, gpszICQProtoName); strcat(pszServiceName, PSS_GETAWAYMSG);
+		CreateServiceFunction(pszServiceName , IcqGetAwayMsg);
+		strcpy(pszServiceName, gpszICQProtoName); strcat(pszServiceName, PSS_FILEALLOW);
+		CreateServiceFunction(pszServiceName , IcqFileAllow);
+		strcpy(pszServiceName, gpszICQProtoName); strcat(pszServiceName, PSS_FILEDENY);
+		CreateServiceFunction(pszServiceName , IcqFileDeny);
+		strcpy(pszServiceName, gpszICQProtoName); strcat(pszServiceName, PSS_FILECANCEL);
+		CreateServiceFunction(pszServiceName , IcqFileCancel);
+		strcpy(pszServiceName, gpszICQProtoName); strcat(pszServiceName, PSS_FILE);
+		CreateServiceFunction(pszServiceName , IcqSendFile);
+		strcpy(pszServiceName, gpszICQProtoName); strcat(pszServiceName, PSR_AWAYMSG);
+		CreateServiceFunction(pszServiceName , IcqRecvAwayMsg);
+		strcpy(pszServiceName, gpszICQProtoName); strcat(pszServiceName, PSR_FILE);
+		CreateServiceFunction(pszServiceName ,IcqRecvFile);
+		strcpy(pszServiceName, gpszICQProtoName); strcat(pszServiceName, PSR_MESSAGE);
+		CreateServiceFunction(pszServiceName ,IcqRecvMessage);
+		strcpy(pszServiceName, gpszICQProtoName); strcat(pszServiceName, PSR_URL);
+		CreateServiceFunction(pszServiceName ,IcqRecvUrl);
+		strcpy(pszServiceName, gpszICQProtoName); strcat(pszServiceName, PSR_CONTACTS);
+		CreateServiceFunction(pszServiceName ,IcqRecvContacts);
+		strcpy(pszServiceName, gpszICQProtoName); strcat(pszServiceName, PSR_AUTH);
+		CreateServiceFunction(pszServiceName ,IcqRecvAuth);
+		strcpy(pszServiceName, gpszICQProtoName); strcat(pszServiceName, PSS_AUTHREQUEST);
+		CreateServiceFunction(pszServiceName ,IcqSendAuthRequest);
+		strcpy(pszServiceName, gpszICQProtoName); strcat(pszServiceName, PSS_ADDED);
+		CreateServiceFunction(pszServiceName, IcqSendYouWereAdded);
+		strcpy(pszServiceName, gpszICQProtoName); strcat(pszServiceName, PSS_USERISTYPING);
+		CreateServiceFunction(pszServiceName, IcqSendUserIsTyping);
+    strcpy(pszServiceName, gpszICQProtoName); strcat(pszServiceName, PS_GETAVATARINFO);
+    CreateServiceFunction(pszServiceName, IcqGetAvatarInfo);
+		strcpy(pszServiceName, gpszICQProtoName); strcat(pszServiceName, ME_ICQ_STATUSMSGREQ);
+		hsmsgrequest=CreateHookableEvent(pszServiceName);
+	}
 
-    strcpy(pszServiceName, gpszICQProtoName); strcat(pszServiceName, ME_ICQ_CUSTOMSTATUS_EXTRAICON_CHANGED);
-    hxstatusiconchanged = CreateHookableEvent(pszServiceName);
-  }
 
-  InitDirectConns();
-  InitOscarFileTransfer();
-  InitServerLists();
-  icq_InitInfoUpdate();
+	InitDirectConns();
+	InitServerLists();
+	icq_InitInfoUpdate();
 
-  // Initialize charset conversion routines
-  InitI18N();
+	// Initialize charset conversion routines
+	InitI18N();
 
-  UpdateGlobalSettings();
+	UpdateGlobalSettings();
 
-  gnCurrentStatus = ID_STATUS_OFFLINE;
+	gnCurrentStatus = ID_STATUS_OFFLINE;
 
-  ICQCreateServiceFunction(MS_REQ_AUTH, icq_RequestAuthorization);
-  ICQCreateServiceFunction(MS_GRANT_AUTH, IcqGrantAuthorization);
-  ICQCreateServiceFunction(MS_REVOKE_AUTH, IcqRevokeAuthorization);
+	hHookUserMenu = HookEvent(ME_CLIST_PREBUILDCONTACTMENU, icq_PrebuildContactMenu);
 
-  ICQCreateServiceFunction(MS_XSTATUS_SHOWDETAILS, IcqShowXStatusDetails);
+	{
 
-  // This must be here - the events are called too early, WTF?
-  InitXStatusEvents();
+		CLISTMENUITEM mi;
+		char pszServiceName[MAX_PATH+30];
 
-  return 0;
+
+		strcpy(pszServiceName, gpszICQProtoName);
+		strcat(pszServiceName, MS_REQ_AUTH);
+		CreateServiceFunction(pszServiceName, icq_RequestAuthorization);
+
+		ZeroMemory(&mi, sizeof(mi));
+		mi.cbSize = sizeof(mi);
+		mi.position = 1000030000;
+		mi.flags = 0;
+		mi.hIcon = NULL;
+		mi.pszContactOwner = gpszICQProtoName;
+		mi.pszName = Translate("Request authorization");
+		mi.pszService = pszServiceName;
+		hUserMenu = (HANDLE) CallService(MS_CLIST_ADDCONTACTMENUITEM, 0, (LPARAM) & mi);
+	}
+
+	return 0;
+
 }
 
 
 
 int __declspec(dllexport) Unload(void)
 {
-  if (gbXStatusEnabled) gbXStatusEnabled = 10; // block clist changing
 
-  UninitXStatusEvents();
+	if (hServerConn)
+	{
 
-  UninitServerLists();
-  UninitOscarFileTransfer();
-  UninitDirectConns();
+		icq_packet packet;
 
-  NetLib_SafeCloseHandle(&ghDirectNetlibUser, FALSE);
-  NetLib_SafeCloseHandle(&ghServerNetlibUser, FALSE);
-  UninitRates();
-  UninitCookies();
-  UninitCache();
-  DeleteCriticalSection(&modeMsgsMutex);
-  DeleteCriticalSection(&localSeqMutex);
-  DeleteCriticalSection(&connectionHandleMutex);
-  SAFE_FREE(&modeMsgs.szAway);
-  SAFE_FREE(&modeMsgs.szNa);
-  SAFE_FREE(&modeMsgs.szOccupied);
-  SAFE_FREE(&modeMsgs.szDnd);
-  SAFE_FREE(&modeMsgs.szFfc);
 
-  if (hHookIconsChanged)
-    UnhookEvent(hHookIconsChanged);
+		packet.wLen = 0;
+		write_flap(&packet, ICQ_CLOSE_CHAN);
+		sendServPacket(&packet);
 
-  if (hHookUserInfoInit)
-    UnhookEvent(hHookUserInfoInit);
+		icq_serverDisconnect();
 
-  if (hHookOptionInit)
-    UnhookEvent(hHookOptionInit);
+	}
 
-  if (hsmsgrequest)
-    DestroyHookableEvent(hsmsgrequest);
+	UninitServerLists();
+	UninitDirectConns();
+	icq_InfoUpdateCleanup();
 
-  if (hxstatusiconchanged)
-    DestroyHookableEvent(hxstatusiconchanged);
+	Netlib_CloseHandle(hDirectNetlibUser);
+	Netlib_CloseHandle(ghServerNetlibUser);
+	UninitCookies();
+	DeleteCriticalSection(&modeMsgsMutex);
+	DeleteCriticalSection(&localSeqMutex);
+	DeleteCriticalSection(&connectionHandleMutex);
+	SAFE_FREE(&modeMsgs.szAway);
+	SAFE_FREE(&modeMsgs.szNa);
+	SAFE_FREE(&modeMsgs.szOccupied);
+	SAFE_FREE(&modeMsgs.szDnd);
+	SAFE_FREE(&modeMsgs.szFfc);
 
-  if (hHookUserMenu)
-    UnhookEvent(hHookUserMenu);
 
-  if (hHookIdleEvent)
-    UnhookEvent(hHookIdleEvent);
+	if (hHookUserInfoInit)
+		UnhookEvent(hHookUserInfoInit);
 
-  return 0;
+	if (hHookOptionInit)
+		UnhookEvent(hHookOptionInit);
+
+	if (hsmsgrequest)
+		DestroyHookableEvent(hsmsgrequest);
+
+	if (hHookUserMenu)
+		UnhookEvent(hHookUserMenu);
+
+	if (hHookIdleEvent)
+		UnhookEvent(hHookIdleEvent);
+
+	return 0;
+
 }
 
 
 
 static int OnSystemModulesLoaded(WPARAM wParam,LPARAM lParam)
 {
-  NETLIBUSER nlu = {0};
-  char pszP2PName[MAX_PATH+3];
-  char pszGroupsName[MAX_PATH+10];
-  char pszSrvGroupsName[MAX_PATH+10];
-  char szBuffer[MAX_PATH+64];
-  char* modules[5] = {0,0,0,0,0};
 
-  strcpy(pszP2PName, gpszICQProtoName);
-  strcat(pszP2PName, "P2P");
-
-  strcpy(pszGroupsName, gpszICQProtoName);
-  strcat(pszGroupsName, "Groups");
-  strcpy(pszSrvGroupsName, gpszICQProtoName);
-  strcat(pszSrvGroupsName, "SrvGroups");
-  modules[0] = gpszICQProtoName;
-  modules[1] = pszP2PName;
-  modules[2] = pszGroupsName;
-  modules[3] = pszSrvGroupsName;
-  CallService("DBEditorpp/RegisterModule",(WPARAM)modules,(LPARAM)4);
+	NETLIBUSER nlu = {0};
+	char pszP2PName[MAX_PATH+3];
 
 
-  null_snprintf(szBuffer, sizeof szBuffer, ICQTranslate("%s server connection"), gpszICQProtoName);
-  nlu.cbSize = sizeof(nlu);
-  nlu.flags = NUF_OUTGOING | NUF_HTTPGATEWAY;
-  nlu.szDescriptiveName = szBuffer;
-  nlu.szSettingsModule = gpszICQProtoName;
-  nlu.szHttpGatewayHello = "http://http.proxy.icq.com/hello";
-  nlu.szHttpGatewayUserAgent = "Mozilla/4.08 [en] (WinNT; U ;Nav)";
-  nlu.pfnHttpGatewayInit = icq_httpGatewayInit;
-  nlu.pfnHttpGatewayBegin = icq_httpGatewayBegin;
-  nlu.pfnHttpGatewayWrapSend = icq_httpGatewayWrapSend;
-  nlu.pfnHttpGatewayUnwrapRecv = icq_httpGatewayUnwrapRecv;
+	strcpy(pszP2PName, gpszICQProtoName);
+	strcat(pszP2PName, "P2P");
 
-  ghServerNetlibUser = (HANDLE)CallService(MS_NETLIB_REGISTERUSER, 0, (LPARAM)&nlu);
+	nlu.cbSize = sizeof(nlu);
+	nlu.flags = NUF_OUTGOING | NUF_HTTPGATEWAY;
+	nlu.szDescriptiveName = Translate("ICQ server connection");
+	nlu.szSettingsModule = gpszICQProtoName;
+	nlu.szHttpGatewayHello = "http://http.proxy.icq.com/hello";
+	nlu.szHttpGatewayUserAgent = "Mozilla/4.08 [en] (WinNT; U ;Nav)";
+	nlu.pfnHttpGatewayInit = icq_httpGatewayInit;
+	nlu.pfnHttpGatewayBegin = icq_httpGatewayBegin;
+	nlu.pfnHttpGatewayWrapSend = icq_httpGatewayWrapSend;
+	nlu.pfnHttpGatewayUnwrapRecv = icq_httpGatewayUnwrapRecv;
+	ghServerNetlibUser = (HANDLE)CallService(MS_NETLIB_REGISTERUSER, 0, (LPARAM)&nlu);
 
-  null_snprintf(szBuffer, sizeof szBuffer, ICQTranslate("%s client-to-client connections"), gpszICQProtoName);
-  nlu.flags = NUF_OUTGOING | NUF_INCOMING;
-  nlu.szDescriptiveName = szBuffer;
-  nlu.szSettingsModule = pszP2PName;
-  nlu.minIncomingPorts = 1;
-  ghDirectNetlibUser = (HANDLE)CallService(MS_NETLIB_REGISTERUSER, 0, (LPARAM)&nlu);
+	nlu.flags = NUF_OUTGOING | NUF_INCOMING;
+	nlu.szDescriptiveName = Translate("ICQ client-to-client connections");
+	nlu.szSettingsModule = pszP2PName;
+	nlu.minIncomingPorts = 1;
+	hDirectNetlibUser = (HANDLE)CallService(MS_NETLIB_REGISTERUSER, 0, (LPARAM)&nlu);
 
-  hHookOptionInit = HookEvent(ME_OPT_INITIALISE, IcqOptInit);
-  hHookUserInfoInit = HookEvent(ME_USERINFO_INITIALISE, OnDetailsInit);
-  hHookUserMenu = HookEvent(ME_CLIST_PREBUILDCONTACTMENU, icq_PrebuildContactMenu);
-  hHookIdleEvent = HookEvent(ME_IDLE_CHANGED, IcqIdleChanged);
+	hHookOptionInit = HookEvent(ME_OPT_INITIALISE, IcqOptInit);
+	hHookUserInfoInit = HookEvent(ME_USERINFO_INITIALISE, OnDetailsInit);
 
-  InitAvatars();
+	hHookIdleEvent = HookEvent(ME_IDLE_CHANGED, IcqIdleChanged);
 
-  // Init extra optional modules
-  InitPopUps();
-  InitIconLib();
+	return 0;
 
-  hHookIconsChanged = IconLibHookIconsChanged(IconLibIconsChanged);
-
-  {
-    char str[MAX_PATH], proto[MAX_PATH], lib[MAX_PATH];
-    
-    ICQTranslateUtfStatic(gpszICQProtoName, proto);
-
-    GetModuleFileName(hInst, lib, MAX_PATH);
-
-    IconLibDefine(ICQTranslateUtfStatic("Request authorization", str), proto, "req_auth", NULL, lib, -IDI_AUTH_ASK);
-    IconLibDefine(ICQTranslateUtfStatic("Grant authorization", str), proto, "grant_auth", NULL, lib, -IDI_AUTH_GRANT);
-    IconLibDefine(ICQTranslateUtfStatic("Revoke authorization", str), proto, "revoke_auth", NULL, lib, -IDI_AUTH_REVOKE);
-  }
-
-  // Initialize IconLib icons
-  InitXStatusIcons();
-  InitXStatusEvents();
-  InitXStatusItems(FALSE);
-
-  {
-    CLISTMENUITEM mi;
-    char pszServiceName[MAX_PATH+30];
-
-    strcpy(pszServiceName, gpszICQProtoName);
-    strcat(pszServiceName, MS_REQ_AUTH);
-
-    ZeroMemory(&mi, sizeof(mi));
-    mi.cbSize = sizeof(mi);
-    mi.position = 1000030000;
-    mi.flags = 0;
-    if (IconLibInstalled())
-      mi.hIcon = IconLibGetIcon("req_auth");
-    else
-      mi.hIcon = LoadImage(hInst,MAKEINTRESOURCE(IDI_AUTH_ASK),IMAGE_ICON,0,0,LR_SHARED);
-    mi.pszContactOwner = gpszICQProtoName;
-    mi.pszName = ICQTranslate("Request authorization");
-    mi.pszService = pszServiceName;
-    hUserMenuAuth = (HANDLE)CallService(MS_CLIST_ADDCONTACTMENUITEM, 0, (LPARAM)&mi);
-    IconLibReleaseIcon("req_auth");
-
-    strcpy(pszServiceName, gpszICQProtoName);
-    strcat(pszServiceName, MS_GRANT_AUTH);
-
-    mi.position = 1000029999;
-    if (IconLibInstalled())
-      mi.hIcon = IconLibGetIcon("grant_auth");
-    else
-      mi.hIcon = LoadImage(hInst,MAKEINTRESOURCE(IDI_AUTH_GRANT),IMAGE_ICON,0,0,LR_SHARED);
-    mi.pszName = ICQTranslate("Grant authorization");
-    hUserMenuGrant = (HANDLE)CallService(MS_CLIST_ADDCONTACTMENUITEM, 0, (LPARAM)&mi);
-    IconLibReleaseIcon("grant_auth");
-
-    strcpy(pszServiceName, gpszICQProtoName);
-    strcat(pszServiceName, MS_REVOKE_AUTH);
-
-    mi.position = 1000029998;
-    if (IconLibInstalled())
-      mi.hIcon = IconLibGetIcon("revoke_auth");
-    else
-      mi.hIcon = LoadImage(hInst,MAKEINTRESOURCE(IDI_AUTH_REVOKE),IMAGE_ICON,0,0,LR_SHARED);
-    mi.pszName = ICQTranslate("Revoke authorization");
-    hUserMenuRevoke = (HANDLE)CallService(MS_CLIST_ADDCONTACTMENUITEM, 0, (LPARAM)&mi);
-    IconLibReleaseIcon("revoke_auth");
-
-    strcpy(pszServiceName, gpszICQProtoName);
-    strcat(pszServiceName, MS_XSTATUS_SHOWDETAILS);
-
-    mi.position = -2000004999;
-    mi.hIcon = NULL; // dynamically updated
-    mi.pszName = ICQTranslate("Show custom status details");
-    mi.flags=CMIF_NOTOFFLINE;
-    hUserMenuXStatus = (HANDLE)CallService(MS_CLIST_ADDCONTACTMENUITEM, 0, (LPARAM)&mi);
-  }
-
-  {
-    // TODO: add beta builds support to devel builds :)
-
-    CallService(MS_UPDATE_REGISTERFL, 1683, (WPARAM)&pluginInfo);
-  }
-
-  return 0;
-}
-
-
-
-static int OnSystemPreShutdown(WPARAM wParam,LPARAM lParam)
-{ // all threads should be terminated here
-  if (hServerConn)
-  {
-    icq_sendCloseConnection();
-
-    icq_serverDisconnect(TRUE);
-  }
-
-  icq_InfoUpdateCleanup();
-
-  return 0;
-}
-
-
-
-void CListShowMenuItem(HANDLE hMenuItem, BYTE bShow)
-{
-  CLISTMENUITEM mi = {0};
-
-  mi.cbSize = sizeof(mi);
-  if (bShow)
-    mi.flags = CMIM_FLAGS;
-  else
-    mi.flags = CMIM_FLAGS | CMIF_HIDDEN;
-
-  CallService(MS_CLIST_MODIFYMENUITEM, (WPARAM)hMenuItem, (LPARAM)&mi);
-}
-
-
-
-void CListSetMenuItemIcon(HANDLE hMenuItem, HICON hIcon)
-{
-  CLISTMENUITEM mi = {0};
-
-  mi.cbSize = sizeof(mi);
-  mi.flags = CMIM_FLAGS | CMIM_ICON;
-
-  mi.hIcon = hIcon;
-  CallService(MS_CLIST_MODIFYMENUITEM, (WPARAM)hMenuItem, (LPARAM)&mi);
 }
 
 
 
 static int icq_PrebuildContactMenu(WPARAM wParam, LPARAM lParam)
 {
-  BYTE bXStatus;
 
-  CListShowMenuItem(hUserMenuAuth, ICQGetContactSettingByte((HANDLE)wParam, "Auth", 0));
-  CListShowMenuItem(hUserMenuGrant, ICQGetContactSettingByte((HANDLE)wParam, "Grant", 0));
-  CListShowMenuItem(hUserMenuRevoke, (BYTE)(ICQGetContactSettingByte(NULL, "PrivacyItems", 0) && !ICQGetContactSettingByte((HANDLE)wParam, "Grant", 0)));
-
-  bXStatus = ICQGetContactSettingByte((HANDLE)wParam, DBSETTING_XSTATUSID, 0);
-  CListShowMenuItem(hUserMenuXStatus, (BYTE)(bHideXStatusUI ? 0 : bXStatus));
-  if (bXStatus && !bHideXStatusUI)
-  {
-    CListSetMenuItemIcon(hUserMenuXStatus, GetXStatusIcon(bXStatus, LR_SHARED));
-  }
-
-  return 0;
-}
+    CLISTMENUITEM mi;
 
 
+    ZeroMemory(&mi, sizeof(mi));
+    mi.cbSize = sizeof(mi);
+    if (!DBGetContactSettingByte((HANDLE)wParam, gpszICQProtoName, "Auth", 0))
+        mi.flags = CMIM_FLAGS | CMIM_NAME | CMIF_HIDDEN;
+    else
+        mi.flags = CMIM_FLAGS | CMIM_NAME;
+    mi.pszName = Translate("Request authorization");
 
-static int IconLibIconsChanged(WPARAM wParam, LPARAM lParam)
-{
-  CListSetMenuItemIcon(hUserMenuAuth, IconLibGetIcon("req_auth"));
-  IconLibReleaseIcon("req_auth");
-  CListSetMenuItemIcon(hUserMenuGrant, IconLibGetIcon("grant_auth"));
-  IconLibReleaseIcon("grant_auth");
-  CListSetMenuItemIcon(hUserMenuRevoke, IconLibGetIcon("revoke_auth"));
-  IconLibReleaseIcon("revoke_auth");
+    CallService(MS_CLIST_MODIFYMENUITEM, (WPARAM) hUserMenu, (LPARAM) & mi);
 
-  ChangedIconsXStatus();
+    return 0;
 
-  return 0;
 }
 
 
 
 void UpdateGlobalSettings()
 {
-  if (ghServerNetlibUser)
-  {
-    NETLIBUSERSETTINGS nlus = {0};
 
-    nlus.cbSize = sizeof(NETLIBUSERSETTINGS);
-    if (CallService(MS_NETLIB_GETUSERSETTINGS, (WPARAM)ghServerNetlibUser, (LPARAM)&nlus))
-    {
-      if (nlus.useProxy && nlus.proxyType == PROXYTYPE_HTTP)
-        gbGatewayMode = 1;
-      else
-        gbGatewayMode = 0;
-    }
-    else
-      gbGatewayMode = 0;
-  }
+	gbAimEnabled = DBGetContactSettingByte(NULL, gpszICQProtoName, "AimEnabled", DEFAULT_AIM_ENABLED);
+	gbSsiEnabled = DBGetContactSettingByte(NULL, gpszICQProtoName, "UseServerCList", DEFAULT_SS_ENABLED);
+  gbAvatarsEnabled = DBGetContactSettingByte(NULL, gpszICQProtoName, "AvatarsEnabled", DEFAULT_AVATARS_ENABLED);
 
-  gbSecureLogin = ICQGetContactSettingByte(NULL, "SecureLogin", DEFAULT_SECURE_LOGIN);
-  gbAimEnabled = ICQGetContactSettingByte(NULL, "AimEnabled", DEFAULT_AIM_ENABLED);
-  gbUtfEnabled = ICQGetContactSettingByte(NULL, "UtfEnabled", DEFAULT_UTF_ENABLED);
-  gwAnsiCodepage = ICQGetContactSettingWord(NULL, "AnsiCodePage", DEFAULT_ANSI_CODEPAGE);
-  gbDCMsgEnabled = ICQGetContactSettingByte(NULL, "DirectMessaging", DEFAULT_DCMSG_ENABLED);
-  gbTempVisListEnabled = ICQGetContactSettingByte(NULL, "TempVisListEnabled", DEFAULT_TEMPVIS_ENABLED);
-  gbSsiEnabled = ICQGetContactSettingByte(NULL, "UseServerCList", DEFAULT_SS_ENABLED);
-  gbAvatarsEnabled = ICQGetContactSettingByte(NULL, "AvatarsEnabled", DEFAULT_AVATARS_ENABLED);
-  gbXStatusEnabled = ICQGetContactSettingByte(NULL, "XStatusEnabled", DEFAULT_XSTATUS_ENABLED);
 }

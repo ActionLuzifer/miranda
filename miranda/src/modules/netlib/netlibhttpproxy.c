@@ -2,8 +2,8 @@
 
 Miranda IM: the free IM client for Microsoft* Windows*
 
-Copyright 2000-2007 Miranda ICQ/IM project,
-all portions of this codebase are copyrighted to the people
+Copyright 2000-2003 Miranda ICQ/IM project, 
+all portions of this codebase are copyrighted to the people 
 listed in contributors.txt.
 
 This program is free software; you can redistribute it and/or
@@ -20,7 +20,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
-#include "commonheaders.h"
+#include "../../core/commonheaders.h"
 #include "netlib.h"
 
 #define HTTPGETTIMEOUT   55000  //in ms. http GETs through most proxies will give up after a while so the request needs to be re-sent
@@ -52,7 +52,6 @@ static int HttpGatewaySendGet(struct NetlibConnection *nlc)
 	 */
 	nlhrSend.requestType=(nlc->nlhpi.szHttpGetUrl == NULL) ? REQUEST_POST : REQUEST_GET;
 	nlhrSend.flags=NLHRF_GENERATEHOST|NLHRF_DUMPPROXY|NLHRF_SMARTAUTHHEADER;
-	if (nlc->nlhpi.flags & NLHPIF_HTTP11) nlhrSend.flags |= NLHRF_HTTP11;
 
 	/*
 	 * Gena01 - fixing a possible crash, can't use GET Sequence if there is no GET URL
@@ -60,7 +59,7 @@ static int HttpGatewaySendGet(struct NetlibConnection *nlc)
 	if ((nlc->nlhpi.flags&NLHPIF_USEGETSEQUENCE) && (nlc->nlhpi.szHttpGetUrl != NULL)) {
 		EnterCriticalSection(&nlc->csHttpSequenceNums);
 
-		mir_snprintf(szUrl,SIZEOF(szUrl),"%s%u",nlc->nlhpi.szHttpGetUrl,nlc->nlhpi.firstGetSequence);
+		_snprintf(szUrl,sizeof(szUrl),"%s%u",nlc->nlhpi.szHttpGetUrl,nlc->nlhpi.firstGetSequence);
 		nlc->nlhpi.firstGetSequence++;
 		if(nlc->nlhpi.flags&NLHPIF_GETPOSTSAMESEQUENCE) nlc->nlhpi.firstPostSequence++;
 		LeaveCriticalSection(&nlc->csHttpSequenceNums);
@@ -78,7 +77,7 @@ static int HttpGatewaySendGet(struct NetlibConnection *nlc)
 
 	nlcSend=*nlc;
 	nlcSend.usingHttpGateway=0;
-
+	
 	if (nlc->nlhpi.szHttpGetUrl != NULL) {
 
 		Netlib_Logf(nlc->nlu,"%s %d: Sending data.[ICQ GET] ",__FILE__,__LINE__);
@@ -101,13 +100,11 @@ static int HttpGatewaySendGet(struct NetlibConnection *nlc)
 			nlhrSend.dataLength=p->dataBufferLen;
 	        nlhrSend.pData=(char*)p->dataBuffer;
 
-			mir_free(p);
+			free(p);
 	}
-
+	 
 	if(NetlibHttpSendRequest((WPARAM)&nlcSend,(LPARAM)&nlhrSend)==SOCKET_ERROR) {
 		struct NetlibHTTPProxyPacketQueue *p = nlc->pHttpProxyPacketQueue;
-		
-		mir_free(nlhrSend.pData);
 
 		nlc->usingHttpGateway=1;
 
@@ -119,15 +116,14 @@ static int HttpGatewaySendGet(struct NetlibConnection *nlc)
 
 			p = p->next;
 
-			mir_free(t->dataBuffer);
-			mir_free(t);
+			free(t->dataBuffer);
+			free(t);
 		}
 
 		nlc->pHttpProxyPacketQueue = NULL; /* empty Queue */
 
 		return 0;
 	}
-	mir_free(nlhrSend.pData);
 	nlc->dwLastGetSentTime=GetTickCount();
 	return 1;
 }
@@ -145,7 +141,7 @@ int NetlibHttpGatewayOLDPost(struct NetlibConnection *nlc,const char *buf,int le
 
 	nlcSend.handleType=NLH_CONNECTION;
 	nlcSend.nlu=nlc->nlu;
-	nlcSend.hNtlmSecurity=nlc->hNtlmSecurity;
+	nlcSend.hInstSecurityDll=nlc->hInstSecurityDll;
 	nlcSend.s=socket(AF_INET,SOCK_STREAM,0);
 	if(nlcSend.s==INVALID_SOCKET) {
 		Netlib_Logf(nlc->nlu,"%s %d: %s() failed (%u)",__FILE__,__LINE__,"socket",WSAGetLastError());
@@ -172,7 +168,7 @@ int NetlibHttpGatewayOLDPost(struct NetlibConnection *nlc,const char *buf,int le
 	if(flags&MSG_NODUMP) nlhrSend.flags|=NLHRF_NODUMP;
 	if(nlc->nlhpi.flags&NLHPIF_USEPOSTSEQUENCE) {
 		EnterCriticalSection(&nlc->csHttpSequenceNums);
-		mir_snprintf(szUrl,SIZEOF(szUrl),"%s%u",nlc->nlhpi.szHttpPostUrl,nlc->nlhpi.firstPostSequence);
+		_snprintf(szUrl,sizeof(szUrl),"%s%u",nlc->nlhpi.szHttpPostUrl,nlc->nlhpi.firstPostSequence);
 		nlc->nlhpi.firstPostSequence++;
 		if(nlc->nlhpi.flags&NLHPIF_GETPOSTSAMESEQUENCE) nlc->nlhpi.firstGetSequence++;
 		LeaveCriticalSection(&nlc->csHttpSequenceNums);
@@ -225,9 +221,9 @@ int NetlibHttpGatewayPost(struct NetlibConnection *nlc,const char *buf,int len,i
 {
 		struct NetlibHTTPProxyPacketQueue *p;
 
-        if (nlc->nlhpi.szHttpGetUrl != NULL)
+        if (nlc->nlhpi.szHttpGetUrl != NULL) 
                return NetlibHttpGatewayOLDPost(nlc, buf, len, flags);
-
+        
         /*
          * Gena01 - many changes here, do compare against the other version.
          *
@@ -238,13 +234,13 @@ int NetlibHttpGatewayPost(struct NetlibConnection *nlc,const char *buf,int len,i
          * Impact: NONE! Since currently miranda doesn't allow szHttpGetUrl to be NULL, it will not connect
          *         with the new plugins that use this code.
          */
-
-         p = mir_alloc(sizeof(struct NetlibHTTPProxyPacketQueue));
-         p->dataBuffer = mir_alloc(len);
+         
+         p = malloc(sizeof(struct NetlibHTTPProxyPacketQueue));
+         p->dataBuffer = malloc(len);
          memcpy(p->dataBuffer, buf, len);
          p->dataBufferLen = len;
          p->next = NULL;
-
+         
          /*
           * Now check to see where to insert this in our queue
           */
@@ -252,16 +248,16 @@ int NetlibHttpGatewayPost(struct NetlibConnection *nlc,const char *buf,int len,i
                 nlc->pHttpProxyPacketQueue = p;
         } else {
                 struct NetlibHTTPProxyPacketQueue *t = nlc->pHttpProxyPacketQueue;
-
-                while (t->next != NULL)
+                
+                while (t->next != NULL) 
                         t = t->next;
-
+                
                 t->next = p;
         }
-
+        
 
         /*
-         * Gena01 - fake a Send!! tell 'em all is ok. We catch errors in Recv.
+         * Gena01 - fake a Send!! tell 'em all is ok. We catch errors in Recv. 
          */
         return len;
 }
@@ -269,11 +265,19 @@ int NetlibHttpGatewayPost(struct NetlibConnection *nlc,const char *buf,int len,i
 #define NETLIBHTTP_RETRYCOUNT   3
 #define NETLIBHTTP_RETRYTIMEOUT 5000
 
+static int HttpGatewaySendGetService(WPARAM wParam, LPARAM lParam )
+{
+	return 0;
+}
+
 int NetlibHttpGatewayRecv(struct NetlibConnection *nlc,char *buf,int len,int flags)
 {
 	DWORD dwTimeNow;
 	int timedout;
 	NETLIBHTTPREQUEST *nlhrReply;
+	PBYTE dataBuffer;
+	int contentLength,i,bytesRecved;
+	int recvResult;
 	int retryCount;
 
 	/*
@@ -300,7 +304,7 @@ int NetlibHttpGatewayRecv(struct NetlibConnection *nlc,char *buf,int len,int fla
 			}
 */
 			if ( nlc->pHttpProxyPacketQueue == 0 && nlc->nlu->user.pfnHttpGatewayWrapSend != NULL )
-				nlc->nlu->user.pfnHttpGatewayWrapSend((HANDLE)nlc,"",0,MSG_NOHTTPGATEWAYWRAP,NetlibSend);
+				nlc->nlu->user.pfnHttpGatewayWrapSend((HANDLE)nlc,"",0,MSG_NOHTTPGATEWAYWRAP,HttpGatewaySendGetService);
 
 			if(!HttpGatewaySendGet(nlc)) {
 				return SOCKET_ERROR;
@@ -309,10 +313,10 @@ int NetlibHttpGatewayRecv(struct NetlibConnection *nlc,char *buf,int len,int fla
 	/********************/
 	if(nlc->dataBuffer) {
 		if(nlc->dataBufferLen<=len) {
-			int contentLength=nlc->dataBufferLen;
+			contentLength=nlc->dataBufferLen;
 			CopyMemory(buf,nlc->dataBuffer,nlc->dataBufferLen);
 			if(!(flags&MSG_PEEK)) {
-				mir_free(nlc->dataBuffer);
+				free(nlc->dataBuffer);
 				nlc->dataBuffer=NULL;
 				nlc->dataBufferLen=0;
 			}
@@ -322,7 +326,7 @@ int NetlibHttpGatewayRecv(struct NetlibConnection *nlc,char *buf,int len,int fla
 		if(!(flags&MSG_PEEK)) {
 			nlc->dataBufferLen-=len;
 			MoveMemory(nlc->dataBuffer,nlc->dataBuffer+len,nlc->dataBufferLen);
-			nlc->dataBuffer=(PBYTE)mir_realloc(nlc->dataBuffer,nlc->dataBufferLen);
+			nlc->dataBuffer=(PBYTE)realloc(nlc->dataBuffer,nlc->dataBufferLen);
 		}
 		return len;
 	}
@@ -341,15 +345,11 @@ int NetlibHttpGatewayRecv(struct NetlibConnection *nlc,char *buf,int len,int fla
 			retryCount = 0;
 			continue;
 		}
-		
-		nlhrReply=(NETLIBHTTPREQUEST*)NetlibHttpRecv(nlc, flags|MSG_RAW|MSG_DUMPPROXY, MSG_RAW|MSG_DUMPPROXY);
-		if (nlhrReply==NULL) return SOCKET_ERROR;
+		nlhrReply=(NETLIBHTTPREQUEST*)NetlibHttpRecvHeaders((WPARAM)nlc,flags|MSG_RAW|MSG_DUMPPROXY);
+		if(nlhrReply==NULL) return SOCKET_ERROR;
         // ignore 1xx result codes
         if (nlhrReply->resultCode < 200)
-		{
-			NetlibHttpFreeRequestStruct(0,(LPARAM)nlhrReply);
 			continue;
-		}
 		// 0.3.1+
 		// Attempt to retry NETLIBHTTP_RETRYCOUNT times if the result code is >300
         if (nlhrReply->resultCode >= 300)
@@ -367,13 +367,72 @@ int NetlibHttpGatewayRecv(struct NetlibConnection *nlc,char *buf,int len,int fla
 					continue;
 				SetLastError(ERROR_GEN_FAILURE);
 				return SOCKET_ERROR;
-		}	}
+			}
+        }
 		retryCount = 0;
+		contentLength=-1;
+		for(i=0;i<nlhrReply->headersCount;i++)
+			if(!lstrcmpi(nlhrReply->headers[i].szName,"Content-Length")) {
+				contentLength=atoi(nlhrReply->headers[i].szValue);
+				break;
+			}
 
-		if(nlhrReply->dataLength==0 && nlc->nlu->user.szHttpGatewayHello != NULL)
-		{
+		/*
+		if(contentLength<0) {
 			NetlibHttpFreeRequestStruct(0,(LPARAM)nlhrReply);
+			SetLastError(ERROR_INVALID_DATA);
+			return SOCKET_ERROR;
+		}*/
+		if(contentLength==0 && nlc->nlu->user.szHttpGatewayHello != NULL)
 			continue;
+
+
+		if (contentLength < 0) {
+			/* create initial buffer */
+			contentLength = 2048;
+
+			dataBuffer=(PBYTE)malloc(contentLength);
+
+			/* error and exit */
+			if(dataBuffer==NULL) {
+				NetlibHttpFreeRequestStruct(0,(LPARAM)nlhrReply);
+				SetLastError(ERROR_NOT_ENOUGH_MEMORY);
+				return SOCKET_ERROR;
+			}
+
+			/* now we need to get the bytes and add them to our buffer */
+			bytesRecved = 0;
+
+			do {
+				recvResult=NLRecv(nlc,dataBuffer+bytesRecved,contentLength-bytesRecved,MSG_RAW|MSG_DUMPPROXY);
+				if(recvResult==SOCKET_ERROR) {
+					free(dataBuffer);
+					NetlibHttpFreeRequestStruct(0,(LPARAM)nlhrReply);
+					if(recvResult==0) SetLastError(ERROR_HANDLE_EOF);
+					return SOCKET_ERROR;
+				}
+				bytesRecved+=recvResult;
+			} while (recvResult > 0);
+			 contentLength = bytesRecved;
+		} else {
+			if(contentLength > 0) {
+				dataBuffer=(PBYTE)malloc(contentLength);
+				if(dataBuffer==NULL) {
+					NetlibHttpFreeRequestStruct(0,(LPARAM)nlhrReply);
+					SetLastError(ERROR_NOT_ENOUGH_MEMORY);
+					return SOCKET_ERROR;
+				}
+				for(bytesRecved=0;bytesRecved<contentLength;) {
+					recvResult=NLRecv(nlc,dataBuffer+bytesRecved,contentLength-bytesRecved,MSG_RAW|MSG_DUMPPROXY);
+					if(recvResult==0 || recvResult==SOCKET_ERROR) {
+						free(dataBuffer);
+						NetlibHttpFreeRequestStruct(0,(LPARAM)nlhrReply);
+						if(recvResult==0) SetLastError(ERROR_HANDLE_EOF);
+						return SOCKET_ERROR;
+					}
+					bytesRecved+=recvResult;
+			}	}
+			else dataBuffer = NULL;
 		}
 
 		closesocket(nlc->s);
@@ -387,51 +446,46 @@ int NetlibHttpGatewayRecv(struct NetlibConnection *nlc,char *buf,int len,int fla
 		if (nlc->nlhpi.szHttpGetUrl != NULL)  {
 			Netlib_Logf(nlc->nlu,"%s %d: Doing GET, Again????",__FILE__,__LINE__);
 
-			if(!HttpGatewaySendGet(nlc)) {
-				NetlibHttpFreeRequestStruct(0,(LPARAM)nlhrReply);
-				return SOCKET_ERROR;
-			}
+		if(!HttpGatewaySendGet(nlc)) {
+			free(dataBuffer);
+			NetlibHttpFreeRequestStruct(0,(LPARAM)nlhrReply);
+			return SOCKET_ERROR;
+		}
 		}
 
 		if(nlc->nlu->user.pfnHttpGatewayUnwrapRecv && !(flags&MSG_NOHTTPGATEWAYWRAP)) {
 			PBYTE newBuffer;
-			newBuffer=nlc->nlu->user.pfnHttpGatewayUnwrapRecv(nlhrReply,nlhrReply->pData,nlhrReply->dataLength,&nlhrReply->dataLength,mir_realloc);
+			newBuffer=nlc->nlu->user.pfnHttpGatewayUnwrapRecv(nlhrReply,dataBuffer,contentLength,&contentLength,realloc);
 			if(newBuffer==NULL) {
+				free(dataBuffer);
 				NetlibHttpFreeRequestStruct(0,(LPARAM)nlhrReply);
 				return SOCKET_ERROR;
 			}
-			nlhrReply->pData=newBuffer;
+			dataBuffer=newBuffer;
 		}
-		if(nlhrReply->dataLength>0) break;
-		if((nlhrReply->dataLength==0)&&(nlc->nlhpi.szHttpGetUrl==NULL))
+		NetlibHttpFreeRequestStruct(0,(LPARAM)nlhrReply);
+		if(contentLength>0) break;
+		if((contentLength==0)&&(nlc->nlhpi.szHttpGetUrl==NULL))
 			break;
-		NetlibHttpFreeRequestStruct(0,(LPARAM)nlhrReply);
+		free(dataBuffer);
 	}
-	if(nlhrReply->dataLength<=len) {
-		int contentLength = nlhrReply->dataLength;
-
-		CopyMemory(buf,nlhrReply->pData,nlhrReply->dataLength);
+	if(contentLength<=len) {
 		if(flags&MSG_PEEK) {
-			nlc->dataBuffer=nlhrReply->pData;
-			nlc->dataBufferLen=nlhrReply->dataLength;
-			nlhrReply->pData = NULL;
-			nlhrReply->dataLength = 0;
+			nlc->dataBuffer=dataBuffer;
+			nlc->dataBufferLen=contentLength;
 		}
-		NetlibHttpFreeRequestStruct(0,(LPARAM)nlhrReply);
+		CopyMemory(buf,dataBuffer,contentLength);
+		if(!(flags&MSG_PEEK)) free(dataBuffer);
 		return contentLength;
 	}
-	CopyMemory(buf,nlhrReply->pData,len);
+	CopyMemory(buf,dataBuffer,len);
 	if(!(flags&MSG_PEEK)) {
-		MoveMemory(nlhrReply->pData,nlhrReply->pData+len,nlhrReply->dataLength-len);
-		nlhrReply->pData=(PBYTE)mir_realloc(nlhrReply->pData,nlhrReply->dataLength-len);
-		nlc->dataBufferLen=nlhrReply->dataLength-len;
+		MoveMemory(dataBuffer,dataBuffer+len,contentLength-len);
+		dataBuffer=(PBYTE)realloc(dataBuffer,contentLength-len);
+		nlc->dataBufferLen=contentLength-len;
 	}
-	else nlc->dataBufferLen=nlhrReply->dataLength;
-	nlc->dataBuffer=nlhrReply->pData;
-
-	nlhrReply->pData = NULL;
-	nlhrReply->dataLength = 0;
-	NetlibHttpFreeRequestStruct(0,(LPARAM)nlhrReply);
+	else nlc->dataBufferLen=contentLength;
+	nlc->dataBuffer=dataBuffer;
 
 	Netlib_Logf(nlc->nlu,"%s %d: NetlibHTTPGatewayRecv EXIT!",__FILE__,__LINE__);
 	return len;
@@ -454,8 +508,6 @@ int NetlibInitHttpConnection(struct NetlibConnection *nlc,struct NetlibUser *nlu
 	nlhrSend.nlc=nlc;
 	nlhrSend.requestType=REQUEST_GET;
 	nlhrSend.flags=NLHRF_GENERATEHOST|NLHRF_DUMPPROXY|NLHRF_SMARTAUTHHEADER;
-	if (nlc->nlhpi.flags & NLHPIF_HTTP11) nlhrSend.flags |= NLHRF_HTTP11;
-
 	nlhrSend.szUrl=nlu->user.szHttpGatewayHello;
 	nlhrSend.headers=httpHeaders;
     nlhrSend.headersCount=3;
@@ -496,7 +548,7 @@ int NetlibInitHttpConnection(struct NetlibConnection *nlc,struct NetlibUser *nlu
 	nlc->usingHttpGateway=1;
 
 	/* don't send anything if only using POST? */
-	if(nlc->nlhpi.szHttpGetUrl!= NULL)
+	if(nlc->nlhpi.szHttpGetUrl!= NULL) 
 	if(!HttpGatewaySendGet(nlc))
 		return 0;
 
@@ -516,14 +568,14 @@ int NetlibHttpGatewaySetInfo(WPARAM wParam,LPARAM lParam)
 		SetLastError(ERROR_INVALID_PARAMETER);
 		return 0;
 	}
-	if(nlc->nlhpi.szHttpGetUrl) mir_free(nlc->nlhpi.szHttpGetUrl);
-	if(nlc->nlhpi.szHttpPostUrl) mir_free(nlc->nlhpi.szHttpPostUrl);
+	if(nlc->nlhpi.szHttpGetUrl) free(nlc->nlhpi.szHttpGetUrl);
+	if(nlc->nlhpi.szHttpPostUrl) free(nlc->nlhpi.szHttpPostUrl);
 	nlc->nlhpi=*nlhpi;
 
 	if (nlc->nlhpi.szHttpGetUrl)
-	nlc->nlhpi.szHttpGetUrl=mir_strdup(nlc->nlhpi.szHttpGetUrl);
+	nlc->nlhpi.szHttpGetUrl=_strdup(nlc->nlhpi.szHttpGetUrl);
 
-	nlc->nlhpi.szHttpPostUrl=mir_strdup(nlc->nlhpi.szHttpPostUrl);
+	nlc->nlhpi.szHttpPostUrl=_strdup(nlc->nlhpi.szHttpPostUrl);
 	return 1;
 }
 
@@ -531,9 +583,9 @@ int NetlibHttpSetSticky(WPARAM wParam, LPARAM lParam)
 {
 	struct NetlibUser * nu = (struct NetlibUser*)wParam;
 	if (GetNetlibHandleType(nu)!=NLH_USER) return ERROR_INVALID_PARAMETER;
-	if (nu->szStickyHeaders) { mir_free(nu->szStickyHeaders); nu->szStickyHeaders=NULL; }
+	if (nu->szStickyHeaders) { free(nu->szStickyHeaders); nu->szStickyHeaders=NULL; }
 	if (lParam) {
-		nu->szStickyHeaders=mir_strdup((char*)lParam); // pointer is ours
+		nu->szStickyHeaders=_strdup((char*)lParam); // pointer is ours
 	}
 	return 0;
 }

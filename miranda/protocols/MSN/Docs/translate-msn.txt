@@ -9,10 +9,9 @@
 [A new mail has come from %s (title: %s).]
 [A new mail has come from %s (%s) (title: %s).]
 [Subject: %s]
-[Unread mail is available: %d messages (%d junk e-mails).]
+[Unread mail is available: %d messages in %d folders.]
 [Test: Arrival Hotmail]
 [A New Hotmail has come!]
-[Contact left channel]
 
 ; Messages
 
@@ -22,8 +21,7 @@
 
 ; Menus
 
-[&Block]
-[&Unblock]
+[&Block/Unblock]
 [Display Hotmail &Inbox]
 [&Invite to chat]
 [Set &Nickname]
@@ -40,9 +38,6 @@
 [Cannot start the file transfer: no free sockets. Error %d: %s.]
 [Cannot start the file transfer due to the lack of free sockets.]
 [Cannot start the file transfer: cannot listen on a socket. Error %d: %s.]
-[Contact tried to send its webcam data (currently not supported)]
-[Contact tried to view our webcam data (currently not supported)]
-[Contact tried to open an audio conference (currently not supported)]
 [file transfer is canceled by remote host]
 [file transfer: time out occurred]
 [Internet Explorer is in the 'Offline' mode. Switch IE to the 'Online' mode and then try to relogin]
@@ -78,11 +73,8 @@
 [Send message font color/size info inside messages]
 [Disable all contacts not included into my contact list]
 [Enable avatars support]
-[Manage server groups]
-[Treat Away status as 'Be Right Back']
 [Never update your nickname from server]
 [Run the following application when new Hotmail is arrived]
-[Server groups import may change your contact list layout after next login. Do you want to upload your groups to the server?]
 
 ; Network options dialog
 
@@ -92,10 +84,6 @@
 [Use HTTP gateway mode (incompatible with MSN Gateway plugin)]
 [Use IE proxy settings]
 [Keep connection alive (send a ping packet every minute)]
-[Notify me when a message delivery has failed]
-[Use MSN Messenger 7 protocol]
-[Use OpenSSL encryption (requires LIBSSL32.DLL)]
-
 [Incoming file transfers]
 [Automatically obtain host/port for incoming file transfers]
 [Your host (or router):]
@@ -139,31 +127,3 @@ plugins folder]
 [Somebody included you in his/her server list]
 [Allowed (active) contact]
 [Blocked contact]
-
-; chat window
-[Me]
-[Others]
-
-; chat log message
-[This conversation has been inactive, participants will be removed.]
-[To resume the conversation, please quit this session and start a new chat session.]
-
-; contact list and chat title
-[MSN Chat #]
-
-; message box
-[There is only 1 person left in the chat, do you want to switch back to standard message window?]
-[User is already in the chat session.]
-[No active chat session is found.]
-
-; menus
-[User &details]
-[User &history]
-[&Leave chat session]
-[&Invite user...]
-
-; options dialog
-[Avatar]
-[Running on a mobile device]
-[Running on a MSN mobile device]
-[Using MSN Webmessenger]

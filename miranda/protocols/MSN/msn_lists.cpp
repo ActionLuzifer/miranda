@@ -47,12 +47,12 @@ void Lists_Init(void)
 void Lists_Uninit(void)
 {
 	for ( int i=0; i < count; i++ ) {
-		mir_free( lists[i].email );
-		mir_free( lists[i].nick );
+		free( lists[i].email );
+		free( lists[i].nick );
 	}
 
 	if ( lists != NULL )
-		mir_free( lists );
+		free( lists );
 
 	DeleteCriticalSection( &csLists );
 }
@@ -77,12 +77,12 @@ void __stdcall Lists_Wipe( void )
 {
 	EnterCriticalSection( &csLists );
 	for ( int i=0; i < count; i++ ) {
-		mir_free( lists[i].email );
-		mir_free( lists[i].nick );
+		free( lists[i].email );
+		free( lists[i].nick );
 	}
 
 	if ( lists != NULL ) {
-		mir_free( lists );
+		free( lists );
 		lists = NULL;
 	}
 
@@ -128,11 +128,11 @@ int __stdcall Lists_Add( int list, const char* email, const char* nick )
 	int idx = Lists_IsInList( -1, email );
 	if ( idx == 0 )
 	{
-		lists = ( MsnContact* )mir_realloc( lists, sizeof( MsnContact )*( count+1 ));
+		lists = ( MsnContact* )realloc( lists, sizeof( MsnContact )*( count+1 ));
 		C = &lists[ count++ ];
 		C->list = 0;
-		C->email = mir_strdup( email );
-		C->nick  = ( char* )mir_strdup( nick );
+		C->email = strdup( email );
+		C->nick  = ( char* )_mbsdup(( const BYTE* )nick );
 	}
 	else C = &lists[ idx-1 ];
 
@@ -150,11 +150,11 @@ void __stdcall Lists_Remove( int list, const char* email )
 
 		C->list &= ~list;
 		if ( C->list == 0 ) {
-			mir_free( C->email );
-			mir_free( C->nick );
+			free( C->email );
+			free( C->nick );
 			count--;
 			memmove( lists+i, lists+i+1, sizeof( MsnContact )*( count-i ));
-			lists = ( MsnContact* )mir_realloc( lists, sizeof( MsnContact )*count );
+			lists = ( MsnContact* )realloc( lists, sizeof( MsnContact )*count );
 	}	}
 
 	LeaveCriticalSection( &csLists );
@@ -179,13 +179,13 @@ static void ResetListOptions(HWND hwndList)
 
 static void SetAllContactIcons( HWND hwndList )
 {
-	HANDLE hContact = ( HANDLE )MSN_CallService( MS_DB_CONTACT_FINDFIRST, 0, 0 );
+	HANDLE hContact = ( HANDLE )CallService( MS_DB_CONTACT_FINDFIRST, 0, 0 );
 	do {
 		HANDLE hItem = ( HANDLE )SendMessage( hwndList, CLM_FINDCONTACT, ( WPARAM )hContact, 0 );
 		if ( hItem == NULL )
 			continue;
 
-		char* szProto = ( char* )MSN_CallService( MS_PROTO_GETCONTACTBASEPROTO, ( WPARAM )hContact, 0 );
+		char* szProto = ( char* )CallService( MS_PROTO_GETCONTACTBASEPROTO, ( WPARAM )hContact, 0 );
 		if ( szProto == NULL ) {
 LBL_Bad:	SendMessage( hwndList, CLM_DELETEITEM, ( WPARAM )hItem, 0 );
 			continue;
@@ -208,7 +208,7 @@ LBL_Bad:	SendMessage( hwndList, CLM_DELETEITEM, ( WPARAM )hItem, 0 );
 		if ( SendMessage( hwndList, CLM_GETEXTRAIMAGE, ( WPARAM )hItem, MAKELPARAM(3,0)) == 0xFF )
 			SendMessage( hwndList, CLM_SETEXTRAIMAGE,( WPARAM )hItem, MAKELPARAM(3,( dwMask & LIST_RL )?4:0));
 	}
-		while( hContact = ( HANDLE )MSN_CallService( MS_DB_CONTACT_FINDNEXT, ( WPARAM )hContact, 0 ));
+		while( hContact = ( HANDLE )CallService( MS_DB_CONTACT_FINDNEXT, ( WPARAM )hContact, 0 ));
 }
 
 static void SaveListItem( HANDLE hContact, const char* szEmail, int list, int iPrevValue, int iNewValue )
@@ -223,13 +223,13 @@ static void SaveListItem( HANDLE hContact, const char* szEmail, int list, int iP
 
 static void SaveSettings( HWND hwndList )
 {
-	HANDLE hContact = ( HANDLE )MSN_CallService( MS_DB_CONTACT_FINDFIRST, 0, 0 );
+	HANDLE hContact = ( HANDLE )CallService( MS_DB_CONTACT_FINDFIRST, 0, 0 );
 	do {
 		HANDLE hItem = ( HANDLE )SendMessage( hwndList, CLM_FINDCONTACT, ( WPARAM )hContact, 0 );
 		if ( hItem == NULL )
 			continue;
 
-		char* szProto = ( char* )MSN_CallService( MS_PROTO_GETCONTACTBASEPROTO, ( WPARAM )hContact, 0 );
+		char* szProto = ( char* )CallService( MS_PROTO_GETCONTACTBASEPROTO, ( WPARAM )hContact, 0 );
 		if ( szProto == NULL ) continue;
 		if ( strcmp( szProto, msnProtocolName )) continue;
 
@@ -242,7 +242,7 @@ static void SaveSettings( HWND hwndList )
 		SaveListItem( hContact, szEmail, LIST_AL, ( dwMask & LIST_AL ) != 0, SendMessage( hwndList, CLM_GETEXTRAIMAGE, ( WPARAM )hItem, MAKELPARAM(1,0)));
 		SaveListItem( hContact, szEmail, LIST_BL, ( dwMask & LIST_BL ) != 0, SendMessage( hwndList, CLM_GETEXTRAIMAGE, ( WPARAM )hItem, MAKELPARAM(2,0)));
 	}
-		while( hContact = ( HANDLE )MSN_CallService( MS_DB_CONTACT_FINDNEXT, ( WPARAM )hContact, 0 ));
+		while( hContact = ( HANDLE )CallService( MS_DB_CONTACT_FINDNEXT, ( WPARAM )hContact, 0 ));
 }
 
 BOOL CALLBACK DlgProcMsnServLists(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam)
@@ -252,19 +252,12 @@ BOOL CALLBACK DlgProcMsnServLists(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM 
 	switch ( msg ) {
 	case WM_INITDIALOG:
 		TranslateDialogDefault( hwndDlg );
-		{	
-			HIMAGELIST hIml = ImageList_Create(
-				GetSystemMetrics(SM_CXSMICON), GetSystemMetrics(SM_CYSMICON),
-				ILC_MASK | (IsWinVerXPPlus() ? ILC_COLOR32 : ILC_COLOR16 ), 5, 5 );
-			ImageList_AddIcon( hIml, LoadIcon(GetModuleHandle(NULL),MAKEINTRESOURCE(211)));
-			ImageList_AddIcon( hIml, LoadIconEx( "list_fl" ));
-			ReleaseIconEx( "list_fl" );
-			ImageList_AddIcon( hIml, LoadIconEx( "list_al" ));
-			ReleaseIconEx( "list_al" );
-			ImageList_AddIcon( hIml, LoadIconEx( "list_bl" ));
-			ReleaseIconEx( "list_bl" );
-			ImageList_AddIcon( hIml, LoadIconEx( "list_rl" ));
-			ReleaseIconEx( "list_rl" );
+		{	HIMAGELIST hIml = ImageList_Create(GetSystemMetrics(SM_CXSMICON),GetSystemMetrics(SM_CYSMICON),ILC_COLOR16|ILC_MASK,5,5);
+			ImageList_AddIcon( hIml,LoadIcon(GetModuleHandle(NULL),MAKEINTRESOURCE(211)));
+			ImageList_AddIcon( hIml, LoadIcon( hInst, MAKEINTRESOURCE( IDI_LIST_FL )));
+			ImageList_AddIcon( hIml, LoadIcon( hInst, MAKEINTRESOURCE( IDI_LIST_AL )));
+			ImageList_AddIcon( hIml, LoadIcon( hInst, MAKEINTRESOURCE( IDI_LIST_BL )));
+			ImageList_AddIcon( hIml, LoadIcon( hInst, MAKEINTRESOURCE( IDI_LIST_RL )));
 			SendDlgItemMessage( hwndDlg, IDC_LIST, CLM_SETEXTRAIMAGELIST, 0, (LPARAM)hIml );
 		}
 		ResetListOptions( GetDlgItem( hwndDlg, IDC_LIST ));
@@ -341,7 +334,7 @@ BOOL CALLBACK DlgProcMsnServLists(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM 
 		break;
 
 	case WM_DESTROY:
-		HIMAGELIST hIml=(HIMAGELIST)SendDlgItemMessage(hwndDlg,IDC_LIST,CLM_GETEXTRAIMAGELIST,0,0);
+		HIMAGELIST hIml=(HIMAGELIST)SendDlgItemMessage(hwndDlg,IDC_LIST,LVM_GETIMAGELIST,0,0);
 		ImageList_Destroy(hIml);
 		break;
 	}

@@ -20,53 +20,56 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "irc.h"
 
-CIrcSession       g_ircSession = NULL;   // Representation of the IRC-connection
-CMyMonitor*       monitor;               // Object that processes data from the IRC server
-MM_INTERFACE		mmi = {0};             // structure which keeps pointers to mirandas alloc, free and realloc
-char*             IRCPROTONAME = NULL; 
-char*             ALTIRCPROTONAME = NULL;
-char*             pszServerFile = NULL;
-char*             pszPerformFile = NULL;
-char*             pszIgnoreFile = NULL;
-char              mirandapath[MAX_PATH];
-DWORD             mirVersion = NULL;
-CRITICAL_SECTION  cs;
-CRITICAL_SECTION  m_gchook;
-PLUGINLINK*       pluginLink;
-HINSTANCE         g_hInstance = NULL;	
-PREFERENCES*      prefs;	
+CIrcSession			g_ircSession=NULL;			// Representation of the IRC-connection
+CMyMonitor			*monitor;					// Object that processes data from the IRC server
+char *				IRCPROTONAME = NULL; 
+char *				ALTIRCPROTONAME = NULL;
+char *				pszServerFile = NULL;
+char *				pszPerformFile = NULL;
+char *				pszIgnoreFile = NULL;
+char				mirandapath[MAX_PATH];
+DWORD				mirVersion = NULL;
+CRITICAL_SECTION	cs;
+PLUGINLINK *		pluginLink;
+HINSTANCE			g_hInstance = NULL;	
+PREFERENCES			* prefs;	
 
+//static HMODULE	m_libeay32;
 HMODULE				m_ssleay32 = NULL;
 	
-// Information about the plugin
-PLUGININFO pluginInfo =
-{						
-	sizeof( PLUGININFO ),
-	"IRC Protocol",
-	PLUGIN_MAKE_VERSION( 0,6,4,0 ),
-	"IRC protocol for Miranda IM.",
-	"Miranda team",
-	"i_am_matrix@users.sourceforge.net",
-	"© 2003-2006 Miranda team",
-	"http://www.miranda-im.org",
-	0,	0
+
+PLUGININFO			pluginInfo=
+{						// Information about the plugin
+						sizeof( PLUGININFO ),
+						"IRC Protocol",
+						PLUGIN_MAKE_VERSION( 0,5,0,3 ),
+						"IRC protocol for Miranda IM.",
+						"MatriX ' m3x",
+						"i_am_matrix@users.sourceforge.net",
+						"© 2004 Jörgen Persson",
+						"http://members.chello.se/matrix/",
+						0,	
+						0
 }; 
 
-extern "C" BOOL WINAPI DllMain(HINSTANCE hinstDLL,DWORD fdwReason,LPVOID lpvReserved)
+
+
+BOOL APIENTRY DllMain(HINSTANCE hinstDLL,DWORD fdwReason,LPVOID lpvReserved)
 {
 	g_hInstance=hinstDLL;
+
 	return TRUE;
 }
 
+
+
 extern "C" __declspec(dllexport) PLUGININFO* MirandaPluginInfo(DWORD mirandaVersion)
 {
-	if ( mirandaVersion < PLUGIN_MAKE_VERSION( 0, 6, 0, 0 )) {
-		MessageBox( NULL, _T("The IRC protocol plugin cannot be loaded. It requires Miranda IM 0.6.0.0 or later."), _T("IRC Protocol Plugin"), MB_OK|MB_ICONWARNING|MB_SETFOREGROUND|MB_TOPMOST );
-		return NULL;
-	}
 	mirVersion = mirandaVersion;
 	return &pluginInfo;
 }
+
+
 
 static void GetModuleName( void )	 // ripped from msn
 {
@@ -75,28 +78,36 @@ static void GetModuleName( void )	 // ripped from msn
 
 	GetModuleFileName(g_hInstance, mirandapath, MAX_PATH);
 	p = strrchr( mirandapath, '\\' );
-	if ( p ) {
-		char * p2;
+	if(p)
+	{
 		*p = '\0';
 		p++;
 		p1 = strrchr( p, '.' );
 		*p1 = '\0';
-		p2 = p;
-		while( *p2 ) {
-			if (*p2 == ' ')
-				*p2 = '_';
-			p2++;
-		}
-
 		IRCPROTONAME = strdup( p );
 		ALTIRCPROTONAME = new char[lstrlen( IRCPROTONAME ) + 7 ];
 		CharUpper(IRCPROTONAME);
 
 		if (lstrcmpi(IRCPROTONAME, "IRC"))
-			mir_snprintf(ALTIRCPROTONAME, lstrlen( IRCPROTONAME ) + 7 , "IRC (%s)", IRCPROTONAME);
+			_snprintf(ALTIRCPROTONAME, lstrlen( IRCPROTONAME ) + 7 , "IRC (%s)", IRCPROTONAME);
 		else
-			mir_snprintf(ALTIRCPROTONAME, lstrlen( IRCPROTONAME ) + 7 , "%s", IRCPROTONAME);
-}	}
+			_snprintf(ALTIRCPROTONAME, lstrlen( IRCPROTONAME ) + 7 , "%s", IRCPROTONAME);
+	}
+}
+
+
+
+static void RegisterProtocol( void )
+{
+	PROTOCOLDESCRIPTOR pd;
+	ZeroMemory( &pd, sizeof( pd ) );
+	pd.cbSize = sizeof( pd );
+	pd.szName = IRCPROTONAME;
+	pd.type = PROTOTYPE_PROTOCOL;
+	CallService( MS_PROTO_REGISTERMODULE, 0, (LPARAM)&pd );
+}
+
+
 
 extern "C" int __declspec(dllexport) Load( PLUGINLINK *link )
 {
@@ -108,60 +119,122 @@ extern "C" int __declspec(dllexport) Load( PLUGINLINK *link )
 
 	pluginLink=link;
 
-	if ( !mirVersion || mirVersion<PLUGIN_MAKE_VERSION( 0, 4, 0 ,0 )) {
+	if( !mirVersion || mirVersion<PLUGIN_MAKE_VERSION( 0, 4, 0 ,0 ) ) 
+	{
 		char szVersion[] = "0.4"; // minimum required version
 		char szText[] = "The IRC protocol could not be loaded as it is dependant on Miranda IM version %s or later.\n\nDo you want to download an update from the Miranda website now?";
 		char * szTemp = new char[lstrlen (szVersion) + lstrlen(szText) + 10];
-		mir_snprintf(szTemp, lstrlen (szVersion) + lstrlen(szText) + 10, szText, szVersion);
-		if (IDYES == MessageBoxA(0,Translate(szTemp),Translate("Information"),MB_YESNO|MB_ICONINFORMATION))
+		_snprintf(szTemp, lstrlen (szVersion) + lstrlen(szText) + 10, szText, szVersion);
+		if(IDYES == MessageBoxA(0,Translate(szTemp),Translate("Information"),MB_YESNO|MB_ICONINFORMATION))
 			CallService(MS_UTILS_OPENURL, 1, (LPARAM) "http://miranda-im.org/");
 		delete[] szTemp;
 		return 1;
 	}
 
-	GetModuleName();
 
-	mmi.cbSize = sizeof(mmi);
-	CallService(MS_SYSTEM_GET_MMI, 0, (LPARAM) &mmi);
-	
 	InitializeCriticalSection(&cs);
-	InitializeCriticalSection(&m_gchook);
 
+#ifdef IRC_SSL
 	m_ssleay32 = LoadLibrary("ssleay32.dll");
+#endif
 
 	monitor = new CMyMonitor;
 	g_ircSession.AddIrcMonitor(monitor);
 
-	// register protocol
-	{	PROTOCOLDESCRIPTOR pd;
-		ZeroMemory( &pd, sizeof( pd ) );
-		pd.cbSize = sizeof( pd );
-		pd.szName = IRCPROTONAME;
-		pd.type = PROTOTYPE_PROTOCOL;
-		CallService( MS_PROTO_REGISTERMODULE, 0, (LPARAM)&pd );
-	}
-
+	GetModuleName();
+	RegisterProtocol();
 	HookEvents();
 	CreateServiceFunctions();
 	InitPrefs();
 	CList_SetAllOffline(true);
+
 	return 0;
 }
 
+
+
 extern "C" int __declspec(dllexport) Unload(void)
 {
+
 	CList_SetAllOffline(TRUE);
 
 	DeleteCriticalSection(&cs);
-	DeleteCriticalSection(&m_gchook);
 
-	if (m_ssleay32)
+	if(m_ssleay32)
 		FreeLibrary(m_ssleay32);
 
 	UnhookEvents();
 	UnInitOptions();
-	free( IRCPROTONAME );
+	delete [] IRCPROTONAME;
 	delete [] ALTIRCPROTONAME;
 	delete monitor;
+
 	return 0;
 }
+
+
+
+extern "C" int __declspec(dllexport) UninstallEx(PLUGINUNINSTALLPARAMS* ppup)
+{
+	if (ppup && ppup->bDoDeleteSettings) 
+	{
+		char path[MAX_PATH];
+		char * dllname;
+		char * fend;
+		
+		GetModuleFileName( g_hInstance, path, MAX_PATH);
+		dllname = strrchr(path,'\\');
+		dllname++;
+		fend = strrchr(path,'.');
+		if(fend)
+			*fend = '\0';
+
+		if (ppup->bIsMirandaRunning )
+		{ 
+			HANDLE hContact;
+			char *szProto;
+
+			hContact = (HANDLE) PUICallService(MS_DB_CONTACT_FINDFIRST, 0, 0);
+			while (hContact) 
+			{
+				szProto = (char *) PUICallService(MS_PROTO_GETCONTACTBASEPROTO, (WPARAM) hContact, 0);
+				if (szProto != NULL && !lstrcmpi(szProto, dllname)) 
+				{
+					DBCONTACTWRITESETTING cws;
+					cws.szModule="CList";
+					cws.szSetting="NotOnList";
+					cws.value.type=DBVT_BYTE;
+					cws.value.bVal=1;
+					PUICallService(MS_DB_CONTACT_WRITESETTING,(WPARAM)hContact,(LPARAM)&cws);
+				}
+				hContact = (HANDLE) PUICallService(MS_DB_CONTACT_FINDNEXT, (WPARAM) hContact, 0);
+			}
+			PUIRemoveDbModule(dllname);
+		}
+		char szFileName[MAX_PATH]; 
+		_snprintf(szFileName, sizeof(szFileName), "%s%s_servers.ini", ppup->pszPluginsPath, dllname);
+		DeleteFile(szFileName); 
+		_snprintf(szFileName, sizeof(szFileName), "%s%s_ignore.ini",  ppup->pszPluginsPath, dllname);
+		DeleteFile(szFileName); 
+		_snprintf(szFileName, sizeof(szFileName), "%s%s_perform.ini",  ppup->pszPluginsPath, dllname);
+		DeleteFile(szFileName); 
+		_snprintf(szFileName, sizeof(szFileName), "%sIRC_license.txt",  ppup->pszPluginsPath);
+		DeleteFile(szFileName); 
+		_snprintf(szFileName, sizeof(szFileName), "%sIRC_Readme.txt",  ppup->pszPluginsPath);
+		DeleteFile(szFileName); 
+		_snprintf(szFileName, sizeof(szFileName), "%sIRC_Translate.txt",  ppup->pszPluginsPath);
+		DeleteFile(szFileName); 
+	}
+	return 0; 
+}
+
+
+
+
+
+
+
+
+
+
+

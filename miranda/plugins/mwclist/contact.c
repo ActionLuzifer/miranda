@@ -24,11 +24,12 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "m_clui.h"
 #include "clist.h"
 
+int GetContactDisplayName(WPARAM wParam,LPARAM lParam);
 extern HANDLE hContactIconChangedEvent;
 extern int GetContactCachedStatus(HANDLE hContact);
 extern char *GetContactCachedProtocol(HANDLE hContact);
 
-int sortByStatus;
+static int sortByStatus;
 static int sortByProto;
 static int sortNoOfflineBottom;
 struct {
@@ -68,7 +69,7 @@ void ChangeContactIcon(HANDLE hContact,int iIcon,int add)
 static int GetStatusModeOrdering(int statusMode)
 {
 	int i;
-	for(i=0; i< SIZEOF(statusModeOrder); i++)
+	for(i=0;i<sizeof(statusModeOrder)/sizeof(statusModeOrder[0]);i++)
 		if(statusModeOrder[i].status==statusMode) return statusModeOrder[i].order;
 	return 1000;
 }
@@ -95,12 +96,12 @@ void LoadContactTree(void)
 		cacheEntry=GetContactFullCacheEntry(hContact);
 		if (cacheEntry==NULL)
 		{
-			MessageBoxA(0,"Fail To Get CacheEntry for hContact","!!!!!",0);
+			MessageBox(0,"Fail To Get CacheEntry for hContact","!!!!!",0);
 			break;
 		}
 		status=cacheEntry->status;
 		if((!hideOffline || status!=ID_STATUS_OFFLINE) && !cacheEntry->Hidden)
-			ChangeContactIcon(hContact,ExtIconFromStatusMode(hContact,(char*)cacheEntry->szProto,status),1);
+			ChangeContactIcon(hContact,IconFromStatusMode((char*)cacheEntry->szProto,status),1);
 		hContact=(HANDLE)CallService(MS_DB_CONTACT_FINDNEXT,(WPARAM)hContact,0);
 	}
 	sortByStatus=DBGetContactSettingByte(NULL,"CList","SortByStatus",SETTING_SORTBYSTATUS_DEFAULT);
@@ -116,16 +117,17 @@ void LoadContactTree(void)
 	//sprintf(buf,"%s %s took %i ms",__FILE__,__LINE__,tick);
 	sprintf(buf,"LoadContactTree %d \r\n",tick);
 
-	OutputDebugStringA(buf);
+	OutputDebugString(buf);
 	}
 }
 
 #define SAFESTRING(a) a?a:""
 
-int CompareContacts( const struct ClcContact *contact1, const struct ClcContact *contact2 )
+int CompareContacts(WPARAM wParam,LPARAM lParam)
 {
-	HANDLE a = contact1->hContact, b = contact2->hContact;
-	TCHAR *namea,*nameb;
+	HANDLE a=(HANDLE)wParam,b=(HANDLE)lParam;
+//	char namea[128],*nameb;
+	char *namea,*nameb;
 	int statusa,statusb;
 	char *szProto1,*szProto2;
 	int rc;
@@ -136,8 +138,7 @@ int CompareContacts( const struct ClcContact *contact1, const struct ClcContact 
 	if (sortByProto) {
 
 		/* deal with statuses, online contacts have to go above offline */
-		if (sortNoOfflineBottom==0) 
-			if((statusa==ID_STATUS_OFFLINE)!=(statusb==ID_STATUS_OFFLINE)) {
+		if((statusa==ID_STATUS_OFFLINE)!=(statusb==ID_STATUS_OFFLINE)) {
 			return 2*(statusa==ID_STATUS_OFFLINE)-1;
 		}
 		/* both are online, now check protocols */
@@ -158,12 +159,13 @@ int CompareContacts( const struct ClcContact *contact1, const struct ClcContact 
 			{
 			if((statusa==ID_STATUS_OFFLINE)!=(statusb==ID_STATUS_OFFLINE)) {
 				return 2*(statusa==ID_STATUS_OFFLINE)-1;
-			}
+			};
 		}
 	}
 
 	//otherwise just compare names
-	return _tcsicmp(namea,nameb);
+	return _stricmp(namea,nameb);
+	
 }
 
 #undef SAFESTRING
@@ -192,6 +194,18 @@ int ContactChangeGroup(WPARAM wParam,LPARAM lParam)
 		DBDeleteContactSetting((HANDLE)wParam,"CList","Group");
 	else
 		DBWriteContactSettingString((HANDLE)wParam,"CList","Group",(char*)CallService(MS_CLIST_GROUPGETNAME2,lParam,(LPARAM)(int*)NULL));
-	CallService(MS_CLUI_CONTACTADDED,wParam,ExtIconFromStatusMode((HANDLE)wParam,(char*)CallService(MS_PROTO_GETCONTACTBASEPROTO,wParam,0),GetContactStatus((HANDLE)wParam)));
+	CallService(MS_CLUI_CONTACTADDED,wParam,IconFromStatusMode((char*)CallService(MS_PROTO_GETCONTACTBASEPROTO,wParam,0),GetContactStatus((HANDLE)wParam)));
+	return 0;
+}
+
+int SetHideOffline(WPARAM wParam,LPARAM lParam)
+{
+	switch((int)wParam) {
+		case 0: DBWriteContactSettingByte(NULL,"CList","HideOffline",0); break;
+		case 1: DBWriteContactSettingByte(NULL,"CList","HideOffline",1); break;
+		case -1: DBWriteContactSettingByte(NULL,"CList","HideOffline",(BYTE)!DBGetContactSettingByte(NULL,"CList","HideOffline",SETTING_HIDEOFFLINE_DEFAULT)); break;
+	}
+	
+	LoadContactTree();
 	return 0;
 }

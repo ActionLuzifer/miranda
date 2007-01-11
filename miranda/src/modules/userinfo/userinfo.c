@@ -2,8 +2,8 @@
 
 Miranda IM: the free IM client for Microsoft* Windows*
 
-Copyright 2000-2007 Miranda ICQ/IM project,
-all portions of this codebase are copyrighted to the people
+Copyright 2000-2003 Miranda ICQ/IM project, 
+all portions of this codebase are copyrighted to the people 
 listed in contributors.txt.
 
 This program is free software; you can redistribute it and/or
@@ -20,7 +20,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
-#include "commonheaders.h"
+#include "../../core/commonheaders.h"
 #define UPDATEANIMFRAMES 20
 
 int DetailsInit(WPARAM wParam,LPARAM lParam);
@@ -38,7 +38,6 @@ struct DetailsPageData {
 	HINSTANCE hInst;
 	DLGPROC dlgProc;
 	HWND hwnd;
-	HTREEITEM hItem;
 	int changed;
 };
 
@@ -52,7 +51,7 @@ struct DetailsData {
 	struct DetailsPageData *opd;
 	RECT rcDisplay;
 	int updateAnimFrame;
-	TCHAR szUpdating[64];
+	char szUpdating[64];
 	int *infosUpdated;
 };
 
@@ -88,45 +87,36 @@ static int ShowDetailsDialogCommand(WPARAM wParam,LPARAM lParam)
 	psh.hwndParent = NULL;
 	psh.nPages = opi.pageCount;
 	psh.pStartPage = 0;
-	psh.pszCaption = (TCHAR*)wParam;	  //more abuses of structure: this is hContact
+	psh.pszCaption = (char*)wParam;	  //more abuses of structure: this is hContact
 	psh.ppsp = (PROPSHEETPAGE*)opi.odp;		  //blatent misuse of the structure, but what the hell
 	CreateDialogParam(GetModuleHandle(NULL),MAKEINTRESOURCE(IDD_DETAILS),NULL,DlgProcDetails,(LPARAM)&psh);
 	for(i=0;i<opi.pageCount;i++) {
-		mir_free((char*)opi.odp[i].pszTitle);
-		if(opi.odp[i].pszGroup!=NULL) mir_free(opi.odp[i].pszGroup);
-		if((DWORD)opi.odp[i].pszTemplate&0xFFFF0000) mir_free((char*)opi.odp[i].pszTemplate);
+		free((char*)opi.odp[i].pszTitle);
+		if(opi.odp[i].pszGroup!=NULL) free(opi.odp[i].pszGroup);
+		if((DWORD)opi.odp[i].pszTemplate&0xFFFF0000) free((char*)opi.odp[i].pszTemplate);
 	}
-	mir_free(opi.odp);
+	free(opi.odp);
 	return 0;
 }
 
 static int AddDetailsPage(WPARAM wParam,LPARAM lParam)
 {
-	OPTIONSDIALOGPAGE *odp=(OPTIONSDIALOGPAGE*)lParam, *dst;
+	OPTIONSDIALOGPAGE *odp=(OPTIONSDIALOGPAGE*)lParam;
 	struct DetailsPageInit *opi=(struct DetailsPageInit*)wParam;
 
-	if(odp==NULL||opi==NULL) return 1;
-	if(odp->cbSize != sizeof(OPTIONSDIALOGPAGE) && odp->cbSize != OPTIONPAGE_OLD_SIZE2) return 1;
-	opi->odp=(OPTIONSDIALOGPAGE*)mir_realloc(opi->odp,sizeof(OPTIONSDIALOGPAGE)*(opi->pageCount+1));
-	dst = opi->odp + opi->pageCount;
-	dst->cbSize = sizeof(OPTIONSDIALOGPAGE);
-	dst->hInstance = odp->hInstance;
-	dst->pfnDlgProc = odp->pfnDlgProc;
-	dst->position = odp->position;
-	if((DWORD)odp->pszTemplate&0xFFFF0000) dst->pszTemplate = mir_strdup(odp->pszTemplate);
-	else dst->pszTemplate = odp->pszTemplate;
-
-	#if defined(_UNICODE)
-	if ( odp->flags == ODPF_UNICODE )
-		dst->ptszTitle = (odp->ptszTitle==0) ? NULL : mir_wstrdup(odp->ptszTitle);
-	else
-	#endif
-		dst->ptszTitle = (odp->pszTitle==0) ? NULL : LangPackPcharToTchar(odp->pszTitle);
-
-	dst->pszGroup = NULL;
-	dst->groupPosition = odp->groupPosition;
-	dst->hGroupIcon = odp->hGroupIcon;
-	dst->hIcon = odp->hIcon;
+	if(odp->cbSize!=sizeof(OPTIONSDIALOGPAGE) && odp->cbSize!=OPTIONSDIALOGPAGE_V0120_SIZE) return 1;
+	opi->odp=(OPTIONSDIALOGPAGE*)realloc(opi->odp,sizeof(OPTIONSDIALOGPAGE)*(opi->pageCount+1));
+	opi->odp[opi->pageCount].cbSize=sizeof(OPTIONSDIALOGPAGE);
+	opi->odp[opi->pageCount].hInstance=odp->hInstance;
+	opi->odp[opi->pageCount].pfnDlgProc=odp->pfnDlgProc;
+	opi->odp[opi->pageCount].position=odp->position;
+	opi->odp[opi->pageCount].pszTitle=_strdup(odp->pszTitle);
+	if((DWORD)odp->pszTemplate&0xFFFF0000) opi->odp[opi->pageCount].pszTemplate=_strdup(odp->pszTemplate);
+	else opi->odp[opi->pageCount].pszTemplate=odp->pszTemplate;
+	opi->odp[opi->pageCount].pszGroup=NULL;
+	opi->odp[opi->pageCount].groupPosition=odp->groupPosition;
+	opi->odp[opi->pageCount].hGroupIcon=odp->hGroupIcon;
+	opi->odp[opi->pageCount].hIcon=odp->hIcon;
 	opi->pageCount++;
 	return 0;
 }
@@ -142,7 +132,7 @@ static int UserInfoContactDelete(WPARAM wParam,LPARAM lParam)
 static void ThemeDialogBackground(HWND hwnd) {
 	if (IsWinVerXPPlus()) {
 		static HMODULE hThemeAPI = NULL;
-		if (!hThemeAPI) hThemeAPI = GetModuleHandleA("uxtheme");
+		if (!hThemeAPI) hThemeAPI = GetModuleHandle("uxtheme");
 		if (hThemeAPI) {
 			HRESULT (STDAPICALLTYPE *MyEnableThemeDialogTexture)(HWND,DWORD) = (HRESULT (STDAPICALLTYPE*)(HWND,DWORD))GetProcAddress(hThemeAPI,"EnableThemeDialogTexture");
 			if (MyEnableThemeDialogTexture)
@@ -155,30 +145,35 @@ static void ThemeDialogBackground(HWND hwnd) {
 #define M_CHECKONLINE (WM_USER+11)
 static BOOL CALLBACK DlgProcDetails(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 {
-	struct DetailsData *dat =(struct DetailsData*)GetWindowLong(hwndDlg,GWL_USERDATA);
+	struct DetailsData *dat;
+
+	dat=(struct DetailsData*)GetWindowLong(hwndDlg,GWL_USERDATA);
 	switch (msg)
 	{
 		case WM_INITDIALOG:
 		{	PROPSHEETHEADER *psh=(PROPSHEETHEADER*)lParam;
 			TranslateDialogDefault(hwndDlg);
 			SendMessage(hwndDlg, WM_SETICON, ICON_BIG, (LPARAM)LoadIcon(GetModuleHandle(NULL), MAKEINTRESOURCE(IDI_USERDETAILS)));
-			dat=(struct DetailsData*)mir_alloc(sizeof(struct DetailsData));
+			dat=(struct DetailsData*)malloc(sizeof(struct DetailsData));
 			SetWindowLong(hwndDlg, GWL_USERDATA, (LONG)dat);
 			dat->hContact=(HANDLE)psh->pszCaption;
 			dat->hProtoAckEvent=HookEventMessage(ME_PROTO_ACK,hwndDlg,HM_PROTOACK);
 			dat->infosUpdated=NULL;
 			WindowList_Add(hWindowList,hwndDlg,dat->hContact);
 			{
-				TCHAR *name, oldTitle[256], newTitle[256];
-				if (dat->hContact == NULL)
-					name = TranslateT("Owner");
-				else
-					name = ( TCHAR* )CallService(MS_CLIST_GETCONTACTDISPLAYNAME, (WPARAM)dat->hContact, GCDNF_TCHAR);
+				char *name,oldTitle[256],newTitle[256];
+				CallContactService(dat->hContact,PSS_GETINFO,0,0);
 
-				GetWindowText( hwndDlg, oldTitle, SIZEOF( oldTitle ));
-				mir_sntprintf( newTitle, SIZEOF(newTitle), oldTitle, name );
-				SetWindowText( hwndDlg, newTitle );
-				SetDlgItemText( hwndDlg, IDC_NAME, name );
+				if (dat->hContact == NULL)
+					name = Translate("Owner");
+				else
+					name = (char*)CallService(MS_CLIST_GETCONTACTDISPLAYNAME, (WPARAM)dat->hContact, 0);
+
+				GetWindowText(hwndDlg,oldTitle,sizeof(oldTitle));
+				_snprintf(newTitle,sizeof(newTitle),oldTitle,name);
+				SetWindowText(hwndDlg,newTitle);
+				SetDlgItemText(hwndDlg,IDC_NAME,name);
+
 			}
 			{	LOGFONT lf;
 				HFONT hNormalFont=(HFONT)SendDlgItemMessage(hwndDlg,IDC_NAME,WM_GETFONT,0,0);
@@ -189,44 +184,102 @@ static BOOL CALLBACK DlgProcDetails(HWND hwndDlg, UINT msg, WPARAM wParam, LPARA
 			}
 			{	OPTIONSDIALOGPAGE *odp;
 				int i;
-				TVINSERTSTRUCT tvis;
+				TCITEM tci;
 				DBVARIANT dbv;
 
 				dat->currentPage=0;
-				if(DBGetContactSettingTString(NULL,"UserInfo","LastTab",&dbv))
+				if(DBGetContactSetting(NULL,"UserInfo","LastTab",&dbv))
 					dbv.type=DBVT_DELETED;
 				dat->pageCount=psh->nPages;
-				dat->opd=(struct DetailsPageData*)mir_alloc(sizeof(struct DetailsPageData)*dat->pageCount);
+				dat->opd=(struct DetailsPageData*)malloc(sizeof(struct DetailsPageData)*dat->pageCount);
 				odp=(OPTIONSDIALOGPAGE*)psh->ppsp;
 
+				tci.mask=TCIF_TEXT;
 				for(i=0;i<dat->pageCount;i++) {
-					dat->opd[i].pTemplate=(DLGTEMPLATE *)LockResource(LoadResource(odp[i].hInstance,FindResourceA(odp[i].hInstance,odp[i].pszTemplate,MAKEINTRESOURCEA(5))));
+					dat->opd[i].pTemplate=(DLGTEMPLATE *)LockResource(LoadResource(odp[i].hInstance,FindResource(odp[i].hInstance,odp[i].pszTemplate,RT_DIALOG)));
 					dat->opd[i].dlgProc=odp[i].pfnDlgProc;
 					dat->opd[i].hInst=odp[i].hInstance;
 					dat->opd[i].hwnd=NULL;
 					dat->opd[i].changed=0;
-					tvis.hParent = NULL;
-					tvis.hInsertAfter = TVI_LAST;
-					tvis.item.mask = TVIF_TEXT | TVIF_PARAM;
-					tvis.item.lParam = (LPARAM) i;
-					tvis.item.pszText = odp[i].ptszTitle;
-					if(dbv.type!=DBVT_DELETED && !lstrcmp(tvis.item.pszText,dbv.ptszVal))
+					tci.pszText=(char*)odp[i].pszTitle;
+					if(dbv.type!=DBVT_DELETED && !strcmp(tci.pszText,dbv.pszVal))
 						dat->currentPage=i;
-					dat->opd[i].hItem = TreeView_InsertItem(GetDlgItem(hwndDlg, IDC_PAGETREE), &tvis);
+					TabCtrl_InsertItem(GetDlgItem(hwndDlg,IDC_TABS),i,&tci);
 				}
 				DBFreeVariant(&dbv);
 			}
-
+			
+			
 			GetWindowRect(GetDlgItem(hwndDlg,IDC_TABS),&dat->rcDisplay);
 			TabCtrl_AdjustRect(GetDlgItem(hwndDlg,IDC_TABS),FALSE,&dat->rcDisplay);
+
 			{	POINT pt={0,0};
 				ClientToScreen(hwndDlg,&pt);
 				OffsetRect(&dat->rcDisplay,-pt.x,-pt.y);
 			}
-			TreeView_Select(GetDlgItem(hwndDlg,IDC_PAGETREE), dat->opd[dat->currentPage].hItem, TVGN_CARET);
+			
+			{ // Resize dialog to make room for all plugin tabs
+				int displayheight=dat->rcDisplay.bottom - dat->rcDisplay.top;
+				int needh;
+				
+				POINT mpt={0,0};
+				RECT ws={0,0,0,0};
+				ClientToScreen(hwndDlg,&mpt);
+				
+				// Map dlu to pixels
+				ws.bottom=132;
+				MapDialogRect(hwndDlg,&ws);
+				needh=ws.bottom;
+				
+				if (displayheight<needh) {
+					int addheight=needh-displayheight;
+						
+					// Resize whole dialog
+					GetWindowRect(hwndDlg,&ws);
+					MoveWindow(hwndDlg,
+						ws.left,ws.top,
+						ws.right-ws.left,ws.bottom-ws.top+addheight,
+						FALSE);
+					
+					// Resize tabcontrol
+					GetWindowRect(GetDlgItem(hwndDlg,IDC_TABS),&ws);
+					OffsetRect(&ws,-mpt.x,-mpt.y);
+					MoveWindow(GetDlgItem(hwndDlg,IDC_TABS),
+						ws.left,ws.top,
+						ws.right-ws.left,ws.bottom-ws.top+addheight,
+						FALSE);
+						
+					// Move button IDOK
+					GetWindowRect(GetDlgItem(hwndDlg,IDOK),&ws);
+					OffsetRect(&ws,-mpt.x,-mpt.y);
+					MoveWindow(GetDlgItem(hwndDlg,IDOK),
+						ws.left,ws.top+addheight,
+						ws.right-ws.left,ws.bottom-ws.top,
+						FALSE);
+					
+					// Move button IDC_UPDATE
+					GetWindowRect(GetDlgItem(hwndDlg,IDC_UPDATE),&ws);
+					OffsetRect(&ws,-mpt.x,-mpt.y);
+					MoveWindow(GetDlgItem(hwndDlg,IDC_UPDATE),
+						ws.left,ws.top+addheight,
+						ws.right-ws.left,ws.bottom-ws.top,
+						FALSE);
+					
+					// Move button IDC_UPDATING
+					GetWindowRect(GetDlgItem(hwndDlg,IDC_UPDATING),&ws);
+					OffsetRect(&ws,-mpt.x,-mpt.y);
+					MoveWindow(GetDlgItem(hwndDlg,IDC_UPDATING),
+						ws.left,ws.top+addheight,
+						ws.right-ws.left,ws.bottom-ws.top,
+						FALSE);
+				}
+			}
+
+
+			TabCtrl_SetCurSel(GetDlgItem(hwndDlg,IDC_TABS),dat->currentPage);
 			dat->opd[dat->currentPage].hwnd=CreateDialogIndirectParam(dat->opd[dat->currentPage].hInst,dat->opd[dat->currentPage].pTemplate,hwndDlg,dat->opd[dat->currentPage].dlgProc,(LPARAM)dat->hContact);
 			ThemeDialogBackground(dat->opd[dat->currentPage].hwnd);
-			SetWindowPos(dat->opd[dat->currentPage].hwnd, HWND_TOP, dat->rcDisplay.left, dat->rcDisplay.top, dat->rcDisplay.right - dat->rcDisplay.left, dat->rcDisplay.bottom - dat->rcDisplay.top, 0);
+			SetWindowPos(dat->opd[dat->currentPage].hwnd,HWND_TOP,dat->rcDisplay.left,dat->rcDisplay.top,0,0,SWP_NOSIZE);
 			{	PSHNOTIFY pshn;
 				pshn.hdr.code=PSN_INFOCHANGED;
 				pshn.hdr.hwndFrom=dat->opd[dat->currentPage].hwnd;
@@ -236,7 +289,7 @@ static BOOL CALLBACK DlgProcDetails(HWND hwndDlg, UINT msg, WPARAM wParam, LPARA
 			}
 			ShowWindow(dat->opd[dat->currentPage].hwnd,SW_SHOW);
 			dat->updateAnimFrame=0;
-			GetDlgItemText(hwndDlg,IDC_UPDATING,dat->szUpdating,SIZEOF(dat->szUpdating));
+			GetDlgItemText(hwndDlg,IDC_UPDATING,dat->szUpdating,sizeof(dat->szUpdating));
 			SendMessage(hwndDlg,M_CHECKONLINE,0,0);
 			if(!IsWindowEnabled(GetDlgItem(hwndDlg,IDC_UPDATE)))
 				ShowWindow(GetDlgItem(hwndDlg,IDC_UPDATING),SW_HIDE);
@@ -244,25 +297,21 @@ static BOOL CALLBACK DlgProcDetails(HWND hwndDlg, UINT msg, WPARAM wParam, LPARA
 				EnableWindow(GetDlgItem(hwndDlg,IDC_UPDATE),FALSE);
 				SetTimer(hwndDlg,1,100,NULL);
 			}
-			CallContactService(dat->hContact,PSS_GETINFO,SGIF_ONOPEN,0);
 			return TRUE;
 		}
 		case WM_TIMER:
-		{	TCHAR str[128];
-			mir_sntprintf(str,SIZEOF(str), _T("%.*s%s%.*s"),dat->updateAnimFrame%10,_T("........."),dat->szUpdating,dat->updateAnimFrame%10,_T("........."));
+		{	char str[128];
+			sprintf(str,"%.*s%s%.*s",dat->updateAnimFrame%10,".........",dat->szUpdating,dat->updateAnimFrame%10,".........");
 			SetDlgItemText(hwndDlg,IDC_UPDATING,str);
 			if(++dat->updateAnimFrame==UPDATEANIMFRAMES) dat->updateAnimFrame=0;
 			break;
 		}
 		case WM_CTLCOLORSTATIC:
-			switch (GetDlgCtrlID((HWND)lParam)) {
-			case IDC_WHITERECT:
-			case IDC_LOGO:
+			if(GetDlgItem(hwndDlg,IDC_WHITERECT)==(HWND)lParam) {
 				SetBkColor((HDC)wParam,RGB(255,255,255));
 				return (BOOL)GetStockObject(WHITE_BRUSH);
-			
-			case IDC_UPDATING:
-			{
+			}
+			else if(GetDlgItem(hwndDlg,IDC_UPDATING)==(HWND)lParam) {
 				COLORREF textCol,bgCol,newCol;
 				int ratio;
 				textCol=GetSysColor(COLOR_BTNTEXT);
@@ -275,11 +324,8 @@ static BOOL CALLBACK DlgProcDetails(HWND hwndDlg, UINT msg, WPARAM wParam, LPARA
 				SetBkColor((HDC)wParam,GetSysColor(COLOR_3DFACE));
 				return (BOOL)GetSysColorBrush(COLOR_3DFACE);
 			}
-			default:
-				SetBkMode((HDC)wParam,TRANSPARENT);
-				return (BOOL)GetStockObject(NULL_BRUSH);
-			}
-			break;
+			SetBkMode((HDC)wParam,TRANSPARENT);
+			return (BOOL)GetStockObject(NULL_BRUSH);
 		case PSM_CHANGED:
 			dat->opd[dat->currentPage].changed=1;
 			return TRUE;
@@ -324,9 +370,9 @@ static BOOL CALLBACK DlgProcDetails(HWND hwndDlg, UINT msg, WPARAM wParam, LPARA
 				ShowWindow(GetDlgItem(hwndDlg,IDC_UPDATING),SW_HIDE);
 				KillTimer(hwndDlg,1);
 				SendMessage(hwndDlg,M_CHECKONLINE,0,0);
-				break;
+				break;							
 			} //if
-			if(dat->infosUpdated==NULL) dat->infosUpdated=(int*)mir_calloc(sizeof(int)*(int)ack->hProcess);
+			if(dat->infosUpdated==NULL) dat->infosUpdated=(int*)calloc(sizeof(int),(int)ack->hProcess);
 			if(ack->result==ACKRESULT_SUCCESS || ack->result==ACKRESULT_FAILED) dat->infosUpdated[ack->lParam]=1;
 			for(i=0;i<(int)ack->hProcess;i++)
 				if(dat->infosUpdated[i]==0) break;
@@ -339,9 +385,9 @@ static BOOL CALLBACK DlgProcDetails(HWND hwndDlg, UINT msg, WPARAM wParam, LPARA
 		}
 		case WM_NOTIFY:
 			switch(wParam) {
-				case IDC_PAGETREE:
+				case IDC_TABS:
 					switch(((LPNMHDR)lParam)->code) {
-						case TVN_SELCHANGING:
+						case TCN_SELCHANGING:
 						{	PSHNOTIFY pshn;
 							if(dat->currentPage==-1 || dat->opd[dat->currentPage].hwnd==NULL) break;
 							pshn.hdr.code=PSN_KILLACTIVE;
@@ -354,29 +400,23 @@ static BOOL CALLBACK DlgProcDetails(HWND hwndDlg, UINT msg, WPARAM wParam, LPARA
 							}
 							break;
 						}
-						case TVN_SELCHANGED:
-							if(dat->currentPage!=-1 && dat->opd[dat->currentPage].hwnd!=NULL) {
-								ShowWindow(dat->opd[dat->currentPage].hwnd,SW_HIDE);
-								{
-									LPNMTREEVIEW pnmtv = (LPNMTREEVIEW) lParam;
-									TVITEM tvi = pnmtv->itemNew;
-									dat->currentPage=tvi.lParam;
+						case TCN_SELCHANGE:
+							if(dat->currentPage!=-1 && dat->opd[dat->currentPage].hwnd!=NULL) ShowWindow(dat->opd[dat->currentPage].hwnd,SW_HIDE);
+							dat->currentPage=TabCtrl_GetCurSel(GetDlgItem(hwndDlg,IDC_TABS));
+							if(dat->currentPage!=-1) {
+								if(dat->opd[dat->currentPage].hwnd==NULL) {
+									PSHNOTIFY pshn;
+									dat->opd[dat->currentPage].hwnd=CreateDialogIndirectParam(dat->opd[dat->currentPage].hInst,dat->opd[dat->currentPage].pTemplate,hwndDlg,dat->opd[dat->currentPage].dlgProc,(LPARAM)dat->hContact);
+									ThemeDialogBackground(dat->opd[dat->currentPage].hwnd);
+									SetWindowPos(dat->opd[dat->currentPage].hwnd,HWND_TOP,dat->rcDisplay.left,dat->rcDisplay.top,0,0,SWP_NOSIZE);
+									pshn.hdr.code=PSN_INFOCHANGED;
+									pshn.hdr.hwndFrom=dat->opd[dat->currentPage].hwnd;
+									pshn.hdr.idFrom=0;
+									pshn.lParam=(LPARAM)dat->hContact;
+									SendMessage(dat->opd[dat->currentPage].hwnd,WM_NOTIFY,0,(LPARAM)&pshn);
 								}
-								if(dat->currentPage!=-1) {
-									if(dat->opd[dat->currentPage].hwnd==NULL) {
-										PSHNOTIFY pshn;
-										dat->opd[dat->currentPage].hwnd=CreateDialogIndirectParam(dat->opd[dat->currentPage].hInst,dat->opd[dat->currentPage].pTemplate,hwndDlg,dat->opd[dat->currentPage].dlgProc,(LPARAM)dat->hContact);
-										ThemeDialogBackground(dat->opd[dat->currentPage].hwnd);
-										SetWindowPos(dat->opd[dat->currentPage].hwnd, HWND_TOP, dat->rcDisplay.left, dat->rcDisplay.top, dat->rcDisplay.right - dat->rcDisplay.left, dat->rcDisplay.bottom - dat->rcDisplay.top, 0);
-										pshn.hdr.code=PSN_INFOCHANGED;
-										pshn.hdr.hwndFrom=dat->opd[dat->currentPage].hwnd;
-										pshn.hdr.idFrom=0;
-										pshn.lParam=(LPARAM)dat->hContact;
-										SendMessage(dat->opd[dat->currentPage].hwnd,WM_NOTIFY,0,(LPARAM)&pshn);
-									}
-									ShowWindow(dat->opd[dat->currentPage].hwnd,SW_SHOW);
-									SetFocus(GetDlgItem(hwndDlg,IDC_PAGETREE));
-								}
+								ShowWindow(dat->opd[dat->currentPage].hwnd,SW_SHOW);
+								SetFocus(GetDlgItem(hwndDlg,IDC_TABS));
 							}
 							break;
 					}
@@ -416,7 +456,7 @@ static BOOL CALLBACK DlgProcDetails(HWND hwndDlg, UINT msg, WPARAM wParam, LPARA
 						if(dat->opd[i].hwnd==NULL || !dat->opd[i].changed) continue;
 						pshn.hdr.hwndFrom=dat->opd[i].hwnd;
 						if(SendMessage(dat->opd[i].hwnd,WM_NOTIFY,0,(LPARAM)&pshn)==PSNRET_INVALID_NOCHANGEPAGE) {
-							TreeView_Select(GetDlgItem(hwndDlg,IDC_PAGETREE), dat->opd[i].hItem, TVGN_CARET);
+							TabCtrl_SetCurSel(GetDlgItem(hwndDlg,IDC_TABS),i);
 							if(dat->currentPage!=-1) ShowWindow(dat->opd[dat->currentPage].hwnd,SW_HIDE);
 							dat->currentPage=i;
 							ShowWindow(dat->opd[dat->currentPage].hwnd,SW_SHOW);
@@ -427,7 +467,7 @@ static BOOL CALLBACK DlgProcDetails(HWND hwndDlg, UINT msg, WPARAM wParam, LPARA
 					break;
 				}
 				case IDC_UPDATE:
-					if(dat->infosUpdated!=NULL) {mir_free(dat->infosUpdated); dat->infosUpdated=NULL;}
+					if(dat->infosUpdated!=NULL) {free(dat->infosUpdated); dat->infosUpdated=NULL;}
 					if(dat->hContact != NULL) {
 						CallContactService(dat->hContact,PSS_GETINFO,0,0);
 						EnableWindow(GetDlgItem(hwndDlg,IDC_UPDATE),FALSE);
@@ -441,15 +481,13 @@ static BOOL CALLBACK DlgProcDetails(HWND hwndDlg, UINT msg, WPARAM wParam, LPARA
 			SendMessage(hwndDlg,WM_COMMAND,MAKEWPARAM(IDOK,BN_CLICKED),(LPARAM)GetDlgItem(hwndDlg,IDOK));
 			break;
 		case WM_DESTROY:
-			{
-				TCHAR name[128];
-				TVITEM tvi;
-				tvi.mask = TVIF_TEXT;
-				tvi.hItem = dat->opd[dat->currentPage].hItem;
-				tvi.pszText=name;
-				tvi.cchTextMax=SIZEOF(name);
-				TreeView_GetItem(GetDlgItem(hwndDlg, IDC_PAGETREE), &tvi);
-				DBWriteContactSettingTString(NULL,"UserInfo","LastTab", name);
+			{	TCITEM tci;
+				char name[128];
+				tci.mask=TCIF_TEXT;
+				tci.pszText=name;
+				tci.cchTextMax=sizeof(name);
+				TabCtrl_GetItem(GetDlgItem(hwndDlg,IDC_TABS),dat->currentPage,&tci);
+				DBWriteContactSettingString(NULL,"UserInfo","LastTab",name);
 			}
 			SendDlgItemMessage(hwndDlg,IDC_NAME,WM_SETFONT,SendDlgItemMessage(hwndDlg,IDC_WHITERECT,WM_GETFONT,0,0),0);
 			DeleteObject(dat->hBoldFont);
@@ -459,9 +497,9 @@ static BOOL CALLBACK DlgProcDetails(HWND hwndDlg, UINT msg, WPARAM wParam, LPARA
 				for(i=0;i<dat->pageCount;i++)
 					if(dat->opd[i].hwnd!=NULL) DestroyWindow(dat->opd[i].hwnd);
 			}
-			if(dat->infosUpdated!=NULL) mir_free(dat->infosUpdated);
-			mir_free(dat->opd);
-			mir_free(dat);
+			if(dat->infosUpdated!=NULL) free(dat->infosUpdated);
+			free(dat->opd);
+			free(dat);
 			break;
 	}
 	return FALSE;

@@ -1,5 +1,5 @@
 ####################################################################
-# AIM TOC2 Protocol Plugin
+# AIM Protocol Plugin
 # Makefile for Mingw
 ####################################################################
 #
@@ -29,6 +29,7 @@ SRC = aim.c \
       filerecv.c \
       firstrun.c \
       groupchat.c \
+      groupchatlog.c \
       groups.c \
       idle.c \
       im.c \
@@ -70,7 +71,6 @@ HDR = buddies.h \
       toc.h \
       userinfo.h \
       utils.h
-
 LIB = -lgdi32 -lversion -lcomctl32 -lwsock32 -lcomdlg32 -lole32
 
 CC = gcc
@@ -82,7 +82,7 @@ ID = indent
 ifdef DEBUG
 BIN = ..\..\bin\debug\plugins\AIM.dll
 else
-BIN = ..\..\bin\release\plugins\AIM.dll
+BIN = ..\..\rin\release\plugins\AIM.dll
 endif
 
 # Defines
@@ -92,7 +92,7 @@ DEFINES := $(DEFINES) -D_DEBUG
 endif
 
 # Flags
-LFLAGS  = -shared -s
+LFLAGS  = -shared 
 RCFLAGS = --input-format rc --output-format coff
 ifdef DEBUG
 CFLAGS  = -g $(DEFINES) -I../../include

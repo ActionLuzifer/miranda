@@ -29,7 +29,7 @@ static void aim_evil_warnsend(HANDLE hContact)
     if (aim_util_isonline() && !DBGetContactSetting(hContact, AIM_PROTO, AIM_KEY_UN, &dbv)) {
         char buf[MSG_LEN * 2];
 
-        mir_snprintf(buf, sizeof(buf), "toc_evil %s \"norm\"", dbv.pszVal);
+        _snprintf(buf, sizeof(buf), "toc_evil %s \"norm\"", dbv.pszVal);
         aim_toc_sflapsend(buf, -1, TYPE_DATA);
         DBFreeVariant(&dbv);
     }
@@ -44,14 +44,14 @@ static void aim_evilwarnuser(HANDLE hContact)
     if (!DBGetContactSetting(hContact, AIM_PROTO, AIM_KEY_UN, &dbv)) {
         char *clistName = (char *) CallService(MS_CLIST_GETCONTACTDISPLAYNAME, (WPARAM) hContact, 0);
         if (strcmp(clistName, dbv.pszVal)) {
-            mir_snprintf(tbuf, sizeof(tbuf), Translate("Warn %s (%s)"), clistName, dbv.pszVal);
+            _snprintf(tbuf, sizeof(tbuf), Translate("Warn %s (%s)"), clistName, dbv.pszVal);
         }
         else
-            mir_snprintf(tbuf, sizeof(tbuf), Translate("Warn %s"), dbv.pszVal);
-        mir_snprintf(buf, sizeof(buf),
-                     Translate
-                     ("Would you like to warn %s?\r\n\r\nYou must have exchanged messages with this user recently in order for this to work."),
-                     dbv.pszVal);
+            _snprintf(tbuf, sizeof(tbuf), Translate("Warn %s"), dbv.pszVal);
+        _snprintf(buf, sizeof(buf),
+                  Translate
+                  ("Would you like to warn %s?\r\n\r\nYou must have exchanged messages with this user recently in order for this to work."),
+                  dbv.pszVal);
 
         if (MessageBox(0, buf, tbuf, MB_YESNO | MB_ICONQUESTION) == IDYES) {
             aim_evil_warnsend(hContact);
@@ -75,17 +75,14 @@ static int aim_prebuildevilmenu(WPARAM wParam, LPARAM lParam)
     mi.cbSize = sizeof(mi);
     // Don't show menu item if you set the option to hide or you haven't received a message from 
     // them in the last AIM_EVIL_TO minutes
-    // Note: Hide menu for chat rooms too.  Duh!
     // Note: AOL doesn't accept warnings from users who havent sent you a message recently
-    if (DBGetContactSettingByte((HANDLE) wParam, AIM_PROTO, AIM_CHAT, 0) ||
-        !DBGetContactSettingByte(NULL, AIM_PROTO, AIM_KEY_WM, AIM_KEY_WM_DEF) ||
+    if (!DBGetContactSettingByte(NULL, AIM_PROTO, AIM_KEY_WM, AIM_KEY_WM_DEF) ||
         (time(NULL) - DBGetContactSettingDword((HANDLE) wParam, AIM_PROTO, AIM_KEY_LM, 0)) / 60 > AIM_EVIL_TO)
-        mi.flags = CMIM_FLAGS | CMIF_NOTOFFLINE | CMIF_HIDDEN;
-    else {
+        mi.flags = CMIM_FLAGS | CMIF_NOTOFFLINE | CMIM_NAME | CMIF_HIDDEN;
+    else
         mi.flags = CMIM_FLAGS | CMIF_NOTOFFLINE | CMIM_NAME;
-        mir_snprintf(buf, sizeof(buf), "%s (%d%%)", Translate("Warn User"), DBGetContactSettingWord((HANDLE) wParam, AIM_PROTO, AIM_KEY_EV, 0));
-        mi.pszName = buf;
-    }
+    _snprintf(buf, sizeof(buf), "%s (%d%%)", Translate("Warn User"), DBGetContactSettingWord((HANDLE) wParam, AIM_PROTO, AIM_KEY_EV, 0));
+    mi.pszName = buf;
     CallService(MS_CLIST_MODIFYMENUITEM, (WPARAM) hUserMenu, (LPARAM) & mi);
     return 0;
 }
@@ -95,7 +92,7 @@ void aim_evil_init()
     CLISTMENUITEM mi;
     char szService[MAX_PATH + 30];
 
-    mir_snprintf(szService, sizeof(szService), "%s%s", AIM_PROTO, AIM_SVC_EVIL);
+    _snprintf(szService, sizeof(szService), "%s%s", AIM_PROTO, AIM_SVC_EVIL);
     CreateServiceFunction(szService, aim_peformevilmenu);
     ZeroMemory(&mi, sizeof(mi));
     mi.cbSize = sizeof(mi);
@@ -136,7 +133,7 @@ static BOOL CALLBACK aim_warneddlgproc(HWND hwndDlg, UINT msg, WPARAM wParam, LP
                 EndDialog(hwndDlg, 0);
             SendMessage(hwndDlg, WM_SETICON, ICON_BIG, (LPARAM) LoadIcon(hInstance, MAKEINTRESOURCE(IDI_WARN)));
             SetWindowText(GetDlgItem(hwndDlg, IDC_ID), sinfo->szUser);
-            mir_snprintf(buf, sizeof(buf), "%d%%", sinfo->dwWarnLevel);
+            _snprintf(buf, sizeof(buf), "%d%%", sinfo->dwWarnLevel);
             SetWindowText(GetDlgItem(hwndDlg, IDC_WARN), buf);
             SetFocus(hwndDlg);
             break;
@@ -180,8 +177,8 @@ void aim_evil_update(char *szUser, int level)
         if (ServiceExists(MS_CLIST_SYSTRAY_NOTIFY)) {
             char buf[256];
 
-            mir_snprintf(buf, sizeof(buf), Translate("You were warned by %s.  Your new warning level is %d%%."),
-                         szUser ? szUser : Translate("Anonymous"), level);
+            _snprintf(buf, sizeof(buf), Translate("You were warned by %s.  Your new warning level is %d%%."),
+                      szUser ? szUser : Translate("Anonymous"), level);
             aim_util_shownotification(Translate("AIM Warning"), buf, NIIF_WARNING);
         }
         else {
@@ -194,10 +191,10 @@ void aim_evil_update(char *szUser, int level)
         }
     }
     else if (oldLevel != 0 && level != 0) {     // Our warning is being lowered
-        if (ServiceExists(MS_CLIST_SYSTRAY_NOTIFY)) {   // only show warning level being lowered for notification enabled people
+        if (ServiceExists(MS_CLIST_SYSTRAY_NOTIFY)) {       // only show warning level being lowered for notification enabled people
             char buf[256];
 
-            mir_snprintf(buf, sizeof(buf), Translate("Your warning level has been changed to %d%%."), szUser, level);
+            _snprintf(buf, sizeof(buf), Translate("Your warning level has been changed to %d%%."), szUser, level);
             aim_util_shownotification(Translate("AIM Warning Level Change"), buf, NIIF_WARNING);
         }
     }

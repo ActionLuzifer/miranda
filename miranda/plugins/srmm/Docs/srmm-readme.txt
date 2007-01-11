@@ -1,6 +1,6 @@
 
-       SRMM Plugin for Miranda IM
-       __________________________
+       SRMM Plugin v1.0.1 for Miranda IM
+       _________________________________
 
 
 About
@@ -16,35 +16,6 @@ Simply copy "srmm.dll" into your Miranda IM plugin directory (usually
 
 Changes
 -------
-2.6.0.0
- - Improved RTL support
- - Removed offline from autopopup options
-
-2.5.0.0
- - RTL support added
- - Updated icons
-
-2.4.0.0
- - Message API fix (MS_MSG_GETWINDOWDATA)
-
-2.3.0.0
- - Drag/drop didn't always work from message control
-
-2.2.0.0
- - Log window didn't scroll correctly when avatar was loaded
- - Added show seconds option to log window timestamp
- - Drag and drop file transfer support
- - Updated internal API to 0.0.0.3
- - Fix some possible buffer overflow issues
- - Hide typing notification when user goes offline
- - Auto popup option is now set per status
-
-2.1.0.0
- - Show avatars for protocols that support them
- - Show user menu by clicking user name
- - Copy user name by shift clicking username
- - Log window is drawn using XP theme if possible
-
 2.0.0.0
  - Remove send to multiple "feature"
  - Remove single message mode
@@ -56,8 +27,6 @@ Changes
  - Close message dialog with Ctrl+w
  - Fixed some focus/flash issues
  - Added option to delete temporary contacts on window close
- - Support window api v0.0.0.1
- - Retry dialog caused crash
 
 1.0.4.2
  - Typing Notify options didn't enable/disable correctly
@@ -84,12 +53,8 @@ Todo:
  - Font size fixes (muldiv, http://msdn.microsoft.com/library/default.asp?url=/library/en-us/gdi/fontext_1wmq.asp)
  - Cache fonts
  - Add "old" event fonts
-
-
-Thanks
-------
-Thanks to Matrix and Valkyre who designed and created the icons.
-
+ - Change default fonts
+ - Avatar support
 
 Support and bug reporting
 -------------------------
@@ -107,7 +72,7 @@ http://bugs.miranda-im.org/
 Contact
 -------
 Current maintainer is Robert Rainwater.
-E-mail: rainwater at miranda-im.org
+E-mail: rianwater at miranda-im.org
 
 
 

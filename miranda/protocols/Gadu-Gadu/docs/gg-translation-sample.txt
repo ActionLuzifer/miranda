@@ -11,9 +11,9 @@ Miasto rodz.:
 Rok urodzenia:
 
 ; Options
-;[Gadu-Gadu] @ deprecated 0.0.1.4
-;[&Gadu-Gadu] @ deprecated 0.0.1.4
-;[Gadu-Gadu connection] @ deprecated 0.0.1.4
+;[Gadu-Gadu] << Deprecitated 0.0.1.4
+;[&Gadu-Gadu] << Deprecitated 0.0.1.4
+;[Gadu-Gadu connection] << Deprecitated 0.0.1.4
 ; Expert short
 [Ex.]
 Eks.
@@ -25,13 +25,8 @@ Tylko dla przyjació³
 Pokazuj u¿ytkowników z opisem stanu jako niewidocznych
 [Ignore incoming conference messages]
 Ignoruj nadchodz¹ce wiadomoœci konferencyjne
-;[Automatically pop up the window when a image is received] @ deprecated 0.0.3.4
-[Receive image and after image is received use:]
-Odbieraj nadchodz¹ce obrazki za pomoc¹ metody:
-[System tray icon]
-Ikona zadañ systemowych
-[Popup window]
-Wyskakuj¹ce okno
+[Automatically pop up the window when a image is received]
+Automatycznie pokazuj okienko na wierzchu, kiedy otrzymam obrazek
 [Show contacts not on my list having me on their list]
 Pokazuj kontakty spoza mojej listy maj¹ce mnie na swojej liœcie
 [Gadu-Gadu Number:]
@@ -40,7 +35,7 @@ Numer Gadu-Gadu:
 Numer Gadu-Gadu
 [Gadu-Gadu User Details]
 Dane u¿ytkownika Gadu-Gadu
-;[Lost Gadu-Gadu Password?] @ deprecated 0.0.1.3
+;[Lost Gadu-Gadu Password?] << Deprecitated 0.0.1.3
 [Retrieve password]
 Odzyskaj has³o
 [Create new account]
@@ -64,15 +59,10 @@ Po³¹cz ponownie automatycznie po niezamierzonym roz³¹czeniu
 Po roz³¹czeniu siê zostaw opis nastêpuj¹cego stanu:
 [Manually specify connection host]
 Podaj adres hosta serwera rêcznie
-[Manually specify connection servers' hosts]
-Podaj adresy hostów serwerów rêcznie
-;[Use secure SSL connection] @ deprecated 0.0.2.6
-[Use SSL secure connection]
+[Use secure SSL connection]
+U¿ywaj bezpiecznego po³¹czenia SSL
 [Host:]
 Host:
-U¿ywaj bezpiecznego po³¹czenia SSL
-[* new line is separator\n** hostname:port format]
-* nowa linia - separator\n** format nazwahosta:port
 [Use direct connections]
 U¿ywaj po³¹czeñ bezpoœrednich
 [Use forwarding]
@@ -103,10 +93,6 @@ Miranda nie mog³a ustaliæ IP serwera Gadu-Gadu na podstawie nazwy hosta.
 Otrzymano niepoprawn¹ odpowiedŸ od serwera.
 [Cannot establish secure connection.]
 Nie mo¿na nawi¹zaæ bezpiecznego po³¹czenia.
-[Server disconnected asking you for changing your e-mail.]
-Serwer roz³¹czy³ siê prosz¹c o zmianê Twojego adresu e-mail.
-[Too many login attempts with invalid password.]
-Za du¿o prób po³¹czeñ z podaniem b³êdnego has³a.
 [Your Gadu-Gadu number and password combination was rejected by the Gadu-Gadu server. Please check login details at M->Options->Network->Gadu-Gadu and try again.]
 Twój numer i has³o zosta³y odrzucone przez serwer Gadu-Gadu. SprawdŸ dane logowania M->Opcje->Sieæ->Gadu-Gadu i spróbuj ponownie.
 [Connecting to Gadu-Gadu hub failed.]
@@ -138,8 +124,6 @@ Lista zosta³a zaimportowana pomyœlnie.
 kontakty
 [Your password will be sent to your registration e-mail.\nDo you want to continue ?]
 Twoje has³o zostanie wys³ane na twój e-mail rejestracyjny.\nChcesz kontynuowaæ ?
-[You need to specify your registration e-mail first.]
-Musisz najpierw wpisaæ w konfiguracji swój e-mail rejestracyjny.
 [Password could not be reminded because of error:\n\t%s]
 Has³o nie mo¿e zostaæ wys³ane z powodu b³êdu:\n\t%s
 [Password was sent to your e-mail.]
@@ -243,8 +227,6 @@ Obrazek od %s
 Obrazek dla %s
 [Image files (*.bmp,*.jpg,*.gif)]
 Pliki obrazów (*.bmp,*.jpg,*.gif)
-[Image files (*.bmp,*.jpg,*.gif,*.png)]
-Pliki obrazów (*.bmp,*.jpg,*.gif,*.png)
 [Select picture to send]
 Wybierz obrazek do wys³ania
 [Could not load image. Image might have unsupported file format.]
@@ -257,8 +239,6 @@ Otwórz now¹ konferencjê
 Wybierz uczestników konferencji.
 [Open &conference...]
 Otwórz &konferencjê...
-[&Clear ignored conferences]
-&Wyczyœæ ignorowane konferencje
 [Me]
 Ja
 [%s initiated the conference.]
@@ -271,25 +251,3 @@ Konferencja
 Uczestnicy
 [You have to be connected to open new conference.]
 Musisz byæ po³¹czony, ¿eby otworzyæ now¹ konferencjê
-[All ignored conferences are now unignored and the conference policy will act again.]
-Wszystkie ignorowane konferencje zosta³y zresetowane.
-[There are no ignored conferences.]
-Nie ma ignorowanych konferencji.
-[%s has initiated conference with %d participants (%d unknowns).\nDo you want do participate ?]
-%s zainicjowa³(a) konferencjê z %d uczestnikami - %d nieznany(ch).\nChcesz do³¹czyæ do tej konferencji ?
-
-; Conference policy
-[Conference policy]
-Regu³y konferencji
-[Ask]
-Pytaj
-[Ignore]
-Ignoruj
-[Allow]
-Zezwól
-[if total participant count greater than:]
-jeœli ca³kowita liczba uczestników przekracza:
-[if unknown participant count greater than:]
-jeœli liczba nieznanych przekracza:
-[in other case]
-w innym wypadku

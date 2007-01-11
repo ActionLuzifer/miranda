@@ -5,7 +5,6 @@
 // Copyright © 2000,2001 Richard Hughes, Roland Rabien, Tristan Van de Vreede
 // Copyright © 2001,2002 Jon Keating, Richard Hughes
 // Copyright © 2002,2003,2004 Martin Öberg, Sam Kothari, Robert Rainwater
-// Copyright © 2004,2005 Joe Kucera
 // 
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -23,7 +22,7 @@
 //
 // -----------------------------------------------------------------------------
 //
-// File name      : $Source: /cvsroot/miranda/miranda/protocols/IcqOscarJ/icq_http.h,v $
+// File name      : $Source$
 // Revision       : $Revision$
 // Last change on : $Date$
 // Last change by : $Author$
@@ -41,15 +40,13 @@
 
 #define HTTP_PACKETTYPE_HELLOREPLY   2
 #define HTTP_PACKETTYPE_LOGIN        3
-#define HTTP_PACKETTYPE_LOGINREPLY   4    /* contains 1 byte: 0 */
+#define HTTP_PACKETTYPE_4UNK         4	  /* contains 1 byte: 0 */
 #define HTTP_PACKETTYPE_FLAP         5
-#define HTTP_PACKETTYPE_CLOSE        6    /* contains no data */
-#define HTTP_PACKETTYPE_CLOSEREPLY   7    /* contains 1 byte: 0 */
+#define HTTP_PACKETTYPE_6UNK         6	  /* contains no data */
 
 int icq_httpGatewayInit(HANDLE hConn, NETLIBOPENCONNECTION *nloc, NETLIBHTTPREQUEST *nlhr);
 int icq_httpGatewayBegin(HANDLE hConn, NETLIBOPENCONNECTION *nloc);
 int icq_httpGatewayWrapSend(HANDLE hConn, PBYTE buf, int len, int flags, MIRANDASERVICE pfnNetlibSend);
 PBYTE icq_httpGatewayUnwrapRecv(NETLIBHTTPREQUEST *nlhr, PBYTE buf, int bufLen, int *outBufLen, void *(*NetlibRealloc)(void *, size_t));
-int icq_httpGatewayWalkTo(HANDLE hConn, NETLIBOPENCONNECTION* nloc);
 
 #endif /* __ICQ_HTTP_H */

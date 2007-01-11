@@ -1,8 +1,8 @@
 //{{NO_DEPENDENCIES}}
 // Microsoft Visual C++ generated include file.
-// Used by msn.rc
+// Used by resource.rc
 //
-#define IDI_MSN                         101
+#define IDI_MSN                         1
 #define IDD_USEROPTS                    105
 #define IDD_OPT_MSN_CONN                106
 #define IDD_HOTMAIL_OPT_POPUP           107
@@ -18,11 +18,9 @@
 #define IDI_LIST_BL                     122
 #define IDI_LIST_RL                     123
 #define IDI_AVATAR                      125
-#define IDI_NUDGE                       128
-#define IDI_SERVICES                    129
+#define IDI_ICON1                       128
+#define IDI_SERVICES                    128
 #define IDI_ICON2                       130
-#define IDD_DIALOG1                     131
-#define IDD_SETAVATAR                   132
 #define IDD_OPT_MSN                     185
 #define IDD_SETNICKNAME                 226
 #define IDC_STMSNGROUP                  1002
@@ -31,19 +29,12 @@
 #define IDC_USEIEPROXY                  1005
 #define IDC_ENABLE_AVATARS              1006
 #define IDC_USEWINCOLORS                1007
-#define IDC_ENABLE_NUDGE                1007
 #define IDC_MSN_PICT                    1008
-#define IDC_NUDGE_MESSAGE               1008
 #define IDC_CUSTOM1                     1009
-#define IDC_NUDGE_POPUP                 1009
 #define IDC_USE_OWN_NICKNAME            1010
 #define IDC_BTN_INSTALL                 1011
-#define IDC_NUDGE_CLIST                 1011
 #define IDC_BTN_DOWNLOAD                1012
-#define IDC_NUDGE_CHAT                  1012
 #define IDC_BTN_CANCEL                  1013
-#define IDC_NUDGE_POPUP2                1013
-#define IDC_NUDGE_SOUND                 1013
 #define IDC_MSNLISTS                    1014
 #define IDC_LIST                        1015
 #define IDC_ICON_FL                     1016
@@ -59,17 +50,8 @@
 #define IDC_BGCOLOUR                    1026
 #define IDC_KEEPALIVE                   1027
 #define IDC_TEXTCOLOUR                  1028
-#define IDC_AWAY_AS_BRB                 1029
 #define IDC_PREVIEW                     1030
 #define IDC_PREVIEW2                    1031
-#define IDC_ENABLE                      1032
-#define IDC_SLOWSEND                    1033
-#define IDC_MANAGEGROUPS                1034
-#define IDC_NOTIFY_ENDSESSION           1035
-#define IDC_CHECK1                      1036
-#define IDC_USEOPENSSL                  1036
-#define IDC_USEMSNP11                   1037
-#define IDC_STMSNEXTRAGROUP             1037
 #define IDC_SENDFONTINFO                1046
 #define IDC_NOTIFY_USERTYPE             1047
 #define IDC_NICKNAME                    1048
@@ -85,7 +67,6 @@
 #define IDC_ENTER_MAILER_APP            1059
 #define IDC_MOBILE                      1060
 #define IDC_MSN_MOBILE                  1061
-#define IDC_WEBMESSENGER                1062
 #define IDC_LOGINSERVER                 1171
 #define IDC_YOURHOST                    1172
 #define IDC_MSNPORT                     1174
@@ -98,12 +79,12 @@
 #define IDC_STATIC                      -1
 
 // Next default values for new objects
-//
+// 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        133
+#define _APS_NEXT_RESOURCE_VALUE        131
 #define _APS_NEXT_COMMAND_VALUE         40001
-#define _APS_NEXT_CONTROL_VALUE         1038
+#define _APS_NEXT_CONTROL_VALUE         1032
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

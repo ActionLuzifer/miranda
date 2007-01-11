@@ -4,8 +4,7 @@
 //
 // Copyright © 2000,2001 Richard Hughes, Roland Rabien, Tristan Van de Vreede
 // Copyright © 2001,2002 Jon Keating, Richard Hughes
-// Copyright © 2002,2003,2004 Martin Öberg, Sam Kothari, Robert Rainwater
-// Copyright © 2004,2005,2006 Joe Kucera
+// Copyright © 2002,2003,2004 Martin  berg, Sam Kothari, Robert Rainwater
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -23,7 +22,7 @@
 //
 // -----------------------------------------------------------------------------
 //
-// File name      : $Source: /cvsroot/miranda/miranda/protocols/IcqOscarJ/i18n.h,v $
+// File name      : $Source$
 // Revision       : $Revision$
 // Last change on : $Date$
 // Last change by : $Author$
@@ -36,20 +35,16 @@
 
 
 
-BOOL IsUSASCII(const unsigned char *pBuffer, int nSize);
-BOOL IsUnicodeAscii(const wchar_t *pBuffer, int nSize);
-int UTF8_IsValid(const unsigned char* pszInput);
+BOOL IsUSASCII(char* pBuffer, int nSize);
 
-char* detect_decode_utf8(const char *from);
+BOOL IsUnicodeAscii(wchar_t* pBuffer, int nSize);
 
 wchar_t *make_unicode_string(const unsigned char *utf8);
 
 unsigned char *make_utf8_string(const wchar_t *unicode);
 
 int utf8_encode(const char *from, char **to);
-char *ansi_to_utf8(const char *szAnsi);
-char *ansi_to_utf8_codepage(const char *szAnsi, WORD wCp);
+
 int utf8_decode(const char *from, char **to);
-int utf8_decode_static(const char *from, char *to, int to_size);
 
 void InitI18N(void);
