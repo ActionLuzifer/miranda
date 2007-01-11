@@ -2,7 +2,7 @@
 
 Miranda IM: the free IM client for Microsoft* Windows*
 
-Copyright 2000-2007 Miranda ICQ/IM project, 
+Copyright 2000-2003 Miranda ICQ/IM project, 
 all portions of this codebase are copyrighted to the people 
 listed in contributors.txt.
 
@@ -26,7 +26,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 //This module is new in 0.1.2.1
 
-#define CLISTCONTROL_CLASS  _T("CListControl")
+#define CLISTCONTROL_CLASS  "CListControl"
 
 //styles
 #define CLS_MANUALUPDATE    0x0001	 //todo
@@ -116,7 +116,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define CLM_SETEXTRACOLUMNS   (CLM_FIRST+30)   //wParam=number of extra columns (zero to MAXEXTRACOLUMNS from clc.h, currently 16)
 #define CLM_SETEXTRAIMAGE     (CLM_FIRST+31)   //wParam=hItem, lParam=MAKELPARAM(iColumn (0 based),iImage). iImage=0xFF is a blank
 #define CLM_SETEXTRAIMAGELIST (CLM_FIRST+32)   //lParam=HIMAGELIST
-
 #define FONTID_CONTACTS    0
 #define FONTID_INVIS       1
 #define FONTID_OFFLINE     2
@@ -125,11 +124,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define FONTID_GROUPCOUNTS 5
 #define FONTID_DIVIDERS    6
 #define FONTID_OFFINVIS    7
-#define FONTID_STATUSMSG   8
-#define FONTID_GROUPSCLOSED   9
-#define FONTID_CONTACTSHOVER	10
-#define FONTID_MAX				18
-
+#define FONTID_MAX         7
 #define CLM_SETFONT           (CLM_FIRST+33)   //wParam=hFont, lParam=MAKELPARAM(fRedraw,fontId)
 #define CLM_SETINDENT         (CLM_FIRST+34)   //wParam=new indent, default is 3 pixels
 #define CLM_SETITEMTEXT       (CLM_FIRST+35)   //wParam=hItem, lParam=(char*)pszNewText
@@ -150,7 +145,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define CLM_SETLEFTMARGIN     (CLM_FIRST+47)   //wParam=pixels
 typedef struct {
 	int cbSize;
-	const TCHAR *pszText;
+	const char *pszText;
 	HANDLE hParentGroup;
 	DWORD flags;
 	HICON hIcon;     //todo
@@ -159,15 +154,7 @@ typedef struct {
 #define CLCIIF_BELOWCONTACTS  2     //put it at the bottom
 #define CLCIIF_CHECKBOX       0x40  //give this item a check box
 #define CLCIIF_GROUPFONT      0x80  //draw the item using FONTID_GROUPS
-
-#define CLM_ADDINFOITEMA    (CLM_FIRST+48)   //lParam=&cii, returns hItem
-#define CLM_ADDINFOITEMW    (CLM_FIRST+53)   //lParam=&cii, returns hItem
-#if defined( _UNICODE )
-	#define CLM_ADDINFOITEM CLM_ADDINFOITEMW
-#else
-	#define CLM_ADDINFOITEM CLM_ADDINFOITEMA
-#endif
-
+#define CLM_ADDINFOITEM    (CLM_FIRST+48)   //lParam=&cii, returns hItem
 	//the order of info items is never changed, so make sure you add them in the
 	//  order you want them to remain
 #define CLCIT_INVALID    -1

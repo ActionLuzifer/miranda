@@ -2,8 +2,8 @@
 
 Miranda IM: the free IM client for Microsoft* Windows*
 
-Copyright 2000-2007 Miranda ICQ/IM project,
-all portions of this codebase are copyrighted to the people
+Copyright 2000-2003 Miranda ICQ/IM project, 
+all portions of this codebase are copyrighted to the people 
 listed in contributors.txt.
 
 This program is free software; you can redistribute it and/or
@@ -20,7 +20,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
-#include "commonheaders.h"
+#include "../../core/commonheaders.h"
 
 #define SUMMARY     0
 #define DETAIL      1
@@ -80,112 +80,74 @@ int LoadHistoryModule(void)
 	return 0;
 }
 
-/////////////////////////////////////////////////////////////////////////////////////////
-// Fills the events list
-
-static void GetMessageDescription( DBEVENTINFO *dbei, TCHAR* buf, int cbBuf )
+static void GetMessageDescription(int type,DBEVENTINFO *dbei,char *buf,int cbBuf)
 {
-	char* pszSrc = ( char* )dbei->pBlob;
-	#if defined( _UNICODE )
-		unsigned len = strlen(( char* )dbei->pBlob )+1;
-		if ( dbei->cbBlob != len ) {
-			int len2 = dbei->cbBlob - len;
-			if ( len2 > cbBuf )
-				len2 = cbBuf - sizeof( TCHAR );
-
-			memcpy( buf, &dbei->pBlob[ len ], len2 );
-			return;
-		}
-	#endif
-
-	#if !defined( _UNICODE )
-		strncpy( buf, ( const char* )pszSrc, cbBuf );
-	#else
-		MultiByteToWideChar( CP_ACP, 0, ( LPCSTR )pszSrc, -1, buf, cbBuf );
-	#endif
-	buf[ cbBuf-1 ] = 0;
-}
-
-static void GetUrlDescription( DBEVENTINFO *dbei, TCHAR* buf, int cbBuf )
-{
-	int len = dbei->cbBlob;
-	if ( len >= cbBuf )
-		len = cbBuf-1;
-
-	#if !defined( _UNICODE )
-		memcpy( buf, dbei->pBlob, len );
-	#else
-		MultiByteToWideChar( CP_ACP, 0, ( LPCSTR )dbei->pBlob, len, buf, cbBuf );
-	#endif
-	buf[ len ] = 0;
-
-	if ( len < cbBuf-3 )
-		_tcscat( buf, _T( "\r\n" ));
-}
-
-static void GetFileDescription( DBEVENTINFO *dbei, TCHAR* buf, int cbBuf )
-{
-	int len = dbei->cbBlob - sizeof( DWORD );
-	if ( len >= cbBuf )
-		len = cbBuf-1;
-
-	#if !defined( _UNICODE )
-		memcpy( buf, dbei->pBlob + sizeof( DWORD ), len );
-	#else
-		MultiByteToWideChar( CP_ACP, 0, ( LPCSTR )dbei->pBlob + sizeof( DWORD ), len, buf, cbBuf );
-	#endif
-	buf[ len ] = 0;
-
-	if ( len < cbBuf-3 )
-		_tcscat( buf, _T( "\r\n" ));
-}
-
-static void GetObjectDescription( DBEVENTINFO *dbei, TCHAR* str, int cbStr )
-{
-	switch( dbei->eventType ) {
-	case EVENTTYPE_MESSAGE:
-		GetMessageDescription( dbei, str, cbStr );
-		break;
-
-	case EVENTTYPE_URL:
-		GetUrlDescription( dbei, str, cbStr );
-		break;
-
-	case EVENTTYPE_FILE:
-		GetFileDescription( dbei, str, cbStr );
-		break;
-
-	default:
-		str[ 0 ] = 0;
-}	}
-
-static void GetObjectSummary( DBEVENTINFO *dbei, TCHAR* str, int cbStr )
-{
-	TCHAR* pszSrc;
-
-	switch( dbei->eventType ) {
-	case EVENTTYPE_MESSAGE:
-		if ( dbei->flags & DBEF_SENT )   pszSrc = TranslateT( "Outgoing Message" );
-		else                             pszSrc = TranslateT( "Incoming Message" );
-		break;
-
-	case EVENTTYPE_URL:
-		if ( dbei->flags & DBEF_SENT )   pszSrc = TranslateT( "Outgoing URL" );
-      else                             pszSrc = TranslateT( "Incoming URL" );
-		break;
-
-	case EVENTTYPE_FILE:
-		if ( dbei->flags & DBEF_SENT )   pszSrc = TranslateT( "Outgoing File" );
-		else                             pszSrc = TranslateT( "Incoming File" );
-		break;
-
-	default:
-		str[ 0 ] = 0;
-		return;
+	if(type==SUMMARY) {
+		if(dbei->flags&DBEF_SENT) mir_snprintf(buf,cbBuf,Translate("Outgoing Message"));
+		else mir_snprintf(buf,cbBuf,Translate("Incoming Message"));
 	}
+	else {
+		strncpy(buf,dbei->pBlob,cbBuf);
+		buf[cbBuf-1]=0;
+	}
+}
 
-	_tcsncpy( str, ( const TCHAR* )pszSrc, cbStr );
-	str[ cbStr-1 ] = 0;
+static void GetUrlDescription(int type,DBEVENTINFO *dbei,char *buf,int cbBuf)
+{
+	if(type==SUMMARY) {
+		if(dbei->flags&DBEF_SENT) mir_snprintf(buf,cbBuf,Translate("Outgoing URL"));
+		else mir_snprintf(buf,cbBuf,Translate("Incoming URL"));
+	}
+	else {
+		CopyMemory(buf,dbei->pBlob,min((DWORD)cbBuf,dbei->cbBlob));
+		buf[cbBuf-1]=0;
+		if((int)strlen(buf)<cbBuf-1) {
+			MoveMemory(buf+strlen(buf)+1,buf+strlen(buf),cbBuf-strlen(buf)-2);
+			buf[cbBuf-1]=0;
+			buf[strlen(buf)+1]='\n';
+			buf[strlen(buf)]='\r';
+		}
+	}
+}
+
+static void GetAuthReqDescription(int type,DBEVENTINFO *dbei,char *buf,int cbBuf)
+{
+    buf[0]=0;
+}
+
+static void GetAddedDescription(int type,DBEVENTINFO *dbei,char *buf,int cbBuf)
+{
+    buf[0]=0;
+}
+
+static void GetFileDescription(int type,DBEVENTINFO *dbei,char *buf,int cbBuf)
+{
+	if(type==SUMMARY) {
+		if(dbei->flags&DBEF_SENT) mir_snprintf(buf,cbBuf,Translate("Outgoing File"));
+		else mir_snprintf(buf,cbBuf,Translate("Incoming File"));
+	}
+	else {
+		CopyMemory(buf,dbei->pBlob+sizeof(DWORD),min((DWORD)cbBuf,dbei->cbBlob-sizeof(DWORD)));
+		buf[cbBuf-1]=0;
+		if((int)strlen(buf)<cbBuf-1) {
+			MoveMemory(buf+strlen(buf)+1,buf+strlen(buf),cbBuf-strlen(buf)-2);
+			buf[cbBuf-1]=0;
+			buf[strlen(buf)+1]='\n';
+			buf[strlen(buf)]='\r';
+		}
+	}
+}
+
+static void GetObjectDescription(DBEVENTINFO *dbei,int type,char *str,int cbStr)
+{
+	str[0]=0;
+	switch(dbei->eventType) {
+		case EVENTTYPE_MESSAGE: GetMessageDescription(type,dbei,str,cbStr); break;
+		case EVENTTYPE_URL: GetUrlDescription(type,dbei,str,cbStr); break;
+		case EVENTTYPE_AUTHREQUEST: GetAuthReqDescription(type,dbei,str,cbStr); break;
+		case EVENTTYPE_ADDED: GetAddedDescription(type,dbei,str,cbStr); break;
+		case EVENTTYPE_FILE: GetFileDescription(type,dbei,str,cbStr); break;
+	}
 }
 
 typedef struct {
@@ -195,11 +157,11 @@ typedef struct {
 
 static void FillHistoryThread(THistoryThread *hInfo)
 {
-	TCHAR str[200], eventText[256], strdatetime[64];
+	char str[200],eventText[256],strdatetime[64];
 	HANDLE hDbEvent;
 	DBEVENTINFO dbei;
 	int newBlobSize,oldBlobSize,i;
-	DBTIMETOSTRINGT dbtts;
+	DBTIMETOSTRING dbtts;
 	HWND hwndList;
 
 	SendDlgItemMessage(hInfo->hwnd,IDC_LIST,LB_RESETCONTENT,0,0);
@@ -211,34 +173,34 @@ static void FillHistoryThread(THistoryThread *hInfo)
 	dbei.pBlob=NULL;
 	oldBlobSize=0;
 	hDbEvent=(HANDLE)CallService(MS_DB_EVENT_FINDLAST,(WPARAM)hInfo->hContact,0);
-	dbtts.cbDest = SIZEOF(strdatetime);
-	dbtts.szDest = strdatetime;
-	dbtts.szFormat = _T("d t");
+	dbtts.cbDest=sizeof(strdatetime);
+	dbtts.szDest=strdatetime;
+	dbtts.szFormat="d t";
 	hwndList=GetDlgItem(hInfo->hwnd,IDC_LIST);
 	while(hDbEvent!=NULL) {
 		if (!IsWindow(hInfo->hwnd)) break;
 		newBlobSize=CallService(MS_DB_EVENT_GETBLOBSIZE,(WPARAM)hDbEvent,0);
 		if(newBlobSize>oldBlobSize) {
-			dbei.pBlob=(PBYTE)mir_realloc(dbei.pBlob,newBlobSize);
+			dbei.pBlob=(PBYTE)realloc(dbei.pBlob,newBlobSize);
 			oldBlobSize=newBlobSize;
 		}
-		dbei.cbBlob = oldBlobSize;
-		CallService( MS_DB_EVENT_GET, (WPARAM)hDbEvent, (LPARAM)&dbei );
-		GetObjectSummary(&dbei,str,SIZEOF(str));
+		dbei.cbBlob=oldBlobSize;
+		CallService(MS_DB_EVENT_GET,(WPARAM)hDbEvent,(LPARAM)&dbei);
+		GetObjectDescription(&dbei,SUMMARY,str,sizeof(str));
 		if(str[0]) {
-			CallService(MS_DB_TIME_TIMESTAMPTOSTRINGT, dbei.timestamp,( LPARAM )&dbtts );
-			mir_sntprintf( eventText, SIZEOF(eventText), _T("%s: %s"), strdatetime, str );
-			i = SendMessage(hwndList, LB_ADDSTRING, 0, (LPARAM)eventText );
-			SendMessage(hwndList, LB_SETITEMDATA, i, (LPARAM)hDbEvent);
+			CallService(MS_DB_TIME_TIMESTAMPTOSTRING,dbei.timestamp,(LPARAM)&dbtts);
+			wsprintf(eventText,"%s: %s",strdatetime,str);
+			i=SendMessage(hwndList,LB_ADDSTRING,0,(LPARAM)eventText);
+			SendMessage(hwndList,LB_SETITEMDATA,i,(LPARAM)hDbEvent);
 		}
 		hDbEvent=(HANDLE)CallService(MS_DB_EVENT_FINDPREV,(WPARAM)hDbEvent,0);
 	}
-	if(dbei.pBlob!=NULL) mir_free(dbei.pBlob);
+	if(dbei.pBlob!=NULL) free(dbei.pBlob);
 
 	SendDlgItemMessage(hInfo->hwnd,IDC_LIST,LB_SETCURSEL,0,0);
 	SendMessage(hInfo->hwnd,WM_COMMAND,MAKEWPARAM(IDC_LIST,LBN_SELCHANGE),0);
-	EnableWindow(GetDlgItem(hInfo->hwnd, IDC_LIST), TRUE);
-	mir_free(hInfo);
+    EnableWindow(GetDlgItem(hInfo->hwnd, IDC_LIST), TRUE);
+	free(hInfo);
 }
 
 static int HistoryDlgResizer(HWND hwndDlg,LPARAM lParam,UTILRESIZECONTROL *urc) {
@@ -264,16 +226,16 @@ static BOOL CALLBACK DlgProcHistory(HWND hwndDlg, UINT msg, WPARAM wParam, LPARA
 	switch (msg)
 	{
 		case WM_INITDIALOG:
-		{
-			TCHAR* contactName, str[200];
+		{   char *contactName;
+			char str[200];
 
 			TranslateDialogDefault(hwndDlg);
 			SetWindowLong(hwndDlg,GWL_USERDATA,lParam);
 			hContact = (HANDLE)lParam;
-         WindowList_Add(hWindowList,hwndDlg,hContact);
+            WindowList_Add(hWindowList,hwndDlg,hContact);			
 			Utils_RestoreWindowPosition(hwndDlg,hContact,"History","");
-			contactName=(TCHAR*)CallService(MS_CLIST_GETCONTACTDISPLAYNAME,(WPARAM)hContact,GCDNF_TCHAR);
-			mir_sntprintf(str,SIZEOF(str),TranslateT("History for %s"),contactName);
+			contactName=(char*)CallService(MS_CLIST_GETCONTACTDISPLAYNAME,(WPARAM)hContact,0);
+			mir_snprintf(str,sizeof(str),Translate("History for %s"),contactName);
 			SetWindowText(hwndDlg,str);
 			SendMessage(hwndDlg,WM_SETICON,ICON_BIG,(LPARAM)LoadIcon(GetModuleHandle(NULL),MAKEINTRESOURCE(IDI_HISTORY)));
 			SendMessage(hwndDlg,DM_HREBUILD,0,0);
@@ -281,10 +243,10 @@ static BOOL CALLBACK DlgProcHistory(HWND hwndDlg, UINT msg, WPARAM wParam, LPARA
 		}
 		case DM_HREBUILD:
 		{
-			THistoryThread *hInfo = (THistoryThread*)mir_alloc(sizeof(THistoryThread));
-         EnableWindow(GetDlgItem(hwndDlg, IDC_LIST), FALSE);
+			THistoryThread *hInfo = (THistoryThread*)malloc(sizeof(THistoryThread));
+            EnableWindow(GetDlgItem(hwndDlg, IDC_LIST), FALSE);
 			hInfo->hContact = hContact;
-			hInfo->hwnd = hwndDlg;
+			hInfo->hwnd = hwndDlg;			
 			forkthread(FillHistoryThread, 0, hInfo);
 			return TRUE;
 		}
@@ -296,7 +258,7 @@ static BOOL CALLBACK DlgProcHistory(HWND hwndDlg, UINT msg, WPARAM wParam, LPARA
 		}
         case WM_GETMINMAXINFO:
         {
-            ((MINMAXINFO*)lParam)->ptMinTrackSize.x=300;
+            ((MINMAXINFO*)lParam)->ptMinTrackSize.x=300; 
             ((MINMAXINFO*)lParam)->ptMinTrackSize.y=230;
         }
 		case WM_SIZE:
@@ -305,7 +267,7 @@ static BOOL CALLBACK DlgProcHistory(HWND hwndDlg, UINT msg, WPARAM wParam, LPARA
 			urd.cbSize=sizeof(urd);
 			urd.hwndDlg=hwndDlg;
 			urd.hInstance=GetModuleHandle(NULL);
-			urd.lpTemplate=MAKEINTRESOURCEA(IDD_HISTORY);
+			urd.lpTemplate=MAKEINTRESOURCE(IDD_HISTORY);
 			urd.lParam=(LPARAM)NULL;
 			urd.pfnResizer=HistoryDlgResizer;
 			CallService(MS_UTILS_RESIZEDIALOG,0,(LPARAM)&urd);
@@ -327,7 +289,7 @@ static BOOL CALLBACK DlgProcHistory(HWND hwndDlg, UINT msg, WPARAM wParam, LPARA
 					int index;
 					index = SendDlgItemMessage(hwndDlg,IDC_LIST,LB_GETCURSEL,0,0);
 					if(index==LB_ERR) break;
-					if (MessageBox(hwndDlg,TranslateT("Are you sure you want to delete this history item?"),TranslateT("Delete History"),MB_YESNO|MB_ICONQUESTION)==IDYES) {
+					if (MessageBox(hwndDlg,Translate("Are you sure you want to delete this history item?"),Translate("Delete History"),MB_YESNO|MB_ICONQUESTION)==IDYES) {
 						hDbevent = (HANDLE)SendDlgItemMessage(hwndDlg,IDC_LIST,LB_GETITEMDATA,index,0);
 						CallService(MS_DB_EVENT_DELETE,(WPARAM)hContact,(LPARAM)hDbevent);
 						SendMessage(hwndDlg,DM_HREBUILD,0,0);
@@ -336,66 +298,68 @@ static BOOL CALLBACK DlgProcHistory(HWND hwndDlg, UINT msg, WPARAM wParam, LPARA
 				}
 				case IDC_LIST:
 					if (HIWORD(wParam) == LBN_SELCHANGE)
-					{	TCHAR str[8192],*contactName;
+					{	char str[8192],*contactName;
 						HANDLE hDbEvent;
 						DBEVENTINFO dbei;
 						int sel;
 						sel=SendDlgItemMessage(hwndDlg,IDC_LIST,LB_GETCURSEL,0,0);
 						if(sel==LB_ERR) { EnableWindow(GetDlgItem(hwndDlg,IDC_DELETEHISTORY),FALSE); break; }
 						EnableWindow(GetDlgItem(hwndDlg,IDC_DELETEHISTORY),TRUE);
-						contactName=(TCHAR*)CallService(MS_CLIST_GETCONTACTDISPLAYNAME,(WPARAM)hContact,GCDNF_TCHAR);
+						contactName=(char*)CallService(MS_CLIST_GETCONTACTDISPLAYNAME,(WPARAM)hContact,0);
 						hDbEvent=(HANDLE)SendDlgItemMessage(hwndDlg,IDC_LIST,LB_GETITEMDATA,sel,0);
 						ZeroMemory(&dbei,sizeof(dbei));
 						dbei.cbSize=sizeof(dbei);
 						dbei.cbBlob=CallService(MS_DB_EVENT_GETBLOBSIZE,(WPARAM)hDbEvent,0);
-						dbei.pBlob=(PBYTE)mir_alloc(dbei.cbBlob);
+						dbei.pBlob=(PBYTE)malloc(dbei.cbBlob);
 						CallService(MS_DB_EVENT_GET,(WPARAM)hDbEvent,(LPARAM)&dbei);
-						GetObjectDescription(&dbei,str,SIZEOF(str));
-						mir_free(dbei.pBlob);
+						GetObjectDescription(&dbei,DETAIL,str,sizeof(str));
+						free(dbei.pBlob);
 						if(str[0]) SetDlgItemText(hwndDlg, IDC_EDIT, str);
 					}
 					return TRUE;
 			}
 			break;
 		case DM_FINDNEXT:
-		{	TCHAR str[1024];
+		{	char str[1024],*contactName;
 			HANDLE hDbEvent,hDbEventStart;
 			DBEVENTINFO dbei;
-			int newBlobSize,oldBlobSize;
+			int newBlobSize,oldBlobSize,index;
 
-			int index = SendDlgItemMessage(hwndDlg,IDC_LIST,LB_GETCURSEL,0,0);
-			if ( index == LB_ERR )
-				break;
-
+			contactName=(char*)CallService(MS_CLIST_GETCONTACTDISPLAYNAME,(WPARAM)hContact,0);
+			index=SendDlgItemMessage(hwndDlg,IDC_LIST,LB_GETCURSEL,0,0);
+			if(index==LB_ERR) break;
 			hDbEventStart=(HANDLE)SendDlgItemMessage(hwndDlg,IDC_LIST,LB_GETITEMDATA,index,0);
+			hDbEvent=hDbEventStart;
 			ZeroMemory(&dbei,sizeof(dbei));
 			dbei.cbSize=sizeof(dbei);
 			dbei.pBlob=NULL;
 			oldBlobSize=0;
 			for(;;) {
-				hDbEvent = (HANDLE)SendDlgItemMessage(hwndDlg,IDC_LIST,LB_GETITEMDATA,++index,0);
-				if(hDbEvent == ( HANDLE )LB_ERR) {
-					index = -1;
-					continue;
+				hDbEvent=(HANDLE)CallService(MS_DB_EVENT_FINDPREV,(WPARAM)hDbEvent,0);
+				index++;
+				if(hDbEvent==NULL) {
+					hDbEvent=(HANDLE)CallService(MS_DB_EVENT_FINDLAST,(WPARAM)hContact,0);
+					index=0;
 				}
 				if(hDbEvent==hDbEventStart) break;
 				newBlobSize=CallService(MS_DB_EVENT_GETBLOBSIZE,(WPARAM)hDbEvent,0);
 				if(newBlobSize>oldBlobSize) {
-					dbei.pBlob=(PBYTE)mir_realloc(dbei.pBlob,newBlobSize);
+					dbei.pBlob=(PBYTE)realloc(dbei.pBlob,newBlobSize);
 					oldBlobSize=newBlobSize;
 				}
 				dbei.cbBlob=oldBlobSize;
 				CallService(MS_DB_EVENT_GET,(WPARAM)hDbEvent,(LPARAM)&dbei);
-				GetObjectDescription(&dbei,str,SIZEOF(str));
+				GetObjectDescription(&dbei,DETAIL,str,sizeof(str));
 				if(str[0]) {
 					CharUpperBuff(str,lstrlen(str));
-					if( _tcsstr(str,(const TCHAR*)lParam)!=NULL) {
+					if(strstr(str,(const char*)lParam)!=NULL) {
 						SendDlgItemMessage(hwndDlg,IDC_LIST,LB_SETCURSEL,index,0);
 						SendMessage(hwndDlg,WM_COMMAND,MAKEWPARAM(IDC_LIST,LBN_SELCHANGE),0);
 						break;
-			}	}	}
-			
-			mir_free(dbei.pBlob);
+					}
+				}
+			}
+			free(dbei.pBlob);
 			break;
 		}
 	}
@@ -407,7 +371,7 @@ static BOOL CALLBACK DlgProcHistoryFind(HWND hwndDlg, UINT msg, WPARAM wParam, L
 	switch (msg) {
 		case WM_INITDIALOG:
 			TranslateDialogDefault(hwndDlg);
-			SetWindowLong(hwndDlg, GWL_USERDATA, lParam);
+			SetWindowLong(hwndDlg, GWL_USERDATA, lParam);	
 			return TRUE;
 
 		case WM_COMMAND:
@@ -415,10 +379,10 @@ static BOOL CALLBACK DlgProcHistoryFind(HWND hwndDlg, UINT msg, WPARAM wParam, L
 			{
 				case IDOK://find Next
 				{	HWND hwndParent;
-					TCHAR str[128];
+					char str[128];
 
 					hwndParent=(HWND)GetWindowLong(hwndDlg, GWL_USERDATA);
-					GetDlgItemText(hwndDlg, IDC_FINDWHAT, str, SIZEOF(str));
+					GetDlgItemText(hwndDlg, IDC_FINDWHAT, str, sizeof(str));
 					CharUpperBuff(str,lstrlen(str));
 					SendMessage(hwndParent,DM_FINDNEXT,0,(LPARAM)str);
 					return TRUE;
@@ -426,7 +390,7 @@ static BOOL CALLBACK DlgProcHistoryFind(HWND hwndDlg, UINT msg, WPARAM wParam, L
 				case IDCANCEL:
 					DestroyWindow(hwndDlg);
 					return TRUE;
-
+				
 			}
 			break;
 	}

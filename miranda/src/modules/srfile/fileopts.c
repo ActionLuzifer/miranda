@@ -2,7 +2,7 @@
 
 Miranda IM: the free IM client for Microsoft* Windows*
 
-Copyright 2000-2007 Miranda ICQ/IM project, 
+Copyright 2000-2003 Miranda ICQ/IM project, 
 all portions of this codebase are copyrighted to the people 
 listed in contributors.txt.
 
@@ -20,7 +20,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
-#include "commonheaders.h"
+#include "../../core/commonheaders.h"
 #include "file.h"
 
 #define VSCAN_MCAFEE      1
@@ -55,12 +55,12 @@ static BOOL CALLBACK DlgProcFileOpts(HWND hwndDlg, UINT msg, WPARAM wParam, LPAR
 			TranslateDialogDefault(hwndDlg);
 			{
 				char str[MAX_PATH];
-				GetContactReceivedFilesDir(NULL,str,SIZEOF(str));
-				SetDlgItemTextA(hwndDlg,IDC_FILEDIR,str);
+				GetContactReceivedFilesDir(NULL,str,sizeof(str));
+				SetDlgItemText(hwndDlg,IDC_FILEDIR,str);
 			}
 			{	HRESULT (STDAPICALLTYPE *MySHAutoComplete)(HWND,DWORD);
 
-				MySHAutoComplete=(HRESULT (STDAPICALLTYPE*)(HWND,DWORD))GetProcAddress(GetModuleHandleA("shlwapi"),"SHAutoComplete");
+				MySHAutoComplete=(HRESULT (STDAPICALLTYPE*)(HWND,DWORD))GetProcAddress(GetModuleHandle("shlwapi"),"SHAutoComplete");
 				if(MySHAutoComplete) MySHAutoComplete(GetWindow(GetDlgItem(hwndDlg,IDC_FILEDIR),GW_CHILD),1);
 			}
 			CheckDlgButton(hwndDlg, IDC_AUTOACCEPT, DBGetContactSettingByte(NULL,"SRFile","AutoAccept",0) ? BST_CHECKED : BST_UNCHECKED);
@@ -74,15 +74,15 @@ static BOOL CALLBACK DlgProcFileOpts(HWND hwndDlg, UINT msg, WPARAM wParam, LPAR
 			CheckDlgButton(hwndDlg, IDC_WARNBEFOREOPENING, DBGetContactSettingByte(NULL,"SRFile","WarnBeforeOpening",1) ? BST_CHECKED : BST_UNCHECKED);
 			{	char szScanExe[MAX_PATH];
 				int i,iItem;
-				for( i=0; i < SIZEOF(virusScanners); i++ ) {
-					if(SRFile_GetRegValue(HKEY_LOCAL_MACHINE,virusScanners[i].szExeRegPath,virusScanners[i].szExeRegValue,szScanExe,SIZEOF(szScanExe))) {
-						iItem=SendDlgItemMessageA(hwndDlg,IDC_SCANCMDLINE,CB_ADDSTRING,0,(LPARAM)virusScanners[i].szProductName);
+				for(i=0;i<sizeof(virusScanners)/sizeof(virusScanners[0]);i++) {
+					if(SRFile_GetRegValue(HKEY_LOCAL_MACHINE,virusScanners[i].szExeRegPath,virusScanners[i].szExeRegValue,szScanExe,sizeof(szScanExe))) {
+						iItem=SendDlgItemMessage(hwndDlg,IDC_SCANCMDLINE,CB_ADDSTRING,0,(LPARAM)virusScanners[i].szProductName);
 						SendDlgItemMessage(hwndDlg,IDC_SCANCMDLINE,CB_SETITEMDATA,iItem,i);
 					}
 				}
 			}
 			if(DBGetContactSetting(NULL,"SRFile","ScanCmdLine",&dbv)==0) {
-				SetDlgItemTextA(hwndDlg,IDC_SCANCMDLINE,dbv.pszVal);
+				SetDlgItemText(hwndDlg,IDC_SCANCMDLINE,dbv.pszVal);
 				DBFreeVariant(&dbv);
 			}
 			else {
@@ -112,11 +112,11 @@ static BOOL CALLBACK DlgProcFileOpts(HWND hwndDlg, UINT msg, WPARAM wParam, LPAR
 		case M_SCANCMDLINESELCHANGE:
 		{	char str[512],szScanExe[MAX_PATH];
 			int iScanner=SendDlgItemMessage(hwndDlg,IDC_SCANCMDLINE,CB_GETITEMDATA,SendDlgItemMessage(hwndDlg,IDC_SCANCMDLINE,CB_GETCURSEL,0,0),0);
-			if(iScanner >= SIZEOF(virusScanners) || iScanner<0) break;
+			if(iScanner>=sizeof(virusScanners)/sizeof(virusScanners[0]) || iScanner<0) break;
 			str[0]='\0';
-			if(SRFile_GetRegValue(HKEY_LOCAL_MACHINE,virusScanners[iScanner].szExeRegPath,virusScanners[iScanner].szExeRegValue,szScanExe,SIZEOF(szScanExe)))
-				wsprintfA(str,virusScanners[iScanner].szCommandLine,szScanExe);
-			SetDlgItemTextA(hwndDlg,IDC_SCANCMDLINE,str);
+			if(SRFile_GetRegValue(HKEY_LOCAL_MACHINE,virusScanners[iScanner].szExeRegPath,virusScanners[iScanner].szExeRegValue,szScanExe,sizeof(szScanExe)))
+				wsprintf(str,virusScanners[iScanner].szCommandLine,szScanExe);
+			SetDlgItemText(hwndDlg,IDC_SCANCMDLINE,str);
 			break;
 		}
 		case WM_COMMAND:
@@ -126,9 +126,9 @@ static BOOL CALLBACK DlgProcFileOpts(HWND hwndDlg, UINT msg, WPARAM wParam, LPAR
 					break;
 				case IDC_FILEDIRBROWSE:
 				{	char str[MAX_PATH];
-					GetDlgItemTextA(hwndDlg,IDC_FILEDIR,str,SIZEOF(str));
+					GetDlgItemText(hwndDlg,IDC_FILEDIR,str,sizeof(str));
 					if(BrowseForFolder(hwndDlg,str))
-						SetDlgItemTextA(hwndDlg,IDC_FILEDIR,str);
+						SetDlgItemText(hwndDlg,IDC_FILEDIR,str);
 					break;
 				}
 				case IDC_AUTOACCEPT:
@@ -143,10 +143,10 @@ static BOOL CALLBACK DlgProcFileOpts(HWND hwndDlg, UINT msg, WPARAM wParam, LPAR
 					break;
 				case IDC_SCANCMDLINEBROWSE:
 				{	char str[MAX_PATH+2];
-					OPENFILENAMEA ofn={0};
+					OPENFILENAME ofn={0};
 					char filter[512],*pfilter;
 
-					GetDlgItemTextA(hwndDlg,IDC_SCANCMDLINE,str,SIZEOF(str));
+					GetDlgItemText(hwndDlg,IDC_SCANCMDLINE,str,sizeof(str));
 					ofn.lStructSize=OPENFILENAME_SIZE_VERSION_400;
 					ofn.hwndOwner=hwndDlg;
 					ofn.Flags=OFN_FILEMUSTEXIST|OFN_HIDEREADONLY;
@@ -163,24 +163,24 @@ static BOOL CALLBACK DlgProcFileOpts(HWND hwndDlg, UINT msg, WPARAM wParam, LPAR
 					*pfilter='\0';
 					ofn.lpstrFilter=filter;
 					ofn.lpstrFile=str;
-					ofn.nMaxFile=SIZEOF(str)-2;
+					ofn.nMaxFile=sizeof(str)-2;
 					if(str[0]=='"')	{
 						char *pszQuote=strchr(str+1,'"');
 						if(pszQuote) *pszQuote='\0';
-						MoveMemory(str,str+1,lstrlenA(str));
+						MoveMemory(str,str+1,lstrlen(str));
 					}
 					else {
 						char *pszSpace=strchr(str,' ');
 						if(pszSpace) *pszSpace='\0';
 					}
 					ofn.nMaxFileTitle=MAX_PATH;
-					if(!GetOpenFileNameA(&ofn)) break;
+					if(!GetOpenFileName(&ofn)) break;
 					if(strchr(str,' ')!=NULL) {
-						MoveMemory(str+1,str,SIZEOF(str)-2);
+						MoveMemory(str+1,str,sizeof(str)-2);
 						str[0]='"';
-						lstrcatA(str,"\"");
+						lstrcat(str,"\"");
 					}
-					SetDlgItemTextA(hwndDlg,IDC_SCANCMDLINE,str);
+					SetDlgItemText(hwndDlg,IDC_SCANCMDLINE,str);
 					break;
 				}
 			}
@@ -191,13 +191,13 @@ static BOOL CALLBACK DlgProcFileOpts(HWND hwndDlg, UINT msg, WPARAM wParam, LPAR
 			{
 				case PSN_APPLY:
 				{	char str[512];
-					GetDlgItemTextA(hwndDlg,IDC_FILEDIR,str,SIZEOF(str));
+					GetDlgItemText(hwndDlg,IDC_FILEDIR,str,sizeof(str));
 					DBWriteContactSettingString(NULL,"SRFile","RecvFilesDirAdv",str);
 					DBWriteContactSettingByte(NULL,"SRFile","AutoAccept",(BYTE)IsDlgButtonChecked(hwndDlg,IDC_AUTOACCEPT));
 					DBWriteContactSettingByte(NULL,"SRFile","AutoMin",(BYTE)IsDlgButtonChecked(hwndDlg,IDC_AUTOMIN));
 					DBWriteContactSettingByte(NULL,"SRFile","AutoClose",(BYTE)IsDlgButtonChecked(hwndDlg,IDC_AUTOCLOSE));
 					DBWriteContactSettingByte(NULL,"SRFile","UseScanner",(BYTE)(IsDlgButtonChecked(hwndDlg,IDC_SCANAFTERDL)?VIRUSSCAN_AFTERDL:(IsDlgButtonChecked(hwndDlg,IDC_SCANDURINGDL)?VIRUSSCAN_DURINGDL:VIRUSSCAN_DISABLE)));
-					GetDlgItemTextA(hwndDlg,IDC_SCANCMDLINE,str,SIZEOF(str));
+					GetDlgItemText(hwndDlg,IDC_SCANCMDLINE,str,sizeof(str));
 					DBWriteContactSettingString(NULL,"SRFile","ScanCmdLine",str);
 					DBWriteContactSettingByte(NULL,"SRFile","WarnBeforeOpening",(BYTE)IsDlgButtonChecked(hwndDlg,IDC_WARNBEFOREOPENING));
 					DBWriteContactSettingByte(NULL,"SRFile","IfExists",(BYTE)(IsDlgButtonChecked(hwndDlg,IDC_ASK)?FILERESUME_ASK:(IsDlgButtonChecked(hwndDlg,IDC_RESUME)?FILERESUME_RESUMEALL:(IsDlgButtonChecked(hwndDlg,IDC_OVERWRITE)?FILERESUME_OVERWRITEALL:FILERESUME_RENAMEALL))));
@@ -212,16 +212,17 @@ static BOOL CALLBACK DlgProcFileOpts(HWND hwndDlg, UINT msg, WPARAM wParam, LPAR
 int FileOptInitialise(WPARAM wParam,LPARAM lParam)
 {
 	OPTIONSDIALOGPAGE odp={0};
-	odp.cbSize = sizeof(odp);
-	odp.position = 900000000;
-	odp.hInstance = GetModuleHandle(NULL);
-	odp.pszTemplate = MAKEINTRESOURCEA(IDD_OPT_FILETRANSFER);
-	odp.pszTitle = "File Transfers";
-	odp.pszGroup = "Events";
-	odp.pfnDlgProc = DlgProcFileOpts;
-	odp.flags = ODPF_BOLDGROUPS;
-	odp.nIDBottomSimpleControl = IDC_VIRUSSCANNERGROUP;
-	CallService( MS_OPT_ADDPAGE, wParam, ( LPARAM )&odp );
+
+	odp.cbSize=sizeof(odp);
+	odp.position=900000000;
+	odp.hInstance=GetModuleHandle(NULL);
+	odp.pszTemplate=MAKEINTRESOURCE(IDD_OPT_FILETRANSFER);
+	odp.pszTitle=Translate("File Transfers");
+	odp.pszGroup=Translate("Events");
+	odp.pfnDlgProc=DlgProcFileOpts;
+	odp.flags=ODPF_BOLDGROUPS;
+	odp.nIDBottomSimpleControl=IDC_VIRUSSCANNERGROUP;
+	CallService(MS_OPT_ADDPAGE,wParam,(LPARAM)&odp);
 	return 0;
 }
 

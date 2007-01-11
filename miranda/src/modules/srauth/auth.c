@@ -2,7 +2,7 @@
 
 Miranda IM: the free IM client for Microsoft* Windows*
 
-Copyright 2000-2007 Miranda ICQ/IM project, 
+Copyright 2000-2003 Miranda ICQ/IM project, 
 all portions of this codebase are copyrighted to the people 
 listed in contributors.txt.
 
@@ -20,7 +20,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
-#include "commonheaders.h"
+#include "../../core/commonheaders.h"
 
 #define MS_AUTH_SHOWREQUEST	"Auth/ShowRequest"
 #define MS_AUTH_SHOWADDED	"Auth/ShowAdded"
@@ -55,7 +55,7 @@ static int AuthEventAdded(WPARAM wParam,LPARAM lParam)
 	if(dbei.flags&(DBEF_SENT|DBEF_READ) || (dbei.eventType!=EVENTTYPE_AUTHREQUEST && dbei.eventType!=EVENTTYPE_ADDED)) return 0;
 
 	dbei.cbBlob=CallService(MS_DB_EVENT_GETBLOBSIZE,(WPARAM)lParam,0);
-	dbei.pBlob=mir_alloc(dbei.cbBlob);
+	dbei.pBlob=malloc(dbei.cbBlob);
 	CallService(MS_DB_EVENT_GET,(WPARAM)(HANDLE)lParam,(LPARAM)&dbei);
 
 	hcontact=*((PHANDLE)(dbei.pBlob+sizeof(DWORD)));
@@ -74,7 +74,7 @@ static int AuthEventAdded(WPARAM wParam,LPARAM lParam)
 		cli.hIcon=LoadSkinnedIcon(SKINICON_OTHER_MIRANDA);
 		cli.pszService=MS_AUTH_SHOWREQUEST;
 		CallService(MS_CLIST_ADDEVENT,0,(LPARAM)&cli);
-		mir_free(dbei.pBlob);
+		free(dbei.pBlob);
 	}
 	else if(dbei.eventType==EVENTTYPE_ADDED)
 	{
@@ -83,7 +83,7 @@ static int AuthEventAdded(WPARAM wParam,LPARAM lParam)
 		cli.hIcon=LoadSkinnedIcon(SKINICON_OTHER_MIRANDA);
 		cli.pszService=MS_AUTH_SHOWADDED;
 		CallService(MS_CLIST_ADDEVENT,0,(LPARAM)&cli);
-		mir_free(dbei.pBlob);
+		free(dbei.pBlob);
 	}
 	return 0;
 }

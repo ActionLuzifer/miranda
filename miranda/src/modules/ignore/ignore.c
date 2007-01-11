@@ -2,7 +2,7 @@
 
 Miranda IM: the free IM client for Microsoft* Windows*
 
-Copyright 2000-2007 Miranda ICQ/IM project, 
+Copyright 2000-2003 Miranda ICQ/IM project, 
 all portions of this codebase are copyrighted to the people 
 listed in contributors.txt.
 
@@ -20,7 +20,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
-#include "commonheaders.h"
+#include "../../core/commonheaders.h"
 
 #define IGNOREEVENT_MAX  6
 
@@ -56,7 +56,7 @@ static void SetListGroupIcons(HWND hwndList,HANDLE hFirstItem,HANDLE hParentItem
 	while(hItem) {
 		hChildItem=(HANDLE)SendMessage(hwndList,CLM_GETNEXTITEM,CLGN_CHILD,(LPARAM)hItem);
 		if(hChildItem) SetListGroupIcons(hwndList,hChildItem,hItem,childCount);
-		for(i=0; i < SIZEOF(iconOn); i++)
+		for(i=0;i<sizeof(iconOn)/sizeof(iconOn[0]);i++)
 			if(iconOn[i] && SendMessage(hwndList,CLM_GETEXTRAIMAGE,(WPARAM)hItem,i)==0) iconOn[i]=0;
 		hItem=(HANDLE)SendMessage(hwndList,CLM_GETNEXTITEM,CLGN_NEXTGROUP,(LPARAM)hItem);
 	}
@@ -64,7 +64,7 @@ static void SetListGroupIcons(HWND hwndList,HANDLE hFirstItem,HANDLE hParentItem
 	if(typeOfFirst==CLCIT_CONTACT) hItem=hFirstItem;
 	else hItem=(HANDLE)SendMessage(hwndList,CLM_GETNEXTITEM,CLGN_NEXTCONTACT,(LPARAM)hFirstItem);
 	while(hItem) {
-		for( i=0; i < SIZEOF(iconOn); i++ ) {
+		for(i=0;i<sizeof(iconOn)/sizeof(iconOn[0]);i++) {
 			iImage=SendMessage(hwndList,CLM_GETEXTRAIMAGE,(WPARAM)hItem,i);
 			if(iconOn[i] && iImage==0) iconOn[i]=0;
 			if(iImage!=0xFF) childCount[i]++;
@@ -72,7 +72,7 @@ static void SetListGroupIcons(HWND hwndList,HANDLE hFirstItem,HANDLE hParentItem
 		hItem=(HANDLE)SendMessage(hwndList,CLM_GETNEXTITEM,CLGN_NEXTCONTACT,(LPARAM)hItem);
 	}
 	//set icons
-	for( i=0; i < SIZEOF(iconOn); i++ ) {
+	for(i=0;i<sizeof(iconOn)/sizeof(iconOn[0]);i++) {
 		SendMessage(hwndList,CLM_SETEXTRAIMAGE,(WPARAM)hParentItem,MAKELPARAM(i,childCount[i]?(iconOn[i]?i+3:0):0xFF));
 		if(groupChildCount) groupChildCount[i]+=childCount[i];
 	}
@@ -206,7 +206,7 @@ static BOOL CALLBACK DlgProcIgnoreOpts(HWND hwndDlg, UINT msg, WPARAM wParam, LP
 				ImageList_AddIcon(hIml,LoadSkinnedIcon(SKINICON_OTHER_MIRANDA));
 				ImageList_AddIcon(hIml,LoadIcon(GetModuleHandle(NULL),MAKEINTRESOURCE(IDI_ADDCONTACT)));
 				SendDlgItemMessage(hwndDlg,IDC_LIST,CLM_SETEXTRAIMAGELIST,0,(LPARAM)hIml);
-				for( i=0; i < SIZEOF(hIcons); i++ )
+				for(i=0;i<sizeof(hIcons)/sizeof(hIcons[0]);i++)
 					hIcons[i]=ImageList_GetIcon(hIml,1+i,ILD_NORMAL);
 			}
 			SendDlgItemMessage(hwndDlg,IDC_ALLICON,STM_SETICON,(WPARAM)hIcons[0],0);
@@ -229,10 +229,10 @@ static BOOL CALLBACK DlgProcIgnoreOpts(HWND hwndDlg, UINT msg, WPARAM wParam, LP
 			{	CLCINFOITEM cii={0};
 				cii.cbSize=sizeof(cii);
 				cii.flags=CLCIIF_GROUPFONT;
-				cii.pszText=TranslateT("** All contacts **");
+				cii.pszText=Translate("** All contacts **");
 				hItemAll=(HANDLE)SendDlgItemMessage(hwndDlg,IDC_LIST,CLM_ADDINFOITEM,0,(LPARAM)&cii);
 
-				cii.pszText=TranslateT("** Unknown contacts **");
+				cii.pszText=Translate("** Unknown contacts **");
 				hItemUnknown=(HANDLE)SendDlgItemMessage(hwndDlg,IDC_LIST,CLM_ADDINFOITEM,0,(LPARAM)&cii);
 				InitialiseItem(GetDlgItem(hwndDlg,IDC_LIST),NULL,hItemUnknown,0xFFFFFFFF);
 			}
@@ -321,7 +321,7 @@ static BOOL CALLBACK DlgProcIgnoreOpts(HWND hwndDlg, UINT msg, WPARAM wParam, LP
 		case WM_DESTROY:
 		{	int i;
 			HIMAGELIST hIml;
-			for( i=0; i < SIZEOF(hIcons); i++ )
+			for(i=0;i<sizeof(hIcons)/sizeof(hIcons[0]);i++)
 				DestroyIcon(hIcons[i]);
 			hIml=(HIMAGELIST)SendDlgItemMessage(hwndDlg,IDC_LIST,CLM_GETEXTRAIMAGELIST,0,0);
 			ImageList_Destroy(hIml);
@@ -334,18 +334,20 @@ static BOOL CALLBACK DlgProcIgnoreOpts(HWND hwndDlg, UINT msg, WPARAM wParam, LP
 static UINT expertOnlyControls[]={IDC_STCHECKMARKS};
 static int IgnoreOptInitialise(WPARAM wParam,LPARAM lParam)
 {
-	OPTIONSDIALOGPAGE odp = { 0 };
-	odp.cbSize = sizeof(odp);
-	odp.position = 900000000;
-	odp.hInstance = GetModuleHandle(NULL);
-	odp.pszTemplate = MAKEINTRESOURCEA(IDD_OPT_IGNORE);
-	odp.pszTitle = "Ignore";
-	odp.pszGroup = "Events";
-	odp.pfnDlgProc = DlgProcIgnoreOpts;
-	odp.flags = ODPF_BOLDGROUPS;
-	odp.expertOnlyControls = expertOnlyControls;
-	odp.nExpertOnlyControls = SIZEOF( expertOnlyControls );
-	CallService( MS_OPT_ADDPAGE, wParam, ( LPARAM )&odp);
+	OPTIONSDIALOGPAGE odp;
+
+	ZeroMemory(&odp,sizeof(odp));
+	odp.cbSize=sizeof(odp);
+	odp.position=900000000;
+	odp.hInstance=GetModuleHandle(NULL);
+	odp.pszTemplate=MAKEINTRESOURCE(IDD_OPT_IGNORE);
+	odp.pszTitle=Translate("Ignore");
+	odp.pszGroup=Translate("Events");
+	odp.pfnDlgProc=DlgProcIgnoreOpts;
+	odp.flags=ODPF_BOLDGROUPS;
+	odp.expertOnlyControls=expertOnlyControls;
+	odp.nExpertOnlyControls=sizeof(expertOnlyControls)/sizeof(expertOnlyControls[0]);
+	CallService(MS_OPT_ADDPAGE,wParam,(LPARAM)&odp);
 	return 0;
 }
 

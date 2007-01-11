@@ -2,8 +2,8 @@
 
 Miranda IM: the free IM client for Microsoft* Windows*
 
-Copyright 2000-2007 Miranda ICQ/IM project,
-all portions of this codebase are copyrighted to the people
+Copyright 2000-2003 Miranda ICQ/IM project, 
+all portions of this codebase are copyrighted to the people 
 listed in contributors.txt.
 
 This program is free software; you can redistribute it and/or
@@ -20,7 +20,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
-#include "commonheaders.h"
+#include "../../core/commonheaders.h"
 
 int LoadProtoChains(void);
 
@@ -58,10 +58,10 @@ static int Proto_RegisterModule(WPARAM wParam,LPARAM lParam)
 	int i;
 
 	if(pd->cbSize!=sizeof(PROTOCOLDESCRIPTOR)) return 1;
-	protocolModule=(PROTOCOLDESCRIPTOR*)mir_realloc(protocolModule,sizeof(PROTOCOLDESCRIPTOR)*(protocolModuleCount+1));
+	protocolModule=(PROTOCOLDESCRIPTOR*)realloc(protocolModule,sizeof(PROTOCOLDESCRIPTOR)*(protocolModuleCount+1));
 	protocolModule[protocolModuleCount]=*pd;
-	protocolModule[protocolModuleCount++].szName=mir_strdup(pd->szName);
-	pProtocolModules=(PROTOCOLDESCRIPTOR**)mir_realloc(pProtocolModules,sizeof(PROTOCOLDESCRIPTOR*)*(protocolModuleCount+1));
+	protocolModule[protocolModuleCount++].szName=_strdup(pd->szName);
+	pProtocolModules=(PROTOCOLDESCRIPTOR**)realloc(pProtocolModules,sizeof(PROTOCOLDESCRIPTOR*)*(protocolModuleCount+1));
 	for(i=0;i<protocolModuleCount;i++)
 		pProtocolModules[i]=&protocolModule[i];
 	return 0;
@@ -69,7 +69,7 @@ static int Proto_RegisterModule(WPARAM wParam,LPARAM lParam)
 
 static int Proto_ValidTypingContact(HANDLE hContact, char *szProto) {
 	DWORD protoCaps;
-
+	
 	if (!hContact || !szProto) return 0;
 	protoCaps=CallProtoService(szProto,PS_GETCAPS,PFLAGNUM_4,0);
 	if (!(protoCaps&PF4_SUPPORTTYPING)) return 0;
@@ -108,10 +108,10 @@ static int ProtoShutdown(WPARAM wParam,LPARAM lParam)
 	if(protocolModule!=NULL) {
 		int i;
 		for(i=0;i<protocolModuleCount;i++)
-			mir_free(protocolModule[i].szName);
-		mir_free(protocolModule);
+			free(protocolModule[i].szName);
+		free(protocolModule);
 	}
-	if(pProtocolModules!=NULL) mir_free(pProtocolModules);
+	if(pProtocolModules!=NULL) free(pProtocolModules);
 	protocolModuleCount=0;
 	UninitContactDir();
 	return 0;

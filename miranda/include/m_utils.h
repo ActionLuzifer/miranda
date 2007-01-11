@@ -2,8 +2,8 @@
 
 Miranda IM: the free IM client for Microsoft* Windows*
 
-Copyright 2000-2007 Miranda ICQ/IM project,
-all portions of this codebase are copyrighted to the people
+Copyright 2000-2003 Miranda ICQ/IM project, 
+all portions of this codebase are copyrighted to the people 
 listed in contributors.txt.
 
 This program is free software; you can redistribute it and/or
@@ -23,8 +23,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #ifndef M_UTILS_H__
 #define M_UTILS_H__ 1
-
-#include <tchar.h>
 
 //this entire module is v0.1.0.1+
 //this module cannot be redefined by a plugin, because it's not useful for it
@@ -166,7 +164,7 @@ __inline static int WindowList_Broadcast(HANDLE hList,UINT message,WPARAM wParam
 	lParam=(LPARAM)(MSG*)&msg
 
 	Returns 0 on success, nonzero on failure, this service does not fail, even if PostMessage() fails for whatever reason
-
+	
 */
 #define MS_UTILS_BROADCASTTOWINDOWLIST_ASYNC "Utils/BroadcastToWindowListAsync"
 
@@ -179,7 +177,7 @@ __inline static int WindowList_BroadcastAsync(HANDLE hList,UINT message,WPARAM w
 /***************************** Hyperlink windows ********************************/
 
 //there aren't any services here, because you don't need them.
-#define WNDCLASS_HYPERLINK   _T("Hyperlink")
+#define WNDCLASS_HYPERLINK   "Hyperlink"
 //the control will obey the SS_LEFT (0), SS_CENTER (1), and SS_RIGHT (2) styles
 //the control will send STN_CLICKED via WM_COMMAND when the link itself is clicked
 
@@ -241,7 +239,7 @@ __inline static int Utils_RestoreWindowPositionNoMove(HWND hwnd,HANDLE hContact,
 
 /************************ Colour Picker Control (0.1.2.1+) **********************/
 
-#define WNDCLASS_COLOURPICKER  _T("ColourPicker")
+#define WNDCLASS_COLOURPICKER  "ColourPicker"
 
 #define CPM_SETCOLOUR          0x1000	  //lParam=new colour
 #define CPM_GETCOLOUR          0x1001	  //returns colour
@@ -272,7 +270,7 @@ __inline static int Utils_RestoreWindowPositionNoMove(HWND hwnd,HANDLE hContact,
 #define MS_UTILS_GETBITMAPFILTERSTRINGS  "Utils/GetBitmapFilterStrings"
 
 //Saves a path to a relative path (from the miranda directory)
-//Only saves as a relative path if the file is in the miranda directory (or
+//Only saves as a relative path if the file is in the miranda directory (or 
 //sub directory)
 //wParam=(WPARAM)(char*)pszPath
 //lParam=(LPARAM)(char*)pszNewPath
@@ -289,18 +287,6 @@ __inline static int Utils_RestoreWindowPositionNoMove(HWND hwnd,HANDLE hContact,
 //Returns numbers of chars copied.
 #define MS_UTILS_PATHTOABSOLUTE "Utils/PathToAbsolute"
 
-//Unicode versions (0.6.2+)
-#ifdef _UNICODE
-  #define MS_UTILS_PATHTORELATIVEW "Utils/PathToRelativeW"
-  #define MS_UTILS_PATHTOABSOLUTEW "Utils/PathToAbsoluteW"
-
-  #define MS_UTILS_PATHTORELATIVET MS_UTILS_PATHTORELATIVEW
-  #define MS_UTILS_PATHTOABSOLUTET MS_UTILS_PATHTOABSOLUTEW
-#else
-  #define MS_UTILS_PATHTORELATIVET MS_UTILS_PATHTORELATIVE
-  #define MS_UTILS_PATHTOABSOLUTET MS_UTILS_PATHTOABSOLUTE
-#endif
-
 // Added in 0.4.0.1
 // Here are some string wrappers that are more safe than the win32 versions
 
@@ -315,17 +301,6 @@ static __inline int mir_snprintf(char *buffer, size_t count, const char* fmt, ..
 	return len;
 }
 
-static __inline int mir_sntprintf(TCHAR *buffer, size_t count, const TCHAR* fmt, ...) {
-	va_list va;
-	int len;
-
-	va_start(va, fmt);
-	len = _vsntprintf(buffer, count-1, fmt, va);
-	va_end(va);
-	buffer[count-1] = 0;
-	return len;
-}
-
 static __inline int mir_vsnprintf(char *buffer, size_t count, const char* fmt, va_list va) {
 	int len;
 
@@ -334,11 +309,6 @@ static __inline int mir_vsnprintf(char *buffer, size_t count, const char* fmt, v
 	return len;
 }
 
-// allows to include TCHAR* strings into mir_snprintf and NetLib_Logf calls
-#if defined( _UNICODE )
-	#define TCHAR_STR_PARAM "%S"
-#else
-	#define TCHAR_STR_PARAM "%s"
-#endif
-
 #endif // M_UTILS_H__
+
+

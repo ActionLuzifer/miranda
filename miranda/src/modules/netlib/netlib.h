@@ -2,7 +2,7 @@
 
 Miranda IM: the free IM client for Microsoft* Windows*
 
-Copyright 2000-2007 Miranda ICQ/IM project, 
+Copyright 2000-2003 Miranda ICQ/IM project, 
 all portions of this codebase are copyrighted to the people 
 listed in contributors.txt.
 
@@ -61,7 +61,7 @@ struct NetlibConnection {
 	HANDLE hOkToCloseEvent;
 	LONG dontCloseNow;
 	struct NetlibNestedCriticalSection ncsSend,ncsRecv;
-	HANDLE hNtlmSecurity;
+	HINSTANCE hInstSecurityDll;
 	struct NetlibHTTPProxyPacketQueue * pHttpProxyPacketQueue;
 	int pollingTimeout;
 };
@@ -70,7 +70,6 @@ struct NetlibBoundPort {
 	int handleType;
 	SOCKET s;
 	WORD wPort;
-	WORD wExPort;
 	struct NetlibUser *nlu;
 	NETLIBNEWCONNECTIONPROC_V2 pfnNewConnectionV2;
 	HANDLE hThread;
@@ -107,7 +106,6 @@ int NetlibHttpRecvHeaders(WPARAM wParam,LPARAM lParam);
 int NetlibHttpFreeRequestStruct(WPARAM wParam,LPARAM lParam);
 int NetlibHttpTransaction(WPARAM wParam,LPARAM lParam);
 void NetlibHttpSetLastErrorUsingHttpResult(int result);
-NETLIBHTTPREQUEST* NetlibHttpRecv(HANDLE hConnection, DWORD hflags, DWORD dflags);
 
 //netlibhttpproxy.c
 int NetlibInitHttpConnection(struct NetlibConnection *nlc,struct NetlibUser *nlu,NETLIBOPENCONNECTION *nloc);
@@ -141,21 +139,6 @@ int NetlibSend(WPARAM wParam,LPARAM lParam);
 int NetlibRecv(WPARAM wParam,LPARAM lParam);
 int NetlibSelect(WPARAM wParam,LPARAM lParam);
 int NetlibSelectEx(WPARAM wParam,LPARAM lParam);
-
-//netlibupnp.c
-BOOL NetlibUPnPAddPortMapping(WORD intport, char *proto, 
-							  WORD *extport, DWORD *extip, BOOL search);
-void NetlibUPnPDeletePortMapping(WORD extport, char* proto);
-void NetlibUPnPInit(void);
-void NetlibUPnPDestroy(void);
-
-//netlibsecurity.c
-void   NetlibSecurityInit(void);
-void   NetlibSecurityDestroy(void);
-void   NetlibDestroySecurityProvider(char* provider, HANDLE hSecurity);
-HANDLE NetlibInitSecurityProvider(char* provider);
-char*  NtlmCreateResponseFromChallenge(HANDLE hSecurity, char *szChallenge);
-
 
 static __inline int NLSend(struct NetlibConnection *nlc,const char *buf,int len,int flags) {
 	NETLIBBUFFER nlb={(char*)buf,len,flags};

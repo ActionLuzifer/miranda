@@ -2,7 +2,7 @@
 
 Miranda IM: the free IM client for Microsoft* Windows*
 
-Copyright 2000-2007 Miranda ICQ/IM project, 
+Copyright 2000-2003 Miranda ICQ/IM project, 
 all portions of this codebase are copyrighted to the people 
 listed in contributors.txt.
 
@@ -20,7 +20,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
-#include "commonheaders.h"
+#include "../../core/commonheaders.h"
 #include "netlib.h"
 
 extern CRITICAL_SECTION csNetlibUser;
@@ -82,18 +82,18 @@ static int NetlibInitSocks4Connection(struct NetlibConnection *nlc,struct Netlib
 	int nUserLen,nHostLen,len;
 	BYTE reply[8];
 
-	nUserLen=lstrlenA(nlu->settings.szProxyAuthUser);
-	nHostLen=lstrlenA(nloc->szHost);
-	pInit=(PBYTE)mir_alloc(10+nUserLen+nHostLen);
+	nUserLen=lstrlen(nlu->settings.szProxyAuthUser);
+	nHostLen=lstrlen(nloc->szHost);
+	pInit=(PBYTE)malloc(10+nUserLen+nHostLen);
 	pInit[0]=4;   //SOCKS4
 	pInit[1]=1;   //connect
 	*(PWORD)(pInit+2)=htons(nloc->wPort);
 	if(nlu->settings.szProxyAuthUser==NULL) pInit[8]=0;
-	else lstrcpyA(pInit+8,nlu->settings.szProxyAuthUser);
+	else lstrcpy(pInit+8,nlu->settings.szProxyAuthUser);
 	if(nlu->settings.dnsThroughProxy) {
 		if((*(PDWORD)(pInit+4)=inet_addr(nloc->szHost))==INADDR_NONE) {
 			*(PDWORD)(pInit+4)=0x01000000;
-			lstrcpyA(pInit+9+nUserLen,nloc->szHost);
+			lstrcpy(pInit+9+nUserLen,nloc->szHost);
 			len=10+nUserLen+nHostLen;
 		}
 		else len=9+nUserLen;
@@ -101,27 +101,27 @@ static int NetlibInitSocks4Connection(struct NetlibConnection *nlc,struct Netlib
 	else {
 		*(PDWORD)(pInit+4)=DnsLookup(nlu,nloc->szHost);
 		if(*(PDWORD)(pInit+4)==0) {
-			mir_free(pInit);
+			free(pInit);
 			return 0;
 		}
 		len=9+nUserLen;
 	}
 	if(NLSend(nlc,pInit,len,MSG_DUMPPROXY)==SOCKET_ERROR) {
 		Netlib_Logf(nlu,"%s %d: %s() failed (%u)",__FILE__,__LINE__,"NLSend",GetLastError());
-		mir_free(pInit);
+		free(pInit);
 		return 0;
 	}
-	mir_free(pInit);
+	free(pInit);
 
 	if(!WaitUntilReadable(nlc->s,30000)) {
 		Netlib_Logf(nlu,"%s %d: %s() failed (%u)",__FILE__,__LINE__,"WaitUntilReadable",GetLastError());
 		return 0;
 	}
 
-	len=NLRecv(nlc,reply,SIZEOF(reply),MSG_DUMPPROXY);
-	if(len < sizeof(reply) || reply[1]!=90) {
-		if(len != SOCKET_ERROR) {
-			if (len < SIZEOF(reply)) SetLastError(ERROR_BAD_FORMAT);
+	len=NLRecv(nlc,reply,sizeof(reply),MSG_DUMPPROXY);
+	if(len<sizeof(reply) || reply[1]!=90) {
+		if(len!=SOCKET_ERROR) {
+			if(len<sizeof(reply)) SetLastError(ERROR_BAD_FORMAT);
 			else switch(reply[1]) {
 				case 91: SetLastError(ERROR_ACCESS_DENIED); break;
 				case 92: SetLastError(ERROR_CONNECTION_UNAVAIL); break;
@@ -168,9 +168,9 @@ static int NetlibInitSocks5Connection(struct NetlibConnection *nlc,struct Netlib
 		int nUserLen,nPassLen;
 		PBYTE pAuthBuf;
 
-		nUserLen=lstrlenA(nlu->settings.szProxyAuthUser);
-		nPassLen=lstrlenA(nlu->settings.szProxyAuthPassword);
-		pAuthBuf=(PBYTE)mir_alloc(3+nUserLen+nPassLen);
+		nUserLen=lstrlen(nlu->settings.szProxyAuthUser);
+		nPassLen=lstrlen(nlu->settings.szProxyAuthPassword);
+		pAuthBuf=(PBYTE)malloc(3+nUserLen+nPassLen);
 		pAuthBuf[0]=1;		//auth version
 		pAuthBuf[1]=nUserLen;
 		memcpy(pAuthBuf+2,nlu->settings.szProxyAuthUser,nUserLen);
@@ -178,17 +178,17 @@ static int NetlibInitSocks5Connection(struct NetlibConnection *nlc,struct Netlib
 		memcpy(pAuthBuf+3+nUserLen,nlu->settings.szProxyAuthPassword,nPassLen);
 		if(NLSend(nlc,pAuthBuf,3+nUserLen+nPassLen,MSG_DUMPPROXY)==SOCKET_ERROR) {
 			Netlib_Logf(nlu,"%s %d: %s() failed (%u)",__FILE__,__LINE__,"NLSend",GetLastError());
-			mir_free(pAuthBuf);
+			free(pAuthBuf);
 			return 0;
 		}
-		mir_free(pAuthBuf);
+		free(pAuthBuf);
 
 		if(!WaitUntilReadable(nlc->s,10000)) {
 			Netlib_Logf(nlu,"%s %d: %s() failed (%u)",__FILE__,__LINE__,"WaitUntilReadable",GetLastError());
 			return 0;
 		}
 
-		len=NLRecv(nlc,buf,SIZEOF(buf),MSG_DUMPPROXY);
+		len=NLRecv(nlc,buf,sizeof(buf),MSG_DUMPPROXY);
 		if(len<2 || buf[1]) {
 			if(len!=SOCKET_ERROR) {
 				if(len<2) SetLastError(ERROR_BAD_FORMAT);
@@ -205,7 +205,7 @@ static int NetlibInitSocks5Connection(struct NetlibConnection *nlc,struct Netlib
 
 		if(nlu->settings.dnsThroughProxy) {
 			if((hostIP=inet_addr(nloc->szHost))==INADDR_NONE)
-				nHostLen=lstrlenA(nloc->szHost)+1;
+				nHostLen=lstrlen(nloc->szHost)+1;
 			else nHostLen=4;
 		}
 		else {
@@ -213,7 +213,7 @@ static int NetlibInitSocks5Connection(struct NetlibConnection *nlc,struct Netlib
 				return 0;
 			nHostLen=4;
 		}
-		pInit=(PBYTE)mir_alloc(6+nHostLen);
+		pInit=(PBYTE)malloc(6+nHostLen);
 		pInit[0]=5;   //SOCKS5
 		pInit[1]=1;   //connect
 		pInit[2]=0;   //reserved
@@ -229,10 +229,10 @@ static int NetlibInitSocks5Connection(struct NetlibConnection *nlc,struct Netlib
 		*(PWORD)(pInit+4+nHostLen)=htons(nloc->wPort);
 		if(NLSend(nlc,pInit,6+nHostLen,MSG_DUMPPROXY)==SOCKET_ERROR) {
 			Netlib_Logf(nlu,"%s %d: %s() failed (%u)",__FILE__,__LINE__,"NLSend",GetLastError());
-			mir_free(pInit);
+			free(pInit);
 			return 0;
 		}
-		mir_free(pInit);
+		free(pInit);
 	}
 
 	if(!WaitUntilReadable(nlc->s,30000)) {
@@ -240,7 +240,7 @@ static int NetlibInitSocks5Connection(struct NetlibConnection *nlc,struct Netlib
 		return 0;
 	}
 
-	len=NLRecv(nlc,buf,SIZEOF(buf),MSG_DUMPPROXY);
+	len=NLRecv(nlc,buf,sizeof(buf),MSG_DUMPPROXY);
 	if(len<7 || buf[0]!=5 || buf[1]) {
 		if(len!=SOCKET_ERROR) {
 			if(len<7 || buf[0]!=5) SetLastError(ERROR_BAD_FORMAT);
@@ -273,9 +273,9 @@ static int NetlibInitHttpsConnection(struct NetlibConnection *nlc,struct NetlibU
 
 	nlhrSend.cbSize=sizeof(nlhrSend);
 	nlhrSend.requestType=REQUEST_CONNECT;
-	nlhrSend.flags=NLHRF_DUMPPROXY|NLHRF_SMARTAUTHHEADER|NLHRF_HTTP11;
+	nlhrSend.flags=NLHRF_DUMPPROXY|NLHRF_SMARTAUTHHEADER;
 	if(nlu->settings.dnsThroughProxy) {
-		mir_snprintf(szUrl,SIZEOF(szUrl),"%s:%u",nloc->szHost,nloc->wPort);
+		mir_snprintf(szUrl,sizeof(szUrl),"%s:%u",nloc->szHost,nloc->wPort);
 		if(inet_addr(nloc->szHost)==INADDR_NONE) {
 			httpHeaders[0].szName="Host";
 			httpHeaders[0].szValue=szUrl;
@@ -287,7 +287,7 @@ static int NetlibInitHttpsConnection(struct NetlibConnection *nlc,struct NetlibU
 		DWORD ip=DnsLookup(nlu,nloc->szHost);
 		if(ip==0) return 0;
 		addr.S_un.S_addr=ip;
-		mir_snprintf(szUrl,SIZEOF(szUrl),"%s:%u",inet_ntoa(addr),nloc->wPort);
+		mir_snprintf(szUrl,sizeof(szUrl),"%s:%u",inet_ntoa(addr),nloc->wPort);
 	}
 	nlhrSend.szUrl=szUrl;
 	nlhrSend.headers=httpHeaders;
@@ -312,14 +312,14 @@ static void FreePartiallyInitedConnection(struct NetlibConnection *nlc)
 	DWORD dwOriginalLastError=GetLastError();
 
 	if(nlc->s!=INVALID_SOCKET) closesocket(nlc->s);
-	if(nlc->nlhpi.szHttpPostUrl) mir_free(nlc->nlhpi.szHttpPostUrl);
-	if(nlc->nlhpi.szHttpGetUrl) mir_free(nlc->nlhpi.szHttpGetUrl);
-	NetlibDestroySecurityProvider("NTLM", nlc->hNtlmSecurity);
+	if(nlc->nlhpi.szHttpPostUrl) free(nlc->nlhpi.szHttpPostUrl);
+	if(nlc->nlhpi.szHttpGetUrl) free(nlc->nlhpi.szHttpGetUrl);
+	if(nlc->hInstSecurityDll) FreeLibrary(nlc->hInstSecurityDll);
 	NetlibDeleteNestedCS(&nlc->ncsSend);
 	NetlibDeleteNestedCS(&nlc->ncsRecv);
 	CloseHandle(nlc->hOkToCloseEvent);
 	DeleteCriticalSection(&nlc->csHttpSequenceNums);
-	mir_free(nlc);
+	free(nlc);
 	SetLastError(dwOriginalLastError);
 }
 
@@ -429,13 +429,13 @@ int NetlibOpenConnection(WPARAM wParam,LPARAM lParam)
 		SetLastError(ERROR_INVALID_PARAMETER);
 		return (int)(HANDLE)NULL;
 	}
-	nlc=(struct NetlibConnection*)mir_calloc(sizeof(struct NetlibConnection));
+	nlc=(struct NetlibConnection*)calloc(1,sizeof(struct NetlibConnection));
 	nlc->handleType=NLH_CONNECTION;
 	nlc->nlu=nlu;
 	nlc->s=socket(AF_INET,SOCK_STREAM,0);
 	if(nlc->s==INVALID_SOCKET) {
 		Netlib_Logf(nlu,"%s %d: %s() failed (%u)",__FILE__,__LINE__,"socket",WSAGetLastError());
-		mir_free(nlc);
+		free(nlc);
 		return (int)(HANDLE)NULL;
 	}
 	if (nlu->settings.specifyOutgoingPorts && nlu->settings.szOutgoingPorts) 
@@ -478,7 +478,7 @@ int NetlibOpenConnection(WPARAM wParam,LPARAM lParam)
 	NetlibInitializeNestedCS(&nlc->ncsSend);
 	NetlibInitializeNestedCS(&nlc->ncsRecv);
 	if(nlu->settings.useProxy && (nlu->settings.proxyType==PROXYTYPE_HTTP || nlu->settings.proxyType==PROXYTYPE_HTTPS) && nlu->settings.useProxyAuth && nlu->settings.useProxyAuthNtlm)
-		nlc->hNtlmSecurity = NetlibInitSecurityProvider("NTLM");
+		nlc->hInstSecurityDll=LoadLibrary("security.dll");
 
 	nlc->sinProxy.sin_family=AF_INET;
 	if(nlu->settings.useProxy) {
