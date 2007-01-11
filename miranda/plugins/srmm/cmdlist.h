@@ -1,9 +1,7 @@
 /*
-SRMM
+AOL Instant Messenger Plugin for Miranda IM
 
-Copyright 2000-2005 Miranda ICQ/IM project, 
-all portions of this codebase are copyrighted to the people 
-listed in contributors.txt.
+Copyright (c) 2003 Robert Rainwater
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License

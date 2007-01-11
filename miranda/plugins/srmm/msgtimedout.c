@@ -1,7 +1,7 @@
 /*
 SRMM
 
-Copyright 2000-2005 Miranda ICQ/IM project, 
+Copyright 2000-2003 Miranda ICQ/IM project, 
 all portions of this codebase are copyrighted to the people 
 listed in contributors.txt.
 
@@ -19,17 +19,19 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
-
 #include "commonheaders.h"
 #pragma hdrstop
 #include "msgs.h"
 
+
 BOOL CALLBACK ErrorDlgProc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 {
-	char* pszError = ( char* )GetWindowLong(hwndDlg, GWL_USERDATA);
 
+	char *pszError = NULL;
+
+	pszError = (char *) GetWindowLong(hwndDlg, GWL_USERDATA);
 	switch (msg) {
-	case WM_INITDIALOG:
+		case WM_INITDIALOG:
 		{
 			RECT rc, rcParent;
 
@@ -48,24 +50,25 @@ BOOL CALLBACK ErrorDlgProc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 			GetWindowRect(GetParent(hwndDlg), &rcParent);
 			SetWindowPos(hwndDlg, 0, (rcParent.left + rcParent.right - (rc.right - rc.left)) / 2, (rcParent.top + rcParent.bottom - (rc.bottom - rc.top)) / 2, 0, 0, SWP_NOZORDER | SWP_NOSIZE);
 		}
-		return TRUE;
+			return TRUE;
 
-	case WM_COMMAND:
-		switch (LOWORD(wParam)) {
-		case IDOK:
-			if (pszError)
-				free(pszError);
-			SendMessage(GetParent(hwndDlg), DM_ERRORDECIDED, MSGERROR_RETRY, 0);
-			DestroyWindow(hwndDlg);
+		case WM_COMMAND:
+			switch (LOWORD(wParam)) {
+				case IDOK:
+					if (pszError)
+						free(pszError);
+					SendMessage(GetParent(hwndDlg), DM_ERRORDECIDED, MSGERROR_RETRY, 0);
+					DestroyWindow(hwndDlg);
+					break;
+				case IDCANCEL:
+					if (pszError)
+						free(pszError);
+					SendMessage(GetParent(hwndDlg), DM_ERRORDECIDED, MSGERROR_CANCEL, 0);
+					DestroyWindow(hwndDlg);
+					break;
+			}
 			break;
-		case IDCANCEL:
-			if (pszError)
-				free(pszError);
-			SendMessage(GetParent(hwndDlg), DM_ERRORDECIDED, MSGERROR_CANCEL, 0);
-			DestroyWindow(hwndDlg);
-			break;
-		}
-		break;
 	}
 	return FALSE;
+
 }

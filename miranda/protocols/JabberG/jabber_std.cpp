@@ -3,7 +3,7 @@ Plugin of Miranda IM for communicating with users of the MSN Messenger protocol.
 Copyright ( c ) 2003-5 George Hazan.
 Copyright ( c ) 2002-3 Richard Hughes ( original version ).
 
-Miranda IM: the mir_free icq client for MS Windows
+Miranda IM: the free icq client for MS Windows
 Copyright ( C ) 2000-2002 Richard Hughes, Roland Rabien & Tristan Van de Vreede
 
 This program is free software; you can redistribute it and/or
@@ -19,17 +19,11 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
-
-File name      : $Source: /cvsroot/miranda/miranda/protocols/JabberG/jabber_std.cpp,v $
-Revision       : $Revision$
-Last change on : $Date$
-Last change by : $Author$
-
 */
 
 #include "jabber.h"
 
-HANDLE __stdcall JCreateServiceFunction(
+HANDLE __stdcall JCreateServiceFunction( 
 	const char* szService,
 	MIRANDASERVICE serviceProc )
 {
@@ -39,35 +33,14 @@ HANDLE __stdcall JCreateServiceFunction(
 	return CreateServiceFunction( str, serviceProc );
 }
 
-HANDLE __stdcall JCreateHookableEvent(
-	const char* szService )
-{
-	char str[ MAXMODULELABELLENGTH ];
-	strcpy( str, jabberProtoName );
-	strcat( str, szService );
-	return CreateHookableEvent( str );
-}
-
-#if !defined( _DEBUG )
 int __stdcall JCallService( const char* szSvcName, WPARAM wParam, LPARAM lParam )
 {
 	return CallService( szSvcName, wParam, lParam );
-}
-#endif
-
-void __stdcall JDeleteSetting( HANDLE hContact, const char* valueName )
-{
-   DBDeleteContactSetting( hContact, jabberProtoName, valueName );
 }
 
 DWORD __stdcall JGetByte( const char* valueName, int parDefltValue )
 {
 	return DBGetContactSettingByte( NULL, jabberProtoName, valueName, parDefltValue );
-}
-
-DWORD __stdcall JGetByte( HANDLE hContact, const char* valueName, int parDefltValue )
-{
-	return DBGetContactSettingByte( hContact, jabberProtoName, valueName, parDefltValue );
 }
 
 char* __stdcall JGetContactName( HANDLE hContact )
@@ -95,16 +68,6 @@ int __stdcall JGetStaticString( const char* valueName, HANDLE hContact, char* de
 		return 1;
 
 	return ( dbv.type != DBVT_ASCIIZ );
-}
-
-int __stdcall JGetStringUtf( HANDLE hContact, char* valueName, DBVARIANT* dbv )
-{
-	return DBGetContactSettingStringUtf( hContact, jabberProtoName, valueName, dbv );
-}
-
-int __stdcall JGetStringT( HANDLE hContact, char* valueName, DBVARIANT* dbv )
-{
-	return DBGetContactSettingTString( hContact, jabberProtoName, valueName, dbv );
 }
 
 WORD __stdcall JGetWord( HANDLE hContact, const char* valueName, int parDefltValue )
@@ -148,16 +111,6 @@ DWORD __stdcall JSetDword( HANDLE hContact, const char* valueName, DWORD parValu
 DWORD __stdcall JSetString( HANDLE hContact, const char* valueName, const char* parValue )
 {
 	return DBWriteContactSettingString( hContact, jabberProtoName, valueName, parValue );
-}
-
-DWORD __stdcall JSetStringT( HANDLE hContact, const char* valueName, const TCHAR* parValue )
-{
-	return DBWriteContactSettingTString( hContact, jabberProtoName, valueName, parValue );
-}
-
-DWORD __stdcall JSetStringUtf( HANDLE hContact, const char* valueName, const char* parValue )
-{
-	return DBWriteContactSettingStringUtf( hContact, jabberProtoName, valueName, parValue );
 }
 
 DWORD __stdcall JSetWord( HANDLE hContact, const char* valueName, int parValue )

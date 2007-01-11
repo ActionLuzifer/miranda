@@ -5,7 +5,7 @@
 // Copyright © 2000,2001 Richard Hughes, Roland Rabien, Tristan Van de Vreede
 // Copyright © 2001,2002 Jon Keating, Richard Hughes
 // Copyright © 2002,2003,2004 Martin Öberg, Sam Kothari, Robert Rainwater
-// Copyright © 2004,2005,2006 Joe Kucera
+// Copyright © 2004,2005 Joe Kucera
 // 
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -23,7 +23,7 @@
 //
 // -----------------------------------------------------------------------------
 //
-// File name      : $Source: /cvsroot/miranda/miranda/protocols/IcqOscarJ/UI/loginpassword.c,v $
+// File name      : $Source$
 // Revision       : $Revision$
 // Last change on : $Date$
 // Last change by : $Author$
@@ -37,69 +37,76 @@
 #include "icqoscar.h"
 
 
+
+extern HINSTANCE hInst;
+extern char gpszICQProtoName[MAX_PATH];
+extern int gnCurrentStatus;
+
 BOOL CALLBACK LoginPasswdDlgProc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam);
+
 
 
 void RequestPassword()
 {
+
   DialogBox(hInst, MAKEINTRESOURCE(IDD_LOGINPW), NULL, LoginPasswdDlgProc);
+
 }
 
 
 BOOL CALLBACK LoginPasswdDlgProc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 {
+
   switch (msg)
   {
+
     case WM_INITDIALOG:
       {
-        char pszUIN[MAX_PATH];
-        char str[MAX_PATH];
+
+        char pszUIN[128];
         DWORD dwUin;
 
-        ICQTranslateDialog(hwndDlg);
-        SendMessage(hwndDlg, WM_SETICON, ICON_BIG, (LPARAM)LoadIcon(hInst, MAKEINTRESOURCE(IDI_ICQ)));
-        dwUin = ICQGetContactSettingUIN(NULL);
-        null_snprintf(pszUIN, 128, ICQTranslateUtfStatic("Enter a password for UIN %u:", str), dwUin);
-        SetDlgItemTextUtf(hwndDlg, IDC_INSTRUCTION, pszUIN);
-
-        SendDlgItemMessage(hwndDlg, IDC_LOGINPW, EM_LIMITTEXT, 10, 0);
-
-        CheckDlgButton(hwndDlg, IDC_SAVEPASS, ICQGetContactSettingByte(NULL, "RememberPass", 0));
+        TranslateDialogDefault(hwndDlg);
+        SendMessage(hwndDlg, WM_SETICON, ICON_BIG, (LPARAM) LoadIcon(hInst, MAKEINTRESOURCE(IDI_ICQ)));
+        dwUin = DBGetContactSettingDword(NULL, gpszICQProtoName, UNIQUEIDSETTING, 0);
+        _snprintf(pszUIN, 128, Translate("Enter a password for UIN %u:"), dwUin);
+        SetDlgItemText(hwndDlg, IDC_INSTRUCTION, pszUIN);
       }
-      break;
+		  break;
 
     case WM_CLOSE:
 
       EndDialog(hwndDlg, 0);
       break;
-    
+		
     case WM_COMMAND:
       {
+			
         switch (LOWORD(wParam))
         {
+				
           case IDOK:
             {
-              gbRememberPwd = (BYTE)IsDlgButtonChecked(hwndDlg, IDC_SAVEPASS);
-              ICQWriteContactSettingByte(NULL, "RememberPass", gbRememberPwd);
+              char str[128];
 
-              GetDlgItemTextA(hwndDlg, IDC_LOGINPW, gpszPassword, sizeof(gpszPassword));
+              GetDlgItemText(hwndDlg, IDC_LOGINPW, str, sizeof(str));
+					    icq_login(str);
+					    EndDialog(hwndDlg, IDOK);
 
-              icq_login(gpszPassword);
-
-              EndDialog(hwndDlg, IDOK);
             }
-            break;
+				    break;
 
           case IDCANCEL:
-            {
-              SetCurrentStatus(ID_STATUS_OFFLINE);
-
-              EndDialog(hwndDlg, IDCANCEL);
-            }
+            gnCurrentStatus = ID_STATUS_OFFLINE;
+            ProtoBroadcastAck(gpszICQProtoName, NULL, ACKTYPE_STATUS, ACKRESULT_SUCCESS,
+              (HANDLE)ID_STATUS_OFFLINE, ID_STATUS_OFFLINE);
+            EndDialog(hwndDlg, IDCANCEL);
             break;
+
         }
       }
       break;
+
   }
 
   return FALSE;

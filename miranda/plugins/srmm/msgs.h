@@ -1,7 +1,7 @@
 /*
 SRMM
 
-Copyright 2000-2005 Miranda ICQ/IM project, 
+Copyright 2000-2003 Miranda ICQ/IM project, 
 all portions of this codebase are copyrighted to the people 
 listed in contributors.txt.
 
@@ -31,7 +31,6 @@ struct NewMessageWindowLParam
 {
 	HANDLE hContact;
 	const char *szInitialText;
-	int isWchar;
 };
 
 struct MessageWindowData
@@ -65,8 +64,6 @@ struct MessageWindowData
 	WORD wOldStatus;
 	TCmdList *cmdList;
 	TCmdList *cmdListCurrent;
-	int bIsRtl, bIsFirstAppend, bIsAutoRTL;
-	int lastEventType;
 };
 
 #define HM_EVENTSENT         (WM_USER+10)
@@ -89,8 +86,6 @@ struct MessageWindowData
 #define DM_UPDATESIZEBAR     (WM_USER+27)
 #define HM_AVATARACK         (WM_USER+28)
 #define HM_ACKEVENT          (WM_USER+29)
-#define DM_GETWINDOWSTATE    (WM_USER+30)
-#define DM_STATUSICONCHANGE  (WM_USER+31)
 
 #define EVENTTYPE_STATUSCHANGE 25368
 
@@ -121,7 +116,7 @@ void FreeMsgLogIcons(void);
 #define MSGFONTID_MESSAGEAREA 8
 #define MSGFONTID_NOTICE      9
 
-void LoadMsgDlgFont(int i, LOGFONT* lf, COLORREF* colour);
+void LoadMsgDlgFont(int i, LOGFONTA * lf, COLORREF * colour);
 extern const int msgDlgFontCount;
 
 #define LOADHISTORY_UNREAD    0
@@ -130,12 +125,12 @@ extern const int msgDlgFontCount;
 
 #define SRMMMOD                    "SRMM"
 
-#define SRMSGSET_POPFLAGS          "PopupFlags"
-#define SRMSGDEFSET_POPFLAGS       0
 #define SRMSGSET_SHOWBUTTONLINE    "ShowButtonLine"
 #define SRMSGDEFSET_SHOWBUTTONLINE 1
 #define SRMSGSET_SHOWINFOLINE      "ShowInfoLine"
 #define SRMSGDEFSET_SHOWINFOLINE   1
+#define SRMSGSET_AUTOPOPUP         "AutoPopupMsg"
+#define SRMSGDEFSET_AUTOPOPUP      0
 #define SRMSGSET_AUTOMIN           "AutoMin"
 #define SRMSGDEFSET_AUTOMIN        0
 #define SRMSGSET_AUTOCLOSE         "AutoClose"
@@ -177,8 +172,6 @@ extern const int msgDlgFontCount;
 #define SRMSGDEFSET_HIDENAMES      1
 #define SRMSGSET_SHOWTIME          "ShowTime"
 #define SRMSGDEFSET_SHOWTIME       1
-#define SRMSGSET_SHOWSECS          "ShowSeconds"
-#define SRMSGDEFSET_SHOWSECS       1
 #define SRMSGSET_SHOWDATE          "ShowDate"
 #define SRMSGDEFSET_SHOWDATE       0
 #define SRMSGSET_SHOWSTATUSCH      "ShowStatusChanges"

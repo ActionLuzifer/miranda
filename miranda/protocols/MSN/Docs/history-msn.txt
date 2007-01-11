@@ -4,84 +4,10 @@ Legend:
 [-] deleted
 [!] bug fixed
 
-Version 0.7.0.1
-===============
-[+] IcoLib Integration
-
-Version 0.5.0.3
-===============
-[+] added support for custom smileys
-[!] bug 0001996 fixed: No Contact Idetification When an Unsupport Feature Even Occurs
-
-Version 0.5.0.1
-===============
-[!] bug 0002083 fixed: Filetransfer suddenly stops
-[!] bug 0002067 fixed: MSN connection fails in gateway mode through http-proxy (with authentication)
-[!] bug 0001584 fixed: Crash when sender cancels file send
-
-Version 0.4.3.1
-===============
-[!] bug 0001887 fixed: Sometimes getting Error 540 from server then disconnect.
-[!] fix for the invalid chars in the MSN chat
-
-Version 0.4.3.0
-===============
-[+] first Unicode version of the MSN plugin
-[!] wish 0001015: nudges (thanks Tweetie for a patch)
-[!] bug 0001532 fixed: Hotmail does not open from miranda
-[!] bug 0001536 fixed: Contacts displayed as online while MSN isn't connected yet
-
-Version 0.4.1.3
-===============
-[+] support for dropping idle switchboards was added
-
-Version 0.4.1.2
-===============
-[+] Unicode in the nicknames and groups. Requires clistw &  Miranda
-0.4.3 bld. 32 or later
-[*] avatar setting dialog was moved to View/Change User Details section
-[!] fix for initial email notification in the MSNP11 mode
-[!] fix for the "User is already in your contact list" error
-[!] bug 0001427 fixed: Error 540 during login on slow connections
-[!] bug 0001468 fixed: MSN 7.5 users cannot load Miranda users avatar.
-[!] BYE command was handled incorrectly
-[!] fix for the old MSN file transfers: a received file cannot be opened
-
-Version 0.4.1.1
-===============
-[!]  fixed a bug when Miranda hangs up on exit, when the
-clist_modern plugin is installed
-
-Version 0.4.0.4
-===============
-[!] important bugfix: MSNP11 status messages may block the login
-process.
-[!] fix for the problems with the keep-alive thread
-[*] numerous minor changes and bugfixes.
-
-Version 0.4.0.3
-===============
-[+] MSNP11 support added
-[+] wish #0001239 fixed: MSN Personal Status Messages
-[+] WebMessenger detection added
-[!] fix for the GPF on exit
-
-Version 0.4.0.2
-===============
-[!] bug #0000913 fixed: no zero-termination after _snprintf (potential
-security issue)
-[!] bug #0001176 fixed: can't send messages to the MSN WebMessenger
-[!] bug #0001202 fixed: Can't delete received file directory
-[!] various memory leaks
-
 Version 0.4.0.1
 ===============
 [+] wish #0000971 fixed: Block & Unblock actions must be separated
-[+] wish #0000966 fixed: to show the warning when a  contact  tries
-to establish a audio/video/webcam conference with you.
 [-] removed support for old versions of Miranda.
-[!] bug #0000996 fixed: File transfer fails when auto-accept is on
-and file already exists in destination directory
 [!] fixes for minor string allocation problems.
 
 WARNING!!! All versions since this one require Miranda 0.4.x core.

@@ -18,7 +18,7 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
-#include "irc.h"
+#include "Irc.h"
 extern PREFERENCES*		prefs;
 extern char *			IRCPROTONAME;
 extern bool				bEcho;
@@ -33,9 +33,9 @@ static String FormatOutput (const CIrcMessage* pmsg)
 		if (pmsg->sCommand=="WALLOPS" && pmsg->parameters.size() >0)
 		{
 			char temp[200]; *temp = '\0';
-			mir_snprintf(temp, 499, Translate(	"WallOps from %s: " ), pmsg->prefix.sNick.c_str());
+			_snprintf(temp, 499, Translate(	"WallOps from %s: " ), pmsg->prefix.sNick.c_str());
 			sMessage = temp;
-			for(int i=0; i < (int)pmsg->parameters.size(); i++)
+			for(int i=0; i < pmsg->parameters.size(); i++)
 			{
 				sMessage = sMessage + pmsg->parameters[i];
 				if (i != pmsg->parameters.size()-1)
@@ -47,9 +47,9 @@ static String FormatOutput (const CIrcMessage* pmsg)
 		if (pmsg->sCommand=="301" && pmsg->parameters.size() >0)
 		{
 			char temp[500]; *temp = '\0';
-			mir_snprintf(temp, sizeof(temp), Translate(	"%s is away" ), pmsg->parameters[1].c_str());
+			_snprintf(temp, sizeof(temp), Translate(	"%s is away" ), pmsg->parameters[1].c_str());
 			sMessage = temp;
-			for(int i=2; i < (int)pmsg->parameters.size(); i++)
+			for(int i=2; i < pmsg->parameters.size(); i++)
 			{
 				sMessage = sMessage + ": " + pmsg->parameters[i];
 				if (i != pmsg->parameters.size()-1)
@@ -60,9 +60,9 @@ static String FormatOutput (const CIrcMessage* pmsg)
 		if (pmsg->sCommand=="INVITE" && pmsg->parameters.size() >1)
 		{
 			char temp[256]; *temp = '\0';
-			mir_snprintf(temp, 255, Translate(	"%s invites you to %s" ), pmsg->prefix.sNick.c_str(), pmsg->parameters[1].c_str());
+			_snprintf(temp, 255, Translate(	"%s invites you to %s" ), pmsg->prefix.sNick.c_str(), pmsg->parameters[1].c_str());
 			sMessage = temp;
-			for(int i=2; i < (int)pmsg->parameters.size(); i++)
+			for(int i=2; i < pmsg->parameters.size(); i++)
 			{
 				sMessage = sMessage  +": "+ pmsg->parameters[i];
 				if (i != pmsg->parameters.size()-1)
@@ -79,7 +79,7 @@ static String FormatOutput (const CIrcMessage* pmsg)
 		if (pmsg->sCommand=="303")  // ISON command
 		{
 			sMessage= Translate("These are online: ");
-			for(int i=1; i < (int)pmsg->parameters.size(); i++)
+			for(int i=1; i < pmsg->parameters.size(); i++)
 			{
 				sMessage = sMessage + pmsg->parameters[i];
 				if (i != pmsg->parameters.size()-1)
@@ -110,16 +110,16 @@ static String FormatOutput (const CIrcMessage* pmsg)
 				tempstr.erase(tempstr.length()-1,1);
 				String type = GetWord(tempstr.c_str(), 0);
 				if(lstrcmpi(type.c_str(), "ping") == 0)
-					mir_snprintf(temp, 499, Translate(	"CTCP %s reply sent to %s" ), type.c_str(), pmsg->parameters[0].c_str());
+					_snprintf(temp, 499, Translate(	"CTCP %s reply sent to %s" ), type.c_str(), pmsg->parameters[0].c_str());
 				else
-					mir_snprintf(temp, 499, Translate(	"CTCP %s reply sent to %s: %s" ), type.c_str(), pmsg->parameters[0].c_str(), GetWordAddress(tempstr.c_str(), 1));
+					_snprintf(temp, 499, Translate(	"CTCP %s reply sent to %s: %s" ), type.c_str(), pmsg->parameters[0].c_str(), GetWordAddress(tempstr.c_str(), 1));
 				sMessage = temp;
 				goto THE_END;
 			}
 			
-			mir_snprintf(temp, 499, Translate(	"Notice to %s: " ), pmsg->parameters[0].c_str());
+			_snprintf(temp, 499, Translate(	"Notice to %s: " ), pmsg->parameters[0].c_str());
 			sMessage = temp;
-			for(int i=1; i < (int)pmsg->parameters.size(); i++)
+			for(int i=1; i < pmsg->parameters.size(); i++)
 			{
 				sMessage = sMessage + pmsg->parameters[i];
 				if (i != pmsg->parameters.size()-1)
@@ -140,7 +140,7 @@ static String FormatOutput (const CIrcMessage* pmsg)
 			return sMessage;
 		}
 		if (pmsg->parameters.size() >1)
-			for(int i=1; i < (int)pmsg->parameters.size(); i++)
+			for(int i=1; i < pmsg->parameters.size(); i++)
 			{
 				sMessage = sMessage+pmsg->parameters[i] + " ";
 			}
@@ -150,7 +150,7 @@ static String FormatOutput (const CIrcMessage* pmsg)
 		if( pmsg->prefix.sNick.length() )
 			sMessage= pmsg->prefix.sNick + " ";
 		sMessage =sMessage + pmsg->sCommand + " ";
-		for(int i=0; i < (int)pmsg->parameters.size(); i++)
+		for(int i=0; i < pmsg->parameters.size(); i++)
 		{
 			sMessage = sMessage + pmsg->parameters[i] + " ";
 		}

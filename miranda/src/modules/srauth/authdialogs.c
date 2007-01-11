@@ -2,7 +2,7 @@
 
 Miranda IM: the free IM client for Microsoft* Windows*
 
-Copyright 2000-2007 Miranda ICQ/IM project, 
+Copyright 2000-2003 Miranda ICQ/IM project, 
 all portions of this codebase are copyrighted to the people 
 listed in contributors.txt.
 
@@ -20,7 +20,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
-#include "commonheaders.h"
+#include "../../core/commonheaders.h"
 
 
 BOOL CALLBACK DlgProcAdded(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam)
@@ -46,7 +46,7 @@ BOOL CALLBACK DlgProcAdded(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 			ZeroMemory(&dbei,sizeof(dbei));
 			dbei.cbSize=sizeof(dbei);
 			dbei.cbBlob=CallService(MS_DB_EVENT_GETBLOBSIZE,(WPARAM)hDbEvent,0);
-			dbei.pBlob=mir_alloc(dbei.cbBlob);
+			dbei.pBlob=malloc(dbei.cbBlob);
 			CallService(MS_DB_EVENT_GET,(WPARAM)hDbEvent,(LPARAM)&dbei);
 			uin=(PDWORD)dbei.pBlob;
 			hcontact=*((PHANDLE)(dbei.pBlob+sizeof(DWORD)));
@@ -59,10 +59,10 @@ BOOL CALLBACK DlgProcAdded(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 			if (*uin) 
 				SetDlgItemInt(hwndDlg,IDC_NAME,*uin,FALSE);
 			else
-				SetDlgItemText(hwndDlg,IDC_NAME,TranslateT("(Unknown)"));
+				SetDlgItemText(hwndDlg,IDC_NAME,Translate("(Unknown)"));
 			SetWindowLong(hwndDlg,GWL_USERDATA,lParam);
 			SetWindowLong(GetDlgItem(hwndDlg,IDC_DETAILS),GWL_USERDATA,(LONG)hcontact);
-			mir_free(dbei.pBlob);
+			free(dbei.pBlob);
 			return TRUE;
 		}
 		case WM_DRAWITEM:
@@ -144,7 +144,7 @@ BOOL CALLBACK DenyReasonProc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lPara
 				dbei.cbSize=sizeof(dbei);
 				dbei.cbBlob=0;
 				CallService(MS_DB_EVENT_GET,(WPARAM)GetWindowLong(hwndDlg,GWL_USERDATA),(LPARAM)&dbei);
-				GetDlgItemTextA(hwndDlg,IDC_REASON,szReason,256);
+				GetDlgItemText(hwndDlg,IDC_REASON,szReason,256);
 				CallProtoService(dbei.szModule,PS_AUTHDENY,(WPARAM)GetWindowLong(hwndDlg,GWL_USERDATA),(LPARAM)szReason);
 			}
             // fall through
@@ -179,26 +179,24 @@ BOOL CALLBACK DlgProcAuthReq(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lPara
 			ZeroMemory(&dbei,sizeof(dbei));
 			dbei.cbSize=sizeof(dbei);
 			dbei.cbBlob=CallService(MS_DB_EVENT_GETBLOBSIZE,(WPARAM)hDbEvent,0);
-			dbei.pBlob=mir_alloc(dbei.cbBlob);
+			dbei.pBlob=malloc(dbei.cbBlob);
 			CallService(MS_DB_EVENT_GET,(WPARAM)hDbEvent,(LPARAM)&dbei);
 			uin=(PDWORD)dbei.pBlob;
-			hcontact=*(PHANDLE)(dbei.pBlob+sizeof(DWORD));
+			hcontact=(PHANDLE)(dbei.pBlob+sizeof(DWORD));
 			nick=(char *)(dbei.pBlob+sizeof(DWORD)+sizeof(HANDLE));
 			first=nick+strlen(nick)+1;
 			last=first+strlen(first)+1;
 			email=last+strlen(last)+1;
 			reason=email+strlen(email)+1;
-			SetDlgItemTextA(hwndDlg,IDC_NAME,nick[0]?nick:Translate("(Unknown)"));
-			if (hcontact == INVALID_HANDLE_VALUE || !DBGetContactSettingByte(hcontact, "CList", "NotOnList", 0))
-				ShowWindow(GetDlgItem(hwndDlg,IDC_ADD),FALSE);
+			SetDlgItemText(hwndDlg,IDC_NAME,nick[0]?nick:Translate("(Unknown)"));
 			if (*uin)
 				SetDlgItemInt(hwndDlg,IDC_UIN,*uin,FALSE);
-			else SetDlgItemText(hwndDlg,IDC_UIN,TranslateT("(Unknown)"));
-			SetDlgItemTextA(hwndDlg,IDC_MAIL,email[0]?email:Translate("(Unknown)"));
-			SetDlgItemTextA(hwndDlg,IDC_REASON,reason);
+			else SetDlgItemText(hwndDlg,IDC_UIN,Translate("(Unknown)"));
+			SetDlgItemText(hwndDlg,IDC_MAIL,email[0]?email:Translate("(Unknown)"));
+			SetDlgItemText(hwndDlg,IDC_REASON,reason);
 			SetWindowLong(hwndDlg,GWL_USERDATA,lParam);
-			SetWindowLong(GetDlgItem(hwndDlg,IDC_DETAILS),GWL_USERDATA,(LONG)hcontact);
-			mir_free(dbei.pBlob);
+			SetWindowLong(GetDlgItem(hwndDlg,IDC_DETAILS),GWL_USERDATA,(LONG)*hcontact);
+			free(dbei.pBlob);
 			return TRUE;
 		}
 		case WM_DRAWITEM:

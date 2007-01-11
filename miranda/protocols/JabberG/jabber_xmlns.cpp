@@ -2,7 +2,7 @@
 
 Jabber Protocol Plugin for Miranda IM
 Copyright ( C ) 2002-04  Santithorn Bunchua
-Copyright ( C ) 2005-06  George Hazan
+Copyright ( C ) 2005     George Hazan
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -18,22 +18,15 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-File name      : $Source: /cvsroot/miranda/miranda/protocols/JabberG/jabber_xmlns.cpp,v $
-Revision       : $Revision$
-Last change on : $Date$
-Last change by : $Author$
-
 */
 
 #include "jabber.h"
 
-/////////////////////////////////////////////////////////////////////////////////////////
-// JabberXmlnsBrowse
-
 void JabberXmlnsBrowse( XmlNode *iqNode, void *userdata )
 {
 	XmlNode *queryNode;
-	TCHAR *xmlns, *iqFrom, *iqType;
+	char* xmlns, *iqFrom, *iqType, *iqId;
+	char idStr[64];
 
 	if ( iqNode == NULL ) return;
 	if (( iqFrom=JabberXmlGetAttrValue( iqNode, "from" )) == NULL ) return;
@@ -41,34 +34,32 @@ void JabberXmlnsBrowse( XmlNode *iqNode, void *userdata )
 	if (( queryNode=JabberXmlGetChild( iqNode, "query" )) == NULL ) return;
 	if (( xmlns=JabberXmlGetAttrValue( queryNode, "xmlns" )) == NULL ) return;
 
-	if ( !_tcscmp( iqType, _T("get"))) {
-		XmlNodeIq iq( "result", JabberXmlGetAttrValue( iqNode, "id" ), iqFrom );
-		XmlNode* user = iq.addChild( "user" ); user->addAttr( "jid", jabberJID ); user->addAttr( "type", "client" ); user->addAttr( "xmlns", xmlns );
-		user->addChild( "ns", "http://jabber.org/protocol/disco#info" );
-		user->addChild( "ns", "http://jabber.org/protocol/muc" );
-		user->addChild( "ns", "jabber:iq:agents" );
-		user->addChild( "ns", "jabber:iq:browse" );
-		user->addChild( "ns", "jabber:iq:oob" );
-		user->addChild( "ns", "jabber:iq:version" );
-		user->addChild( "ns", "jabber:x:data" );
-		user->addChild( "ns", "jabber:x:event" );
-		user->addChild( "ns", "vcard-temp" );
-		JabberSend( jabberThreadInfo->s, iq );
+	if (( iqId=JabberXmlGetAttrValue( iqNode, "id" )) == NULL )
+		idStr[0] = '\0';
+	else
+		_snprintf( idStr, sizeof( idStr ), " id='%s'", iqId );
+
+	if ( !strcmp( iqType, "get" )) {
+		JabberSend( jabberThreadInfo->s, "<iq type='result' to='%s'%s>"
+			"<user jid='%s' type='client' name='Miranda' xmlns='%s'>"
+			"<ns>http://jabber.org/protocol/disco#info</ns>"
+			"<ns>http://jabber.org/protocol/muc</ns>"
+			"<ns>jabber:iq:agents</ns>"
+			"<ns>jabber:iq:browse</ns>"
+			"<ns>jabber:iq:oob</ns>"
+			"<ns>jabber:iq:version</ns>"
+			"<ns>jabber:x:data</ns>"
+			"<ns>jabber:x:event</ns>"
+			"<ns>vcard-temp</ns>"
+			"</user></iq>", iqFrom, idStr, UTF8(jabberJID), xmlns );
 }	}
-
-/////////////////////////////////////////////////////////////////////////////////////////
-// JabberXmlnsDisco
-
-static void sttAddFeature( XmlNode* n, char* text )
-{
-	XmlNode* f = n->addChild( "feature" ); f->addAttr( "var", text );
-}
 
 void JabberXmlnsDisco( XmlNode *iqNode, void *userdata )
 {
 	XmlNode *queryNode;
-	TCHAR *xmlns, *p, *discoType;
-	TCHAR *iqFrom, *iqType;
+	char* xmlns, *p, *discoType;
+	char* iqFrom, *iqType, *iqId;
+	char idStr[64];
 
 	if ( iqNode == NULL ) return;
 	if (( iqFrom = JabberXmlGetAttrValue( iqNode, "from" )) == NULL ) return;
@@ -76,32 +67,35 @@ void JabberXmlnsDisco( XmlNode *iqNode, void *userdata )
 	if (( queryNode = JabberXmlGetChild( iqNode, "query" )) == NULL ) return;
 	if (( xmlns = JabberXmlGetAttrValue( queryNode, "xmlns" )) == NULL ) return;
 
-	p = _tcsrchr( xmlns, '/' );
-	discoType = _tcsrchr( xmlns, '#' );
+	JabberStringDecode( iqFrom );
 
-	if ( p==NULL || discoType==NULL || discoType < p )
-		return;
+	p = strrchr( xmlns, '/' );
+	discoType = strrchr( xmlns, '#' );
 
-	if ( !_tcscmp( iqType, _T("get"))) {
-		XmlNodeIq iq( "result", JabberXmlGetAttrValue( iqNode, "id" ), iqFrom );
+	if ( p==NULL || discoType==NULL || discoType<p ) return;
 
-		if ( !_tcscmp( discoType, _T("#info"))) {
-			XmlNode* query = iq.addChild( "query" ); query->addAttr( "xmlns", xmlns );
-			XmlNode* ident = query->addChild( "identity" ); ident->addAttr( "category", "user" );
-			ident->addAttr( "type", "client" ); ident->addAttr( "name", "Miranda" );
-			sttAddFeature( query, "http://jabber.org/protocol/disco#info" );
-			sttAddFeature( query, "http://jabber.org/protocol/muc" );
-			sttAddFeature( query, "http://jabber.org/protocol/si" );
-			sttAddFeature( query, "http://jabber.org/protocol/si/profile/file-transfer" );
-			sttAddFeature( query, "http://jabber.org/protocol/bytestreams" );
-			sttAddFeature( query, "http://jabber.org/protocol/chatstates" );
-			sttAddFeature( query, "jabber:iq:agents" );
-			sttAddFeature( query, "jabber:iq:browse" );
-			sttAddFeature( query, "jabber:iq:oob" );
-			sttAddFeature( query, "jabber:iq:version" );
-			sttAddFeature( query, "jabber:x:data" );
-			sttAddFeature( query, "jabber:x:event" );
-			sttAddFeature( query, "vcard-temp" );
+	if (( iqId=JabberXmlGetAttrValue( iqNode, "id" )) == NULL )
+		idStr[0] = '\0';
+	else
+		_snprintf( idStr, sizeof( idStr ), " id='%s'", iqId );
+
+	if ( !strcmp( iqType, "get" )) {
+		if ( !strcmp( discoType, "#info" )) {
+			JabberSend( jabberThreadInfo->s, "<iq type='result' to='%s'%s><query xmlns='%s'>"
+				"<identity category='user' type='client' name='Miranda'/>"
+				"<feature var='http://jabber.org/protocol/disco#info'/>"
+				"<feature var='http://jabber.org/protocol/muc'/>"
+				"<feature var='http://jabber.org/protocol/si'/>"
+				"<feature var='http://jabber.org/protocol/si/profile/file-transfer'/>"
+				"<feature var='http://jabber.org/protocol/bytestreams'/>"
+				"<feature var='jabber:iq:agents'/>"
+				"<feature var='jabber:iq:browse'/>"
+				"<feature var='jabber:iq:oob'/>"
+				"<feature var='jabber:iq:version'/>"
+				"<feature var='jabber:x:data'/>"
+				"<feature var='jabber:x:event'/>"
+				"<feature var='vcard-temp'/>"
+				"</query></iq>", UTF8(iqFrom), idStr, xmlns );
 		}
-		JabberSend( jabberThreadInfo->s, iq );
+		else JabberSend( jabberThreadInfo->s, "<iq type='result'%s><query xmlns='%s'/></iq>", idStr, xmlns );
 }	}

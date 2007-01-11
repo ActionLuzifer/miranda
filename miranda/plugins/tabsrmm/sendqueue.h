@@ -27,7 +27,6 @@ $Id$
 #define TIMERID_MSGSEND      100
 #define TIMERID_MULTISEND_BASE (TIMERID_MSGSEND + NR_SENDJOBS)
 #define TIMERID_TYPE         3
-#define TIMERID_AWAYMSG      4
 #define TIMEOUT_TYPEOFF      10000      // send type off after 10 seconds of inactivity
 #define SB_CHAR_WIDTH        45
 
@@ -48,10 +47,10 @@ $Id$
 void ClearSendJob(int iIndex);
 int FindNextFailedMsg(HWND hwndDlg, struct MessageWindowData *dat);
 void HandleQueueError(HWND hwndDlg, struct MessageWindowData *dat, int iEntry);
-int AddToSendQueue(HWND hwndDlg, struct MessageWindowData *dat, int iLen, int dwFlags);
-static int SendQueuedMessage(HWND hwndDlg, struct MessageWindowData *dat, int iEntry);
+int AddToSendQueue(HWND hwndDlg, struct MessageWindowData *dat, int iLen);
+int SendQueuedMessage(HWND hwndDlg, struct MessageWindowData *dat, int iEntry);
 void CheckSendQueue(HWND hwndDlg, struct MessageWindowData *dat);
-void LogErrorMessage(HWND hwndDlg, struct MessageWindowData *dat, int iSendJobIndex, TCHAR *szErrMsg);
+void LogErrorMessage(HWND hwndDlg, struct MessageWindowData *dat, int iSendJobIndex, char *szErrMsg);
 void RecallFailedMessage(HWND hwndDlg, struct MessageWindowData *dat, int iEntry);
 void UpdateSaveAndSendButton(HWND hwndDlg, struct MessageWindowData *dat);
 void NotifyDeliveryFailure(HWND hwndDlg, struct MessageWindowData *dat);
@@ -59,12 +58,11 @@ void ShowErrorControls(HWND hwndDlg, struct MessageWindowData *dat, int showCmd)
 void EnableSending(HWND hwndDlg, struct MessageWindowData *dat, int iMode);
 void UpdateReadChars(HWND hwndDlg, struct MessageWindowData *dat);
 void ShowMultipleControls(HWND hwndDlg, const UINT * controls, int cControls, int state);
-void HandleIconFeedback(HWND hwndDlg, struct MessageWindowData *dat, HICON iIcon);
+void HandleIconFeedback(HWND hwndDlg, struct MessageWindowData *dat, int iIcon);
 int GetProtoIconFromList(const char *szProto, int iStatus);
 int ActivateExistingTab(struct ContainerWindowData *pContainer, HWND hwndChild);
 
 static int CALLBACK PopupDlgProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
 
-char *MsgServiceName(HANDLE hContact, struct MessageWindowData *dat, int isUnicode);
-int RTL_Detect(WCHAR *pszwText);
+char *MsgServiceName(HANDLE hContact, struct MessageWindowData *dat);
 

@@ -5,7 +5,7 @@
 // Copyright © 2000,2001 Richard Hughes, Roland Rabien, Tristan Van de Vreede
 // Copyright © 2001,2002 Jon Keating, Richard Hughes
 // Copyright © 2002,2003,2004 Martin  berg, Sam Kothari, Robert Rainwater
-// Copyright © 2004,2005,2006 Joe Kucera
+// Copyright © 2004,2005 Joe Kucera
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -23,7 +23,7 @@
 //
 // -----------------------------------------------------------------------------
 //
-// File name      : $Source: /cvsroot/miranda/miranda/protocols/IcqOscarJ/icqosc_svcs.h,v $
+// File name      : $Source$
 // Revision       : $Revision$
 // Last change on : $Date$
 // Last change by : $Author$
@@ -36,6 +36,10 @@
 
 #ifndef __ICQOSC_SVCS_H
 #define __ICQOSC_SVCS_H
+
+/*
+	//CreateServiceFunction(ICQOSCPROTONAME PSS_FILECANCEL,IcqFileCancel);	 //not yet implemented
+*/
 
 /*---------* Functions *---------------*/
 
@@ -56,8 +60,7 @@ int IcqCreateAdvSearchUI(WPARAM wParam, LPARAM lParam);
 int IcqSearchByAdvanced(WPARAM wParam, LPARAM lParam);
 int IcqAddToList(WPARAM wParam, LPARAM lParam);
 int IcqAddToListByEvent(WPARAM wParam, LPARAM lParam);
-int IcqSetNickName(WPARAM wParam, LPARAM lParam);
-int IcqChangeInfoEx(WPARAM wParam, LPARAM lParam);
+int IcqChangeInfo(WPARAM wParam, LPARAM lParam);
 int IcqGetInfo(WPARAM wParam, LPARAM lParam);
 int IcqSendSms(WPARAM wParam, LPARAM lParam);
 int IcqSetApparentMode(WPARAM wParam, LPARAM lParam);
@@ -71,7 +74,6 @@ int IcqFileDeny(WPARAM wParam, LPARAM lParam);
 int IcqFileCancel(WPARAM wParam, LPARAM lParam);
 int IcqFileResume(WPARAM wParam, LPARAM lParam);
 int IcqGrantAuthorization(WPARAM wParam, LPARAM lParam);
-int IcqRevokeAuthorization(WPARAM wParam, LPARAM lParam);
 int IcqSendAuthRequest(WPARAM,LPARAM);
 int IcqSendYouWereAdded(WPARAM,LPARAM);
 int IcqSendUserIsTyping(WPARAM wParam, LPARAM lParam);
@@ -85,11 +87,5 @@ int IcqRecvAuth(WPARAM wParam, LPARAM lParam);
 int IcqIdleChanged(WPARAM wParam, LPARAM lParam);
 
 int IcqGetAvatarInfo(WPARAM wParam, LPARAM lParam);
-int IcqGetMaxAvatarSize(WPARAM wParam, LPARAM lParam);
-int IcqAvatarFormatSupported(WPARAM wParam, LPARAM lParam);
-int IcqGetMyAvatar(WPARAM wParam, LPARAM lParam);
-int IcqSetMyAvatar(WPARAM wParam, LPARAM lParam);
-
-int IcqSetPassword(WPARAM wParam, LPARAM lParam);
 
 #endif /* __ICQOSC_SVCS_H */

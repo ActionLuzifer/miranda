@@ -1,7 +1,7 @@
 /*
 SRMM
 
-Copyright 2000-2005 Miranda ICQ/IM project, 
+Copyright 2000-2003 Miranda ICQ/IM project, 
 all portions of this codebase are copyrighted to the people 
 listed in contributors.txt.
 
@@ -20,7 +20,7 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
-#if defined(UNICODE) && !defined(_UNICODE)
+#if defined(UNICODE)
    #define _UNICODE
 #endif
 #include <tchar.h>
@@ -50,7 +50,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <m_history.h>
 #include <m_addcontact.h>
 #include <m_message.h>
-#include <m_file.h>
 #include "cmdlist.h"
 #include "msgs.h"
 #include "globals.h"

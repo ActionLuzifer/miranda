@@ -17,13 +17,12 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 #include <windows.h>
+#include "resource.h"
 #include <newpluginapi.h>
 #include <m_database.h>
+#include <m_options.h>
 #include <m_langpack.h>
 #include "help.h"
-
-#include <m_options.h>
-#include "resource.h"
 
 extern HINSTANCE hInst;
 
@@ -44,7 +43,7 @@ int GetStringOption(int id,char *pStr,int cbStr)
 			break;
 		case OPTION_LANGUAGE:
 			pszSetting="Language";
-			wsprintfA(szDefault,"%04x",PRIMARYLANGID(GetUserDefaultLangID()));
+			wsprintf(szDefault,"%04x",PRIMARYLANGID(GetUserDefaultLangID()));
 			pszDefault=szDefault;
 			break;
 #ifdef EDITOR
@@ -57,9 +56,9 @@ int GetStringOption(int id,char *pStr,int cbStr)
 			return 1;
 	}
 	if(DBGetContactSetting(NULL,"HelpPlugin",pszSetting,&dbv))
-		lstrcpynA(pStr,pszDefault,cbStr);
+		lstrcpyn(pStr,pszDefault,cbStr);
 	else {
-		lstrcpynA(pStr,dbv.pszVal,cbStr);
+		lstrcpyn(pStr,dbv.pszVal,cbStr);
 		DBFreeVariant(&dbv);
 	}
 	return 0;
@@ -73,8 +72,8 @@ static BOOL CALLBACK LangListDlgProc(HWND hwndDlg, UINT msg, WPARAM wParam, LPAR
 			GetLanguageList(hwndDlg);
 			return TRUE;
 		case M_LANGLISTFAILED:
-			SetDlgItemText(hwndDlg,IDC_STATUS,TranslateT("Download failed\n\nPlease check your Internet connection and try again."));
-			SetDlgItemText(hwndDlg,IDOK,TranslateT("Retry"));
+			SetDlgItemText(hwndDlg,IDC_STATUS,Translate("Download failed\n\nPlease check your Internet connection and try again."));
+			SetDlgItemText(hwndDlg,IDOK,Translate("Retry"));
 			EnableWindow(GetDlgItem(hwndDlg,IDOK),TRUE);
 			break;
 		case M_LANGLIST:
@@ -86,7 +85,7 @@ static BOOL CALLBACK LangListDlgProc(HWND hwndDlg, UINT msg, WPARAM wParam, LPAR
 			GetStringOption(OPTION_LANGUAGE,szName,sizeof(szName));
 			currentLang=strtol(szName,NULL,0x10);
 			for(i=0;i<(int)wParam;i++) {
-				GetLocaleInfoA(MAKELCID(MAKELANGID(langs[i],SUBLANG_NEUTRAL),SORT_DEFAULT),LOCALE_SLANGUAGE,szName,sizeof(szName));
+				GetLocaleInfo(MAKELCID(MAKELANGID(langs[i],SUBLANG_NEUTRAL),SORT_DEFAULT),LOCALE_SLANGUAGE,szName,sizeof(szName));
 				iItem=SendDlgItemMessage(hwndDlg,IDC_LANGLIST,LB_ADDSTRING,0,(LPARAM)szName);
 				SendDlgItemMessage(hwndDlg,IDC_LANGLIST,LB_SETITEMDATA,iItem,langs[i]);
 				if(langs[i]==currentLang) SendDlgItemMessage(hwndDlg,IDC_LANGLIST,LB_SETCURSEL,iItem,0);
@@ -113,14 +112,14 @@ static BOOL CALLBACK LangListDlgProc(HWND hwndDlg, UINT msg, WPARAM wParam, LPAR
 					//fall thru
 				case IDOK:
 					if(IsWindowVisible(GetDlgItem(hwndDlg,IDC_STATUS))) {
-						SetDlgItemText(hwndDlg,IDC_STATUS,TranslateT("Downloading language list\n\nPlease wait..."));
-						SetDlgItemText(hwndDlg,IDOK,TranslateT("OK"));
+						SetDlgItemText(hwndDlg,IDC_STATUS,Translate("Downloading language list\n\nPlease wait..."));
+						SetDlgItemText(hwndDlg,IDOK,Translate("OK"));
 						EnableWindow(GetDlgItem(hwndDlg,IDOK),FALSE);
 						GetLanguageList(hwndDlg);
 						break;
 					}
 					{	char str[5];
-						wsprintfA(str,"%04x",SendDlgItemMessage(hwndDlg,IDC_LANGLIST,LB_GETITEMDATA,SendDlgItemMessage(hwndDlg,IDC_LANGLIST,LB_GETCURSEL,0,0),0));
+						wsprintf(str,"%04x",SendDlgItemMessage(hwndDlg,IDC_LANGLIST,LB_GETITEMDATA,SendDlgItemMessage(hwndDlg,IDC_LANGLIST,LB_GETCURSEL,0,0),0));
 						DBWriteContactSettingString(NULL,"HelpPlugin","Language",str);
 					}
 					EndDialog(hwndDlg,IDOK);
@@ -155,14 +154,14 @@ static BOOL CALLBACK DlgProcEditorOptions(HWND hwndDlg, UINT msg, WPARAM wParam,
 		case M_UPDATELANGUAGEFIELD:
 		{	char szLangId[5],szLangName[64];
 			GetStringOption(OPTION_LANGUAGE,szLangId,sizeof(szLangId));
-			GetLocaleInfoA(MAKELCID(MAKELANGID(strtol(szLangId,NULL,0x10),SUBLANG_NEUTRAL),SORT_DEFAULT),LOCALE_SLANGUAGE,szLangName,sizeof(szLangName));
+			GetLocaleInfo(MAKELCID(MAKELANGID(strtol(szLangId,NULL,0x10),SUBLANG_NEUTRAL),SORT_DEFAULT),LOCALE_SLANGUAGE,szLangName,sizeof(szLangName));
 #ifdef EDITOR
 			{	char str[128];
 				wsprintf(str,"%s (%s)",szLangName,szLangId);
 				SetDlgItemText(hwndDlg,IDC_LANGUAGE,str);
 			}
 #else
-			SetDlgItemTextA(hwndDlg,IDC_LANGUAGE,szLangName);
+			SetDlgItemText(hwndDlg,IDC_LANGUAGE,szLangName);
 #endif
 			break;
 		}
@@ -216,7 +215,7 @@ static int OptInitialise(WPARAM wParam,LPARAM lParam)
 	odp.hInstance=hInst;
 	odp.pszGroup=Translate("Plugins");
 	odp.flags=ODPF_BOLDGROUPS|ODPF_EXPERTONLY;
-	odp.pszTemplate=MAKEINTRESOURCEA(IDD_OPT_HELP);
+	odp.pszTemplate=MAKEINTRESOURCE(IDD_OPT_HELP);
 #ifdef EDITOR
 	odp.pszTitle=Translate("Help Editor");
 #else

@@ -1,26 +1,4 @@
-/*
-SRMM
-
-Copyright 2000-2005 Miranda ICQ/IM project, 
-all portions of this codebase are copyrighted to the people 
-listed in contributors.txt.
-
-This program is free software; you can redistribute it and/or
-modify it under the terms of the GNU General Public License
-as published by the Free Software Foundation; either version 2
-of the License, or (at your option) any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program; if not, write to the Free Software
-Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
-*/
 #include "commonheaders.h"
-#include "richutil.h"
 
 /*
 	To initialize this library, call:
@@ -38,17 +16,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 	Otherwise it removes the border and draws it by itself.
 */
 
-static struct LIST_INTERFACE li;
-static SortedList sListInt;
-
-static int RichUtil_CmpVal(void *p1, void *p2) {
-	TRichUtil *tp1 = (TRichUtil*)p1;
-	TRichUtil *tp2 = (TRichUtil*)p2;
-	if (tp1->hwnd==tp2->hwnd)
-		return 0;
-	return (int)((int)tp1->hwnd-(int)tp2->hwnd);
-}
-
 // UxTheme Stuff
 static HMODULE mTheme = 0;
 static HANDLE  (WINAPI *MyOpenThemeData)(HWND,LPCWSTR) = 0;
@@ -59,19 +26,12 @@ static HRESULT (WINAPI *MyGetThemeBackgroundContentRect)(HANDLE,HDC,int,int,cons
 static HRESULT (WINAPI *MyDrawThemeParentBackground)(HWND,HDC,RECT*) = 0;
 static BOOL    (WINAPI *MyIsThemeBackgroundPartiallyTransparent)(HANDLE,int,int) = 0;
 
-static CRITICAL_SECTION csRich;
-
 static LRESULT CALLBACK RichUtil_Proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
 static RichUtil_ClearUglyBorder(TRichUtil *ru);
+static WNDPROC origProc;
 
 void RichUtil_Load() {
-	li.cbSize = sizeof(li);
-	CallService(MS_SYSTEM_GET_LI,0,(LPARAM)&li);
-	ZeroMemory(&sListInt, sizeof(sListInt));
-	sListInt.increment = 10;
-	sListInt.sortFunc = RichUtil_CmpVal;
-	mTheme = RIsWinVerXPPlus()?LoadLibraryA("uxtheme.dll"):0;
-	InitializeCriticalSection(&csRich);
+	mTheme = IsWinVerXPPlus()?LoadLibraryA("uxtheme.dll"):0;
 	if (!mTheme) return;
 	MyOpenThemeData = (HANDLE (WINAPI *)(HWND, LPCWSTR))GetProcAddress(mTheme, "OpenThemeData");
 	MyCloseThemeData = (HRESULT (WINAPI *)(HANDLE))GetProcAddress(mTheme, "CloseThemeData");
@@ -93,8 +53,6 @@ void RichUtil_Load() {
 }
 
 void RichUtil_Unload() {
-	li.List_Destroy(&sListInt);
-	DeleteCriticalSection(&csRich);
 	if (mTheme) {
 		FreeLibrary(mTheme);
 	}
@@ -102,19 +60,13 @@ void RichUtil_Unload() {
 
 int RichUtil_SubClass(HWND hwndEdit) {
 	if (IsWindow(hwndEdit)) {
-		int idx;
-
 		TRichUtil *ru = (TRichUtil*)malloc(sizeof(TRichUtil));
-		
+
 		ZeroMemory(ru, sizeof(TRichUtil));
 		ru->hwnd = hwndEdit;
 		ru->hasUglyBorder = 0;
-		EnterCriticalSection(&csRich);
-		if (!li.List_GetIndex(&sListInt, ru, &idx))
-			li.List_Insert(&sListInt, ru, idx);
-		LeaveCriticalSection(&csRich);
 		SetWindowLong(ru->hwnd, GWL_USERDATA, (LONG)ru); // Ugly hack
-		ru->origProc = (WNDPROC)SetWindowLong(ru->hwnd, GWL_WNDPROC, (LONG)&RichUtil_Proc);
+		origProc = (WNDPROC)SetWindowLong(ru->hwnd, GWL_WNDPROC, (LONG)&RichUtil_Proc);
 		RichUtil_ClearUglyBorder(ru);
 		return 1;
 	}
@@ -122,14 +74,9 @@ int RichUtil_SubClass(HWND hwndEdit) {
 }
 
 static LRESULT CALLBACK RichUtil_Proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
-	TRichUtil *ru = 0, tru;
-	int idx;
-	
-	EnterCriticalSection(&csRich);
-	tru.hwnd = hwnd;
-	if (li.List_GetIndex(&sListInt, &tru, &idx))
-		ru = (TRichUtil*)sListInt.items[idx];
-	LeaveCriticalSection(&csRich);
+	TRichUtil *ru;
+
+	ru = (TRichUtil *)GetWindowLong(hwnd, GWL_USERDATA);
 	switch(msg) {
 		case WM_THEMECHANGED:
 		case WM_STYLECHANGED:
@@ -139,7 +86,7 @@ static LRESULT CALLBACK RichUtil_Proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM
 		}
 		case WM_NCPAINT:
 		{
-			LRESULT ret = CallWindowProc(ru->origProc, hwnd, msg, wParam, lParam);
+			LRESULT ret = CallWindowProc(origProc, hwnd, msg, wParam, lParam);
 			if (ru->hasUglyBorder&&MyIsThemeActive()) {
 				HANDLE hTheme = MyOpenThemeData(ru->hwnd, L"EDIT");
 
@@ -175,7 +122,7 @@ static LRESULT CALLBACK RichUtil_Proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM
 		}
 		case WM_NCCALCSIZE:
 		{
-			LRESULT ret = CallWindowProc(ru->origProc, hwnd, msg, wParam, lParam);
+			LRESULT ret = CallWindowProc(origProc, hwnd, msg, wParam, lParam);
 			NCCALCSIZE_PARAMS *ncsParam = (NCCALCSIZE_PARAMS*)lParam;
 			
 			if (ru->hasUglyBorder&&MyIsThemeActive()) {
@@ -207,20 +154,17 @@ static LRESULT CALLBACK RichUtil_Proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM
 			break;
 		case WM_DESTROY:
 		{
-			LRESULT ret = CallWindowProc(ru->origProc, hwnd, msg, wParam, lParam);
+			LRESULT ret = CallWindowProc(origProc, hwnd, msg, wParam, lParam);
 
 			if(IsWindow(hwnd)) {
 				if((WNDPROC)GetWindowLong(hwnd, GWL_WNDPROC) == &RichUtil_Proc)
-					SetWindowLong(hwnd, GWL_WNDPROC, (LONG)ru->origProc);
+					SetWindowLong(hwnd, GWL_WNDPROC, (LONG)origProc);
 			}
-			EnterCriticalSection(&csRich);
-			li.List_Remove(&sListInt, idx);
-			LeaveCriticalSection(&csRich);
 			if (ru) free(ru);
 			return ret;
 		}
 	}
-	return CallWindowProc(ru->origProc, hwnd, msg, wParam, lParam);
+	return CallWindowProc(origProc, hwnd, msg, wParam, lParam);
 }
 
 static RichUtil_ClearUglyBorder(TRichUtil *ru) {

@@ -2,7 +2,7 @@
 
 Miranda IM: the free IM client for Microsoft* Windows*
 
-Copyright 2000-2007 Miranda ICQ/IM project, 
+Copyright 2000-2003 Miranda ICQ/IM project, 
 all portions of this codebase are copyrighted to the people 
 listed in contributors.txt.
 
@@ -50,12 +50,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //returns NULL if the status mode was unknown
 #define GSMDF_PREFIXONLINE  1   //prefix "Online: " to all status modes that
                   //imply online, eg "Online: Away"
-#define GCMDF_UNICODE        2      //will return TCHAR* instead of char*
-#if defined( _UNICODE )
-	#define GCMDF_TCHAR       GCMDF_UNICODE      //will return TCHAR* instead of char*
-#else
-	#define GCMDF_TCHAR       0      //will return char*, as usual
-#endif
 #define MS_CLIST_GETSTATUSMODEDESCRIPTION  "CList/GetStatusModeDescription"
 
 //add a new item to the main menu
@@ -70,21 +64,14 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //cause the position numbers to be placed in brackets after the menu items
 typedef struct {
 	int cbSize;			//size in bytes of this structure
-	union {
-      char*  pszName;      //text of the menu item
-		TCHAR* ptszName;     //Unicode text of the menu item
-	};
+	char *pszName;		//text of the menu item
 	DWORD flags;		//flags
 	int position;		//approx position on the menu. lower numbers go nearer the top
 	HICON hIcon;		//icon to put by the item. If this was not loaded from
 	                    //a resource, you can delete it straight after the call
-	char* pszService;	//name of service to call when the item gets selected
-	union {
-		char* pszPopupName;  //name of the popup menu that this item is on. If this
-									//is NULL the item is on the root of the menu
-		TCHAR* ptszPopupName;
-	};
-
+	char *pszService;	//name of service to call when the item gets selected
+	char *pszPopupName;	//name of the popup menu that this item is on. If this
+						//is NULL the item is on the root of the menu
 	int popupPosition;	//position of the popup menu on the root menu. Ignored
 						//if pszPopupName is NULL or the popup menu already
 						//existed
@@ -113,7 +100,6 @@ typedef struct {
 //displayed in brackets after the menu item text. This only works in debug
 //builds.
 #define MS_CLIST_ADDCONTACTMENUITEM     "CList/AddContactMenuItem"
-#define MS_CLIST_ADDSTATUSMENUITEM      "CList/AddStatusMenuItem"
 
 //modify an existing menu item     v0.1.0.1+
 //wParam=(WPARAM)(HANDLE)hMenuItem
@@ -180,15 +166,6 @@ sense to store all this information in memory, etc.
 //on every call to this service. Callers should make sure that they copy the
 //information before they call this service again.
 #define GCDNF_NOMYHANDLE     1      //will never return the user's custom name
-#define GCDNF_UNICODE        2      //will return TCHAR* instead of char*
-#define GCDNF_NOCACHE        4      //will not use the cache
-
-#if defined( _UNICODE )
-	#define GCDNF_TCHAR       GCDNF_UNICODE      //will return TCHAR* instead of char*
-#else
-	#define GCDNF_TCHAR       0      //will return char*, as usual
-#endif
-
            //even if it's the one that should be displayed.  v0.1.2.0+
 		   //v0.3.0.0+ if using GCDNF_NOMYHANDLE you must free your string
 #define MS_CLIST_GETCONTACTDISPLAYNAME  "CList/GetContactDisplayName"
@@ -220,23 +197,13 @@ typedef struct {
 	HANDLE hDbEvent;	 //caller defined but should be unique for hContact
 	LPARAM lParam;		 //caller defined
 	char *pszService;	 //name of the service to call on activation
-	union {
-		char  *pszTooltip;    //short description of the event to display as a
-		TCHAR *ptszTooltip;    //tooltip on the system tray
-	};
+	char *pszTooltip;    //short description of the event to display as a
+						 //tooltip on the system tray
 } CLISTEVENT;
-#define CLEF_URGENT    1   //flashes the icon even if the user is occupied,
+#define CLEF_URGENT    1    //flashes the icon even if the user is occupied,
 							//and puts the event at the top of the queue
 #define CLEF_ONLYAFEW  2	//the icon will not flash for ever, only a few
 							//times. This is for eg online alert
-#define CLEF_UNICODE   4   //set pszTooltip as unicode
-
-#if defined( _UNICODE )
-	#define CLEF_TCHAR       CLEF_UNICODE      //will use TCHAR* instead of char*
-#else
-	#define CLEF_TCHAR       0      //will return char*, as usual
-#endif
-
 #define MS_CLIST_ADDEVENT     "CList/AddEvent"
 
 //removes an event from the contact list's queue

@@ -1,6 +1,6 @@
 ;----------------------------oOo----------------------------
 ;
-;               IRC Protocol Plugin v 0.5.1.1
+;               IRC Protocol Plugin v 0.5.0.1
 ;
 ;  Implementation of IRC RFC-1459, RFC-2812 for Miranda IM
 ;
@@ -14,7 +14,6 @@
 ;[CTCP chat request from %s]
 
 ; commandmonitor.cpp
-;[CTCP ERROR: Malformed CTCP command received from %s!%s@%s. Possible attempt to take control of your irc client registered]
 ;[CTCP FINGER requested by %s]
 ;[CTCP VERSION requested by %s]
 ;[CTCP SOURCE requested by %s]
@@ -31,7 +30,6 @@
 ;[CTCP %s reply from %s: %s]
 ;[Downloading list (%u%%) - %u channels]
 ;[Downloading list - %u channels]
-;[%s sets mode %s]
 ;[Done: %u channels]
 ;[(probably truncated by server)]
 ;[User information]
@@ -45,16 +43,16 @@
 ;[Jerk]
 ;[Offline]
 ;[*Disconnected*]
-;[The usage of /AWAY in your perform buffer is restricted\n as IRC sends this command automatically.]
 
 ; input.cpp
 ;[Ignore system is enabled]
 ;[Ignore system is disabled]
-;[%s on %s is now ignored (+%s)]
+;[%s is now ignored]
+;[%s is already being ignored]
 ;[%s is not ignored now]
-;[%s was not ignored]
-;[Outgoing commands are shown]
-;[Outgoing commands are not shown]
+;[%s is already not ignored]
+;[Outgoing commands are shown in the server window]
+;[Outgoing commands are not shown in the server window]
 ;[The buddy check function is enabled]
 ;[The buddy check function is disabled]
 ;[The time interval for the buddy check function is now at default setting]
@@ -71,7 +69,7 @@
 ;[Please enter the reply]
 
 ; main.cpp
-;[The IRC protocol could not be loaded as it is dependant on Miranda IM version %s or later.\n\nDo you want to download an update from the Miranda website now?]
+;[The IRC protocol could not be loaded as it is dependant on features in newer versions of Miranda IM.\n\nDo you want to download an update of Miranda IM now?.]
 ;[Information]
 
 ; options.cpp
@@ -94,17 +92,6 @@
 ;[Network]
 ;[%s DCC 'n CTCP]
 ;[%s Advanced]
-;[Main]
-;[Add]
-;[Apply]
-;[Edit]
-;[Cancel]
-;[Channel list]
-;[Server window]
-;[Show channel]
-;[Join channel]
-;[Leave Channel]
-;[Incoming DCC Chat]
 
 ; output.cpp
 ;[WallOps from %s: ]
@@ -138,7 +125,7 @@
 ;[Kick]
 ;[Channel &settings]
 ;[Show the server &window]
-;[&WhoIs info]
+;[User &details]
 ;[&Control]
 ;[&Op]
 ;[&Deop]
@@ -158,7 +145,6 @@
 ;[&Leave channel]
 ;[&Show channel]
 ;[&Show server]
-;[&WhoIs info]
 ;[&Message]
 ;[Di&sconnect]
 ;[&Unignore user]
@@ -166,6 +152,7 @@
 ;[Nickname]
 ;[Connecting to]
 ;[This protocol is dependent on another plugin named \'Chat\'\nPlease download it from the Miranda IM website!]
+;[The IRC protocol can not connect as this version requires features in newer versions of Miranda IM.\nPlease download an upgradeded version from the Miranda IM website!]
 ;[Please choose an IRC-network to go online. This network will be the default.]
 ;[Default network]
 ;[Connection can not be established! You have not completed all necessary fields (Nickname, User ID and Name).]
@@ -173,16 +160,10 @@
 ;[The dcc chat connection is not active]
 ;[%s server connection]
 ;[%s client-to-client connections]
+;[The IRC protocol requires features found in newer versions of Miranda IM.\n\nDo you want to download it from the Miranda IM web site now?]
 ;[IRC Error]
 ;[The IRC protocol depends on another plugin called \'Chat\'\n\nDo you want to download it from the Miranda IM web site now?]
 ;[Reconnecting to]
-;[&Add to ignore list]
-;[Give &Op]
-;[Take O&p]
-;[Give &Halfop]
-;[Take H&alfop]
-;[Give &Voice]
-;[Take V&oice]
 
 ; windows.cpp
 ;[Please wait...]
@@ -214,9 +195,8 @@
 ;[&Del]
 ;[Enable]
 ;[only while connecting]
-;[Update online statuses for users]
-;[Update statuses in channel nicklist]
-;[Don't check if more than (users):]
+;[Online notification of contacts]
+;[Check temporary also]
 ;[Keep connection alive]
 ;[Force visible (-i)]
 ;[Rejoin channel if kicked]
@@ -232,8 +212,6 @@
 ;[Bans]
 ;[Invites]
 ;[Excepts]
-;[(*) blank to set this mask for all networks]
-;[Perform on event:]
 ;[Only Ops set topic]
 ;[No external messages]
 ;[Invite only]
@@ -281,7 +259,7 @@
 ;[Wait (s)]
 ;[Retry count]
 ;[Fear the monkeys!!!]
-;[Check every (s):]
+;[timer (s): ]
 ;[Name]
 ;[Address]
 ;[Channels]
@@ -308,7 +286,7 @@
 ;[User modes]
 ;[Channel modes]
 ;[Client-to-Client File Transfers]
-;[Auto-accept from:]
+;[Automatically accept chat requsts from... ]
 ;[Ignore chat requests from...]
 ;[Client-to-Client Protocol]
 ;[Client-to-Client Chats]
@@ -332,4 +310,3 @@
 ;[Open in &new window]
 ;[&Open in existing window]
 ;[&Copy link]
-;[Scripting support]

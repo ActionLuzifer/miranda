@@ -56,7 +56,7 @@ void aim_util_broadcaststatus(int s)
     }
     ProtoBroadcastAck(AIM_PROTO, NULL, ACKTYPE_STATUS, ACKRESULT_SUCCESS, (HANDLE) oldStatus, aimStatus);
     LOG(LOG_DEBUG, "Broadcasted new status (%s)", (char *) CallService(MS_CLIST_GETSTATUSMODEDESCRIPTION, aimStatus, 0));
-    aim_gchat_updatestatus();
+    aim_gchat_updatemenu();
     aim_password_updatemenu();
 }
 
@@ -66,12 +66,7 @@ int aim_util_userdeleted(WPARAM wParam, LPARAM lParam)
         return 0;
     if (!aim_util_isonline())
         return 0;
-    if (DBGetContactSettingByte((HANDLE) wParam, AIM_PROTO, AIM_CHAT, 0) == 0) {
-        aim_buddy_delete((HANDLE) wParam);
-    }
-    else {
-        aim_gchat_delete_by_contact((HANDLE) wParam);
-    }
+    aim_buddy_delete((HANDLE) wParam);
     return 0;
 }
 
@@ -111,7 +106,7 @@ void aim_util_striphtml(char *dest, const char *src, size_t destsize)
     char *ptrl;
     char *rptr;
 
-    mir_snprintf(dest, destsize, "%s", src);
+    _snprintf(dest, destsize, "%s", src);
     while ((ptr = strstr(dest, "<P>")) != NULL || (ptr = strstr(dest, "<p>")) != NULL) {
         memmove(ptr + 4, ptr + 3, strlen(ptr + 3) + 1);
         *ptr = '\r';
@@ -299,7 +294,7 @@ void aim_util_statusupdate()
             free(szStatus);
             szStatus = NULL;
         }
-        mir_snprintf(snd, MSG_LEN, "toc_set_away");
+        _snprintf(snd, MSG_LEN, "toc_set_away");
         hLastStatusUpdate = 0;
     }
     else {
@@ -314,7 +309,7 @@ void aim_util_statusupdate()
         szTmp = malloc(strlen(szStatus) + MSG_LEN);
         strcpy(szTmp, szStatus);
         aim_util_escape(szTmp);
-        mir_snprintf(snd, MSG_LEN, "toc_set_away \"%s\"", szTmp);
+        _snprintf(snd, MSG_LEN, "toc_set_away \"%s\"", szTmp);
         free(szTmp);
         if ((GetTickCount() - hLastStatusUpdate) < 1000) {
             LOG(LOG_WARN, "Sending status message updates too fast.  Ignoring request.");
@@ -340,19 +335,19 @@ static void __cdecl aim_util_parseurlthread(void *url)
         char szURL[256];
 
         ZeroMemory(&nlhr, sizeof(nlhr));
-        mir_snprintf(szURL, 256, "http://%s/%s", AIM_TOC_HOST, (char *) url);
+        _snprintf(szURL, 256, "http://%s/%s", AIM_TOC_HOST, (char *) url);
         nlhr.cbSize = sizeof(nlhr);
         nlhr.requestType = REQUEST_GET;
         nlhr.flags = NLHRF_DUMPASTEXT;
         nlhr.szUrl = szURL;
-        nlhr.headersCount = 3;
-        nlhr.headers = headers;
-        headers[0].szName = "User-Agent";
-        headers[0].szValue = "Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1)";
-        headers[1].szName = "Host";
-        headers[1].szValue = AIM_TOC_HOST;
-        headers[2].szName = "Accept";
-        headers[2].szValue = "*/*";
+        nlhr.headersCount=3;
+		nlhr.headers=headers;
+		headers[0].szName="User-Agent";
+		headers[0].szValue="Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1)";
+		headers[1].szName="Host";
+		headers[1].szValue=AIM_TOC_HOST;
+		headers[2].szName="Accept";
+		headers[2].szValue="*/*";
         nlreply = (NETLIBHTTPREQUEST *) CallService(MS_NETLIB_HTTPTRANSACTION, (WPARAM) hNetlib, (LPARAM) & nlhr);
         if (nlreply) {
             if (nlreply->resultCode >= 200 && nlreply->resultCode < 300 && nlreply->dataLength) {
@@ -373,28 +368,28 @@ static void __cdecl aim_util_parseurlthread(void *url)
                                 nick[0] = 0;
                                 fname[0] = 0;
                                 lname[0] = 0;
-                                mir_snprintf(data, sizeof(data), "%s", str);
+                                _snprintf(data, sizeof(data), "%s", str);
                                 if (sstr = strstr(data, "<TR><TD>Screen Name:</TD><TD><B>")) {
                                     sstr += 32;
                                     if (sstrend = strstr(sstr, "</B></TD></TR>")) {
                                         *sstrend = '\0';
-                                        mir_snprintf(nick, sizeof(nick), "%s", sstr);
+                                        _snprintf(nick, sizeof(nick), "%s", sstr);
                                     }
                                 }
-                                mir_snprintf(data, sizeof(data), "%s", str);
+                                _snprintf(data, sizeof(data), "%s", str);
                                 if (sstr = strstr(data, "<TR><TD>First Name:</TD><TD><B>")) {
                                     sstr += 31;
                                     if (sstrend = strstr(sstr, "</B></TD></TR>")) {
                                         *sstrend = '\0';
-                                        mir_snprintf(fname, sizeof(fname), "%s", sstr);
+                                        _snprintf(fname, sizeof(fname), "%s", sstr);
                                     }
                                 }
-                                mir_snprintf(data, sizeof(data), "%s", str);
+                                _snprintf(data, sizeof(data), "%s", str);
                                 if (sstr = strstr(data, "<TR><TD>Last Name:</TD><TD><B>")) {
                                     sstr += 30;
                                     if (sstrend = strstr(sstr, "</B></TD></TR>")) {
                                         *sstrend = '\0';
-                                        mir_snprintf(lname, sizeof(lname), "%s", sstr);
+                                        _snprintf(lname, sizeof(lname), "%s", sstr);
                                     }
                                 }
                                 ZeroMemory(&psr, sizeof(psr));
@@ -464,7 +459,7 @@ void aim_util_formatnick(char *nick)
 {
     char buf[MSG_LEN * 2];
 
-    mir_snprintf(buf, sizeof(buf), "toc_format_nickname \"%s\"", nick);
+    _snprintf(buf, sizeof(buf), "toc_format_nickname \"%s\"", nick);
     aim_toc_sflapsend(buf, -1, TYPE_DATA);
 }
 
@@ -576,11 +571,11 @@ void aim_utils_logversion()
     char str[256];
 
 #ifdef AIM_CVSBUILD
-    mir_snprintf(str, sizeof(str), "AimTOC v%d.%d.%d.%da (%s %s)", (pluginInfo.version >> 24) & 0xFF, (pluginInfo.version >> 16) & 0xFF,
-                 (pluginInfo.version >> 8) & 0xFF, pluginInfo.version & 0xFF, __DATE__, __TIME__);
+    _snprintf(str, sizeof(str), "AimTOC v%d.%d.%d.%da (%s %s)", (pluginInfo.version >> 24) & 0xFF, (pluginInfo.version >> 16) & 0xFF,
+              (pluginInfo.version >> 8) & 0xFF, pluginInfo.version & 0xFF, __DATE__, __TIME__);
 #else
-    mir_snprintf(str, sizeof(str), "AimTOC v%d.%d.%d.%d", (pluginInfo.version >> 24) & 0xFF, (pluginInfo.version >> 16) & 0xFF,
-                 (pluginInfo.version >> 8) & 0xFF, pluginInfo.version & 0xFF);
+    _snprintf(str, sizeof(str), "AimTOC v%d.%d.%d.%d", (pluginInfo.version >> 24) & 0xFF, (pluginInfo.version >> 16) & 0xFF,
+              (pluginInfo.version >> 8) & 0xFF, pluginInfo.version & 0xFF);
 #endif
     LOG(LOG_INFO, str);
 #ifdef AIM_CVSBUILD

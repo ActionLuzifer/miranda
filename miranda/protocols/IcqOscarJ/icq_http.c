@@ -5,7 +5,7 @@
 // Copyright © 2000,2001 Richard Hughes, Roland Rabien, Tristan Van de Vreede
 // Copyright © 2001,2002 Jon Keating, Richard Hughes
 // Copyright © 2002,2003,2004 Martin Öberg, Sam Kothari, Robert Rainwater
-// Copyright © 2004,2005,2006 Joe Kucera
+// Copyright © 2004,2005 Joe Kucera
 // 
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -23,77 +23,78 @@
 //
 // -----------------------------------------------------------------------------
 //
-// File name      : $Source: /cvsroot/miranda/miranda/protocols/IcqOscarJ/icq_http.c,v $
+// File name      : $Source$
 // Revision       : $Revision$
 // Last change on : $Date$
 // Last change by : $Author$
 //
 // DESCRIPTION:
 //
-//  HTTP Gateway Handling routines
+//  Describe me here please...
 //
 // -----------------------------------------------------------------------------
 
 #include "icqoscar.h"
 
 
+extern int isLoginServer;
+int dwGatewaySeq = 1;
+
 
 int icq_httpGatewayInit(HANDLE hConn, NETLIBOPENCONNECTION *nloc, NETLIBHTTPREQUEST *nlhr)
-{ // initial response from ICQ http gateway
-  WORD wLen, wVersion, wType;
-  WORD wIpLen;
-  DWORD dwSid1, dwSid2, dwSid3, dwSid4;
-  BYTE response[300], *buf;
-  int responseBytes, recvResult;
-  char szSid[33], szHttpServer[256], szHttpGetUrl[300], szHttpPostUrl[300];
-  NETLIBHTTPPROXYINFO nlhpi = {0};
+{
+	WORD wLen, wVersion, wType;
+	WORD wIpLen;
+	DWORD dwSid1, dwSid2, dwSid3, dwSid4;
+	BYTE response[300], *buf;
+	int responseBytes, recvResult;
+	char szSid[33], szHttpServer[256], szHttpGetUrl[300], szHttpPostUrl[300];
+	NETLIBHTTPPROXYINFO nlhpi = {0};
 
-  
-  for (responseBytes = 0; ; )
-  {
-    recvResult = Netlib_Recv(hConn, response + responseBytes, sizeof(response) - responseBytes, MSG_DUMPPROXY);
-    if(recvResult<=0) break;
-    responseBytes += recvResult;
-    if(responseBytes == sizeof(response))
-      break;
-  }
+	
+	for (responseBytes = 0; ; )
+	{
+		recvResult = Netlib_Recv(hConn, response + responseBytes, sizeof(response) - responseBytes, MSG_DUMPPROXY);
+		if(recvResult<=0) break;
+		responseBytes += recvResult;
+		if(responseBytes == sizeof(response))
+			break;
+	}
 
-  if (responseBytes < 31)
-  {
-    SetLastError(ERROR_INVALID_DATA);
-    return 0;
-  }
+	if (responseBytes < 31)
+	{
+		SetLastError(ERROR_INVALID_DATA);
+		return 0;
+	}
 
-  buf = response;
-  unpackWord(&buf, &wLen);
-  unpackWord(&buf, &wVersion);    /* always 0x0443 */
-  unpackWord(&buf, &wType);       /* hello reply */
-  buf += 6;  /* dunno */
-  unpackDWord(&buf, &dwSid1);
-  unpackDWord(&buf, &dwSid2);
-  unpackDWord(&buf, &dwSid3);
-  unpackDWord(&buf, &dwSid4);
-  null_snprintf(szSid, 33, "%08x%08x%08x%08x", dwSid1, dwSid2, dwSid3, dwSid4);
-  unpackWord(&buf, &wIpLen);
+	buf = response;
+	unpackWord(&buf, &wLen);
+	unpackWord(&buf, &wVersion);	  /* always 0x0443 */
+	unpackWord(&buf, &wType);
+	buf += 6;  /* dunno */
+	unpackDWord(&buf, &dwSid1);
+	unpackDWord(&buf, &dwSid2);
+	unpackDWord(&buf, &dwSid3);
+	unpackDWord(&buf, &dwSid4);
+	_snprintf(szSid, 33, "%08x%08x%08x%08x", dwSid1, dwSid2, dwSid3, dwSid4);
+	unpackWord(&buf, &wIpLen);
 
-  if(responseBytes < 30 + wIpLen || wIpLen == 0 || wIpLen > sizeof(szHttpServer) - 1)
-  {
-    SetLastError(ERROR_INVALID_DATA);
-    return 0;
-  }
+	if(responseBytes < 30 + wIpLen || wIpLen == 0 || wIpLen > sizeof(szHttpServer) - 1)
+	{
+		SetLastError(ERROR_INVALID_DATA);
+		return 0;
+	}
 
-  SetGatewayIndex(hConn, 1); // new master connection begins here
+	memcpy(szHttpServer, buf, wIpLen);
+	szHttpServer[wIpLen] = '\0';
 
-  memcpy(szHttpServer, buf, wIpLen);
-  szHttpServer[wIpLen] = '\0';
-
-  nlhpi.cbSize = sizeof(nlhpi);
-  nlhpi.flags = NLHPIF_USEPOSTSEQUENCE;
-  nlhpi.szHttpGetUrl = szHttpGetUrl;
-  nlhpi.szHttpPostUrl = szHttpPostUrl;
-  nlhpi.firstPostSequence = 1;
-  null_snprintf(szHttpGetUrl, 300, "http://%s/monitor?sid=%s", szHttpServer, szSid);
-  null_snprintf(szHttpPostUrl, 300, "http://%s/data?sid=%s&seq=", szHttpServer, szSid);
+	nlhpi.cbSize = sizeof(nlhpi);
+	nlhpi.flags = NLHPIF_USEPOSTSEQUENCE;
+	nlhpi.szHttpGetUrl = szHttpGetUrl;
+	nlhpi.szHttpPostUrl = szHttpPostUrl;
+	nlhpi.firstPostSequence = 1;
+	_snprintf(szHttpGetUrl, 300, "http://%s/monitor?sid=%s", szHttpServer, szSid);
+	_snprintf(szHttpPostUrl, 300, "http://%s/data?sid=%s&seq=", szHttpServer, szSid);
 
   return CallService(MS_NETLIB_SETHTTPPROXYINFO, (WPARAM)hConn, (LPARAM)&nlhpi);
 }
@@ -101,14 +102,14 @@ int icq_httpGatewayInit(HANDLE hConn, NETLIBOPENCONNECTION *nloc, NETLIBHTTPREQU
 
 
 int icq_httpGatewayBegin(HANDLE hConn, NETLIBOPENCONNECTION* nloc)
-{ // open our "virual data connection"
+{
   icq_packet packet;
   int serverNameLen;
 
-  serverNameLen = strlennull(nloc->szHost);
+  serverNameLen = strlen(nloc->szHost);
 
   packet.wLen = (WORD)(serverNameLen + 4);
-  write_httphdr(&packet, HTTP_PACKETTYPE_LOGIN, GetGatewayIndex(hConn));
+  write_httphdr(&packet, HTTP_PACKETTYPE_LOGIN, dwGatewaySeq);
   packWord(&packet, (WORD)serverNameLen);
   packBuffer(&packet, nloc->szHost, (WORD)serverNameLen);
   packWord(&packet, nloc->wPort);
@@ -122,107 +123,69 @@ int icq_httpGatewayBegin(HANDLE hConn, NETLIBOPENCONNECTION* nloc)
 
 int icq_httpGatewayWrapSend(HANDLE hConn, PBYTE buf, int len, int flags, MIRANDASERVICE pfnNetlibSend)
 {
-  PBYTE sendBuf = buf;
-  int sendLen = len;
-  int sendResult = 0;
+  icq_packet packet;
+  int sendResult;
 
-  while (sendLen > 0)
-  { // imitate polite behaviour of icq5.1 and split large packets
-    icq_packet packet;
-    WORD curLen;
-    int curResult;
+  packet.wLen = len;
+  write_httphdr(&packet, HTTP_PACKETTYPE_FLAP, dwGatewaySeq);
+  packBuffer(&packet, buf, (WORD)len);
+  sendResult = Netlib_Send(hConn, packet.pData, packet.wLen, flags);
+  SAFE_FREE(&packet.pData);
 
-    if (sendLen > 512) curLen = 512; else curLen = (WORD)sendLen;
-    // send wrapped data
-    packet.wLen = curLen;
-    write_httphdr(&packet, HTTP_PACKETTYPE_FLAP, GetGatewayIndex(hConn));
-    packBuffer(&packet, sendBuf, (WORD)curLen);
-    curResult = Netlib_Send(hConn, packet.pData, packet.wLen, flags);
-    SAFE_FREE(&packet.pData);
+  if(sendResult <= 0)
+    return sendResult;
 
-    // sending failed, end loop
-    if (curResult <= 0)
-      return curResult;
-    // calculare real number of data bytes sent
-    if (curResult > 14) sendResult += curResult - 14;
-    // move on
-    sendLen -= curLen;
-    sendBuf += curLen;
-  }
+  if(sendResult < 14)
+    return 0;
 
-  return sendResult;
+  return sendResult - 14;
 }
 
 
 
 PBYTE icq_httpGatewayUnwrapRecv(NETLIBHTTPREQUEST* nlhr, PBYTE buf, int len, int* outBufLen, void *(*NetlibRealloc)(void *, size_t))
 {
-  WORD wLen, wType;
-  DWORD dwPackSeq;
-  PBYTE tbuf;
-  int i, copyBytes;
+	WORD wLen, wType;
+	PBYTE tbuf;
+	int i, copyBytes;
 
-  
-  tbuf = buf;
-  for(i = 0;;)
-  {
-    if (tbuf - buf + 2 > len)
-      break;
-    unpackWord(&tbuf, &wLen);
-    if (wLen < 12)
-      break;
-    if (tbuf - buf + wLen > len)
-      break;
-    tbuf += 2;    /* version */
-    unpackWord(&tbuf, &wType);
-    tbuf += 4;    /* flags */
-    unpackDWord(&tbuf, &dwPackSeq);
-    if (wType == HTTP_PACKETTYPE_FLAP)
-    { // it is normal data packet
-      copyBytes = wLen - 12;
-      if (copyBytes > len - i)
-      {
-        /* invalid data - do our best to get something out of it */
-        copyBytes = len - i;
-      }
-      memcpy(buf + i, tbuf, copyBytes);
-      i += copyBytes;
-    }
-    else if (wType == HTTP_PACKETTYPE_LOGINREPLY)
-    { // our "virtual connection" was established, good
-      BYTE bRes;
+	
+	tbuf = buf;
+	for(i = 0;;)
+	{
+		if (tbuf - buf + 2 > len)
+			break;
+		unpackWord(&tbuf, &wLen);
+		if (wLen < 12)
+			break;
+		if (tbuf - buf + wLen > len)
+			break;
+		tbuf += 2;	  /* version */
+		unpackWord(&tbuf, &wType);
+		tbuf += 8;   /* flags & subtype */
+		if (wType == HTTP_PACKETTYPE_FLAP)
+		{
+			copyBytes = wLen - 12;
+			if (copyBytes > len - i)
+			{
+				/* invalid data - do our best to get something out of it */
+				copyBytes = len - i;
+			}
+			memcpy(buf + i, tbuf, copyBytes);
+			i += copyBytes;
+		}
+/*    else if (wType == HTTP_PACKETTYPE_4UNK && !isLoginServer)
+    { // on the BOS connection we should reply to this????
+      icq_packet packet;
 
-      unpackByte(&tbuf, &bRes);
-      wLen -= 1;
-      if (!bRes)
-        NetLog_Server("Gateway Connection #%d Established.", dwPackSeq);
-      else
-        NetLog_Server("Gateway Connection #%d Failed, error: %d", dwPackSeq, bRes);
-    }
-    else if (wType == HTTP_PACKETTYPE_CLOSEREPLY)
-    { // "virtual connection" closed - only received if any other "virual connection" still active
-      NetLog_Server("Gateway Connection #%d Closed.", dwPackSeq);
-    }
-    tbuf += wLen - 12;
-  }
-  *outBufLen = i;
+      packet.wLen = 0;
+      write_httphdr(&packet, HTTP_PACKETTYPE_6UNK, 1);
+      Netlib_Send(nlhr->nlc, packet.pData, packet.wLen, MSG_DUMPPROXY|MSG_NOHTTPGATEWAYWRAP);
+    }*/
+		tbuf += wLen - 12;
+	}
+	*outBufLen = i;
 
-  return buf;
-}
+	return buf;
 
-
-
-int icq_httpGatewayWalkTo(HANDLE hConn, NETLIBOPENCONNECTION* nloc)
-{ // this is bad simplification - for avatars to work we need to handle
-  // two "virtual connections" at the same time
-  icq_packet packet;
-  DWORD dwGatewaySeq = GetGatewayIndex(hConn);
-
-  packet.wLen = 0;
-  write_httphdr(&packet, HTTP_PACKETTYPE_CLOSE, dwGatewaySeq);
-  Netlib_Send(hConn, packet.pData, packet.wLen, MSG_DUMPPROXY|MSG_NOHTTPGATEWAYWRAP);
-  // we closed virtual connection, open new one
-  dwGatewaySeq++;
-  SetGatewayIndex(hConn, dwGatewaySeq);
-  return icq_httpGatewayBegin(hConn, nloc);
 }

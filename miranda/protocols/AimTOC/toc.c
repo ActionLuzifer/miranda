@@ -18,70 +18,70 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 #include "aim.h"
+
 struct toc_data *tdt = NULL;
 
-static int CallProtoServiceSync(const char *proto, const char *service, WPARAM wParam, LPARAM lParam)
-{
-    char szProtoService[MAX_PATH];
+static int CallProtoServiceSync(const char *proto, const char *service, WPARAM wParam, LPARAM lParam) {
+	char szProtoService[MAX_PATH];
 
-    mir_snprintf(szProtoService, sizeof(szProtoService), "%s%s", proto, service);
-    return CallServiceSync(szProtoService, wParam, lParam);
+	_snprintf(szProtoService,sizeof(szProtoService),"%s%s",proto,service);
+	return CallServiceSync(szProtoService,wParam,lParam);
 }
 
 HANDLE aim_toc_connect()
 {
     NETLIBOPENCONNECTION ncon = { 0 };
     NETLIBUSERSETTINGS nlus = { 0 };
-    SOCKET s;
+	SOCKET s;
     HANDLE con;
     char host[256];
     DBVARIANT dbv;
-    SOCKADDR_IN saddr;
-    int len;
+	SOCKADDR_IN saddr;
+	int len;
 
-    hServerSideList = importBuddies || firstRun;
-    if (!DBGetContactSetting(NULL, AIM_PROTO, AIM_KEY_TS, &dbv)) {
-        mir_snprintf(host, sizeof(host), "%s", dbv.pszVal);
-        DBFreeVariant(&dbv);
-    }
-    else
-        mir_snprintf(host, sizeof(host), "%s", AIM_TOC_HOST);
+    hServerSideList = importBuddies||firstRun;
+	if (!DBGetContactSetting(NULL, AIM_PROTO, AIM_KEY_TS, &dbv)) {
+		_snprintf(host, sizeof(host), "%s", dbv.pszVal);
+		DBFreeVariant(&dbv);
+	}
+	else
+		_snprintf(host, sizeof(host), "%s", AIM_TOC_HOST);
 
-    nlus.cbSize = sizeof(nlus);
-    ncon.cbSize = sizeof(ncon);
-    ncon.szHost = host;
-    ncon.wPort = DBGetContactSettingWord(NULL, AIM_PROTO, AIM_KEY_TT, AIM_TOC_PORT);
-    if (ncon.wPort == 0) {
-        ncon.wPort = aim_util_randomnum(AIM_TOC_PORTLOW, AIM_TOC_PORTHIGH);
-    }
-    con = (HANDLE) CallService(MS_NETLIB_OPENCONNECTION, (WPARAM) hNetlib, (LPARAM) & ncon);
+	nlus.cbSize = sizeof(nlus);
+	ncon.cbSize = sizeof(ncon);
+	ncon.szHost = host;
+	ncon.wPort = DBGetContactSettingWord(NULL, AIM_PROTO, AIM_KEY_TT, AIM_TOC_PORT);
+	if (ncon.wPort == 0) {
+		ncon.wPort = aim_util_randomnum(AIM_TOC_PORTLOW, AIM_TOC_PORTHIGH);
+	}
+	con = (HANDLE) CallService(MS_NETLIB_OPENCONNECTION, (WPARAM) hNetlib, (LPARAM) & ncon);
     if (!con) {
-        mir_snprintf(host, sizeof(host), "%s", AIM_TOC_HOST);
-        ncon.szHost = host;
-        ncon.wPort = AIM_TOC_PORT;
-        if (!con) {
-            aim_util_broadcaststatus(ID_STATUS_OFFLINE);
-            LOG(LOG_DEBUG, "Connection to %s:%d failed", ncon.szHost, ncon.wPort);
-            return NULL;
-        }
+		_snprintf(host, sizeof(host), "%s", AIM_TOC_HOST);
+		ncon.szHost = host;
+		ncon.wPort = AIM_TOC_PORT;
+		if (!con) {
+			aim_util_broadcaststatus(ID_STATUS_OFFLINE);
+			LOG(LOG_DEBUG, "Connection to %s:%d failed", ncon.szHost, ncon.wPort);
+			return NULL;
+		}
     }
-    if (Miranda_Terminated() || CallProtoServiceSync(AIM_PROTO, PS_GETSTATUS, 0, 0) != ID_STATUS_CONNECTING) {
-        Netlib_CloseHandle(con);
-        return NULL;
-    }
-    if ((CallService(MS_NETLIB_GETUSERSETTINGS, (WPARAM) hNetlib, (LPARAM) & nlus) && !(nlus.useProxy && nlus.dnsThroughProxy)) &&
-        (s = CallService(MS_NETLIB_GETSOCKET, (WPARAM) con, 0)) != INVALID_SOCKET) {
-        if (getpeername(s, (SOCKADDR *) & saddr, &len) == 0) {
-            DBWriteContactSettingString(NULL, AIM_PROTO, AIM_KEY_SA, inet_ntoa(saddr.sin_addr));
-        }
-        else {
-            DBWriteContactSettingString(NULL, AIM_PROTO, AIM_KEY_SA, host);
-        }
-    }
-    else {
-        DBWriteContactSettingString(NULL, AIM_PROTO, AIM_KEY_SA, host);
-    }
-
+	if (Miranda_Terminated() || CallProtoServiceSync(AIM_PROTO,PS_GETSTATUS,0,0)!=ID_STATUS_CONNECTING) {
+		Netlib_CloseHandle(con);
+		return NULL;
+	}
+	if ((CallService(MS_NETLIB_GETUSERSETTINGS, (WPARAM) hNetlib, (LPARAM) & nlus) && !(nlus.useProxy && nlus.dnsThroughProxy))&&
+				(s=CallService(MS_NETLIB_GETSOCKET, (WPARAM) con, 0))!=INVALID_SOCKET) {
+		if (getpeername(s, (SOCKADDR *)&saddr, &len)==0) {
+			DBWriteContactSettingString(NULL, AIM_PROTO, AIM_KEY_SA, inet_ntoa(saddr.sin_addr));
+		}
+		else {
+			DBWriteContactSettingString(NULL, AIM_PROTO, AIM_KEY_SA, host);
+		}
+	}
+	else {
+		DBWriteContactSettingString(NULL, AIM_PROTO, AIM_KEY_SA, host);
+	}
+    
     importBuddies = 0;
     return con;
 }
@@ -138,7 +138,7 @@ int aim_toc_login(HANDLE hConn)
     tdt = malloc(sizeof(struct toc_data));
     tdt->password = NULL;
     tdt->username = NULL;
-    tdt->state = STATE_OFFLINE;
+	tdt->state = STATE_OFFLINE;
     hServerConn = hConn;
     hServerPacketRecver = NULL;
     if (!DBGetContactSetting(NULL, AIM_PROTO, AIM_KEY_PW, &dbv)) {
@@ -174,43 +174,34 @@ static void toc_peformerror(int e)
     buf[0] = '\0';
     switch (e) {
             // Misc Errors
-		case 901:
-			mir_snprintf(buf, sizeof(buf), Translate("Buddy not avaliable."));
-			break;
-		case 903:
-            mir_snprintf(buf, sizeof(buf), Translate("A message has been dropped. You are exceeding the server speed limit."));
-			break;
-		case 931:
-            mir_snprintf(buf, sizeof(buf),Translate("Unable to add buddy or group. You may have the max allowed buddies or groups or are trying to add a buddy to a group that doesn't exist and cannot be created."));
-            MessageBox(0, Translate("Unable to add buddy or group. You may have the max allowed buddies or groups or are trying to add a buddy to a group that doesn't exist and cannot be created."), "Oops",MB_OK);
-			break;
-		case 960:
-            mir_snprintf(buf, sizeof(buf), Translate("You are sending messages too fast.  Some messages may have been dropped."));
+        case 903:
+            _snprintf(buf, sizeof(buf), Translate("A message has been dropped.  You are exceeding the server speed limit."));
+        case 960:
+            _snprintf(buf, sizeof(buf), Translate("You are sending messages too fast.  Some messages may have been dropped."));
             break;
         case 961:
-            mir_snprintf(buf, sizeof(buf), Translate("You missed a message because it was too big."));
+            _snprintf(buf, sizeof(buf), Translate("You missed a message because it was too big."));
             break;
         case 962:
-            mir_snprintf(buf, sizeof(buf), Translate("You missed a message because it was sent too fast."));
+            _snprintf(buf, sizeof(buf), Translate("You missed a message because it was sent too fast."));
             break;
             // Login Errors
         case 980:
-            mir_snprintf(buf, sizeof(buf), Translate("Incorrect nickname or password.  Please change your login details and try again."));
+            _snprintf(buf, sizeof(buf), Translate("Incorrect nickname or password.  Please change your login details and try again."));
             break;
         case 981:
-            mir_snprintf(buf, sizeof(buf), Translate("The service is temporarily unavailable.  Please try again later."));
+            _snprintf(buf, sizeof(buf), Translate("The service is temporarily unavailable.  Please try again later."));
             break;
         case 982:
-            mir_snprintf(buf, sizeof(buf), Translate("Your warning level is currently too high to sign on.  Please try again later."));
+            _snprintf(buf, sizeof(buf), Translate("Your warning level is currently too high to sign on.  Please try again later."));
             break;
         case 983:
-            mir_snprintf(buf, sizeof(buf),
-                         Translate
-                         ("You have been connecting and disconnecting too frequently.  Wait 10 minutes and try again.  If you continue to try, you will need to wait even longer."));
-            MessageBox(0, Translate("You have been connecting and disconnecting too frequently.  Wait 10 minutes and try again.  If you continue to try, you will need to wait even longer."), "Error 983",MB_ICONERROR | MB_OK);
-			break;
+            _snprintf(buf, sizeof(buf),
+                      Translate
+                      ("You have been connecting and disconnecting too frequently.  Wait 10 minutes and try again.  If you continue to try, you will need to wait even longer."));
+            break;
         case 989:
-            mir_snprintf(buf, sizeof(buf), Translate("An unknown signon error has occurred.  Please try again later."));
+            _snprintf(buf, sizeof(buf), Translate("An unknown signon error has occurred.  Please try again later."));
             break;
     }
     if (buf[0]) {
@@ -233,8 +224,7 @@ int aim_toc_parse(char *buf, int len)
     struct toc_sflap_hdr *hdr;
     char snd[MSG_LEN * 2];
     char *c;
-	int d,e,f,g,pw,sn;
-	char code[15];
+
     hdr = (struct toc_sflap_hdr *) buf;
 
     if (tdt->state == STATE_FLAPON) {
@@ -250,41 +240,31 @@ int aim_toc_parse(char *buf, int len)
         else
             LOG(LOG_DEBUG, "Received SFLAP SIGNON");
         if (!DBGetContactSetting(NULL, AIM_PROTO, AIM_KEY_AS, &dbv)) {
-            mir_snprintf(host, sizeof(host), "%s", dbv.pszVal);
+            _snprintf(host, sizeof(host), "%s", dbv.pszVal);
             DBFreeVariant(&dbv);
         }
         else
-            mir_snprintf(host, sizeof(host), "%s", AIM_AUTH_HOST);
-        port = DBGetContactSettingWord(NULL, AIM_PROTO, AIM_KEY_TT, AIM_AUTH_PORT);
+            _snprintf(host, sizeof(host), "%s", AIM_AUTH_HOST);
+        port = DBGetContactSettingWord(NULL, AIM_PROTO, AIM_KEY_AT, AIM_AUTH_PORT);
         if (port == 0) {
             port = aim_util_randomnum(AIM_AUTH_PORTLOW, AIM_AUTH_PORTHIGH);
             LOG(LOG_DEBUG, "Using random auth port for %s (Port %d)", host, port);
         }
         tdt->seqno = ntohs(hdr->seqno);
         tdt->state = STATE_SIGNON;
-        mir_snprintf(so.username, sizeof(so.username), "%s", tdt->username);
+        _snprintf(so.username, sizeof(so.username), "%s", tdt->username);
         so.ver = htonl(1);
         so.tag = htons(1);
         so.namelen = htons(strlen(so.username));
-		
-
         if (aim_toc_sflapsend((char *) &so, ntohs(so.namelen) + 8, TYPE_SIGNON)) {
             return -1;
         }
-		sn = tdt->username[0]-96;
-		pw = tdt->password[0]-96;
-		d = sn * 7696 + 738816;
-		e = sn * 746512;
-		f = pw * d;
-		g = f - d + e + 71665152;
-		itoa(g,code,10);
-		//toc2_login login.oscar.aol.com 29999 screenname 0x3900005d3b01 English "TIC:\Revision: 1.61 " 160 US "" "" 3 0 30303 -kentucky -utf8 94791632'
-		mir_snprintf(snd, sizeof(snd), "toc2_login %s %d %s %s %s %s %s", host, 29999, aim_util_normalize(tdt->username),
-		aim_util_roastpwd(tdt->password), LANGUAGE, REVISION, code);
-		if (aim_toc_sflapsend(snd, -1, TYPE_DATA)) {
-			return -1;
-		}
-		return len;
+        _snprintf(snd, sizeof(snd), "toc_signon %s %d %s %s %s \"%s\"", host, port, aim_util_normalize(tdt->username),
+                  aim_util_roastpwd(tdt->password), LANGUAGE, REVISION);
+        if (aim_toc_sflapsend(snd, -1, TYPE_DATA)) {
+            return -1;
+        }
+        return len;
     }
     if (tdt->state == STATE_SIGNON) {
         if (_strnicmp(buf + sizeof(struct toc_sflap_hdr), "SIGN_ON", strlen("SIGN_ON"))) {
@@ -307,9 +287,9 @@ int aim_toc_parse(char *buf, int len)
         }
         aim_userinfo_send();
         aim_buddy_updateconfig(0);
-        mir_snprintf(snd, sizeof(snd), "toc_init_done");
+        _snprintf(snd, sizeof(snd), "toc_init_done");
         aim_toc_sflapsend(snd, -1, TYPE_DATA);
-        mir_snprintf(snd, sizeof(snd), "toc_set_caps %s %s %s", UID_ICQ_SUPPORT, UID_AIM_CHAT, UID_AIM_FILE_RECV);
+        _snprintf(snd, sizeof(snd), "toc_set_caps %s %s %s", UID_ICQ_SUPPORT, UID_AIM_CHAT, UID_AIM_FILE_RECV);
         aim_toc_sflapsend(snd, -1, TYPE_DATA);
         return len;
     }
@@ -325,10 +305,6 @@ int aim_toc_parse(char *buf, int len)
         toc_peformerror(error);
         return len;
     }
-	if (!_strcmpi(c, "NEW_BUDDY_REPLY2")) {
-        char* ch=strtok(NULL, ":");
-		MessageBox(0, Translate("Buddy Added Successfully!"),ch, MB_OK | MB_ICONINFORMATION);
-    }
     // SIGN_ON:<Client Version Supported>
     if (!_strcmpi(c, "SIGN_ON")) {
         LOG(LOG_DEBUG, "Parsing SIGN_ON");
@@ -341,19 +317,19 @@ int aim_toc_parse(char *buf, int len)
             DBVARIANT dbv;
 
             if (!DBGetContactSetting(NULL, AIM_PROTO, AIM_KEY_AS, &dbv)) {
-                mir_snprintf(host, sizeof(host), "%s", dbv.pszVal);
+                _snprintf(host, sizeof(host), "%s", dbv.pszVal);
                 DBFreeVariant(&dbv);
             }
             else
-                mir_snprintf(host, sizeof(host), "%s", AIM_AUTH_HOST);
-            port = DBGetContactSettingWord(NULL, AIM_PROTO, AIM_KEY_TT, AIM_AUTH_PORT);
+                _snprintf(host, sizeof(host), "%s", AIM_AUTH_HOST);
+            port = DBGetContactSettingWord(NULL, AIM_PROTO, AIM_KEY_AT, AIM_AUTH_PORT);
             tdt->state = STATE_ONLINE;
-            mir_snprintf(snd, sizeof(snd), "toc2_signon %s %d %s %s %s %s", host, port, aim_util_normalize(tdt->username),
-                         aim_util_roastpwd(tdt->password), LANGUAGE, REVISION);
+            _snprintf(snd, sizeof(snd), "toc_signon %s %d %s %s %s \"%s\"", host, port, aim_util_normalize(tdt->username),
+                      aim_util_roastpwd(tdt->password), LANGUAGE, REVISION);
             if (aim_toc_sflapsend(snd, -1, TYPE_DATA)) {
                 return -1;
             }
-            mir_snprintf(snd, sizeof(snd), "toc_init_done");
+            _snprintf(snd, sizeof(snd), "toc_init_done");
             aim_toc_sflapsend(snd, -1, TYPE_DATA);
         }
         return len;
@@ -365,9 +341,9 @@ int aim_toc_parse(char *buf, int len)
         return len;
     }
     // CONFIG:<config>
-    else if (!_strcmpi(c, "CONFIG2")) {
+    else if (!_strcmpi(c, "CONFIG")) {
         LOG(LOG_DEBUG, "Parsing CONFIG");
-        c = strtok(NULL, "");
+        c = strtok(NULL, ":");
         aim_buddy_parseconfig(c);
         return len;
     }
@@ -391,7 +367,7 @@ int aim_toc_parse(char *buf, int len)
         return len;
     }
     // UPDATE_BUDDY:<Buddy User>:<Online? T/F>:<Evil Amount>:<Signon Time>:<IdleTime>:<UC>
-    else if (!_strcmpi(c, "UPDATE_BUDDY2")) {
+    else if (!_strcmpi(c, "UPDATE_BUDDY")) {
         char *l, *uc;
         int logged, evil, idle, type = 0;
         time_t signon, time_idle;
@@ -449,21 +425,16 @@ int aim_toc_parse(char *buf, int len)
         return len;
     }
     // IM_IN:<Source User>:<Auto Response T/F?>:<Message>
-    else if (!_strcmpi(c, "IM_IN_ENC2")) {
+    else if (!_strcmpi(c, "IM_IN")) {
         char *message, *msg;
         int autoresponse = 0;
         CCSDATA ccs;
         PROTORECVEVENT pre;
         HANDLE hContact;
+
         LOG(LOG_DEBUG, "Parsing IM_IN");
         c = strtok(NULL, ":");
         message = strtok(NULL, ":");
-		message = strtok(NULL, ":");
-		message = strtok(NULL, ":");
-		message = strtok(NULL, ":");
-		message = strtok(NULL, ":");
-		message = strtok(NULL, ":");
-		message = strtok(NULL, ":");
         if (message && (*message == 'T'))
             autoresponse = 1;
         while (*message && (*message != ':'))
@@ -474,7 +445,7 @@ int aim_toc_parse(char *buf, int len)
             int len = strlen(Translate(AIM_STR_AR)) + 2 + strlen(message) + 1;
             char *m = malloc(len);
             msg = malloc(len);
-            mir_snprintf(m, len, "%s: %s", Translate(AIM_STR_AR), message);
+            _snprintf(m, len, "%s: %s", Translate(AIM_STR_AR), message);
             aim_util_striphtml(msg, m, len);
             free(m);
         }
@@ -661,7 +632,7 @@ int aim_toc_parse(char *buf, int len)
             ft->user = _strdup(aim_util_normalize(user));
             ft->size = totalsize;
             ft->files = files;
-            mir_snprintf(ft->UID, sizeof(ft->UID), "%s", UID_AIM_FILE_RECV);
+            _snprintf(ft->UID, sizeof(ft->UID), "%s", UID_AIM_FILE_RECV);
             ft->hContact = hContact;
             free(tmp);
             for (i--; i >= 0; i--)

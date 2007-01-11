@@ -2,7 +2,7 @@
 
 Miranda IM: the free IM client for Microsoft* Windows*
 
-Copyright 2000-2007 Miranda ICQ/IM project, 
+Copyright 2000-2003 Miranda ICQ/IM project, 
 all portions of this codebase are copyrighted to the people 
 listed in contributors.txt.
 
@@ -24,8 +24,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifndef M_LANGPACK_H__
 #define M_LANGPACK_H__
 
-#define LANG_UNICODE 0x1000
-
 //translates a single string into the user's local language	  v0.1.1.0+
 //wParam=0
 //lParam=(LPARAM)(const char*)szEnglish
@@ -37,14 +35,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //these versions, I pity them.
 #define MS_LANGPACK_TRANSLATESTRING   "LangPack/TranslateString"
 #define Translate(s)   ((char*)CallService(MS_LANGPACK_TRANSLATESTRING,0,(LPARAM)(s)))
-#define TranslateW(s)   ((WCHAR*)CallService(MS_LANGPACK_TRANSLATESTRING,LANG_UNICODE,(LPARAM)(s)))
-#if defined( _UNICODE )
-	#define TranslateT(s) TranslateW(_T(s))
-	#define TranslateTS(s) TranslateW(s)
-#else
-	#define TranslateT(s) Translate(s)
-	#define TranslateTS(s) Translate(s)
-#endif
 
 //translates a dialog into the user's local language	  v0.1.1.0+
 //wParam=0
@@ -62,7 +52,6 @@ typedef struct {
 #define LPTDF_NOIGNOREEDIT   1     //translate all edit controls. By default
                    //non-read-only edit controls are not translated
 #define LPTDF_NOTITLE        2     //do not translate the title of the dialog
-
 #define MS_LANGPACK_TRANSLATEDIALOG  "LangPack/TranslateDialog"
 __inline static int TranslateDialogDefault(HWND hwndDlg)
 {
@@ -80,22 +69,6 @@ __inline static int TranslateDialogDefault(HWND hwndDlg)
 //returns 0 on success, nonzero on failure
 #define MS_LANGPACK_TRANSLATEMENU    "LangPack/TranslateMenu"
 
-//returns the codepage used in the language pack 	  v0.4.3.0+
-//wParam=0
-//lParam=0
-//returns the codepage stated in the langpack, or CP_ACP if no langpack is present
-#define MS_LANGPACK_GETCODEPAGE      "LangPack/GetCodePage"
-
-//returns the locale id associated with the language pack    v0.4.3.0+
-//wParam=0
-//lParam=0
-//returns the Windows locale id stated in the langpack, or LOCALE_USER_DEFAULT if no langpack is present
-#define MS_LANGPACK_GETLOCALE        "LangPack/GetLocale"
-
-//returns the strdup/wcsdup of lparam according to the langpack  v0.4.3.0+
-//wParam=0
-//lParam=(LPARAM)(char*)source string
-//returns a string converted from char* to TCHAR* using the langpack codepage. 
-//This string should be freed using mir_free() then
-#define MS_LANGPACK_PCHARTOTCHAR     "LangPack/PcharToTchar"
 #endif // M_LANGPACK_H__
+
+

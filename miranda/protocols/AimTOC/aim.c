@@ -54,7 +54,7 @@ int aim_modulesloaded(WPARAM wParam, LPARAM lParam)
     NETLIBUSER nlu;
     char szP2P[128];
 
-    mir_snprintf(szP2P, sizeof(szP2P), "%sP2P", AIM_PROTO);
+    _snprintf(szP2P, sizeof(szP2P), "%sP2P", AIM_PROTO);
     ZeroMemory(&nlu, sizeof(nlu));
     nlu.cbSize = sizeof(nlu);
     nlu.flags = NUF_OUTGOING | NUF_HTTPCONNS;
@@ -71,8 +71,7 @@ int aim_modulesloaded(WPARAM wParam, LPARAM lParam)
     hServerSideList = importBuddies;
     aim_evil_init();
     aim_userinfo_init();
-    if (ServiceExists(MS_GC_REGISTER))
-        aim_gchat_init();
+    aim_gchat_init();
     aim_idle_init();
     aim_keepalive_init();
     aim_links_init();
@@ -110,7 +109,7 @@ int __declspec(dllexport) Load(PLUGINLINK * link)
     pthread_mutex_init(&connectionHandleMutex);
     pthread_mutex_init(&buddyMutex);
     aim_filerecv_init();
-    aim_services_register(hInstance);
+    aim_services_register();
     aim_buddy_offlineall();
     return 0;
 }
@@ -122,8 +121,7 @@ int __declspec(dllexport) Unload()
     }
     aim_evil_destroy();
     aim_userinfo_destroy();
-    if (ServiceExists(MS_GC_REGISTER))
-        aim_gchat_destroy();
+    aim_gchat_destroy();
     aim_idle_destroy();
     aim_keepalive_destroy();
     aim_links_destroy();

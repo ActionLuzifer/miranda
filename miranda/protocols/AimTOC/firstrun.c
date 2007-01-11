@@ -44,7 +44,7 @@ void aim_firstrun_check()
              MB_ICONQUESTION | MB_YESNO) == IDYES) {
             char buf[MAX_PATH];
 
-            mir_snprintf(buf, sizeof(buf), "%s.dll", AIM_PROTO);
+            _snprintf(buf, sizeof(buf), "%s.dll", AIM_PROTO);
             DBWriteContactSettingByte(NULL, "PluginDisable", buf, 1);
         }
     }

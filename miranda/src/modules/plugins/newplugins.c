@@ -20,11 +20,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
-#include "commonheaders.h"
-#include "../database/dblists.h"
-
-// block these plugins
-#define DEFMOD_REMOVED_UIPLUGINOPTS     21
+#include "../../core/commonheaders.h"
 
 // basic export prototypes
 typedef int (__cdecl * Miranda_Plugin_Load) ( PLUGINLINK * );
@@ -58,86 +54,65 @@ typedef struct { // can all be NULL
 #define PCLASS_CLIST 	 0x80  // a CList implementation
 
 typedef struct pluginEntry {
+	struct pluginEntry * prev, * next;
 	char pluginname[64];
 	unsigned int pclass; // PCLASS_*
 	BASIC_PLUGIN_INFO bpi;
 	struct pluginEntry * nextclass; 
 } pluginEntry;
 
-SortedList pluginList = { 0 }, pluginListAddr = { 0 };
+typedef struct {
+	pluginEntry * first, * last;
+} pluginEntryList;
 
 PLUGINLINK pluginCoreLink;
-char   mirandabootini[MAX_PATH];
+char mirandabootini[MAX_PATH];
 static DWORD mirandaVersion;
+static pluginEntryList pluginListHead;
 static pluginEntry * pluginListDb;
 static pluginEntry * pluginListUI;
-static pluginEntry * pluginList_png2dib = NULL;
 static HANDLE hPluginListHeap = NULL;
 static pluginEntry * pluginDefModList[DEFMOD_HIGHEST+1]; // do not free this memory
 static int askAboutIgnoredPlugins;
 
-int  InitIni(void);
-void UninitIni(void);
-
 #define PLUGINDISABLELIST "PluginDisable"
 
-void KillModuleEventHooks( HINSTANCE );
-void KillModuleServices( HINSTANCE );
-
 int LoadDatabaseModule(void);	
-void ListView_SetItemTextA( HWND hwndLV, int i, int iSubItem, char* pszText );
 
-void ListView_GetItemTextA( HWND hwndLV, int i, int iSubItem, char* pszText, size_t cchTextMax )
+static void LL_Insert(pluginEntryList * head, pluginEntry * p)
 {
-	LV_ITEMA  ms_lvi;
-	ms_lvi.iSubItem = iSubItem;
-	ms_lvi.cchTextMax = cchTextMax;
-	ms_lvi.pszText = pszText;
-	SendMessageA( hwndLV, LVM_GETITEMTEXTA, i, (LPARAM)&ms_lvi);
+	if ( head->first == NULL ) head->first = p;
+	if ( head->last != NULL ) head->last->next = p;
+	p->prev = head->last;
+	head->last = p;
+	p->next = NULL;
 }
 
-HINSTANCE GetInstByAddress( void* codePtr )
+static void LL_Remove(pluginEntryList * head, pluginEntry * q)
 {
-	int idx;
-	HINSTANCE result;
-	pluginEntry p; p.bpi.hInst = codePtr;
-
-	if ( pluginListAddr.realCount == 0 )
-		return NULL;
-
-	List_GetIndex( &pluginListAddr, &p, &idx );
-	if ( idx > 0 )
-		idx--;
-
-	result = (( pluginEntry* )( pluginListAddr.items[idx] ))->bpi.hInst;
-	if ( idx == 0 && codePtr < ( void* )result )
-		return NULL;
-
-	return result;
+	if ( q->prev != NULL ) q->prev->next = q->next;
+	if ( q->next != NULL ) q->next->prev = q->prev;
+	if ( head->first == q ) head->first = q->next;
+	if ( head->last == q ) head->last = q->prev;
+		
+	q->next = q->prev = NULL;
 }
 
 // returns true if the API exports were good, otherwise, passed in data is returned
 #define CHECKAPI_NONE 	0
 #define CHECKAPI_DB 	1
 #define CHECKAPI_CLIST  2
-
-static char* modulesToSkip[] = { "autoloadavatars.dll", "multiwindow.dll", "fontservice.dll", "icolib.dll" };
-
 static int checkAPI(char * plugin, BASIC_PLUGIN_INFO * bpi, DWORD mirandaVersion, int checkTypeAPI, int * exports)
 {
 	HINSTANCE h = NULL;
 	// this is evil but these plugins are buggy/old and people are blaming Miranda
-	// fontservice plugin is built into the core now
 	{
 		char * p = strrchr(plugin,'\\');
 		if ( p != NULL && ++p ) {
-			int i;
-			for ( i = 0; i < SIZEOF(modulesToSkip); i++ )
-				if ( lstrcmpiA( p, modulesToSkip[i] ) == 0 )
-					return 0;
-	}	}
-
-	h = LoadLibraryA(plugin);
+			if ( lstrcmpi(p,"autoloadavatars.dll")==0 || lstrcmpi(p,"multiwindow.dll")==0 ) return 0;
+		}
+	}
+	h = LoadLibrary(plugin);
 	if ( h == NULL ) return 0;
 	// loaded, check for exports
 	bpi->Load = (Miranda_Plugin_Load) GetProcAddress(h, "Load");
@@ -149,8 +124,7 @@ static int checkAPI(char * plugin, BASIC_PLUGIN_INFO * bpi, DWORD mirandaVersion
 		PLUGININFO * pi = bpi->Info(mirandaVersion);
 		if ( pi && pi->cbSize==sizeof(PLUGININFO) && pi->shortName && pi->description 
 				&& pi->author && pi->authorEmail && pi->copyright && pi->homepage
-				&& pi->replacesDefaultModule <= DEFMOD_HIGHEST 
-				&& pi->replacesDefaultModule != DEFMOD_REMOVED_UIPLUGINOPTS)
+				&& pi->replacesDefaultModule <= DEFMOD_HIGHEST )
 		{
 			bpi->pluginInfo = pi;
 			// basic API is present
@@ -177,10 +151,7 @@ static int checkAPI(char * plugin, BASIC_PLUGIN_INFO * bpi, DWORD mirandaVersion
 			// check clist ?
 			if ( checkTypeAPI == CHECKAPI_CLIST ) {				
 				bpi->clistlink = (CList_Initialise) GetProcAddress(h, "CListInitialise");
-				#if defined( _UNICODE )
-					if ( pi->isTransient == UNICODE_AWARE )
-				#endif
-				if ( bpi->clistlink ) {
+				if ( bpi->clistlink ) {					
 					// nothing more can be done here, this export is a load function
 					bpi->hInst=h;
 					if ( exports != NULL ) *exports=1;
@@ -199,7 +170,7 @@ static int checkAPI(char * plugin, BASIC_PLUGIN_INFO * bpi, DWORD mirandaVersion
 static int valid_library_name(char * name)
 {
 	char * dot = strrchr(name, '.');
-	if ( dot != NULL && lstrcmpiA(dot+1,"dll") == 0) {
+	if ( dot != NULL && lstrcmpi(dot+1,"dll") == 0) {
 		if ( dot[4] == 0 ) return 1;
 	}
 	return 0;
@@ -212,7 +183,7 @@ static int validguess_db_name(char * name)
 	// this is ONLY SAFE because name -> ffd.cFileName == MAX_PATH
 	char x = name[4];
 	name[4]=0;
-	rc=lstrcmpiA(name,"dbx_") == 0;
+	rc=lstrcmpi(name,"dbx_") == 0;
 	name[4]=x;
 	return rc;
 }
@@ -224,7 +195,7 @@ static int validguess_clist_name(char * name)
 	// argh evil
 	char x = name[6];
 	name[6]=0;
-	rc=lstrcmpiA(name,"clist_") == 0;
+	rc=lstrcmpi(name,"clist_") == 0;
 	name[6]=x;
 	return rc;
 }
@@ -233,27 +204,17 @@ static int validguess_clist_name(char * name)
 static void Plugin_Uninit(pluginEntry * p)
 {	
 	// if it was an installed database plugin, call its unload
-	if ( p->pclass & PCLASS_DB )
-		p->bpi.dblink->Unload( p->pclass & PCLASS_OK );
-
+	if ( p->pclass&PCLASS_DB ) p->bpi.dblink->Unload( p->pclass&PCLASS_OK );
 	// if the basic API check had passed, call Unload if Load() was ever called
-	if ( p->pclass & PCLASS_LOADED )
-		p->bpi.Unload();
-
+	if ( p->pclass&PCLASS_LOADED ) p->bpi.Unload();
 	// release the library
 	if ( p->bpi.hInst != NULL ) {
-		// we need to kill all resources which belong to that DLL before calling FreeLibrary
-		KillModuleEventHooks( p->bpi.hInst );
-		KillModuleServices( p->bpi.hInst );
-
-		FreeLibrary( p->bpi.hInst );
-		ZeroMemory( &p->bpi, sizeof( p->bpi ));
+		FreeLibrary(p->bpi.hInst);
+		ZeroMemory(&p->bpi,sizeof(p->bpi));
 	}
-	List_RemovePtr( &pluginList, p );
-	List_RemovePtr( &pluginListAddr, p );
 }
 
-typedef BOOL (*SCAN_PLUGINS_CALLBACK) ( WIN32_FIND_DATAA * fd, char * path, WPARAM wParam, LPARAM lParam );
+typedef BOOL (*SCAN_PLUGINS_CALLBACK) ( WIN32_FIND_DATA * fd, char * path, WPARAM wParam, LPARAM lParam );
 
 static void enumPlugins(SCAN_PLUGINS_CALLBACK cb, WPARAM wParam, LPARAM lParam)
 {
@@ -261,24 +222,24 @@ static void enumPlugins(SCAN_PLUGINS_CALLBACK cb, WPARAM wParam, LPARAM lParam)
 	char search[MAX_PATH];
 	char * p = 0;	
 	// get miranda's exe path
-	GetModuleFileNameA(NULL, exe, SIZEOF(exe));
+	GetModuleFileName(NULL, exe, sizeof(exe));
 	// find the last \ and null it out, this leaves no trailing slash
 	p = strrchr(exe, '\\');
 	if ( p ) *p=0;
 	// create the search filter
-	mir_snprintf(search,SIZEOF(search),"%s\\Plugins\\*.dll", exe);
+	_snprintf(search,sizeof(search),"%s\\Plugins\\*.dll", exe);
 	{
 		// FFFN will return filenames for things like dot dll+ or dot dllx 
 		HANDLE hFind=INVALID_HANDLE_VALUE;
-		WIN32_FIND_DATAA ffd;		
-		hFind = FindFirstFileA(search, &ffd);
+		WIN32_FIND_DATA ffd;		
+		hFind = FindFirstFile(search, &ffd);
 		if ( hFind != INVALID_HANDLE_VALUE ) {
 			do {
 				if ( !(ffd.dwFileAttributes&FILE_ATTRIBUTE_DIRECTORY) && valid_library_name(ffd.cFileName) ) 
 				{ 
 					cb(&ffd,exe,wParam,lParam);
 				} //if
-			} while ( FindNextFileA(hFind, &ffd) );
+			} while ( FindNextFile(hFind, &ffd) );
 			FindClose(hFind);
 		} //if	
 	}
@@ -297,17 +258,61 @@ static int PluginsEnum(WPARAM wParam, LPARAM lParam)
 			pluginEntry * y = pluginListDb, * n;
 			while ( y != NULL ) {
 				n = y->nextclass;
-				if ( x != y )
+				if ( x != y ) { 
+					LL_Remove(&pluginListHead, y);
 					Plugin_Uninit(y);
+				}
 				y = n;
 			} // while			
 			x->pclass |= PCLASS_LOADED | PCLASS_OK | PCLASS_LAST;
 			return 0;
-		} 
-		else if ( rc == DBPE_HALT ) return 1;
+		} else if ( rc == DBPE_HALT ) return 1;
 		x = x->nextclass;
 	} // while
 	return pluginListDb != NULL ? 1 : -1;
+}
+
+
+// hooked very late, after all the internal plugins, blah
+static int UnloadNewPlugins(WPARAM wParam, LPARAM lParam)
+{
+	pluginEntry * p = pluginListHead.first;
+	// unload everything but the special db/clist plugins
+	while ( p != NULL ) {
+		pluginEntry * q = p->next;
+		if ( !(p->pclass&PCLASS_LAST) && p->pclass&PCLASS_OK ) 
+		{
+			LL_Remove(&pluginListHead, p);
+			Plugin_Uninit(p);
+		}
+		p = q;
+	}
+	return 0;
+}
+
+// called at the end of module chain unloading, just modular engine left at this point
+int UnloadNewPluginsModule(void)
+{
+	pluginEntry * p = pluginListHead.first;	
+	// unload everything but the DB
+	while ( p != NULL ) {
+		pluginEntry * q = p->next;			
+		if ( !(p->pclass&PCLASS_DB) ) { 
+			LL_Remove(&pluginListHead, p);
+			Plugin_Uninit(p);
+		}
+		p = q;
+	}
+	// unload the DB
+	p = pluginListHead.first;
+	while ( p != NULL ) {
+		pluginEntry * q = p->next;		
+		Plugin_Uninit(p);
+		p = q;
+	}
+	if ( hPluginListHeap ) HeapDestroy(hPluginListHeap);
+	hPluginListHeap=0;
+	return 0;
 }
 
 static int PluginsGetDefaultArray(WPARAM wParam, LPARAM lParam)
@@ -316,16 +321,17 @@ static int PluginsGetDefaultArray(WPARAM wParam, LPARAM lParam)
 }
 
 // called in the first pass to create pluginEntry* structures and validate database plugins
-static BOOL scanPluginsDir (WIN32_FIND_DATAA * fd, char * path, WPARAM wParam, LPARAM lParam )
+static BOOL scanPluginsDir (WIN32_FIND_DATA * fd, char * path, WPARAM wParam, LPARAM lParam )
 {
 	int isdb = validguess_db_name(fd->cFileName);
 	BASIC_PLUGIN_INFO bpi;
 	pluginEntry * p = HeapAlloc(hPluginListHeap, HEAP_NO_SERIALIZE|HEAP_ZERO_MEMORY, sizeof(pluginEntry));
-	strncpy(p->pluginname, fd->cFileName, SIZEOF(p->pluginname));
+	p->next=NULL;					
+	strncpy(p->pluginname, fd->cFileName, sizeof(p->pluginname));
 	// plugin name suggests its a db module, load it right now
 	if ( isdb ) {
 		char buf[MAX_PATH];
-		mir_snprintf(buf,SIZEOF(buf),"%s\\Plugins\\%s", path, fd->cFileName);
+		_snprintf(buf,sizeof(buf),"%s\\Plugins\\%s", path, fd->cFileName);
 		if ( checkAPI(buf, &bpi, mirandaVersion, CHECKAPI_DB, NULL) ) {	
 			// db plugin is valid
 			p->pclass |= (PCLASS_DB|PCLASS_BASICAPI);
@@ -334,29 +340,64 @@ static BOOL scanPluginsDir (WIN32_FIND_DATAA * fd, char * path, WPARAM wParam, L
 			// keep a faster list.
 			if ( pluginListDb != NULL ) p->nextclass=pluginListDb;			
 			pluginListDb=p;
-		}  
-		else {							
+		}  else {							
 			// didn't have basic APIs or DB exports - failed.
 			p->pclass |= PCLASS_FAILED;
 		}
-	}
-	else if ( validguess_clist_name(fd->cFileName) ) {
+	} else if ( validguess_clist_name(fd->cFileName) ) {
 		// keep a note of this plugin for later
 		if ( pluginListUI != NULL ) p->nextclass=pluginListUI;
 		pluginListUI=p;
 		p->pclass |= PCLASS_CLIST;
-	} 
-	else if ( lstrcmpiA(fd->cFileName, "png2dib.dll") == 0)
-		pluginList_png2dib = p;
-
+	}
 	// add it to the list
-	List_InsertPtr( &pluginList, p );
+	LL_Insert(&pluginListHead, p);
 	return TRUE;
+}
+
+// called before anything real is loaded, incl. database
+int LoadNewPluginsModuleInfos(void)
+{
+	hPluginListHeap=HeapCreate(HEAP_NO_SERIALIZE, 0, 0);	
+	mirandaVersion = (DWORD)CallService(MS_SYSTEM_GETVERSION, 0, 0);
+	// 
+	CreateServiceFunction(MS_PLUGINS_ENUMDBPLUGINS, PluginsEnum);
+	CreateServiceFunction(MS_PLUGINS_GETDISABLEDEFAULTARRAY, PluginsGetDefaultArray);
+	// make sure plugins can get internal core APIs
+	pluginCoreLink.CallService=CallService;
+	pluginCoreLink.ServiceExists=ServiceExists;
+	pluginCoreLink.CreateServiceFunction=CreateServiceFunction;
+	pluginCoreLink.CreateTransientServiceFunction=CreateServiceFunction;
+	pluginCoreLink.DestroyServiceFunction=DestroyServiceFunction;
+	pluginCoreLink.CreateHookableEvent=CreateHookableEvent;
+	pluginCoreLink.DestroyHookableEvent=DestroyHookableEvent;
+	pluginCoreLink.HookEvent=HookEvent;
+	pluginCoreLink.HookEventMessage=HookEventMessage;
+	pluginCoreLink.UnhookEvent=UnhookEvent;
+	pluginCoreLink.NotifyEventHooks=NotifyEventHooks;
+	pluginCoreLink.SetHookDefaultForHookableEvent=SetHookDefaultForHookableEvent;
+	pluginCoreLink.CallServiceSync=CallServiceSync;
+	pluginCoreLink.CallFunctionAsync=CallFunctionAsync;	
+	// remember where the mirandaboot.ini goes
+	{
+		char exe[MAX_PATH];
+		char * slice;
+		GetModuleFileName(NULL, exe, sizeof(exe));
+		slice=strrchr(exe, '\\');
+		if ( slice != NULL ) *slice=0;
+		_snprintf(mirandabootini, sizeof(mirandabootini), "%s\\mirandaboot.ini", exe);
+	}
+	// look for all *.dll's
+	enumPlugins(scanPluginsDir, 0, 0);
+	// the database will select which db plugin to use, or fail if no profile is selected
+	if (LoadDatabaseModule()) return 1;
+	//  could validate the plugin entries here but internal modules arent loaded so can't call Load() in one pass
+	return 0;
 }
 
 static void SetPluginOnWhiteList(char * pluginname, int allow)
 {
-	DBWriteContactSettingByte(NULL, PLUGINDISABLELIST, pluginname, (BYTE)(allow ? 0 : 1));
+	DBWriteContactSettingByte(NULL, PLUGINDISABLELIST, pluginname, allow ? 0 : 1);
 }
 
 // returns 1 if the plugin should be enabled within this profile, filename is always lower case
@@ -365,33 +406,49 @@ static int isPluginOnWhiteList(char * pluginname)
 	int rc = DBGetContactSettingByte(NULL, PLUGINDISABLELIST, pluginname, 0);
 	if ( rc != 0 && askAboutIgnoredPlugins ) {
 		char buf[256];
-		mir_snprintf(buf,SIZEOF(buf),Translate("'%s' is disabled, re-enable?"),pluginname);
-		if ( MessageBoxA(NULL,buf,Translate("Re-enable Miranda plugin?"),MB_YESNO|MB_ICONQUESTION) == IDYES ) {
+		_snprintf(buf,sizeof(buf),Translate("'%s' is disabled, re-enable?"),pluginname);
+		if ( MessageBox(NULL,buf,Translate("Re-enable Miranda plugin?"),MB_YESNO|MB_ICONQUESTION) == IDYES ) {
 			SetPluginOnWhiteList(pluginname, 1);
 			return 1;
-	}	}
-
+		}
+	}
 	return rc == 0;
 }
 
-static pluginEntry* getCListModule(char * exe, char * slice, int useWhiteList)
+
+// used within LoadNewPluginsModule as an exception handler
+int CListFailed(int result)
+{
+	// result = 0, no clist_* can be found
+	MessageBox(0, result ? 
+	Translate("Unable to start any of the installed contact list plugins, I even ignored your preferences for which contact list couldn't load any.") 
+	: Translate("Can't find a contact list plugin! you need clist_classic or clist_mw.") , "", MB_OK | MB_ICONINFORMATION);
+	return 1;
+}
+
+static int PluginOptionsInit(WPARAM wParam, LPARAM lParam);
+
+static pluginEntry * getCListModule(char * exe, char * slice, int useWhiteList)
 {
 	pluginEntry * p = pluginListUI;
 	BASIC_PLUGIN_INFO bpi;
 	while ( p != NULL )
 	{
-		mir_snprintf(slice, &exe[MAX_PATH] - slice, "\\Plugins\\%s", p->pluginname);
-		CharLowerA(p->pluginname);
+		_snprintf(slice, &exe[MAX_PATH] - slice, "\\Plugins\\%s", p->pluginname);
+		CharLower(p->pluginname);
 		if ( useWhiteList ? isPluginOnWhiteList(p->pluginname) : 1 ) {
 			if ( checkAPI(exe, &bpi, mirandaVersion, CHECKAPI_CLIST, NULL) ) {
 				p->bpi = bpi;
-				p->pclass |= PCLASS_LAST | PCLASS_OK | PCLASS_BASICAPI;
+				p->pclass |= PCLASS_LAST | PCLASS_OK | PCLASS_BASICAPI;						
 				if ( bpi.clistlink(&pluginCoreLink) == 0 ) {
 					p->bpi=bpi;
 					p->pclass |= PCLASS_LOADED;
 					return p;
-				} 
-				else Plugin_Uninit( p );
+					break;
+				} else { 
+					Plugin_Uninit(p); 
+					LL_Remove(&pluginListHead, p);
+				}
 			} //if
 		} //if
 		p = p->nextclass;
@@ -399,32 +456,71 @@ static pluginEntry* getCListModule(char * exe, char * slice, int useWhiteList)
 	return NULL;
 }
 
-/////////////////////////////////////////////////////////////////////////////////////////
-//
-//   Event hook to unload all non-core plugins
-//   hooked very late, after all the internal plugins, blah
-
-static int UnloadNewPlugins(WPARAM wParam, LPARAM lParam)
+int LoadNewPluginsModule(void)
 {
-	int i;
+	char exe[MAX_PATH];
+	char * slice;
+	pluginEntry * p, * q;
+	pluginEntry * clist = NULL;
+	int useWhiteList;
 
-	// unload everything but the special db/clist plugins
-	for ( i = pluginList.realCount-1; i >= 0; i-- ) {
-		pluginEntry* p = pluginList.items[i];
-		if ( !(p->pclass & PCLASS_LAST) && (p->pclass & PCLASS_OK))
-			Plugin_Uninit( p );
+	// make full path to the plugin
+	GetModuleFileName(NULL, exe, sizeof(exe));
+	slice=strrchr(exe, '\\');
+	if ( slice != NULL ) *slice=0;
+	// remember some useful options
+	askAboutIgnoredPlugins=(UINT) GetPrivateProfileInt("PluginLoader", "AskAboutIgnoredPlugins", 0, mirandabootini);
+	// first load the clist cos alot of plugins need that to be present at Load()
+	for ( useWhiteList = 1; useWhiteList >= 0 && clist == NULL; useWhiteList-- ) 
+		clist=getCListModule(exe, slice, useWhiteList);
+	/* the loop above will try and get one clist DLL to work, if all fail then just bail now */
+	if ( clist == NULL ) 
+		return CListFailed( pluginListUI ? 1 : 0 );
+	/* enable and disable as needed  */
+	p=pluginListUI;
+	while ( p != NULL ) {
+		SetPluginOnWhiteList(p->pluginname, clist != p ? 0 : 1 );
+		p = p->nextclass;
 	}
-
+	/* now loop thru and load all the other plugins, do this in one pass */
+	p=pluginListHead.first;
+	while ( p != NULL ) {
+		q = p->next;
+		CharLower(p->pluginname);
+		if ( !(p->pclass&PCLASS_LOADED) && !(p->pclass&PCLASS_DB) 
+			&& !(p->pclass&PCLASS_CLIST) && isPluginOnWhiteList(p->pluginname) ) {
+			BASIC_PLUGIN_INFO bpi;
+			_snprintf(slice,&exe[sizeof(exe)] - slice, "\\Plugins\\%s", p->pluginname);			
+			if ( checkAPI(exe, &bpi, mirandaVersion, CHECKAPI_NONE, NULL) ) {
+				int rm = bpi.pluginInfo->replacesDefaultModule;					
+				p->bpi = bpi;
+				p->pclass |= PCLASS_OK | PCLASS_BASICAPI;
+				if ( pluginDefModList[rm] == NULL ) {					
+					if ( bpi.Load(&pluginCoreLink) == 0 ) p->pclass |= PCLASS_LOADED;
+					else { 
+						LL_Remove(&pluginListHead, p);
+						Plugin_Uninit(p);
+					}
+					if ( rm ) pluginDefModList[rm]=p;
+				} //if
+				else { 
+					SetPluginOnWhiteList(p->pluginname, 0);
+					LL_Remove(&pluginListHead, p);
+					Plugin_Uninit(p);
+				}
+			} else p->pclass |= PCLASS_FAILED;
+		}
+		p=q;
+	} // while
+	// hook shutdown after everything
+	HookEvent(ME_SYSTEM_SHUTDOWN, UnloadNewPlugins);
+	HookEvent(ME_OPT_INITIALISE, PluginOptionsInit);
 	return 0;
 }
 
-/////////////////////////////////////////////////////////////////////////////////////////
-//
-//   Plugins options page dialog
-
-static BOOL dialogListPlugins(WIN32_FIND_DATAA * fd, char * path, WPARAM wParam, LPARAM lParam)
+static BOOL dialogListPlugins(WIN32_FIND_DATA * fd, char * path, WPARAM wParam, LPARAM lParam)
 {
-	LVITEMA it;
+	LVITEM it;
 	int iRow;
 	HWND hwndList=(HWND)lParam;
 	BASIC_PLUGIN_INFO pi;
@@ -432,9 +528,9 @@ static BOOL dialogListPlugins(WIN32_FIND_DATAA * fd, char * path, WPARAM wParam,
 	char buf[MAX_PATH];
 	int isdb = 0;
 	HINSTANCE gModule=NULL;
-	mir_snprintf(buf,SIZEOF(buf),"%s\\Plugins\\%s",path,fd->cFileName);
-	CharLowerA(fd->cFileName);
-	gModule=GetModuleHandleA(buf);
+	_snprintf(buf,sizeof(buf),"%s\\Plugins\\%s",path,fd->cFileName);
+	CharLower(fd->cFileName);
+	gModule=GetModuleHandle(buf);
 	if ( checkAPI(buf, &pi, mirandaVersion, CHECKAPI_NONE, &exports) == 0 ) {
 		// failed to load anything, but if exports were good, show some info.
 		return TRUE;
@@ -442,20 +538,20 @@ static BOOL dialogListPlugins(WIN32_FIND_DATAA * fd, char * path, WPARAM wParam,
 	isdb = pi.pluginInfo->replacesDefaultModule == DEFMOD_DB;
 	ZeroMemory(&it, sizeof(it));
 	it.mask=LVIF_TEXT | LVIF_PARAM;
-	it.pszText = Translate(fd->cFileName);
+	it.pszText=Translate(fd->cFileName);
 	it.lParam=(LPARAM)pi.pluginInfo->replacesDefaultModule;
-	iRow=SendMessageA( hwndList, LVM_INSERTITEMA, 0, (LPARAM)&it );
+	iRow=ListView_InsertItem(hwndList,&it);
 	if ( isPluginOnWhiteList(fd->cFileName) ) ListView_SetItemState(hwndList, iRow, !isdb ? 0x2000 : 0x3000, 0xF000);
 	if ( iRow != (-1) ) {
-		ListView_SetItemTextA(hwndList, iRow, 1, pi.pluginInfo->shortName);
-		mir_snprintf(buf,SIZEOF(buf),"%d.%d.%d.%d", HIBYTE(HIWORD(pi.pluginInfo->version)), LOBYTE(HIWORD(pi.pluginInfo->version)), HIBYTE(LOWORD(pi.pluginInfo->version)), LOBYTE(LOWORD(pi.pluginInfo->version)));
-		ListView_SetItemTextA(hwndList, iRow, 2, buf);
-		ListView_SetItemText(hwndList, iRow, 3, TranslateTS( gModule != NULL ? _T("Yes"):_T("No") ));
-		ListView_SetItemTextA(hwndList, iRow, 4, pi.pluginInfo->author);
-		ListView_SetItemTextA(hwndList, iRow, 5, pi.pluginInfo->authorEmail);
-		ListView_SetItemTextA(hwndList, iRow, 6, Translate(pi.pluginInfo->description));
-		ListView_SetItemTextA(hwndList, iRow, 7, pi.pluginInfo->copyright);
-		ListView_SetItemTextA(hwndList, iRow, 8, pi.pluginInfo->homepage);
+		ListView_SetItemText(hwndList, iRow, 1, pi.pluginInfo->shortName);
+		_snprintf(buf,sizeof(buf),"%d.%d.%d.%d", HIBYTE(HIWORD(pi.pluginInfo->version)), LOBYTE(HIWORD(pi.pluginInfo->version)), HIBYTE(LOWORD(pi.pluginInfo->version)), LOBYTE(LOWORD(pi.pluginInfo->version)));
+		ListView_SetItemText(hwndList, iRow, 2, buf);
+		ListView_SetItemText(hwndList, iRow, 3, Translate( gModule != NULL ? "Yes":"No" ));
+		ListView_SetItemText(hwndList, iRow, 4, pi.pluginInfo->author);
+		ListView_SetItemText(hwndList, iRow, 5, pi.pluginInfo->authorEmail);
+		ListView_SetItemText(hwndList, iRow, 6, pi.pluginInfo->description);
+		ListView_SetItemText(hwndList, iRow, 7, pi.pluginInfo->copyright);
+		ListView_SetItemText(hwndList, iRow, 8, pi.pluginInfo->homepage);
 	}
 	FreeLibrary(pi.hInst);
 	return TRUE;
@@ -468,13 +564,13 @@ static LRESULT CALLBACK ListView_WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPA
 	return CallWindowProc(proc,hwnd,msg,wParam,lParam);
 }
 
-static TCHAR* PluginCutCopyright(TCHAR * buf)
+static char * PluginCutCopyright(char * buf)
 {
 	/* Some plugins include (C,c)opyright, which is fine but it looks stupid in the UI */
-	TCHAR tmp[16];
-	_tcsncpy(tmp, buf, 9);
+	char tmp[16];
+	strncpy(tmp, buf, 9);
 	tmp[9]=0;
-	if ( lstrcmpi( tmp, _T("copyright")) == 0 ) return buf+10;
+	if ( lstrcmpi(tmp,"copyright") == 0 ) return buf+10;
 	return buf;
 }
 
@@ -488,34 +584,34 @@ static BOOL CALLBACK DlgPluginOpt(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM 
 			TranslateDialogDefault(hwndDlg);
 			SetWindowLong(hwndList,GWL_USERDATA, SetWindowLong(hwndList,GWL_WNDPROC, (LONG)ListView_WndProc));
 			col.mask=LVCF_TEXT|LVCF_WIDTH;
-			col.pszText=TranslateT("Plugin");
+			col.pszText=Translate("Plugin");
 			col.cx=75;
 			ListView_InsertColumn(hwndList,0,&col);
 			
-			col.pszText=TranslateT("Name");			
+			col.pszText=Translate("Name");			
 			ListView_InsertColumn(hwndList,1,&col);
 		
-			col.pszText=TranslateT("Version");
+			col.pszText=Translate("Version");
 			col.cx=60;
 			ListView_InsertColumn(hwndList,2,&col);
 		
-			col.pszText=TranslateT("Running");
+			col.pszText=Translate("Running");
 			col.cx=1000;
 			ListView_InsertColumn(hwndList,3,&col);
 		
-			col.pszText=TranslateT("Author");
+			col.pszText=Translate("Author");
 			ListView_InsertColumn(hwndList,4,&col);		
 		
-			col.pszText=TranslateT("e-mail");
+			col.pszText=Translate("e-mail");
 			ListView_InsertColumn(hwndList,5,&col);				
 			
-			col.pszText=TranslateT("Description");
+			col.pszText=Translate("Description");
 			ListView_InsertColumn(hwndList,6,&col);				
 			
-			col.pszText=TranslateT("Copyright");
+			col.pszText=Translate("Copyright");
 			ListView_InsertColumn(hwndList,7,&col);	
 			
-			col.pszText=TranslateT("Homepage");
+			col.pszText=Translate("Homepage");
 			ListView_InsertColumn(hwndList,8,&col);	
 			
 			// XXX: Won't work on windows 95 without IE3+ or 4.70
@@ -566,28 +662,29 @@ static BOOL CALLBACK DlgPluginOpt(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM 
 				SendMessage(GetParent(hwndDlg), PSM_CHANGED, 0, 0);
 				break;
 			}			
-			if ( hdr && hdr->hdr.code == LVN_ITEMCHANGED && IsWindowVisible(hdr->hdr.hwndFrom) && hdr->iItem != -1 ) {
-				TCHAR buf[1024];
+			if ( hdr && hdr->hdr.code == LVN_ITEMCHANGED && IsWindowVisible(hdr->hdr.hwndFrom) 
+					&& hdr->iItem != (-1) ) {
+				char buf[1024];
 				int sel = hdr->uNewState&LVIS_SELECTED;
 				HWND hwndList = GetDlgItem(hwndDlg, IDC_PLUGLIST);	
 				// frame/about
-				ListView_GetItemText(hwndList, hdr->iItem, 1, buf, SIZEOF(buf));				
-				SetWindowText(GetDlgItem(hwndDlg,IDC_PLUGININFOFRAME),sel ? buf : _T(""));
+				ListView_GetItemText(hwndList, hdr->iItem, 1, buf, sizeof(buf));				
+				SetWindowText(GetDlgItem(hwndDlg,IDC_PLUGININFOFRAME),sel ? buf : "");
 				// author
-				ListView_GetItemText(hwndList, hdr->iItem, 4, buf, SIZEOF(buf));
-				SetWindowText(GetDlgItem(hwndDlg,IDC_PLUGINAUTHOR), sel ? buf : _T(""));
+				ListView_GetItemText(hwndList, hdr->iItem, 4, buf, sizeof(buf));
+				SetWindowText(GetDlgItem(hwndDlg,IDC_PLUGINAUTHOR), sel ? buf : "");
 				// author email
-				ListView_GetItemText(hwndList, hdr->iItem, 5, buf, SIZEOF(buf));
-				SetWindowText(GetDlgItem(hwndDlg,IDC_PLUGINEMAIL), sel ? buf : _T(""));
+				ListView_GetItemText(hwndList, hdr->iItem, 5, buf, sizeof(buf));
+				SetWindowText(GetDlgItem(hwndDlg,IDC_PLUGINEMAIL), sel ? buf : "");
 				// description
-				ListView_GetItemText(hwndList, hdr->iItem, 6, buf, SIZEOF(buf));
-				SetWindowText(GetDlgItem(hwndDlg,IDC_PLUGINLONGINFO), sel ? buf : _T(""));
+				ListView_GetItemText(hwndList, hdr->iItem, 6, buf, sizeof(buf));
+				SetWindowText(GetDlgItem(hwndDlg,IDC_PLUGINLONGINFO), sel ? buf : "");
 				// copyright
-				ListView_GetItemText(hwndList, hdr->iItem, 7, buf, SIZEOF(buf));
-				SetWindowText(GetDlgItem(hwndDlg,IDC_PLUGINCPYR), sel ? PluginCutCopyright(buf) : _T(""));
+				ListView_GetItemText(hwndList, hdr->iItem, 7, buf, sizeof(buf));
+				SetWindowText(GetDlgItem(hwndDlg,IDC_PLUGINCPYR), sel ? PluginCutCopyright(buf) : "");
 				// homepage
-				ListView_GetItemText(hwndList, hdr->iItem, 8, buf, SIZEOF(buf));
-				SetWindowText(GetDlgItem(hwndDlg,IDC_PLUGINURL), sel ? buf : _T(""));
+				ListView_GetItemText(hwndList, hdr->iItem, 8, buf, sizeof(buf));
+				SetWindowText(GetDlgItem(hwndDlg,IDC_PLUGINURL), sel ? buf : "");				
 			}
 			if ( hdr && hdr->hdr.code == PSN_APPLY ) {				
 				HWND hwndList=GetDlgItem(hwndDlg,IDC_PLUGLIST);
@@ -595,11 +692,12 @@ static BOOL CALLBACK DlgPluginOpt(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM 
 				int iState;
 				char buf[1024];
 				for (iRow=0 ; iRow != (-1) ; ) {					
-					ListView_GetItemTextA(hwndList, iRow, 0, buf, SIZEOF(buf));
+					ListView_GetItemText(hwndList, iRow, 0, buf, sizeof(buf));
 					iState=ListView_GetItemState(hwndList, iRow, LVIS_STATEIMAGEMASK);
 					SetPluginOnWhiteList(buf, iState&0x2000 ? 1 : 0);
 					iRow=ListView_GetNextItem(hwndList, iRow, LVNI_ALL);					
-			}	}
+				}
+			}
 			break;
 		}
 		case WM_COMMAND:
@@ -611,8 +709,8 @@ static BOOL CALLBACK DlgPluginOpt(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM 
 					{
 						char buf[512];
 						char * p = &buf[7];
-						lstrcpyA(buf,"mailto:");
-						if ( GetWindowTextA(GetDlgItem(hwndDlg, LOWORD(wParam)), p, SIZEOF(buf) - 7) ) {							
+						lstrcpy(buf,"mailto:");
+						if ( GetWindowText(GetDlgItem(hwndDlg, LOWORD(wParam)), p, sizeof(buf) - 7) ) {							
 							CallService(MS_UTILS_OPENURL,0,(LPARAM) (LOWORD(wParam)==IDC_PLUGINEMAIL ? buf : p) );
 						}
 						break;
@@ -627,196 +725,25 @@ static BOOL CALLBACK DlgPluginOpt(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM 
 
 static int PluginOptionsInit(WPARAM wParam, LPARAM lParam)
 {
-	OPTIONSDIALOGPAGE odp = { 0 };
-	odp.cbSize = sizeof(odp);
-	odp.hInstance = GetModuleHandle(NULL);
-	odp.pfnDlgProc = DlgPluginOpt;
-	odp.pszTemplate = MAKEINTRESOURCEA(IDD_OPT_PLUGINS);
-	odp.position = 1300000000;	
-	odp.pszTitle = "Plugins";
-	odp.flags = ODPF_BOLDGROUPS;
-	CallService( MS_OPT_ADDPAGE, wParam, ( LPARAM )&odp );
+	OPTIONSDIALOGPAGE odp;
+	ZeroMemory(&odp,sizeof(odp));
+	odp.cbSize=sizeof(odp);
+	odp.hInstance=GetModuleHandle(NULL);
+	odp.pfnDlgProc=DlgPluginOpt;
+	odp.pszTemplate=MAKEINTRESOURCE(IDD_OPT_PLUGINS);
+	odp.position=1300000000;	
+	odp.pszTitle=Translate("Plugins");
+	odp.flags=ODPF_BOLDGROUPS;
+	CallService(MS_OPT_ADDPAGE,wParam,(LPARAM)&odp);
 	return 0;
 }
 
-/////////////////////////////////////////////////////////////////////////////////////////
-//
-//   Loads all plugins
 
-int LoadNewPluginsModule(void)
-{
-	char exe[MAX_PATH];
-	char* slice;
-	pluginEntry* p;
-	pluginEntry* clist = NULL;
-	int useWhiteList, i;
 
-	// make full path to the plugin
-	GetModuleFileNameA(NULL, exe, SIZEOF(exe));
-	slice=strrchr(exe, '\\');
-	if ( slice != NULL ) 
-		*slice=0;
 
-	// remember some useful options
-	askAboutIgnoredPlugins=(UINT) GetPrivateProfileIntA( "PluginLoader", "AskAboutIgnoredPlugins", 0, mirandabootini);
 
-	// if png2dib is present, load it to provide the basic core functions
-	if ( pluginList_png2dib != NULL ) {
-		BASIC_PLUGIN_INFO bpi;
-		mir_snprintf(slice,&exe[SIZEOF(exe)] - slice, "\\Plugins\\%s", pluginList_png2dib->pluginname);			
-		if ( checkAPI(exe, &bpi, mirandaVersion, CHECKAPI_NONE, NULL) ) {
-			pluginList_png2dib->bpi = bpi;
-			pluginList_png2dib->pclass |= PCLASS_OK | PCLASS_BASICAPI;
-			if ( bpi.Load(&pluginCoreLink) == 0 )
-				pluginList_png2dib->pclass |= PCLASS_LOADED;
-			else
-				Plugin_Uninit( pluginList_png2dib );
-	}	}
 
-	// first load the clist cos alot of plugins need that to be present at Load()
-	for ( useWhiteList = 1; useWhiteList >= 0 && clist == NULL; useWhiteList-- ) 
-		clist=getCListModule(exe, slice, useWhiteList);
-	/* the loop above will try and get one clist DLL to work, if all fail then just bail now */
-	if ( clist == NULL ) {
-		// result = 0, no clist_* can be found
-		if ( pluginListUI )
-			MessageBox(0, TranslateT("Unable to start any of the installed contact list plugins, I even ignored your preferences for which contact list couldn't load any."), _T(""), MB_OK | MB_ICONINFORMATION);
-		else
-			MessageBox(0, TranslateT("Can't find a contact list plugin! you need clist_classic or clist_mw.") , _T(""), MB_OK | MB_ICONINFORMATION);
-		return 1;
-	}
 
-	/* enable and disable as needed  */
-	p=pluginListUI;
-	while ( p != NULL ) {
-		SetPluginOnWhiteList(p->pluginname, clist != p ? 0 : 1 );
-		p = p->nextclass;
-	}
-	/* now loop thru and load all the other plugins, do this in one pass */
-	
-	for ( i=0; i < pluginList.realCount; i++ ) {
-		p = pluginList.items[i];		
-		CharLowerA(p->pluginname);
-		if ( !(p->pclass&PCLASS_LOADED) && !(p->pclass&PCLASS_DB) 
-			&& !(p->pclass&PCLASS_CLIST) && isPluginOnWhiteList(p->pluginname) ) {
-			BASIC_PLUGIN_INFO bpi;
-			mir_snprintf(slice,&exe[SIZEOF(exe)] - slice, "\\Plugins\\%s", p->pluginname);			
-			if ( checkAPI(exe, &bpi, mirandaVersion, CHECKAPI_NONE, NULL) ) {
-				int rm = bpi.pluginInfo->replacesDefaultModule;
-				p->bpi = bpi;
-				p->pclass |= PCLASS_OK | PCLASS_BASICAPI;
 
-				List_InsertPtr( &pluginListAddr, p );
 
-				if ( pluginDefModList[rm] == NULL ) {
-					if ( bpi.Load(&pluginCoreLink) == 0 ) p->pclass |= PCLASS_LOADED;
-					else {
-						Plugin_Uninit( p );
-						i--;
-					}
-					if ( rm ) pluginDefModList[rm]=p;
-				} //if
-				else { 
-					SetPluginOnWhiteList( p->pluginname, 0 );
-					Plugin_Uninit( p );
-					i--;
-				}
-			} 
-			else p->pclass |= PCLASS_FAILED;
-	}	}
 
-	// hook shutdown after everything
-	HookEvent(ME_SYSTEM_SHUTDOWN, UnloadNewPlugins);
-	HookEvent(ME_OPT_INITIALISE, PluginOptionsInit);
-	return 0;
-}
-
-/////////////////////////////////////////////////////////////////////////////////////////
-//
-//   Plugins module initialization
-//   called before anything real is loaded, incl. database
-
-static int sttComparePlugins( pluginEntry* p1, pluginEntry* p2 )
-{	return ( int )( p1->bpi.hInst - p2->bpi.hInst );
-}
-
-static int sttComparePluginsByName( pluginEntry* p1, pluginEntry* p2 )
-{	return lstrcmpA( p1->pluginname, p2->pluginname );
-}
-
-int LoadNewPluginsModuleInfos(void)
-{
-	pluginList.increment = 10;
-	pluginList.sortFunc = sttComparePluginsByName;
-
-	pluginListAddr.increment = 10;
-	pluginListAddr.sortFunc = sttComparePlugins;
-
-	hPluginListHeap=HeapCreate(HEAP_NO_SERIALIZE, 0, 0);	
-	mirandaVersion = (DWORD)CallService(MS_SYSTEM_GETVERSION, 0, 0);
-	// 
-	CreateServiceFunction(MS_PLUGINS_ENUMDBPLUGINS, PluginsEnum);
-	CreateServiceFunction(MS_PLUGINS_GETDISABLEDEFAULTARRAY, PluginsGetDefaultArray);
-	// make sure plugins can get internal core APIs
-	pluginCoreLink.CallService=CallService;
-	pluginCoreLink.ServiceExists=ServiceExists;
-	pluginCoreLink.CreateServiceFunction=CreateServiceFunction;
-	pluginCoreLink.CreateTransientServiceFunction=CreateServiceFunction;
-	pluginCoreLink.DestroyServiceFunction=DestroyServiceFunction;
-	pluginCoreLink.CreateHookableEvent=CreateHookableEvent;
-	pluginCoreLink.DestroyHookableEvent=DestroyHookableEvent;
-	pluginCoreLink.HookEvent=HookEvent;
-	pluginCoreLink.HookEventMessage=HookEventMessage;
-	pluginCoreLink.UnhookEvent=UnhookEvent;
-	pluginCoreLink.NotifyEventHooks=NotifyEventHooks;
-	pluginCoreLink.SetHookDefaultForHookableEvent=SetHookDefaultForHookableEvent;
-	pluginCoreLink.CallServiceSync=CallServiceSync;
-	pluginCoreLink.CallFunctionAsync=CallFunctionAsync;	
-	// remember where the mirandaboot.ini goes
-	{
-		char exe[MAX_PATH];
-		char * slice;
-		GetModuleFileNameA(NULL, exe, SIZEOF(exe));
-		slice=strrchr(exe, '\\');
-		if ( slice != NULL ) *slice=0;
-		mir_snprintf(mirandabootini, SIZEOF(mirandabootini), "%s\\mirandaboot.ini", exe);
-	}
-	// look for all *.dll's
-	enumPlugins(scanPluginsDir, 0, 0);
-	// the database will select which db plugin to use, or fail if no profile is selected
-	if (LoadDatabaseModule()) return 1;
-	InitIni();
-	//  could validate the plugin entries here but internal modules arent loaded so can't call Load() in one pass
-	return 0;
-}
-
-/////////////////////////////////////////////////////////////////////////////////////////
-//
-//   Plugins module unloading
-//   called at the end of module chain unloading, just modular engine left at this point
-
-int UnloadNewPluginsModule(void)
-{
-	int i;
-
-	// unload everything but the DB
-	for ( i = pluginList.realCount-1; i >= 0; i-- ) {
-		pluginEntry* p = pluginList.items[i];
-		if ( !(p->pclass & PCLASS_DB) )
-			Plugin_Uninit( p );
-	}
-
-	// unload the DB
-	for ( i = pluginList.realCount-1; i >= 0; i-- ) {
-		pluginEntry * p = pluginList.items[i];		
-		Plugin_Uninit( p );
-	}
-
-	if ( hPluginListHeap ) HeapDestroy(hPluginListHeap);
-	hPluginListHeap=0;
-
-	List_Destroy( &pluginList );
-	List_Destroy( &pluginListAddr );
-	UninitIni();
-	return 0;
-}

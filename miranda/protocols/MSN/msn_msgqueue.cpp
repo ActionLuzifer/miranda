@@ -41,30 +41,29 @@ void MsgQueue_Init( void )
 
 void MsgQueue_Uninit( void )
 {
-	MsgQueue_Clear( NULL );
+	if ( msgQueueCount )
+		free( msgQueue );
+
 	DeleteCriticalSection( &csMsgQueue );
 }
 
-int __stdcall MsgQueue_Add( HANDLE hContact, int msgType, const char* msg, int msgSize, filetransfer* ft, int flags )
+int __stdcall MsgQueue_Add( HANDLE hContact, const char* msg, int msgSize, filetransfer* ft )
 {
 	EnterCriticalSection( &csMsgQueue );
-	msgQueue = ( MsgQueueEntry* )mir_realloc( msgQueue, sizeof( MsgQueueEntry )*( msgQueueCount+1 ));
+	msgQueue = ( MsgQueueEntry* )realloc( msgQueue, sizeof( MsgQueueEntry )*( msgQueueCount+1 ));
 
 	int seq = msgQueueSeq++;
 
 	MsgQueueEntry& E = msgQueue[ msgQueueCount++ ];
 	E.hContact = hContact;
 	E.msgSize = msgSize;
-	E.msgType = msgType;
 	if ( msgSize <= 0 )
-		E.message = mir_strdup( msg );
+		E.message = strdup( msg );
 	else
-		memcpy( E.message = ( char* )mir_alloc( msgSize ), msg, msgSize );
+		memcpy( E.message = new char[ msgSize ], msg, msgSize );
 	E.ft = ft;
 	E.seq = seq;
-	E.flags = flags;
 	E.allocatedToThread = 0;
-	E.timeout = DBGetContactSettingDword(NULL, "SRMM", "MessageTimeout", 10000)/1000;
 
 	LeaveCriticalSection( &csMsgQueue );
 	return seq;
@@ -112,7 +111,7 @@ HANDLE __stdcall MsgQueue_GetNextRecipient(void)
 	return ret;
 }
 
-//deletes from list. Must mir_free() return value
+//deletes from list. Must free() return value
 int __stdcall MsgQueue_GetNext( HANDLE hContact, MsgQueueEntry& retVal )
 {
 	int i;
@@ -131,32 +130,7 @@ int __stdcall MsgQueue_GetNext( HANDLE hContact, MsgQueueEntry& retVal )
 
 	msgQueueCount--;
 	memmove( msgQueue+i, msgQueue+i+1, sizeof( MsgQueueEntry )*( msgQueueCount-i ));
-	msgQueue = ( MsgQueueEntry* )mir_realloc( msgQueue, sizeof( MsgQueueEntry )*msgQueueCount );
+	msgQueue = ( MsgQueueEntry* )realloc( msgQueue, sizeof( MsgQueueEntry )*msgQueueCount );
 	LeaveCriticalSection( &csMsgQueue );
 	return i+1;
-}
-
-void __stdcall MsgQueue_Clear( HANDLE hContact )
-{
-	int i;
-
-	if (hContact == NULL)
-	{
-		EnterCriticalSection( &csMsgQueue );
-
-		for( i=0; i < msgQueueCount; i++ )
-			mir_free( msgQueue[ i ].message );
-		mir_free( msgQueue );
-
-		msgQueueCount = 0;
-		msgQueue = NULL;
-		msgQueueSeq = 1;
-		LeaveCriticalSection( &csMsgQueue );
-	}
-	else
-	{
-		MsgQueueEntry E;
-		while (MsgQueue_GetNext(hContact, E) != 0)
-			mir_free( E.message );
-	}
 }

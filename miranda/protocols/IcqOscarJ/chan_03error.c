@@ -5,7 +5,6 @@
 // Copyright © 2000,2001 Richard Hughes, Roland Rabien, Tristan Van de Vreede
 // Copyright © 2001,2002 Jon Keating, Richard Hughes
 // Copyright © 2002,2003,2004 Martin Öberg, Sam Kothari, Robert Rainwater
-// Copyright © 2004,2005 Joe Kucera
 // 
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -23,7 +22,7 @@
 //
 // -----------------------------------------------------------------------------
 //
-// File name      : $Source: /cvsroot/miranda/miranda/protocols/IcqOscarJ/chan_03error.c,v $
+// File name      : $Source$
 // Revision       : $Revision$
 // Last change on : $Date$
 // Last change by : $Author$
@@ -37,7 +36,15 @@
 #include "icqoscar.h"
 
 
+
+extern HANDLE ghServerNetlibUser;
+extern HANDLE hDirectNetlibUser;
+
+
+
 void handleErrorChannel(unsigned char* buf, WORD datalen)
 {
-  NetLog_Server("Ignoring server packet on ERROR channel");
+
+	Netlib_Logf(ghServerNetlibUser, "Ignoring server packet on ERROR channel");
+
 }

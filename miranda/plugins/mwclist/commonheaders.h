@@ -2,8 +2,8 @@
 
 Miranda IM: the free IM client for Microsoft* Windows*
 
-Copyright 2000-2004 Miranda ICQ/IM project,
-all portions of this codebase are copyrighted to the people
+Copyright 2000-2004 Miranda ICQ/IM project, 
+all portions of this codebase are copyrighted to the people 
 listed in contributors.txt.
 
 This program is free software; you can redistribute it and/or
@@ -25,10 +25,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 //#include "AggressiveOptimize.h"
 
-#if defined( UNICODE ) && !defined( _UNICODE )
-#define _UNICODE
-#endif
-
 #include <malloc.h>
 
 #ifdef _DEBUG
@@ -47,6 +43,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <io.h>
 #include <string.h>
 #include <direct.h>
+#include "m_clist.h"
 #include "resource.h"
 #include "forkthread.h"
 #include <win2k.h>
@@ -59,26 +56,23 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <m_options.h>
 #include <m_protosvc.h>
 #include <m_utils.h>
-#include <m_clc.h>
-#include <m_clist.h>
-#include <m_clistint.h>
 #include <m_skin.h>
 #include <m_contacts.h>
 #include <m_plugins.h>
 #include "m_genmenu.h"
+#include "genmenu.h"
 #include "m_clui.h"
-#include "m_mwclc.h"
+#include "m_clc.h"
 #include "clc.h"
 #include "clist.h"
 #include "icolib.h"
+#include "dblists.h"
 #include <m_userinfo.h>
 #include ".\CLUIFrames\cluiframes.h"
 #include ".\CLUIFrames\m_cluiframes.h"
 #include  "m_metacontacts.h"
-#include "BkgrCfg.h"
-#include <m_file.h>
-#include <m_addcontact.h>
-#include "m_fontservice.h"
+
+#define CLS_CONTACTLIST 1
 
 // shared vars
 extern HINSTANCE g_hInst;
@@ -93,44 +87,83 @@ extern HINSTANCE g_hInst;
 
 */
 
-extern struct LIST_INTERFACE li;
+extern struct MM_INTERFACE memoryManagerInterface;
+
+
+#define mir_alloc(n) memoryManagerInterface.mmi_malloc(n)
+#define mir_free(ptr) memoryManagerInterface.mmi_free(ptr)
+#define mir_realloc(ptr,size) memoryManagerInterface.mmi_realloc(ptr,size)
 
 #ifndef CS_DROPSHADOW
-#define CS_DROPSHADOW 0x00020000
+#define CS_DROPSHADOW 0x00020000	
 #endif
 
-extern BOOL __cdecl strstri(const char *a, const char *b);
-extern BOOL __cdecl boolstrcmpi(const char *a, const char *b);
-extern int __cdecl MyStrCmp (const char *a, const char *b);
-extern int __cdecl MyStrLen (const char *a);
-extern int __cdecl MyStrCmpi(const char *a, const char *b);
-extern int __cdecl MyStrCmpiT(const TCHAR *a, const TCHAR *b);
-extern __inline void *mir_calloc( size_t num, size_t size );
+#ifndef MYCMP
+#define MYCMP 1
 
-extern void *mir_calloc( size_t num, size_t size );
-extern char * mir_strdup(const char * src);
 
-extern char *DBGetStringA(HANDLE hContact,const char *szModule,const char *szSetting);
-extern wchar_t *DBGetStringW(HANDLE hContact,const char *szModule,const char *szSetting);
-extern DWORD exceptFunction(LPEXCEPTION_POINTERS EP);
+static int __cdecl MyStrCmp (const char *a, const char *b)
+{
+	
+	if (a==NULL&&b==NULL) return 0;
+	if ((int)a<1000||(int)b<1000||IsBadCodePtr((FARPROC)a)||IsBadCodePtr((FARPROC)b)) 
+	{
+		return 1;
+	}
+	//OutputDebugStr("MY\r\n");
+	//undef();
+	return (strcmp(a,b));
+};
 
-//from bkg options
+#define strcmp(a,b) MyStrCmp(a,b)
+#endif
 
-//  Register of plugin's user
-//
-//  wParam = (WPARAM)szSetting - string that describes a user
-//           format: Category/ModuleName,
-//           eg: "Contact list background/CLUI",
-//               "Status bar background/StatusBar"
-//  lParam = (LPARAM)dwFlags
-//
-#define MS_BACKGROUNDCONFIG_REGISTER "BkgrCfg/Register"
 
-//
-//  Notification about changed background
-//  wParam = ModuleName
-//  lParam = 0
-#define ME_BACKGROUNDCONFIG_CHANGED "BkgrCfg/Changed"
 
+__inline void *mir_calloc( size_t num, size_t size )
+{
+ 	void *p=mir_alloc(num*size);
+	if (p==NULL) return NULL;
+	memset(p,0,num*size);
+	return p;
+};
+
+__inline char * mir_strdup(const char * src)
+{
+	char * p;
+	if (src==NULL) return NULL;
+	p= mir_alloc( strlen(src)+1 );
+	strcpy(p, src);
+	return p;
+}
+
+static char *DBGetString(HANDLE hContact,const char *szModule,const char *szSetting)
+{
+	char *str=NULL;
+	DBVARIANT dbv;
+	DBGetContactSetting(hContact,szModule,szSetting,&dbv);
+	if(dbv.type==DBVT_ASCIIZ)
+		str=strdup(dbv.pszVal);
+	DBFreeVariant(&dbv);
+	return str;
+}
+
+static DWORD exceptFunction(LPEXCEPTION_POINTERS EP) 
+{ 
+    //printf("1 ");                     // printed first 
+	char buf[4096];
+	
+	
+	sprintf(buf,"\r\nExceptCode: %x\r\nExceptFlags: %x\r\nExceptAddress: %x\r\n",
+		EP->ExceptionRecord->ExceptionCode,
+		EP->ExceptionRecord->ExceptionFlags,
+		EP->ExceptionRecord->ExceptionAddress
+		);
+	OutputDebugStr(buf);
+	MessageBoxA(0,buf,"clist_mw Exception",0);
+
+    
+	return EXCEPTION_EXECUTE_HANDLER; 
+} 
 
 #endif

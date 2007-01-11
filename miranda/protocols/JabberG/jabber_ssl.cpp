@@ -2,7 +2,7 @@
 
 Jabber Protocol Plugin for Miranda IM
 Copyright ( C ) 2002-04  Santithorn Bunchua
-Copyright ( C ) 2005-06  George Hazan
+Copyright ( C ) 2005     George Hazan
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -17,11 +17,6 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
-
-File name      : $Source: /cvsroot/miranda/miranda/protocols/JabberG/jabber_ssl.cpp,v $
-Revision       : $Revision$
-Last change on : $Date$
-Last change by : $Author$
 
 */
 
@@ -53,9 +48,10 @@ BOOL JabberSslInit()
 	sslHandleCount = 0;
 	InitializeCriticalSection( &sslHandleMutex );
 
-	hLibSSL = LoadLibraryA( "SSLEAY32.DLL" );
+	hLibSSL = LoadLibrary( "SSLEAY32.DLL" );
+
 	if ( !hLibSSL )
-		hLibSSL = LoadLibraryA( "LIBSSL32.DLL" );
+		hLibSSL = LoadLibrary( "LIBSSL32.DLL" );
 
 	if ( hLibSSL ) {
 		if (( pfn_SSL_library_init=( PFN_SSL_int_void )GetProcAddress( hLibSSL, "SSL_library_init" )) == NULL )
@@ -82,20 +78,25 @@ BOOL JabberSslInit()
 		if ( error == TRUE ) {
 			FreeLibrary( hLibSSL );
 			hLibSSL = NULL;
-	}	}
+		}
+	}
+
+
+#ifdef _DEBUG
+	if ( hLibSSL )
+		JabberLog( "SSL library load successful" );
+	else
+		JabberLog( "SSL library cannot load" );
+#endif
 
 	if ( hLibSSL ) {
-		JabberLog( "SSL library load successful" );
 		pfn_SSL_library_init();
 		jabberSslCtx = pfn_SSL_CTX_new( pfn_SSLv23_client_method());
 
 		return TRUE;
 	}
-
-	JabberLog( "SSL library cannot load" );
-	JSetByte( "UseTLS", 0 );
-	JSetByte( "UseSSL", 0 );
-	return FALSE;
+	else
+		return FALSE;
 }
 
 void JabberSslUninit()
@@ -108,7 +109,7 @@ void JabberSslUninit()
 		hLibSSL = NULL;
 	}
 
-	if ( sslHandleList ) mir_free( sslHandleList );
+	if ( sslHandleList ) free( sslHandleList );
 	sslHandleCount = 0;
 	DeleteCriticalSection( &sslHandleMutex );
 }
@@ -151,7 +152,7 @@ void JabberSslAddHandle( HANDLE hConn, PVOID ssl )
 		return;
 	}
 
-	sslHandleList = ( JABBER_SSL_MAPPING * ) mir_realloc( sslHandleList, ( sslHandleCount+1 )*sizeof( JABBER_SSL_MAPPING ));
+	sslHandleList = ( JABBER_SSL_MAPPING * ) realloc( sslHandleList, ( sslHandleCount+1 )*sizeof( JABBER_SSL_MAPPING ));
 	sslHandleList[sslHandleCount].h = hConn;
 	sslHandleList[sslHandleCount].ssl = ssl;
 	sslHandleCount++;
@@ -170,6 +171,6 @@ void JabberSslRemoveHandle( HANDLE hConn )
 
 	sslHandleCount--;
 	memmove( sslHandleList+i, sslHandleList+i+1, ( sslHandleCount-i )*sizeof( JABBER_SSL_MAPPING ));
-	sslHandleList = ( JABBER_SSL_MAPPING * ) mir_realloc( sslHandleList, sslHandleCount*sizeof( JABBER_SSL_MAPPING ));
+	sslHandleList = ( JABBER_SSL_MAPPING * ) realloc( sslHandleList, sslHandleCount*sizeof( JABBER_SSL_MAPPING ));
 	LeaveCriticalSection( &sslHandleMutex );
 }

@@ -2,8 +2,8 @@
 
 Miranda IM: the free IM client for Microsoft* Windows*
 
-Copyright 2000-2007 Miranda ICQ/IM project,
-all portions of this codebase are copyrighted to the people
+Copyright 2000-2003 Miranda ICQ/IM project, 
+all portions of this codebase are copyrighted to the people 
 listed in contributors.txt.
 
 This program is free software; you can redistribute it and/or
@@ -20,7 +20,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
-#include "commonheaders.h"
+#include "../../core/commonheaders.h"
 #include "file.h"
 
 static HANDLE *hFileMenu;
@@ -80,7 +80,7 @@ static int FileEventAdded(WPARAM wParam,LPARAM lParam)
 		cle.hIcon=LoadSkinnedIcon(SKINICON_EVENT_FILE);
 		cle.pszService="SRFile/RecvFile";
 		contactName=(char*)CallService(MS_CLIST_GETCONTACTDISPLAYNAME,wParam,0);
-		mir_snprintf(szTooltip,SIZEOF(szTooltip),Translate("File from %s"),contactName);
+		_snprintf(szTooltip,sizeof(szTooltip),Translate("File from %s"),contactName);
 		cle.pszTooltip=szTooltip;
 		CallService(MS_CLIST_ADDEVENT,0,(LPARAM)&cle);
 	}
@@ -92,14 +92,14 @@ void CreateDirectoryTree(char *szDir)
 	DWORD dwAttributes;
 	char *pszLastBackslash,szTestDir[MAX_PATH];
 
-	lstrcpynA(szTestDir,szDir,SIZEOF(szTestDir));
-	if((dwAttributes=GetFileAttributesA(szTestDir))!=0xffffffff
+	lstrcpyn(szTestDir,szDir,sizeof(szTestDir));
+	if((dwAttributes=GetFileAttributes(szTestDir))!=0xffffffff
 	   && dwAttributes&FILE_ATTRIBUTE_DIRECTORY) return;
 	pszLastBackslash=strrchr(szTestDir,'\\');
-	if(pszLastBackslash==NULL) {GetCurrentDirectoryA(MAX_PATH,szDir); return;}
+	if(pszLastBackslash==NULL) {GetCurrentDirectory(MAX_PATH,szDir); return;}
 	*pszLastBackslash='\0';
 	CreateDirectoryTree(szTestDir);
-	CreateDirectoryA(szTestDir,NULL);
+	CreateDirectory(szTestDir,NULL);
 }
 
 int SRFile_GetRegValue(HKEY hKeyBase,const char *szSubKey,const char *szValue,char *szOutput,int cbOutput)
@@ -107,13 +107,13 @@ int SRFile_GetRegValue(HKEY hKeyBase,const char *szSubKey,const char *szValue,ch
 	HKEY hKey;
 	DWORD cbOut=cbOutput;
 
-	if(RegOpenKeyExA(hKeyBase,szSubKey,0,KEY_QUERY_VALUE,&hKey)!=ERROR_SUCCESS) return 0;
-	if(RegQueryValueExA(hKey,szValue,NULL,NULL,(PBYTE)szOutput,&cbOut)!=ERROR_SUCCESS) {RegCloseKey(hKey); return 0;}
+	if(RegOpenKeyEx(hKeyBase,szSubKey,0,KEY_QUERY_VALUE,&hKey)!=ERROR_SUCCESS) return 0;
+	if(RegQueryValueEx(hKey,szValue,NULL,NULL,(PBYTE)szOutput,&cbOut)!=ERROR_SUCCESS) {RegCloseKey(hKey); return 0;}
 	RegCloseKey(hKey);
 	return 1;
 }
 
-void GetSensiblyFormattedSize(DWORD size,TCHAR *szOut,int cchOut,int unitsOverride,int appendUnits,int *unitsUsed)
+void GetSensiblyFormattedSize(DWORD size,char *szOut,int cchOut,int unitsOverride,int appendUnits,int *unitsUsed)
 {
 	if(!unitsOverride) {
 		if(size<1000) unitsOverride=UNITS_BYTES;
@@ -123,19 +123,19 @@ void GetSensiblyFormattedSize(DWORD size,TCHAR *szOut,int cchOut,int unitsOverri
 	}
 	if(unitsUsed) *unitsUsed=unitsOverride;
 	switch(unitsOverride) {
-		case UNITS_BYTES: mir_sntprintf(szOut,cchOut,_T("%u%s%s"),size,appendUnits?_T(" "):_T(""),appendUnits?TranslateT("bytes"):_T("")); break;
-		case UNITS_KBPOINT1: mir_sntprintf(szOut,cchOut,_T("%.1lf%s"),size/1024.0,appendUnits?_T(" KB"):_T("")); break;
-		case UNITS_KBPOINT0: mir_sntprintf(szOut,cchOut,_T("%u%s"),size/1024,appendUnits?_T(" KB"):_T("")); break;
-		default: mir_sntprintf(szOut,cchOut,_T("%.2lf%s"),size/1048576.0,appendUnits?_T(" MB"):_T("")); break;
+		case UNITS_BYTES: _snprintf(szOut,cchOut,"%u%s%s",size,appendUnits?" ":"",appendUnits?Translate("bytes"):""); break;
+		case UNITS_KBPOINT1: _snprintf(szOut,cchOut,"%.1lf%s",size/1024.0,appendUnits?" KB":""); break;
+		case UNITS_KBPOINT0: _snprintf(szOut,cchOut,"%u%s",size/1024,appendUnits?" KB":""); break;
+		default: _snprintf(szOut,cchOut,"%.2lf%s",size/1048576.0,appendUnits?" MB":""); break;
 	}
 }
 
 // Tripple redirection sucks but is needed to nullify the array pointer
-void FreeFilesMatrix(char ***files)
+void FreeFilesMatrix(char ***files) 
 {
 
 	char **pFile;
-
+	
 	if (*files == NULL)
 		return;
 
@@ -143,39 +143,39 @@ void FreeFilesMatrix(char ***files)
 	pFile = *files;
 	while (*pFile != NULL)
 	{
-		mir_free(*pFile);
+		free(*pFile);
 		*pFile = NULL;
 		pFile++;
 	}
 
 	// Free the array itself
-	mir_free(*files);
+	free(*files);
 	*files = NULL;
 
 }
 
 void FreeProtoFileTransferStatus(PROTOFILETRANSFERSTATUS *fts)
 {
-	if(fts->currentFile) mir_free(fts->currentFile);
+	if(fts->currentFile) free(fts->currentFile);
 	if(fts->files) {
 		int i;
-		for(i=0;i<fts->totalFiles;i++) mir_free(fts->files[i]);
-		mir_free(fts->files);
+		for(i=0;i<fts->totalFiles;i++) free(fts->files[i]);
+		free(fts->files);
 	}
-	if(fts->workingDir) mir_free(fts->workingDir);
+	if(fts->workingDir) free(fts->workingDir);
 }
 
 void CopyProtoFileTransferStatus(PROTOFILETRANSFERSTATUS *dest,PROTOFILETRANSFERSTATUS *src)
 {
 	*dest=*src;
-	if(src->currentFile) dest->currentFile=mir_strdup(src->currentFile);
+	if(src->currentFile) dest->currentFile=_strdup(src->currentFile);
 	if(src->files) {
 		int i;
-		dest->files=(char**)mir_alloc(sizeof(char*)*src->totalFiles);
+		dest->files=(char**)malloc(sizeof(char*)*src->totalFiles);
 		for(i=0;i<src->totalFiles;i++)
-			dest->files[i]=mir_strdup(src->files[i]);
+			dest->files[i]=_strdup(src->files[i]);
 	}
-	if(src->workingDir) dest->workingDir=mir_strdup(src->workingDir);
+	if(src->workingDir) dest->workingDir=_strdup(src->workingDir);
 }
 
 static void RemoveUnreadFileEvents(void)
@@ -207,6 +207,7 @@ static int SRFileModulesLoaded(WPARAM wParam,LPARAM lParam)
 	ZeroMemory(&mi,sizeof(mi));
 	mi.cbSize=sizeof(mi);
 	mi.position=-2000020000;
+	mi.flags=CMIF_NOTOFFLINE;
 	mi.hIcon=LoadSkinnedIcon(SKINICON_EVENT_FILE);
 	mi.pszName=Translate("&File");
 	mi.pszService=MS_FILE_SENDFILE;
@@ -214,9 +215,8 @@ static int SRFileModulesLoaded(WPARAM wParam,LPARAM lParam)
 	for(i=0;i<protoCount;i++) {
 		if(protocol[i]->type!=PROTOTYPE_PROTOCOL) continue;
 		if(CallProtoService(protocol[i]->szName,PS_GETCAPS,PFLAGNUM_1,0)&PF1_FILESEND) {
-            mi.flags=(CallProtoService(protocol[i]->szName,PS_GETCAPS,PFLAGNUM_4,0)&PF4_OFFLINEFILES)?0:CMIF_NOTOFFLINE;
 			mi.pszContactOwner=protocol[i]->szName;
-			hFileMenu = (HANDLE*)mir_realloc(hFileMenu,sizeof(HANDLE)*(hFileMenuCount+1));
+			hFileMenu = (HANDLE*)realloc(hFileMenu,sizeof(HANDLE)*(hFileMenuCount+1));
 			hFileMenu[hFileMenuCount] = (HANDLE)CallService(MS_CLIST_ADDCONTACTMENUITEM,0,(LPARAM)&mi);
 			hFileMenuCount++;
 		}
@@ -237,7 +237,7 @@ int FilePreBuildContactMenu(WPARAM wParam,LPARAM lParam) {
 		mi.flags = CMIM_FLAGS|CMIM_ICON;
 		mi.hIcon = LoadSkinnedIcon(SKINICON_EVENT_FILE);
 
-		for(i=0;i<hFileMenuCount;i++)
+		for(i=0;i<hFileMenuCount;i++) 
 			CallService(MS_CLIST_MODIFYMENUITEM, (WPARAM)hFileMenu[i], (LPARAM)&mi);
 	}
 	return 0;
@@ -249,7 +249,7 @@ int FileIconsChanged(WPARAM wParam,LPARAM lParam) {
 }
 
 int FileShutdownProc(WPARAM wParam,LPARAM lParam) {
-	mir_free(hFileMenu);
+	free(hFileMenu);
 	return 0;
 }
 
@@ -272,14 +272,14 @@ int LoadSendRecvFileModule(void)
     // Upgrade Routine for File Received Path - Remove me after 0.3.4
 	{
         DBVARIANT dbv;
-
+        
 	    if(!DBGetContactSetting(NULL,"SRFile","RecvFilesDir",&dbv)) {
             char szPath[MAX_PATH];
 
-            mir_snprintf(szPath, SIZEOF(szPath), "%s%s%s", dbv.pszVal, dbv.pszVal[strlen(dbv.pszVal)-1]=='\\'?"":"\\" , "%userid%");
+            _snprintf(szPath, sizeof(szPath), "%s%s%s", dbv.pszVal, dbv.pszVal[strlen(dbv.pszVal)-1]=='\\'?"":"\\" , "%userid%");
             DBFreeVariant(&dbv);
             DBWriteContactSettingString(NULL,"SRFile","RecvFilesDirAdv",szPath);
-            DBDeleteContactSetting(NULL,"SRFile","RecvFilesDir");
+            DBDeleteContactSetting(NULL,"SRFile","RecvFilesDir"); 
         }
     }
     // End Upgrade

@@ -2,7 +2,7 @@
 
 Jabber Protocol Plugin for Miranda IM
 Copyright ( C ) 2002-04  Santithorn Bunchua
-Copyright ( C ) 2005-06  George Hazan
+Copyright ( C ) 2005     George Hazan
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -17,11 +17,6 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
-
-File name      : $Source: /cvsroot/miranda/miranda/protocols/JabberG/jabber_password.cpp,v $
-Revision       : $Revision$
-Last change on : $Date$
-Last change by : $Author$
 
 */
 
@@ -46,12 +41,15 @@ static BOOL CALLBACK JabberChangePasswordDlgProc( HWND hwndDlg, UINT msg, WPARAM
 {
 	switch ( msg ) {
 	case WM_INITDIALOG:
-		SendMessage( hwndDlg, WM_SETICON, ICON_BIG, ( LPARAM )LoadIconEx( "key" ));
-		TranslateDialogDefault( hwndDlg );
-		if ( jabberOnline && jabberThreadInfo!=NULL ) {
-			TCHAR text[128];
-			mir_sntprintf( text, SIZEOF( text ), _T("%s %s@") _T(TCHAR_STR_PARAM), TranslateT( "Set New Password for" ), jabberThreadInfo->username, jabberThreadInfo->server );
-			SetWindowText( hwndDlg, text );
+		{
+			char text[128];
+
+			SendMessage( hwndDlg, WM_SETICON, ICON_BIG, ( LPARAM )LoadIcon( hInst, MAKEINTRESOURCE( IDI_KEYS )) );
+			TranslateDialogDefault( hwndDlg );
+			if ( jabberOnline && jabberThreadInfo!=NULL ) {
+				_snprintf( text, sizeof( text ), "%s %s@%s", JTranslate( "Set New Password for" ), jabberThreadInfo->username, jabberThreadInfo->server );
+				SetWindowText( hwndDlg, text );
+			}
 		}
 		return TRUE;
 	case WM_COMMAND:
@@ -59,27 +57,33 @@ static BOOL CALLBACK JabberChangePasswordDlgProc( HWND hwndDlg, UINT msg, WPARAM
 		case IDOK:
 			if ( jabberOnline && jabberThreadInfo!=NULL ) {
 				char newPasswd[128], text[128];
-				GetDlgItemTextA( hwndDlg, IDC_NEWPASSWD, newPasswd, SIZEOF( newPasswd ));
-				GetDlgItemTextA( hwndDlg, IDC_NEWPASSWD2, text, SIZEOF( text ));
+				char* username, *password, *server;
+				int iqId;
+
+				GetDlgItemText( hwndDlg, IDC_NEWPASSWD, newPasswd, sizeof( newPasswd ));
+				GetDlgItemText( hwndDlg, IDC_NEWPASSWD2, text, sizeof( text ));
 				if ( strcmp( newPasswd, text )) {
-					MessageBox( hwndDlg, TranslateT( "New password does not match." ), TranslateT( "Change Password" ), MB_OK|MB_ICONSTOP|MB_SETFOREGROUND );
+					MessageBox( hwndDlg, JTranslate( "New password does not match." ), JTranslate( "Change Password" ), MB_OK|MB_ICONSTOP|MB_SETFOREGROUND );
 					break;
 				}
-				GetDlgItemTextA( hwndDlg, IDC_OLDPASSWD, text, SIZEOF( text ));
+				GetDlgItemText( hwndDlg, IDC_OLDPASSWD, text, sizeof( text ));
 				if ( strcmp( text, jabberThreadInfo->password )) {
-					MessageBox( hwndDlg, TranslateT( "Current password is incorrect." ), TranslateT( "Change Password" ), MB_OK|MB_ICONSTOP|MB_SETFOREGROUND );
+					MessageBox( hwndDlg, JTranslate( "Current password is incorrect." ), JTranslate( "Change Password" ), MB_OK|MB_ICONSTOP|MB_SETFOREGROUND );
 					break;
 				}
-				strncpy( jabberThreadInfo->newPassword, newPasswd, SIZEOF( jabberThreadInfo->newPassword ));
-
-				int iqId = JabberSerialNext();
-				JabberIqAdd( iqId, IQ_PROC_NONE, JabberIqResultSetPassword );
-
-				XmlNodeIq iq( "set", iqId, jabberThreadInfo->server );
-				XmlNode* q = iq.addQuery( "jabber:iq:register" );
-				q->addChild( "username", jabberThreadInfo->username );
-				q->addChild( "password", newPasswd );
-				JabberSend( jabberThreadInfo->s, iq );
+				if (( server=JabberTextEncode( jabberThreadInfo->server )) != NULL ) {
+					if (( username=JabberTextEncode( jabberThreadInfo->username )) != NULL ) {
+						if (( password=JabberTextEncode( newPasswd )) != NULL ) {
+							strncpy( jabberThreadInfo->newPassword, newPasswd, sizeof( jabberThreadInfo->newPassword ));
+							iqId = JabberSerialNext();
+							JabberIqAdd( iqId, IQ_PROC_NONE, JabberIqResultSetPassword );
+							JabberSend( jabberThreadInfo->s, "<iq type='set' id='"JABBER_IQID"%d' to='%s'><query xmlns='jabber:iq:register'><username>%s</username><password>%s</password></query></iq>", iqId, server, username, password );
+							free( password );
+						}
+						free( username );
+					}
+					free( server );
+				}
 			}
 			DestroyWindow( hwndDlg );
 			break;

@@ -5,7 +5,6 @@
 // Copyright © 2000,2001 Richard Hughes, Roland Rabien, Tristan Van de Vreede
 // Copyright © 2001,2002 Jon Keating, Richard Hughes
 // Copyright © 2002,2003,2004 Martin Öberg, Sam Kothari, Robert Rainwater
-// Copyright © 2004,2005,2006 Joe Kucera
 // 
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -23,7 +22,7 @@
 //
 // -----------------------------------------------------------------------------
 //
-// File name      : $Source: /cvsroot/miranda/miranda/protocols/IcqOscarJ/fam_0bstatus.c,v $
+// File name      : $Source$
 // Revision       : $Revision$
 // Last change on : $Date$
 // Last change by : $Author$
@@ -37,34 +36,28 @@
 #include "icqoscar.h"
 
 
+
+extern DWORD dwLocalDirectConnCookie;
+extern HANDLE ghServerNetlibUser;
+
 void handleStatusFam(unsigned char *pBuffer, WORD wBufferLength, snac_header* pSnacHeader)
 {
-  switch (pSnacHeader->wSubtype)
-  {
 
-  case ICQ_STATS_MINREPORTINTERVAL:
-    {
-      WORD wInterval;
-      unpackWord(&pBuffer, &wInterval);
-      NetLog_Server("Server sent SNAC(x0B,x02) - SRV_SET_MINREPORTINTERVAL (Value: %u hours)", wInterval);
-    }
-    break;
+	switch (pSnacHeader->wSubtype)
+	{
+		
+	case SRV_SET_MINREPORTINTERVAL:
+		{
+			WORD wInterval;
+			unpackWord(&pBuffer, &wInterval);
+			Netlib_Logf(ghServerNetlibUser, "Server sent SNAC(x0B,x03) - SRV_SET_MINREPORTINTERVAL (Value: %u hours)", wInterval);
+		}
+		break;
 
-  case ICQ_ERROR:
-  {
-    WORD wError;
+	default:
+		Netlib_Logf(ghServerNetlibUser, "Warning: Ignoring SNAC(x0B,x%02x) - Unknown SNAC (Flags: %u, Ref: %u", pSnacHeader->wSubtype, pSnacHeader->wFlags, pSnacHeader->dwRef);
+		break;
 
-    if (wBufferLength >= 2)
-      unpackWord(&pBuffer, &wError);
-    else 
-      wError = 0;
-
-    LogFamilyError(ICQ_STATS_FAMILY, wError);
-    break;
-  }
-
-  default:
-    NetLog_Server("Warning: Ignoring SNAC(x%02x,x%02x) - Unknown SNAC (Flags: %u, Ref: %u)", ICQ_STATS_FAMILY, pSnacHeader->wSubtype, pSnacHeader->wFlags, pSnacHeader->dwRef);
-    break;
-  }
+	}
+	
 }

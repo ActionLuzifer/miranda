@@ -47,12 +47,12 @@ void Lists_Init(void)
 void Lists_Uninit(void)
 {
 	for ( int i=0; i < count; i++ ) {
-		mir_free( lists[i].email );
-		mir_free( lists[i].nick );
+		free( lists[i].email );
+		free( lists[i].nick );
 	}
 
 	if ( lists != NULL )
-		mir_free( lists );
+		free( lists );
 
 	DeleteCriticalSection( &csLists );
 }
@@ -77,12 +77,12 @@ void __stdcall Lists_Wipe( void )
 {
 	EnterCriticalSection( &csLists );
 	for ( int i=0; i < count; i++ ) {
-		mir_free( lists[i].email );
-		mir_free( lists[i].nick );
+		free( lists[i].email );
+		free( lists[i].nick );
 	}
 
 	if ( lists != NULL ) {
-		mir_free( lists );
+		free( lists );
 		lists = NULL;
 	}
 
@@ -128,11 +128,11 @@ int __stdcall Lists_Add( int list, const char* email, const char* nick )
 	int idx = Lists_IsInList( -1, email );
 	if ( idx == 0 )
 	{
-		lists = ( MsnContact* )mir_realloc( lists, sizeof( MsnContact )*( count+1 ));
+		lists = ( MsnContact* )realloc( lists, sizeof( MsnContact )*( count+1 ));
 		C = &lists[ count++ ];
 		C->list = 0;
-		C->email = mir_strdup( email );
-		C->nick  = ( char* )mir_strdup( nick );
+		C->email = strdup( email );
+		C->nick  = ( char* )_mbsdup(( const BYTE* )nick );
 	}
 	else C = &lists[ idx-1 ];
 
@@ -150,11 +150,11 @@ void __stdcall Lists_Remove( int list, const char* email )
 
 		C->list &= ~list;
 		if ( C->list == 0 ) {
-			mir_free( C->email );
-			mir_free( C->nick );
+			free( C->email );
+			free( C->nick );
 			count--;
 			memmove( lists+i, lists+i+1, sizeof( MsnContact )*( count-i ));
-			lists = ( MsnContact* )mir_realloc( lists, sizeof( MsnContact )*count );
+			lists = ( MsnContact* )realloc( lists, sizeof( MsnContact )*count );
 	}	}
 
 	LeaveCriticalSection( &csLists );
@@ -252,19 +252,12 @@ BOOL CALLBACK DlgProcMsnServLists(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM 
 	switch ( msg ) {
 	case WM_INITDIALOG:
 		TranslateDialogDefault( hwndDlg );
-		{	
-			HIMAGELIST hIml = ImageList_Create(
-				GetSystemMetrics(SM_CXSMICON), GetSystemMetrics(SM_CYSMICON),
-				ILC_MASK | (IsWinVerXPPlus() ? ILC_COLOR32 : ILC_COLOR16 ), 5, 5 );
-			ImageList_AddIcon( hIml, LoadIcon(GetModuleHandle(NULL),MAKEINTRESOURCE(211)));
-			ImageList_AddIcon( hIml, LoadIconEx( "list_fl" ));
-			ReleaseIconEx( "list_fl" );
-			ImageList_AddIcon( hIml, LoadIconEx( "list_al" ));
-			ReleaseIconEx( "list_al" );
-			ImageList_AddIcon( hIml, LoadIconEx( "list_bl" ));
-			ReleaseIconEx( "list_bl" );
-			ImageList_AddIcon( hIml, LoadIconEx( "list_rl" ));
-			ReleaseIconEx( "list_rl" );
+		{	HIMAGELIST hIml = ImageList_Create(GetSystemMetrics(SM_CXSMICON),GetSystemMetrics(SM_CYSMICON),ILC_COLOR16|ILC_MASK,5,5);
+			ImageList_AddIcon( hIml,LoadIcon(GetModuleHandle(NULL),MAKEINTRESOURCE(211)));
+			ImageList_AddIcon( hIml, LoadIcon( hInst, MAKEINTRESOURCE( IDI_LIST_FL )));
+			ImageList_AddIcon( hIml, LoadIcon( hInst, MAKEINTRESOURCE( IDI_LIST_AL )));
+			ImageList_AddIcon( hIml, LoadIcon( hInst, MAKEINTRESOURCE( IDI_LIST_BL )));
+			ImageList_AddIcon( hIml, LoadIcon( hInst, MAKEINTRESOURCE( IDI_LIST_RL )));
 			SendDlgItemMessage( hwndDlg, IDC_LIST, CLM_SETEXTRAIMAGELIST, 0, (LPARAM)hIml );
 		}
 		ResetListOptions( GetDlgItem( hwndDlg, IDC_LIST ));

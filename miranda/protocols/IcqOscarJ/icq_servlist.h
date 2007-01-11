@@ -5,7 +5,7 @@
 // Copyright © 2000,2001 Richard Hughes, Roland Rabien, Tristan Van de Vreede
 // Copyright © 2001,2002 Jon Keating, Richard Hughes
 // Copyright © 2002,2003,2004 Martin Öberg, Sam Kothari, Robert Rainwater
-// Copyright © 2004,2005,2006 Joe Kucera
+// Copyright © 2004,2005 Joe Kucera
 // 
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -23,7 +23,7 @@
 //
 // -----------------------------------------------------------------------------
 //
-// File name      : $Source: /cvsroot/miranda/miranda/protocols/IcqOscarJ/icq_servlist.h,v $
+// File name      : $Source$
 // Revision       : $Revision$
 // Last change on : $Date$
 // Last change by : $Author$
@@ -40,7 +40,8 @@
 // actions:
 #define SSA_CHECK_ROSTER      0     // request serv-list
 #define SSA_VISIBILITY        1     // update visibility
-#define SSA_CONTACT_UPDATE    2     // update contact's details
+#define SSA_CONTACT_RENAME    2     // update contact's nick
+#define SSA_CONTACT_COMMENT   3     // update contact's comment
 #define SSA_GROUP_RENAME      5     // rename group
 #define SSA_PRIVACY_ADD       0xA   // add privacy item
 #define SSA_PRIVACY_REMOVE    0xB   // remove privacy item
@@ -49,14 +50,12 @@
 #define SSA_CONTACT_ADD_AUTH  0x11  // add contact with auth
 #define SSA_CONTACT_SET_GROUP 0x12  // move to group
 #define SSA_CONTACT_REMOVE    0x13  // delete contact
-#define SSA_CONTACT_FIX_AUTH  0x40  // reuploading contact for auth re-request
 #define SSA_GROUP_ADD         0x15  // create group
 #define SSA_GROUP_REMOVE      0x16  // delete group
 #define SSA_GROUP_UPDATE      0x17  // update group
 #define SSA_SERVLIST_ACK      0x20  // send proto ack only (UploadUI)
 #define SSA_SETAVATAR         0x30
 #define SSA_REMOVEAVATAR      0x31
-#define SSA_IMPORT            7
 
 typedef void (*GROUPADDCALLBACK)(WORD wGroupId, LPARAM lParam);
 
@@ -81,27 +80,22 @@ void UninitServerLists(void);
 
 void* collectGroups(int *count);
 void* collectBuddyGroup(WORD wGroupID, int *count);
-char* getServerGroupNameUtf(WORD wGroupID);
-void setServerGroupNameUtf(WORD wGroupID, const char* szGroupNameUtf);
-WORD getServerGroupIDUtf(const char* szPath);
-void setServerGroupIDUtf(const char* szPath, WORD wGroupID);
+char* getServerGroupName(WORD wGroupID);
+void setServerGroupName(WORD wGroupID, const char* szGroupName);
+WORD getServerGroupID(const char* szPath);
+void setServerGroupID(const char* szPath, WORD wGroupID);
 int IsServerGroupsDefined();
-char* makeGroupPathUtf(WORD wGroupId);
+char* makeGroupPath(WORD wGroupId);
 WORD makeGroupId(const char* szGroupPath, GROUPADDCALLBACK ofCallback, servlistcookie* lParam);
 void removeGroupPathLinks(WORD wGroupID);
 int countGroupLevel(WORD wGroupId);
 
-void FlushSrvGroupsCache();
+DWORD addServContact(HANDLE hContact, const char *pszNick, const char *pszGroup);
+DWORD removeServContact(HANDLE hContact);
+DWORD moveServContactGroup(HANDLE hContact, const char *pszNewGroup);
 
-DWORD icq_sendServerContact(HANDLE hContact, DWORD dwCookie, WORD wAction, WORD wGroupId, WORD wContactId);
-DWORD icq_sendSimpleItem(DWORD dwCookie, WORD wAction, DWORD dwUin, char* szUID, WORD wGroupId, WORD wItemId, WORD wItemType);
-DWORD icq_sendGroupUtf(DWORD dwCookie, WORD wAction, WORD wGroupId, const char *szName, void *pContent, int cbContent);
-
-DWORD icq_removeServerPrivacyItem(HANDLE hContact, DWORD dwUin, char* szUid, WORD wItemId, WORD wType);
-DWORD icq_addServerPrivacyItem(HANDLE hContact, DWORD dwUin, char* szUid, WORD wItemId, WORD wType);
-
-
-void resetServContactAuthState(HANDLE hContact, DWORD dwUin);
+DWORD icq_sendBuddy(DWORD dwCookie, WORD wAction, DWORD dwUin, WORD wGroupId, WORD wContactId, const char *szNick, const char*szNote, int authRequired, WORD wItemType);
+DWORD icq_sendGroup(DWORD dwCookie, WORD wAction, WORD wGroupId, const char *szName, void *pContent, int cbContent);
 
 // id type groups
 #define SSIT_ITEM 0

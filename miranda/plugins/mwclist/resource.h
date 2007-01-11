@@ -1,5 +1,5 @@
 //{{NO_DEPENDENCIES}}
-// Microsoft Visual C++ generated include file.
+// Microsoft Developer Studio generated include file.
 // Used by resource.rc
 //
 #define IDC_AUTHICON                    1
@@ -10,6 +10,7 @@
 #define MIM_V2                          20
 #define MIM_V3                          30
 #define MIM_V4                          30
+#define IDI_MIRANDA                     102
 #define IDD_ABOUT                       103
 #define IDI_SMS                         103
 #define IDI_ONLINE                      104
@@ -52,6 +53,7 @@
 #define IDD_NEWPROFILE                  198
 #define IDR_CLISTMENU                   199
 #define IDI_BLANK                       200
+#define IDI_NEWGROUP                    200
 #define IDD_FINDADD                     201
 #define IDI_USERONLINE                  201
 #define IDD_OPT_AUTOAWAY                202
@@ -122,49 +124,9 @@
 #define IDI_ICQC7                       275
 #define IDI_ICQC8                       276
 #define IDI_EMAIL                       277
+#define IDI_BLANK1                      278
 #define IDD_OPT_META_CLC                279
-#define IDI_NEWGROUP                    282
-#define IDI_NEWGROUP2                   282
-#define IDI_CLIENTTRILLIAN              298
-#define IDI_CLIENTMIRANDA               299
-#define IDI_CLIENTRQ                    300
-#define IDI_CLIENTGAIM                  301
-#define IDI_CLIENTIM2                   302
-#define IDI_CLIENTKOPETE                303
-#define IDI_CLIENTLICQ                  304
-#define IDI_CLIENTQIP                   305
-#define IDI_CLIENTSIM                   306
-#define IDI_MIRANDA2                    307
-#define IDD_OPT_CLCBKG2                 308
-#define IDI_CLIENTICQL5                 315
-#define IDI_CLIENTAGILE                 318
-#define IDI_CLIENTGNOMEICU              319
-#define IDI_ICON1                       320
-#define IDI_CLIENTMOBICQ                320
-#define IDI_CLIENTSPAMBOT               321
-#define IDI_CLIENTICQMAC                322
-#define IDI_CLIENTIMPLUS                323
-#define IDI_CLIENTYSM                   324
-#define IDI_CLIENTYAMIGO                325
-#define IDI_CLIENTWEBICQ                326
-#define IDI_CLIENTVICQ                  327
-#define IDI_CLIENTSTRICQ                328
-#define IDI_CLIENTSTICQ                 329
-#define IDI_CLIENTNICQ2                 330
-#define IDI_CLIENTPSI                   331
-#define IDI_CLIENTMOB2ICQ               333
-#define IDI_CLIENTMICQ                  334
-#define IDI_CLIENTLIBICQ2000            335
-#define IDI_CLIENTCENTERICQ             336
-#define IDI_CLIENTALICQ                 337
-#define IDI_CLIENTICQ2000               339
-#define IDI_CLIENTICQ2001               340
-#define IDI_CLIENTICQ2003               341
-#define IDI_CLIENTICQLITE               342
-#define IDI_CLIENTICQLITE4              343
-#define IDI_CLIENTICQLITE5              344
-#define IDI_CLIENTICQGOF                345
-#define IDI_CLIENTICQGOJ                346
+#define IDD_DIALOG1                     280
 #define IDC_RESETPROTOCOLDATA           1000
 #define IDC_SAVE                        1001
 #define IDC_DEFBKCOLOR                  1001
@@ -251,7 +213,6 @@
 #define IDC_EXTRA_ADV2                  1107
 #define IDC_BUILDTIME                   1108
 #define IDC_EXTRA_ADV1                  1108
-#define IDC_EXTRA_WEB                   1109
 #define IDC_NUMBER                      1113
 #define IDC_UIN                         1123
 #define IDC_TRANSPARENT                 1124
@@ -604,9 +565,6 @@
 #define IDC_HKTITLE                     1760
 #define IDC_CHECK1                      1761
 #define IDC_USECONNECTINGICON           1761
-#define IDC_BKGRLIST                    1762
-#define IDC_BC_STATIC                   1763
-#define IDC_SC_STATIC                   1764
 #define IDD_OPT_GENMENU                 11267
 #define IDC_MENUITEMS                   11710
 #define IDC_MENUOBJECTS                 11711
@@ -646,7 +604,7 @@
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        347
+#define _APS_NEXT_RESOURCE_VALUE        281
 #define _APS_NEXT_COMMAND_VALUE         40018
 #define _APS_NEXT_CONTROL_VALUE         1762
 #define _APS_NEXT_SYMED_VALUE           101

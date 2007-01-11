@@ -2,7 +2,7 @@
 
 Jabber Protocol Plugin for Miranda IM
 Copyright ( C ) 2002-04  Santithorn Bunchua
-Copyright ( C ) 2005-06  George Hazan
+Copyright ( C ) 2005     George Hazan
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -17,11 +17,6 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
-
-File name      : $Source: /cvsroot/miranda/miranda/protocols/JabberG/jabber_proxy.cpp,v $
-Revision       : $Revision$
-Last change on : $Date$
-Last change by : $Author$
 
 */
 
@@ -95,7 +90,7 @@ int JabberHttpGatewayBegin( HANDLE hConn, NETLIBOPENCONNECTION *nloc )
 	packString( &packet, nloc->szHost, ( WORD )serverNameLen );
 	packWord( &packet, nloc->wPort );
 	Netlib_Send( hConn, packet.pData, packet.wLen, MSG_DUMPPROXY|MSG_NOHTTPGATEWAYWRAP );
-	mir_free( packet.pData );
+	free( packet.pData );
 	return 1;
 	*/
 	return 1;
@@ -111,7 +106,7 @@ int icq_httpGatewayWrapSend( HANDLE hConn, PBYTE buf, int len, int flags, MIRAND
 	write_httphdr( &packet, HTTP_PACKETTYPE_FLAP );
 	packString( &packet, buf, ( WORD )len );
 	sendResult = Netlib_Send( hConn, packet.pData, packet.wLen, flags );
-	mir_free( packet.pData );
+	free( packet.pData );
 	if( sendResult <= 0 )
 		return sendResult;
 	if( sendResult < 14 )
@@ -124,7 +119,7 @@ PBYTE icq_httpGatewayUnwrapRecv( NETLIBHTTPREQUEST *nlhr, PBYTE buf, int len, in
 	WORD wLen, wType;
 	PBYTE tbuf;
 	int i, copyBytes;
-
+	
 	tbuf = buf;
 	for( i = 0;; )
 	{

@@ -29,7 +29,7 @@ typedef struct {
 		BYTE bVal;
 		WORD wVal;
 		DWORD dVal;
-		TCHAR *pszVal;
+		char *pszVal;
 		WORD cchVal;
 	};
 } CONTACTINFO;
@@ -50,27 +50,6 @@ typedef struct {
 #define CNF_AGE			13 // returns age (byte, 0==unspecified)
 #define CNF_FIRSTLAST	14 // returns first name + last name (string)
 #define CNF_UNIQUEID	15 // returns uniqueid, protocol username (must check type for type of return)
-#define CNF_FAX			18 // returns fax (string)
-#define CNF_CELLULAR	19 // returns cellular (string)
-#define CNF_TIMEZONE	20 // returns timezone (string)
-#define CNF_MYNOTES		21 // returns user specified notes (string)
-#define CNF_BIRTHDAY	22 // returns birthday day of month (byte)
-#define CNF_BIRTHMONTH	23 // returns birthday month (byte)
-#define CNF_BIRTHYEAR	24 // returns birthday year (word)
-#define CNF_STREET		25 // returns street (string)
-#define CNF_ZIP			26 // returns zip code (string)
-#define CNF_LANGUAGE1	27 // returns language1 (string)
-#define CNF_LANGUAGE2	28 // returns language2 (string)
-#define CNF_LANGUAGE3	29 // returns language3 (string)
-#define CNF_CONAME		30 // returns company name (string)
-#define CNF_CODEPT		31 // returns company department (string)
-#define CNF_COPOSITION	32 // returns company position (string)
-#define CNF_COSTREET	33 // returns company street (string)
-#define CNF_COCITY		34 // returns company city (string)
-#define CNF_COSTATE		35 // returns company state (string)
-#define CNF_COZIP		36 // returns company zip code (string)
-#define CNF_COCOUNTRY	37 // returns company country (string)
-#define CNF_COHOMEPAGE	38 // returns company homepage (string)
 
 // Special types
 // Return the custom name using the name order setting
@@ -83,9 +62,6 @@ typedef struct {
 // You must **NOT** do this from your version of free() you have to use Miranda's free()
 // you can get a function pointer to Miranda's free() via MS_SYSTEM_GET_MMI, see m_system.h
 #define CNF_DISPLAYNC	17
-
-// Add this flag if you want to get the Unicode info
-#define CNF_UNICODE     0x80
 
 // If MS_CONTACT_GETCONTACTINFO returns 0 (valid), then one of the following
 // types is setting telling you what type of info you received

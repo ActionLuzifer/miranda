@@ -5,7 +5,7 @@
 // Copyright © 2000,2001 Richard Hughes, Roland Rabien, Tristan Van de Vreede
 // Copyright © 2001,2002 Jon Keating, Richard Hughes
 // Copyright © 2002,2003,2004 Martin Öberg, Sam Kothari, Robert Rainwater
-// Copyright © 2004,2005,2006 Joe Kucera
+// Copyright © 2004,2005 Joe Kucera
 // 
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -23,7 +23,7 @@
 //
 // -----------------------------------------------------------------------------
 //
-// File name      : $Source: /cvsroot/miranda/miranda/protocols/IcqOscarJ/capabilities.c,v $
+// File name      : $Source$
 // Revision       : $Revision$
 // Last change on : $Date$
 // Last change by : $Author$
@@ -42,21 +42,20 @@
 #include "icqoscar.h"
 
 
+
+extern char gpszICQProtoName[MAX_PATH];
+
 typedef struct icq_capability_s
 {
-  DWORD fdwMirandaID;              // A bitmask, we use it in order to save database space
-  BYTE  CapCLSID[BINARY_CAP_SIZE]; // A binary representation of a oscar capability
+	DWORD fdwMirandaID;              // A bitmask, we use it in order to save database space
+	BYTE  CapCLSID[BINARY_CAP_SIZE]; // A binary representation of a oscar capability
 } icq_capability;
 
 static icq_capability CapabilityRecord[] =
 {
-  {CAPF_SRV_RELAY, {CAP_SRV_RELAY}},
-  {CAPF_UTF,       {CAP_UTF      }},
-  {CAPF_RTF,       {CAP_RTF      }},
-  {CAPF_ICQDIRECT, {CAP_ICQDIRECT}},
-  {CAPF_TYPING,    {CAP_TYPING   }},
-  {CAPF_XTRAZ,     {CAP_XTRAZ    }},
-  {CAPF_AIM_FILE,  {CAP_AIM_FILE }}
+	{CAPF_SRV_RELAY, {CAP_SRV_RELAY}},
+	{CAPF_UTF,       {CAP_UTF      }},
+	{CAPF_TYPING,    {CAP_TYPING   }}
 };
 
 
@@ -64,7 +63,9 @@ static icq_capability CapabilityRecord[] =
 // Deletes all oscar capabilities for a given contact
 void ClearAllContactCapabilities(HANDLE hContact)
 {
-  ICQWriteContactSettingDword(hContact, DBSETTING_CAPABILITIES, 0);
+
+	DBWriteContactSettingDword(hContact, gpszICQProtoName, DBSETTING_CAPABILITIES, 0);
+
 }
 
 
@@ -72,17 +73,19 @@ void ClearAllContactCapabilities(HANDLE hContact)
 // Deletes one or many oscar capabilities for a given contact
 void ClearContactCapabilities(HANDLE hContact, DWORD fdwCapabilities)
 {
-  DWORD fdwContactCaps;
+
+	DWORD fdwContactCaps;
 
 
-  // Get current capability flags
-  fdwContactCaps =  ICQGetContactSettingDword(hContact, DBSETTING_CAPABILITIES, 0);
+	// Get current capability flags
+	fdwContactCaps =  DBGetContactSettingDword(hContact, gpszICQProtoName, DBSETTING_CAPABILITIES, 0);
 
-  // Clear unwanted capabilities
-  fdwContactCaps &= ~fdwCapabilities;
+	// Clear unwanted capabilities
+	fdwContactCaps &= ~fdwCapabilities;
 
-  // And write it back to disk
-  ICQWriteContactSettingDword(hContact, DBSETTING_CAPABILITIES, fdwContactCaps);
+	// And write it back to disk
+	DBWriteContactSettingDword(hContact, gpszICQProtoName, DBSETTING_CAPABILITIES, fdwContactCaps);
+
 }
 
 
@@ -90,17 +93,19 @@ void ClearContactCapabilities(HANDLE hContact, DWORD fdwCapabilities)
 // Sets one or many oscar capabilities for a given contact
 void SetContactCapabilities(HANDLE hContact, DWORD fdwCapabilities)
 {
-  DWORD fdwContactCaps;
+
+	DWORD fdwContactCaps;
 
 
-  // Get current capability flags
-  fdwContactCaps =  ICQGetContactSettingDword(hContact, DBSETTING_CAPABILITIES, 0);
+	// Get current capability flags
+	fdwContactCaps =  DBGetContactSettingDword(hContact, gpszICQProtoName, DBSETTING_CAPABILITIES, 0);
 
-  // Update them
-  fdwContactCaps |= fdwCapabilities;
+	// Update them
+	fdwContactCaps |= fdwCapabilities;
 
-  // And write it back to disk
-  ICQWriteContactSettingDword(hContact, DBSETTING_CAPABILITIES, fdwContactCaps);
+	// And write it back to disk
+	DBWriteContactSettingDword(hContact, gpszICQProtoName, DBSETTING_CAPABILITIES, fdwContactCaps);
+
 }
 
 
@@ -108,21 +113,23 @@ void SetContactCapabilities(HANDLE hContact, DWORD fdwCapabilities)
 // Returns true if the given contact supports the requested capabilites
 BOOL CheckContactCapabilities(HANDLE hContact, DWORD fdwCapabilities)
 {
-  DWORD fdwContactCaps;
-  
-  
-  // Get current capability flags
-  fdwContactCaps =  ICQGetContactSettingDword(hContact, DBSETTING_CAPABILITIES, 0);
-  
-  // Check if all requested capabilities are supported
-  if ((fdwContactCaps & fdwCapabilities) == fdwCapabilities)
-  {
-    return TRUE;
-  }
-  else
-  {
-    return FALSE;
-  }
+	
+	DWORD fdwContactCaps;
+	
+	
+	// Get current capability flags
+	fdwContactCaps =  DBGetContactSettingDword(hContact, gpszICQProtoName, DBSETTING_CAPABILITIES, 0);
+	
+	// Check if all requested capabilities are supported
+	if ((fdwContactCaps & fdwCapabilities) == fdwCapabilities)
+	{
+		return TRUE;
+	}
+	else
+	{
+		return FALSE;
+	}
+	
 }
 
 
@@ -131,33 +138,35 @@ BOOL CheckContactCapabilities(HANDLE hContact, DWORD fdwCapabilities)
 // You probably want to call ClearAllContactCapabilities() first.
 void AddCapabilitiesFromBuffer(HANDLE hContact, BYTE* pbyBuffer, int nLength)
 {
-  DWORD fdwContactCaps;
-  int iCapability;
-  int nIndex;
-  int nRecordSize;
+	
+	DWORD fdwContactCaps;
+	int iCapability;
+	int nIndex;
+	int nRecordSize;
 
 
-  // Calculate the number of records
-  nRecordSize = sizeof(CapabilityRecord)/sizeof(icq_capability);
+	// Calculate the number of records
+	nRecordSize = sizeof(CapabilityRecord)/sizeof(icq_capability);
 
-  // Get current capability flags
-  fdwContactCaps =  ICQGetContactSettingDword(hContact, DBSETTING_CAPABILITIES, 0);
+	// Get current capability flags
+	fdwContactCaps =  DBGetContactSettingDword(hContact, gpszICQProtoName, DBSETTING_CAPABILITIES, 0);
 
-  // Loop over all capabilities in the buffer and
-  // compare them to our own record of capabilities
-  for (iCapability = 0; (iCapability + BINARY_CAP_SIZE) <= nLength; iCapability += BINARY_CAP_SIZE)
-  {
-    for (nIndex = 0; nIndex < nRecordSize; nIndex++)
-    {
-      if (!memcmp(pbyBuffer + iCapability, CapabilityRecord[nIndex].CapCLSID, BINARY_CAP_SIZE))
-      {
-        // Match
-        fdwContactCaps |= CapabilityRecord[nIndex].fdwMirandaID;
-        break;
-      }
-    }
-  }
+	// Loop over all capabilities in the buffer and
+	// compare them to our own record of capabilities
+	for (iCapability = 0; (iCapability + BINARY_CAP_SIZE) <= nLength; iCapability += BINARY_CAP_SIZE)
+	{
+		for (nIndex = 0; nIndex < nRecordSize; nIndex++)
+		{
+			if (!memcmp(pbyBuffer + iCapability, CapabilityRecord[nIndex].CapCLSID, BINARY_CAP_SIZE))
+			{
+				// Match
+				fdwContactCaps |= CapabilityRecord[nIndex].fdwMirandaID;
+				break;
+			}
+		}
+	}
 
-  // And write it back to disk
-  ICQWriteContactSettingDword(hContact, DBSETTING_CAPABILITIES, fdwContactCaps);
+	// And write it back to disk
+	DBWriteContactSettingDword(hContact, gpszICQProtoName, DBSETTING_CAPABILITIES, fdwContactCaps);
+	
 }

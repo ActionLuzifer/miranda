@@ -5,7 +5,6 @@
 // Copyright © 2000,2001 Richard Hughes, Roland Rabien, Tristan Van de Vreede
 // Copyright © 2001,2002 Jon Keating, Richard Hughes
 // Copyright © 2002,2003,2004 Martin Öberg, Sam Kothari, Robert Rainwater
-// Copyright © 2004,2005,2006 Joe Kucera
 // 
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -23,7 +22,7 @@
 //
 // -----------------------------------------------------------------------------
 //
-// File name      : $Source: /cvsroot/miranda/miranda/protocols/IcqOscarJ/log.h,v $
+// File name      : $Source$
 // Revision       : $Revision$
 // Last change on : $Date$
 // Last change by : $Author$
@@ -37,15 +36,14 @@
 #ifndef __LOG_H
 #define __LOG_H
 
-#define LOG_NOTE       0   //trivial problems or problems that will already have been reported elsewhere
-#define LOG_WARNING    1   //problems that may have caused data loss
-#define LOG_ERROR      2   //problems that cause a disconnection from the network
-#define LOG_FATAL      3   //problems requiring user intervention: password wrong, rate exceeded, etc.
+#define LOG_NOTE       0	 //trivial problems or problems that will already have been reported elsewhere
+#define LOG_WARNING    1	 //problems that may have caused data loss
+#define LOG_ERROR      2	 //problems that cause a disconnection from the network
+#define LOG_FATAL      3	 //problems requiring user intervention: password wrong, rate exceeded, etc.
 
 /*---------* Functions *---------------*/
 
 void icq_LogMessage(int level, const char *szMsg);
 void icq_LogUsingErrorCode(int level, DWORD dwError, const char *szMsg);  //szMsg is optional
-void icq_LogFatalParam(const char* szMsg, WORD wError);
 
 #endif /* __LOG_H */

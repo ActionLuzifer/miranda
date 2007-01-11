@@ -1,8 +1,8 @@
-/*
+/*                         
 Miranda IM: the free IM client for Microsoft* Windows*
 
-Copyright 2000-2003 Miranda ICQ/IM project,
-all portions of this codebase are copyrighted to the people
+Copyright 2000-2003 Miranda ICQ/IM project, 
+all portions of this codebase are copyrighted to the people 
 listed in contributors.txt.
 
 This program is free software; you can redistribute it and/or
@@ -22,6 +22,14 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 $Id$
 
+simple text formatting routines, taken from the textformat plugin for Miranda
+
+-- Miranda TextFormat Plugin
+-- Copyright (C) 2003 Daniel Wesslén (wesslen)
+
+Modified and adapted for tabSRMM by Nightwish
+Unicode version by Nightwish
+
 License: GPL
 */
 
@@ -33,197 +41,239 @@ License: GPL
 #include <richedit.h>
 
 #include <string>
-#include "msgdlgutils.h"
-#include "m_smileyadd.h"
+#include <vector>
+#include <set>
+#include <fstream>
 
-#include "m_MathModule.h"
-
-#define MWF_LOG_TEXTFORMAT 0x2000000
-#define MSGDLGFONTCOUNT 22
-
-extern "C" RTFColorTable *rtf_ctable;
 extern "C" int _DebugPopup(HANDLE hContact, const char *fmt, ...);
-extern "C" char *xStatusDescr[];
-extern "C" TCHAR *MY_DBGetContactSettingString(HANDLE hContact, char *szModule, char *szSetting);
-extern "C" DWORD m_LangPackCP;
-extern "C" int MY_CallService(const char *svc, WPARAM wParam, LPARAM lParam);
-extern "C" int MY_ServiceExists(const char *svc);
-extern "C" void RTF_ColorAdd(const TCHAR *tszColname, size_t length);
-
-static int iHaveSmileyadd = -1, iHaveMathMod = -1;
-extern "C" unsigned int g_ctable_size;
-TCHAR  tszMathDelimiter[100];
 
 #if defined(UNICODE)
 
-/*
+/* 
  * old code (textformat plugin dealing directly in the edit control - not the best solution, but the author
  * had no other choice as srmm never had an api for this...
  */
 
-static WCHAR *w_bbcodes_begin[] = { L"[b]", L"[i]", L"[u]", L"[s]", L"[color=" };
-static WCHAR *w_bbcodes_end[] = { L"[/b]", L"[/i]", L"[/u]", L"[/s]", L"[/color]" };
+#if defined(OLD_FORMATTING)
 
-static WCHAR *formatting_strings_begin[] = { L"b1 ", L"i1 ", L"u1 ", L"s1 ", L"c1 " };
-static WCHAR *formatting_strings_end[] = { L"b0 ", L"i0 ", L"u0 ", L"s0 ", L"c0 " };
+unsigned FormatSpan(HWND REdit, const std::wstring &text, unsigned npos, wchar_t prech)
+{
+	wchar_t empty[] = L"";
 
-#define NR_CODES 5
+	// skip escaped section, remove the backslash
+	if (prech == '\\') {
+		SendMessage(REdit, EM_SETSEL, npos-1, npos);
+		SendMessageA(REdit, EM_REPLACESEL, FALSE, (LPARAM) empty);
+		return text.size() - 1;
+	}
+
+	std::wstring new_text = text, stripped_chars;
+	unsigned osize = text.size();
+
+	CHARFORMAT fmt;
+	fmt.cbSize = sizeof fmt;
+	fmt.dwMask = 0;
+	fmt.dwEffects = 0;
+
+	while (new_text.size() >= 3 && wcschr(L"_*/", new_text[0])
+		&& new_text[0] == new_text[new_text.size()-1]) {
+
+		wchar_t ch = new_text[0];
+		stripped_chars += ch;
+
+		new_text.erase(0, 1);
+		new_text.erase(new_text.size()-1);
+
+		if (ch == '*') {
+			fmt.dwMask |= CFM_BOLD;
+			fmt.dwEffects |= CFE_BOLD;
+		} else if (ch == '/') {
+			fmt.dwMask |= CFM_ITALIC;
+			fmt.dwEffects |= CFE_ITALIC;
+		} else if (ch == '_') {
+			fmt.dwMask |= CFM_UNDERLINE;
+			fmt.dwEffects |= CFE_UNDERLINE;
+		}
+	}
+
+	SendMessage(REdit, EM_SETSEL, npos+osize-stripped_chars.size(), npos+osize);
+	SendMessage(REdit, EM_REPLACESEL, FALSE, (LPARAM) empty);
+	SendMessage(REdit, EM_SETSEL, npos, npos+stripped_chars.size());
+	SendMessage(REdit, EM_REPLACESEL, FALSE, (LPARAM) empty);
+
+	unsigned p, pos = 0;
+
+    while ((p = new_text.find_first_of(stripped_chars)) != new_text.npos) {
+		new_text[p] = ' ';
+		wchar_t str[] = L" ";
+		SendMessage(REdit, EM_SETSEL, npos+p, npos+p+1);
+		SendMessage(REdit, EM_REPLACESEL, FALSE, (LPARAM) str);
+	}
+
+	SendMessage(REdit, EM_SETSEL, npos, npos + new_text.size());
+	SendMessage(REdit, EM_SETCHARFORMAT, SCF_SELECTION, (LPARAM) &fmt);
+
+	return new_text.size();
+}
+
+extern "C" int FormatText(HWND REdit, unsigned npos, unsigned maxlength)
+{
+	GETTEXTLENGTHEX gtl;
+    GETTEXTEX gtx = {0};
+    gtl.codepage = 1200;
+    gtl.flags = GTL_DEFAULT | GTL_PRECISE | GTL_NUMCHARS;
+	int textlen = SendMessage(REdit, EM_GETTEXTLENGTHEX, (WPARAM) &gtl, 0);
+	//if (textlen > (int)maxlength)
+	//	textlen = (int)maxlength;
+	int nleft = textlen-npos;
+	if (nleft <= 0) // _should_ never happen
+		return -1;
+	std::vector<wchar_t> buf(nleft+1);
+	TEXTRANGE tr;
+	tr.lpstrText = &buf[0];
+	tr.chrg.cpMin = npos;
+	tr.chrg.cpMax = textlen + 1;
+
+    gtx.cb = (nleft + 1) * sizeof(wchar_t);
+    gtx.codepage = 1200;
+    gtx.flags = 2;
+    gtx.lpDefaultChar = 0;
+    gtx.lpUsedDefChar = 0;
+
+    SendMessageW(REdit, EM_EXSETSEL, 0, (LPARAM)&tr.chrg);
+    SendMessageW(REdit, EM_GETTEXTEX, (WPARAM)&gtx, (LPARAM)&buf[0]);
+    
+    //SendMessageW(REdit, EM_GETTEXTRANGE, 0, (LPARAM) &tr);
+
+	std::wstring old_text(buf.begin(), buf.end()-1);
+
+	const wchar_t * const pre_chars = L" \t\n\r\"'!?;:,.-=()[]{}@$%&#\\<>|+^~";
+	const wchar_t * const post_chars = pre_chars;
+#define invalidating_chars L"\01 \r\n\t"
+
+	unsigned p, opos = 0;
+	while ((p = old_text.find_first_of(L"/_*", opos)) != old_text.npos) {
+
+		std::wstring t_(old_text.c_str(), p);
+		const wchar_t *what = t_.c_str();
+        bool space_seen = false, sep_seen = false;
+        unsigned searchoffs = p, epos;
+        wchar_t searchfor[] = invalidating_chars;
+
+		wchar_t sep = old_text[p];
+
+		// can't start in the last two chars
+		if (p >= old_text.size()-2)
+			break;
+
+		// check preceeding char
+		if (p != 0 && !(wcschr(pre_chars, old_text[p-1]) || !_istprint(old_text[p-1])))
+			goto miss;
+
+		// search for end
+		searchfor[0] = sep;
+//		int countdown = 50;
+		for (;; searchoffs = epos) {
+//			if (!--countdown)
+//				goto miss;
+
+			epos = old_text.find_first_of(searchfor, searchoffs+1);
+			if (epos == old_text.npos)
+				goto miss;
+
+			wchar_t found = old_text[epos];
+
+			if (found == sep || found == ' ') {
+				if (epos == old_text.size()-1) // end of stream
+					goto ok;
+				wchar_t next = old_text[epos+1];
+				if (found == sep && (wcschr(post_chars, next) || _istprint(next))) // single word or end of sequence
+					goto ok;
+
+				if (found == sep) {
+//					countdown = 10;
+					sep_seen = true;
+					if (space_seen)
+						goto miss;
+					continue;
+				} else if (found == ' ') {
+					space_seen = true;
+					if (sep_seen)
+						goto miss;
+					continue;
+				} else
+					goto miss;
+			} else
+				goto miss;
+		}
+
+	ok: {
+		std::wstring oldsub(old_text, p, epos-p+1);
+
+		unsigned first = oldsub.find_first_not_of(L"_*/");
+		if (first == oldsub.npos || oldsub[first] == '\0')
+			goto miss;
+		unsigned last = oldsub.find_last_not_of(L"_*/");
+		if (last == oldsub.npos || oldsub[last] == '\0')
+			goto miss;
+
+		if (oldsub.find(L"**") != oldsub.npos)
+			goto miss;
+		if (oldsub.find(L"__") != oldsub.npos)
+			goto miss;
+		if (oldsub.find(L"//") != oldsub.npos)
+			goto miss;
+		unsigned skipped = p - opos;
+
+		//if (g_ignores.count(oldsub))
+		//	goto miss;
+
+		npos += skipped;
+		unsigned newlen;
+		if (p == 0)
+			newlen = FormatSpan(REdit, oldsub, npos, ' ');
+		else
+			newlen = FormatSpan(REdit, oldsub, npos, old_text[p-1]);
+
+		npos += newlen;
+		opos += skipped + oldsub.size();
+		continue;
+		}
+	miss: {
+		unsigned skipped = p - opos;
+		npos += skipped+1;
+		opos += skipped+1;
+		}
+	}
+
+	npos += old_text.size() - opos;
+
+	return npos;
+}
+
+#endif          // if defined(OLD_FORMATTING)
+
+static WCHAR *formatting_strings_begin[] = { L"%b1 ", L"%i1 ", L"%u1 " };
+static WCHAR *formatting_strings_end[] = { L"%b0 ", L"%i0 ", L"%u0 " };
+
 /*
  * this translates formatting tags into rtf sequences...
- * flags: loword = words only for simple  * /_ formatting
- *        hiword = bbcode support (strip bbcodes if 0)
+ * if bWordsOnly is != 0, then only formatting tags 
  */
 
-extern "C" const WCHAR *FilterEventMarkers(WCHAR *wszText)
+extern "C" const WCHAR *FormatRaw(const WCHAR *msg, int bWordsOnly)
 {
-    std::wstring text(wszText);
-    unsigned int beginmark = 0, endmark = 0;
-
-    while(TRUE) {
-        if((beginmark = text.find(_T("~-+"))) != text.npos) {
-            endmark = text.find(_T("+-~"), beginmark);
-            if(endmark != text.npos && (endmark - beginmark) > 5) {
-                text.erase(beginmark, (endmark - beginmark) + 3);
-                continue;
-            }
-            else
-                break;
-        }
-        else
-            break;
-    }
-    lstrcpyW(wszText, text.c_str());
-    return wszText;
-}
-extern "C" const WCHAR *FormatRaw(DWORD dwFlags, const WCHAR *msg, int flags, const char *szProto, HANDLE hContact, BOOL *clr_added)
-{
-    bool clr_was_added = false, was_added;
     static std::wstring message(msg);
-    unsigned beginmark = 0, endmark = 0, tempmark = 0, index;
-    int i, endindex;
+    unsigned beginmark = 0, endmark = 0, index;
     WCHAR endmarker;
     message.assign(msg);
- #ifdef __MATHMOD_SUPPORT
-    if(myGlobals.m_MathModAvail && message.find(myGlobals.m_MathModStartDelimiter) != message.npos)
-        return(message.c_str());
- #endif
 
-    if(HIWORD(flags) == 0)
-        goto nobbcode;
-
-    if(iHaveSmileyadd == -1)
-        iHaveSmileyadd = MY_ServiceExists(MS_SMILEYADD_BATCHPARSE);
-
-    if(iHaveMathMod == -1) {
-        iHaveMathMod = MY_ServiceExists(MATH_RTF_REPLACE_FORMULAE);
-        if(iHaveMathMod) {
-            char *szDelim = (char *)MY_CallService(MATH_GET_STARTDELIMITER, 0, 0);
-            if(szDelim) {
-                MultiByteToWideChar(CP_ACP, 0, szDelim, -1, tszMathDelimiter, safe_sizeof(tszMathDelimiter));
-                tszMathDelimiter[99] = 0;
-                MY_CallService(MTH_FREE_MATH_BUFFER, 0, (LPARAM)szDelim);
-            }
-        }
-    }
-    if(iHaveMathMod) {
-        unsigned mark = 0;
-        int      nrDelims = 0;
-        while((mark = message.find(tszMathDelimiter, mark)) != message.npos) {
-            nrDelims++;
-            mark += lstrlen(tszMathDelimiter);
-        }
-        if(nrDelims > 0 && (nrDelims % 2) != 0)
-            message.append(tszMathDelimiter);
-    }
-    beginmark = 0;
-    while(TRUE) {
-        for(i = 0; i < NR_CODES; i++) {
-            if((tempmark = message.find(w_bbcodes_begin[i], 0)) != message.npos)
-                break;
-        }
-        if(i >= NR_CODES)
-            break;
-        beginmark = tempmark;
-        endindex = i;
-        endmark = message.find(w_bbcodes_end[i], beginmark);
-        if(endindex == 4) {                                  // color
-            size_t closing = message.find_first_of(L"]", beginmark);
-            was_added = false;
-
-            if(closing == message.npos) {                       // must be an invalid [color=] tag w/o closing bracket
-                message[beginmark] = ' ';
-                continue;
-            }
-            else {
-                std::wstring colorname = message.substr(beginmark + 7, 8);
-search_again:
-                bool  clr_found = false;
-                unsigned int ii = 0;
-                wchar_t szTemp[5];
-                for(ii = 0; ii < g_ctable_size; ii++) {
-                    if(!_wcsnicmp((wchar_t *)colorname.c_str(), rtf_ctable[ii].szName, lstrlen(rtf_ctable[ii].szName))) {
-                        closing = beginmark + 7 + wcslen(rtf_ctable[ii].szName);
-                        if(endmark != message.npos) {
-                            message.erase(endmark, 4);
-                            message.replace(endmark, 4, L"c0 ");
-                        }
-                        message.erase(beginmark, (closing - beginmark));
-                        message.insert(beginmark, L"cxxx ");
-                        _snwprintf(szTemp, 4, L"%02d", MSGDLGFONTCOUNT + 10 + ii);
-                        message[beginmark + 3] = szTemp[0];
-                        message[beginmark + 4] = szTemp[1];
-                        clr_found = true;
-                        if(was_added) {
-                            wchar_t wszTemp[100];
-                            _snwprintf(wszTemp, 100, L"##col##%06u:%04u", endmark - closing, ii);
-                            wszTemp[99] = 0;
-                            message.insert(beginmark, wszTemp);
-                        }
-                        break;
-                    }
-                }
-                if(!clr_found) {
-                    size_t  c_closing = colorname.find_first_of(L"]", 0);
-                    if(c_closing == colorname.npos)
-                        c_closing = colorname.length();
-                    const wchar_t *wszColname = colorname.c_str();
-                    if(endmark != message.npos && c_closing > 2 && c_closing <= 6 && iswalnum(colorname[0]) && iswalnum(colorname[c_closing -1])) {
-                        RTF_ColorAdd(wszColname, c_closing);
-                        if(!was_added) {
-                            clr_was_added = was_added = true;
-                            goto search_again;
-                        }
-                        else
-                            goto invalid_code;
-                    }
-                    else {
-invalid_code:
-                        if(endmark != message.npos)
-                            message.erase(endmark, 8);
-                        if(closing != message.npos && closing < endmark)
-                            message.erase(beginmark, (closing - beginmark) + 1);
-                        else
-                            message[beginmark] = ' ';
-                    }
-                }
-                continue;
-            }
-        }
-        if(endmark != message.npos)
-            message.replace(endmark, 4, formatting_strings_end[i]);
-        message.insert(beginmark, L" ");
-        message.replace(beginmark, 4, formatting_strings_begin[i]);
-    }
-nobbcode:
     if(message.find(L"://") != message.npos)
-       goto nosimpletags;
-
-    if(!(dwFlags & MWF_LOG_TEXTFORMAT))
-        goto nosimpletags;
-
+       return(message.c_str());
+    
     while((beginmark = message.find_first_of(L"*/_", beginmark)) != message.npos) {
         endmarker = message[beginmark];
-        if(LOWORD(flags)) {
+        if(bWordsOnly) {
             if(beginmark > 0 && !iswspace(message[beginmark - 1]) && !iswpunct(message[beginmark - 1])) {
                 beginmark++;
                 continue;
@@ -241,7 +291,7 @@ nobbcode:
             if((endmark = message.find(endmarker, beginmark + 1)) == message.npos)
                 break;
         }
-ok:
+ok:        
         if((endmark - beginmark) < 2) {
             beginmark++;
             continue;
@@ -258,188 +308,227 @@ ok:
                 index = 2;
                 break;
         }
-
-        /*
-         * check if the code enclosed by simple formatting tags is a valid smiley code and skip formatting if 
-         * it really is one.
-         */
-
-        if(iHaveSmileyadd && endmark > beginmark + 1) {
-            std::wstring smcode;
-            smcode.assign(message, beginmark, (endmark - beginmark) + 1);
-            SMADD_BATCHPARSE2 smbp = {0};
-            SMADD_BATCHPARSERES *smbpr;
-
-            smbp.cbSize = sizeof(smbp);
-            smbp.Protocolname = szProto;
-            smbp.flag = SAFL_TCHAR | SAFL_PATH;
-            smbp.str = (TCHAR *)smcode.c_str();
-            smbp.hContact = hContact;
-            smbpr = (SMADD_BATCHPARSERES *)MY_CallService(MS_SMILEYADD_BATCHPARSE, 0, (LPARAM)&smbp);
-            if(smbpr) {
-                MY_CallService(MS_SMILEYADD_BATCHFREE, 0, (LPARAM)smbpr);
-                beginmark = endmark + 1;
-                continue;
-            }
-        }
         message.insert(endmark, L"%%%");
         message.replace(endmark, 4, formatting_strings_end[index]);
         message.insert(beginmark, L"%%%");
         message.replace(beginmark, 4, formatting_strings_begin[index]);
     }
-nosimpletags:
-    if(clr_added && clr_was_added)
-        *clr_added = TRUE;
+    //MessageBoxW(0, message.c_str(), L"foo", MB_OK);
     return(message.c_str());
 }
 
-#else   // unicode
+#else
 
-/* this is the ansi version */
-static char *bbcodes_begin[] = { "[b]", "[i]", "[u]", "[s]", "[color=" };
-static char *bbcodes_end[] = { "[/b]", "[/i]", "[/u]", "[/s]", "[/color]" };
+// ansi version
 
-#define NR_CODES 5
+#if defined(OLD_FORMATTING)
 
-static char *formatting_strings_begin[] = { "b1 ", "i1 ", "u1 ", "s1 ", "c1 " };
-static char *formatting_strings_end[] = { "b0 ", "i0 ", "u0 ", "s0 ", "c0 " };
+unsigned FormatSpan(HWND REdit, const std::string &text, unsigned npos, char prech)
+{
+	char empty[] = "";
+
+	// skip escaped section, remove the backslash
+	if (prech == '\\') {
+		SendMessage(REdit, EM_SETSEL, npos-1, npos);
+		SendMessage(REdit, EM_REPLACESEL, FALSE, (LPARAM) empty);
+		return text.size() - 1;
+	}
+
+	std::string new_text = text, stripped_chars;
+	unsigned osize = text.size();
+
+	CHARFORMAT fmt;
+	fmt.cbSize = sizeof fmt;
+	fmt.dwMask = 0;
+	fmt.dwEffects = 0;
+
+	while (new_text.size() >= 3 && strchr("_*/", new_text[0])
+		&& new_text[0] == new_text[new_text.size()-1]) {
+
+		char ch = new_text[0];
+		stripped_chars += ch;
+
+		new_text.erase(0, 1);
+		new_text.erase(new_text.size()-1);
+
+		if (ch == '*') {
+			fmt.dwMask |= CFM_BOLD;
+			fmt.dwEffects |= CFE_BOLD;
+		} else if (ch == '/') {
+			fmt.dwMask |= CFM_ITALIC;
+			fmt.dwEffects |= CFE_ITALIC;
+		} else if (ch == '_') {
+			fmt.dwMask |= CFM_UNDERLINE;
+			fmt.dwEffects |= CFE_UNDERLINE;
+		}
+	}
+
+	SendMessage(REdit, EM_SETSEL, npos+osize-stripped_chars.size(), npos+osize);
+	SendMessage(REdit, EM_REPLACESEL, FALSE, (LPARAM) empty);
+	SendMessage(REdit, EM_SETSEL, npos, npos+stripped_chars.size());
+	SendMessage(REdit, EM_REPLACESEL, FALSE, (LPARAM) empty);
+
+	unsigned p, pos = 0;
+	while ((p = new_text.find_first_of(stripped_chars)) != new_text.npos) {
+		new_text[p] = ' ';
+		char str[] = " ";
+		SendMessage(REdit, EM_SETSEL, npos+p, npos+p+1);
+		SendMessage(REdit, EM_REPLACESEL, FALSE, (LPARAM) str);
+	}
+
+	SendMessage(REdit, EM_SETSEL, npos, npos + new_text.size());
+	SendMessage(REdit, EM_SETCHARFORMAT, SCF_SELECTION, (LPARAM) &fmt);
+
+	return new_text.size();
+}
+
+extern "C" int FormatText(HWND REdit, unsigned npos, unsigned maxlength)
+{
+	GETTEXTLENGTHEX gtl;
+	gtl.codepage = CP_ACP;
+	gtl.flags = GTL_DEFAULT | GTL_PRECISE | GTL_NUMCHARS;
+	int textlen = SendMessage(REdit, EM_GETTEXTLENGTHEX, (WPARAM) &gtl, 0);
+//	if (textlen > maxlength)
+//		textlen = maxlength;
+	int nleft = textlen-npos;
+	if (nleft <= 0) // _should_ never happen
+		return -1;
+	std::vector<char> buf(nleft+1);
+	TEXTRANGE tr;
+	tr.lpstrText = &buf[0];
+	tr.chrg.cpMin = npos;
+	tr.chrg.cpMax = textlen;
+
+	SendMessage(REdit, EM_GETTEXTRANGE, 0, (LPARAM) &tr);
+
+	std::string old_text(buf.begin(), buf.end()-1);
+
+	const char * const pre_chars = " \t\n\r\"'!?;:,.-=()[]{}@$%&#\\<>|+^~";
+	const char * const post_chars = pre_chars;
+#define invalidating_chars "\01 \r\n\t"
+
+	unsigned p, opos = 0;
+	while ((p = old_text.find_first_of("/_*", opos)) != old_text.npos) {
+
+		std::string t_(old_text.c_str(), p);
+		const char *what = t_.c_str();
+
+		char sep = old_text[p];
+
+		// can't start in the last two chars
+		if (p >= old_text.size()-2)
+			break;
+
+		// check preceeding char
+		if (p != 0 && !(strchr(pre_chars, old_text[p-1]) || !isprint(old_text[p-1])))
+			goto miss;
+
+		// search for end
+		char searchfor[] = invalidating_chars;
+		searchfor[0] = sep;
+		unsigned searchoffs = p, epos;
+//		int countdown = 50;
+		bool space_seen = false, sep_seen = false;
+		for (;; searchoffs = epos) {
+//			if (!--countdown)
+//				goto miss;
+
+			epos = old_text.find_first_of(searchfor, searchoffs+1);
+			if (epos == old_text.npos)
+				goto miss;
+
+			char found = old_text[epos];
+
+			if (found == sep || found == ' ') {
+				if (epos == old_text.size()-1) // end of stream
+					goto ok;
+				char next = old_text[epos+1];
+				if (found == sep && strchr(post_chars, next)) // single word or end of sequence
+					goto ok;
+
+				if (found == sep) {
+//					countdown = 10;
+					sep_seen = true;
+					if (space_seen)
+						goto miss;
+					continue;
+				} else if (found == ' ') {
+					space_seen = true;
+					if (sep_seen)
+						goto miss;
+					continue;
+				} else
+					goto miss;
+			} else
+				goto miss;
+		}
+
+	ok: {
+		std::string oldsub(old_text, p, epos-p+1);
+
+		unsigned first = oldsub.find_first_not_of("_*/");
+		if (first == oldsub.npos || oldsub[first] == ' ')
+			goto miss;
+		unsigned last = oldsub.find_last_not_of("_*/");
+		if (last == oldsub.npos || oldsub[last] == ' ')
+			goto miss;
+
+		if (oldsub.find("**") != oldsub.npos)
+			goto miss;
+		if (oldsub.find("__") != oldsub.npos)
+			goto miss;
+		if (oldsub.find("//") != oldsub.npos)
+			goto miss;
+		unsigned skipped = p - opos;
+
+		//if (g_ignores.count(oldsub))
+		//	goto miss;
+
+		npos += skipped;
+		unsigned newlen;
+		if (p == 0)
+			newlen = FormatSpan(REdit, oldsub, npos, ' ');
+		else
+			newlen = FormatSpan(REdit, oldsub, npos, old_text[p-1]);
+
+		npos += newlen;
+		opos += skipped + oldsub.size();
+		continue;
+		}
+	miss: {
+		unsigned skipped = p - opos;
+		npos += skipped+1;
+		opos += skipped+1;
+		}
+	}
+
+	npos += old_text.size() - opos;
+
+	return npos;
+}
+
+#endif // OLD_FORMATTING
+
+static char *formatting_strings_begin[] = { "%b1 ", "%i1 ", "%u1 " };
+static char *formatting_strings_end[] = { "%b0 ", "%i0 ", "%u0 " };
 
 /*
  * this translates formatting tags into rtf sequences...
  */
 
-extern "C" const char *FormatRaw(DWORD dwFlags, const char *msg, int flags, const char *szProto, HANDLE hContact, BOOL *clr_added)
+extern "C" const char *FormatRaw(const char *msg, int bWordsOnly)
 {
-    bool clr_was_added = false, was_added;
     static std::string message(msg);
-    unsigned beginmark = 0, endmark = 0, tempmark = 0, index;
+    unsigned beginmark = 0, endmark = 0, index;
     char endmarker;
-    int i, endindex;
     message.assign(msg);
 
-#ifdef __MATHMOD_SUPPORT
-    if(myGlobals.m_MathModAvail && message.find(myGlobals.m_MathModStartDelimiter) != message.npos)
-        return(message.c_str());
-#endif
-
-    if(HIWORD(flags) == 0)
-        goto nobbcode;
-
-    if(iHaveSmileyadd == -1)
-        iHaveSmileyadd = MY_ServiceExists(MS_SMILEYADD_BATCHPARSE);
-
-    if(iHaveMathMod == -1) {
-        iHaveMathMod = MY_ServiceExists(MATH_RTF_REPLACE_FORMULAE);
-        if(iHaveMathMod) {
-            char *szDelim = (char *)MY_CallService(MATH_GET_STARTDELIMITER, 0, 0);
-            if(szDelim) {
-                strncpy(tszMathDelimiter, szDelim, sizeof(tszMathDelimiter));
-                tszMathDelimiter[sizeof(tszMathDelimiter) - 1] = 0;
-                MY_CallService(MTH_FREE_MATH_BUFFER, 0, (LPARAM)szDelim);
-            }
-        }
-    }
-    if(iHaveMathMod) {
-        unsigned mark = 0;
-        int      nrDelims = 0;
-        while((mark = message.find(tszMathDelimiter, mark)) != message.npos) {
-            nrDelims++;
-            mark += lstrlen(tszMathDelimiter);
-        }
-        if(nrDelims > 0 && (nrDelims % 2) != 0)
-            message.append(tszMathDelimiter);
-    }
-
-    while(TRUE) {
-        for(i = 0; i < NR_CODES; i++) {
-            if((tempmark = message.find(bbcodes_begin[i], 0)) != message.npos)
-                break;
-        }
-        if(i >= NR_CODES)
-            break;
-
-        beginmark = tempmark;
-        endindex = i;
-        endmark = message.find(bbcodes_end[i], beginmark);
-        if(endindex == 4) {                                  // color
-            size_t closing = message.find_first_of("]", beginmark);
-            was_added = false;
-
-            if(closing == message.npos) {                       // must be an invalid [color=] tag w/o closing bracket
-                message[beginmark] = ' ';
-                continue;
-            }
-            else {
-                std::string colorname = message.substr(beginmark + 7, 8);
-search_again:
-                bool  clr_found = false;
-                unsigned int ii = 0;
-                char szTemp[5];
-                for(ii = 0; ii < g_ctable_size; ii++) {
-                    if(!_strnicmp((char *)colorname.c_str(), rtf_ctable[ii].szName, lstrlenA(rtf_ctable[ii].szName))) {
-                        closing = beginmark + 7 + lstrlenA(rtf_ctable[ii].szName);
-                        if(endmark != message.npos) {
-                            message.erase(endmark, 8);
-                            message.insert(endmark, "c0xx ");
-                        }
-                        message.erase(beginmark, (closing - beginmark) + 1);
-                        message.insert(beginmark, "cxxx ");
-                        _snprintf(szTemp, 4, "%02d", MSGDLGFONTCOUNT + 10 + ii);
-                        message[beginmark + 3] = szTemp[0];
-                        message[beginmark + 4] = szTemp[1];
-                        clr_found = true;
-                        if(was_added) {
-                            char wszTemp[100];
-                            _snprintf(wszTemp, 100, "##col##%06u:%04u", endmark - closing, ii);
-                            wszTemp[99] = 0;
-                            message.insert(beginmark, wszTemp);
-                        }
-                        break;
-                    }
-                }
-                if(!clr_found) {
-                    size_t  c_closing = colorname.find_first_of("]", 0);
-                    if(c_closing == colorname.npos)
-                        c_closing = colorname.length();
-                    const char *wszColname = colorname.c_str();
-                    if(endmark != message.npos && c_closing > 2 && c_closing <= 6 && isalnum(colorname[0]) && isalnum(colorname[c_closing -1])) {
-                        RTF_ColorAdd(wszColname, c_closing);
-                        if(!was_added) {
-                            clr_was_added = was_added = true;
-                            goto search_again;
-                        }
-                        else
-                            goto invalid_code;
-                    }
-                    else {
-invalid_code:
-                        if(endmark != message.npos)
-                            message.erase(endmark, 8);
-                        if(closing != message.npos && closing < endmark)
-                            message.erase(beginmark, (closing - beginmark) + 1);
-                        else
-                            message[beginmark] = ' ';
-                    }
-                }
-                continue;
-            }
-        }
-        if(endmark != message.npos)
-            message.replace(endmark, 4, formatting_strings_end[i]);
-        message.insert(beginmark, " ");
-        message.replace(beginmark, 4, formatting_strings_begin[i]);
-    }
-
-nobbcode:
     if(message.find("://") != message.npos)
-       goto nosimpletags;
-
-    if(!(dwFlags & MWF_LOG_TEXTFORMAT))            // skip */_ stuff if not enabled
-        goto nosimpletags;
+       return(message.c_str());
 
     while((beginmark = message.find_first_of("*/_", beginmark)) != message.npos) {
         endmarker = message[beginmark];
-        if(LOWORD(flags)) {
+        if(bWordsOnly) {
             if(beginmark > 0 && !isspace(message[beginmark - 1]) && !ispunct(message[beginmark - 1])) {
                 beginmark++;
                 continue;
@@ -457,7 +546,7 @@ nobbcode:
             if((endmark = message.find(endmarker, beginmark + 1)) == message.npos)
                 break;
         }
-ok:
+ok:        
         if((endmark - beginmark) < 2) {
             beginmark++;
             continue;
@@ -474,294 +563,13 @@ ok:
                 index = 2;
                 break;
         }
-        if(iHaveSmileyadd && endmark > beginmark + 1) {
-            std::string smcode;
-            smcode.assign(message, beginmark, (endmark - beginmark) + 1);
-            SMADD_BATCHPARSE2 smbp = {0};
-            SMADD_BATCHPARSERES *smbpr;
-
-            smbp.cbSize = sizeof(smbp);
-            smbp.Protocolname = szProto;
-            smbp.flag = SAFL_TCHAR | SAFL_PATH;
-            smbp.str = (TCHAR *)smcode.c_str();
-            smbp.hContact = hContact;
-            smbpr = (SMADD_BATCHPARSERES *)MY_CallService(MS_SMILEYADD_BATCHPARSE, 0, (LPARAM)&smbp);
-            if(smbpr) {
-                MY_CallService(MS_SMILEYADD_BATCHFREE, 0, (LPARAM)smbpr);
-                beginmark = endmark + 1;
-                continue;
-            }
-        }
         message.insert(endmark, "%%%");
         message.replace(endmark, 4, formatting_strings_end[index]);
         message.insert(beginmark, "%%%");
         message.replace(beginmark, 4, formatting_strings_begin[index]);
     }
-nosimpletags:
-    if(clr_added && clr_was_added)
-        *clr_added = TRUE;
     return(message.c_str());
 }
 
 #endif
-
-// formatting the titlebar
-// free() the return value
-//
-
-#if defined(_UNICODE) || defined(UNICODE)
-
-static TCHAR *title_variables[] = { _T("%n"), _T("%s"), _T("%u"), _T("%p"), _T("%c"), _T("%x"), _T("%m")};
-#define NR_VARS 7
-
-extern "C" int MY_DBGetContactSettingTString(HANDLE hContact, char *szModule, char *szSetting, DBVARIANT *dbv);
-extern "C" int MY_DBFreeVariant(DBVARIANT *dbv);
-
-extern "C" WCHAR *NewTitle(HANDLE hContact, const TCHAR *szFormat, const TCHAR *szNickname, const char *szStatus, const TCHAR *szContainer, const char *szUin, const char *szProto, DWORD idle, UINT codePage, BYTE xStatus, WORD wStatus)
-{
-    TCHAR *szResult = 0;
-    int length = 0;
-    int i, tempmark = 0;
-    TCHAR szTemp[512];
-
-    std::wstring title(szFormat);
-
-    while(TRUE) {
-        for(i = 0; i < NR_VARS; i++) {
-            if((tempmark = title.find(title_variables[i], 0)) != title.npos)
-                break;
-        }
-        if(i >= NR_VARS)
-            break;
-
-        switch(title[tempmark + 1]) {
-            case 'n': {
-                if(szNickname)
-                    title.insert(tempmark + 2, szNickname);
-                title.erase(tempmark, 2);
-                break;
-            }
-            case 's': {
-				if(szStatus && szStatus[0]) {
-                    MultiByteToWideChar(m_LangPackCP, 0, szStatus, -1, szTemp, 500);
-                    title.insert(tempmark + 2, szTemp);
-                }
-                title.erase(tempmark, 2);
-                break;
-            }
-            case 'u': {
-                if(szUin) {
-                    MultiByteToWideChar(CP_ACP, 0, szUin, -1, szTemp, 500);
-                    title.insert(tempmark + 2, szTemp);
-                }
-                title.erase(tempmark, 2);
-                break;
-            }
-            case 'c': {
-                title.insert(tempmark + 2, szContainer);
-                title.erase(tempmark, 2);
-                break;
-            }
-            case 'p': {
-                if(szProto) {
-                    MultiByteToWideChar(CP_ACP, 0, szProto, -1, szTemp, 500);
-                    title.insert(tempmark + 2, szTemp);
-                }
-                title.erase(tempmark, 2);
-                break;
-            }
-            case 'x': {
-                char *szFinalStatus = NULL;
-
-                if(wStatus != ID_STATUS_OFFLINE && xStatus > 0 && xStatus <= 31) {
-                    DBVARIANT dbv = {0};
-
-                    if(!MY_DBGetContactSettingTString(hContact, (char *)szProto, "XStatusName", &dbv)) {
-                        _tcsncpy(szTemp, dbv.ptszVal, 500);
-                        szTemp[500] = 0;
-                        MY_DBFreeVariant(&dbv);
-                    }
-                    else
-                        szFinalStatus = (char *)xStatusDescr[xStatus - 1];
-                    if(szFinalStatus)
-                        MultiByteToWideChar(m_LangPackCP, 0, szFinalStatus, -1, szTemp, 500);
-
-                    title.insert(tempmark + 2, szTemp);
-                }
-                title.erase(tempmark, 2);
-                break;
-            }
-            case 'm': {
-                char *szFinalStatus = NULL;
-
-                if(wStatus != ID_STATUS_OFFLINE && xStatus > 0 && xStatus <= 31) {
-                    DBVARIANT dbv = {0};
-
-                    if(!MY_DBGetContactSettingTString(hContact, (char *)szProto, "XStatusName", &dbv)) {
-                        _tcsncpy(szTemp, dbv.ptszVal, 500);
-                        szTemp[500] = 0;
-                        MY_DBFreeVariant(&dbv);
-                    }
-                    else
-                        szFinalStatus = (char *)xStatusDescr[xStatus - 1];
-                }
-                else
-					szFinalStatus = (char *)(szStatus && szStatus[0] ? szStatus : "(undef)");
-
-                if(szFinalStatus)
-                    MultiByteToWideChar(m_LangPackCP, 0, szFinalStatus, -1, szTemp, 500);
-
-                title.insert(tempmark + 2, szTemp);
-                title.erase(tempmark, 2);
-                break;
-            }
-            default:
-                title.erase(tempmark, 1);
-                break;
-        }
-    }
-    length = title.length();
-
-    szResult = (TCHAR *)malloc((length + 2) * sizeof(TCHAR));
-    if(szResult) {
-        _tcsncpy(szResult, title.c_str(), length);
-        szResult[length] = 0;
-    }
-    return szResult;
-}
-
-
-extern "C" const WCHAR *EncodeWithNickname(const char *string, const WCHAR *szNick, UINT codePage)
-{
-    static std::wstring msg;
-    wchar_t stringW[256];
-    int mark = 0;
-
-    MultiByteToWideChar(codePage, 0, string, -1, stringW, 256);
-    stringW[255] = 0;
-    msg.assign(stringW);
-    if((mark = msg.find(L"%nick%")) != msg.npos) {
-        msg.erase(mark, 6);
-        msg.insert(mark, szNick, lstrlenW(szNick));
-    }
-    return msg.c_str();
-}
-
-#else
-
-static TCHAR *title_variables[] = { _T("%n"), _T("%s"), _T("%u"), _T("%p"), _T("%c"), _T("%x"), _T("%m")};
-#define NR_VARS 7
-
-extern "C" char *NewTitle(HANDLE hContact, const TCHAR *szFormat, const TCHAR *szNickname, const char *szStatus, const TCHAR *szContainer, const char *szUin, const char *szProto, DWORD idle, UINT codePage, BYTE xStatus, WORD wStatus)
-{
-    TCHAR *szResult = 0;
-    int length = 0;
-    int i, tempmark = 0;
-
-    std::string title(szFormat);
-
-    while(TRUE) {
-        for(i = 0; i < NR_VARS; i++) {
-            if((tempmark = title.find(title_variables[i], 0)) != title.npos)
-                break;
-        }
-        if(i >= NR_VARS)
-            break;
-
-        switch(title[tempmark + 1]) {
-            case 'n': {
-                if(szNickname)
-                    title.insert(tempmark + 2, szNickname);
-                title.erase(tempmark, 2);
-                break;
-            }
-            case 's': {
-				if(szStatus && szStatus[0])
-                    title.insert(tempmark + 2, szStatus);
-                title.erase(tempmark, 2);
-                break;
-            }
-            case 'u': {
-                if(szUin)
-                    title.insert(tempmark + 2, szUin);
-                title.erase(tempmark, 2);
-                break;
-            }
-            case 'c': {
-                title.insert(tempmark + 2, szContainer);
-                title.erase(tempmark, 2);
-                break;
-            }
-            case 'p': {
-                if(szProto)
-                    title.insert(tempmark + 2, szProto);
-                title.erase(tempmark, 2);
-                break;
-            }
-            case 'x': {
-                if(wStatus != ID_STATUS_OFFLINE && xStatus > 0 && xStatus <= 31)
-                    title.insert(tempmark + 2, xStatusDescr[xStatus - 1]);
-                title.erase(tempmark, 2);
-                break;
-            }
-            case 'm': {
-                char *szFinalStatus = NULL;
-                TCHAR *result = NULL;
-
-                if(wStatus != ID_STATUS_OFFLINE && xStatus > 0 && xStatus <= 32) {
-                    if((result = MY_DBGetContactSettingString(hContact, (char *)szProto, "XStatusName")) != NULL) {
-                        szFinalStatus = result;
-                    }
-                    else
-						szFinalStatus = (char *)(szStatus && szStatus[0] ? szStatus : "(undef)");
-                }
-                else
-                    szFinalStatus = (char *)(szStatus && szStatus[0] ? szStatus : "(undef)");
-
-                title.insert(tempmark + 2, szFinalStatus);
-                title.erase(tempmark, 2);
-
-                if(result)
-                    free(result);
-                break;
-            }
-            default:
-                title.erase(tempmark, 1);
-                break;
-        }
-    }
-    length = title.length();
-
-    szResult = (TCHAR *)malloc((title.length() + 2) * sizeof(TCHAR));
-    if(szResult) {
-        _tcsncpy(szResult, title.c_str(), length);
-        szResult[length] = 0;
-    }
-    return szResult;
-}
-
-#endif
-
-extern "C" const char *FilterEventMarkersA(char *szText)
-{
-    std::string text(szText);
-    unsigned int beginmark = 0, endmark = 0;
-
-    while(TRUE) {
-        if((beginmark = text.find("~-+")) != text.npos) {
-            endmark = text.find("+-~", beginmark);
-            if(endmark != text.npos && (endmark - beginmark) > 5) {
-                text.erase(beginmark, (endmark - beginmark) + 3);
-                continue;
-            }
-            else
-                break;
-        }
-        else
-            break;
-    }
-    lstrcpyA(szText, text.c_str());
-    return szText;
-}
-
 

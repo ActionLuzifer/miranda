@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
-#include "commonheaders.h"
+#include "../../core/commonheaders.h"
 
 BOOL CALLBACK AddContactDlgProc(HWND hdlg,UINT msg,WPARAM wparam,LPARAM lparam)
 {
@@ -26,10 +26,11 @@ BOOL CALLBACK AddContactDlgProc(HWND hdlg,UINT msg,WPARAM wparam,LPARAM lparam)
 	{
 		case WM_INITDIALOG:
 			{
-				char idstr[4],szUin[10];
+				char szTitle[128],idstr[4],szUin[10];
 				DBVARIANT dbv;
 				int groupId;
 				DWORD flags=0;
+				char *szName;
 				
 				acs=(ADDCONTACTSTRUCT *)lparam;
 				SetWindowLong(hdlg,GWL_USERDATA,(LONG)acs);
@@ -46,43 +47,32 @@ BOOL CALLBACK AddContactDlgProc(HWND hdlg,UINT msg,WPARAM wparam,LPARAM lparam)
 					dbei.cbBlob=sizeof(DWORD);
 					dbei.pBlob=(PBYTE)&dwUin;
 					CallService(MS_DB_EVENT_GET,(WPARAM)acs->handle,(LPARAM)&dbei);
-					_ltoa(dwUin,szUin,10);
+					ltoa(dwUin,szUin,10);
 					acs->szProto = dbei.szModule;
 				}
-				{	TCHAR* szName;
-					if ( acs->handleType == HANDLE_CONTACT )
-						szName = (TCHAR*)CallService( MS_CLIST_GETCONTACTDISPLAYNAME,(WPARAM)acs->handle, GCDNF_TCHAR );
-					else {
-						char* p = (acs->handleType == HANDLE_EVENT) ? szUin : acs->psr->nick;
-						#if defined( _UNICODE )
-							szName =( TCHAR* )alloca( 128*sizeof( TCHAR ));
-							MultiByteToWideChar( CP_ACP, 0, p, -1, szName, 128 );
-						#else
-							szName = p;
-						#endif
-					}
-               
-					if ( lstrlen( szName )) {
-						TCHAR  szTitle[128];
-						mir_sntprintf( szTitle, SIZEOF(szTitle), TranslateT("Add %s"), szName );
-						SetWindowText( hdlg, szTitle );
-					}
-					else SetWindowText( hdlg, TranslateT("Add Contact"));
-				}
 				
-				if ( acs->handleType == HANDLE_CONTACT && acs->handle ) {
+				szName=acs->handleType==HANDLE_CONTACT?(char *)CallService(MS_CLIST_GETCONTACTDISPLAYNAME,(WPARAM)acs->handle,0):(acs->handleType==HANDLE_EVENT?szUin:acs->psr->nick);
+				if (szName && strlen(szName)) {
+					_snprintf(szTitle,128,Translate("Add %s"),szName);
+				}
+				else {
+					_snprintf(szTitle,128,Translate("Add Contact"),szName);
+				}
+				SetWindowText(hdlg,szTitle);
+				
+				if ( acs->handleType==HANDLE_CONTACT && acs->handle ) {
 					if ( acs->szProto == NULL || (acs->szProto != NULL && strcmp(acs->szProto,"") == 0) ) 
 						acs->szProto = (char*)CallService(MS_PROTO_GETCONTACTBASEPROTO,(WPARAM)acs->handle,0);
 				}
 
 				for(groupId=0;groupId<999;groupId++)
 				{
-					_itoa(groupId,idstr,10);
-					if(DBGetContactSettingTString(NULL,"CListGroups",idstr,&dbv)) break;
-					SendDlgItemMessage(hdlg,IDC_GROUP,CB_ADDSTRING,0,(LPARAM)(dbv.ptszVal+1));
-					DBFreeVariant(&dbv);
+					itoa(groupId,idstr,10);
+					if(DBGetContactSetting(NULL,"CListGroups",idstr,&dbv)) break;
+					SendDlgItemMessage(hdlg,IDC_GROUP,CB_ADDSTRING,0,(LPARAM)(dbv.pszVal+1));
 				}
-				SendDlgItemMessage(hdlg,IDC_GROUP,CB_INSERTSTRING,0,(LPARAM)TranslateT("None"));
+				DBFreeVariant(&dbv);
+				SendDlgItemMessage(hdlg,IDC_GROUP,CB_INSERTSTRING,0,(LPARAM)Translate("None"));
 				SendDlgItemMessage(hdlg,IDC_GROUP,CB_SETCURSEL,0,0);
 				/* acs->szProto may be NULL don't expect it */
 				if (acs->szProto) flags=CallProtoService(acs->szProto,PS_GETCAPS,PFLAGNUM_4,0);
@@ -99,7 +89,7 @@ BOOL CALLBACK AddContactDlgProc(HWND hdlg,UINT msg,WPARAM wparam,LPARAM lparam)
 					EnableWindow(GetDlgItem(hdlg,IDC_AUTHREQ),FALSE);
 					EnableWindow(GetDlgItem(hdlg,IDC_AUTHGB),FALSE);
 				}
-				SetDlgItemText(hdlg,IDC_AUTHREQ,TranslateT("Please authorize my request and add me to your contact list."));
+				SetDlgItemText(hdlg,IDC_AUTHREQ,Translate("Please authorize my request and add me to your contact list."));
 				EnableWindow(GetDlgItem(hdlg,IDC_AUTHREQ),IsDlgButtonChecked(hdlg,IDC_AUTH));
 				EnableWindow(GetDlgItem(hdlg,IDC_AUTHGB),IsDlgButtonChecked(hdlg,IDC_AUTH));
 			}
@@ -128,6 +118,8 @@ BOOL CALLBACK AddContactDlgProc(HWND hdlg,UINT msg,WPARAM wparam,LPARAM lparam)
 				case IDOK:
 					{
 						HANDLE hcontact=INVALID_HANDLE_VALUE;
+						char szHandle[256];
+						
 						if(acs->handleType==HANDLE_EVENT)
 						{
 							DBEVENTINFO dbei;
@@ -145,15 +137,6 @@ BOOL CALLBACK AddContactDlgProc(HWND hdlg,UINT msg,WPARAM wparam,LPARAM lparam)
 						
 						if ( hcontact == NULL ) break;
 
-						{	TCHAR szHandle[256];
-							if ( GetDlgItemText( hdlg, IDC_MYHANDLE, szHandle, SIZEOF(szHandle)))
-								DBWriteContactSettingTString( hcontact, "CList", "MyHandle", szHandle );
-
-							GetDlgItemText( hdlg, IDC_GROUP, szHandle, SIZEOF(szHandle));
-							if ( lstrcmp( szHandle, TranslateT( "None" )))
-								DBWriteContactSettingTString( hcontact, "CList", "Group", szHandle );
-						}
-
 						if(IsDlgButtonChecked(hdlg,IDC_ADDED)) CallContactService(hcontact,PSS_ADDED,0,0);
 						if(IsDlgButtonChecked(hdlg,IDC_AUTH)) {
 							DWORD flags;
@@ -162,10 +145,18 @@ BOOL CALLBACK AddContactDlgProc(HWND hdlg,UINT msg,WPARAM wparam,LPARAM lparam)
 							else {
 								char szReason[256];
 
-								GetDlgItemTextA(hdlg,IDC_AUTHREQ,szReason,256);
+								GetDlgItemText(hdlg,IDC_AUTHREQ,szReason,256);
 								CallContactService(hcontact,PSS_AUTHREQUEST,0,(LPARAM)szReason);
-						}	}
+							}
+						}
 						
+						if(GetDlgItemText(hdlg,IDC_MYHANDLE,szHandle,128))
+							DBWriteContactSettingString(hcontact,"CList","MyHandle",szHandle);
+
+						GetDlgItemText(hdlg,IDC_GROUP,szHandle,256);
+						if(lstrcmp(szHandle,Translate("None")))
+							DBWriteContactSettingString(hcontact,"CList","Group",szHandle);
+
 						DBDeleteContactSetting(hcontact,"CList","NotOnList");
 					}
 					// fall through
@@ -186,13 +177,13 @@ BOOL CALLBACK AddContactDlgProc(HWND hdlg,UINT msg,WPARAM wparam,LPARAM lparam)
 			acs=(ADDCONTACTSTRUCT *)GetWindowLong(hdlg,GWL_USERDATA);
 			if (acs) {
 				if (acs->psr) {
-					if (acs->psr->nick) mir_free(acs->psr->nick);
-					if (acs->psr->firstName) mir_free(acs->psr->firstName);
-					if (acs->psr->lastName) mir_free(acs->psr->lastName);
-					if (acs->psr->email) mir_free(acs->psr->email);
-					mir_free(acs->psr);
+					if (acs->psr->nick) free(acs->psr->nick);
+					if (acs->psr->firstName) free(acs->psr->firstName);
+					if (acs->psr->lastName) free(acs->psr->lastName);
+					if (acs->psr->email) free(acs->psr->email);
+					free(acs->psr);
 				}
-				mir_free(acs);
+				free(acs);
 			}
 			break;
 	}
@@ -204,17 +195,17 @@ int AddContactDialog(WPARAM wParam,LPARAM lParam)
 {
 	ADDCONTACTSTRUCT *acs;
 	if (lParam) {	
-		acs=mir_alloc(sizeof(ADDCONTACTSTRUCT));
+		acs=malloc(sizeof(ADDCONTACTSTRUCT));
 		memmove(acs,(ADDCONTACTSTRUCT*)lParam,sizeof(ADDCONTACTSTRUCT));
 		if (acs->psr) {
 			PROTOSEARCHRESULT *psr;
 			/* bad! structures that are bigger than psr will cause crashes if they define pointers within unreachable structural space */
-			psr=mir_alloc(acs->psr->cbSize);
+			psr=malloc(acs->psr->cbSize);
 			memmove(psr,acs->psr,acs->psr->cbSize);
-			if (psr->nick) psr->nick=mir_strdup(psr->nick);
-			if (psr->firstName) psr->firstName=mir_strdup(psr->firstName);
-			if (psr->lastName) psr->lastName=mir_strdup(psr->lastName);
-			if (psr->email) psr->email=mir_strdup(psr->email);
+			if (psr->nick) psr->nick=_strdup(psr->nick);
+			if (psr->firstName) psr->firstName=_strdup(psr->firstName);
+			if (psr->lastName) psr->lastName=_strdup(psr->lastName);
+			if (psr->email) psr->email=_strdup(psr->email);
 			acs->psr=psr;
 			/* copied the passed acs structure, the psr structure with, the pointers within that  */
 		} //if
@@ -233,3 +224,8 @@ int LoadAddContactModule(void)
 	CreateServiceFunction(MS_ADDCONTACT_SHOW,AddContactDialog);
 	return 0;
 }
+
+					
+
+
+
