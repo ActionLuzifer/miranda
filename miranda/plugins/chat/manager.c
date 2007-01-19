@@ -759,10 +759,6 @@ BOOL SM_RemoveAll (void)
 		mir_free( m_WndList->ptszName );
 		mir_free( m_WndList->ptszStatusbarText );
 		mir_free( m_WndList->ptszTopic );
-		#if defined( _UNICODE )
-			mir_free( m_WndList->pszID );
-			mir_free( m_WndList->pszName );
-		#endif
 
 		while (m_WndList->lpCommands != NULL) {
 			COMMAND_INFO *pNext = m_WndList->lpCommands->next;
@@ -968,7 +964,7 @@ void MM_IconsChanged(void)
 {
 	MODULEINFO *pTemp = m_ModList, *pLast = NULL;
 	ImageList_ReplaceIcon(hIconsList, 0, LoadSkinnedIcon(SKINICON_EVENT_MESSAGE));
-	ImageList_ReplaceIcon(hIconsList, 1, LoadIconEx( "overlay" ));
+	ImageList_ReplaceIcon(hIconsList, 1, LoadIconEx(IDI_OVERLAY, "overlay", 0, 0));
 	while (pTemp != NULL)
 	{
 		pTemp->OnlineIconIndex = ImageList_ReplaceIcon(hIconsList, pTemp->OnlineIconIndex, LoadSkinnedProtoIcon(pTemp->pszModule, ID_STATUS_ONLINE));

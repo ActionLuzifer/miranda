@@ -315,7 +315,7 @@ int utf8_encode(const char *from, char **to)
 
 char *ansi_to_utf8(const char *szAnsi)
 {
-  char *szUtf = NULL;
+  char *szUtf;
 
   if (strlennull(szAnsi))
   {

@@ -33,7 +33,6 @@
 	
 
 .\jabber_agent.cpp : \
-	".\jabber.h"\
 	".\jabber_byte.h"\
 	".\jabber_iq.h"\
 	".\jabber_list.h"\
@@ -41,7 +40,6 @@
 	
 
 .\jabber_bitmap.cpp : \
-	".\jabber.h"\
 	".\jabber_byte.h"\
 	".\jabber_list.h"\
 	".\jabber_xml.h"\
@@ -49,7 +47,6 @@
 	
 
 .\jabber_byte.cpp : \
-	".\jabber.h"\
 	".\jabber_byte.h"\
 	".\jabber_iq.h"\
 	".\jabber_list.h"\
@@ -57,7 +54,6 @@
 	
 
 .\jabber_chat.cpp : \
-	".\jabber.h"\
 	".\jabber_byte.h"\
 	".\jabber_iq.h"\
 	".\jabber_list.h"\
@@ -65,21 +61,18 @@
 	
 
 .\jabber_file.cpp : \
-	".\jabber.h"\
 	".\jabber_byte.h"\
 	".\jabber_list.h"\
 	".\jabber_xml.h"\
 	
 
 .\jabber_form.cpp : \
-	".\jabber.h"\
 	".\jabber_byte.h"\
 	".\jabber_list.h"\
 	".\jabber_xml.h"\
 	
 
 .\jabber_ft.cpp : \
-	".\jabber.h"\
 	".\jabber_byte.h"\
 	".\jabber_iq.h"\
 	".\jabber_list.h"\
@@ -87,7 +80,6 @@
 	
 
 .\jabber_groupchat.cpp : \
-	".\jabber.h"\
 	".\jabber_byte.h"\
 	".\jabber_iq.h"\
 	".\jabber_list.h"\
@@ -95,7 +87,6 @@
 	
 
 .\jabber_icolib.cpp : \
-	".\jabber.h"\
 	".\jabber_byte.h"\
 	".\jabber_list.h"\
 	".\jabber_xml.h"\
@@ -103,7 +94,6 @@
 	
 
 .\jabber_iq.cpp : \
-	".\jabber.h"\
 	".\jabber_byte.h"\
 	".\jabber_iq.h"\
 	".\jabber_list.h"\
@@ -112,7 +102,6 @@
 	
 
 .\jabber_iqid.cpp : \
-	".\jabber.h"\
 	".\jabber_byte.h"\
 	".\jabber_iq.h"\
 	".\jabber_list.h"\
@@ -121,7 +110,6 @@
 	
 
 .\jabber_iqid_muc.cpp : \
-	".\jabber.h"\
 	".\jabber_byte.h"\
 	".\jabber_iq.h"\
 	".\jabber_list.h"\
@@ -129,42 +117,36 @@
 	
 
 .\jabber_libstr.cpp : \
-	".\jabber.h"\
 	".\jabber_byte.h"\
 	".\jabber_list.h"\
 	".\jabber_xml.h"\
 	
 
 .\jabber_list.cpp : \
-	".\jabber.h"\
 	".\jabber_byte.h"\
 	".\jabber_list.h"\
 	".\jabber_xml.h"\
 	
 
 .\jabber_menu.cpp : \
-	".\jabber.h"\
 	".\jabber_byte.h"\
 	".\jabber_list.h"\
 	".\jabber_xml.h"\
 	
 
 .\jabber_misc.cpp : \
-	".\jabber.h"\
 	".\jabber_byte.h"\
 	".\jabber_list.h"\
 	".\jabber_xml.h"\
 	
 
 .\jabber_opt.cpp : \
-	".\jabber.h"\
 	".\jabber_byte.h"\
 	".\jabber_list.h"\
 	".\jabber_xml.h"\
 	
 
 .\jabber_password.cpp : \
-	".\jabber.h"\
 	".\jabber_byte.h"\
 	".\jabber_iq.h"\
 	".\jabber_list.h"\
@@ -172,101 +154,12 @@
 	
 
 .\jabber_proxy.cpp : \
-	".\jabber.h"\
 	".\jabber_byte.h"\
 	".\jabber_list.h"\
 	".\jabber_xml.h"\
 	
 
 .\jabber_secur.cpp : \
-	".\jabber.h"\
-	".\jabber_byte.h"\
-	".\jabber_list.h"\
-	".\jabber_secur.h"\
-	".\jabber_xml.h"\
-	
-
-.\jabber_ssl.cpp : \
-	".\jabber.h"\
-	".\jabber_byte.h"\
-	".\jabber_list.h"\
-	".\jabber_ssl.h"\
-	".\jabber_xml.h"\
-	
-
-.\jabber_std.cpp : \
-	".\jabber.h"\
-	".\jabber_byte.h"\
-	".\jabber_list.h"\
-	".\jabber_xml.h"\
-	
-
-.\jabber_svc.cpp : \
-	".\jabber.h"\
-	".\jabber_byte.h"\
-	".\jabber_iq.h"\
-	".\jabber_list.h"\
-	".\jabber_xml.h"\
-	
-
-.\jabber_thread.cpp : \
-	".\jabber.h"\
-	".\jabber_byte.h"\
-	".\jabber_iq.h"\
-	".\jabber_list.h"\
-	".\jabber_secur.h"\
-	".\jabber_ssl.h"\
-	".\jabber_xml.h"\
-	".\version.h"\
-	
-
-.\jabber_userinfo.cpp : \
-	".\jabber.h"\
-	".\jabber_byte.h"\
-	".\jabber_list.h"\
-	".\jabber_xml.h"\
-	".\sha1.h"\
-	
-
-.\jabber_util.cpp : \
-	".\jabber.h"\
-	".\jabber_byte.h"\
-	".\jabber_list.h"\
-	".\jabber_ssl.h"\
-	".\jabber_xml.h"\
-	".\sha1.h"\
-	
-
-.\jabber_vcard.cpp : \
-	".\jabber.h"\
-	".\jabber_byte.h"\
-	".\jabber_iq.h"\
-	".\jabber_list.h"\
-	".\jabber_xml.h"\
-	
-
-.\jabber_ws.cpp : \
-	".\jabber.h"\
-	".\jabber_byte.h"\
-	".\jabber_list.h"\
-	".\jabber_xml.h"\
-	
-
-.\jabber_xml.cpp : \
-	".\jabber.h"\
-	".\jabber_byte.h"\
-	".\jabber_list.h"\
-	".\jabber_xml.h"\
-	
-
-.\jabber_xmlns.cpp : \
-	".\jabber.h"\
-	".\jabber_byte.h"\
-	".\jabber_list.h"\
-	".\jabber_xml.h"\
-	
-
-.\md5c.cpp : \
 	"..\..\include\m_chat.h"\
 	"..\..\include\m_clist.h"\
 	"..\..\include\m_clui.h"\
@@ -291,8 +184,77 @@
 	".\jabber.h"\
 	".\jabber_byte.h"\
 	".\jabber_list.h"\
+	".\jabber_secur.h"\
 	".\jabber_xml.h"\
-	".\md5.h"\
+	
+
+.\jabber_ssl.cpp : \
+	".\jabber_byte.h"\
+	".\jabber_list.h"\
+	".\jabber_ssl.h"\
+	".\jabber_xml.h"\
+	
+
+.\jabber_std.cpp : \
+	".\jabber_byte.h"\
+	".\jabber_list.h"\
+	".\jabber_xml.h"\
+	
+
+.\jabber_svc.cpp : \
+	".\jabber_byte.h"\
+	".\jabber_iq.h"\
+	".\jabber_list.h"\
+	".\jabber_xml.h"\
+	
+
+.\jabber_thread.cpp : \
+	".\jabber_byte.h"\
+	".\jabber_iq.h"\
+	".\jabber_list.h"\
+	".\jabber_ssl.h"\
+	".\jabber_xml.h"\
+	".\version.h"\
+	
+
+.\jabber_userinfo.cpp : \
+	".\jabber_byte.h"\
+	".\jabber_list.h"\
+	".\jabber_xml.h"\
+	".\sha1.h"\
+	
+
+.\jabber_util.cpp : \
+	".\jabber_byte.h"\
+	".\jabber_list.h"\
+	".\jabber_ssl.h"\
+	".\jabber_xml.h"\
+	".\sha1.h"\
+	
+
+.\jabber_vcard.cpp : \
+	".\jabber_byte.h"\
+	".\jabber_iq.h"\
+	".\jabber_list.h"\
+	".\jabber_xml.h"\
+	
+
+.\jabber_ws.cpp : \
+	".\jabber_byte.h"\
+	".\jabber_list.h"\
+	".\jabber_xml.h"\
+	
+
+.\jabber_xml.cpp : \
+	".\jabber_byte.h"\
+	".\jabber_list.h"\
+	".\jabber_xml.h"\
+	
+
+.\jabber_xmlns.cpp : \
+	".\jabber_byte.h"\
+	".\jabber_list.h"\
+	".\jabber_xml.h"\
 	
 
 .\sha1.cpp : \

@@ -5,7 +5,7 @@
 // Copyright © 2000,2001 Richard Hughes, Roland Rabien, Tristan Van de Vreede
 // Copyright © 2001,2002 Jon Keating, Richard Hughes
 // Copyright © 2002,2003,2004 Martin Öberg, Sam Kothari, Robert Rainwater
-// Copyright © 2004,2005,2006 Joe Kucera
+// Copyright © 2004,2005,2006,2007 Joe Kucera
 // 
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -118,8 +118,6 @@ char* MirandaVersionToString(char* szStr, int v, int m)
 
 
 const capstr capMirandaIm = {'M', 'i', 'r', 'a', 'n', 'd', 'a', 'M', 0, 0, 0, 0, 0, 0, 0, 0};
-const capstr capIcqJs7    = {0x69, 0x63, 0x71, 0x6A, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20};
-const capstr capIcqJs7sec = {0x69, 0x63, 0x71, 0x6A, 0x20, 0x53, 0x65, 0x63, 0x75, 0x72, 0x65, 0x20, 0x49, 0x4D, 0x20, 0x20};
 const capstr capAimOscar  = {'M', 'i', 'r', 'a', 'n', 'd', 'a', 'A', 0, 0, 0, 0, 0, 0, 0, 0};
 const capstr capTrillian  = {0x97, 0xb1, 0x27, 0x51, 0x24, 0x3c, 0x43, 0x34, 0xad, 0x22, 0xd6, 0xab, 0xf7, 0x3f, 0x14, 0x09};
 const capstr capTrilCrypt = {0xf2, 0xe7, 0xc7, 0xf4, 0xfe, 0xad, 0x4d, 0xfb, 0xb2, 0x35, 0x36, 0x79, 0x8b, 0xdf, 0x00, 0x00};
@@ -132,18 +130,17 @@ const capstr capAndRQ     = {'&', 'R', 'Q', 'i', 'n', 's', 'i', 'd', 'e', 0, 0, 
 const capstr capRAndQ     = {'R', '&', 'Q', 'i', 'n', 's', 'i', 'd', 'e', 0, 0, 0, 0, 0, 0, 0};
 const capstr capmChat     = {'m', 'C', 'h', 'a', 't', ' ', 'i', 'c', 'q', ' ', 0, 0, 0, 0, 0, 0};
 const capstr capJimm      = {'J', 'i', 'm', 'm', ' ', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-const capstr capAnastasia = {0x44, 0xE5, 0xBF, 0xCE, 0xB0, 0x96, 0xE5, 0x47, 0xBD, 0x65, 0xEF, 0xD6, 0xA3, 0x7E, 0x36, 0x02};
 const capstr capQip       = {0x56, 0x3F, 0xC8, 0x09, 0x0B, 0x6F, 0x41, 'Q', 'I', 'P', ' ', '2', '0', '0', '5', 'a'};
-const capstr capQipPDA    = {0x56, 0x3F, 0xC8, 0x09, 0x0B, 0x6F, 0x41, 'Q', 'I', 'P', ' ', ' ', ' ', ' ', ' ', '!'};
-const capstr capQipMobile = {0x56, 0x3F, 0xC8, 0x09, 0x0B, 0x6F, 0x41, 'Q', 'I', 'P', ' ', ' ', ' ', ' ', ' ', '"'};
 const capstr capIm2       = {0x74, 0xED, 0xC3, 0x36, 0x44, 0xDF, 0x48, 0x5B, 0x8B, 0x1C, 0x67, 0x1A, 0x1F, 0x86, 0x09, 0x9F}; // IM2 Ext Msg
 const capstr capMacIcq    = {0xdd, 0x16, 0xf2, 0x02, 0x84, 0xe6, 0x11, 0xd4, 0x90, 0xdb, 0x00, 0x10, 0x4b, 0x9b, 0x4b, 0x7d};
+const capstr capRichText  = {0x97, 0xb1, 0x27, 0x51, 0x24, 0x3c, 0x43, 0x34, 0xad, 0x22, 0xd6, 0xab, 0xf7, 0x3f, 0x14, 0x92};
 const capstr capIs2001    = {0x2e, 0x7a, 0x64, 0x75, 0xfa, 0xdf, 0x4d, 0xc8, 0x88, 0x6f, 0xea, 0x35, 0x95, 0xfd, 0xb6, 0xdf};
 const capstr capIs2002    = {0x10, 0xcf, 0x40, 0xd1, 0x4c, 0x7f, 0x11, 0xd1, 0x82, 0x22, 0x44, 0x45, 0x53, 0x54, 0x00, 0x00};
 const capstr capComm20012 = {0xa0, 0xe9, 0x3f, 0x37, 0x4c, 0x7f, 0x11, 0xd1, 0x82, 0x22, 0x44, 0x45, 0x53, 0x54, 0x00, 0x00};
 const capstr capStrIcq    = {0xa0, 0xe9, 0x3f, 0x37, 0x4f, 0xe9, 0xd3, 0x11, 0xbc, 0xd2, 0x00, 0x04, 0xac, 0x96, 0xdd, 0x96};
 const capstr capAimIcon   = {0x09, 0x46, 0x13, 0x46, 0x4c, 0x7f, 0x11, 0xd1, 0x82, 0x22, 0x44, 0x45, 0x53, 0x54, 0x00, 0x00}; // CAP_AIM_BUDDYICON
 const capstr capAimDirect = {0x09, 0x46, 0x13, 0x45, 0x4c, 0x7f, 0x11, 0xd1, 0x82, 0x22, 0x44, 0x45, 0x53, 0x54, 0x00, 0x00}; // CAP_AIM_DIRECTIM
+const capstr capIsIcq     = {0x09, 0x46, 0x13, 0x44, 0x4c, 0x7f, 0x11, 0xd1, 0x82, 0x22, 0x44, 0x45, 0x53, 0x54, 0x00, 0x00};
 const capstr capIcqLite   = {0x17, 0x8C, 0x2D, 0x9B, 0xDA, 0xA5, 0x45, 0xBB, 0x8D, 0xDB, 0xF3, 0xBD, 0xBD, 0x53, 0xA1, 0x0A};
 const capstr capAimChat   = {0x74, 0x8F, 0x24, 0x20, 0x62, 0x87, 0x11, 0xD1, 0x82, 0x22, 0x44, 0x45, 0x53, 0x54, 0x00, 0x00};
 const capstr capUim       = {0xA7, 0xE4, 0x0A, 0x96, 0xB3, 0xA0, 0x47, 0x9A, 0xB8, 0x45, 0xC9, 0xE4, 0x67, 0xC5, 0x6B, 0x1F};
@@ -151,10 +148,22 @@ const capstr capRambler   = {0x7E, 0x11, 0xB7, 0x78, 0xA3, 0x53, 0x49, 0x26, 0xA
 const capstr capAbv       = {0x00, 0xE7, 0xE0, 0xDF, 0xA9, 0xD0, 0x4F, 0xe1, 0x91, 0x62, 0xC8, 0x90, 0x9A, 0x13, 0x2A, 0x1B};
 const capstr capNetvigator= {0x4C, 0x6B, 0x90, 0xA3, 0x3D, 0x2D, 0x48, 0x0E, 0x89, 0xD6, 0x2E, 0x4B, 0x2C, 0x10, 0xD9, 0x9F};
 const capstr captZers     = {0xb2, 0xec, 0x8f, 0x16, 0x7c, 0x6f, 0x45, 0x1b, 0xbd, 0x79, 0xdc, 0x58, 0x49, 0x78, 0x88, 0xb9}; // CAP_TZERS
-const capstr capHtmlMsgs  = {0x01, 0x38, 0xca, 0x7b, 0x76, 0x9a, 0x49, 0x15, 0x88, 0xf2, 0x13, 0xfc, 0x00, 0x97, 0x9e, 0xa8}; // icq6
 const capstr capSimpLite  = {0x53, 0x49, 0x4D, 0x50, 0x53, 0x49, 0x4D, 0x50, 0x53, 0x49, 0x4D, 0x50, 0x53, 0x49, 0x4D, 0x50};
 const capstr capSimpPro   = {0x53, 0x49, 0x4D, 0x50, 0x5F, 0x50, 0x52, 0x4F, 0x53, 0x49, 0x4D, 0x50, 0x5F, 0x50, 0x52, 0x4F};
 const capstr capIMsecure  = {'I', 'M', 's', 'e', 'c', 'u', 'r', 'e', 'C', 'p', 'h', 'r', 0x00, 0x00, 0x06, 0x01}; // ZoneLabs
+
+
+static BOOL hasRichText, hasRichChecked;
+
+static BOOL hasCapRichText(BYTE* caps, WORD wLen)
+{
+  if (!hasRichChecked) 
+  {
+    hasRichText = MatchCap(caps, wLen, &capRichText, 0x10)?TRUE:FALSE;
+    hasRichChecked = TRUE;
+  }
+  return hasRichText;
+}
 
 
 char* cliLibicq2k  = "libicq2000";
@@ -162,7 +171,7 @@ char* cliLicqVer   = "Licq ";
 char* cliCentericq = "Centericq";
 char* cliLibicqUTF = "libicq2000 (Unicode)";
 char* cliTrillian  = "Trillian";
-char* cliQip       = "QIP %s";
+char* cliQip       = "QIP 200%c%c";
 char* cliIM2       = "IM2";
 char* cliSpamBot   = "Spam Bot";
 
@@ -172,6 +181,7 @@ char* detectUserClient(HANDLE hContact, DWORD dwUin, WORD wVersion, DWORD dwFT1,
   LPSTR szClient = NULL;
 
   *bClientId = 1; // Most clients does not tick as MsgIDs
+  hasRichChecked = FALSE; // init fast rich text detection
 
   // Is this a Miranda IM client?
   if (dwFT1 == 0xffffffff)
@@ -301,16 +311,7 @@ char* detectUserClient(HANDLE hContact, DWORD dwUin, WORD wVersion, DWORD dwFT1,
 
         szClient = MirandaVersionToString(szClientBuf, iver, mver);
 
-        if (MatchCap(caps, wLen, &capIcqJs7, 0x10))
-        { // detect mod
-          strcat(szClient, " (s7 & sss)");
-        }
-        else if (MatchCap(caps, wLen, &capIcqJs7sec, 0x10))
-        {
-          strcat(szClient, " (s7 & sss)");
-          strcat(szClient, " + SecureIM");
-        }
-        else if (dwFT1 == 0xFFFFFFFF && dwFT3 == 0x5AFEC0DE)
+        if (dwFT1 == 0xFFFFFFFF && dwFT3 == 0x5AFEC0DE)
         {
           strcat(szClient, " + SecureIM");
         }
@@ -319,7 +320,7 @@ char* detectUserClient(HANDLE hContact, DWORD dwUin, WORD wVersion, DWORD dwFT1,
       }
       else if (MatchCap(caps, wLen, &capTrillian, 0x10) || MatchCap(caps, wLen, &capTrilCrypt, 0x10))
       { // this is Trillian, check for new version
-        if (CheckContactCapabilities(hContact, CAPF_RTF))
+        if (hasCapRichText(caps, wLen))
           szClient = "Trillian v3";
         else
           szClient = cliTrillian;
@@ -411,32 +412,12 @@ char* detectUserClient(HANDLE hContact, DWORD dwUin, WORD wVersion, DWORD dwFT1,
 
         szClient = szClientBuf;
       }
-      else if (MatchCap(caps, wLen, &capQipPDA, 0x10))
-      {
-        szClient = "QIP PDA (Windows)";
-      }
-      else if (MatchCap(caps, wLen, &capQipMobile, 0x10))
-      {
-        szClient = "QIP Mobile (Java)";
-      }
       else if (capId = MatchCap(caps, wLen, &capQip, 0xE))
       {
-        char ver[10];
+        char v1 = (*capId)[0xE];
+        char v2 = (*capId)[0xF];
 
-        if (dwFT3 == 0x0F)
-          strcpy(ver, "2005");
-        else
-        {
-          strncpy(ver, (*capId)+11, 5);
-          ver[5] = '\0'; // fill in missing zero
-        }
-
-        null_snprintf(szClientBuf, 64, cliQip, ver);
-        if (dwFT1 && dwFT2 == 0x0E)
-        { // add QIP build
-          null_snprintf(ver, 10, " (%d%d%d%d)", dwFT1 >> 0x18, (dwFT1 >> 0x10) & 0xFF, (dwFT1 >> 0x08) & 0xFF, dwFT1 & 0xFF);
-          strcat(szClientBuf, ver);
-        }
+        null_snprintf(szClientBuf, 64, cliQip, v1, v2);
         szClient = szClientBuf;
       }
       else if (capId = MatchCap(caps, wLen, &capmChat, 0xA))
@@ -459,13 +440,9 @@ char* detectUserClient(HANDLE hContact, DWORD dwUin, WORD wVersion, DWORD dwFT1,
       {
         szClient = "uIM";
       }
-      else if (MatchCap(caps, wLen, &capAnastasia, 0x10))
-      { // http://chis.nnov.ru/anastasia
-        szClient = "Anastasia";
-      }
       else if (szClient == cliLibicq2k)
       { // try to determine which client is behind libicq2000
-        if (CheckContactCapabilities(hContact, CAPF_RTF))
+        if (hasCapRichText(caps, wLen))
           szClient = cliCentericq; // centericq added rtf capability to libicq2000
         else if (CheckContactCapabilities(hContact, CAPF_UTF))
           szClient = cliLibicqUTF; // IcyJuice added unicode capability to libicq2000
@@ -478,7 +455,7 @@ char* detectUserClient(HANDLE hContact, DWORD dwUin, WORD wVersion, DWORD dwFT1,
           if (MatchCap(caps, wLen, &capIs2001, 0x10))
           {
             if (!dwFT1 && !dwFT2 && !dwFT3)
-              if (CheckContactCapabilities(hContact, CAPF_RTF))
+              if (hasCapRichText(caps, wLen))
                 szClient = "TICQClient"; // possibly also older GnomeICU
               else
                 szClient = "ICQ for Pocket PC";
@@ -493,7 +470,7 @@ char* detectUserClient(HANDLE hContact, DWORD dwUin, WORD wVersion, DWORD dwFT1,
             *bClientId = 0;
             szClient = "ICQ 2002";
           }
-          else if (CheckContactCapabilities(hContact, CAPF_SRV_RELAY | CAPF_UTF | CAPF_RTF))
+          else if (CheckContactCapabilities(hContact, CAPF_SRV_RELAY | CAPF_UTF) && hasCapRichText(caps, wLen))
           {
             if (!dwFT1 && !dwFT2 && !dwFT3)
             {
@@ -525,14 +502,7 @@ char* detectUserClient(HANDLE hContact, DWORD dwUin, WORD wVersion, DWORD dwFT1,
             {
               if (MatchCap(caps, wLen, &captZers, 0x10))
               { // capable of tZers ?
-                if (MatchCap(caps, wLen, &capHtmlMsgs, 0x10))
-                {
-                  strcpy(szClientBuf, "ICQ 6");
-                }
-                else
-                {
-                  strcpy(szClientBuf, "icq5.1");
-                }
+                strcpy(szClientBuf, "icq5.1");
               }
               else
               {
@@ -552,22 +522,15 @@ char* detectUserClient(HANDLE hContact, DWORD dwUin, WORD wVersion, DWORD dwFT1,
               }
               szClient = szClientBuf;
             }
-            else if (!CheckContactCapabilities(hContact, CAPF_ICQDIRECT))
-              if (CheckContactCapabilities(hContact, CAPF_RTF))
-              { // most probably Qnext - try to make that shit at least receiving our msgs
-                ClearContactCapabilities(hContact, CAPF_SRV_RELAY);
-                NetLog_Server("Forcing simple messages (QNext client).");
-                szClient = "QNext";
-              }
-              else
-                szClient = "pyICQ";
+            else if (!MatchCap(caps, wLen, &capIsIcq, 0x10))
+              szClient = "pyICQ";
             else
               szClient = "ICQ Lite v4";
           }
         }
         else if (wVersion == 7)
         {
-          if (CheckContactCapabilities(hContact, CAPF_RTF))
+          if (hasCapRichText(caps, wLen))
             szClient = "GnomeICU"; // this is an exception
           else if (CheckContactCapabilities(hContact, CAPF_SRV_RELAY))
           {
@@ -586,13 +549,13 @@ char* detectUserClient(HANDLE hContact, DWORD dwUin, WORD wVersion, DWORD dwFT1,
         }
         else if (wVersion == 0xA)
         {
-          if (!CheckContactCapabilities(hContact, CAPF_RTF) && !CheckContactCapabilities(hContact, CAPF_UTF))
+          if (!hasCapRichText(caps, wLen) && !CheckContactCapabilities(hContact, CAPF_UTF))
           { // this is bad, but we must do it - try to detect QNext
             ClearContactCapabilities(hContact, CAPF_SRV_RELAY);
             NetLog_Server("Forcing simple messages (QNext client).");
             szClient = "QNext";
           }
-          else if (!CheckContactCapabilities(hContact, CAPF_RTF) && CheckContactCapabilities(hContact, CAPF_UTF) && !dwFT1 && !dwFT2 && !dwFT3)
+          else if (!hasCapRichText(caps, wLen) && CheckContactCapabilities(hContact, CAPF_UTF) && !dwFT1 && !dwFT2 && !dwFT3)
           { // not really good, but no other option
             szClient = "NanoICQ";
           }
@@ -617,13 +580,13 @@ char* detectUserClient(HANDLE hContact, DWORD dwUin, WORD wVersion, DWORD dwFT1,
               szClient = "libgaim"; // Gaim 1.5.1 most probably
             else if (MatchCap(caps, wLen, &capAimChat, 0x10) && CheckContactCapabilities(hContact, CAPF_AIM_FILE) && wLen == 0x20)
               szClient = "Easy Message";
-            else if (MatchCap(caps, wLen, &capAimIcon, 0x10) && MatchCap(caps, wLen, &capAimChat, 0x10) && CheckContactCapabilities(hContact, CAPF_UTF) && wLen == 0x30)
+            else if (MatchCap(caps, wLen, &capAimIcon, 0x10) && MatchCap(caps, wLen, &capAimChat, 0x10) && CheckContactCapabilities(hContact, CAPF_UTF) && wLen == 0x20)
               szClient = "Meebo";
             else if (MatchCap(caps, wLen, &capAimIcon, 0x10) && CheckContactCapabilities(hContact, CAPF_UTF) && wLen == 0x20)
               szClient = "PyICQ-t Jabber Transport";
             else if (MatchCap(caps, wLen, &capAimIcon, 0x10) && MatchCap(caps, wLen, &capIcqLite, 0x10) && CheckContactCapabilities(hContact, CAPF_UTF | CAPF_XTRAZ))
               szClient = "PyICQ-t Jabber Transport";
-            else if (CheckContactCapabilities(hContact, CAPF_UTF | CAPF_SRV_RELAY | CAPF_ICQDIRECT | CAPF_TYPING) && wLen == 0x40)
+            else if (MatchCap(caps, wLen, &capIsIcq, 0x10) && CheckContactCapabilities(hContact, CAPF_UTF | CAPF_SRV_RELAY | CAPF_TYPING) && wLen == 0x40)
               szClient = "Agile Messenger"; // Smartphone 2002
           }
         }

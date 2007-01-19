@@ -30,53 +30,36 @@ ______________
   Manage server list contacts added contacts should never receive auth requests, but
   if you have an old account they can receive added notification.
 
+- When owner avatar is deleted it is removed from server, but contacts are not 
+  notified immediately. They get notified when they reconnect or when icq is reconnected.
+
 - Some wicked firewall software can cause HTML tags (e.g. <font> </font>) to be added to
   incoming messages.
-
-- With HTTP Proxy Mode in Connection settings, neither Avatars nor File Transfer can work.
-  This is partly a limitation of current Miranda's network module implementation. But
-  File Transfer cannot work with HTTP Proxy, that is a protocol limitation.
-
 
 TO-DO List
 __________
 
-0.3.11
-  Server-list support now groups requests - much more faster & reliable
+0.3.9
+  Manage server-list dialog now groups requests - much faster
   Full support for sub-groups in Manage server-list dialog
-  Simple sub-groups support (optional)
-  Bigger Avatars support (like ICQ 6)
-  
+  Real Level 1 rate management (will solve multi-recipient message problems)
+  AIM file transfers (OFT) - like icq5 (including transfer thru server)
 
 0.5
   Account management (together with Miranda core changes)
   Multi-user chat (Xtraz based)
-  Mid-NetLib module for HTTP gateway (for Avatars to work) [icq_net]
 
 
 
 Changes
 _______
 
-0.3.8 Devel builds
+0.3.7.6
 
 Bugfixes:
-  Fixed peer-to-peer session cookie checking (was working only due to coincidence)
-  Fixed SMS message handling, made message parsing more consistent
-  Applied fix for re-requesting authorization (thx Bio)
-  Fixed handling of message acks & status msg replies from ICQ 6
-  Fixed handling of malformed messages acks
-  Minor protocol related tweaks
-
-New Features:
-  Oscar File Transfers - like icq5 (including: transfer thru server, resume)
-
-Improvements:
-  Client detection improvements
-  Level 1 Rate management (global) - should solve problems with many contacts in list
-  Support for Custom Profile Folders plug-in - configurable avatars cache folder
-
-
+  Some fixes from development version 0.3.8.x
+  
+  
 0.3.7.5
 
 Bugfixes:
@@ -111,7 +94,7 @@ Bugfixes:
   Fixed offline greeting cards were not processed properly
   Fixed small protocol glitch with reverse peer-to-peer connection
 
-
+  
 0.3.7.1
 
 Bugfixes:
@@ -119,7 +102,7 @@ Bugfixes:
   Fixed avatars were not working when server port set to 0
   Made message parser more strict (fixes bug allowing stealth invisible client detection)
   Fixed Popup's unicode support cannot be used in ANSI mode even if available
-  
+
 Improvements:
   Added new session password API - allowing plugins like Secure Login to work better
 
@@ -386,8 +369,6 @@ Database items (usually at Contact\ICQ):
 Database items for Main Contact (usually at Settings\ICQ):
 (BYTE)InfoUpdate - Threshold in DAYS for updating user info (restart is needed) - default is 14 days
 
-(DWORD)KeepAliveInterval - Period in which Keep-Alive packets are send if enabled - default is one minute
-
 (BYTE)PrivacyItems = 1 - adds more privacy tools to contact menu (e.g. Revoke Authorization)
 
 
@@ -402,7 +383,7 @@ Thanks to Angeli-Ka for nice custom status icons.
 License and Copyright
 _____________________
 
-Copyright (C) 2000-2006 Joe Kucera, Martin Öberg, Richard Hughes, Jon Keating
+Copyright (C) 2000-2007 Joe Kucera, Martin Öberg, Richard Hughes, Jon Keating
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License

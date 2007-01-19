@@ -41,54 +41,7 @@ static int SetStatus(WPARAM wParam, LPARAM /*lParam*/)
 { 
 	if (wParam==conn.status)
 		return 0;
-	//ForkThread((pThreadFunc)set_status_thread,(void*)wParam);
-	if(conn.shutting_down)
-		return 0;
-	EnterCriticalSection(&statusMutex);
-	int status = wParam;
-	start_connection(status);
-	if(conn.state==1)
-		switch(status)
-	{
-		case ID_STATUS_OFFLINE:
-			{
-				broadcast_status(ID_STATUS_OFFLINE);
-				break;
-			}
-		case ID_STATUS_ONLINE:
-		case ID_STATUS_FREECHAT:
-			{
-				broadcast_status(ID_STATUS_ONLINE);
-				aim_set_away(conn.hServerConn,conn.seqno,NULL);//unset away message
-				aim_set_invis(conn.hServerConn,conn.seqno,AIM_STATUS_ONLINE,AIM_STATUS_NULL);//online not invis	
-				break;
-			}
-		case ID_STATUS_INVISIBLE:
-			{
-				broadcast_status(status);
-				aim_set_invis(conn.hServerConn,conn.seqno,AIM_STATUS_INVISIBLE,AIM_STATUS_NULL);
-				break;
-			}
-		case ID_STATUS_AWAY:
-		case ID_STATUS_OUTTOLUNCH:
-		case ID_STATUS_NA:
-		case ID_STATUS_DND:
-		case ID_STATUS_OCCUPIED:
-		case ID_STATUS_ONTHEPHONE:
-			{
-				start_connection(ID_STATUS_AWAY);// if not started
-				if(conn.status!=ID_STATUS_AWAY)
-				{
-					assign_modmsg((char*)&DEFAULT_AWAY_MSG);
-					broadcast_status(ID_STATUS_AWAY);
-					aim_set_away(conn.hServerConn,conn.seqno,conn.szModeMsg);//set actual away message
-					aim_set_invis(conn.hServerConn,conn.seqno,AIM_STATUS_AWAY,AIM_STATUS_NULL);//away not invis
-				}
-				//see SetAwayMsg for status away
-				break;
-			}
-	}
-	LeaveCriticalSection(&statusMutex);
+	ForkThread((pThreadFunc)set_status_thread,(void*)wParam);
 	return 0;
 }
 
@@ -219,49 +172,19 @@ static int RecvMsg(WPARAM /*wParam*/, LPARAM lParam)
 {
 	CCSDATA *ccs = ( CCSDATA* )lParam;
 	PROTORECVEVENT *pre = ( PROTORECVEVENT* )ccs->lParam;
+
 	DBEVENTINFO dbei = { 0 };
 	dbei.cbSize = sizeof( dbei );
 	dbei.szModule = AIM_PROTOCOL_NAME;
 	dbei.timestamp = pre->timestamp;
 	dbei.flags = pre->flags&PREF_CREATEREAD?DBEF_READ:0;
 	dbei.eventType = EVENTTYPE_MESSAGE;
-	char* buf = 0;
+	dbei.cbBlob = lstrlen( pre->szMessage ) + 1;
 	if ( pre->flags & PREF_UNICODE )
-	{
-		wchar_t* wbuf=(wchar_t*)&pre->szMessage[lstrlen(pre->szMessage)+1];
-		wchar_t* st_wbuf;
-		if(DBGetContactSettingByte(NULL, AIM_PROTOCOL_NAME, AIM_KEY_FI, 0))
-		{
-			wchar_t* bbuf=html_to_bbcodes(wbuf);
-			st_wbuf=strip_html(bbuf);
-			free(bbuf);
-		}
-		else
-			st_wbuf=strip_html(wbuf);
-		//delete[] pre->szMessage; not necessary - done in server.cpp
-		buf=(char *)malloc(wcslen(st_wbuf)*3+3);
-		WideCharToMultiByte( CP_ACP, 0,st_wbuf, -1,buf,wcslen(st_wbuf)+1, NULL, NULL);
-		memcpy(&buf[strlen(buf)+1],st_wbuf,lstrlen(buf)*2+2);
-		delete[] st_wbuf;
-		dbei.pBlob=(PBYTE)buf;
-		dbei.cbBlob = lstrlen(buf)+1;
-		dbei.cbBlob*=(sizeof(wchar_t)+1);
-	}
-	else
-	{
-		if(DBGetContactSettingByte(NULL, AIM_PROTOCOL_NAME, AIM_KEY_FI, 0))
-		{
-			char* bbuf=html_to_bbcodes(pre->szMessage);
-			buf=strip_html(bbuf);
-			free(bbuf);
-		}
-		else
-			buf=strip_html(pre->szMessage);
-		dbei.pBlob=(PBYTE)buf;
-		dbei.cbBlob = lstrlen(buf)+1;
-	}
+		dbei.cbBlob *= ( sizeof( wchar_t )+1 );
+
+	dbei.pBlob = ( PBYTE ) pre->szMessage;
     CallService(MS_DB_EVENT_ADD, (WPARAM) ccs->hContact, (LPARAM) & dbei);
-	if(buf) free(buf);
     return 0;
 }
 static int GetProfile(WPARAM wParam, LPARAM /*lParam*/)
@@ -680,11 +603,6 @@ static int ManageAccount(WPARAM /*wParam*/, LPARAM /*lParam*/)
 	execute_cmd("http","https://my.screenname.aol.com");
 	return 0;
 }
-static int EditProfile(WPARAM /*wParam*/, LPARAM /*lParam*/)
-{ 
-	DialogBox(conn.hInstance, MAKEINTRESOURCE(IDD_AIM), NULL, userinfo_dialog);
-	return 0;
-}
 int ExtraIconsRebuild(WPARAM /*wParam*/, LPARAM /*lParam*/) 
 {
 	if (ServiceExists(MS_CLIST_EXTRA_ADD_ICON))
@@ -827,19 +745,6 @@ void CreateServices()
     mi.hIcon = LoadIcon(conn.hInstance,MAKEINTRESOURCE( IDI_AIM ));
 	mi.pszContactOwner = AIM_PROTOCOL_NAME;
     mi.pszName = Translate( "Manage Account" );
-    mi.pszService = service_name;
-	CallService(MS_CLIST_ADDMAINMENUITEM, 0, (LPARAM)&mi );
-
-	mir_snprintf(service_name, sizeof(service_name), "%s%s", AIM_PROTOCOL_NAME, "/EditProfile");
-	CreateServiceFunction(service_name,EditProfile);
-	memset( &mi, 0, sizeof( mi ));
-	mi.pszPopupName = AIM_PROTOCOL_NAME;
-    mi.cbSize = sizeof( mi );
-    mi.popupPosition = 500090000;
-	mi.position = 500090000;
-    mi.hIcon = LoadIcon(conn.hInstance,MAKEINTRESOURCE( IDI_AIM ));
-	mi.pszContactOwner = AIM_PROTOCOL_NAME;
-    mi.pszName = Translate( "Edit Profile" );
     mi.pszService = service_name;
 	CallService(MS_CLIST_ADDMAINMENUITEM, 0, (LPARAM)&mi );
 

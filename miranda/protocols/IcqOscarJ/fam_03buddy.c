@@ -37,21 +37,23 @@
 #include "icqoscar.h"
 
 static void handleUserOffline(BYTE* buf, WORD wPackLen);
-static void handleUserOnline(BYTE* buf, WORD wPackLen, serverthread_info* info);
+static void handleUserOnline(BYTE* buf, WORD wPackLen);
 static void handleReplyBuddy(BYTE* buf, WORD wPackLen);
 static void handleNotifyRejected(BYTE* buf, WORD wPackLen);
+
+extern DWORD dwLocalDirectConnCookie;
 
 extern const capstr capAimIcon;
 extern const char* cliSpamBot;
 extern char* detectUserClient(HANDLE hContact, DWORD dwUin, WORD wVersion, DWORD dwFT1, DWORD dwFT2, DWORD dwFT3, DWORD dwOnlineSince, DWORD dwDirectCookie, DWORD dwWebPort, BYTE* caps, WORD wLen, BYTE* bClientId, char* szClientBuf);
 
 
-void handleBuddyFam(unsigned char* pBuffer, WORD wBufferLength, snac_header* pSnacHeader, serverthread_info *info)
+void handleBuddyFam(unsigned char* pBuffer, WORD wBufferLength, snac_header* pSnacHeader)
 {
   switch (pSnacHeader->wSubtype)
   {
   case ICQ_USER_ONLINE:
-    handleUserOnline(pBuffer, wBufferLength, info);
+    handleUserOnline(pBuffer, wBufferLength);
     break;
 
   case ICQ_USER_OFFLINE:
@@ -96,7 +98,7 @@ void handleBuddyFam(unsigned char* pBuffer, WORD wBufferLength, snac_header* pSn
 // TLV(D) Capabilities
 // TLV(F) Session timer (in seconds)
 // TLV(1D) Avatar Hash (20 bytes)
-static void handleUserOnline(BYTE* buf, WORD wLen, serverthread_info* info)
+static void handleUserOnline(BYTE* buf, WORD wLen)
 {
   HANDLE hContact;
   DWORD dwPort = 0;
@@ -382,6 +384,8 @@ static void handleUserOnline(BYTE* buf, WORD wLen, serverthread_info* info)
     ICQWriteContactSettingDword(hContact,  "LogonTS",      dwOnlineSince);
     if (dwUIN)
     { // on AIM these are not used
+      ICQWriteContactSettingDword(hContact, "IP",           dwIP);
+      ICQWriteContactSettingDword(hContact, "RealIP",       dwRealIP);
       ICQWriteContactSettingDword(hContact, "DirectCookie", dwDirectConnCookie);
       ICQWriteContactSettingByte(hContact,  "DCType",       (BYTE)nTCPFlag);
       ICQWriteContactSettingWord(hContact,  "UserPort",     (WORD)(dwPort & 0xffff));
@@ -391,28 +395,17 @@ static void handleUserOnline(BYTE* buf, WORD wLen, serverthread_info* info)
     {
       ICQWriteContactSettingUtf(hContact,   "MirVer",       szClient);
       ICQWriteContactSettingByte(hContact,  "ClientID",     bClientId);
-      ICQWriteContactSettingDword(hContact, "IP",           dwIP);
-      ICQWriteContactSettingDword(hContact, "RealIP",       dwRealIP);
-    }
-    else
-    { // if not first notification only write significant information
-      if (dwIP)
-        ICQWriteContactSettingDword(hContact, "IP",         dwIP);
-      if (dwRealIP)
-        ICQWriteContactSettingDword(hContact, "RealIP",     dwRealIP);
-
     }
     ICQWriteContactSettingWord(hContact,  "Status", (WORD)IcqStatusToMiranda(wStatus));
     ICQWriteContactSettingDword(hContact, "IdleTS", tIdleTS);
 
     // Update info?
-    if (dwUIN)
-    {
-      DWORD dwUpdateThreshold = ICQGetContactSettingByte(NULL, "InfoUpdate", UPDATE_THRESHOLD)*3600*24;
-
-      if ((time(NULL) - ICQGetContactSettingDword(hContact, "InfoTS", 0)) > dwUpdateThreshold)
-        icq_QueueUser(hContact);
-    }
+    if (dwUIN && ((time(NULL) - ICQGetContactSettingDword(hContact, "InfoTS", 0)) > UPDATE_THRESHOLD))
+      icq_QueueUser(hContact);
+  }
+  else
+  {
+    dwLocalDirectConnCookie = dwDirectConnCookie;
   }
 
   // And a small log notice...

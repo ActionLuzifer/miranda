@@ -3,11 +3,10 @@
 	ProjectType="Visual C++"
 	Version="7.10"
 	Name="dbtool"
-	ProjectGUID="{EEDDE5B0-C023-40C2-96A5-1D1F4B11B791}"
-	SccProjectName="&quot;$/Miranda/miranda-tools/dbtool&quot;, DIIAAAAA"
-	SccAuxPath=""
-	SccLocalPath="."
-	SccProvider="MSSCCI:Microsoft Visual SourceSafe">
+	SccProjectName="SAK"
+	SccAuxPath="SAK"
+	SccLocalPath="SAK"
+	SccProvider="SAK">
 	<Platforms>
 		<Platform
 			Name="Win32"/>
@@ -26,10 +25,10 @@
 				Optimization="0"
 				AdditionalIncludeDirectories="../../miranda/include"
 				PreprocessorDefinitions="_DEBUG;WIN32;_WINDOWS;DATABASE_INDEPENDANT"
+				ExceptionHandling="FALSE"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
-				UsePrecompiledHeader="3"
-				PrecompiledHeaderThrough="dbtool.h"
+				UsePrecompiledHeader="2"
 				BrowseInformationFile="$(IntDir)/"
 				WarningLevel="3"
 				SuppressStartupBanner="TRUE"
@@ -92,10 +91,10 @@
 				AdditionalIncludeDirectories="../../miranda/include"
 				PreprocessorDefinitions="NDEBUG;WIN32;_WINDOWS;DATABASE_INDEPENDANT"
 				StringPooling="TRUE"
+				ExceptionHandling="FALSE"
 				RuntimeLibrary="2"
 				EnableFunctionLevelLinking="TRUE"
-				UsePrecompiledHeader="3"
-				PrecompiledHeaderThrough="dbtool.h"
+				UsePrecompiledHeader="2"
 				AssemblerOutput="3"
 				BrowseInformationFile="$(IntDir)/"
 				WarningLevel="3"
@@ -154,17 +153,17 @@
 			ConfigurationType="1"
 			UseOfMFC="0"
 			ATLMinimizesCRunTimeLibraryUsage="FALSE"
-			CharacterSet="1">
+			CharacterSet="2">
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
 				AdditionalIncludeDirectories="../../miranda/include"
 				PreprocessorDefinitions="_DEBUG;WIN32;_WINDOWS;DATABASE_INDEPENDANT"
+				ExceptionHandling="FALSE"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
 				BufferSecurityCheck="TRUE"
-				UsePrecompiledHeader="3"
-				PrecompiledHeaderThrough="dbtool.h"
+				UsePrecompiledHeader="2"
 				BrowseInformationFile="$(IntDir)/"
 				WarningLevel="3"
 				SuppressStartupBanner="TRUE"
@@ -218,7 +217,7 @@
 			ConfigurationType="1"
 			UseOfMFC="0"
 			ATLMinimizesCRunTimeLibraryUsage="FALSE"
-			CharacterSet="1"
+			CharacterSet="2"
 			WholeProgramOptimization="FALSE">
 			<Tool
 				Name="VCCLCompilerTool"
@@ -229,10 +228,10 @@
 				AdditionalIncludeDirectories="../../miranda/include"
 				PreprocessorDefinitions="NDEBUG;WIN32;_WINDOWS;DATABASE_INDEPENDANT"
 				StringPooling="TRUE"
+				ExceptionHandling="FALSE"
 				RuntimeLibrary="2"
 				BufferSecurityCheck="TRUE"
-				UsePrecompiledHeader="3"
-				PrecompiledHeaderThrough="dbtool.h"
+				UsePrecompiledHeader="2"
 				AssemblerOutput="4"
 				BrowseInformationFile="$(IntDir)/"
 				WarningLevel="3"
@@ -328,21 +327,6 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\langpack.cpp">
-				<FileConfiguration
-					Name="Debug|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						ExceptionHandling="TRUE"/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release Unicode|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						Optimization="2"/>
-				</FileConfiguration>
-			</File>
-			<File
 				RelativePath="main.cpp">
 				<FileConfiguration
 					Name="Debug|Win32">
@@ -351,8 +335,7 @@
 						Optimization="0"
 						AdditionalIncludeDirectories=""
 						PreprocessorDefinitions=""
-						BasicRuntimeChecks="3"
-						UsePrecompiledHeader="1"/>
+						BasicRuntimeChecks="3"/>
 				</FileConfiguration>
 				<FileConfiguration
 					Name="Release|Win32">
@@ -360,8 +343,7 @@
 						Name="VCCLCompilerTool"
 						Optimization="2"
 						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions=""
-						UsePrecompiledHeader="1"/>
+						PreprocessorDefinitions=""/>
 				</FileConfiguration>
 				<FileConfiguration
 					Name="Debug Unicode|Win32">
@@ -370,8 +352,7 @@
 						Optimization="0"
 						AdditionalIncludeDirectories=""
 						PreprocessorDefinitions=""
-						BasicRuntimeChecks="3"
-						UsePrecompiledHeader="1"/>
+						BasicRuntimeChecks="3"/>
 				</FileConfiguration>
 				<FileConfiguration
 					Name="Release Unicode|Win32">
@@ -379,8 +360,7 @@
 						Name="VCCLCompilerTool"
 						Optimization="2"
 						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions=""
-						UsePrecompiledHeader="1"/>
+						PreprocessorDefinitions=""/>
 				</FileConfiguration>
 			</File>
 			<File

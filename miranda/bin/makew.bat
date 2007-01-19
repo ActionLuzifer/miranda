@@ -15,7 +15,7 @@ nmake /f miranda32.mak CFG="miranda32 - Win32 Release Unicode"
 if errorlevel 1 goto :Error
 
 cd ..\..\miranda-tools\dbtool
-nmake /f dbtool.mak CFG="dbtool - Win32 Release Unicode"
+nmake /f dbtool.mak CFG="dbtool - Win32 Release"
 if errorlevel 1 goto :Error
 
 rem ---------------------------------------------------------------------------
@@ -62,13 +62,17 @@ cd ..\clist_nicer
 nmake /f clist.mak CFG="clist_nicer - Win32 Release Unicode"
 if errorlevel 1 goto :Error
 
+cd ..\help
+nmake /f help.mak CFG="help - Win32 Release Unicode"
+if errorlevel 1 goto :Error
+
 cd ..\loadavatars
 nmake /f avatars.mak CFG="loadavatars - Win32 Release Unicode"
 if errorlevel 1 goto :Error
 
-cd ..\modernb
-nmake /f modernb.mak CFG="modernb - Win32 Release Unicode"
-if errorlevel 1 goto :Error
+rem cd ..\modernb
+rem nmake /f modernb.mak CFG="modernb - Win32 Release Unicode"
+rem if errorlevel 1 goto :Error
 
 cd ..\mwclist
 nmake /f mwclist.mak CFG="mwclist - Win32 Release Unicode"
@@ -87,6 +91,7 @@ rem Zip it
 rem ---------------------------------------------------------------------------
 
 cd "..\..\bin\Release Unicode"
+copy ..\release\dbtool.exe
 
 copy ..\release\Icons\xstatus_ICQ.dll    Icons
 
@@ -139,7 +144,7 @@ echo             VALUE "CompanyName", " \0"                                     
 echo             VALUE "FileDescription", "Miranda IM\0"                           >>..\src\version.rc
 echo             VALUE "FileVersion", "0.%1.%2 alpha build #%3\0"                  >>..\src\version.rc
 echo             VALUE "InternalName", "miranda32\0"                               >>..\src\version.rc
-echo             VALUE "LegalCopyright", "Copyright © 2000-2007 Miranda IM Project. This software is released under the terms of the GNU General Public License.\0"    >>..\src\version.rc
+echo             VALUE "LegalCopyright", "Copyright c 2000-2006 Miranda IM Project. This software is released under the terms of the GNU General Public License.\0"    >>..\src\version.rc
 echo             VALUE "LegalTrademarks", "\0"                                     >>..\src\version.rc
 echo             VALUE "OriginalFilename", "miranda32.exe\0"                       >>..\src\version.rc
 echo             VALUE "PrivateBuild", "\0"                                        >>..\src\version.rc
@@ -219,13 +224,13 @@ rem  Unicode plugins
 copy ..\..\plugins\chat\Release_Unicode\chat.pdb               %Temp%\pdbw\plugins
 copy ..\..\plugins\clist\Release_Unicode\clist_classic.pdb     %Temp%\pdbw\plugins
 copy ..\..\plugins\clist_nicer\Release_Unicode\clist_nicer.pdb %Temp%\pdbw\plugins
+copy ..\..\plugins\help\Release_Unicode\help.pdb               %Temp%\pdbw\plugins
 copy ..\..\plugins\modernb\Release_Unicode\clist_modern.pdb    %Temp%\pdbw\plugins
 copy ..\..\plugins\mwclist\Release_Unicode\clist_mw.pdb        %Temp%\pdbw\plugins
 copy ..\..\plugins\srmm\Release_Unicode\srmm.pdb               %Temp%\pdbw\plugins
 copy ..\..\plugins\tabSRMM\Release_Unicode\tabSRMM.pdb         %Temp%\pdbw\plugins
 rem  Non-Unicode plugins
 copy ..\..\plugins\db3x\Release\dbx_3x.pdb                     %Temp%\pdbw\plugins
-copy ..\..\plugins\db3x_mmap\Release\dbx_mmap.pdb              %Temp%\pdbw\plugins
 copy ..\..\plugins\import\Release\import.pdb                   %Temp%\pdbw\plugins
 copy ..\..\plugins\png2dib\Release\png2dib.pdb                 %Temp%\pdbw\plugins
 

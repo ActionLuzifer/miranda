@@ -181,9 +181,6 @@ enum JABBER_SESSION_TYPE
 };
 
 struct ThreadData {
-	ThreadData( JABBER_SESSION_TYPE parType );
-	~ThreadData();
-
 	HANDLE hThread;
 	JABBER_SESSION_TYPE type;
 
@@ -414,8 +411,6 @@ void   JabberCheckAllContactsAreTransported( void );
 BOOL   JabberDBCheckIsTransportedContact(const TCHAR* jid, HANDLE hContact);
 int    ReloadIconsEventHook(WPARAM wParam, LPARAM lParam);
 int    JGetAdvancedStatusIcon(WPARAM wParam, LPARAM lParam);
-void   JabberIconsInit( void );
-HICON  LoadIconEx( const char* name );
 
 //---- jabber_libstr.c ----------------------------------------------
 

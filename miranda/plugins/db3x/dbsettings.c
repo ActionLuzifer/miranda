@@ -470,26 +470,6 @@ static int FreeVariant(WPARAM wParam,LPARAM lParam)
 	return 0;
 }
 
-static int SetSettingResident(WPARAM wParam,LPARAM lParam)
-{
-	char*  szSetting;
-	size_t cbSettingNameLen = strlen(( char* )lParam );
-	int    idx;
-	char*  szTemp = ( char* )alloca( cbSettingNameLen+2 );
-	strcpy( szTemp+1, ( char* )lParam );
-
-	EnterCriticalSection(&csDbAccess);
-	if ( !li.List_GetIndex( &lSettings, szTemp, &idx ))
-		szSetting = InsertCachedSetting( szTemp, cbSettingNameLen+2, idx );
-	else
-		szSetting = lSettings.items[ idx ];
-
-   *szSetting = (char)wParam;
-
-	LeaveCriticalSection(&csDbAccess);
-	return 0;
-}
-
 static int WriteContactSetting(WPARAM wParam,LPARAM lParam)
 {
 	DBCONTACTWRITESETTING *dbcws=(DBCONTACTWRITESETTING*)lParam;
@@ -935,7 +915,6 @@ int InitSettings(void)
 	CreateServiceFunction(MS_DB_CONTACT_WRITESETTING,WriteContactSetting);
 	CreateServiceFunction(MS_DB_CONTACT_DELETESETTING,DeleteContactSetting);
 	CreateServiceFunction(MS_DB_CONTACT_ENUMSETTINGS,EnumContactSettings);
-	CreateServiceFunction(MS_DB_SETSETTINGRESIDENT,SetSettingResident);
 	hSettingChangeEvent=CreateHookableEvent(ME_DB_CONTACT_SETTINGCHANGED);
 
 	hCacheHeap=HeapCreate(HEAP_NO_SERIALIZE,0,0);

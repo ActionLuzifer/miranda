@@ -21,8 +21,6 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
-#define NEWSTR_ALLOCA(A) (A==NULL)?NULL:strcpy((char*)alloca(strlen(A)+1),A)
-
 /**** memory.c *************************************************************************/
 
 void*  mir_alloc( size_t );
@@ -52,3 +50,4 @@ char*  LangPackTranslateString(const char *szEnglish, const int W);
 TCHAR*   a2t( const char* str );
 char*    u2a( const wchar_t* src );
 wchar_t* a2u( const char* src );
+
