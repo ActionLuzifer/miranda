@@ -22,7 +22,6 @@
 */
 #include "commonheaders.h"
 #include "clc.h"
-#include "m_icolib.h"
 
 #define TM_AUTOALPHA  1
 #define MENU_MIRANDAMENU         0xFFFF1234
@@ -33,7 +32,6 @@ static HANDLE hContactDraggingEvent, hContactDroppedEvent, hContactDragStopEvent
 static int transparentFocus = 1;
 UINT uMsgProcessProfile;
 
-int  CheckProtocolOrder();
 void LoadCluiServices();
 
 BOOL(WINAPI * MySetLayeredWindowAttributes) (HWND, COLORREF, BYTE, DWORD);
@@ -44,13 +42,10 @@ typedef struct {
 	int showgrip;
 	int transparent;
 	int alpha;
-}
-	CluiOpts;
-
+} CluiOpts;
 static CluiOpts cluiopt = {0};
 
-void fnLoadCluiGlobalOpts()
-{
+void fnLoadCluiGlobalOpts() {
 	cluiopt.showsbar = DBGetContactSettingByte(NULL, "CLUI", "ShowSBar", 1);
 	cluiopt.showgrip = DBGetContactSettingByte(NULL, "CLUI", "ShowGrip", 1);
 	cluiopt.transparent = DBGetContactSettingByte(NULL,"CList","Transparent",SETTING_TRANSPARENT_DEFAULT);
@@ -96,7 +91,7 @@ static void DisconnectAll()
 
 static int CluiIconsChanged(WPARAM wParam, LPARAM lParam)
 {
-	ImageList_ReplaceIcon_IconLibLoaded(himlMirandaIcon, 0, LoadSkinnedIcon(SKINICON_OTHER_MIRANDA));
+	ImageList_ReplaceIcon(himlMirandaIcon, 0, LoadSkinnedIcon(SKINICON_OTHER_MIRANDA));
 	DrawMenuBar(cli.hwndContactList);
 	return 0;
 }
@@ -189,6 +184,7 @@ static BOOL CALLBACK AskForConfirmationDlgProc(HWND hWnd, UINT msg, WPARAM wPara
 	}
 
 	return FALSE;
+
 }
 
 static int MenuItem_DeleteContact(WPARAM wParam, LPARAM lParam)
@@ -296,7 +292,6 @@ int LoadCLUIModule(void)
 	hContactDroppedEvent  = CreateHookableEvent(ME_CLUI_CONTACTDROPPED);
 	hContactDragStopEvent = CreateHookableEvent(ME_CLUI_CONTACTDRAGSTOP);
 	LoadCluiServices();
-	CheckProtocolOrder();
 
 	wndclass.style = CS_HREDRAW | CS_VREDRAW | CS_DBLCLKS | CS_GLOBALCLASS;
 	wndclass.lpfnWndProc = cli.pfnContactListControlWndProc;
@@ -320,7 +315,7 @@ int LoadCLUIModule(void)
 	wndclass.hbrBackground = (HBRUSH) (COLOR_3DFACE + 1);
 	wndclass.lpszMenuName = MAKEINTRESOURCE(IDR_CLISTMENU);
 	wndclass.lpszClassName = _T(MIRANDACLASS);
-	RegisterClass(&wndclass);  
+	RegisterClass(&wndclass);
 
 	if (DBGetContactSettingTString(NULL, "CList", "TitleText", &dbv))
 		lstrcpyn(titleText, _T(MIRANDANAME), SIZEOF( titleText ));
@@ -368,32 +363,29 @@ int LoadCLUIModule(void)
 		CreateServiceFunction("CList/DeleteContactCommand", MenuItem_DeleteContact);
 		mi.position = 2000070000;
 		mi.flags = 0;
-		mi.hIcon = LoadIconEx(cli.hInst, MAKEINTRESOURCE(IDI_DELETE),FALSE);
+		mi.hIcon = LoadIcon(cli.hInst, MAKEINTRESOURCE(IDI_DELETE));
 		mi.pszContactOwner = NULL;      //on every contact
 		mi.pszName = Translate("De&lete");
 		mi.pszService = "CList/DeleteContactCommand";
 		CallService(MS_CLIST_ADDCONTACTMENUITEM, 0, (LPARAM) & mi);
-        Safe_DestroyIcon(mi.hIcon);
 
 		CreateServiceFunction("CList/RenameContactCommand", MenuItem_RenameContact);
 		mi.position = 2000050000;
 		mi.flags = 0;
-		mi.hIcon = LoadIconEx(cli.hInst, MAKEINTRESOURCE(IDI_RENAME),FALSE);
+		mi.hIcon = LoadIcon(cli.hInst, MAKEINTRESOURCE(IDI_RENAME));
 		mi.pszContactOwner = NULL;      //on every contact
 		mi.pszName = Translate("&Rename");
 		mi.pszService = "CList/RenameContactCommand";
 		hRenameMenuItem = (HANDLE) CallService(MS_CLIST_ADDCONTACTMENUITEM, 0, (LPARAM) & mi);
 		HookEvent(ME_CLIST_PREBUILDCONTACTMENU, MenuItem_PreBuild);
-        Safe_DestroyIcon(mi.hIcon);
 
 		CreateServiceFunction("CList/AddToListContactCommand", MenuItem_AddContactToList);
 		mi.position = -2050000000;
 		mi.flags = CMIF_NOTONLIST;
-		mi.hIcon = LoadIconEx(cli.hInst, MAKEINTRESOURCE(IDI_ADDCONTACT),FALSE);
+		mi.hIcon = LoadIcon(cli.hInst, MAKEINTRESOURCE(IDI_ADDCONTACT));
 		mi.pszName = Translate("&Add permanently to list");
 		mi.pszService = "CList/AddToListContactCommand";
 		CallService(MS_CLIST_ADDCONTACTMENUITEM, 0, (LPARAM) & mi);
-        Safe_DestroyIcon(mi.hIcon);
 	}
 	return 0;
 }
@@ -495,7 +487,7 @@ LRESULT CALLBACK fnContactListWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM
 		mii.cbSize = MENUITEMINFO_V4_SIZE;
 		mii.fMask = MIIM_TYPE | MIIM_DATA;
 		himlMirandaIcon = ImageList_Create(g_IconWidth, g_IconHeight, ILC_COLOR32 | ILC_MASK, 1, 1);
-		ImageList_AddIcon_IconLibLoaded(himlMirandaIcon, LoadSkinnedIcon(SKINICON_OTHER_MIRANDA));
+		ImageList_AddIcon(himlMirandaIcon, LoadSkinnedIcon(SKINICON_OTHER_MIRANDA));
 		mii.dwItemData = MENU_MIRANDAMENU;
 		mii.fType = MFT_OWNERDRAW;
 		mii.dwTypeData = NULL;
@@ -982,8 +974,9 @@ LRESULT CALLBACK fnContactListWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM
 				if (showOpts & 2) {
 					char szName[64];
 					szName[0] = 0;
-					if (CallProtoService(szProto, PS_GETNAME, sizeof(szName), (LPARAM) szName))
+					if (CallProtoService(szProto, PS_GETNAME, sizeof(szName), (LPARAM) szName)) {
 						strcpy(szName, szProto);
+					}           //if
 					if (lstrlenA(szName) < SIZEOF(szName) - 1)
 						lstrcatA(szName, " ");
 					GetTextExtentPoint32A(dis->hDC, szName, lstrlenA(szName), &textSize);

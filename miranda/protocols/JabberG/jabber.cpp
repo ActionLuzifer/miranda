@@ -109,17 +109,11 @@ HWND hwndJabberChangePassword = NULL;
 HANDLE heventRawXMLIn;
 HANDLE heventRawXMLOut;
 
-HANDLE hInitChat = NULL;
-
 static int compareTransports( const TCHAR* p1, const TCHAR* p2 )
 {	return _tcsicmp( p1, p2 );
 }
-LIST<TCHAR> jabberTransports( 50, compareTransports );
 
-static int sttCompareHandles( const void* p1, const void* p2 )
-{	return (long)p1 - (long)p2;
-}
-LIST<void> arHooks( 20, sttCompareHandles ); 
+LIST<TCHAR> jabberTransports( 50, compareTransports );
 
 int JabberOptInit( WPARAM wParam, LPARAM lParam );
 int JabberUserInfoInit( WPARAM wParam, LPARAM lParam );
@@ -139,8 +133,8 @@ extern "C" BOOL WINAPI DllMain( HINSTANCE hModule, DWORD dwReason, LPVOID lpvRes
 
 extern "C" __declspec( dllexport ) PLUGININFO *MirandaPluginInfo( DWORD mirandaVersion )
 {
-	if ( mirandaVersion < PLUGIN_MAKE_VERSION( 0,7,0,3 )) {
-		MessageBoxA( NULL, "The Jabber protocol plugin cannot be loaded. It requires Miranda IM 0.7.0.3 or later.", "Jabber Protocol Plugin", MB_OK|MB_ICONWARNING|MB_SETFOREGROUND|MB_TOPMOST );
+	if ( mirandaVersion < PLUGIN_MAKE_VERSION( 0,6,0,0 )) {
+		MessageBoxA( NULL, "The Jabber protocol plugin cannot be loaded. It requires Miranda IM 0.5.2.0 or later.", "Jabber Protocol Plugin", MB_OK|MB_ICONWARNING|MB_SETFOREGROUND|MB_TOPMOST );
 		return NULL;
 	}
 
@@ -192,15 +186,20 @@ int JabberGcEventHook( WPARAM, LPARAM );
 int JabberGcMenuHook( WPARAM, LPARAM );
 int JabberGcInit( WPARAM, LPARAM );
 
-int JabberContactDeleted( WPARAM wParam, LPARAM lParam );
-int JabberDbSettingChanged( WPARAM wParam, LPARAM lParam );
-int JabberMenuPrebuildContactMenu( WPARAM wParam, LPARAM lParam );
-
 static COLORREF crCols[16] = {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15};
+HANDLE hChatEvent = NULL,
+       hChatMenu = NULL,
+		 hReloadIcons = NULL,
+		 hChatMess = NULL,
+		 hInitChat = NULL,
+		 hEvInitChat = NULL,
+		 hEvModulesLoaded = NULL,
+		 hEvOptInit = NULL,
+		 hEvPreShutdown = NULL,
+		 hEvUserInfoInit = NULL;
 
 static int OnModulesLoaded( WPARAM wParam, LPARAM lParam )
 {
-	JabberMenuInit();
 	JabberWsInit();
 	JabberSslInit();
 	HookEvent( ME_USERINFO_INITIALISE, JabberUserInfoInit );
@@ -218,20 +217,17 @@ static int OnModulesLoaded( WPARAM wParam, LPARAM lParam )
 		gcr.pszModule = jabberProtoName;
 		JCallService( MS_GC_REGISTER, NULL, ( LPARAM )&gcr );
 
-		arHooks.insert( HookEvent( ME_GC_EVENT, JabberGcEventHook ));
-		arHooks.insert( HookEvent( ME_GC_BUILDMENU, JabberGcMenuHook ));
+		hChatEvent = HookEvent( ME_GC_EVENT, JabberGcEventHook );
+		hChatMenu = HookEvent( ME_GC_BUILDMENU, JabberGcMenuHook );
+
+		JCreateServiceFunction( JS_GETADVANCEDSTATUSICON, JGetAdvancedStatusIcon );
+		hReloadIcons = HookEvent(ME_SKIN2_ICONSCHANGED,ReloadIconsEventHook);
 
 		char szEvent[ 200 ];
 		mir_snprintf( szEvent, sizeof szEvent, "%s\\ChatInit", jabberProtoName );
 		hInitChat = CreateHookableEvent( szEvent );
-		arHooks.insert( HookEvent( szEvent, JabberGcInit ));
+		hEvInitChat = HookEvent( szEvent, JabberGcInit );
 	}
-
-	JCreateServiceFunction( JS_GETADVANCEDSTATUSICON, JGetAdvancedStatusIcon );
-	arHooks.insert( HookEvent( ME_SKIN2_ICONSCHANGED, ReloadIconsEventHook ));
-	arHooks.insert( HookEvent( ME_DB_CONTACT_SETTINGCHANGED, JabberDbSettingChanged ));
-	arHooks.insert( HookEvent( ME_DB_CONTACT_DELETED, JabberContactDeleted ));
-	arHooks.insert( HookEvent( ME_CLIST_PREBUILDCONTACTMENU, JabberMenuPrebuildContactMenu ));
 
 	JabberCheckAllContactsAreTransported();
 	return 0;
@@ -261,9 +257,6 @@ extern "C" int __declspec( dllexport ) Load( PLUGINLINK *link )
 	jabberProtoName = mir_strdup( p );
 	_strupr( jabberProtoName );
 
-	mir_snprintf( text, sizeof( text ), "%s/Status", jabberProtoName );
-	JCallService( MS_DB_SETSETTINGRESIDENT, TRUE, ( LPARAM )text );
-
 	jabberModuleName = mir_strdup( jabberProtoName );
 	_strlwr( jabberModuleName );
 	jabberModuleName[0] = toupper( jabberModuleName[0] );
@@ -273,9 +266,9 @@ extern "C" int __declspec( dllexport ) Load( PLUGINLINK *link )
 	DuplicateHandle( GetCurrentProcess(), GetCurrentThread(), GetCurrentProcess(), &hMainThread, THREAD_SET_CONTEXT, FALSE, 0 );
 	jabberMainThreadId = GetCurrentThreadId();
 
-	arHooks.insert( HookEvent( ME_OPT_INITIALISE, JabberOptInit ));
-	arHooks.insert( HookEvent( ME_SYSTEM_MODULESLOADED, OnModulesLoaded ));
-	arHooks.insert( HookEvent( ME_SYSTEM_PRESHUTDOWN, OnPreShutdown ));
+	hEvOptInit       = HookEvent( ME_OPT_INITIALISE, JabberOptInit );
+	hEvModulesLoaded = HookEvent( ME_SYSTEM_MODULESLOADED, OnModulesLoaded );
+	hEvPreShutdown   = HookEvent( ME_SYSTEM_PRESHUTDOWN, OnPreShutdown );
 
 	// Register protocol module
 	PROTOCOLDESCRIPTOR pd;
@@ -317,8 +310,8 @@ extern "C" int __declspec( dllexport ) Load( PLUGINLINK *link )
 	JabberSerialInit();
 	JabberIqInit();
 	JabberListInit();
-	JabberIconsInit();
 	JabberSvcInit();
+	JabberMenuInit();
 	return 0;
 }
 
@@ -327,10 +320,15 @@ extern "C" int __declspec( dllexport ) Load( PLUGINLINK *link )
 
 extern "C" int __declspec( dllexport ) Unload( void )
 {
-	int i;
-	for ( i=0; i < arHooks.getCount(); i++ )
-		UnhookEvent( arHooks[i] );
-	arHooks.destroy();
+	if ( hChatEvent  )      UnhookEvent( hChatEvent );
+	if ( hChatMenu   )      UnhookEvent( hChatMenu );
+	if ( hChatMess   )      UnhookEvent( hChatMess );
+	if ( hReloadIcons )     UnhookEvent( hReloadIcons );
+	if ( hEvInitChat )      UnhookEvent( hEvInitChat );
+	if ( hEvModulesLoaded ) UnhookEvent( hEvModulesLoaded );
+	if ( hEvOptInit  )      UnhookEvent( hEvOptInit );
+	if ( hEvPreShutdown )   UnhookEvent( hEvPreShutdown );
+	if ( hEvUserInfoInit )  UnhookEvent( hEvUserInfoInit );
 
 	if ( hInitChat )
 		DestroyHookableEvent( hInitChat );
@@ -357,7 +355,7 @@ extern "C" int __declspec( dllexport ) Unload( void )
 	if ( jabberVcardPhotoType ) mir_free( jabberVcardPhotoType );
 	if ( streamId ) mir_free( streamId );
 
-	for ( i=0; i < jabberTransports.getCount(); i++ )
+	for ( int i=0; i < jabberTransports.getCount(); i++ )
 		free( jabberTransports[i] );
 	jabberTransports.destroy();
 

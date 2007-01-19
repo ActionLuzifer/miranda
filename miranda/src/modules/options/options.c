@@ -860,12 +860,11 @@ static int OptModulesLoaded(WPARAM wParam,LPARAM lParam)
 	ZeroMemory(&mi,sizeof(mi));
 	mi.cbSize=sizeof(mi);
 	mi.flags=0;
-	mi.hIcon=LoadIconEx(GetModuleHandle(NULL),MAKEINTRESOURCE(IDI_OPTIONS),FALSE);
+	mi.hIcon=LoadIcon(GetModuleHandle(NULL),MAKEINTRESOURCE(IDI_OPTIONS));
 	mi.position=1900000000;
 	mi.pszName=Translate("&Options...");
 	mi.pszService="Options/OptionsCommand";
 	CallService(MS_CLIST_ADDMAINMENUITEM,0,(LPARAM)&mi);
-    Safe_DestroyIcon(mi.hIcon);
 	return 0;
 }
 

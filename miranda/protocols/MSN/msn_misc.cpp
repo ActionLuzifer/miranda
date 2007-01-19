@@ -116,7 +116,7 @@ int __stdcall MSN_AddUser( HANDLE hContact, const char* email, int flags )
 					return -1;
 
 			char id[ MSN_GUID_LEN ];
-			if ( !MSN_GetStaticString( "ID", hContact, id, sizeof( id )))
+			if ( !MSN_GetStaticString( "ID", hContact, id, sizeof id ))
 				msgid = msnNsThread->sendPacket( "REM", "%s %s", listName, id );
 		}
 		else {
@@ -166,6 +166,23 @@ void __stdcall MSN_AddAuthRequest( HANDLE hContact, const char *email, const cha
 	strcpy(( char* )pCurBlob, email ); pCurBlob += strlen( email )+1;
 	*pCurBlob = '\0';         	   //reason
 	MSN_CallService( MS_DB_EVENT_ADD, NULL,( LPARAM )&dbei );
+}
+
+/////////////////////////////////////////////////////////////////////////////////////////
+// MSN_AddServerGroup - adds a group to the server list
+
+void MSN_AddServerGroup( const char* pszGroupName )
+{
+	char szBuf[ 200 ];
+	UrlEncode( pszGroupName, szBuf, sizeof szBuf );
+
+	if ( hGroupAddEvent == NULL )
+		hGroupAddEvent = CreateEvent( NULL, FALSE, FALSE, NULL );
+
+	msnNsThread->sendPacket( "ADG", "%s", szBuf );
+
+	WaitForSingleObject( hGroupAddEvent, INFINITE );
+	CloseHandle( hGroupAddEvent ); hGroupAddEvent = NULL;
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////
@@ -364,11 +381,12 @@ void ThreadData::sendCaps( void )
 	MSN_CallService( MS_SYSTEM_GETVERSIONTEXT, sizeof( mversion ), ( LPARAM )mversion );
 
 	int nBytes = mir_snprintf( capMsg, sizeof( capMsg ),
+		"MIME-Version: 1.0\r\n"
 		"Content-Type: text/x-clientcaps\r\n\r\n"
 		"Client-Name: Miranda IM %s (MSN v.%s)\r\n",
 		mversion, __VERSION_STRING );
 
-	sendMessage( 'U', capMsg, MSG_DISABLE_HDR );
+	sendPacket( "MSG", "%c %d\r\n%s", 'N', nBytes, capMsg );
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////
@@ -626,7 +644,7 @@ void __stdcall	MSN_ShowPopup( const char* nickname, const char* msg, int flags )
 	POPUPDATAEX* ppd = ( POPUPDATAEX* )mir_calloc( sizeof( POPUPDATAEX ));
 
 	ppd->lchContact = NULL;
-	ppd->lchIcon = LoadIconEx( "main" );
+	ppd->lchIcon = LoadIcon( hInst, MAKEINTRESOURCE( IDI_MSN ));
 	strcpy( ppd->lpzContactName, nickname );
 	strcpy( ppd->lpzText, msg );
 
@@ -1143,57 +1161,4 @@ TCHAR* UnEscapeChatTags(TCHAR* str_in)
 	}
 	*d = 0;
 	return str_in;
-}
-
-bool txtParseParam (const char* szData, const char* presearch, const char* start, const char* finish, char* param, const int size)
-{
-	const char *cp, *cp1;
-	int len;
-	
-	if (szData == NULL) return false;
-
-	if (presearch != NULL)
-	{
-		cp1 = strstr(szData, presearch);
-		if (cp1 == NULL) return false;
-	}
-	else
-		cp1 = szData;
-
-	cp = strstr(cp1, start);
-	if (cp == NULL) return false;
-	cp += strlen(start);
-	while (*cp == ' ') ++cp;
-
-	cp1 = strstr(cp, finish);
-	if (cp1 == NULL) return FALSE;
-	while (*(cp1-1) == ' ' && cp1 > cp) --cp1;
-
-	len = min(cp1 - cp, size - 1);
-	memmove(param, cp, len);
-	param[len] = 0;
-
-	return true;
-} 
-
-
-void MSN_Base64Decode( const char* str, char* res, size_t reslen )
-{
-	if ( str == NULL ) res[0] = 0;
-
-	char* p = const_cast< char* >( str );
-	int cbLen = strlen( p );
-	if ( cbLen & 3 ) { // fix for stupid Kopete's base64 encoder
-		char* p1 = ( char* )alloca( cbLen+5 );
-		memcpy( p1, p, cbLen );
-		p = p1;
-		p1 += cbLen; 
-		for ( int i = 4 - (cbLen & 3); i > 0; i--, p1++, cbLen++ )
-			*p1 = '=';
-		*p1 = 0;
-	}
-
-	NETLIBBASE64 nlb = { p, cbLen, ( PBYTE )res, reslen };
-	MSN_CallService( MS_NETLIB_BASE64DECODE, 0, LPARAM( &nlb ));
-	res[nlb.cbDecoded] = 0;
 }

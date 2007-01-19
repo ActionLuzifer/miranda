@@ -26,7 +26,6 @@ DbToolOptions opts;
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
 	hInst=hInstance;
-	LoadLangPackModule();
 	InitCommonControls();
 	DialogBox(hInst,MAKEINTRESOURCE(IDD_WIZARD),NULL,WizardDlgProc);
 	return 0;

@@ -32,6 +32,7 @@ UNICODE done
 static VOID CALLBACK TrayCycleTimerProc(HWND hwnd, UINT message, UINT idEvent, DWORD dwTime);
 
 extern HIMAGELIST hCListImages;
+extern int currentStatusMenuItem, currentDesiredStatusMode;
 
 extern struct CluiData g_CluiData;
 
@@ -311,7 +312,7 @@ int TrayIconUpdate(HICON hNewIcon, const TCHAR *szNewTip, const char *szPreferre
 	char szProto = 0;
 
 	nid.cbSize = ( dviShell.dwMajorVersion >= 5 ) ? sizeof(nid) : NOTIFYICONDATA_V1_SIZE;
-	nid.hWnd = pcli->hwndContactList;
+	nid.hWnd = (HWND) CallService(MS_CLUI_GETHWND, 0, 0);
 	nid.uFlags = NIF_ICON | NIF_TIP;
 	nid.hIcon = hNewIcon;           
 
@@ -404,7 +405,7 @@ void TrayIconUpdateBase(const char *szChangedProto)
 	int i,count,netProtoCount,changed = -1;
 	PROTOCOLDESCRIPTOR **protos;
 	int averageMode = 0;
-	HWND hwnd = pcli->hwndContactList;
+	HWND hwnd = (HWND) CallService(MS_CLUI_GETHWND, 0, 0);
 
 	if (cycleTimerId) {
 		KillTimer(NULL, cycleTimerId); cycleTimerId = 0;
@@ -541,7 +542,7 @@ void TrayIconSetToBase(char *szPreferredProto)
 
 void TrayIconIconsChanged(void)
 {
-	HWND hwnd = pcli->hwndContactList;
+	HWND hwnd = (HWND) CallService(MS_CLUI_GETHWND, 0, 0);
 	TrayIconDestroy(hwnd);
 	TrayIconInit(hwnd);
 }
@@ -629,7 +630,7 @@ int CListTrayNotify(MIRANDASYSTRAYNOTIFY *msn)
 		if (trayIcon) {
 			NOTIFYICONDATAA nid = { 0 };
 			nid.cbSize = sizeof(nid); // : NOTIFYICONDATAA_V1_SIZE;
-			nid.hWnd = pcli->hwndContactList;
+			nid.hWnd = (HWND) CallService(MS_CLUI_GETHWND, 0, 0);
 			if (msn->szProto) {
 				int j;
 				for (j = 0; j < trayIconCount; j++) {

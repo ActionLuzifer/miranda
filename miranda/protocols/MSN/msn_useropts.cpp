@@ -234,7 +234,7 @@ BOOL CALLBACK AvatarDlgProc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam
 				char tFileName[ MAX_PATH ];
 				MSN_GetAvatarFileName( NULL, tFileName, sizeof tFileName );
 				DeleteFileA( tFileName );
-				MSN_DeleteSetting( NULL, "PictObject" );
+				DBDeleteContactSetting( NULL, msnProtocolName, "PictObject" );
 				InvalidateRect( hwndDlg, NULL, TRUE );
 				break;
 		}	}

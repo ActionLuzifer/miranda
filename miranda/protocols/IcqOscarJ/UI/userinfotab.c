@@ -341,7 +341,7 @@ static BOOL CALLBACK AvatarDlgProc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM
               {
                 strcpy(szAvatar, file);
                 SAFE_FREE(&file);
-                if (dbvHash.pbVal[1] == AVATAR_HASH_FLASH) // we do this by hand, as owner's format is not saved
+                if (dbvHash.pbVal[1] == 8) // we do this by hand, as owner's format is not saved
                   dwPaFormat = PA_FORMAT_XML;
               }
               else
@@ -555,7 +555,7 @@ static void SetValue(HWND hwndDlg, int idCtrl, HANDLE hContact, char* szModule, 
           null_snprintf(str, 250, "%d", dbv.wVal);
           pstr = str;
 
-          if (hContact && IsDirectConnectionOpen(hContact, DIRECTCONN_STANDARD, 1))
+          if (hContact && IsDirectConnectionOpen(hContact, DIRECTCONN_STANDARD))
           {
             ICQTranslateUtfStatic(" (DC Established)", szExtra);
             strcat(str, szExtra);

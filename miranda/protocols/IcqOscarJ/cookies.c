@@ -341,8 +341,9 @@ void ReleaseCookie(DWORD dwCookie)
 
 
 
-void InitMessageCookie(message_cookie_data *pCookie)
+message_cookie_data *CreateMessageCookie(WORD bMsgType, BYTE bAckType)
 {
+  message_cookie_data *pCookie;
   DWORD dwMsgID1;
   DWORD dwMsgID2;
 
@@ -352,27 +353,13 @@ void InitMessageCookie(message_cookie_data *pCookie)
     dwMsgID2 = RandRange(0, 0x0FFFF);
   } while (FindMessageCookie(dwMsgID1, dwMsgID2, NULL, NULL, NULL));
 
-  if (pCookie)
-  {
-    pCookie->dwMsgID1 = dwMsgID1;
-    pCookie->dwMsgID2 = dwMsgID2;
-  }
-}
-
-
-
-message_cookie_data *CreateMessageCookie(WORD bMsgType, BYTE bAckType)
-{
-  message_cookie_data *pCookie;
-
   pCookie = (message_cookie_data*)SAFE_MALLOC(sizeof(message_cookie_data));
   if (pCookie)
   {
     pCookie->bMessageType = bMsgType;
     pCookie->nAckType = bAckType;
-
-    InitMessageCookie(pCookie);
+    pCookie->dwMsgID1 = dwMsgID1;
+    pCookie->dwMsgID2 = dwMsgID2;
   }
   return pCookie;
 }
-

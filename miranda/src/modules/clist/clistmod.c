@@ -22,7 +22,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 #include "commonheaders.h"
 #include "clc.h"
-#include "m_icolib.h"
 
 int AddMainMenuItem(WPARAM wParam, LPARAM lParam);
 int AddContactMenuItem(WPARAM wParam, LPARAM lParam);
@@ -36,6 +35,7 @@ int GetContactDisplayName(WPARAM wParam, LPARAM lParam);
 int InvalidateDisplayName(WPARAM wParam, LPARAM lParam);
 int InitGroupServices(void);
 int Docking_IsDocked(WPARAM wParam, LPARAM lParam);
+int MenuProcessCommand(WPARAM wParam, LPARAM lParam);
 void InitDisplayNameCache(void);
 void FreeDisplayNameCache(void);
 void InitTray(void);
@@ -125,7 +125,7 @@ static int GetStatusModeDescription(WPARAM wParam, LPARAM lParam)
 		{
 			static char szMode[64]={0};
 			TCHAR* buf1 = (TCHAR*)cli.pfnGetStatusModeDescription(wParam,lParam);
-			char *buf2 = u2a(buf1);
+			char *buf2=u2a(buf1);
 			_snprintf(szMode,sizeof(szMode),"%s",buf2);
 			mir_free(buf2);
 			return (int)szMode;
@@ -228,7 +228,7 @@ static int ContactListModulesLoaded(WPARAM wParam, LPARAM lParam)
 		protoIconIndex = (struct ProtoIconIndex *) mir_realloc(protoIconIndex, sizeof(struct ProtoIconIndex) * (protoIconIndexCount + 1));
 		protoIconIndex[protoIconIndexCount].szProto = protoList[i]->szName;
 		for (j = 0; j < SIZEOF(statusModeList); j++) {
-			iImg = ImageList_AddIcon_IconLibLoaded(hCListImages, LoadSkinnedProtoIcon(protoList[i]->szName, statusModeList[j]));
+			iImg = ImageList_AddIcon(hCListImages, LoadSkinnedProtoIcon(protoList[i]->szName, statusModeList[j]));
 			if (j == 0)
 				protoIconIndex[protoIconIndexCount].iIconBase = iImg;
 		}
@@ -270,14 +270,14 @@ static int CListIconsChanged(WPARAM wParam, LPARAM lParam)
 	int i, j;
 
 	for (i = 0; i < SIZEOF(statusModeList); i++)
-		ImageList_ReplaceIcon_IconLibLoaded(hCListImages, i + 1, LoadSkinnedIcon(skinIconStatusList[i]));
-	ImageList_ReplaceIcon_IconLibLoaded(hCListImages, IMAGE_GROUPOPEN, LoadSkinnedIcon(SKINICON_OTHER_GROUPOPEN));
-	ImageList_ReplaceIcon_IconLibLoaded(hCListImages, IMAGE_GROUPSHUT, LoadSkinnedIcon(SKINICON_OTHER_GROUPSHUT));
+		ImageList_ReplaceIcon(hCListImages, i + 1, LoadSkinnedIcon(skinIconStatusList[i]));
+	ImageList_ReplaceIcon(hCListImages, IMAGE_GROUPOPEN, LoadSkinnedIcon(SKINICON_OTHER_GROUPOPEN));
+	ImageList_ReplaceIcon(hCListImages, IMAGE_GROUPSHUT, LoadSkinnedIcon(SKINICON_OTHER_GROUPSHUT));
 	for (i = 0; i < protoIconIndexCount; i++)
 		for (j = 0; j < SIZEOF(statusModeList); j++)
-			ImageList_ReplaceIcon_IconLibLoaded(hCListImages, protoIconIndex[i].iIconBase + j, LoadSkinnedProtoIcon(protoIconIndex[i].szProto, statusModeList[j]));
+			ImageList_ReplaceIcon(hCListImages, protoIconIndex[i].iIconBase + j, LoadSkinnedProtoIcon(protoIconIndex[i].szProto, statusModeList[j]));
 	cli.pfnTrayIconIconsChanged();
-	cli.pfnInvalidateRect( cli.hwndContactList, NULL, TRUE);
+	cli.pfnInvalidateRect((HWND) CallService(MS_CLUI_GETHWND, 0, 0), NULL, TRUE);
 	return 0;
 }
 
@@ -513,18 +513,14 @@ int LoadContactListModule2(void)
 	hCListImages = ImageList_Create(16, 16, ILC_MASK | (IsWinVerXPPlus()? ILC_COLOR32 : ILC_COLOR16), 13, 0);
 	HookEvent(ME_SKIN_ICONSCHANGED, CListIconsChanged);
 	CreateServiceFunction(MS_CLIST_GETICONSIMAGELIST, GetIconsImageList);
-  
-	ImageList_AddIcon_NotShared(hCListImages, cli.hInst, MAKEINTRESOURCE(IDI_BLANK));
-
+	ImageList_AddIcon(hCListImages, LoadIcon(cli.hInst, MAKEINTRESOURCE(IDI_BLANK)));
 	{
 		int i;
-		//now all core skin icons are loaded via icon lib. so lets release them
 		for (i = 0; i < SIZEOF(statusModeList); i++)
-			ImageList_AddIcon_IconLibLoaded(hCListImages, LoadSkinnedIcon(skinIconStatusList[i]));                    
+			ImageList_AddIcon(hCListImages, LoadSkinnedIcon(skinIconStatusList[i]));
 	}
-
-	//see IMAGE_GROUP... in clist.h if you add more images above here    
-	ImageList_AddIcon_IconLibLoaded(hCListImages, LoadSkinnedIcon(SKINICON_OTHER_GROUPOPEN));
-	ImageList_AddIcon_IconLibLoaded(hCListImages, LoadSkinnedIcon(SKINICON_OTHER_GROUPSHUT));
+	//see IMAGE_GROUP... in clist.h if you add more images above here
+	ImageList_AddIcon(hCListImages, LoadSkinnedIcon(SKINICON_OTHER_GROUPOPEN));
+	ImageList_AddIcon(hCListImages, LoadSkinnedIcon(SKINICON_OTHER_GROUPSHUT));
 	return 0;
 }

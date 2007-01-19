@@ -39,7 +39,6 @@
 
 typedef struct {
   message_cookie_data pMessage;
-  BYTE ft_magic;
   int status;
   int sending;
   int iCurrentFile;
@@ -77,7 +76,6 @@ typedef struct {
 typedef struct {
   HANDLE hContact;
   HANDLE hConnection;
-  DWORD dwConnectionCookie;
   int type;
   WORD wVersion;
   int incoming;
@@ -89,6 +87,7 @@ typedef struct {
   DWORD dwRemoteInternalIP;
   DWORD dwLocalExternalIP;
   DWORD dwLocalInternalIP;
+  DWORD dwConnCookie;
   int initialised;
   int handshake;
   DWORD dwThreadId;
@@ -97,12 +96,12 @@ typedef struct {
 } directconnect;
 
 void OpenDirectConnection(HANDLE hContact, int type, void *pvExtra);
-int IsDirectConnectionOpen(HANDLE hContact, int type, int bPassive);
+int IsDirectConnectionOpen(HANDLE hContact, int type);
 void CloseDirectConnection(directconnect *dc);
 void CloseContactDirectConns(HANDLE hContact);
 int SendDirectMessage(HANDLE hContact, icq_packet *pkt);
 int sendDirectPacket(directconnect *dc, icq_packet *pkt);
-void icq_newConnectionReceived(HANDLE hNewConnection, DWORD dwRemoteIP, void *pExtra);
+void icq_newConnectionReceived(HANDLE hNewConnection, DWORD dwRemoteIP);
 void InitDirectConns(void);
 void UninitDirectConns(void);
 directconnect* FindFileTransferDC(filetransfer* ft);

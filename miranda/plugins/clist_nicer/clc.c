@@ -61,7 +61,7 @@ LONG g_cxsmIcon, g_cysmIcon;
 void  ShutdownGdiPlus();
 void  SetDBButtonStates(HANDLE hContact);
 
-int GetProtocolVisibility(const char *ProtoName)
+int GetProtocolVisibility(char *ProtoName)
 {
 	int i;
 	int res=0;
@@ -826,7 +826,7 @@ LBL_Def:
 				if (contact->type == CLCIT_GROUP) {
 					hMenu = (HMENU)CallService(MS_CLIST_MENUBUILDSUBGROUP, (WPARAM)contact->group, 0);
 					ClientToScreen(hwnd,&pt);
-					TrackPopupMenu(hMenu,TPM_TOPALIGN|TPM_LEFTALIGN|TPM_RIGHTBUTTON,pt.x,pt.y,0,pcli->hwndContactList,NULL);
+					TrackPopupMenu(hMenu,TPM_TOPALIGN|TPM_LEFTALIGN|TPM_RIGHTBUTTON,pt.x,pt.y,0,(HWND)CallService(MS_CLUI_GETHWND,0,0),NULL);
 					return 0;
 					CheckMenuItem(hMenu, POPUP_GROUPHIDEOFFLINE, contact->group->hideOffline ? MF_CHECKED : MF_UNCHECKED);
 				} else if (contact->type == CLCIT_CONTACT)

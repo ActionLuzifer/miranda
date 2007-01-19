@@ -786,10 +786,6 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\msn_menu.cpp"
-				>
-			</File>
-			<File
 				RelativePath="msn_mime.cpp"
 				>
 				<FileConfiguration

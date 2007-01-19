@@ -13,7 +13,6 @@
 	"..\include\m_email.h"\
 	"..\include\m_file.h"\
 	"..\include\m_findadd.h"\
-	"..\include\m_genmenu.h"\
 	"..\include\m_history.h"\
 	"..\include\m_idle.h"\
 	"..\include\m_ignore.h"\
@@ -51,7 +50,6 @@
 	"..\include\m_email.h"\
 	"..\include\m_file.h"\
 	"..\include\m_findadd.h"\
-	"..\include\m_genmenu.h"\
 	"..\include\m_history.h"\
 	"..\include\m_idle.h"\
 	"..\include\m_ignore.h"\
@@ -89,7 +87,6 @@
 	"..\include\m_email.h"\
 	"..\include\m_file.h"\
 	"..\include\m_findadd.h"\
-	"..\include\m_genmenu.h"\
 	"..\include\m_history.h"\
 	"..\include\m_idle.h"\
 	"..\include\m_ignore.h"\
@@ -128,7 +125,6 @@
 	"..\include\m_email.h"\
 	"..\include\m_file.h"\
 	"..\include\m_findadd.h"\
-	"..\include\m_genmenu.h"\
 	"..\include\m_history.h"\
 	"..\include\m_idle.h"\
 	"..\include\m_ignore.h"\
@@ -170,7 +166,6 @@
 	"..\include\m_email.h"\
 	"..\include\m_file.h"\
 	"..\include\m_findadd.h"\
-	"..\include\m_genmenu.h"\
 	"..\include\m_history.h"\
 	"..\include\m_idle.h"\
 	"..\include\m_ignore.h"\
@@ -332,20 +327,12 @@
 	
 
 .\modules\clist\clistcore.c : \
-	"..\include\m_genmenu.h"\
 	".\modules\clist\clc.h"\
-	".\modules\clist\genmenu.h"\
 	
 
 .\modules\clist\clistevents.c : \
 	".\modules\clist\clc.h"\
 	".\modules\database\dblists.h"\
-	
-
-.\modules\clist\clistmenus.c : \
-	"..\include\m_clui.h"\
-	"..\include\m_genmenu.h"\
-	".\modules\clist\genmenu.h"\
 	
 
 .\modules\clist\clistmod.c : \
@@ -377,16 +364,6 @@
 	".\modules\clist\clc.h"\
 	
 
-.\modules\clist\genmenu.c : \
-	"..\include\m_genmenu.h"\
-	".\modules\clist\genmenu.h"\
-	
-
-.\modules\clist\genmenuopt.c : \
-	"..\include\m_genmenu.h"\
-	".\modules\clist\genmenu.h"\
-	
-
 .\modules\clist\groups.c : \
 	".\modules\clist\clc.h"\
 	
@@ -395,42 +372,8 @@
 	".\modules\clist\clc.h"\
 	
 
-.\modules\fonts\FontOptions.c : \
-	"..\include\m_fontservice.h"\
-	".\modules\database\dblists.h"\
-	".\modules\fonts\FontService.h"\
-	
-
-.\modules\fonts\FontService.c : \
-	"..\include\m_fontservice.h"\
-	".\modules\fonts\FontService.h"\
-	".\modules\fonts\module_fonts.h"\
-	
-
-.\modules\fonts\module_fonts.c : \
-	"..\include\m_fontservice.h"\
-	".\modules\fonts\module_fonts.h"\
-	
-
-.\modules\fonts\services.c : \
-	"..\include\m_fontservice.h"\
-	".\modules\database\dblists.h"\
-	".\modules\fonts\FontService.h"\
-	
-
-.\modules\icolib\IcoLib.c : \
-	"..\include\m_icolib.h"\
-	".\modules\icolib\IcoLib.h"\
-	
-
-.\modules\icolib\skin2icons.c : \
-	"..\include\m_icolib.h"\
-	".\modules\database\dblists.h"\
-	".\modules\icolib\IcoLib.h"\
-	
-
 .\resource.rc : \
-	"..\docs\contributors.txt"\
+	"..\docs\credits.txt"\
 	"..\include\statusmodes.h"\
 	".\miranda32.exe.manifest"\
 	".\res\addcontact.ico"\

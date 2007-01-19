@@ -27,10 +27,6 @@ NULL=
 NULL=nul
 !ENDIF
 
-CPP=cl.exe
-MTL=midl.exe
-RSC=rc.exe
-
 !IF  "$(CFG)" == "msn - Win32 Release"
 
 OUTDIR=.\Release
@@ -53,7 +49,6 @@ CLEAN :
 	-@erase "$(INTDIR)\msn_libstr.obj"
 	-@erase "$(INTDIR)\msn_lists.obj"
 	-@erase "$(INTDIR)\msn_md5c.obj"
-	-@erase "$(INTDIR)\msn_menu.obj"
 	-@erase "$(INTDIR)\msn_mime.obj"
 	-@erase "$(INTDIR)\msn_misc.obj"
 	-@erase "$(INTDIR)\msn_msgqueue.obj"
@@ -80,8 +75,42 @@ CLEAN :
 "$(OUTDIR)" :
     if not exist "$(OUTDIR)/$(NULL)" mkdir "$(OUTDIR)"
 
+CPP=cl.exe
 CPP_PROJ=/nologo /MD /W3 /Zi /O1 /Oy /I "../../include" /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "MSN_EXPORTS" /FAcs /Fa"$(INTDIR)\\" /Fp"$(INTDIR)\msn.pch" /Yu"msn_global.h" /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /c
+
+.c{$(INTDIR)}.obj::
+   $(CPP) @<<
+   $(CPP_PROJ) $<
+<<
+
+.cpp{$(INTDIR)}.obj::
+   $(CPP) @<<
+   $(CPP_PROJ) $<
+<<
+
+.cxx{$(INTDIR)}.obj::
+   $(CPP) @<<
+   $(CPP_PROJ) $<
+<<
+
+.c{$(INTDIR)}.sbr::
+   $(CPP) @<<
+   $(CPP_PROJ) $<
+<<
+
+.cpp{$(INTDIR)}.sbr::
+   $(CPP) @<<
+   $(CPP_PROJ) $<
+<<
+
+.cxx{$(INTDIR)}.sbr::
+   $(CPP) @<<
+   $(CPP_PROJ) $<
+<<
+
+MTL=midl.exe
 MTL_PROJ=/nologo /D "NDEBUG" /mktyplib203 /win32
+RSC=rc.exe
 RSC_PROJ=/l 0x809 /fo"$(INTDIR)\resource.res" /d "NDEBUG"
 BSC32=bscmake.exe
 BSC32_FLAGS=/nologo /o"$(OUTDIR)\msn.bsc"
@@ -119,8 +148,7 @@ LINK32_OBJS= \
 	"$(INTDIR)\msn_useropts.obj" \
 	"$(INTDIR)\msn_ws.obj" \
 	"$(INTDIR)\sha1.obj" \
-	"$(INTDIR)\resource.res" \
-	"$(INTDIR)\msn_menu.obj"
+	"$(INTDIR)\resource.res"
 
 "..\..\bin\release\plugins\msn.dll" : "$(OUTDIR)" $(DEF_FILE) $(LINK32_OBJS)
     $(LINK32) @<<
@@ -164,8 +192,6 @@ CLEAN :
 	-@erase "$(INTDIR)\msn_lists.sbr"
 	-@erase "$(INTDIR)\msn_md5c.obj"
 	-@erase "$(INTDIR)\msn_md5c.sbr"
-	-@erase "$(INTDIR)\msn_menu.obj"
-	-@erase "$(INTDIR)\msn_menu.sbr"
 	-@erase "$(INTDIR)\msn_mime.obj"
 	-@erase "$(INTDIR)\msn_mime.sbr"
 	-@erase "$(INTDIR)\msn_misc.obj"
@@ -209,8 +235,42 @@ CLEAN :
 "$(OUTDIR)" :
     if not exist "$(OUTDIR)/$(NULL)" mkdir "$(OUTDIR)"
 
+CPP=cl.exe
 CPP_PROJ=/nologo /MDd /W3 /Gm /Gi /ZI /Od /I "../../include" /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "MSN_EXPORTS" /FR"$(INTDIR)\\" /Fp"$(INTDIR)\msn.pch" /Yu"msn_global.h" /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /GZ /c
+
+.c{$(INTDIR)}.obj::
+   $(CPP) @<<
+   $(CPP_PROJ) $<
+<<
+
+.cpp{$(INTDIR)}.obj::
+   $(CPP) @<<
+   $(CPP_PROJ) $<
+<<
+
+.cxx{$(INTDIR)}.obj::
+   $(CPP) @<<
+   $(CPP_PROJ) $<
+<<
+
+.c{$(INTDIR)}.sbr::
+   $(CPP) @<<
+   $(CPP_PROJ) $<
+<<
+
+.cpp{$(INTDIR)}.sbr::
+   $(CPP) @<<
+   $(CPP_PROJ) $<
+<<
+
+.cxx{$(INTDIR)}.sbr::
+   $(CPP) @<<
+   $(CPP_PROJ) $<
+<<
+
+MTL=midl.exe
 MTL_PROJ=/nologo /D "_DEBUG" /mktyplib203 /win32
+RSC=rc.exe
 RSC_PROJ=/l 0x809 /fo"$(INTDIR)\resource.res" /d "_DEBUG"
 BSC32=bscmake.exe
 BSC32_FLAGS=/nologo /o"$(OUTDIR)\msn.bsc"
@@ -241,8 +301,7 @@ BSC32_SBRS= \
 	"$(INTDIR)\msn_threads.sbr" \
 	"$(INTDIR)\msn_useropts.sbr" \
 	"$(INTDIR)\msn_ws.sbr" \
-	"$(INTDIR)\sha1.sbr" \
-	"$(INTDIR)\msn_menu.sbr"
+	"$(INTDIR)\sha1.sbr"
 
 "$(OUTDIR)\msn.bsc" : "$(OUTDIR)" $(BSC32_SBRS)
     $(BSC32) @<<
@@ -281,8 +340,7 @@ LINK32_OBJS= \
 	"$(INTDIR)\msn_useropts.obj" \
 	"$(INTDIR)\msn_ws.obj" \
 	"$(INTDIR)\sha1.obj" \
-	"$(INTDIR)\resource.res" \
-	"$(INTDIR)\msn_menu.obj"
+	"$(INTDIR)\resource.res"
 
 "..\..\bin\debug\plugins\msn.dll" : "$(OUTDIR)" $(DEF_FILE) $(LINK32_OBJS)
     $(LINK32) @<<
@@ -311,7 +369,6 @@ CLEAN :
 	-@erase "$(INTDIR)\msn_libstr.obj"
 	-@erase "$(INTDIR)\msn_lists.obj"
 	-@erase "$(INTDIR)\msn_md5c.obj"
-	-@erase "$(INTDIR)\msn_menu.obj"
 	-@erase "$(INTDIR)\msn_mime.obj"
 	-@erase "$(INTDIR)\msn_misc.obj"
 	-@erase "$(INTDIR)\msn_msgqueue.obj"
@@ -338,8 +395,42 @@ CLEAN :
 "$(OUTDIR)" :
     if not exist "$(OUTDIR)/$(NULL)" mkdir "$(OUTDIR)"
 
+CPP=cl.exe
 CPP_PROJ=/nologo /MD /W3 /Zi /O1 /Oy /I "../../include" /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "UNICODE" /D "_USRDLL" /D "MSN_EXPORTS" /FAcs /Fa"$(INTDIR)\\" /Fp"$(INTDIR)\msn.pch" /Yu"msn_global.h" /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /c
+
+.c{$(INTDIR)}.obj::
+   $(CPP) @<<
+   $(CPP_PROJ) $<
+<<
+
+.cpp{$(INTDIR)}.obj::
+   $(CPP) @<<
+   $(CPP_PROJ) $<
+<<
+
+.cxx{$(INTDIR)}.obj::
+   $(CPP) @<<
+   $(CPP_PROJ) $<
+<<
+
+.c{$(INTDIR)}.sbr::
+   $(CPP) @<<
+   $(CPP_PROJ) $<
+<<
+
+.cpp{$(INTDIR)}.sbr::
+   $(CPP) @<<
+   $(CPP_PROJ) $<
+<<
+
+.cxx{$(INTDIR)}.sbr::
+   $(CPP) @<<
+   $(CPP_PROJ) $<
+<<
+
+MTL=midl.exe
 MTL_PROJ=/nologo /D "NDEBUG" /mktyplib203 /win32
+RSC=rc.exe
 RSC_PROJ=/l 0x809 /fo"$(INTDIR)\resource.res" /d "NDEBUG"
 BSC32=bscmake.exe
 BSC32_FLAGS=/nologo /o"$(OUTDIR)\msn.bsc"
@@ -377,8 +468,7 @@ LINK32_OBJS= \
 	"$(INTDIR)\msn_useropts.obj" \
 	"$(INTDIR)\msn_ws.obj" \
 	"$(INTDIR)\sha1.obj" \
-	"$(INTDIR)\resource.res" \
-	"$(INTDIR)\msn_menu.obj"
+	"$(INTDIR)\resource.res"
 
 "..\..\bin\Release Unicode\plugins\msn.dll" : "$(OUTDIR)" $(DEF_FILE) $(LINK32_OBJS)
     $(LINK32) @<<
@@ -422,8 +512,6 @@ CLEAN :
 	-@erase "$(INTDIR)\msn_lists.sbr"
 	-@erase "$(INTDIR)\msn_md5c.obj"
 	-@erase "$(INTDIR)\msn_md5c.sbr"
-	-@erase "$(INTDIR)\msn_menu.obj"
-	-@erase "$(INTDIR)\msn_menu.sbr"
 	-@erase "$(INTDIR)\msn_mime.obj"
 	-@erase "$(INTDIR)\msn_mime.sbr"
 	-@erase "$(INTDIR)\msn_misc.obj"
@@ -466,8 +554,42 @@ CLEAN :
 "$(OUTDIR)" :
     if not exist "$(OUTDIR)/$(NULL)" mkdir "$(OUTDIR)"
 
+CPP=cl.exe
 CPP_PROJ=/nologo /MDd /W3 /Gm /Gi /ZI /Od /I "../../include" /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "UNICODE" /D "_USRDLL" /D "MSN_EXPORTS" /FR"$(INTDIR)\\" /Fp"$(INTDIR)\msn.pch" /Yu"msn_global.h" /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /GZ /c
+
+.c{$(INTDIR)}.obj::
+   $(CPP) @<<
+   $(CPP_PROJ) $<
+<<
+
+.cpp{$(INTDIR)}.obj::
+   $(CPP) @<<
+   $(CPP_PROJ) $<
+<<
+
+.cxx{$(INTDIR)}.obj::
+   $(CPP) @<<
+   $(CPP_PROJ) $<
+<<
+
+.c{$(INTDIR)}.sbr::
+   $(CPP) @<<
+   $(CPP_PROJ) $<
+<<
+
+.cpp{$(INTDIR)}.sbr::
+   $(CPP) @<<
+   $(CPP_PROJ) $<
+<<
+
+.cxx{$(INTDIR)}.sbr::
+   $(CPP) @<<
+   $(CPP_PROJ) $<
+<<
+
+MTL=midl.exe
 MTL_PROJ=/nologo /D "_DEBUG" /mktyplib203 /win32
+RSC=rc.exe
 RSC_PROJ=/l 0x809 /fo"$(INTDIR)\resource.res" /d "_DEBUG"
 BSC32=bscmake.exe
 BSC32_FLAGS=/nologo /o"$(OUTDIR)\msn.bsc"
@@ -498,8 +620,7 @@ BSC32_SBRS= \
 	"$(INTDIR)\msn_threads.sbr" \
 	"$(INTDIR)\msn_useropts.sbr" \
 	"$(INTDIR)\msn_ws.sbr" \
-	"$(INTDIR)\sha1.sbr" \
-	"$(INTDIR)\msn_menu.sbr"
+	"$(INTDIR)\sha1.sbr"
 
 "$(OUTDIR)\msn.bsc" : "$(OUTDIR)" $(BSC32_SBRS)
     $(BSC32) @<<
@@ -538,8 +659,7 @@ LINK32_OBJS= \
 	"$(INTDIR)\msn_useropts.obj" \
 	"$(INTDIR)\msn_ws.obj" \
 	"$(INTDIR)\sha1.obj" \
-	"$(INTDIR)\resource.res" \
-	"$(INTDIR)\msn_menu.obj"
+	"$(INTDIR)\resource.res"
 
 "..\..\bin\Debug Unicode\plugins\msn.dll" : "$(OUTDIR)" $(DEF_FILE) $(LINK32_OBJS)
     $(LINK32) @<<
@@ -547,36 +667,6 @@ LINK32_OBJS= \
 <<
 
 !ENDIF
-
-.c{$(INTDIR)}.obj::
-   $(CPP) @<<
-   $(CPP_PROJ) $<
-<<
-
-.cpp{$(INTDIR)}.obj::
-   $(CPP) @<<
-   $(CPP_PROJ) $<
-<<
-
-.cxx{$(INTDIR)}.obj::
-   $(CPP) @<<
-   $(CPP_PROJ) $<
-<<
-
-.c{$(INTDIR)}.sbr::
-   $(CPP) @<<
-   $(CPP_PROJ) $<
-<<
-
-.cpp{$(INTDIR)}.sbr::
-   $(CPP) @<<
-   $(CPP_PROJ) $<
-<<
-
-.cxx{$(INTDIR)}.sbr::
-   $(CPP) @<<
-   $(CPP_PROJ) $<
-<<
 
 
 !IF "$(NO_EXTERNAL_DEPS)" != "1"
@@ -937,34 +1027,6 @@ SOURCE=.\msn_md5c.cpp
 
 
 "$(INTDIR)\msn_md5c.obj"	"$(INTDIR)\msn_md5c.sbr" : $(SOURCE) "$(INTDIR)" "$(INTDIR)\msn.pch"
-
-
-!ENDIF
-
-SOURCE=.\msn_menu.cpp
-
-!IF  "$(CFG)" == "msn - Win32 Release"
-
-
-"$(INTDIR)\msn_menu.obj" : $(SOURCE) "$(INTDIR)" "$(INTDIR)\msn.pch"
-
-
-!ELSEIF  "$(CFG)" == "msn - Win32 Debug"
-
-
-"$(INTDIR)\msn_menu.obj"	"$(INTDIR)\msn_menu.sbr" : $(SOURCE) "$(INTDIR)" "$(INTDIR)\msn.pch"
-
-
-!ELSEIF  "$(CFG)" == "msn - Win32 Release Unicode"
-
-
-"$(INTDIR)\msn_menu.obj" : $(SOURCE) "$(INTDIR)" "$(INTDIR)\msn.pch"
-
-
-!ELSEIF  "$(CFG)" == "msn - Win32 Debug Unicode"
-
-
-"$(INTDIR)\msn_menu.obj"	"$(INTDIR)\msn_menu.sbr" : $(SOURCE) "$(INTDIR)" "$(INTDIR)\msn.pch"
 
 
 !ENDIF

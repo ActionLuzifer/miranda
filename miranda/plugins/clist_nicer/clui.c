@@ -62,6 +62,7 @@ struct ExtraCache *g_ExtraCache = NULL;
 int g_nextExtraCacheEntry = 0;
 int g_maxExtraCacheEntry = 0;
 
+extern HANDLE hPreBuildStatusMenuEvent;
 extern ImageItem *g_CLUIImageItem;
 extern HBRUSH g_CLUISkinnedBkColor;
 extern StatusItems_t *StatusItems;
@@ -461,7 +462,7 @@ static void InitIcoLib()
 
 static int IcoLibChanged(WPARAM wParam, LPARAM lParam)
 {
-    IcoLibReloadIcons();
+	IcoLibReloadIcons();
 	return 0;
 }
 
@@ -565,10 +566,8 @@ void IcoLibReloadIcons()
 			continue;
 
 		hIcon = (HICON) CallService(MS_SKIN2_GETICON, 0, (LPARAM) top_buttons[i].szIcoLibIcon);
-        if(top_buttons[i].hwnd && IsWindow(top_buttons[i].hwnd)) {
-            SendMessage(top_buttons[i].hwnd, BM_SETIMAGE, IMAGE_ICON, (LPARAM) hIcon);
-            InvalidateRect(top_buttons[i].hwnd, NULL, TRUE);
-        }
+		SendMessage(top_buttons[i].hwnd, BM_SETIMAGE, IMAGE_ICON, (LPARAM) hIcon);
+		InvalidateRect(top_buttons[i].hwnd, NULL, TRUE);
 	}
 	g_CluiData.hIconVisible = (HICON) CallService(MS_SKIN2_GETICON, 0, (LPARAM) "CLN_visible");
 	g_CluiData.hIconInvisible = (HICON) CallService(MS_SKIN2_GETICON, 0, (LPARAM) "CLN_invisible");
@@ -587,9 +586,8 @@ void IcoLibReloadIcons()
     }
     //
 	pcli->pfnClcBroadcast(CLM_AUTOREBUILD, 0, 0);
-	pcli->pfnReloadProtoMenus();
-	//FYR: Not necessary. It is already notified in pfnReloadProtoMenus
-    //NotifyEventHooks(pcli->hPreBuildStatusMenuEvent, 0, 0);
+	MenuModulesLoaded(0, 0);
+    NotifyEventHooks(hPreBuildStatusMenuEvent, 0, 0);
 	SendMessage(g_hwndViewModeFrame, WM_USER + 100, 0, 0);
 }
 
@@ -1273,11 +1271,10 @@ LRESULT CALLBACK ContactListWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM l
 		break;
 	case M_CREATECLC:
 		{
-			if(DBGetContactSettingByte(NULL, "CLUI", "useskin", 0))
-				IMG_LoadItems();
-			CreateButtonBar(hwnd);
-            //FYR: to be checked: otherwise it raises double xStatus items
-            //NotifyEventHooks(pcli->hPreBuildStatusMenuEvent, 0, 0);
+            if(DBGetContactSettingByte(NULL, "CLUI", "useskin", 0))
+                IMG_LoadItems();
+            CreateButtonBar(hwnd);
+		    NotifyEventHooks(hPreBuildStatusMenuEvent, 0, 0);
 			SendMessage(hwnd, WM_SETREDRAW, FALSE, FALSE);
 			{
 				BYTE windowStyle = DBGetContactSettingByte(NULL, "CLUI", "WindowStyle", 0);

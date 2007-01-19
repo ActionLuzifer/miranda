@@ -87,8 +87,6 @@ void parseServerAddress(char *szServer, WORD* wPort);
 char *DemangleXml(const char *string, int len);
 char *MangleXml(const char *string, int len);
 char *EliminateHtml(const char *string, int len);
-char* ApplyEncoding(const char *string, const char* pszEncoding);
-
 
 void ResetSettingsOnListReload(void);
 void ResetSettingsOnConnect(void);
@@ -120,8 +118,7 @@ void* __fastcall SAFE_MALLOC(size_t size);
 void LinkContactPhotoToFile(HANDLE hContact, char* szFile);
 void ContactPhotoSettingChanged(HANDLE hContact);
 
-HANDLE NetLib_OpenConnection(HANDLE hUser, const char* szIdent, NETLIBOPENCONNECTION* nloc);
-HANDLE NetLib_BindPort(NETLIBNEWCONNECTIONPROC_V2 pFunc, void* lParam, WORD* pwPort, DWORD* pdwIntIP);
+HANDLE NetLib_OpenConnection(HANDLE hUser, NETLIBOPENCONNECTION* nloc);
 void NetLib_SafeCloseHandle(HANDLE *hConnection, int bServerConn);
 int NetLog_Server(const char *fmt,...);
 int NetLog_Direct(const char *fmt,...);
@@ -136,12 +133,6 @@ char* __fastcall ICQTranslateUtfStatic(const char* src, char* buf);
 
 char* GetUserPassword(BOOL bAlways);
 WORD GetMyStatusFlags();
-
-/* Unicode FS utility functions */
-
-int FileStatUtf(const char *path, struct _stati64 *buffer);
-int MakeDirUtf(const char *dir);
-int OpenFileUtf(const char *filename, int oflag, int pmode);
 
 /* Unicode UI utility functions */
 wchar_t* GetWindowTextUcs(HWND hWnd);

@@ -394,14 +394,13 @@ static struct LISTOPTIONSITEM lvItems[] = {
     0, _T("Place dividers in inactive sessions"), 0, LOI_TYPE_SETTING, (UINT_PTR)"usedividers", 0,
     0, _T("Use popup configuration for placing dividers"), 0, LOI_TYPE_SETTING, (UINT_PTR)"div_popupconfig", 0,
     0, _T("RTL is default text direction"), 0, LOI_TYPE_SETTING, (UINT_PTR)"rtldefault", 0,
-    0, _T("Support Math Module plugin"), 1, LOI_TYPE_SETTING, (UINT_PTR)"wantmathmod", 1,
+    0, _T("Support Math Module plugin"), 0, LOI_TYPE_SETTING, (UINT_PTR)"wantmathmod", 1,
     0, _T("Log status changes"), 0, LOI_TYPE_SETTING, (UINT_PTR)"logstatus", 2,
     0, _T("Automatically copy selected text"), 0, LOI_TYPE_SETTING, (UINT_PTR)"autocopy", 2,
     0, _T("Use multiple background colors"), IDC_AUTOSELECTCOPY, LOI_TYPE_FLAG, (UINT_PTR)MWF_LOG_INDIVIDUALBKG, 0,
+    0, _T("Enable IEView as default message log"), 1, LOI_TYPE_SETTING, (UINT_PTR)"default_ieview", 1,
     0, NULL, 0, 0, 0, 0
 };
-
-static int have_ieview = 0, have_hpp = 0;
 
 static BOOL CALLBACK DlgProcLogOptions(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 {
@@ -492,26 +491,7 @@ static BOOL CALLBACK DlgProcLogOptions(HWND hwndDlg, UINT msg, WPARAM wParam, LP
 			EnableWindow(GetDlgItem(hwndDlg, IDC_TRIMSPIN), maxhist != 0);
 			EnableWindow(GetDlgItem(hwndDlg, IDC_TRIM), maxhist != 0);
 			CheckDlgButton(hwndDlg, IDC_ALWAYSTRIM, maxhist != 0);
-
-            have_ieview = ServiceExists(MS_IEVIEW_WINDOW);
-            have_hpp = ServiceExists("History++/ExtGrid/NewWindow");
-
-            SendDlgItemMessage(hwndDlg, IDC_MSGLOGDIDSPLAY, CB_INSERTSTRING, -1, (LPARAM)_T("Default"));
-            SendDlgItemMessage(hwndDlg, IDC_MSGLOGDIDSPLAY, CB_SETCURSEL, 0, 0);
-
-            if(have_ieview) {
-                SendDlgItemMessage(hwndDlg, IDC_MSGLOGDIDSPLAY, CB_INSERTSTRING, -1, (LPARAM)_T("IEView plugin"));
-                if(DBGetContactSettingByte(NULL, SRMSGMOD_T, "default_ieview", 0))
-                    SendDlgItemMessage(hwndDlg, IDC_MSGLOGDIDSPLAY, CB_SETCURSEL, 1, 0);
-            }
-            if(have_hpp) {
-                SendDlgItemMessage(hwndDlg, IDC_MSGLOGDIDSPLAY, CB_INSERTSTRING, -1, (LPARAM)_T("History++ plugin"));
-                if(DBGetContactSettingByte(NULL, SRMSGMOD_T, "default_ieview", 0))
-                    SendDlgItemMessage(hwndDlg, IDC_MSGLOGDIDSPLAY, CB_SETCURSEL, 1, 0);
-                else if(DBGetContactSettingByte(NULL, SRMSGMOD_T, "default_hpp", 0))
-                    SendDlgItemMessage(hwndDlg, IDC_MSGLOGDIDSPLAY, CB_SETCURSEL, have_ieview ? 2 : 1, 0);
-            }
-            return TRUE;
+			return TRUE;
 		}
 	case WM_COMMAND:
 		switch (LOWORD(wParam)) {
@@ -592,8 +572,6 @@ static BOOL CALLBACK DlgProcLogOptions(HWND hwndDlg, UINT msg, WPARAM wParam, LP
 				{
 					int i = 0;
 					TVITEM item = {0};
-                    LRESULT msglogmode = SendDlgItemMessage(hwndDlg, IDC_MSGLOGDIDSPLAY, CB_GETCURSEL, 0, 0);
-
 					dwFlags &= ~(MWF_LOG_INDIVIDUALBKG | MWF_LOG_TEXTFORMAT | MWF_LOG_GRID | MWF_LOG_INDENT | MWF_LOG_SHOWICONS | MWF_LOG_SYMBOLS | MWF_LOG_INOUTICONS | MWF_LOG_GROUPMODE);
 
 					if (IsDlgButtonChecked(hwndDlg, IDC_LOADCOUNT))
@@ -607,18 +585,6 @@ static BOOL CALLBACK DlgProcLogOptions(HWND hwndDlg, UINT msg, WPARAM wParam, LP
 
 					DBWriteContactSettingDword(NULL, SRMSGMOD_T, "IndentAmount", (DWORD) GetDlgItemInt(hwndDlg, IDC_INDENTAMOUNT, &translated, FALSE));
 					DBWriteContactSettingDword(NULL, SRMSGMOD_T, "RightIndent", (DWORD) GetDlgItemInt(hwndDlg, IDC_RIGHTINDENT, &translated, FALSE));
-
-                    DBWriteContactSettingByte(NULL, SRMSGMOD_T, "default_ieview", 0);
-                    DBWriteContactSettingByte(NULL, SRMSGMOD_T, "default_hpp", 0);
-
-                    if(msglogmode == 1) {
-                        if(have_ieview)
-                            DBWriteContactSettingByte(NULL, SRMSGMOD_T, "default_ieview", 1);
-                        else
-                            DBWriteContactSettingByte(NULL, SRMSGMOD_T, "default_hpp", 1);
-                    }
-                    else if(msglogmode == 2)
-                        DBWriteContactSettingByte(NULL, SRMSGMOD_T, "default_hpp", 1);
 
 					/*
 					* scan the tree view and obtain the options...
@@ -641,6 +607,9 @@ static BOOL CALLBACK DlgProcLogOptions(HWND hwndDlg, UINT msg, WPARAM wParam, LP
 					else
 						DBWriteContactSettingDword(NULL, SRMSGMOD_T, "maxhist", 0);
 					ReloadGlobals();
+#ifdef __MATHMOD_SUPPORT    		
+					myGlobals.m_MathModAvail = ServiceExists(MATH_RTF_REPLACE_FORMULAE) && DBGetContactSettingByte(NULL, SRMSGMOD_T, "wantmathmod", 0);
+#endif                            
 					WindowList_Broadcast(hMessageWindowList, DM_OPTIONSAPPLIED, 1, 0);
 					return TRUE;
 				}
@@ -1476,7 +1445,7 @@ static BOOL CALLBACK SkinOptionsDlgProc(HWND hwnd, UINT msg, WPARAM wParam, LPAR
          TCITEM tci;
          RECT rcClient;
          int oPage = DBGetContactSettingByte(NULL, SRMSGMOD_T, "skin_opage", 0);
-         SKINDESCRIPTION sd;
+         //SKINDESCRIPTION sd;
 		 HWND hwndFirstPage;
 
          GetClientRect(hwnd, &rcClient);
@@ -1502,7 +1471,7 @@ static BOOL CALLBACK SkinOptionsDlgProc(HWND hwnd, UINT msg, WPARAM wParam, LPAR
          if(MyEnableThemeDialogTexture)
              MyEnableThemeDialogTexture((HWND)tci.lParam, ETDT_ENABLETAB);
 
-         if(myGlobals.m_WinVerMajor >= 5) {
+         /*if(myGlobals.m_WinVerMajor >= 5 && 0) {						// disabled because skin editor doesn't do anything for tabsrmm (yet)
              if(ServiceExists(MS_CLNSE_INVOKE)) {
 
                  ZeroMemory(&sd, sizeof(sd));
@@ -1540,7 +1509,7 @@ static BOOL CALLBACK SkinOptionsDlgProc(HWND hwnd, UINT msg, WPARAM wParam, LPAR
                  TabCtrl_SetCurSel(GetDlgItem(hwnd, IDC_OPTIONSTAB), oPage);
              }
          }
-         else {
+         else */{
              TabCtrl_SetCurSel(GetDlgItem(hwnd, IDC_OPTIONSTAB), 0);
 			 ShowWindow(hwndFirstPage, SW_SHOW);
          }
@@ -1691,11 +1660,7 @@ void ReloadGlobals()
      myGlobals.m_FixFutureTimestamps = (int)DBGetContactSettingByte(NULL, SRMSGMOD_T, "do_fft", 1);
      myGlobals.m_RTLDefault = (int)DBGetContactSettingByte(NULL, SRMSGMOD_T, "rtldefault", 0);
      myGlobals.m_SplitterSaveOnClose = (int)DBGetContactSettingByte(NULL, SRMSGMOD_T, "splitsavemode", 1);
-#ifdef __MATHMOD_SUPPORT    		
-	 myGlobals.m_MathModAvail = ServiceExists(MATH_RTF_REPLACE_FORMULAE) && DBGetContactSettingByte(NULL, SRMSGMOD_T, "wantmathmod", 1);
-#else
      myGlobals.m_MathModAvail = 0;
-#endif
      myGlobals.m_WinVerMajor = WinVerMajor();
      myGlobals.m_WinVerMinor = WinVerMinor();
      myGlobals.m_bIsXP = IsWinVerXPPlus();

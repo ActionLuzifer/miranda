@@ -31,27 +31,25 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //#include "skinEngine.h"
 #include "version.h"
 
-int LoadSkinButtonModule();
-
 //current module prototypes
 void  UninitSkinHotKeys();
 void  GetDefaultFontSetting(int i,LOGFONT *lf,COLORREF *colour);
 int   CLUI_OnSkinLoad(WPARAM wParam, LPARAM lParam);
-int   LoadContactListModule(void);
+int	  LoadContactListModule(void);
 int   LoadCLCModule(void);
 
 void	cliCheckCacheItem(pdisplayNameCacheEntry pdnce);
 void	cliFreeCacheItem( pdisplayNameCacheEntry p );
 void	cliRebuildEntireList(HWND hwnd,struct ClcData *dat);
 void	cliRecalcScrollBar(HWND hwnd,struct ClcData *dat);
-int   cliHotKeysProcess(HWND hwnd,WPARAM wParam,LPARAM lParam);
-int   cliHotkeysProcessMessage(WPARAM wParam,LPARAM lParam);
-int   cliHotKeysRegister(HWND hwnd);
-int   cliHotKeysUnregister(HWND hwnd);
+int		cliHotKeysProcess(HWND hwnd,WPARAM wParam,LPARAM lParam);
+int		cliHotkeysProcessMessage(WPARAM wParam,LPARAM lParam);
+int		cliHotKeysRegister(HWND hwnd);
+int		cliHotKeysUnregister(HWND hwnd);
 void	CLUI_cliOnCreateClc(void);
-int   cli_AddItemToGroup(struct ClcGroup *group, int iAboveItem);
-int   cli_AddInfoItemToGroup(struct ClcGroup *group,int flags,const TCHAR *pszText);
-int   cliGetGroupContentsCount(struct ClcGroup *group, int visibleOnly);
+int		cli_AddItemToGroup(struct ClcGroup *group, int iAboveItem);
+int		cli_AddInfoItemToGroup(struct ClcGroup *group,int flags,const TCHAR *pszText);
+int     cliGetGroupContentsCount(struct ClcGroup *group, int visibleOnly);
 struct CListEvent* cliCreateEvent( void );
 
 int cliGetRowsPriorTo(struct ClcGroup *group,struct ClcGroup *subgroup,int contactIndex);
@@ -98,17 +96,20 @@ void ( *saveDeleteItemFromTree )(HWND hwnd, HANDLE hItem);
 void cli_DeleteItemFromTree(HWND hwnd, HANDLE hItem);
 
 void ( *saveFreeContact )( struct ClcContact* );
-void cli_FreeContact( struct ClcContact* );
+extern void cli_FreeContact( struct ClcContact* );
 
 void ( *saveFreeGroup )( struct ClcGroup* );
 void cli_FreeGroup( struct ClcGroup* );
 
 void (*saveSaveStateAndRebuildList)(HWND hwnd, struct ClcData *dat);
 
+
+
 char* cli_GetGroupCountsText(struct ClcData *dat, struct ClcContact *contact);
 char* (*saveGetGroupCountsText)(struct ClcData *dat, struct ClcContact *contact);
 
-CluiData g_CluiData={0};
+
+
 
 void ( *saveChangeContactIcon)(HANDLE hContact,int iIcon,int add);
 void cli_ChangeContactIcon(HANDLE hContact,int iIcon,int add);
@@ -166,7 +167,7 @@ int MakeVer(a,b,c,d)
 
 __declspec(dllexport) PLUGININFO* MirandaPluginInfo(DWORD mirandaVersion)
 {
-	if ( mirandaVersion < PLUGIN_MAKE_VERSION(0,7,0,9) )
+	if ( mirandaVersion < PLUGIN_MAKE_VERSION(0,4,3,42) )
 	{
 		return NULL;
 	}
@@ -208,20 +209,9 @@ int __declspec(dllexport) CListInitialise(PLUGINLINK * link)
 {
 	int rc=0;
 	pluginLink=link;
-	#ifdef _DEBUG
-		//_CrtSetBreakAlloc(7680);
-	#endif
 	memset(&memoryManagerInterface,0,sizeof(memoryManagerInterface));
 	memoryManagerInterface.cbSize = sizeof(memoryManagerInterface);
 	CallService(MS_SYSTEM_GET_MMI, 0, (LPARAM)&memoryManagerInterface);
-
-	/* Global data initialization */
-	{
-		g_CluiData.fOnDesktop=FALSE;
-		g_CluiData.fUseKeyColor=TRUE;
-		g_CluiData.dwKeyColor=RGB(255,0,255);
-		g_CluiData.bCurrentAlpha=255;
-	}
 
 	InitUxTheme();
 
@@ -234,12 +224,9 @@ int __declspec(dllexport) CListInitialise(PLUGINLINK * link)
 	// get the contact list interface
 	pcli = ( CLIST_INTERFACE* )CallService(MS_CLIST_RETRIEVE_INTERFACE, 0, (LPARAM)g_hInst);
 	if ( (int)pcli == CALLSERVICE_NOTFOUND ) {
-LBL_Error:
-		MessageBoxA( NULL, "This version of plugin requires Miranda IM 0.7.0.8 or later", "Fatal error", MB_OK );
+		MessageBoxA( NULL, "This version of plugin requires Miranda IM 0.5 or later", "Fatal error", MB_OK );
 		return 1;
 	}
-	if ( pcli->version < 4 )
-		goto LBL_Error;
 
 	// OVERLOAD CLIST INTERFACE FUNCTIONS
 	//
@@ -248,20 +235,16 @@ LBL_Error:
 	//  'save*' - pointer to stored default parent handle
 	//	'cli_*'	- new handler with default core service calling
 
-	pcli->bDisplayLocked = TRUE;
-
-	pcli->pfnCheckCacheItem	= (void (*)(ClcCacheEntryBase*)) cliCheckCacheItem;
-	pcli->pfnFreeCacheItem = (void(*)(ClcCacheEntryBase*)) cliFreeCacheItem;
-	pcli->pfnTrayIconUpdateBase = (void (*)(const char *szChangedProto)) cliTrayIconUpdateBase;	
+	pcli->pfnCheckCacheItem		= (void (*)(ClcCacheEntryBase*)) cliCheckCacheItem;
+	pcli->pfnFreeCacheItem		= (void(*)(ClcCacheEntryBase*)) cliFreeCacheItem;
+	pcli->pfnTrayIconUpdateBase	= (void (*)(const char *szChangedProto)) cliTrayIconUpdateBase;	
 	
 	pcli->pfnInvalidateDisplayNameCacheEntry	= cliInvalidateDisplayNameCacheEntry;
 	pcli->pfnTrayIconUpdateWithImageList		= cliTrayIconUpdateWithImageList;
 	pcli->pfnCluiProtocolStatusChanged	= cliCluiProtocolStatusChanged;
 	pcli->pfnHotkeysProcessMessage		= cliHotkeysProcessMessage;
-	pcli->pfnHotKeysProcess		= cliHotKeysProcess;
-	pcli->pfnHotKeysRegister	= cliHotKeysRegister;
-	pcli->pfnHotKeysUnregister	= cliHotKeysUnregister;
 	pcli->pfnBeginRenameSelection		= cliBeginRenameSelection;
+	pcli->pfnTrayIconIconsChanged		= cliTrayIconIconsChanged;
 	pcli->pfnCListTrayNotify	= cliCListTrayNotify;
 	pcli->pfnCreateClcContact	= cliCreateClcContact;
 	pcli->pfnCreateCacheItem	= cliCreateCacheItem;
@@ -269,10 +252,12 @@ LBL_Error:
 	pcli->pfnGetRowHeight		= cliGetRowHeight;
 	pcli->pfnGetRowTopY			= cliGetRowTopY;
 	pcli->pfnGetRowTotalHeight	= cliGetRowTotalHeight;
-	pcli->pfnGetProtocolVisibility = GetProtocolVisibility;
 	pcli->pfnInvalidateRect		= CLUI__cliInvalidateRect;
 	pcli->pfnGetCacheEntry		= cliGetCacheEntry;
 	pcli->pfnOnCreateClc		= CLUI_cliOnCreateClc;
+	pcli->pfnHotKeysProcess		= cliHotKeysProcess;
+	pcli->pfnHotKeysRegister	= cliHotKeysRegister;
+	pcli->pfnHotKeysUnregister	= cliHotKeysUnregister;
 	pcli->pfnPaintClc			= CLCPaint_cliPaintClc;
 	pcli->pfnRebuildEntireList	= cliRebuildEntireList;
 	pcli->pfnRecalcScrollBar	= cliRecalcScrollBar;
@@ -282,31 +267,30 @@ LBL_Error:
 	pcli->pfnHitTest			= cliHitTest;
 	pcli->pfnCompareContacts	= cliCompareContacts;
 	pcli->pfnBuildGroupPopupMenu= cliBuildGroupPopupMenu;
-	pcli->pfnTrayIconIconsChanged		= cliTrayIconIconsChanged;
 	pcli->pfnTrayIconSetToBase	= cliTrayIconSetToBase;
 	pcli->pfnFindItem			= cliFindItem;
 	pcli->pfnGetRowByIndex		= cliGetRowByIndex;
 	pcli->pfnGetRowsPriorTo		= cliGetRowsPriorTo;
-	pcli->pfnGetGroupContentsCount =cliGetGroupContentsCount;
-	pcli->pfnCreateEvent        = cliCreateEvent;
+    pcli->pfnGetGroupContentsCount =cliGetGroupContentsCount;
+    pcli->pfnCreateEvent        = cliCreateEvent;
 
 	//partialy overloaded - call default handlers from inside
-	saveIconFromStatusMode      = pcli->pfnIconFromStatusMode;
-	pcli->pfnIconFromStatusMode = cli_IconFromStatusMode;
+    saveIconFromStatusMode      = pcli->pfnIconFromStatusMode;
+    pcli->pfnIconFromStatusMode = cli_IconFromStatusMode;
 
 	saveLoadCluiGlobalOpts		= pcli->pfnLoadCluiGlobalOpts;
 	pcli->pfnLoadCluiGlobalOpts = CLUI_cli_LoadCluiGlobalOpts;
 
 	saveSortCLC					= pcli->pfnSortCLC;	
 	pcli->pfnSortCLC			= cli_SortCLC;
-
+	
 	saveAddGroup				= pcli->pfnAddGroup; 
 	pcli->pfnAddGroup			= cli_AddGroup;
-
+	
 	saveGetGroupCountsText		= pcli->pfnGetGroupCountsText;
 	pcli->pfnGetGroupCountsText	= cli_GetGroupCountsText;
 
-	saveAddContactToTree		= pcli->pfnAddContactToTree;  
+    saveAddContactToTree		= pcli->pfnAddContactToTree;  
 	pcli->pfnAddContactToTree	= cli_AddContactToTree;
 
 	saveAddInfoItemToGroup		= pcli->pfnAddInfoItemToGroup; 
@@ -326,13 +310,13 @@ LBL_Error:
 
 	saveFreeGroup				= pcli->pfnFreeGroup; 
 	pcli->pfnFreeGroup			= cli_FreeGroup;
-
+	
 	saveChangeContactIcon		= pcli->pfnChangeContactIcon;
 	pcli->pfnChangeContactIcon	= cli_ChangeContactIcon;
-
+    
 	saveTrayIconProcessMessage		= pcli->pfnTrayIconProcessMessage; 
 	pcli->pfnTrayIconProcessMessage	= cli_TrayIconProcessMessage;
-
+	
 	saveSaveStateAndRebuildList		= pcli->pfnSaveStateAndRebuildList;
 	pcli->pfnSaveStateAndRebuildList= cli_SaveStateAndRebuildList;
 
@@ -352,11 +336,11 @@ LBL_Error:
 	CreateServiceFunction(CLUI_SetDrawerService,SetDrawer);
 
 	///test///
-	LoadSkinButtonModule();
 	ModernButton_LoadModule();
 	SkinEngine_LoadModule();
 	rc=LoadContactListModule();
 	if (rc==0) rc=LoadCLCModule();
+	LoadMoveToGroup();
 	TRACE("CListInitialise ClistMW...Done\r\n");
 	return rc;
 }
@@ -373,6 +357,7 @@ int __declspec(dllexport) Unload(void)
 {
 	TRACE("Unloading ClistMW\r\n");	
 	if (IsWindow(pcli->hwndContactList)) DestroyWindow(pcli->hwndContactList);
+	UninitCustomMenus();
 	UnloadAvatarOverlayIcon();
 	UninitSkinHotKeys();
 	UnhookEvent(g_hSkinLoadedEvent);
