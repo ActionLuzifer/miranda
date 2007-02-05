@@ -1,4 +1,3 @@
-
 /* pnggccrd.c - mixed C/assembler version of utilities to read a PNG file
  *
  * For Intel x86 CPU (Pentium-MMX or later) and GNU C compiler.
@@ -7,9 +6,9 @@
  *     and http://www.intel.com/drg/pentiumII/appnotes/923/923.htm
  *     for Intel's performance analysis of the MMX vs. non-MMX code.
  *
- * Last changed in libpng 1.2.15 January 5, 2007
+ * libpng version 1.2.8 - December 3, 2004
  * For conditions of distribution and use, see copyright notice in png.h
- * Copyright (c) 1998-2007 Glenn Randers-Pehrson
+ * Copyright (c) 1998-2004 Glenn Randers-Pehrson
  * Copyright (c) 1998, Intel Corporation
  *
  * Based on MSVC code contributed by Nirav Chhatrapati, Intel Corp., 1998.
@@ -245,7 +244,7 @@
 #define PNG_INTERNAL
 #include "png.h"
 
-#if defined(PNG_ASSEMBLER_CODE_SUPPORTED) && defined(PNG_USE_PNGGCCRD)
+#if defined(PNG_USE_PNGGCCRD)
 
 int PNGAPI png_mmx_support(void);
 
@@ -255,11 +254,10 @@ static const int FARDATA png_pass_inc[7]   = {8, 8, 4, 4, 2, 2, 1};
 static const int FARDATA png_pass_width[7] = {8, 4, 4, 2, 2, 1, 1};
 #endif
 
-#if defined(PNG_MMX_CODE_SUPPORTED)
-/* djgpp, Win32, Cygwin, and OS2 add their own underscores to global variables,
+#if defined(PNG_ASSEMBLER_CODE_SUPPORTED)
+/* djgpp, Win32, and Cygwin add their own underscores to global variables,
  * so define them without: */
-#if defined(__DJGPP__) || defined(WIN32) || defined(__CYGWIN__) || \
-    defined(__OS2__)
+#if defined(__DJGPP__) || defined(WIN32) || defined(__CYGWIN__)
 #  define _mmx_supported  mmx_supported
 #  define _const4         const4
 #  define _const6         const6
@@ -378,7 +376,7 @@ png_squelch_warnings(void)
    _mask48_1 = _mask48_1;
    _mask48_0 = _mask48_0;
 }
-#endif /* PNG_MMX_CODE_SUPPORTED */
+#endif /* PNG_ASSEMBLER_CODE_SUPPORTED */
 
 
 static int _mmx_supported = 2;
@@ -389,7 +387,7 @@ static int _mmx_supported = 2;
 /*                                                                           */
 /*===========================================================================*/
 
-#if defined(PNG_HAVE_MMX_COMBINE_ROW)
+#if defined(PNG_HAVE_ASSEMBLER_COMBINE_ROW)
 
 #define BPP2  2
 #define BPP3  3 /* bytes per pixel (a.k.a. pixel_bytes) */
@@ -416,7 +414,7 @@ png_combine_row(png_structp png_ptr, png_bytep row, int mask)
 {
    png_debug(1, "in png_combine_row (pnggccrd.c)\n");
 
-#if defined(PNG_MMX_CODE_SUPPORTED)
+#if defined(PNG_ASSEMBLER_CODE_SUPPORTED)
    if (_mmx_supported == 2) {
 #if !defined(PNG_1_0_X)
        /* this should have happened in png_init_mmx_flags() already */
@@ -607,7 +605,7 @@ png_combine_row(png_structp png_ptr, png_bytep row, int mask)
             png_bytep srcptr;
             png_bytep dstptr;
 
-#if defined(PNG_MMX_CODE_SUPPORTED) && defined(PNG_THREAD_UNSAFE_OK)
+#if defined(PNG_ASSEMBLER_CODE_SUPPORTED) && defined(PNG_THREAD_UNSAFE_OK)
 #if !defined(PNG_1_0_X)
             if ((png_ptr->asm_flags & PNG_ASM_FLAG_MMX_READ_COMBINE_ROW)
                 /* && _mmx_supported */ )
@@ -700,7 +698,7 @@ png_combine_row(png_structp png_ptr, png_bytep row, int mask)
                );
             }
             else /* mmx _not supported - Use modified C routine */
-#endif /* PNG_MMX_CODE_SUPPORTED */
+#endif /* PNG_ASSEMBLER_CODE_SUPPORTED */
             {
                register png_uint_32 i;
                png_uint_32 initial_val = png_pass_start[png_ptr->pass];
@@ -745,7 +743,7 @@ png_combine_row(png_structp png_ptr, png_bytep row, int mask)
             png_bytep srcptr;
             png_bytep dstptr;
 
-#if defined(PNG_MMX_CODE_SUPPORTED) && defined(PNG_THREAD_UNSAFE_OK)
+#if defined(PNG_ASSEMBLER_CODE_SUPPORTED) && defined(PNG_THREAD_UNSAFE_OK)
 #if !defined(PNG_1_0_X)
             if ((png_ptr->asm_flags & PNG_ASM_FLAG_MMX_READ_COMBINE_ROW)
                 /* && _mmx_supported */ )
@@ -854,7 +852,7 @@ png_combine_row(png_structp png_ptr, png_bytep row, int mask)
                );
             }
             else /* mmx _not supported - Use modified C routine */
-#endif /* PNG_MMX_CODE_SUPPORTED */
+#endif /* PNG_ASSEMBLER_CODE_SUPPORTED */
             {
                register png_uint_32 i;
                png_uint_32 initial_val = BPP2 * png_pass_start[png_ptr->pass];
@@ -898,7 +896,7 @@ png_combine_row(png_structp png_ptr, png_bytep row, int mask)
             png_bytep srcptr;
             png_bytep dstptr;
 
-#if defined(PNG_MMX_CODE_SUPPORTED) && defined(PNG_THREAD_UNSAFE_OK)
+#if defined(PNG_ASSEMBLER_CODE_SUPPORTED) && defined(PNG_THREAD_UNSAFE_OK)
 #if !defined(PNG_1_0_X)
             if ((png_ptr->asm_flags & PNG_ASM_FLAG_MMX_READ_COMBINE_ROW)
                 /* && _mmx_supported */ )
@@ -1022,7 +1020,7 @@ png_combine_row(png_structp png_ptr, png_bytep row, int mask)
                );
             }
             else /* mmx _not supported - Use modified C routine */
-#endif /* PNG_MMX_CODE_SUPPORTED */
+#endif /* PNG_ASSEMBLER_CODE_SUPPORTED */
             {
                register png_uint_32 i;
                png_uint_32 initial_val = BPP3 * png_pass_start[png_ptr->pass];
@@ -1066,7 +1064,7 @@ png_combine_row(png_structp png_ptr, png_bytep row, int mask)
             png_bytep srcptr;
             png_bytep dstptr;
 
-#if defined(PNG_MMX_CODE_SUPPORTED) && defined(PNG_THREAD_UNSAFE_OK)
+#if defined(PNG_ASSEMBLER_CODE_SUPPORTED) && defined(PNG_THREAD_UNSAFE_OK)
 #if !defined(PNG_1_0_X)
             if ((png_ptr->asm_flags & PNG_ASM_FLAG_MMX_READ_COMBINE_ROW)
                 /* && _mmx_supported */ )
@@ -1197,7 +1195,7 @@ png_combine_row(png_structp png_ptr, png_bytep row, int mask)
                );
             }
             else /* mmx _not supported - Use modified C routine */
-#endif /* PNG_MMX_CODE_SUPPORTED */
+#endif /* PNG_ASSEMBLER_CODE_SUPPORTED */
             {
                register png_uint_32 i;
                png_uint_32 initial_val = BPP4 * png_pass_start[png_ptr->pass];
@@ -1241,7 +1239,7 @@ png_combine_row(png_structp png_ptr, png_bytep row, int mask)
             png_bytep srcptr;
             png_bytep dstptr;
 
-#if defined(PNG_MMX_CODE_SUPPORTED) && defined(PNG_THREAD_UNSAFE_OK)
+#if defined(PNG_ASSEMBLER_CODE_SUPPORTED) && defined(PNG_THREAD_UNSAFE_OK)
 #if !defined(PNG_1_0_X)
             if ((png_ptr->asm_flags & PNG_ASM_FLAG_MMX_READ_COMBINE_ROW)
                 /* && _mmx_supported */ )
@@ -1389,7 +1387,7 @@ png_combine_row(png_structp png_ptr, png_bytep row, int mask)
                );
             }
             else /* mmx _not supported - Use modified C routine */
-#endif /* PNG_MMX_CODE_SUPPORTED */
+#endif /* PNG_ASSEMBLER_CODE_SUPPORTED */
             {
                register png_uint_32 i;
                png_uint_32 initial_val = BPP6 * png_pass_start[png_ptr->pass];
@@ -1480,7 +1478,7 @@ png_combine_row(png_structp png_ptr, png_bytep row, int mask)
 
 } /* end png_combine_row() */
 
-#endif /* PNG_HAVE_MMX_COMBINE_ROW */
+#endif /* PNG_HAVE_ASSEMBLER_COMBINE_ROW */
 
 
 
@@ -1492,7 +1490,7 @@ png_combine_row(png_structp png_ptr, png_bytep row, int mask)
 /*===========================================================================*/
 
 #if defined(PNG_READ_INTERLACING_SUPPORTED)
-#if defined(PNG_HAVE_MMX_READ_INTERLACE)
+#if defined(PNG_HAVE_ASSEMBLER_READ_INTERLACE)
 
 /* png_do_read_interlace() is called after any 16-bit to 8-bit conversion
  * has taken place.  [GRR: what other steps come before and/or after?]
@@ -1510,7 +1508,7 @@ png_do_read_interlace(png_structp png_ptr)
 
    png_debug(1, "in png_do_read_interlace (pnggccrd.c)\n");
 
-#if defined(PNG_MMX_CODE_SUPPORTED)
+#if defined(PNG_ASSEMBLER_CODE_SUPPORTED)
    if (_mmx_supported == 2) {
 #if !defined(PNG_1_0_X)
        /* this should have happened in png_init_mmx_flags() already */
@@ -1723,7 +1721,7 @@ png_do_read_interlace(png_structp png_ptr)
 
             /* New code by Nirav Chhatrapati - Intel Corporation */
 
-#if defined(PNG_MMX_CODE_SUPPORTED)
+#if defined(PNG_ASSEMBLER_CODE_SUPPORTED)
 #if !defined(PNG_1_0_X)
             if ((png_ptr->asm_flags & PNG_ASM_FLAG_MMX_READ_INTERLACE)
                 /* && _mmx_supported */ )
@@ -1739,7 +1737,6 @@ png_do_read_interlace(png_structp png_ptr)
                      int dummy_value_c;   // fix 'forbidden register spilled'
                      int dummy_value_S;
                      int dummy_value_D;
-                     int dummy_value_a;
 
                      __asm__ __volatile__ (
                         "subl $21, %%edi         \n\t"
@@ -1747,7 +1744,7 @@ png_do_read_interlace(png_structp png_ptr)
 
                      ".loop3_pass0:              \n\t"
                         "movd (%%esi), %%mm0     \n\t" // x x x x x 2 1 0
-                        "pand (%3), %%mm0        \n\t" // z z z z z 2 1 0
+                        "pand _const4, %%mm0     \n\t" // z z z z z 2 1 0
                         "movq %%mm0, %%mm1       \n\t" // z z z z z 2 1 0
                         "psllq $16, %%mm0        \n\t" // z z z 2 1 0 z z
                         "movq %%mm0, %%mm2       \n\t" // z z z 2 1 0 z z
@@ -1772,14 +1769,12 @@ png_do_read_interlace(png_structp png_ptr)
 
                         : "=c" (dummy_value_c),        // output regs (dummy)
                           "=S" (dummy_value_S),
-                          "=D" (dummy_value_D),
-                          "=a" (dummy_value_a)
-
+                          "=D" (dummy_value_D)
 
                         : "1" (sptr),      // esi      // input regs
                           "2" (dp),        // edi
                           "0" (width),     // ecx
-                          "3" (&_const4)  // %1(?)  (0x0000000000FFFFFFLL)
+                          "rim" (_const4)  // %1(?)  (0x0000000000FFFFFFLL)
 
 #if 0  /* %mm0, ..., %mm4 not supported by gcc 2.7.2.3 or egcs 1.1 */
                         : "%mm0", "%mm1", "%mm2"       // clobber list
@@ -1792,7 +1787,6 @@ png_do_read_interlace(png_structp png_ptr)
                      int dummy_value_c;   // fix 'forbidden register spilled'
                      int dummy_value_S;
                      int dummy_value_D;
-                     int dummy_value_a;
 
                      __asm__ __volatile__ (
                         "subl $9, %%edi          \n\t"
@@ -1800,7 +1794,7 @@ png_do_read_interlace(png_structp png_ptr)
 
                      ".loop3_pass2:              \n\t"
                         "movd (%%esi), %%mm0     \n\t" // x x x x x 2 1 0
-                        "pand (%3), %%mm0     \n\t" // z z z z z 2 1 0
+                        "pand _const4, %%mm0     \n\t" // z z z z z 2 1 0
                         "movq %%mm0, %%mm1       \n\t" // z z z z z 2 1 0
                         "psllq $16, %%mm0        \n\t" // z z z 2 1 0 z z
                         "movq %%mm0, %%mm2       \n\t" // z z z 2 1 0 z z
@@ -1819,13 +1813,12 @@ png_do_read_interlace(png_structp png_ptr)
 
                         : "=c" (dummy_value_c),        // output regs (dummy)
                           "=S" (dummy_value_S),
-                          "=D" (dummy_value_D),
-                          "=a" (dummy_value_a)
+                          "=D" (dummy_value_D)
 
                         : "1" (sptr),      // esi      // input regs
                           "2" (dp),        // edi
                           "0" (width),     // ecx
-                          "3" (&_const4)  // (0x0000000000FFFFFFLL)
+                          "rim" (_const4)  // (0x0000000000FFFFFFLL)
 
 #if 0  /* %mm0, ..., %mm2 not supported by gcc 2.7.2.3 or egcs 1.1 */
                         : "%mm0", "%mm1", "%mm2"       // clobber list
@@ -1846,8 +1839,6 @@ png_do_read_interlace(png_structp png_ptr)
                         int dummy_value_c;  // fix 'forbidden register spilled'
                         int dummy_value_S;
                         int dummy_value_D;
-                        int dummy_value_a;
-                        int dummy_value_d;
 
                         __asm__ __volatile__ (
                            "subl $3, %%esi          \n\t"
@@ -1859,14 +1850,14 @@ png_do_read_interlace(png_structp png_ptr)
                            "movq %%mm0, %%mm1       \n\t" // x x 5 4 3 2 1 0
                            "movq %%mm0, %%mm2       \n\t" // x x 5 4 3 2 1 0
                            "psllq $24, %%mm0        \n\t" // 4 3 2 1 0 z z z
-                           "pand (%3), %%mm1          \n\t" // z z z z z 2 1 0
+                           "pand _const4, %%mm1     \n\t" // z z z z z 2 1 0
                            "psrlq $24, %%mm2        \n\t" // z z z x x 5 4 3
                            "por %%mm1, %%mm0        \n\t" // 4 3 2 1 0 2 1 0
                            "movq %%mm2, %%mm3       \n\t" // z z z x x 5 4 3
                            "psllq $8, %%mm2         \n\t" // z z x x 5 4 3 z
                            "movq %%mm0, (%%edi)     \n\t"
                            "psrlq $16, %%mm3        \n\t" // z z z z z x x 5
-                           "pand (%4), %%mm3     \n\t" // z z z z z z z 5
+                           "pand _const6, %%mm3     \n\t" // z z z z z z z 5
                            "por %%mm3, %%mm2        \n\t" // z z x x 5 4 3 5
                            "subl $6, %%esi          \n\t"
                            "movd %%mm2, 8(%%edi)    \n\t"
@@ -1877,15 +1868,13 @@ png_do_read_interlace(png_structp png_ptr)
 
                            : "=c" (dummy_value_c),        // output regs (dummy)
                              "=S" (dummy_value_S),
-                             "=D" (dummy_value_D),
-                             "=a" (dummy_value_a),
-                             "=d" (dummy_value_d)
+                             "=D" (dummy_value_D)
 
                            : "1" (sptr),      // esi      // input regs
                              "2" (dp),        // edi
                              "0" (width_mmx), // ecx
-                             "3" (&_const4), // 0x0000000000FFFFFFLL
-                             "4" (&_const6)  // 0x00000000000000FFLL
+                             "rim" (_const4), // 0x0000000000FFFFFFLL
+                             "rim" (_const6)  // 0x00000000000000FFLL
 
 #if 0  /* %mm0, ..., %mm3 not supported by gcc 2.7.2.3 or egcs 1.1 */
                            : "%mm0", "%mm1"               // clobber list
@@ -2628,7 +2617,7 @@ png_do_read_interlace(png_structp png_ptr)
                  /* GRR 19991007:  does it?  or should pixel_bytes in each
                   *   block be replaced with immediate value (e.g., 1)? */
                  /* GRR 19991017:  replaced with constants in each case */
-#endif /* PNG_MMX_CODE_SUPPORTED */
+#endif /* PNG_ASSEMBLER_CODE_SUPPORTED */
             {
                if (pixel_bytes == 1)
                {
@@ -2753,13 +2742,13 @@ png_do_read_interlace(png_structp png_ptr)
 
 } /* end png_do_read_interlace() */
 
-#endif /* PNG_HAVE_MMX_READ_INTERLACE */
+#endif /* PNG_HAVE_ASSEMBLER_READ_INTERLACE */
 #endif /* PNG_READ_INTERLACING_SUPPORTED */
 
 
 
-#if defined(PNG_HAVE_MMX_READ_FILTER_ROW)
-#if defined(PNG_MMX_CODE_SUPPORTED)
+#if defined(PNG_HAVE_ASSEMBLER_READ_FILTER_ROW)
+#if defined(PNG_ASSEMBLER_CODE_SUPPORTED)
 
 // These variables are utilized in the functions below.  They are declared
 // globally here to ensure alignment on 8-byte boundaries.
@@ -5066,7 +5055,7 @@ png_read_filter_row_mmx_up(png_row_infop row_info, png_bytep row,
 
 } // end of png_read_filter_row_mmx_up()
 
-#endif /* PNG_MMX_CODE_SUPPORTED */
+#endif /* PNG_ASSEMBLER_CODE_SUPPORTED */
 
 
 
@@ -5088,7 +5077,7 @@ png_read_filter_row(png_structp png_ptr, png_row_infop row_info, png_bytep
    char filnm[10];
 #endif
 
-#if defined(PNG_MMX_CODE_SUPPORTED)
+#if defined(PNG_ASSEMBLER_CODE_SUPPORTED)
 /* GRR:  these are superseded by png_ptr->asm_flags: */
 #define UseMMX_sub    1   // GRR:  converted 20000730
 #define UseMMX_up     1   // GRR:  converted 20000729
@@ -5102,7 +5091,7 @@ png_read_filter_row(png_structp png_ptr, png_row_infop row_info, png_bytep
 #endif
        png_mmx_support();
    }
-#endif /* PNG_MMX_CODE_SUPPORTED */
+#endif /* PNG_ASSEMBLER_CODE_SUPPORTED */
 
 #ifdef PNG_DEBUG
    png_debug(1, "in png_read_filter_row (pnggccrd.c)\n");
@@ -5111,15 +5100,15 @@ png_read_filter_row(png_structp png_ptr, png_row_infop row_info, png_bytep
       case 0: sprintf(filnm, "none");
          break;
       case 1: sprintf(filnm, "sub-%s",
-#if defined(PNG_MMX_CODE_SUPPORTED) && defined(PNG_THREAD_UNSAFE_OK)
+#if defined(PNG_ASSEMBLER_CODE_SUPPORTED) && defined(PNG_THREAD_UNSAFE_OK)
 #if !defined(PNG_1_0_X)
-        (png_ptr->asm_flags & PNG_ASM_FLAG_MMX_READ_FILTER_SUB)? "MMX" :
+        (png_ptr->asm_flags & PNG_ASM_FLAG_MMX_READ_FILTER_SUB)? "MMX" : 
 #endif
 #endif
 "x86");
          break;
       case 2: sprintf(filnm, "up-%s",
-#ifdef PNG_MMX_CODE_SUPPORTED
+#ifdef PNG_ASSEMBLER_CODE_SUPPORTED
 #if !defined(PNG_1_0_X)
         (png_ptr->asm_flags & PNG_ASM_FLAG_MMX_READ_FILTER_UP)? "MMX" :
 #endif
@@ -5127,7 +5116,7 @@ png_read_filter_row(png_structp png_ptr, png_row_infop row_info, png_bytep
  "x86");
          break;
       case 3: sprintf(filnm, "avg-%s",
-#if defined(PNG_MMX_CODE_SUPPORTED) && defined(PNG_THREAD_UNSAFE_OK)
+#if defined(PNG_ASSEMBLER_CODE_SUPPORTED) && defined(PNG_THREAD_UNSAFE_OK)
 #if !defined(PNG_1_0_X)
         (png_ptr->asm_flags & PNG_ASM_FLAG_MMX_READ_FILTER_AVG)? "MMX" :
 #endif
@@ -5135,7 +5124,7 @@ png_read_filter_row(png_structp png_ptr, png_row_infop row_info, png_bytep
  "x86");
          break;
       case 4: sprintf(filnm, "Paeth-%s",
-#if defined(PNG_MMX_CODE_SUPPORTED) && defined(PNG_THREAD_UNSAFE_OK)
+#if defined(PNG_ASSEMBLER_CODE_SUPPORTED) && defined(PNG_THREAD_UNSAFE_OK)
 #if !defined(PNG_1_0_X)
         (png_ptr->asm_flags & PNG_ASM_FLAG_MMX_READ_FILTER_PAETH)? "MMX":
 #endif
@@ -5158,7 +5147,7 @@ png_read_filter_row(png_structp png_ptr, png_row_infop row_info, png_bytep
          break;
 
       case PNG_FILTER_VALUE_SUB:
-#if defined(PNG_MMX_CODE_SUPPORTED) && defined(PNG_THREAD_UNSAFE_OK)
+#if defined(PNG_ASSEMBLER_CODE_SUPPORTED) && defined(PNG_THREAD_UNSAFE_OK)
 #if !defined(PNG_1_0_X)
          if ((png_ptr->asm_flags & PNG_ASM_FLAG_MMX_READ_FILTER_SUB) &&
              (row_info->pixel_depth >= png_ptr->mmx_bitdepth_threshold) &&
@@ -5170,7 +5159,7 @@ png_read_filter_row(png_structp png_ptr, png_row_infop row_info, png_bytep
             png_read_filter_row_mmx_sub(row_info, row);
          }
          else
-#endif /* PNG_MMX_CODE_SUPPORTED */
+#endif /* PNG_ASSEMBLER_CODE_SUPPORTED */
          {
             png_uint_32 i;
             png_uint_32 istop = row_info->rowbytes;
@@ -5187,7 +5176,7 @@ png_read_filter_row(png_structp png_ptr, png_row_infop row_info, png_bytep
          break;
 
       case PNG_FILTER_VALUE_UP:
-#if defined(PNG_MMX_CODE_SUPPORTED)
+#if defined(PNG_ASSEMBLER_CODE_SUPPORTED)
 #if !defined(PNG_1_0_X)
          if ((png_ptr->asm_flags & PNG_ASM_FLAG_MMX_READ_FILTER_UP) &&
              (row_info->pixel_depth >= png_ptr->mmx_bitdepth_threshold) &&
@@ -5199,7 +5188,7 @@ png_read_filter_row(png_structp png_ptr, png_row_infop row_info, png_bytep
             png_read_filter_row_mmx_up(row_info, row, prev_row);
          }
           else
-#endif /* PNG_MMX_CODE_SUPPORTED */
+#endif /* PNG_ASSEMBLER_CODE_SUPPORTED */
          {
             png_uint_32 i;
             png_uint_32 istop = row_info->rowbytes;
@@ -5215,7 +5204,7 @@ png_read_filter_row(png_structp png_ptr, png_row_infop row_info, png_bytep
          break;
 
       case PNG_FILTER_VALUE_AVG:
-#if defined(PNG_MMX_CODE_SUPPORTED) && defined(PNG_THREAD_UNSAFE_OK)
+#if defined(PNG_ASSEMBLER_CODE_SUPPORTED) && defined(PNG_THREAD_UNSAFE_OK)
 #if !defined(PNG_1_0_X)
          if ((png_ptr->asm_flags & PNG_ASM_FLAG_MMX_READ_FILTER_AVG) &&
              (row_info->pixel_depth >= png_ptr->mmx_bitdepth_threshold) &&
@@ -5227,7 +5216,7 @@ png_read_filter_row(png_structp png_ptr, png_row_infop row_info, png_bytep
             png_read_filter_row_mmx_avg(row_info, row, prev_row);
          }
          else
-#endif /* PNG_MMX_CODE_SUPPORTED */
+#endif /* PNG_ASSEMBLER_CODE_SUPPORTED */
          {
             png_uint_32 i;
             png_bytep rp = row;
@@ -5253,7 +5242,7 @@ png_read_filter_row(png_structp png_ptr, png_row_infop row_info, png_bytep
          break;
 
       case PNG_FILTER_VALUE_PAETH:
-#if defined(PNG_MMX_CODE_SUPPORTED) && defined(PNG_THREAD_UNSAFE_OK)
+#if defined(PNG_ASSEMBLER_CODE_SUPPORTED) && defined(PNG_THREAD_UNSAFE_OK)
 #if !defined(PNG_1_0_X)
          if ((png_ptr->asm_flags & PNG_ASM_FLAG_MMX_READ_FILTER_PAETH) &&
              (row_info->pixel_depth >= png_ptr->mmx_bitdepth_threshold) &&
@@ -5265,7 +5254,7 @@ png_read_filter_row(png_structp png_ptr, png_row_infop row_info, png_bytep
             png_read_filter_row_mmx_paeth(row_info, row, prev_row);
          }
          else
-#endif /* PNG_MMX_CODE_SUPPORTED */
+#endif /* PNG_ASSEMBLER_CODE_SUPPORTED */
          {
             png_uint_32 i;
             png_bytep rp = row;
@@ -5326,7 +5315,7 @@ png_read_filter_row(png_structp png_ptr, png_row_infop row_info, png_bytep
    }
 }
 
-#endif /* PNG_HAVE_MMX_READ_FILTER_ROW */
+#endif /* PNG_HAVE_ASSEMBLER_READ_FILTER_ROW */
 
 
 /*===========================================================================*/
@@ -5350,7 +5339,6 @@ int PNGAPI
 png_mmx_support(void)
 {
 #if defined(PNG_MMX_CODE_SUPPORTED)
-    int result;
     __asm__ __volatile__ (
         "pushl %%ebx          \n\t"  // ebx gets clobbered by CPUID instruction
         "pushl %%ecx          \n\t"  // so does ecx...
@@ -5392,6 +5380,7 @@ png_mmx_support(void)
     "0:                       \n\t"  // .NOT_SUPPORTED: target label for jump instructions
         "movl $0, %%eax       \n\t"  // set return value to 0
     "1:                       \n\t"  // .RETURN: target label for jump instructions
+        "movl %%eax, _mmx_supported \n\t" // save in global static variable, too
         "popl %%edx           \n\t"  // restore edx
         "popl %%ecx           \n\t"  // restore ecx
         "popl %%ebx           \n\t"  // restore ebx
@@ -5399,17 +5388,16 @@ png_mmx_support(void)
 //      "ret                  \n\t"  // DONE:  no MMX support
                                      // (fall through to standard C "ret")
 
-        : "=a" (result)              // output list
+        :                            // output list (none)
 
         :                            // any variables used on input (none)
 
-                                     // no clobber list
+        : "%eax"                     // clobber list
 //      , "%ebx", "%ecx", "%edx"     // GRR:  we handle these manually
 //      , "memory"   // if write to a variable gcc thought was in a reg
 //      , "cc"       // "condition codes" (flag bits)
     );
-    _mmx_supported = result;
-#else
+#else     
     _mmx_supported = 0;
 #endif /* PNG_MMX_CODE_SUPPORTED */
 

@@ -822,6 +822,7 @@ static int PopupShow(NEN_OPTIONS *pluginOptions, HANDLE hContact, HANDLE hEvent,
     pdata->eventData[0].szText[MAX_SECONDLINE - 1] = 0;
     pdata->nrEventsAlloced = NR_MERGED;
     pdata->nrMerged = 1;
+
     PopupCount++;
 
     PopUpList[NumberPopupData(NULL)] = pdata;
@@ -1181,7 +1182,7 @@ static int PopupShowW(NEN_OPTIONS *pluginOptions, HANDLE hContact, HANDLE hEvent
     codePage = DBGetContactSettingDword(hContact, SRMSGMOD_T, "ANSIcodepage", myGlobals.m_LangPackCP);
     
     if (hContact) {
-        MY_GetContactDisplayNameW(hContact, pud.lpwzContactName, MAX_CONTACTNAME, (char *)CallService(MS_PROTO_GETCONTACTBASEPROTO, (WPARAM)hContact, 0), 0);
+        MY_GetContactDisplayNameW(hContact, pud.lpwzContactName, MAX_CONTACTNAME, dbe.szModule, 0);
         pud.lpwzContactName[MAX_CONTACTNAME - 1] = 0;
     }
     else {
@@ -1591,12 +1592,6 @@ void DeletePopupsForContact(HANDLE hContact, DWORD dwMask)
     if(!(dwMask & nen_options.dwRemoveMask) || nen_options.iDisable || !myGlobals.g_PopupAvail)
         return;
         
-    //_DebugTraceA("removing popups for: %d", hContact);
-    /*
-    for(i = 0; i < 20; i++) {
-        if(PopUpList[i] != NULL && PopUpList[i]->hContact == hContact && PopUpList[i]->hWnd != 0 && IsWindow(PopUpList[i]->hWnd))
-            PUDeletePopUp(PopUpList[i]->hWnd);
-    }*/
     while((i = NumberPopupData(hContact)) != -1) {
         if(PopUpList[i]->hWnd != 0 && IsWindow(PopUpList[i]->hWnd))
             PUDeletePopUp(PopUpList[i]->hWnd);

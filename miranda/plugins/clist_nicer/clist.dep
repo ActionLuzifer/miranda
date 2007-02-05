@@ -1,20 +1,6 @@
 # Microsoft Developer Studio Generated Dependency File, included by clist.mak
 
 .\CLUIFrames\cluiframes.c : \
-	".\CLUIFrames\cluiframes.h"\
-	".\m_clui.h"\
-	
-
-.\CLUIFrames\framesmenu.c : \
-	".\CLUIFrames\cluiframes.h"\
-	".\m_clui.h"\
-	
-
-.\CLUIFrames\groupmenu.c : \
-	".\m_clui.h"\
-	
-
-.\alphablend.c : \
 	"..\..\include\m_addcontact.h"\
 	"..\..\include\m_button.h"\
 	"..\..\include\m_clc.h"\
@@ -24,9 +10,7 @@
 	"..\..\include\m_contacts.h"\
 	"..\..\include\m_database.h"\
 	"..\..\include\m_file.h"\
-	"..\..\include\m_genmenu.h"\
 	"..\..\include\m_langpack.h"\
-	"..\..\include\m_message.h"\
 	"..\..\include\m_options.h"\
 	"..\..\include\m_plugins.h"\
 	"..\..\include\m_popup.h"\
@@ -41,16 +25,253 @@
 	".\alphablend.h"\
 	".\clc.h"\
 	".\clist.h"\
-	".\commonheaders.h"\
+	".\CLUIFrames\cluiframes.h"\
+	".\CLUIFrames\genmenu.h"\
 	".\extbackg.h"\
 	".\forkthread.h"\
-	".\icolib.h"\
 	".\m_avatars.h"\
-	".\m_cln_skinedit.h"\
 	".\m_clui.h"\
-	".\m_cluiframes.h"\
-	".\m_fontservice.h"\
-	".\m_metacontacts.h"\
+	".\m_genmenu.h"\
+	".\rowheight_funcs.h"\
+	
+
+.\CLUIFrames\framesmenu.c : \
+	"..\..\include\m_addcontact.h"\
+	"..\..\include\m_button.h"\
+	"..\..\include\m_clc.h"\
+	"..\..\include\m_clist.h"\
+	"..\..\include\m_clistint.h"\
+	"..\..\include\m_clui.h"\
+	"..\..\include\m_contacts.h"\
+	"..\..\include\m_database.h"\
+	"..\..\include\m_file.h"\
+	"..\..\include\m_langpack.h"\
+	"..\..\include\m_options.h"\
+	"..\..\include\m_plugins.h"\
+	"..\..\include\m_popup.h"\
+	"..\..\include\m_protocols.h"\
+	"..\..\include\m_protosvc.h"\
+	"..\..\include\m_skin.h"\
+	"..\..\include\m_system.h"\
+	"..\..\include\m_utils.h"\
+	"..\..\include\newpluginapi.h"\
+	"..\..\include\statusmodes.h"\
+	"..\..\include\win2k.h"\
+	".\alphablend.h"\
+	".\clc.h"\
+	".\clist.h"\
+	".\CLUIFrames\cluiframes.h"\
+	".\CLUIFrames\genmenu.h"\
+	".\extbackg.h"\
+	".\forkthread.h"\
+	".\m_avatars.h"\
+	".\m_clui.h"\
+	".\m_genmenu.h"\
+	".\rowheight_funcs.h"\
+	
+
+.\CLUIFrames\genmenu.c : \
+	"..\..\include\m_addcontact.h"\
+	"..\..\include\m_button.h"\
+	"..\..\include\m_clc.h"\
+	"..\..\include\m_clist.h"\
+	"..\..\include\m_clistint.h"\
+	"..\..\include\m_clui.h"\
+	"..\..\include\m_contacts.h"\
+	"..\..\include\m_database.h"\
+	"..\..\include\m_file.h"\
+	"..\..\include\m_langpack.h"\
+	"..\..\include\m_options.h"\
+	"..\..\include\m_plugins.h"\
+	"..\..\include\m_popup.h"\
+	"..\..\include\m_protocols.h"\
+	"..\..\include\m_protosvc.h"\
+	"..\..\include\m_skin.h"\
+	"..\..\include\m_system.h"\
+	"..\..\include\m_utils.h"\
+	"..\..\include\newpluginapi.h"\
+	"..\..\include\statusmodes.h"\
+	"..\..\include\win2k.h"\
+	".\alphablend.h"\
+	".\clc.h"\
+	".\clist.h"\
+	".\CLUIFrames\genmenu.h"\
+	".\extbackg.h"\
+	".\forkthread.h"\
+	".\m_avatars.h"\
+	".\m_clui.h"\
+	".\m_genmenu.h"\
+	".\rowheight_funcs.h"\
+	
+
+.\CLUIFrames\genmenuopt.c : \
+	"..\..\include\m_addcontact.h"\
+	"..\..\include\m_button.h"\
+	"..\..\include\m_clc.h"\
+	"..\..\include\m_clist.h"\
+	"..\..\include\m_clistint.h"\
+	"..\..\include\m_clui.h"\
+	"..\..\include\m_contacts.h"\
+	"..\..\include\m_database.h"\
+	"..\..\include\m_file.h"\
+	"..\..\include\m_langpack.h"\
+	"..\..\include\m_options.h"\
+	"..\..\include\m_plugins.h"\
+	"..\..\include\m_popup.h"\
+	"..\..\include\m_protocols.h"\
+	"..\..\include\m_protosvc.h"\
+	"..\..\include\m_skin.h"\
+	"..\..\include\m_system.h"\
+	"..\..\include\m_utils.h"\
+	"..\..\include\newpluginapi.h"\
+	"..\..\include\statusmodes.h"\
+	"..\..\include\win2k.h"\
+	".\alphablend.h"\
+	".\clc.h"\
+	".\clist.h"\
+	".\CLUIFrames\genmenu.h"\
+	".\extbackg.h"\
+	".\forkthread.h"\
+	".\m_avatars.h"\
+	".\m_clui.h"\
+	".\m_genmenu.h"\
+	".\rowheight_funcs.h"\
+	
+
+.\CLUIFrames\groupmenu.c : \
+	"..\..\include\m_addcontact.h"\
+	"..\..\include\m_button.h"\
+	"..\..\include\m_clc.h"\
+	"..\..\include\m_clist.h"\
+	"..\..\include\m_clistint.h"\
+	"..\..\include\m_clui.h"\
+	"..\..\include\m_contacts.h"\
+	"..\..\include\m_database.h"\
+	"..\..\include\m_file.h"\
+	"..\..\include\m_langpack.h"\
+	"..\..\include\m_options.h"\
+	"..\..\include\m_plugins.h"\
+	"..\..\include\m_popup.h"\
+	"..\..\include\m_protocols.h"\
+	"..\..\include\m_protosvc.h"\
+	"..\..\include\m_skin.h"\
+	"..\..\include\m_system.h"\
+	"..\..\include\m_utils.h"\
+	"..\..\include\newpluginapi.h"\
+	"..\..\include\statusmodes.h"\
+	"..\..\include\win2k.h"\
+	".\alphablend.h"\
+	".\clc.h"\
+	".\clist.h"\
+	".\CLUIFrames\genmenu.h"\
+	".\extbackg.h"\
+	".\forkthread.h"\
+	".\m_avatars.h"\
+	".\m_clui.h"\
+	".\m_genmenu.h"\
+	".\rowheight_funcs.h"\
+	
+
+.\CLUIFrames\movetogroup.c : \
+	"..\..\include\m_addcontact.h"\
+	"..\..\include\m_button.h"\
+	"..\..\include\m_clc.h"\
+	"..\..\include\m_clist.h"\
+	"..\..\include\m_clistint.h"\
+	"..\..\include\m_clui.h"\
+	"..\..\include\m_contacts.h"\
+	"..\..\include\m_database.h"\
+	"..\..\include\m_file.h"\
+	"..\..\include\m_langpack.h"\
+	"..\..\include\m_options.h"\
+	"..\..\include\m_plugins.h"\
+	"..\..\include\m_popup.h"\
+	"..\..\include\m_protocols.h"\
+	"..\..\include\m_protosvc.h"\
+	"..\..\include\m_skin.h"\
+	"..\..\include\m_system.h"\
+	"..\..\include\m_utils.h"\
+	"..\..\include\newpluginapi.h"\
+	"..\..\include\statusmodes.h"\
+	"..\..\include\win2k.h"\
+	".\alphablend.h"\
+	".\clc.h"\
+	".\clist.h"\
+	".\CLUIFrames\genmenu.h"\
+	".\extbackg.h"\
+	".\forkthread.h"\
+	".\m_avatars.h"\
+	".\m_clui.h"\
+	".\m_genmenu.h"\
+	".\rowheight_funcs.h"\
+	
+
+.\CLUIFrames\protocolorder.c : \
+	"..\..\include\m_addcontact.h"\
+	"..\..\include\m_button.h"\
+	"..\..\include\m_clc.h"\
+	"..\..\include\m_clist.h"\
+	"..\..\include\m_clistint.h"\
+	"..\..\include\m_clui.h"\
+	"..\..\include\m_contacts.h"\
+	"..\..\include\m_database.h"\
+	"..\..\include\m_file.h"\
+	"..\..\include\m_langpack.h"\
+	"..\..\include\m_options.h"\
+	"..\..\include\m_plugins.h"\
+	"..\..\include\m_popup.h"\
+	"..\..\include\m_protocols.h"\
+	"..\..\include\m_protosvc.h"\
+	"..\..\include\m_skin.h"\
+	"..\..\include\m_system.h"\
+	"..\..\include\m_utils.h"\
+	"..\..\include\newpluginapi.h"\
+	"..\..\include\statusmodes.h"\
+	"..\..\include\win2k.h"\
+	".\alphablend.h"\
+	".\clc.h"\
+	".\clist.h"\
+	".\CLUIFrames\cluiframes.h"\
+	".\CLUIFrames\genmenu.h"\
+	".\extbackg.h"\
+	".\forkthread.h"\
+	".\m_avatars.h"\
+	".\m_clui.h"\
+	".\m_genmenu.h"\
+	".\rowheight_funcs.h"\
+	
+
+.\alphablend.c : \
+	"..\..\include\m_addcontact.h"\
+	"..\..\include\m_button.h"\
+	"..\..\include\m_clc.h"\
+	"..\..\include\m_clist.h"\
+	"..\..\include\m_clistint.h"\
+	"..\..\include\m_clui.h"\
+	"..\..\include\m_contacts.h"\
+	"..\..\include\m_database.h"\
+	"..\..\include\m_file.h"\
+	"..\..\include\m_langpack.h"\
+	"..\..\include\m_options.h"\
+	"..\..\include\m_plugins.h"\
+	"..\..\include\m_popup.h"\
+	"..\..\include\m_protocols.h"\
+	"..\..\include\m_protosvc.h"\
+	"..\..\include\m_skin.h"\
+	"..\..\include\m_system.h"\
+	"..\..\include\m_utils.h"\
+	"..\..\include\newpluginapi.h"\
+	"..\..\include\statusmodes.h"\
+	"..\..\include\win2k.h"\
+	".\alphablend.h"\
+	".\clc.h"\
+	".\clist.h"\
+	".\CLUIFrames\genmenu.h"\
+	".\extbackg.h"\
+	".\forkthread.h"\
+	".\m_avatars.h"\
+	".\m_clui.h"\
+	".\m_genmenu.h"\
 	".\rowheight_funcs.h"\
 	
 
@@ -64,9 +285,7 @@
 	"..\..\include\m_contacts.h"\
 	"..\..\include\m_database.h"\
 	"..\..\include\m_file.h"\
-	"..\..\include\m_genmenu.h"\
 	"..\..\include\m_langpack.h"\
-	"..\..\include\m_message.h"\
 	"..\..\include\m_options.h"\
 	"..\..\include\m_plugins.h"\
 	"..\..\include\m_popup.h"\
@@ -83,17 +302,13 @@
 	".\clc.h"\
 	".\clist.h"\
 	".\CLUIFrames\cluiframes.h"\
-	".\commonheaders.h"\
+	".\CLUIFrames\genmenu.h"\
 	".\coolsb\coolscroll.h"\
 	".\extbackg.h"\
 	".\forkthread.h"\
-	".\icolib.h"\
 	".\m_avatars.h"\
-	".\m_cln_skinedit.h"\
 	".\m_clui.h"\
-	".\m_cluiframes.h"\
-	".\m_fontservice.h"\
-	".\m_metacontacts.h"\
+	".\m_genmenu.h"\
 	".\rowheight_funcs.h"\
 	
 
@@ -107,9 +322,7 @@
 	"..\..\include\m_contacts.h"\
 	"..\..\include\m_database.h"\
 	"..\..\include\m_file.h"\
-	"..\..\include\m_genmenu.h"\
 	"..\..\include\m_langpack.h"\
-	"..\..\include\m_message.h"\
 	"..\..\include\m_options.h"\
 	"..\..\include\m_plugins.h"\
 	"..\..\include\m_popup.h"\
@@ -124,16 +337,12 @@
 	".\alphablend.h"\
 	".\clc.h"\
 	".\clist.h"\
-	".\commonheaders.h"\
+	".\CLUIFrames\genmenu.h"\
 	".\extbackg.h"\
 	".\forkthread.h"\
-	".\icolib.h"\
 	".\m_avatars.h"\
-	".\m_cln_skinedit.h"\
 	".\m_clui.h"\
-	".\m_cluiframes.h"\
-	".\m_fontservice.h"\
-	".\m_metacontacts.h"\
+	".\m_genmenu.h"\
 	".\rowheight_funcs.h"\
 	
 
@@ -147,9 +356,7 @@
 	"..\..\include\m_contacts.h"\
 	"..\..\include\m_database.h"\
 	"..\..\include\m_file.h"\
-	"..\..\include\m_genmenu.h"\
 	"..\..\include\m_langpack.h"\
-	"..\..\include\m_message.h"\
 	"..\..\include\m_options.h"\
 	"..\..\include\m_plugins.h"\
 	"..\..\include\m_popup.h"\
@@ -164,16 +371,12 @@
 	".\alphablend.h"\
 	".\clc.h"\
 	".\clist.h"\
-	".\commonheaders.h"\
+	".\CLUIFrames\genmenu.h"\
 	".\extbackg.h"\
 	".\forkthread.h"\
-	".\icolib.h"\
 	".\m_avatars.h"\
-	".\m_cln_skinedit.h"\
 	".\m_clui.h"\
-	".\m_cluiframes.h"\
-	".\m_fontservice.h"\
-	".\m_metacontacts.h"\
+	".\m_genmenu.h"\
 	".\rowheight_funcs.h"\
 	
 
@@ -187,9 +390,7 @@
 	"..\..\include\m_contacts.h"\
 	"..\..\include\m_database.h"\
 	"..\..\include\m_file.h"\
-	"..\..\include\m_genmenu.h"\
 	"..\..\include\m_langpack.h"\
-	"..\..\include\m_message.h"\
 	"..\..\include\m_options.h"\
 	"..\..\include\m_plugins.h"\
 	"..\..\include\m_popup.h"\
@@ -204,16 +405,12 @@
 	".\alphablend.h"\
 	".\clc.h"\
 	".\clist.h"\
-	".\commonheaders.h"\
+	".\CLUIFrames\genmenu.h"\
 	".\extbackg.h"\
 	".\forkthread.h"\
-	".\icolib.h"\
 	".\m_avatars.h"\
-	".\m_cln_skinedit.h"\
 	".\m_clui.h"\
-	".\m_cluiframes.h"\
-	".\m_fontservice.h"\
-	".\m_metacontacts.h"\
+	".\m_genmenu.h"\
 	".\rowheight_funcs.h"\
 	
 
@@ -227,9 +424,7 @@
 	"..\..\include\m_contacts.h"\
 	"..\..\include\m_database.h"\
 	"..\..\include\m_file.h"\
-	"..\..\include\m_genmenu.h"\
 	"..\..\include\m_langpack.h"\
-	"..\..\include\m_message.h"\
 	"..\..\include\m_options.h"\
 	"..\..\include\m_plugins.h"\
 	"..\..\include\m_popup.h"\
@@ -244,16 +439,12 @@
 	".\alphablend.h"\
 	".\clc.h"\
 	".\clist.h"\
-	".\commonheaders.h"\
+	".\CLUIFrames\genmenu.h"\
 	".\extbackg.h"\
 	".\forkthread.h"\
-	".\icolib.h"\
 	".\m_avatars.h"\
-	".\m_cln_skinedit.h"\
 	".\m_clui.h"\
-	".\m_cluiframes.h"\
-	".\m_fontservice.h"\
-	".\m_metacontacts.h"\
+	".\m_genmenu.h"\
 	".\rowheight_funcs.h"\
 	
 
@@ -267,9 +458,7 @@
 	"..\..\include\m_contacts.h"\
 	"..\..\include\m_database.h"\
 	"..\..\include\m_file.h"\
-	"..\..\include\m_genmenu.h"\
 	"..\..\include\m_langpack.h"\
-	"..\..\include\m_message.h"\
 	"..\..\include\m_options.h"\
 	"..\..\include\m_plugins.h"\
 	"..\..\include\m_popup.h"\
@@ -284,17 +473,13 @@
 	".\alphablend.h"\
 	".\clc.h"\
 	".\clist.h"\
-	".\commonheaders.h"\
+	".\CLUIFrames\genmenu.h"\
 	".\coolsb\coolscroll.h"\
 	".\extbackg.h"\
 	".\forkthread.h"\
-	".\icolib.h"\
 	".\m_avatars.h"\
-	".\m_cln_skinedit.h"\
 	".\m_clui.h"\
-	".\m_cluiframes.h"\
-	".\m_fontservice.h"\
-	".\m_metacontacts.h"\
+	".\m_genmenu.h"\
 	".\rowheight_funcs.h"\
 	
 
@@ -308,9 +493,7 @@
 	"..\..\include\m_contacts.h"\
 	"..\..\include\m_database.h"\
 	"..\..\include\m_file.h"\
-	"..\..\include\m_genmenu.h"\
 	"..\..\include\m_langpack.h"\
-	"..\..\include\m_message.h"\
 	"..\..\include\m_options.h"\
 	"..\..\include\m_plugins.h"\
 	"..\..\include\m_popup.h"\
@@ -325,16 +508,12 @@
 	".\alphablend.h"\
 	".\clc.h"\
 	".\clist.h"\
-	".\commonheaders.h"\
+	".\CLUIFrames\genmenu.h"\
 	".\extbackg.h"\
 	".\forkthread.h"\
-	".\icolib.h"\
 	".\m_avatars.h"\
-	".\m_cln_skinedit.h"\
 	".\m_clui.h"\
-	".\m_cluiframes.h"\
-	".\m_fontservice.h"\
-	".\m_metacontacts.h"\
+	".\m_genmenu.h"\
 	".\rowheight_funcs.h"\
 	
 
@@ -348,9 +527,7 @@
 	"..\..\include\m_contacts.h"\
 	"..\..\include\m_database.h"\
 	"..\..\include\m_file.h"\
-	"..\..\include\m_genmenu.h"\
 	"..\..\include\m_langpack.h"\
-	"..\..\include\m_message.h"\
 	"..\..\include\m_options.h"\
 	"..\..\include\m_plugins.h"\
 	"..\..\include\m_popup.h"\
@@ -365,17 +542,13 @@
 	".\alphablend.h"\
 	".\clc.h"\
 	".\clist.h"\
-	".\commonheaders.h"\
+	".\CLUIFrames\genmenu.h"\
 	".\coolsb\coolscroll.h"\
 	".\extbackg.h"\
 	".\forkthread.h"\
-	".\icolib.h"\
 	".\m_avatars.h"\
-	".\m_cln_skinedit.h"\
 	".\m_clui.h"\
-	".\m_cluiframes.h"\
-	".\m_fontservice.h"\
-	".\m_metacontacts.h"\
+	".\m_genmenu.h"\
 	".\rowheight_funcs.h"\
 	
 
@@ -389,9 +562,7 @@
 	"..\..\include\m_contacts.h"\
 	"..\..\include\m_database.h"\
 	"..\..\include\m_file.h"\
-	"..\..\include\m_genmenu.h"\
 	"..\..\include\m_langpack.h"\
-	"..\..\include\m_message.h"\
 	"..\..\include\m_options.h"\
 	"..\..\include\m_plugins.h"\
 	"..\..\include\m_popup.h"\
@@ -407,16 +578,12 @@
 	".\clc.h"\
 	".\clist.h"\
 	".\CLUIFrames\cluiframes.h"\
-	".\commonheaders.h"\
+	".\CLUIFrames\genmenu.h"\
 	".\extbackg.h"\
 	".\forkthread.h"\
-	".\icolib.h"\
 	".\m_avatars.h"\
-	".\m_cln_skinedit.h"\
 	".\m_clui.h"\
-	".\m_cluiframes.h"\
-	".\m_fontservice.h"\
-	".\m_metacontacts.h"\
+	".\m_genmenu.h"\
 	".\rowheight_funcs.h"\
 	
 
@@ -430,10 +597,8 @@
 	"..\..\include\m_contacts.h"\
 	"..\..\include\m_database.h"\
 	"..\..\include\m_file.h"\
-	"..\..\include\m_genmenu.h"\
 	"..\..\include\m_ignore.h"\
 	"..\..\include\m_langpack.h"\
-	"..\..\include\m_message.h"\
 	"..\..\include\m_options.h"\
 	"..\..\include\m_plugins.h"\
 	"..\..\include\m_popup.h"\
@@ -449,16 +614,12 @@
 	".\clc.h"\
 	".\clist.h"\
 	".\CLUIFrames\cluiframes.h"\
-	".\commonheaders.h"\
+	".\CLUIFrames\genmenu.h"\
 	".\extbackg.h"\
 	".\forkthread.h"\
-	".\icolib.h"\
 	".\m_avatars.h"\
-	".\m_cln_skinedit.h"\
 	".\m_clui.h"\
-	".\m_cluiframes.h"\
-	".\m_fontservice.h"\
-	".\m_metacontacts.h"\
+	".\m_genmenu.h"\
 	".\rowheight_funcs.h"\
 	
 
@@ -472,9 +633,7 @@
 	"..\..\include\m_contacts.h"\
 	"..\..\include\m_database.h"\
 	"..\..\include\m_file.h"\
-	"..\..\include\m_genmenu.h"\
 	"..\..\include\m_langpack.h"\
-	"..\..\include\m_message.h"\
 	"..\..\include\m_options.h"\
 	"..\..\include\m_plugins.h"\
 	"..\..\include\m_popup.h"\
@@ -489,16 +648,12 @@
 	".\alphablend.h"\
 	".\clc.h"\
 	".\clist.h"\
-	".\commonheaders.h"\
+	".\CLUIFrames\genmenu.h"\
 	".\extbackg.h"\
 	".\forkthread.h"\
-	".\icolib.h"\
 	".\m_avatars.h"\
-	".\m_cln_skinedit.h"\
 	".\m_clui.h"\
-	".\m_cluiframes.h"\
-	".\m_fontservice.h"\
-	".\m_metacontacts.h"\
+	".\m_genmenu.h"\
 	".\rowheight_funcs.h"\
 	
 
@@ -512,9 +667,7 @@
 	"..\..\include\m_contacts.h"\
 	"..\..\include\m_database.h"\
 	"..\..\include\m_file.h"\
-	"..\..\include\m_genmenu.h"\
 	"..\..\include\m_langpack.h"\
-	"..\..\include\m_message.h"\
 	"..\..\include\m_options.h"\
 	"..\..\include\m_plugins.h"\
 	"..\..\include\m_popup.h"\
@@ -529,16 +682,12 @@
 	".\alphablend.h"\
 	".\clc.h"\
 	".\clist.h"\
-	".\commonheaders.h"\
+	".\CLUIFrames\genmenu.h"\
 	".\extbackg.h"\
 	".\forkthread.h"\
-	".\icolib.h"\
 	".\m_avatars.h"\
-	".\m_cln_skinedit.h"\
 	".\m_clui.h"\
-	".\m_cluiframes.h"\
-	".\m_fontservice.h"\
-	".\m_metacontacts.h"\
+	".\m_genmenu.h"\
 	".\rowheight_funcs.h"\
 	
 
@@ -552,9 +701,7 @@
 	"..\..\include\m_contacts.h"\
 	"..\..\include\m_database.h"\
 	"..\..\include\m_file.h"\
-	"..\..\include\m_genmenu.h"\
 	"..\..\include\m_langpack.h"\
-	"..\..\include\m_message.h"\
 	"..\..\include\m_options.h"\
 	"..\..\include\m_plugins.h"\
 	"..\..\include\m_popup.h"\
@@ -569,16 +716,12 @@
 	".\alphablend.h"\
 	".\clc.h"\
 	".\clist.h"\
-	".\commonheaders.h"\
+	".\CLUIFrames\genmenu.h"\
 	".\extbackg.h"\
 	".\forkthread.h"\
-	".\icolib.h"\
 	".\m_avatars.h"\
-	".\m_cln_skinedit.h"\
 	".\m_clui.h"\
-	".\m_cluiframes.h"\
-	".\m_fontservice.h"\
-	".\m_metacontacts.h"\
+	".\m_genmenu.h"\
 	".\rowheight_funcs.h"\
 	
 
@@ -592,9 +735,7 @@
 	"..\..\include\m_contacts.h"\
 	"..\..\include\m_database.h"\
 	"..\..\include\m_file.h"\
-	"..\..\include\m_genmenu.h"\
 	"..\..\include\m_langpack.h"\
-	"..\..\include\m_message.h"\
 	"..\..\include\m_options.h"\
 	"..\..\include\m_plugins.h"\
 	"..\..\include\m_popup.h"\
@@ -609,16 +750,12 @@
 	".\alphablend.h"\
 	".\clc.h"\
 	".\clist.h"\
-	".\commonheaders.h"\
+	".\CLUIFrames\genmenu.h"\
 	".\extbackg.h"\
 	".\forkthread.h"\
-	".\icolib.h"\
 	".\m_avatars.h"\
-	".\m_cln_skinedit.h"\
 	".\m_clui.h"\
-	".\m_cluiframes.h"\
-	".\m_fontservice.h"\
-	".\m_metacontacts.h"\
+	".\m_genmenu.h"\
 	".\rowheight_funcs.h"\
 	
 
@@ -633,9 +770,7 @@
 	"..\..\include\m_database.h"\
 	"..\..\include\m_file.h"\
 	"..\..\include\m_findadd.h"\
-	"..\..\include\m_genmenu.h"\
 	"..\..\include\m_langpack.h"\
-	"..\..\include\m_message.h"\
 	"..\..\include\m_options.h"\
 	"..\..\include\m_plugins.h"\
 	"..\..\include\m_popup.h"\
@@ -651,17 +786,13 @@
 	".\clc.h"\
 	".\clist.h"\
 	".\CLUIFrames\cluiframes.h"\
-	".\commonheaders.h"\
+	".\CLUIFrames\genmenu.h"\
 	".\coolsb\coolscroll.h"\
 	".\extbackg.h"\
 	".\forkthread.h"\
-	".\icolib.h"\
 	".\m_avatars.h"\
-	".\m_cln_skinedit.h"\
 	".\m_clui.h"\
-	".\m_cluiframes.h"\
-	".\m_fontservice.h"\
-	".\m_metacontacts.h"\
+	".\m_genmenu.h"\
 	".\m_updater.h"\
 	".\rowheight_funcs.h"\
 	
@@ -676,9 +807,7 @@
 	"..\..\include\m_contacts.h"\
 	"..\..\include\m_database.h"\
 	"..\..\include\m_file.h"\
-	"..\..\include\m_genmenu.h"\
 	"..\..\include\m_langpack.h"\
-	"..\..\include\m_message.h"\
 	"..\..\include\m_options.h"\
 	"..\..\include\m_plugins.h"\
 	"..\..\include\m_popup.h"\
@@ -693,16 +822,12 @@
 	".\alphablend.h"\
 	".\clc.h"\
 	".\clist.h"\
-	".\commonheaders.h"\
+	".\CLUIFrames\genmenu.h"\
 	".\extbackg.h"\
 	".\forkthread.h"\
-	".\icolib.h"\
 	".\m_avatars.h"\
-	".\m_cln_skinedit.h"\
 	".\m_clui.h"\
-	".\m_cluiframes.h"\
-	".\m_fontservice.h"\
-	".\m_metacontacts.h"\
+	".\m_genmenu.h"\
 	".\rowheight_funcs.h"\
 	
 
@@ -716,9 +841,7 @@
 	"..\..\include\m_contacts.h"\
 	"..\..\include\m_database.h"\
 	"..\..\include\m_file.h"\
-	"..\..\include\m_genmenu.h"\
 	"..\..\include\m_langpack.h"\
-	"..\..\include\m_message.h"\
 	"..\..\include\m_options.h"\
 	"..\..\include\m_plugins.h"\
 	"..\..\include\m_popup.h"\
@@ -734,16 +857,12 @@
 	".\clc.h"\
 	".\clist.h"\
 	".\CLUIFrames\cluiframes.h"\
-	".\commonheaders.h"\
+	".\CLUIFrames\genmenu.h"\
 	".\extbackg.h"\
 	".\forkthread.h"\
-	".\icolib.h"\
 	".\m_avatars.h"\
-	".\m_cln_skinedit.h"\
 	".\m_clui.h"\
-	".\m_cluiframes.h"\
-	".\m_fontservice.h"\
-	".\m_metacontacts.h"\
+	".\m_genmenu.h"\
 	".\rowheight_funcs.h"\
 	
 
@@ -757,7 +876,6 @@
 	"..\..\include\m_contacts.h"\
 	"..\..\include\m_database.h"\
 	"..\..\include\m_file.h"\
-	"..\..\include\m_genmenu.h"\
 	"..\..\include\m_langpack.h"\
 	"..\..\include\m_message.h"\
 	"..\..\include\m_options.h"\
@@ -774,15 +892,16 @@
 	".\alphablend.h"\
 	".\clc.h"\
 	".\clist.h"\
+	".\CLUIFrames\genmenu.h"\
 	".\commonheaders.h"\
 	".\extbackg.h"\
 	".\forkthread.h"\
 	".\icolib.h"\
 	".\m_avatars.h"\
-	".\m_cln_skinedit.h"\
 	".\m_clui.h"\
 	".\m_cluiframes.h"\
 	".\m_fontservice.h"\
+	".\m_genmenu.h"\
 	".\m_metacontacts.h"\
 	".\rowheight_funcs.h"\
 	
@@ -797,9 +916,7 @@
 	"..\..\include\m_contacts.h"\
 	"..\..\include\m_database.h"\
 	"..\..\include\m_file.h"\
-	"..\..\include\m_genmenu.h"\
 	"..\..\include\m_langpack.h"\
-	"..\..\include\m_message.h"\
 	"..\..\include\m_options.h"\
 	"..\..\include\m_plugins.h"\
 	"..\..\include\m_popup.h"\
@@ -814,16 +931,12 @@
 	".\alphablend.h"\
 	".\clc.h"\
 	".\clist.h"\
-	".\commonheaders.h"\
+	".\CLUIFrames\genmenu.h"\
 	".\extbackg.h"\
 	".\forkthread.h"\
-	".\icolib.h"\
 	".\m_avatars.h"\
-	".\m_cln_skinedit.h"\
 	".\m_clui.h"\
-	".\m_cluiframes.h"\
-	".\m_fontservice.h"\
-	".\m_metacontacts.h"\
+	".\m_genmenu.h"\
 	".\rowheight_funcs.h"\
 	
 
@@ -849,9 +962,7 @@
 	"..\..\include\m_contacts.h"\
 	"..\..\include\m_database.h"\
 	"..\..\include\m_file.h"\
-	"..\..\include\m_genmenu.h"\
 	"..\..\include\m_langpack.h"\
-	"..\..\include\m_message.h"\
 	"..\..\include\m_options.h"\
 	"..\..\include\m_plugins.h"\
 	"..\..\include\m_popup.h"\
@@ -866,16 +977,12 @@
 	".\alphablend.h"\
 	".\clc.h"\
 	".\clist.h"\
-	".\commonheaders.h"\
+	".\CLUIFrames\genmenu.h"\
 	".\extbackg.h"\
 	".\forkthread.h"\
-	".\icolib.h"\
 	".\m_avatars.h"\
-	".\m_cln_skinedit.h"\
 	".\m_clui.h"\
-	".\m_cluiframes.h"\
-	".\m_fontservice.h"\
-	".\m_metacontacts.h"\
+	".\m_genmenu.h"\
 	".\rowheight_funcs.h"\
 	
 
@@ -889,9 +996,7 @@
 	"..\..\include\m_contacts.h"\
 	"..\..\include\m_database.h"\
 	"..\..\include\m_file.h"\
-	"..\..\include\m_genmenu.h"\
 	"..\..\include\m_langpack.h"\
-	"..\..\include\m_message.h"\
 	"..\..\include\m_options.h"\
 	"..\..\include\m_plugins.h"\
 	"..\..\include\m_popup.h"\
@@ -906,17 +1011,13 @@
 	".\alphablend.h"\
 	".\clc.h"\
 	".\clist.h"\
-	".\commonheaders.h"\
+	".\CLUIFrames\genmenu.h"\
 	".\coolsb\coolscroll.h"\
 	".\extbackg.h"\
 	".\forkthread.h"\
-	".\icolib.h"\
 	".\m_avatars.h"\
-	".\m_cln_skinedit.h"\
 	".\m_clui.h"\
-	".\m_cluiframes.h"\
-	".\m_fontservice.h"\
-	".\m_metacontacts.h"\
+	".\m_genmenu.h"\
 	".\rowheight_funcs.h"\
 	
 
@@ -930,9 +1031,7 @@
 	"..\..\include\m_contacts.h"\
 	"..\..\include\m_database.h"\
 	"..\..\include\m_file.h"\
-	"..\..\include\m_genmenu.h"\
 	"..\..\include\m_langpack.h"\
-	"..\..\include\m_message.h"\
 	"..\..\include\m_options.h"\
 	"..\..\include\m_plugins.h"\
 	"..\..\include\m_popup.h"\
@@ -947,16 +1046,12 @@
 	".\alphablend.h"\
 	".\clc.h"\
 	".\clist.h"\
-	".\commonheaders.h"\
+	".\CLUIFrames\genmenu.h"\
 	".\extbackg.h"\
 	".\forkthread.h"\
-	".\icolib.h"\
 	".\m_avatars.h"\
-	".\m_cln_skinedit.h"\
 	".\m_clui.h"\
-	".\m_cluiframes.h"\
-	".\m_fontservice.h"\
-	".\m_metacontacts.h"\
+	".\m_genmenu.h"\
 	".\rowheight_funcs.h"\
 	
 
@@ -970,7 +1065,6 @@
 	"..\..\include\m_contacts.h"\
 	"..\..\include\m_database.h"\
 	"..\..\include\m_file.h"\
-	"..\..\include\m_genmenu.h"\
 	"..\..\include\m_langpack.h"\
 	"..\..\include\m_options.h"\
 	"..\..\include\m_plugins.h"\
@@ -989,7 +1083,6 @@
 	".\extbackg.h"\
 	".\forkthread.h"\
 	".\m_avatars.h"\
-	".\m_cln_skinedit.h"\
 	
 
 .\init.c : \
@@ -1002,9 +1095,7 @@
 	"..\..\include\m_contacts.h"\
 	"..\..\include\m_database.h"\
 	"..\..\include\m_file.h"\
-	"..\..\include\m_genmenu.h"\
 	"..\..\include\m_langpack.h"\
-	"..\..\include\m_message.h"\
 	"..\..\include\m_options.h"\
 	"..\..\include\m_plugins.h"\
 	"..\..\include\m_popup.h"\
@@ -1020,56 +1111,12 @@
 	".\clc.h"\
 	".\clist.h"\
 	".\CLUIFrames\cluiframes.h"\
-	".\commonheaders.h"\
+	".\CLUIFrames\genmenu.h"\
 	".\extbackg.h"\
 	".\forkthread.h"\
-	".\icolib.h"\
 	".\m_avatars.h"\
-	".\m_cln_skinedit.h"\
 	".\m_clui.h"\
-	".\m_cluiframes.h"\
-	".\m_fontservice.h"\
-	".\m_metacontacts.h"\
-	".\rowheight_funcs.h"\
-	
-
-.\CLUIFrames\movetogroup.c : \
-	"..\..\include\m_addcontact.h"\
-	"..\..\include\m_button.h"\
-	"..\..\include\m_clc.h"\
-	"..\..\include\m_clist.h"\
-	"..\..\include\m_clistint.h"\
-	"..\..\include\m_clui.h"\
-	"..\..\include\m_contacts.h"\
-	"..\..\include\m_database.h"\
-	"..\..\include\m_file.h"\
-	"..\..\include\m_genmenu.h"\
-	"..\..\include\m_langpack.h"\
-	"..\..\include\m_message.h"\
-	"..\..\include\m_options.h"\
-	"..\..\include\m_plugins.h"\
-	"..\..\include\m_popup.h"\
-	"..\..\include\m_protocols.h"\
-	"..\..\include\m_protosvc.h"\
-	"..\..\include\m_skin.h"\
-	"..\..\include\m_system.h"\
-	"..\..\include\m_utils.h"\
-	"..\..\include\newpluginapi.h"\
-	"..\..\include\statusmodes.h"\
-	"..\..\include\win2k.h"\
-	".\alphablend.h"\
-	".\clc.h"\
-	".\clist.h"\
-	".\commonheaders.h"\
-	".\extbackg.h"\
-	".\forkthread.h"\
-	".\icolib.h"\
-	".\m_avatars.h"\
-	".\m_cln_skinedit.h"\
-	".\m_clui.h"\
-	".\m_cluiframes.h"\
-	".\m_fontservice.h"\
-	".\m_metacontacts.h"\
+	".\m_genmenu.h"\
 	".\rowheight_funcs.h"\
 	
 
@@ -1083,9 +1130,7 @@
 	"..\..\include\m_contacts.h"\
 	"..\..\include\m_database.h"\
 	"..\..\include\m_file.h"\
-	"..\..\include\m_genmenu.h"\
 	"..\..\include\m_langpack.h"\
-	"..\..\include\m_message.h"\
 	"..\..\include\m_options.h"\
 	"..\..\include\m_plugins.h"\
 	"..\..\include\m_popup.h"\
@@ -1100,16 +1145,12 @@
 	".\alphablend.h"\
 	".\clc.h"\
 	".\clist.h"\
-	".\commonheaders.h"\
+	".\CLUIFrames\genmenu.h"\
 	".\extbackg.h"\
 	".\forkthread.h"\
-	".\icolib.h"\
 	".\m_avatars.h"\
-	".\m_cln_skinedit.h"\
 	".\m_clui.h"\
-	".\m_cluiframes.h"\
-	".\m_fontservice.h"\
-	".\m_metacontacts.h"\
+	".\m_genmenu.h"\
 	".\rowheight_funcs.h"\
 	
 
@@ -1123,9 +1164,7 @@
 	"..\..\include\m_contacts.h"\
 	"..\..\include\m_database.h"\
 	"..\..\include\m_file.h"\
-	"..\..\include\m_genmenu.h"\
 	"..\..\include\m_langpack.h"\
-	"..\..\include\m_message.h"\
 	"..\..\include\m_options.h"\
 	"..\..\include\m_plugins.h"\
 	"..\..\include\m_popup.h"\
@@ -1141,16 +1180,12 @@
 	".\clc.h"\
 	".\clist.h"\
 	".\CLUIFrames\cluiframes.h"\
-	".\commonheaders.h"\
+	".\CLUIFrames\genmenu.h"\
 	".\extbackg.h"\
 	".\forkthread.h"\
-	".\icolib.h"\
 	".\m_avatars.h"\
-	".\m_cln_skinedit.h"\
 	".\m_clui.h"\
-	".\m_cluiframes.h"\
-	".\m_fontservice.h"\
-	".\m_metacontacts.h"\
+	".\m_genmenu.h"\
 	".\rowheight_funcs.h"\
 	
 
@@ -1164,9 +1199,7 @@
 	"..\..\include\m_contacts.h"\
 	"..\..\include\m_database.h"\
 	"..\..\include\m_file.h"\
-	"..\..\include\m_genmenu.h"\
 	"..\..\include\m_langpack.h"\
-	"..\..\include\m_message.h"\
 	"..\..\include\m_options.h"\
 	"..\..\include\m_plugins.h"\
 	"..\..\include\m_popup.h"\
@@ -1181,16 +1214,12 @@
 	".\alphablend.h"\
 	".\clc.h"\
 	".\clist.h"\
-	".\commonheaders.h"\
+	".\CLUIFrames\genmenu.h"\
 	".\extbackg.h"\
 	".\forkthread.h"\
-	".\icolib.h"\
 	".\m_avatars.h"\
-	".\m_cln_skinedit.h"\
 	".\m_clui.h"\
-	".\m_cluiframes.h"\
-	".\m_fontservice.h"\
-	".\m_metacontacts.h"\
+	".\m_genmenu.h"\
 	".\rowheight_funcs.h"\
 	
 
@@ -1204,9 +1233,7 @@
 	"..\..\include\m_contacts.h"\
 	"..\..\include\m_database.h"\
 	"..\..\include\m_file.h"\
-	"..\..\include\m_genmenu.h"\
 	"..\..\include\m_langpack.h"\
-	"..\..\include\m_message.h"\
 	"..\..\include\m_options.h"\
 	"..\..\include\m_plugins.h"\
 	"..\..\include\m_popup.h"\
@@ -1222,16 +1249,12 @@
 	".\clc.h"\
 	".\clist.h"\
 	".\CLUIFrames\cluiframes.h"\
-	".\commonheaders.h"\
+	".\CLUIFrames\genmenu.h"\
 	".\extbackg.h"\
 	".\forkthread.h"\
-	".\icolib.h"\
 	".\m_avatars.h"\
-	".\m_cln_skinedit.h"\
 	".\m_clui.h"\
-	".\m_cluiframes.h"\
-	".\m_fontservice.h"\
-	".\m_metacontacts.h"\
+	".\m_genmenu.h"\
 	".\m_variables.h"\
 	".\rowheight_funcs.h"\
 	
@@ -1246,9 +1269,7 @@
 	"..\..\include\m_contacts.h"\
 	"..\..\include\m_database.h"\
 	"..\..\include\m_file.h"\
-	"..\..\include\m_genmenu.h"\
 	"..\..\include\m_langpack.h"\
-	"..\..\include\m_message.h"\
 	"..\..\include\m_options.h"\
 	"..\..\include\m_plugins.h"\
 	"..\..\include\m_popup.h"\
@@ -1263,16 +1284,12 @@
 	".\alphablend.h"\
 	".\clc.h"\
 	".\clist.h"\
-	".\commonheaders.h"\
+	".\CLUIFrames\genmenu.h"\
 	".\extbackg.h"\
 	".\forkthread.h"\
-	".\icolib.h"\
 	".\m_avatars.h"\
-	".\m_cln_skinedit.h"\
 	".\m_clui.h"\
-	".\m_cluiframes.h"\
-	".\m_fontservice.h"\
-	".\m_metacontacts.h"\
+	".\m_genmenu.h"\
 	".\rowheight_funcs.h"\
 	
 

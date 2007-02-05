@@ -149,8 +149,8 @@ static void handleAuthKeyResponse(BYTE *buf, WORD wPacketLen, serverthread_info 
 {
   WORD wKeyLen;
   char szKey[64] = {0};
-	mir_md5_state_t state;
-  mir_md5_byte_t digest[16];
+	md5_state_t state;
+  md5_byte_t digest[16];
 
 #ifdef _DEBUG
   NetLog_Server("Received %s", "ICQ_SIGNON_AUTH_KEY");
@@ -180,16 +180,16 @@ static void handleAuthKeyResponse(BYTE *buf, WORD wPacketLen, serverthread_info 
   {
     char *pwd = info->szAuthKey;
 
-    mir_md5_init(&state);
-    mir_md5_append(&state, (const mir_md5_byte_t*)pwd, info->wAuthKeyLen);
-    mir_md5_finish(&state, digest);
+    md5_init(&state);
+    md5_append(&state, (const md5_byte_t*)pwd, info->wAuthKeyLen);
+    md5_finish(&state, digest);
   }
 
-  mir_md5_init(&state);
-  mir_md5_append(&state, szKey, wKeyLen);
-  mir_md5_append(&state, digest, 16);
-  mir_md5_append(&state, CLIENT_MD5_STRING, sizeof(CLIENT_MD5_STRING)-1);
-  mir_md5_finish(&state, digest);
+  md5_init(&state);
+	md5_append(&state, szKey, wKeyLen);
+	md5_append(&state, digest, 16);
+	md5_append(&state, CLIENT_MD5_STRING, sizeof(CLIENT_MD5_STRING)-1);
+	md5_finish(&state, digest);
 
 #ifdef _DEBUG
 	NetLog_Server("Sending ICQ_SIGNON_LOGIN_REQUEST to login server");

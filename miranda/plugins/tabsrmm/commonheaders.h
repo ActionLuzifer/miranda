@@ -85,7 +85,6 @@ typedef unsigned short wchar_t;
 #include "m_cln_skinedit.h"
 
 #include "m_flash.h"
-#include "m_spellchecker.h"
 
 #define safe_sizeof(a) (unsigned int)((sizeof((a)) / sizeof((a)[0])))
 

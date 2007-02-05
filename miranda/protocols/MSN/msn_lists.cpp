@@ -256,17 +256,11 @@ BOOL CALLBACK DlgProcMsnServLists(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM 
 			HIMAGELIST hIml = ImageList_Create(
 				GetSystemMetrics(SM_CXSMICON), GetSystemMetrics(SM_CYSMICON),
 				ILC_MASK | (IsWinVerXPPlus() ? ILC_COLOR32 : ILC_COLOR16 ), 5, 5 );
-			HICON hIcon = ( HICON )LoadImage(GetModuleHandle(NULL),MAKEINTRESOURCE(211), IMAGE_ICON, 0, 0, 0);
-			ImageList_AddIcon( hIml, hIcon );
-			DestroyIcon( hIcon );
-			ImageList_AddIcon( hIml, LoadIconEx( "list_fl" ));
-			ReleaseIconEx( "list_fl" );
-			ImageList_AddIcon( hIml, LoadIconEx( "list_al" ));
-			ReleaseIconEx( "list_al" );
-			ImageList_AddIcon( hIml, LoadIconEx( "list_bl" ));
-			ReleaseIconEx( "list_bl" );
-			ImageList_AddIcon( hIml, LoadIconEx( "list_rl" ));
-			ReleaseIconEx( "list_rl" );
+			ImageList_AddIcon( hIml,LoadIcon(GetModuleHandle(NULL),MAKEINTRESOURCE(211)));
+			ImageList_AddIcon( hIml, LoadIcon( hInst, MAKEINTRESOURCE( IDI_LIST_FL )));
+			ImageList_AddIcon( hIml, LoadIcon( hInst, MAKEINTRESOURCE( IDI_LIST_AL )));
+			ImageList_AddIcon( hIml, LoadIcon( hInst, MAKEINTRESOURCE( IDI_LIST_BL )));
+			ImageList_AddIcon( hIml, LoadIcon( hInst, MAKEINTRESOURCE( IDI_LIST_RL )));
 			SendDlgItemMessage( hwndDlg, IDC_LIST, CLM_SETEXTRAIMAGELIST, 0, (LPARAM)hIml );
 		}
 		ResetListOptions( GetDlgItem( hwndDlg, IDC_LIST ));

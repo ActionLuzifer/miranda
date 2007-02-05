@@ -200,27 +200,27 @@ static void RemoveUnreadFileEvents(void)
 
 static int SRFileModulesLoaded(WPARAM wParam,LPARAM lParam)
 {
-	CLISTMENUITEM mi = { 0 };
+	CLISTMENUITEM mi;
 	PROTOCOLDESCRIPTOR **protocol;
 	int protoCount,i;
 
-	mi.cbSize = sizeof(mi);
-	mi.position = -2000020000;
-	mi.hIcon = LoadSkinnedIcon(SKINICON_EVENT_FILE);
-	mi.pszName = "&File";
-	mi.pszService = MS_FILE_SENDFILE;
+	ZeroMemory(&mi,sizeof(mi));
+	mi.cbSize=sizeof(mi);
+	mi.position=-2000020000;
+	mi.hIcon=LoadSkinnedIcon(SKINICON_EVENT_FILE);
+	mi.pszName=Translate("&File");
+	mi.pszService=MS_FILE_SENDFILE;
 	CallService(MS_PROTO_ENUMPROTOCOLS,(WPARAM)&protoCount,(LPARAM)&protocol);
 	for(i=0;i<protoCount;i++) {
 		if(protocol[i]->type!=PROTOTYPE_PROTOCOL) continue;
 		if(CallProtoService(protocol[i]->szName,PS_GETCAPS,PFLAGNUM_1,0)&PF1_FILESEND) {
-			mi.flags=(CallProtoService(protocol[i]->szName,PS_GETCAPS,PFLAGNUM_4,0)&PF4_OFFLINEFILES)?0:CMIF_NOTOFFLINE;
-			mi.pszContactOwner = protocol[i]->szName;
+            mi.flags=(CallProtoService(protocol[i]->szName,PS_GETCAPS,PFLAGNUM_4,0)&PF4_OFFLINEFILES)?0:CMIF_NOTOFFLINE;
+			mi.pszContactOwner=protocol[i]->szName;
 			hFileMenu = (HANDLE*)mir_realloc(hFileMenu,sizeof(HANDLE)*(hFileMenuCount+1));
 			hFileMenu[hFileMenuCount] = (HANDLE)CallService(MS_CLIST_ADDCONTACTMENUITEM,0,(LPARAM)&mi);
 			hFileMenuCount++;
 		}
 	}
-	IconLib_ReleaseIcon(mi.hIcon, 0);
 	RemoveUnreadFileEvents();
 	return 0;
 }
@@ -239,8 +239,6 @@ int FilePreBuildContactMenu(WPARAM wParam,LPARAM lParam) {
 
 		for(i=0;i<hFileMenuCount;i++)
 			CallService(MS_CLIST_MODIFYMENUITEM, (WPARAM)hFileMenu[i], (LPARAM)&mi);
-
-		IconLib_ReleaseIcon(mi.hIcon, 0);
 	}
 	return 0;
 }

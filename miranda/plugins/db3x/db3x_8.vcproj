@@ -520,6 +520,10 @@
 					/>
 				</FileConfiguration>
 			</File>
+			<File
+				RelativePath=".\utf.c"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"

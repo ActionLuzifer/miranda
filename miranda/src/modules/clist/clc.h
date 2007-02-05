@@ -80,15 +80,6 @@ struct ClcData {
 	int needsResort;
 };
 
-typedef HMONITOR ( WINAPI *pfnMyMonitorFromPoint )(POINT,DWORD);
-extern pfnMyMonitorFromPoint MyMonitorFromPoint;
-
-typedef HMONITOR( WINAPI *pfnMyMonitorFromWindow) (HWND, DWORD);
-extern pfnMyMonitorFromWindow MyMonitorFromWindow;
-
-typedef BOOL(WINAPI *pfnMyGetMonitorInfo) (HMONITOR, LPMONITORINFO);
-extern pfnMyGetMonitorInfo MyGetMonitorInfo;
-
 //clc.c
 extern int g_IconWidth, g_IconHeight;
 
@@ -150,9 +141,6 @@ void PaintClc(HWND hwnd,struct ClcData *dat,HDC hdc,RECT *rcPaint);
 int ClcOptInit(WPARAM wParam,LPARAM lParam);
 DWORD GetDefaultExStyle(void);
 void GetFontSetting(int i,LOGFONTA *lf,COLORREF *colour);
-
-//clistmenus.c
-int MenuProcessCommand(WPARAM wParam,LPARAM lParam);
 
 //clistsettings.c
 TCHAR* GetContactDisplayNameW( HANDLE hContact, int mode );

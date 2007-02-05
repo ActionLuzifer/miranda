@@ -92,9 +92,9 @@ Section "Miranda IM"
   SetOutPath "$INSTDIR"
   File "${MIM_BUILD_DIR}\miranda32.exe"
   File "${MIM_BUILD_DIR}\dbtool.exe"
-  File /oname=contributors.txt "${MIM_BUILD_SRC}\docs\contributors.txt"
-  File /oname=readme.txt "${MIM_BUILD_SRC}\docs\readme.txt"
-  File /oname=license.txt "${MIM_BUILD_SRC}\docs\license.txt"
+  File "${MIM_BUILD_SRC}\docs\contributors.txt"
+  File "${MIM_BUILD_SRC}\docs\readme.txt"
+  File "${MIM_BUILD_SRC}\docs\license.txt"
 
   SetOverWrite off
   File "${MIM_BUILD_SRC}\docs\mirandaboot.ini"
@@ -108,7 +108,7 @@ Section "Miranda IM"
   File "${MIM_BUILD_DIR}\plugins\chat.dll"
 
   DeleteRegKey HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Miranda IM_is1" ; remove old uninstaller key
-  WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Miranda IM" "DisplayName" "Miranda IM" 
+  WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Miranda IM" "DisplayName" "Miranda IM ${MIM_VERSION}" 
   WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Miranda IM" "UninstallString" "$INSTDIR\uninstall.exe"
   WriteUninstaller "$INSTDIR\Uninstall.exe"
 SectionEnd

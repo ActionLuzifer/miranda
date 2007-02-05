@@ -53,7 +53,7 @@ typedef struct snac_header_s
 
 void handleServiceFam(unsigned char *pBuffer, WORD wBufferLength, snac_header* pSnacHeader, serverthread_info *info);
 void handleLocationFam(unsigned char *pBuffer, WORD wBufferLength, snac_header* pSnacHeader);
-void handleBuddyFam(unsigned char *pBuffer, WORD wBufferLength, snac_header* pSnacHeader, serverthread_info *info);
+void handleBuddyFam(unsigned char *pBuffer, WORD wBufferLength, snac_header* pSnacHeader);
 void handleMsgFam(unsigned char *pBuffer, WORD wBufferLength, snac_header* pSnacHeader);
 void handleBosFam(unsigned char *pBuffer, WORD wBufferLength, snac_header* pSnacHeader);
 void handleLookupFam(unsigned char *pBuffer, WORD wBufferLength, snac_header* pSnacHeader);
@@ -66,9 +66,9 @@ void sendClientAuth(const char* szKey, WORD wKeyLen, BOOL bSecure);
 void handleLoginReply(unsigned char *buf, WORD datalen, serverthread_info *info);
 
 void handleServUINSettings(int nPort, serverthread_info *info);
+int TypeGUIDToTypeId(DWORD dwGuid1, DWORD dwGuid2, DWORD dwGuid3, DWORD dwGuid4, WORD wType);
 int getPluginTypeIdLen(int nTypeID);
 void packPluginTypeId(icq_packet *packet, int nTypeID);
-int unpackPluginTypeId(BYTE** pBuffer, WORD* pwLen, int *pTypeId, WORD *pFunctionId, BOOL bThruDC);
 
 void handleMessageTypes(DWORD dwUin, DWORD dwTimestamp, DWORD dwMsgID, DWORD dwMsgID2, WORD wCookie, WORD wVersion, int type, int flags, WORD wAckType, DWORD dwDataLen, WORD wMsgLen, char *pMsg, BOOL bThruDC);
 

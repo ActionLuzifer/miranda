@@ -13,19 +13,15 @@
 #include <malloc.h>
 #include <process.h>
 #include <prsht.h>
-#include <richedit.h>
 #include <stdio.h>
 #include <sys/stat.h>
 #include <time.h>
-#include <Tmschema.h>
-#include <winuser.h>
 //Miranda IM includes
 #pragma warning( disable: 4100 )
 #pragma warning( disable: 4244 )
 #pragma warning( disable: 4201 )
 #include <newpluginapi.h>
 #include <statusmodes.h>
-#include <m_button.h>
 #include <m_clist.h>
 #include <m_clui.h>
 #include "m_cluiframes.h"
@@ -62,13 +58,13 @@
 #include "error.h"
 #include "file.h"
 #include "links.h"
+#include "md5.h"
 #include "packets.h"
 #include "popup.h"
 #include "proxy.h"
 #include "resource.h"
 #include "services.h"
 #include "server.h"
-#include "theme.h"
 #include "thread.h"
 #include "windows.h"
 //Packet Stuff
@@ -288,7 +284,6 @@ public:
 	bool instantidle;
 	bool checking_mail;
 	bool list_received;
-	HANDLE hKeepAliveEvent;
 
 	HINSTANCE hInstance;//plugin handle instance
 	

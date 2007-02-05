@@ -28,6 +28,7 @@ Last change by : $Author$
 #include "jabber.h"
 #include "jabber_ssl.h"
 #include "jabber_list.h"
+#include "sha1.h"
 
 extern CRITICAL_SECTION mutex;
 extern UINT jabberCodePage;
@@ -331,17 +332,17 @@ void __stdcall JabberUtfToTchar( const char* pszValue, size_t cbLen, LPTSTR& des
 
 char* __stdcall JabberSha1( char* str )
 {
-	mir_sha1_ctx sha;
-	mir_sha1_byte_t digest[20];
+	SHA1Context sha;
+	uint8_t digest[20];
 	char* result;
 	int i;
 
 	if ( str == NULL )
 		return NULL;
 
-	mir_sha1_init( &sha );
-	mir_sha1_append( &sha, (mir_sha1_byte_t* )str, strlen( str ));
-	mir_sha1_finish( &sha, digest );
+	SHA1Reset( &sha );
+	SHA1Input( &sha, ( const unsigned __int8* )str, strlen( str ));
+	SHA1Result( &sha, digest );
 	if (( result=( char* )mir_alloc( 41 )) == NULL )
 		return NULL;
 

@@ -40,7 +40,6 @@ ALL : "..\..\bin\release\plugins\clist_modern.dll"
 
 
 CLEAN :
-	-@erase "$(INTDIR)\button.obj"
 	-@erase "$(INTDIR)\cache_funcs.obj"
 	-@erase "$(INTDIR)\clc.obj"
 	-@erase "$(INTDIR)\clcidents.obj"
@@ -57,13 +56,17 @@ CLEAN :
 	-@erase "$(INTDIR)\clisttray.obj"
 	-@erase "$(INTDIR)\clui.obj"
 	-@erase "$(INTDIR)\cluiframes.obj"
+	-@erase "$(INTDIR)\cluiopts.obj"
 	-@erase "$(INTDIR)\cluiservices.obj"
 	-@erase "$(INTDIR)\commonheaders.obj"
 	-@erase "$(INTDIR)\contact.obj"
 	-@erase "$(INTDIR)\Docking.obj"
 	-@erase "$(INTDIR)\extraimage.obj"
+	-@erase "$(INTDIR)\forkthread.obj"
 	-@erase "$(INTDIR)\framesmenu.obj"
 	-@erase "$(INTDIR)\gdiplus.obj"
+	-@erase "$(INTDIR)\genmenu.obj"
+	-@erase "$(INTDIR)\genmenuopt.obj"
 	-@erase "$(INTDIR)\groupmenu.obj"
 	-@erase "$(INTDIR)\image_array.obj"
 	-@erase "$(INTDIR)\init.obj"
@@ -73,16 +76,18 @@ CLEAN :
 	-@erase "$(INTDIR)\modern_row.obj"
 	-@erase "$(INTDIR)\modern_statusbar.obj"
 	-@erase "$(INTDIR)\modernb.pch"
+	-@erase "$(INTDIR)\movetogroup.obj"
+	-@erase "$(INTDIR)\protocolorder.obj"
 	-@erase "$(INTDIR)\resource.res"
 	-@erase "$(INTDIR)\rowheight_funcs.obj"
 	-@erase "$(INTDIR)\rowtemplateopt.obj"
 	-@erase "$(INTDIR)\SkinEditor.obj"
 	-@erase "$(INTDIR)\SkinEngine.obj"
 	-@erase "$(INTDIR)\SkinOpt.obj"
+	-@erase "$(INTDIR)\tabbedoptions.obj"
 	-@erase "$(INTDIR)\utf.obj"
 	-@erase "$(INTDIR)\vc60.idb"
 	-@erase "$(INTDIR)\vc60.pdb"
-	-@erase "$(INTDIR)\viewmodes.obj"
 	-@erase "$(OUTDIR)\clist_modern.exp"
 	-@erase "$(OUTDIR)\clist_modern.map"
 	-@erase "$(OUTDIR)\clist_modern.pdb"
@@ -104,7 +109,7 @@ LINK32_OBJS= \
 	"$(INTDIR)\cluiframes.obj" \
 	"$(INTDIR)\extraimage.obj" \
 	"$(INTDIR)\framesmenu.obj" \
-	"$(INTDIR)\button.obj" \
+	"$(INTDIR)\protocolorder.obj" \
 	"$(INTDIR)\cache_funcs.obj" \
 	"$(INTDIR)\clc.obj" \
 	"$(INTDIR)\clcidents.obj" \
@@ -113,18 +118,21 @@ LINK32_OBJS= \
 	"$(INTDIR)\clcopts.obj" \
 	"$(INTDIR)\clcpaint.obj" \
 	"$(INTDIR)\clcutils.obj" \
-	"$(INTDIR)\clistevents.obj" \
 	"$(INTDIR)\clistmenus.obj" \
 	"$(INTDIR)\clistmod.obj" \
 	"$(INTDIR)\clistopts.obj" \
 	"$(INTDIR)\clistsettings.obj" \
 	"$(INTDIR)\clisttray.obj" \
 	"$(INTDIR)\clui.obj" \
+	"$(INTDIR)\cluiopts.obj" \
 	"$(INTDIR)\cluiservices.obj" \
 	"$(INTDIR)\commonheaders.obj" \
 	"$(INTDIR)\contact.obj" \
 	"$(INTDIR)\Docking.obj" \
+	"$(INTDIR)\forkthread.obj" \
 	"$(INTDIR)\gdiplus.obj" \
+	"$(INTDIR)\genmenu.obj" \
+	"$(INTDIR)\genmenuopt.obj" \
 	"$(INTDIR)\groupmenu.obj" \
 	"$(INTDIR)\image_array.obj" \
 	"$(INTDIR)\init.obj" \
@@ -133,14 +141,16 @@ LINK32_OBJS= \
 	"$(INTDIR)\modern_button.obj" \
 	"$(INTDIR)\modern_row.obj" \
 	"$(INTDIR)\modern_statusbar.obj" \
+	"$(INTDIR)\movetogroup.obj" \
 	"$(INTDIR)\rowheight_funcs.obj" \
 	"$(INTDIR)\rowtemplateopt.obj" \
 	"$(INTDIR)\SkinEditor.obj" \
 	"$(INTDIR)\SkinEngine.obj" \
 	"$(INTDIR)\SkinOpt.obj" \
+	"$(INTDIR)\tabbedoptions.obj" \
 	"$(INTDIR)\utf.obj" \
-	"$(INTDIR)\viewmodes.obj" \
-	"$(INTDIR)\resource.res"
+	"$(INTDIR)\resource.res" \
+	"$(INTDIR)\clistevents.obj"
 
 "..\..\bin\release\plugins\clist_modern.dll" : "$(OUTDIR)" $(DEF_FILE) $(LINK32_OBJS)
     $(LINK32) @<<
@@ -156,7 +166,6 @@ ALL : "..\..\bin\debug\plugins\clist_modern.dll"
 
 
 CLEAN :
-	-@erase "$(INTDIR)\button.obj"
 	-@erase "$(INTDIR)\cache_funcs.obj"
 	-@erase "$(INTDIR)\clc.obj"
 	-@erase "$(INTDIR)\clcidents.obj"
@@ -173,13 +182,17 @@ CLEAN :
 	-@erase "$(INTDIR)\clisttray.obj"
 	-@erase "$(INTDIR)\clui.obj"
 	-@erase "$(INTDIR)\cluiframes.obj"
+	-@erase "$(INTDIR)\cluiopts.obj"
 	-@erase "$(INTDIR)\cluiservices.obj"
 	-@erase "$(INTDIR)\commonheaders.obj"
 	-@erase "$(INTDIR)\contact.obj"
 	-@erase "$(INTDIR)\Docking.obj"
 	-@erase "$(INTDIR)\extraimage.obj"
+	-@erase "$(INTDIR)\forkthread.obj"
 	-@erase "$(INTDIR)\framesmenu.obj"
 	-@erase "$(INTDIR)\gdiplus.obj"
+	-@erase "$(INTDIR)\genmenu.obj"
+	-@erase "$(INTDIR)\genmenuopt.obj"
 	-@erase "$(INTDIR)\groupmenu.obj"
 	-@erase "$(INTDIR)\image_array.obj"
 	-@erase "$(INTDIR)\init.obj"
@@ -189,16 +202,18 @@ CLEAN :
 	-@erase "$(INTDIR)\modern_row.obj"
 	-@erase "$(INTDIR)\modern_statusbar.obj"
 	-@erase "$(INTDIR)\modernb.pch"
+	-@erase "$(INTDIR)\movetogroup.obj"
+	-@erase "$(INTDIR)\protocolorder.obj"
 	-@erase "$(INTDIR)\resource.res"
 	-@erase "$(INTDIR)\rowheight_funcs.obj"
 	-@erase "$(INTDIR)\rowtemplateopt.obj"
 	-@erase "$(INTDIR)\SkinEditor.obj"
 	-@erase "$(INTDIR)\SkinEngine.obj"
 	-@erase "$(INTDIR)\SkinOpt.obj"
+	-@erase "$(INTDIR)\tabbedoptions.obj"
 	-@erase "$(INTDIR)\utf.obj"
 	-@erase "$(INTDIR)\vc60.idb"
 	-@erase "$(INTDIR)\vc60.pdb"
-	-@erase "$(INTDIR)\viewmodes.obj"
 	-@erase "$(OUTDIR)\clist_modern.exp"
 	-@erase "$(OUTDIR)\clist_modern.lib"
 	-@erase "$(OUTDIR)\clist_modern.pdb"
@@ -221,7 +236,7 @@ LINK32_OBJS= \
 	"$(INTDIR)\cluiframes.obj" \
 	"$(INTDIR)\extraimage.obj" \
 	"$(INTDIR)\framesmenu.obj" \
-	"$(INTDIR)\button.obj" \
+	"$(INTDIR)\protocolorder.obj" \
 	"$(INTDIR)\cache_funcs.obj" \
 	"$(INTDIR)\clc.obj" \
 	"$(INTDIR)\clcidents.obj" \
@@ -230,18 +245,21 @@ LINK32_OBJS= \
 	"$(INTDIR)\clcopts.obj" \
 	"$(INTDIR)\clcpaint.obj" \
 	"$(INTDIR)\clcutils.obj" \
-	"$(INTDIR)\clistevents.obj" \
 	"$(INTDIR)\clistmenus.obj" \
 	"$(INTDIR)\clistmod.obj" \
 	"$(INTDIR)\clistopts.obj" \
 	"$(INTDIR)\clistsettings.obj" \
 	"$(INTDIR)\clisttray.obj" \
 	"$(INTDIR)\clui.obj" \
+	"$(INTDIR)\cluiopts.obj" \
 	"$(INTDIR)\cluiservices.obj" \
 	"$(INTDIR)\commonheaders.obj" \
 	"$(INTDIR)\contact.obj" \
 	"$(INTDIR)\Docking.obj" \
+	"$(INTDIR)\forkthread.obj" \
 	"$(INTDIR)\gdiplus.obj" \
+	"$(INTDIR)\genmenu.obj" \
+	"$(INTDIR)\genmenuopt.obj" \
 	"$(INTDIR)\groupmenu.obj" \
 	"$(INTDIR)\image_array.obj" \
 	"$(INTDIR)\init.obj" \
@@ -250,14 +268,16 @@ LINK32_OBJS= \
 	"$(INTDIR)\modern_button.obj" \
 	"$(INTDIR)\modern_row.obj" \
 	"$(INTDIR)\modern_statusbar.obj" \
+	"$(INTDIR)\movetogroup.obj" \
 	"$(INTDIR)\rowheight_funcs.obj" \
 	"$(INTDIR)\rowtemplateopt.obj" \
 	"$(INTDIR)\SkinEditor.obj" \
 	"$(INTDIR)\SkinEngine.obj" \
 	"$(INTDIR)\SkinOpt.obj" \
+	"$(INTDIR)\tabbedoptions.obj" \
 	"$(INTDIR)\utf.obj" \
-	"$(INTDIR)\viewmodes.obj" \
-	"$(INTDIR)\resource.res"
+	"$(INTDIR)\resource.res" \
+	"$(INTDIR)\clistevents.obj"
 
 "..\..\bin\debug\plugins\clist_modern.dll" : "$(OUTDIR)" $(DEF_FILE) $(LINK32_OBJS)
     $(LINK32) @<<
@@ -273,7 +293,6 @@ ALL : "..\..\bin\release Unicode\plugins\clist_modern.dll"
 
 
 CLEAN :
-	-@erase "$(INTDIR)\button.obj"
 	-@erase "$(INTDIR)\cache_funcs.obj"
 	-@erase "$(INTDIR)\clc.obj"
 	-@erase "$(INTDIR)\clcidents.obj"
@@ -290,13 +309,17 @@ CLEAN :
 	-@erase "$(INTDIR)\clisttray.obj"
 	-@erase "$(INTDIR)\clui.obj"
 	-@erase "$(INTDIR)\cluiframes.obj"
+	-@erase "$(INTDIR)\cluiopts.obj"
 	-@erase "$(INTDIR)\cluiservices.obj"
 	-@erase "$(INTDIR)\commonheaders.obj"
 	-@erase "$(INTDIR)\contact.obj"
 	-@erase "$(INTDIR)\Docking.obj"
 	-@erase "$(INTDIR)\extraimage.obj"
+	-@erase "$(INTDIR)\forkthread.obj"
 	-@erase "$(INTDIR)\framesmenu.obj"
 	-@erase "$(INTDIR)\gdiplus.obj"
+	-@erase "$(INTDIR)\genmenu.obj"
+	-@erase "$(INTDIR)\genmenuopt.obj"
 	-@erase "$(INTDIR)\groupmenu.obj"
 	-@erase "$(INTDIR)\image_array.obj"
 	-@erase "$(INTDIR)\init.obj"
@@ -306,16 +329,18 @@ CLEAN :
 	-@erase "$(INTDIR)\modern_row.obj"
 	-@erase "$(INTDIR)\modern_statusbar.obj"
 	-@erase "$(INTDIR)\modernb.pch"
+	-@erase "$(INTDIR)\movetogroup.obj"
+	-@erase "$(INTDIR)\protocolorder.obj"
 	-@erase "$(INTDIR)\resource.res"
 	-@erase "$(INTDIR)\rowheight_funcs.obj"
 	-@erase "$(INTDIR)\rowtemplateopt.obj"
 	-@erase "$(INTDIR)\SkinEditor.obj"
 	-@erase "$(INTDIR)\SkinEngine.obj"
 	-@erase "$(INTDIR)\SkinOpt.obj"
+	-@erase "$(INTDIR)\tabbedoptions.obj"
 	-@erase "$(INTDIR)\utf.obj"
 	-@erase "$(INTDIR)\vc60.idb"
 	-@erase "$(INTDIR)\vc60.pdb"
-	-@erase "$(INTDIR)\viewmodes.obj"
 	-@erase "$(OUTDIR)\clist_modern.exp"
 	-@erase "$(OUTDIR)\clist_modern.map"
 	-@erase "$(OUTDIR)\clist_modern.pdb"
@@ -337,7 +362,7 @@ LINK32_OBJS= \
 	"$(INTDIR)\cluiframes.obj" \
 	"$(INTDIR)\extraimage.obj" \
 	"$(INTDIR)\framesmenu.obj" \
-	"$(INTDIR)\button.obj" \
+	"$(INTDIR)\protocolorder.obj" \
 	"$(INTDIR)\cache_funcs.obj" \
 	"$(INTDIR)\clc.obj" \
 	"$(INTDIR)\clcidents.obj" \
@@ -346,18 +371,21 @@ LINK32_OBJS= \
 	"$(INTDIR)\clcopts.obj" \
 	"$(INTDIR)\clcpaint.obj" \
 	"$(INTDIR)\clcutils.obj" \
-	"$(INTDIR)\clistevents.obj" \
 	"$(INTDIR)\clistmenus.obj" \
 	"$(INTDIR)\clistmod.obj" \
 	"$(INTDIR)\clistopts.obj" \
 	"$(INTDIR)\clistsettings.obj" \
 	"$(INTDIR)\clisttray.obj" \
 	"$(INTDIR)\clui.obj" \
+	"$(INTDIR)\cluiopts.obj" \
 	"$(INTDIR)\cluiservices.obj" \
 	"$(INTDIR)\commonheaders.obj" \
 	"$(INTDIR)\contact.obj" \
 	"$(INTDIR)\Docking.obj" \
+	"$(INTDIR)\forkthread.obj" \
 	"$(INTDIR)\gdiplus.obj" \
+	"$(INTDIR)\genmenu.obj" \
+	"$(INTDIR)\genmenuopt.obj" \
 	"$(INTDIR)\groupmenu.obj" \
 	"$(INTDIR)\image_array.obj" \
 	"$(INTDIR)\init.obj" \
@@ -366,14 +394,16 @@ LINK32_OBJS= \
 	"$(INTDIR)\modern_button.obj" \
 	"$(INTDIR)\modern_row.obj" \
 	"$(INTDIR)\modern_statusbar.obj" \
+	"$(INTDIR)\movetogroup.obj" \
 	"$(INTDIR)\rowheight_funcs.obj" \
 	"$(INTDIR)\rowtemplateopt.obj" \
 	"$(INTDIR)\SkinEditor.obj" \
 	"$(INTDIR)\SkinEngine.obj" \
 	"$(INTDIR)\SkinOpt.obj" \
+	"$(INTDIR)\tabbedoptions.obj" \
 	"$(INTDIR)\utf.obj" \
-	"$(INTDIR)\viewmodes.obj" \
-	"$(INTDIR)\resource.res"
+	"$(INTDIR)\resource.res" \
+	"$(INTDIR)\clistevents.obj"
 
 "..\..\bin\release Unicode\plugins\clist_modern.dll" : "$(OUTDIR)" $(DEF_FILE) $(LINK32_OBJS)
     $(LINK32) @<<
@@ -389,7 +419,6 @@ ALL : "..\..\bin\debug Unicode\plugins\clist_modern.dll"
 
 
 CLEAN :
-	-@erase "$(INTDIR)\button.obj"
 	-@erase "$(INTDIR)\cache_funcs.obj"
 	-@erase "$(INTDIR)\clc.obj"
 	-@erase "$(INTDIR)\clcidents.obj"
@@ -406,13 +435,17 @@ CLEAN :
 	-@erase "$(INTDIR)\clisttray.obj"
 	-@erase "$(INTDIR)\clui.obj"
 	-@erase "$(INTDIR)\cluiframes.obj"
+	-@erase "$(INTDIR)\cluiopts.obj"
 	-@erase "$(INTDIR)\cluiservices.obj"
 	-@erase "$(INTDIR)\commonheaders.obj"
 	-@erase "$(INTDIR)\contact.obj"
 	-@erase "$(INTDIR)\Docking.obj"
 	-@erase "$(INTDIR)\extraimage.obj"
+	-@erase "$(INTDIR)\forkthread.obj"
 	-@erase "$(INTDIR)\framesmenu.obj"
 	-@erase "$(INTDIR)\gdiplus.obj"
+	-@erase "$(INTDIR)\genmenu.obj"
+	-@erase "$(INTDIR)\genmenuopt.obj"
 	-@erase "$(INTDIR)\groupmenu.obj"
 	-@erase "$(INTDIR)\image_array.obj"
 	-@erase "$(INTDIR)\init.obj"
@@ -422,16 +455,18 @@ CLEAN :
 	-@erase "$(INTDIR)\modern_row.obj"
 	-@erase "$(INTDIR)\modern_statusbar.obj"
 	-@erase "$(INTDIR)\modernb.pch"
+	-@erase "$(INTDIR)\movetogroup.obj"
+	-@erase "$(INTDIR)\protocolorder.obj"
 	-@erase "$(INTDIR)\resource.res"
 	-@erase "$(INTDIR)\rowheight_funcs.obj"
 	-@erase "$(INTDIR)\rowtemplateopt.obj"
 	-@erase "$(INTDIR)\SkinEditor.obj"
 	-@erase "$(INTDIR)\SkinEngine.obj"
 	-@erase "$(INTDIR)\SkinOpt.obj"
+	-@erase "$(INTDIR)\tabbedoptions.obj"
 	-@erase "$(INTDIR)\utf.obj"
 	-@erase "$(INTDIR)\vc60.idb"
 	-@erase "$(INTDIR)\vc60.pdb"
-	-@erase "$(INTDIR)\viewmodes.obj"
 	-@erase "$(OUTDIR)\clist_modern.exp"
 	-@erase "$(OUTDIR)\clist_modern.pdb"
 	-@erase "..\..\bin\debug Unicode\plugins\clist_modern.dll"
@@ -453,7 +488,7 @@ LINK32_OBJS= \
 	"$(INTDIR)\cluiframes.obj" \
 	"$(INTDIR)\extraimage.obj" \
 	"$(INTDIR)\framesmenu.obj" \
-	"$(INTDIR)\button.obj" \
+	"$(INTDIR)\protocolorder.obj" \
 	"$(INTDIR)\cache_funcs.obj" \
 	"$(INTDIR)\clc.obj" \
 	"$(INTDIR)\clcidents.obj" \
@@ -462,18 +497,21 @@ LINK32_OBJS= \
 	"$(INTDIR)\clcopts.obj" \
 	"$(INTDIR)\clcpaint.obj" \
 	"$(INTDIR)\clcutils.obj" \
-	"$(INTDIR)\clistevents.obj" \
 	"$(INTDIR)\clistmenus.obj" \
 	"$(INTDIR)\clistmod.obj" \
 	"$(INTDIR)\clistopts.obj" \
 	"$(INTDIR)\clistsettings.obj" \
 	"$(INTDIR)\clisttray.obj" \
 	"$(INTDIR)\clui.obj" \
+	"$(INTDIR)\cluiopts.obj" \
 	"$(INTDIR)\cluiservices.obj" \
 	"$(INTDIR)\commonheaders.obj" \
 	"$(INTDIR)\contact.obj" \
 	"$(INTDIR)\Docking.obj" \
+	"$(INTDIR)\forkthread.obj" \
 	"$(INTDIR)\gdiplus.obj" \
+	"$(INTDIR)\genmenu.obj" \
+	"$(INTDIR)\genmenuopt.obj" \
 	"$(INTDIR)\groupmenu.obj" \
 	"$(INTDIR)\image_array.obj" \
 	"$(INTDIR)\init.obj" \
@@ -482,14 +520,16 @@ LINK32_OBJS= \
 	"$(INTDIR)\modern_button.obj" \
 	"$(INTDIR)\modern_row.obj" \
 	"$(INTDIR)\modern_statusbar.obj" \
+	"$(INTDIR)\movetogroup.obj" \
 	"$(INTDIR)\rowheight_funcs.obj" \
 	"$(INTDIR)\rowtemplateopt.obj" \
 	"$(INTDIR)\SkinEditor.obj" \
 	"$(INTDIR)\SkinEngine.obj" \
 	"$(INTDIR)\SkinOpt.obj" \
+	"$(INTDIR)\tabbedoptions.obj" \
 	"$(INTDIR)\utf.obj" \
-	"$(INTDIR)\viewmodes.obj" \
-	"$(INTDIR)\resource.res"
+	"$(INTDIR)\resource.res" \
+	"$(INTDIR)\clistevents.obj"
 
 "..\..\bin\debug Unicode\plugins\clist_modern.dll" : "$(OUTDIR)" $(DEF_FILE) $(LINK32_OBJS)
     $(LINK32) @<<
@@ -671,10 +711,49 @@ CPP_SWITCHES=/nologo /MDd /W3 /Gm /GX /ZI /Od /I "../../include" /D "WIN32" /D "
 
 !ENDIF
 
-SOURCE=.\button.c
+SOURCE=.\CLUIFrames\protocolorder.c
 
-"$(INTDIR)\button.obj" : $(SOURCE) "$(INTDIR)" "$(INTDIR)\modernb.pch"
+!IF  "$(CFG)" == "modernb - Win32 Release"
 
+CPP_SWITCHES=/nologo /MD /W3 /Zi /O1 /I "../../include" /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "modernb_EXPORTS" /Fp"$(INTDIR)\modernb.pch" /Yu"../commonheaders.h" /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /c
+
+"$(INTDIR)\protocolorder.obj" : $(SOURCE) "$(INTDIR)" "$(INTDIR)\modernb.pch"
+	$(CPP) @<<
+  $(CPP_SWITCHES) $(SOURCE)
+<<
+
+
+!ELSEIF  "$(CFG)" == "modernb - Win32 Debug"
+
+CPP_SWITCHES=/nologo /MDd /W3 /Gm /GX /ZI /Od /I "../../include" /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "modernb_EXPORTS" /Fp"$(INTDIR)\modernb.pch" /Yu"../commonheaders.h" /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /GZ /c
+
+"$(INTDIR)\protocolorder.obj" : $(SOURCE) "$(INTDIR)" "$(INTDIR)\modernb.pch"
+	$(CPP) @<<
+  $(CPP_SWITCHES) $(SOURCE)
+<<
+
+
+!ELSEIF  "$(CFG)" == "modernb - Win32 Release Unicode"
+
+CPP_SWITCHES=/nologo /MD /W3 /Zi /O1 /I "../../include" /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "UNICODE" /D "_USRDLL" /D "modernb_EXPORTS" /Fp"$(INTDIR)\modernb.pch" /Yu"../commonheaders.h" /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /c
+
+"$(INTDIR)\protocolorder.obj" : $(SOURCE) "$(INTDIR)" "$(INTDIR)\modernb.pch"
+	$(CPP) @<<
+  $(CPP_SWITCHES) $(SOURCE)
+<<
+
+
+!ELSEIF  "$(CFG)" == "modernb - Win32 Debug Unicode"
+
+CPP_SWITCHES=/nologo /MDd /W3 /Gm /GX /ZI /Od /I "../../include" /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "UNICODE" /D "_USRDLL" /D "modernb_EXPORTS" /Fp"$(INTDIR)\modernb.pch" /Yu"../commonheaders.h" /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /GZ /c
+
+"$(INTDIR)\protocolorder.obj" : $(SOURCE) "$(INTDIR)" "$(INTDIR)\modernb.pch"
+	$(CPP) @<<
+  $(CPP_SWITCHES) $(SOURCE)
+<<
+
+
+!ENDIF
 
 SOURCE=.\cache_funcs.c
 
@@ -1219,6 +1298,50 @@ CPP_SWITCHES=/nologo /MDd /W3 /Gm /GX /ZI /Od /I "../../include" /D "WIN32" /D "
 
 !ENDIF
 
+SOURCE=.\cluiopts.c
+
+!IF  "$(CFG)" == "modernb - Win32 Release"
+
+CPP_SWITCHES=/nologo /MD /W3 /Zi /O1 /I "../../include" /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "modernb_EXPORTS" /Fp"$(INTDIR)\modernb.pch" /Yu"commonheaders.h" /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /c
+
+"$(INTDIR)\cluiopts.obj" : $(SOURCE) "$(INTDIR)" "$(INTDIR)\modernb.pch"
+	$(CPP) @<<
+  $(CPP_SWITCHES) $(SOURCE)
+<<
+
+
+!ELSEIF  "$(CFG)" == "modernb - Win32 Debug"
+
+CPP_SWITCHES=/nologo /MDd /W3 /Gm /GX /ZI /Od /I "../../include" /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "modernb_EXPORTS" /Fp"$(INTDIR)\modernb.pch" /Yu"commonheaders.h" /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /GZ /c
+
+"$(INTDIR)\cluiopts.obj" : $(SOURCE) "$(INTDIR)" "$(INTDIR)\modernb.pch"
+	$(CPP) @<<
+  $(CPP_SWITCHES) $(SOURCE)
+<<
+
+
+!ELSEIF  "$(CFG)" == "modernb - Win32 Release Unicode"
+
+CPP_SWITCHES=/nologo /MD /W3 /Zi /O1 /I "../../include" /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "UNICODE" /D "_USRDLL" /D "modernb_EXPORTS" /Fp"$(INTDIR)\modernb.pch" /Yu"commonheaders.h" /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /c
+
+"$(INTDIR)\cluiopts.obj" : $(SOURCE) "$(INTDIR)" "$(INTDIR)\modernb.pch"
+	$(CPP) @<<
+  $(CPP_SWITCHES) $(SOURCE)
+<<
+
+
+!ELSEIF  "$(CFG)" == "modernb - Win32 Debug Unicode"
+
+CPP_SWITCHES=/nologo /MDd /W3 /Gm /GX /ZI /Od /I "../../include" /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "UNICODE" /D "_USRDLL" /D "modernb_EXPORTS" /Fp"$(INTDIR)\modernb.pch" /Yu"commonheaders.h" /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /GZ /c
+
+"$(INTDIR)\cluiopts.obj" : $(SOURCE) "$(INTDIR)" "$(INTDIR)\modernb.pch"
+	$(CPP) @<<
+  $(CPP_SWITCHES) $(SOURCE)
+<<
+
+
+!ENDIF
+
 SOURCE=.\cluiservices.c
 
 !IF  "$(CFG)" == "modernb - Win32 Release"
@@ -1356,6 +1479,50 @@ SOURCE=.\Docking.c
 "$(INTDIR)\Docking.obj" : $(SOURCE) "$(INTDIR)" "$(INTDIR)\modernb.pch"
 
 
+SOURCE=.\forkthread.c
+
+!IF  "$(CFG)" == "modernb - Win32 Release"
+
+CPP_SWITCHES=/nologo /MD /W3 /Zi /O1 /I "../../include" /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "modernb_EXPORTS" /Fp"$(INTDIR)\modernb.pch" /Yu"commonheaders.h" /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /c
+
+"$(INTDIR)\forkthread.obj" : $(SOURCE) "$(INTDIR)" "$(INTDIR)\modernb.pch"
+	$(CPP) @<<
+  $(CPP_SWITCHES) $(SOURCE)
+<<
+
+
+!ELSEIF  "$(CFG)" == "modernb - Win32 Debug"
+
+CPP_SWITCHES=/nologo /MDd /W3 /Gm /GX /ZI /Od /I "../../include" /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "modernb_EXPORTS" /Fp"$(INTDIR)\modernb.pch" /Yu"commonheaders.h" /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /GZ /c
+
+"$(INTDIR)\forkthread.obj" : $(SOURCE) "$(INTDIR)" "$(INTDIR)\modernb.pch"
+	$(CPP) @<<
+  $(CPP_SWITCHES) $(SOURCE)
+<<
+
+
+!ELSEIF  "$(CFG)" == "modernb - Win32 Release Unicode"
+
+CPP_SWITCHES=/nologo /MD /W3 /Zi /O1 /I "../../include" /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "UNICODE" /D "_USRDLL" /D "modernb_EXPORTS" /Fp"$(INTDIR)\modernb.pch" /Yu"commonheaders.h" /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /c
+
+"$(INTDIR)\forkthread.obj" : $(SOURCE) "$(INTDIR)" "$(INTDIR)\modernb.pch"
+	$(CPP) @<<
+  $(CPP_SWITCHES) $(SOURCE)
+<<
+
+
+!ELSEIF  "$(CFG)" == "modernb - Win32 Debug Unicode"
+
+CPP_SWITCHES=/nologo /MDd /W3 /Gm /GX /ZI /Od /I "../../include" /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "UNICODE" /D "_USRDLL" /D "modernb_EXPORTS" /Fp"$(INTDIR)\modernb.pch" /Yu"commonheaders.h" /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /GZ /c
+
+"$(INTDIR)\forkthread.obj" : $(SOURCE) "$(INTDIR)" "$(INTDIR)\modernb.pch"
+	$(CPP) @<<
+  $(CPP_SWITCHES) $(SOURCE)
+<<
+
+
+!ENDIF
+
 SOURCE=.\gdiplus.cpp
 
 !IF  "$(CFG)" == "modernb - Win32 Release"
@@ -1399,6 +1566,16 @@ CPP_SWITCHES=/nologo /MDd /W3 /Gm /GX /ZI /Od /I "../../include" /D "WIN32" /D "
 
 
 !ENDIF
+
+SOURCE=.\genmenu.c
+
+"$(INTDIR)\genmenu.obj" : $(SOURCE) "$(INTDIR)" "$(INTDIR)\modernb.pch"
+
+
+SOURCE=.\genmenuopt.c
+
+"$(INTDIR)\genmenuopt.obj" : $(SOURCE) "$(INTDIR)" "$(INTDIR)\modernb.pch"
+
 
 SOURCE=.\groupmenu.c
 
@@ -1557,6 +1734,11 @@ SOURCE=.\modern_statusbar.c
 "$(INTDIR)\modern_statusbar.obj" : $(SOURCE) "$(INTDIR)" "$(INTDIR)\modernb.pch"
 
 
+SOURCE=.\movetogroup.c
+
+"$(INTDIR)\movetogroup.obj" : $(SOURCE) "$(INTDIR)" "$(INTDIR)\modernb.pch"
+
+
 SOURCE=.\rowheight_funcs.c
 
 "$(INTDIR)\rowheight_funcs.obj" : $(SOURCE) "$(INTDIR)" "$(INTDIR)\modernb.pch"
@@ -1582,14 +1764,14 @@ SOURCE=.\SkinOpt.c
 "$(INTDIR)\SkinOpt.obj" : $(SOURCE) "$(INTDIR)" "$(INTDIR)\modernb.pch"
 
 
+SOURCE=.\tabbedoptions.c
+
+"$(INTDIR)\tabbedoptions.obj" : $(SOURCE) "$(INTDIR)" "$(INTDIR)\modernb.pch"
+
+
 SOURCE=.\utf.c
 
 "$(INTDIR)\utf.obj" : $(SOURCE) "$(INTDIR)" "$(INTDIR)\modernb.pch"
-
-
-SOURCE=.\viewmodes.c
-
-"$(INTDIR)\viewmodes.obj" : $(SOURCE) "$(INTDIR)" "$(INTDIR)\modernb.pch"
 
 
 SOURCE=.\resource.rc

@@ -208,7 +208,11 @@ SOURCE=.\msn_lists.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\msn_menu.cpp
+SOURCE=.\msn_md5.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\msn_md5c.cpp
 # End Source File
 # Begin Source File
 
@@ -265,6 +269,15 @@ SOURCE=.\msn_useropts.cpp
 # Begin Source File
 
 SOURCE=.\msn_ws.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=.\sha1.c
+# SUBTRACT CPP /YX /Yc /Yu
+# End Source File
+# Begin Source File
+
+SOURCE=.\sha1.h
 # End Source File
 # Begin Source File
 

@@ -5,7 +5,7 @@
 // Copyright © 2000,2001 Richard Hughes, Roland Rabien, Tristan Van de Vreede
 // Copyright © 2001,2002 Jon Keating, Richard Hughes
 // Copyright © 2002,2003,2004 Martin Öberg, Sam Kothari, Robert Rainwater
-// Copyright © 2004,2005,2006,2007 Joe Kucera
+// Copyright © 2004,2005,2006 Joe Kucera
 // 
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -44,14 +44,14 @@ void handleFileAck(PBYTE buf, WORD wLen, DWORD dwUin, DWORD dwCookie, WORD wStat
 {
   char* pszFileName = NULL;
   DWORD dwFileSize;
-  HANDLE hCookieContact;
+  DWORD dwCookieUin;
   WORD wPort;
   WORD wFilenameLength;
   filetransfer* ft;
 
   
   // Find the filetransfer that belongs to this response
-  if (!FindCookie(dwCookie, &hCookieContact, &ft))
+  if (!FindCookie(dwCookie, &dwCookieUin, &ft))
   {
     NetLog_Direct("Error: Received unexpected file transfer request response");
     return;
@@ -59,7 +59,7 @@ void handleFileAck(PBYTE buf, WORD wLen, DWORD dwUin, DWORD dwCookie, WORD wStat
 
   FreeCookie(dwCookie);
   
-  if (hCookieContact != HContactFromUIN(dwUin, NULL))
+  if (dwCookieUin != dwUin)
   {
     NetLog_Direct("Error: UINs do not match in file transfer request response");
     return;
@@ -68,7 +68,7 @@ void handleFileAck(PBYTE buf, WORD wLen, DWORD dwUin, DWORD dwCookie, WORD wStat
   // If status != 0, a request has been denied
   if (wStatus != 0)
   {
-    NetLog_Direct("File transfer denied by %u.", dwUin);
+    NetLog_Direct("File transfer denied by %u,", dwUin);
     ICQBroadcastAck(ft->hContact, ACKTYPE_FILE, ACKRESULT_DENIED, (HANDLE)ft, 0);
 
     FreeCookie(dwCookie);
@@ -110,14 +110,18 @@ void handleFileAck(PBYTE buf, WORD wLen, DWORD dwUin, DWORD dwCookie, WORD wStat
 
 filetransfer *CreateFileTransfer(HANDLE hContact, DWORD dwUin, int nVersion)
 {
-  filetransfer *ft = CreateIcqFileTransfer();
+  filetransfer *ft;
 
-  ft->dwUin = dwUin;
-  ft->hContact = hContact;
-  ft->nVersion = nVersion;
-  ft->pMessage.bMessageType = MTYPE_FILEREQ;
-  InitMessageCookie(&ft->pMessage);
-
+  ft = (filetransfer*)SAFE_MALLOC(sizeof(filetransfer));
+  if (ft)
+  {
+    ft->dwUin = dwUin;
+    ft->hContact = hContact;
+    ft->nVersion = nVersion;
+    ft->pMessage.bMessageType = MTYPE_FILEREQ;
+    ft->pMessage.dwMsgID1 = time(NULL);
+    ft->pMessage.dwMsgID2 = RandRange(0, 0x00FF);
+  }
   return ft;
 }
 
@@ -221,15 +225,12 @@ void icq_CancelFileTransfer(HANDLE hContact, filetransfer* ft)
   if (FindCookieByData(ft, &dwCookie, NULL))
     FreeCookie(dwCookie);      /* this bit stops a send that's waiting for acceptance */
 
-  if (IsValidFileTransfer(ft))
-  { // Transfer still out there, end it
-    NetLib_SafeCloseHandle(&ft->hConnection, FALSE);
+  NetLib_SafeCloseHandle(&ft->hConnection, FALSE);
 
-    ICQBroadcastAck(ft->hContact, ACKTYPE_FILE, ACKRESULT_FAILED, ft, 0);
+  ICQBroadcastAck(ft->hContact, ACKTYPE_FILE, ACKRESULT_FAILED, ft, 0);
 
-    if (!FindFileTransferDC(ft))
-    { // Release orphan structure only
-      SafeReleaseFileTransfer(&ft);
-    }
-  }
+  /* FIXME: Do not free ft, or anything therein, it is freed inside DC thread ! */
+  #ifdef _DEBUG
+    NetLog_Direct("icq_CancelFileTransfer: OK");
+  #endif
 }

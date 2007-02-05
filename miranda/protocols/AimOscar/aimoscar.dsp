@@ -129,6 +129,10 @@ SOURCE=.\links.cpp
 # End Source File
 # Begin Source File
 
+SOURCE=.\md5.cpp
+# End Source File
+# Begin Source File
+
 SOURCE=.\packets.cpp
 # End Source File
 # Begin Source File
@@ -154,10 +158,6 @@ SOURCE=.\snac.cpp
 # Begin Source File
 
 SOURCE=.\strl.cpp
-# End Source File
-# Begin Source File
-
-SOURCE=.\theme.cpp
 # End Source File
 # Begin Source File
 
@@ -221,6 +221,10 @@ SOURCE=.\links.h
 # End Source File
 # Begin Source File
 
+SOURCE=.\md5.h
+# End Source File
+# Begin Source File
+
 SOURCE=.\packets.h
 # End Source File
 # Begin Source File
@@ -250,10 +254,6 @@ SOURCE=.\snac.h
 # Begin Source File
 
 SOURCE=.\strl.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\theme.h
 # End Source File
 # Begin Source File
 

@@ -43,8 +43,7 @@ void InitIconLib();
 int IconLibInstalled();
 
 void IconLibDefine(const char* desc, const char* section, const char* ident, HICON icon, const char* def_file, int def_idx);
-HICON IconLibGetIcon(const char* ident);
-void IconLibReleaseIcon(const char* ident);
+HICON IconLibProcess(HICON icon, const char* ident);
 HANDLE IconLibHookIconsChanged(MIRANDAHOOK hook);
 
 

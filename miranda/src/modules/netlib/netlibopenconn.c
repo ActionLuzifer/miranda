@@ -424,7 +424,7 @@ int NetlibOpenConnection(WPARAM wParam,LPARAM lParam)
 	struct NetlibUser *nlu=(struct NetlibUser*)wParam;
 	struct NetlibConnection *nlc;
 	SOCKADDR_IN sin;
-    
+
     EnterCriticalSection(&csNetlibUser);
     if(iUPnPCleanup==0) {
         forkthread(NetlibUPnPCleanup, 0, NULL);
