@@ -28,6 +28,7 @@ Last change by : $Author$
 #include "jabber.h"
 #include "jabber_ssl.h"
 #include "jabber_list.h"
+#include "sha1.h"
 
 extern CRITICAL_SECTION mutex;
 extern UINT jabberCodePage;
@@ -81,7 +82,7 @@ int __stdcall JabberSend( HANDLE hConn, XmlNode& node )
 		if ( DBGetContactSettingByte( NULL, "Netlib", "DumpSent", TRUE ) == TRUE ) {
 			char* szLogBuffer = ( char* )alloca( size+32 );
 			strcpy( szLogBuffer, "( SSL ) Data sent\n" );
-			memcpy( szLogBuffer+strlen( szLogBuffer ), str, size+1  ); // also copy \0
+			memcpy( szLogBuffer+strlen( szLogBuffer ), str, size+1  ); // also copy \0 
 			Netlib_Logf( hNetlibUser, "%s", szLogBuffer );	// %s to protect against when fmt tokens are in szLogBuffer causing crash
 		}
 
@@ -116,7 +117,7 @@ int __stdcall JabberSend( HANDLE hConn, const char* fmt, ... )
 		if ( DBGetContactSettingByte( NULL, "Netlib", "DumpSent", TRUE ) == TRUE ) {
 			char* szLogBuffer = ( char* )alloca( size+32 );
 			strcpy( szLogBuffer, "( SSL ) Data sent\n" );
-			memcpy( szLogBuffer+strlen( szLogBuffer ), str, size+1 ); // also copy \0
+			memcpy( szLogBuffer+strlen( szLogBuffer ), str, size+1 ); // also copy \0 
 			Netlib_Logf( hNetlibUser, "%s", szLogBuffer );	// %s to protect against when fmt tokens are in szLogBuffer causing crash
 		}
 
@@ -305,7 +306,7 @@ void __stdcall JabberUtfToTchar( const char* pszValue, size_t cbLen, LPTSTR& des
 		// this code can cause access violation when a stack overflow occurs
 		pszCopy = ( char* )alloca( cbLen+1 );
 	}
-	__except( EXCEPTION_EXECUTE_HANDLER )
+	__finally
 	{
 		bNeedsFree = true;
 		pszCopy = ( char* )malloc( cbLen+1 );
@@ -331,17 +332,17 @@ void __stdcall JabberUtfToTchar( const char* pszValue, size_t cbLen, LPTSTR& des
 
 char* __stdcall JabberSha1( char* str )
 {
-	mir_sha1_ctx sha;
-	mir_sha1_byte_t digest[20];
+	SHA1Context sha;
+	uint8_t digest[20];
 	char* result;
 	int i;
 
 	if ( str == NULL )
 		return NULL;
 
-	mir_sha1_init( &sha );
-	mir_sha1_append( &sha, (mir_sha1_byte_t* )str, strlen( str ));
-	mir_sha1_finish( &sha, digest );
+	SHA1Reset( &sha );
+	SHA1Input( &sha, ( const unsigned __int8* )str, strlen( str ));
+	SHA1Result( &sha, digest );
 	if (( result=( char* )mir_alloc( 41 )) == NULL )
 		return NULL;
 
@@ -833,7 +834,7 @@ struct MyCountryListEntry
 	int id;
 	TCHAR* szName;
 }
-static extraCtry[] =
+static extraCtry[] = 
 {
 	{ 1,	_T("United States") },
 	{ 1,	_T("United States of America") },
@@ -1091,7 +1092,7 @@ TStringPairs::TStringPairs( char* buffer ) :
 	elems( NULL )
 {
    TStringPairsElem tempElem[ 100 ];
-
+   
 	for ( numElems=0; *buffer; numElems++ ) {
 		char* p = strchr( buffer, '=' );
 		if ( p == NULL )

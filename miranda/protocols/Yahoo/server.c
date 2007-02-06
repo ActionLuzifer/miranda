@@ -16,7 +16,7 @@
 #include <time.h>
 
 int poll_loop = 1;
-long lLastSend;
+
 extern YList *connections;
 
 int PASCAL send(SOCKET s, const char FAR *buf, int len, int flags)
@@ -25,17 +25,12 @@ int PASCAL send(SOCKET s, const char FAR *buf, int len, int flags)
     //LOG(("send socket: %d, %d bytes", s, len));
 
     if (yahooStatus == ID_STATUS_OFFLINE) {
-		LOG(("WARNING: WE OFFLINE ALREADY!!"));
-        //return 0;
+		LOG(("WE OFFLINE ALREADY!!"));
+        return 0;
 	}
 
     rlen = Netlib_Send((HANDLE)s, buf, len, 0);
 
-#ifdef HTTP_GATEWAY				
-	if (iHTTPGateway)
-		lLastSend = time(NULL);
-#endif
-	
     if (rlen == SOCKET_ERROR) {
         LOG(("SEND Error."));
         return -1;
@@ -109,7 +104,8 @@ void __cdecl yahoo_server_main(void *empty)
 				//LOG(("Connection tag:%d id:%d fd:%d remove:%d", c->tag, c->id, c->fd, c->remove));
 				if(c->remove) {
 					YList *n = y_list_next(l);
-					//LOG(("Removing id:%d fd:%d tag:%d", c->id, c->fd, c->tag));
+					LOG(("Removing id:%d fd:%d tag:%d", c->id, c->fd, c->tag));
+					Netlib_CloseHandle((HANDLE)c->fd);
 					connections = y_list_remove_link(connections, l);
 					y_list_free_1(l);
 					FREE(c);
@@ -143,34 +139,15 @@ void __cdecl yahoo_server_main(void *empty)
 			}
 			
 			/* do the timer check */
-			if (ylad->id > 0) {
-#ifdef	HTTP_GATEWAY			
-				//YAHOO_DebugLog("HTTPGateway: %d", iHTTPGateway);
-				if	(!iHTTPGateway) {
-#endif					
-					if (yahooLoggedIn && time(NULL) - lLastPing > 60) {
-						LOG(("[TIMER] Sending a keep alive message"));
-						yahoo_keepalive(ylad->id);
-						
-						lLastPing = time(NULL);
-					}
-#ifdef HTTP_GATEWAY					
-				} else {
-					YAHOO_DebugLog("[SERVER] Got packets: %d", ylad->rpkts);
-					
-					if ( yahooLoggedIn && ( (ylad->rpkts > 0 && (time(NULL) - lLastSend) >=3) ||
-						 ( (time(NULL) - lLastSend) >= 13) ) ) {
-							 
-						LOG(("[TIMER] Sending an idle message..."));
-						yahoo_send_idle_packet(ylad->id);
-					}
-						 
-					//
-					// need to sleep, cause netlibselectex is too fast?
-					//
-					SleepEx(500, TRUE);
-				}
-#endif				
+			if (time(NULL) - lLastPing > 60) {
+				LOG(("[TIMER] yahoo_ping_timeout"));
+	
+				if (yahooLoggedIn && (ylad != NULL) && (ylad->id > 0) ) {
+					LOG(("[TIMER] Sending a keep alive message"));
+					yahoo_keepalive(ylad->id);
+				} 
+
+				lLastPing = time(NULL);
 			}
 			/* do the timer check ends */
 			

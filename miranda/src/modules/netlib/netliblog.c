@@ -248,8 +248,6 @@ static int NetlibLog(WPARAM wParam,LPARAM lParam)
 	char szTime[32];
 	LARGE_INTEGER liTimeNow;
 	DWORD dwOriginalLastError;
-	size_t cbBufLen;
-	int bNeedsFree = FALSE;
 
 	if( (nlu != NULL && GetNetlibHandleType(nlu)!=NLH_USER) || pszMsg==NULL) {
 		SetLastError(ERROR_INVALID_PARAMETER);
@@ -276,18 +274,9 @@ static int NetlibLog(WPARAM wParam,LPARAM lParam)
 			szTime[0]='\0';
 			break;
 	}
-	cbBufLen = lstrlenA(pszMsg)+lstrlenA(nlu->user.szSettingsModule)+5+lstrlenA(szTime);
 	EnterCriticalSection(&logOptions.cs);
 	if(logOptions.showUser) lstrcatA(szTime," ");
-	__try
-	{
-		szLine = (char*)alloca( cbBufLen );
-	}
-	__except( EXCEPTION_EXECUTE_HANDLER )
-	{
-		szLine = (char*)malloc( cbBufLen );
-		bNeedsFree = TRUE;
-	}
+	szLine=(char*)alloca(lstrlenA(pszMsg)+lstrlenA(nlu->user.szSettingsModule)+5+lstrlenA(szTime));
 	if(logOptions.timeFormat || logOptions.showUser)
 		sprintf(szLine,"[%s%s] %s\n",szTime,logOptions.showUser?nlu->user.szSettingsModule:"",pszMsg);
 	else
@@ -303,12 +292,9 @@ static int NetlibLog(WPARAM wParam,LPARAM lParam)
 		if(fp) {			
 			fputs(szLine,fp);
 			fclose(fp);
-	}	}
-
+		}
+	}
 	LeaveCriticalSection(&logOptions.cs);
-	if ( bNeedsFree )
-		free( szLine );
-
 	SetLastError(dwOriginalLastError);
 	return 1;
 }

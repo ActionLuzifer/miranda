@@ -226,7 +226,7 @@ SOURCE=.\m_icq.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\oscar_filetransfer.h
+SOURCE=.\md5.h
 # End Source File
 # Begin Source File
 
@@ -680,7 +680,7 @@ SOURCE=.\icqoscar.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\oscar_filetransfer.c
+SOURCE=.\md5.c
 # End Source File
 # Begin Source File
 

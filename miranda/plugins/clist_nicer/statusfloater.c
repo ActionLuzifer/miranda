@@ -676,19 +676,19 @@ void FLT_Update(struct ClcData *dat, struct ClcContact *contact)
 
 	if(FindItem(pcli->hwndContactTree, dat, contact->hContact, &newContact, &group, 0)) {
 		DWORD oldFlags = g_CluiData.dwFlags;
-		DWORD oldExtraImageMask = g_ExtraCache[contact->extraCacheEntry].dwXMask;
+		DWORD oldExtraImageMask = g_CluiData.dwExtraImageMask;
 		struct avatarCacheEntry *ace_old = contact->ace;
-		BYTE oldDualRow = contact->bSecondLine;
+		BYTE oldDualRow = g_CluiData.dualRowMode;
 
 		if(!(g_floatoptions.dwFlags & FLT_AVATARS))
 			contact->ace = 0;
 
 		if(!(g_floatoptions.dwFlags & FLT_DUALROW))
-			contact->bSecondLine = MULTIROW_NEVER;
+			g_CluiData.dualRowMode = MULTIROW_NEVER;
 
 		if(!(g_floatoptions.dwFlags & FLT_EXTRAICONS)) {
 			g_CluiData.dwFlags &= ~CLUI_SHOWCLIENTICONS;
-			g_ExtraCache[contact->extraCacheEntry].dwXMask = 0;
+			g_CluiData.dwExtraImageMask = 0;
 		}
 
 		g_HDC = hdc;
@@ -707,8 +707,8 @@ void FLT_Update(struct ClcData *dat, struct ClcContact *contact)
 
 		g_CluiData.dwFlags = oldFlags;
 		contact->ace = ace_old;
-		contact->bSecondLine = oldDualRow;
-		g_ExtraCache[contact->extraCacheEntry].dwXMask = oldExtraImageMask;
+		g_CluiData.dualRowMode = oldDualRow;
+		g_CluiData.dwExtraImageMask = oldExtraImageMask;
 	}
 	DeleteObject(rgn);
 	if(MyUpdateLayeredWindow)

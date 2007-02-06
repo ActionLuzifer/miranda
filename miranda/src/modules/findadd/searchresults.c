@@ -32,7 +32,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define COLUMNID_EMAIL    4
 #define COLUMNID_HANDLE   5
 
-static int handleColumnAfter = COLUMNID_EMAIL;
+static int handleColumnAfter=COLUMNID_EMAIL;
+
+WCHAR* a2u( const char* );
 
 void SaveColumnSizes(HWND hwndResults)
 {

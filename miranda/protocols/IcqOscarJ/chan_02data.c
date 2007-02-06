@@ -64,7 +64,7 @@ void handleDataChannel(unsigned char *pBuffer, WORD wBufferLength, serverthread_
       break;
 
     case ICQ_BUDDY_FAMILY:
-      handleBuddyFam(pBuffer, wBufferLength, &snacHeader, info);
+      handleBuddyFam(pBuffer, wBufferLength, &snacHeader);
       break;
 
     case ICQ_MSG_FAMILY:
@@ -146,22 +146,14 @@ int unpackSnacHeader(snac_header* pSnacHeader, unsigned char **pBuffer, WORD* pw
         if (wExtraBytes == 6)
         {
           *pBuffer += 4; // TLV type and length?
-          unpackWord(pBuffer, &(pSnacHeader->wVersion));
-          *pwBufferLength -= wExtraBytes;
-          pSnacHeader->bValid = TRUE;
-        }
-        else if (wExtraBytes == 0x0E)
-        {
-          *pBuffer += 8; // TLV(2) - unknown
-          *pBuffer += 4;
-          unpackWord(pBuffer, &(pSnacHeader->wVersion));
-          *pwBufferLength -= wExtraBytes;
+          unpackWord(pBuffer,  &(pSnacHeader->wVersion));
+          *pwBufferLength -= 6;
           pSnacHeader->bValid = TRUE;
         }
         else
         {
-          *pBuffer += wExtraBytes;
           *pwBufferLength -= wExtraBytes;
+          *pBuffer += wExtraBytes;
           pSnacHeader->bValid = TRUE;
         }
       }

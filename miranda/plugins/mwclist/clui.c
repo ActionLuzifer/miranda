@@ -64,12 +64,14 @@ BOOL (WINAPI *MyAnimateWindow)(HWND hWnd,DWORD dwTime,DWORD dwFlags);
 int CluiOptInit(WPARAM wParam,LPARAM lParam);
 int SortList(WPARAM wParam,LPARAM lParam);
 int CluiProtocolStatusChanged(WPARAM wParam,LPARAM lParam);
+extern int CheckProtocolOrder();
 
 extern void SetAllExtraIcons(HWND hwndList,HANDLE hContact);
 extern void ReloadExtraIcons();
 extern void LoadExtraImageFunc();
 extern int CreateStatusBarhWnd(HWND parent);
 extern int CreateStatusBarFrame();
+extern int LoadProtocolOrderModule(void);
 extern int CLUIFramesUpdateFrame(WPARAM wParam,LPARAM lParam);
 extern int ExtraToColumnNum(int extra);
 extern void DrawDataForStatusBar(LPDRAWITEMSTRUCT dis);
@@ -96,6 +98,7 @@ static int CluiModulesLoaded(WPARAM wParam,LPARAM lParam)
 	SetMenuItemInfo(hMenuMain,1,TRUE,&mii);
 
 	canloadstatusbar=TRUE;
+	CheckProtocolOrder();
 	SendMessage(pcli->hwndContactList,WM_SIZE,0,0);
 	CluiProtocolStatusChanged(0,0);
 	Sleep(0);
@@ -573,6 +576,11 @@ LRESULT CALLBACK ContactListWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM l
 	}
 
 	switch (msg) {
+	case WM_INITMENU:
+		if ( ServiceExists( MS_CLIST_MENUBUILDMAIN ))
+			CallService(MS_CLIST_MENUBUILDMAIN,0,0);
+      return 0;
+
 	case WM_CREATE:
 		CallService(MS_LANGPACK_TRANSLATEMENU,(WPARAM)GetMenu(hwnd),0);
 		DrawMenuBar(hwnd);
@@ -938,7 +946,9 @@ int LoadCLUIModule(void)
 		SetWindowPos(pcli->hwndContactList, DBGetContactSettingByte(NULL,"CList","OnTop",SETTING_ONTOP_DEFAULT) ? HWND_TOPMOST : HWND_NOTOPMOST, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE);
 	}
 
+	LoadProtocolOrderModule();
 	lastreqh=0;
+
 	return 0;
 }
 

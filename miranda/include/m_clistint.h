@@ -24,9 +24,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifndef M_CLISTINT_H__
 #define M_CLISTINT_H__ 1
 
-#include "m_genmenu.h"
-#include "m_protocols.h"
-
 #define HCONTACT_ISGROUP    0x80000000
 #define HCONTACT_ISINFO     0xFFFF0000
 #define IsHContactGroup(h)  (((unsigned)(h)^HCONTACT_ISGROUP)<(HCONTACT_ISGROUP^HCONTACT_ISINFO))
@@ -81,8 +78,7 @@ typedef struct
 }
 	EventList;
 
-struct ClcGroup
-{
+struct ClcGroup {
 	ContactList cl;
 	int expanded,hideOffline,groupId;
 	struct ClcGroup *parent;
@@ -90,40 +86,11 @@ struct ClcGroup
 	int totalMembers;
 };
 
-struct ClcFontInfo
-{
+struct ClcFontInfo {
 	HFONT hFont;
 	int fontHeight,changed;
 	COLORREF colour;
 };
-
-/* genmenu structs */
-
-typedef struct
-{
-	int id;
-	int globalid;
-
-	int iconId;
-	TMO_MenuItem mi;
-	boolean OverrideShow;
-	char *UniqName;
-	TCHAR *CustomName;
-	boolean IconRegistred;
-	HMENU hSubMenu;
-}
-	TMO_IntMenuItem,*PMO_IntMenuItem;
-
-typedef struct _menuProto
-{
-	char*  szProto;             //This is DLL-based unique name
-	HANDLE menuID;
-	HANDLE hasAdded;
-	HICON  hIcon;
-}
-	MenuProto;
-
-/* constants */
 
 #define DRAGSTAGE_NOTMOVED  0
 #define DRAGSTAGE_ACTIVE    1
@@ -353,24 +320,6 @@ typedef struct
 	 *************************************************************************************/
 
 	int   ( *pfnGetWindowVisibleState )( HWND hWnd, int iStepX, int iStepY );
-
-	/*************************************************************************************
-	 * version 4 additions (0.7.0.x) - genmenu
-	 *************************************************************************************/
-
-	MenuProto* menuProtos;
-	int        menuProtoCount;
-
-	HANDLE hPreBuildStatusMenuEvent;
-	int    currentStatusMenuItem, currentDesiredStatusMode;
-	BOOL   bDisplayLocked;
-
-	PMO_IntMenuItem ( *pfnMOGetIntMenuItem )( int );
-	PMO_IntMenuItem ( *pfnMOGetMenuItemByGlobalID )( int globalMenuID );
-
-	int   ( *pfnGetProtocolVisibility )( const char* );
-	int   ( *pfnGetProtoIndexByPos )( PROTOCOLDESCRIPTOR** proto, int protoCnt, int Pos);
-	void  ( *pfnReloadProtoMenus )( void );
 }
 	CLIST_INTERFACE;
 

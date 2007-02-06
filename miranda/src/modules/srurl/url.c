@@ -116,32 +116,33 @@ static int ContactSettingChanged(WPARAM wParam, LPARAM lParam)
 
 static int SRUrlModulesLoaded(WPARAM wParam,LPARAM lParam)
 {
-	CLISTMENUITEM mi = { 0 };
+	CLISTMENUITEM mi;
 	PROTOCOLDESCRIPTOR **protocol;
 	int protoCount,i;
 
-	mi.cbSize = sizeof(mi);
-	mi.position = -2000040000;
-	mi.hIcon = LoadSkinnedIcon(SKINICON_EVENT_URL);
-	mi.pszName = "Web Page Address (&URL)";
-	mi.pszService = MS_URL_SENDURL;
+	ZeroMemory(&mi,sizeof(mi));
+	mi.cbSize=sizeof(mi);
+	mi.position=-2000040000;
+	mi.flags=0;
+	mi.hIcon=LoadSkinnedIcon(SKINICON_EVENT_URL);
+	mi.pszName=Translate("Web Page Address (&URL)");
+	mi.pszService=MS_URL_SENDURL;
 	CallService(MS_PROTO_ENUMPROTOCOLS,(WPARAM)&protoCount,(LPARAM)&protocol);
-	for ( i=0; i < protoCount; i++ ) {
-		if ( protocol[i]->type != PROTOTYPE_PROTOCOL )
-			continue;
-		if ( CallProtoService( protocol[i]->szName,PS_GETCAPS,PFLAGNUM_1,0) & PF1_URLSEND ) {
-			mi.pszContactOwner = protocol[i]->szName;
-			hUrlContactMenu = mir_realloc(hUrlContactMenu,(hUrlContactMenuCount+1)*sizeof(HANDLE));
-			hUrlContactMenu[hUrlContactMenuCount++] = (HANDLE)CallService(MS_CLIST_ADDCONTACTMENUITEM,0,(LPARAM)&mi);
+	for(i=0;i<protoCount;i++) {
+		if(protocol[i]->type!=PROTOTYPE_PROTOCOL) continue;
+		if(CallProtoService(protocol[i]->szName,PS_GETCAPS,PFLAGNUM_1,0)&PF1_URLSEND) {
+			mi.pszContactOwner=protocol[i]->szName;
+			hUrlContactMenu=mir_realloc(hUrlContactMenu,(hUrlContactMenuCount+1)*sizeof(HANDLE));
+			hUrlContactMenu[hUrlContactMenuCount++]=(HANDLE)CallService(MS_CLIST_ADDCONTACTMENUITEM,0,(LPARAM)&mi);
 		}
 	}
-	IconLib_ReleaseIcon(mi.hIcon, 0);
 	RestoreUnreadUrlAlerts();
 	return 0;
 }
 
 static int UrlMenuIconChanged(WPARAM wParam, LPARAM lParam)
 {
+
 	if (hUrlContactMenu) {
 		
 		int j; 
@@ -151,16 +152,17 @@ static int UrlMenuIconChanged(WPARAM wParam, LPARAM lParam)
 		mi.flags=CMIM_ICON;
 		mi.hIcon=LoadSkinnedIcon(SKINICON_EVENT_URL);
 
-		for (j=0; j<hUrlContactMenuCount; j++)
+		for (j=0; j<hUrlContactMenuCount; j++) {		
 			CallService(MS_CLIST_MODIFYMENUITEM,(WPARAM)hUrlContactMenu[j],(LPARAM)&mi);
+		}
 
-		IconLib_ReleaseIcon(mi.hIcon, 0);
 	}
 	return 0;
 }
 
 static int SRUrlShutdown(WPARAM wParam,LPARAM lParam)
 {
+
 	if (hEventContactSettingChange)	UnhookEvent(hEventContactSettingChange);
 	if (hContactDeleted) UnhookEvent(hContactDeleted);
 	if (hUrlWindowList) {		
@@ -171,15 +173,16 @@ static int SRUrlShutdown(WPARAM wParam,LPARAM lParam)
 		hUrlContactMenuCount=0;
 	}
 	return 0;
+
 }
 
 int UrlContactDeleted(WPARAM wParam, LPARAM lParam)
 {
 	HWND h;
 	h=WindowList_Find(hUrlWindowList,(HANDLE)wParam);
-	if (h)
+	if (h) {
 		SendMessage(h,WM_CLOSE,0,0);
-
+	}
 	return 0;
 }
 
@@ -197,3 +200,4 @@ int LoadSendRecvUrlModule(void)
 	SkinAddNewSoundEx("RecvUrl",Translate("URL"),Translate("Incoming"));
 	return 0;
 }
+

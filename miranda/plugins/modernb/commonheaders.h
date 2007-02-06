@@ -1,6 +1,3 @@
-#ifndef commonheaders_h__
-#define commonheaders_h__
-
 /*
 
 Miranda IM: the free IM client for Microsoft* Windows*
@@ -23,8 +20,10 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
+#ifndef _COMMON_HEADERS_H_
+#define _COMMON_HEADERS_H_ 1
 
-#define MIRANDA_VER 0x0600
+
 
 #if defined(UNICODE)
 #define _UNICODE 1
@@ -40,7 +39,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifdef _DEBUG
 #	define _CRTDBG_MAP_ALLOC
 #	include <stdlib.h>
-#	include <crtdbg.h>
+//#	include <crtdbg.h>
 #endif
 
 #if defined (_DEBUG)
@@ -78,9 +77,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "resource.h"
 #include <win2k.h>
 
-
-#include "modern_global_structure.h"
-
 #include <newpluginapi.h>
 #include <m_system.h>
 #include <m_database.h>
@@ -95,6 +91,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <m_contacts.h>
 #include <m_plugins.h>
 #include "m_genmenu.h"
+#include "genmenu.h"
 #include "m_clui.h"
 #include "m_clc.h"
 #include "clc.h"
@@ -105,6 +102,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include ".\CLUIFrames\m_cluiframes.h"
 #include  "m_metacontacts.h"
 #include "m_skin_eng.h"
+//#include "BkgrCfg.h"
 #include <m_file.h>
 #include <m_addcontact.h>
 
@@ -121,9 +119,37 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //macros to free data and set it pointer to NULL
 #define mir_free_and_nill(x) {mir_free(x); x=NULL;}
 // shared vars
+extern HINSTANCE g_hInst;
+
+typedef  struct _menuProto 
+{
+  char *szProto;
+  HANDLE menuID;
+  HANDLE hasAdded;
+} MenuProto;
 
 #define CLUI_FRAME_AUTOHIDENOTIFY  512
 #define CLUI_FRAME_SHOWALWAYS      1024
+
+struct CluiData
+{
+	/************************************ 
+	 **         Global variables       **
+	 ************************************/
+
+	/*         NotifyArea menu          */
+	HANDLE		hMenuNotify;             
+	WORD		wNextMenuID;	
+	int			iIconNotify;
+	BOOL		bEventAreaEnabled;
+	BOOL		bNotifyActive;
+    DWORD       dwFlags;
+    TCHAR *     szNoEvents;
+    int         hIconNotify;
+    HANDLE      hUpdateContact;
+};
+
+
 
 extern struct LIST_INTERFACE li;
 extern struct MM_INTERFACE memoryManagerInterface;
@@ -142,7 +168,7 @@ extern int __cdecl mir_strcmp (const char *a, const char *b);
 extern int __cdecl mir_strlen (const char *a);
 extern int __cdecl mir_strcmpi(const char *a, const char *b);
 extern int __cdecl mir_tstrcmpi(const TCHAR *a, const TCHAR *b);
-//extern __inline void *mir_calloc( size_t num, size_t size );
+extern __inline void *mir_calloc( size_t num, size_t size );
 
 char *DBGetStringA(HANDLE hContact,const char *szModule,const char *szSetting);
 extern wchar_t *DBGetStringW(HANDLE hContact,const char *szModule,const char *szSetting);
@@ -207,7 +233,7 @@ extern int CLUI_ShowWindowMod(HWND hwnd, int cmd);
 
 extern char* Utf8EncodeUcs2( const wchar_t* src );
 extern void Utf8Decode( char* str, wchar_t** ucs2 );
-
+#endif
 
 #ifndef LWA_COLORKEY
 #define LWA_COLORKEY            0x00000001
@@ -232,8 +258,6 @@ extern BOOL SkinEngine_SelectTextEffect(HDC hdc, BYTE EffectID, DWORD FirstColor
 #define GLOBAL_PROTO_NAME "global_connect"
 extern void IvalidateDisplayNameCache(DWORD mode);
 
-void FreeAndNil( void **p );
-
 extern SortedList *clistCache;
 
 HICON LoadSmallIconShared(HINSTANCE hInstance, LPCTSTR lpIconName);
@@ -256,23 +280,20 @@ extern BOOL (WINAPI *pfEnableThemeDialogTexture)(HANDLE, DWORD);
 #define TreeView_GetItemA(hwnd, pitem) \
 	(BOOL)SendMessageA((hwnd), TVM_GETITEMA, 0, (LPARAM)(TV_ITEM *)(pitem))
 
+extern DWORD g_dwAskAwayMsgThreadID;
+extern DWORD g_dwGetTextThreadID;
+extern DWORD g_dwSmoothAnimationThreadID;
+extern DWORD g_dwFillFontListThreadID;
+
+extern HANDLE hSmileyAddOptionsChangedHook,hAvatarChanged,hIconChangedHook;
 
 #define STATE_NORMAL 0
 #define STATE_PREPEARETOEXIT 1
 #define STATE_EXITING 2
-#define MirandaExiting() ((g_CluiData.bSTATE>STATE_NORMAL))
+extern BYTE g_bSTATE;
+#define MirandaExiting() ((g_bSTATE>STATE_NORMAL))
+extern BYTE gl_TrimText;
 
-
-
+extern struct CluiData g_CluiData;
+extern void UnLoadContactListModule();
 extern __inline char * strdupn(const char * src, int len);
-
-#define SKINBUTTONCLASS _T("MirandaSkinButtonClass")
-
-#define SORTBY_NAME	   0
-#define SORTBY_STATUS  1
-#define SORTBY_LASTMSG 2
-#define SORTBY_PROTO   3
-#define SORTBY_RATE    4
-
-
-#endif // commonheaders_h__
