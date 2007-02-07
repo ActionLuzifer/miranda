@@ -30,11 +30,10 @@ extern struct avatarCache *g_avatarCache;
 extern int g_curAvatar;
 
 extern struct ExtraCache *g_ExtraCache;
-extern int g_nextExtraCacheEntry;
+extern int g_nextExtraCacheEntry, g_maxExtraCacheEntry;
 extern ImageItem *g_glyphItem;
 
 extern int hClcProtoCount;
-
 extern ClcProtoStatus *clcProto;
 extern HIMAGELIST hCListImages;
 extern struct CluiData g_CluiData;
@@ -70,7 +69,6 @@ BYTE saved_alpha;
 int my_status;
 
 BOOL g_inCLCpaint = FALSE;
-static int g_list_avatars = 0;
 
 #undef _GDITEXTRENDERING
 
@@ -305,7 +303,7 @@ HDC hdcAV;
 
 LONG g_maxAV_X = 200, g_maxAV_Y = 200;
 
-static int __fastcall DrawAvatar(HDC hdcMem, RECT *rc, struct ClcContact *contact, int y, struct ClcData *dat, WORD cstatus, int rowHeight, DWORD dwFlags)
+static int __fastcall DrawAvatar(HDC hdcMem, RECT *rc, struct ClcContact *contact, int y, struct ClcData *dat, WORD cstatus, int rowHeight)
 {
 	float dScale = 0.;
 	float newHeight, newWidth;
@@ -320,10 +318,9 @@ static int __fastcall DrawAvatar(HDC hdcMem, RECT *rc, struct ClcContact *contac
 	DWORD av_saved_left;
 	BOOL gdiPlus;
     StatusItems_t *item = contact->wStatus == ID_STATUS_OFFLINE ? &StatusItems[ID_EXTBKAVATARFRAMEOFFLINE - ID_STATUS_OFFLINE] : &StatusItems[ID_EXTBKAVATARFRAME - ID_STATUS_OFFLINE];
-    int  skinMarginX, skinMarginY;
-    BOOL fOverlay = (g_CluiData.dwFlags & CLUI_FRAME_OVERLAYICONS);
-
+    int skinMarginX, skinMarginY;
     contact->avatarLeft = -1;
+
 	if(!g_CluiData.bAvatarServiceAvail || dat->bisEmbedded)
 		return 0;
 
@@ -425,12 +422,7 @@ static int __fastcall DrawAvatar(HDC hdcMem, RECT *rc, struct ClcContact *contac
 		FrameRgn(hdcMem, rgn, g_CluiData.hBrushAvatarBorder, 1, 1);
 	}
 
-    if(fOverlay)
-        fOverlay = (dwFlags & ECF_HIDEOVERLAY) ? 0 : 1;
-    else
-        fOverlay = (dwFlags & ECF_FORCEOVERLAY) ? 1 : 0;
-
-    if(fOverlay && cstatus && (int)newHeight >= g_cysmIcon)
+	if(g_CluiData.dwFlags & CLUI_FRAME_OVERLAYICONS && cstatus && (int)newHeight >= g_cysmIcon)
 		DrawIconEx(hdcMem, rc->left + (int)newWidth - 15, y + topoffset + (int)newHeight - 15, overlayicons[cstatus - ID_STATUS_OFFLINE], g_cxsmIcon, g_cysmIcon, 0, 0, DI_NORMAL | DI_COMPAT);
 
 	SelectClipRgn(hdcMem, NULL);
@@ -493,7 +485,7 @@ static RECT rcContent;
 static BOOL pi_selectiveIcon;
 
 static BOOL av_left, av_right, av_rightwithnick;
-static BOOL mirror_rtl, mirror_always, mirror_rtltext;
+static BOOL av_wanted, mirror_rtl, mirror_always, mirror_rtltext;
 
 BYTE savedCORNER = -1;
 
@@ -524,7 +516,7 @@ void __inline PaintItem(HDC hdcMem, struct ClcGroup *group, struct ClcContact *c
 	struct ExtraCache *cEntry = NULL;
 	DWORD dwFlags = g_CluiData.dwFlags;
 	int scanIndex;
-	BOOL check_selected, av_local_wanted, fLocalTime;
+	BOOL check_selected;
     
 	rowHeight -= g_CluiData.bRowSpacing;
 	savedCORNER = -1;
@@ -534,7 +526,6 @@ void __inline PaintItem(HDC hdcMem, struct ClcGroup *group, struct ClcContact *c
 
 	g_RTL = FALSE;
 	scanIndex = group->scanIndex;
-    av_local_wanted = (g_list_avatars > 0);
 
 	type = contact->type;
 	flags = contact->flags;
@@ -910,7 +901,6 @@ set_bg_l:
 				} else {
 					DrawAlpha(hdcMem, &rc, sselected->COLOR, sselected->ALPHA, sselected->COLOR2, sselected->COLOR2_TRANSPARENT, sselected->GRADIENT, sselected->CORNER, sselected->BORDERSTYLE, sselected->imageItem);
 				}
-                SetTextColor(hdcMem, sselected->TEXTCOLOR);
 			}
 			else {
                 rc.left = bg_indent_l;
@@ -918,21 +908,17 @@ set_bg_l:
                 rc.right = clRect->right - bg_indent_r;
                 rc.bottom = y + rowHeight;
                 FillRect(hdcMem, &rc, GetSysColorBrush(COLOR_HIGHLIGHT));
-                SetTextColor(hdcMem, dat->selTextColour);
             }
+			SetTextColor(hdcMem, dat->selTextColour);
 		}
 	} 
 	else if (g_hottrack) {
-        StatusItems_t *ht = &StatusItems[ID_EXTBKHOTTRACK - ID_STATUS_OFFLINE];
-
-        SetHotTrackColour(hdcMem,dat);
-        if(ht->IGNORED == 0)
-            SetTextColor(hdcMem, ht->TEXTCOLOR);
+		SetHotTrackColour(hdcMem,dat);
 		if(!g_hottrack_done) {
-		    if (ht->IGNORED == 0) {
-                DrawAlpha(hdcMem, &rc, ht->COLOR, ht->ALPHA, ht->COLOR2, ht->COLOR2_TRANSPARENT, ht->GRADIENT, 
-                          ht->CORNER, ht->BORDERSTYLE, ht->imageItem);
-            }
+	        StatusItems_t *ht = &StatusItems[ID_EXTBKHOTTRACK - ID_STATUS_OFFLINE];
+		    if (ht->IGNORED == 0)
+				DrawAlpha(hdcMem, &rc, ht->COLOR, ht->ALPHA, ht->COLOR2, ht->COLOR2_TRANSPARENT, ht->GRADIENT, 
+						  ht->CORNER, ht->BORDERSTYLE, ht->imageItem);
 		}
 	}
 
@@ -944,9 +930,9 @@ bgskipped:
     rcContent.bottom = y + rowHeight;
     rcContent.left = leftX;
     rcContent.right = clRect->right - dat->rightMargin;
-	twoRows = ((dat->fontInfo[FONTID_STATUS].fontHeight + fontHeight <= rowHeight + 1) && (contact->bSecondLine != MULTIROW_NEVER)) && !dat->bisEmbedded;
+	twoRows = ((dat->fontInfo[FONTID_STATUS].fontHeight + fontHeight <= rowHeight + 1) && (g_CluiData.dualRowMode != MULTIROW_NEVER)) && !dat->bisEmbedded;
 
-    pi_avatar = !dat->bisEmbedded && type == CLCIT_CONTACT && (contact->cFlags & ECF_AVATAR) && contact->ace != 0 && !(contact->ace->dwFlags & AVS_HIDEONCLIST);
+    pi_avatar = !dat->bisEmbedded && type == CLCIT_CONTACT && (av_wanted) && contact->ace != 0 && !(contact->ace->dwFlags & AVS_HIDEONCLIST);
 
 	//checkboxes
 	if (checkboxWidth) {
@@ -992,17 +978,17 @@ bgskipped:
 		rc.bottom = rc.top + rowHeight;
 
 		if(av_left) {
-			leftOffset += DrawAvatar(hdcMem, &rc, contact, y, dat, (WORD)(iImage ? cstatus : 0), rowHeight, cEntry->dwDFlags);
+			leftOffset += DrawAvatar(hdcMem, &rc, contact, y, dat, (WORD)(iImage ? cstatus : 0), rowHeight);
 			rcContent.left += leftOffset;
 			leftX += leftOffset;
 		}
 		else {
 			rc.left = (rcContent.right - g_CluiData.avatarSize) + 1;
-			rightOffset += DrawAvatar(hdcMem, &rc, contact, y, dat, (WORD)(iImage ? cstatus : 0), rowHeight, cEntry->dwDFlags);
+			rightOffset += DrawAvatar(hdcMem, &rc, contact, y, dat, (WORD)(iImage ? cstatus : 0), rowHeight);
 			rcContent.right -= (rightOffset);
 		}
 	}
-	else if(type == CLCIT_CONTACT && !dat->bisEmbedded && !g_selectiveIcon && (dwFlags & CLUI_FRAME_ALWAYSALIGNNICK) && av_local_wanted && (av_left || av_right)) {
+	else if(type == CLCIT_CONTACT && !dat->bisEmbedded && !g_selectiveIcon && (dwFlags & CLUI_FRAME_ALWAYSALIGNNICK) && av_wanted && (av_left || av_right)) {
 		if(av_right)
 			rcContent.right -= (g_CluiData.avatarSize);
 		if(av_left)
@@ -1040,7 +1026,7 @@ bgskipped:
 			else {
 				LONG offset = 0;
 				BOOL centered = FALSE;
-				offset +=  (type != CLCIT_CONTACT || avatar_done || !(av_local_wanted) ? 20 : dwFlags & CLUI_FRAME_ALWAYSALIGNNICK && av_left && g_selectiveIcon ? g_CluiData.avatarSize + 2 : 20);
+				offset +=  (type != CLCIT_CONTACT || avatar_done || !(av_wanted) ? 20 : dwFlags & CLUI_FRAME_ALWAYSALIGNNICK && av_left && g_selectiveIcon ? g_CluiData.avatarSize + 2 : 20);
 				centered = (g_CluiData.bCenterStatusIcons && offset == g_CluiData.avatarSize + 2);
 				ImageList_DrawEx(hCListImages, iImage, hdcMem,  centered ? rcContent.left + offset / 2 - 10 : rcContent.left, (twoRows && type == CLCIT_CONTACT && !g_CluiData.bCenterStatusIcons) ? y + 2 : y + ((rowHeight - 16) >> 1), 0, 0, CLR_NONE, colourFg, mode);
 				rcContent.left += offset;
@@ -1060,7 +1046,7 @@ bgskipped:
             if(cEntry && (contact->extraCacheEntry >= 0 && contact->extraCacheEntry < g_nextExtraCacheEntry && cEntry->iExtraValid)) {
 				int i;
 				for(i = 9; i >= 0; i--) {
-					if(cEntry->iExtraImage[i] != 0xff && ((1 << i) & cEntry->dwXMask)) {
+					if(cEntry->iExtraImage[i] != 0xff && ((1 << i) & g_CluiData.dwExtraImageMask)) {
 						if(contact->extraIconRightBegin == 0 && i != 9)
 							contact->extraIconRightBegin = rcContent.right;
 						ImageList_DrawEx(dat->himlExtraColumns, cEntry->iExtraImage[i], hdcMem, rcContent.right - g_CluiData.exIconScale, twoRows ? rcContent.bottom - g_exIconSpacing : y + ((rowHeight - g_CluiData.exIconScale) >> 1), 
@@ -1071,23 +1057,14 @@ bgskipped:
 				}
 			}
 			if (!bApparentModeDontCare && (dwFlags & CLUI_SHOWVISI) && contact->proto) {
-                BOOL fVisi;
-
-                if(dwFlags & CLUI_SHOWVISI)
-                    fVisi = cEntry->dwDFlags & ECF_HIDEVISIBILITY ? 0 : 1;
-                else
-                    fVisi = cEntry->dwDFlags & ECF_FORCEVISIBILITY ? 1 : 0;
-
-                if(fVisi) {
-                    if(cEntry->isChatRoom)
-                        DrawIconEx(hdcMem, rcContent.right - g_CluiData.exIconScale, twoRows ? rcContent.bottom - g_exIconSpacing : y + ((rowHeight - g_CluiData.exIconScale) >> 1), 
-                        g_CluiData.hIconChatactive, g_CluiData.exIconScale, g_CluiData.exIconScale, 0, 0, DI_NORMAL | DI_COMPAT);
-                    else
-                        DrawIconEx(hdcMem, rcContent.right - g_CluiData.exIconScale, twoRows ? rcContent.bottom - g_exIconSpacing : y + ((rowHeight - g_CluiData.exIconScale) >> 1), 
-                        flags & CONTACTF_VISTO ? g_CluiData.hIconVisible : g_CluiData.hIconInvisible, g_CluiData.exIconScale, g_CluiData.exIconScale, 0, 0, DI_NORMAL | DI_COMPAT);
-                    rcContent.right -= g_exIconSpacing;
-                    rightIcons++;
-                }
+				if(cEntry && cEntry->isChatRoom)
+					DrawIconEx(hdcMem, rcContent.right - g_CluiData.exIconScale, twoRows ? rcContent.bottom - g_exIconSpacing : y + ((rowHeight - g_CluiData.exIconScale) >> 1), 
+					g_CluiData.hIconChatactive, g_CluiData.exIconScale, g_CluiData.exIconScale, 0, 0, DI_NORMAL | DI_COMPAT);
+				else
+					DrawIconEx(hdcMem, rcContent.right - g_CluiData.exIconScale, twoRows ? rcContent.bottom - g_exIconSpacing : y + ((rowHeight - g_CluiData.exIconScale) >> 1), 
+					flags & CONTACTF_VISTO ? g_CluiData.hIconVisible : g_CluiData.hIconInvisible, g_CluiData.exIconScale, g_CluiData.exIconScale, 0, 0, DI_NORMAL | DI_COMPAT);
+				rcContent.right -= g_exIconSpacing;
+				rightIcons++;
 			}
 		}
 	}
@@ -1199,18 +1176,18 @@ text:
 		// avatar
 
 		if(!dat->bisEmbedded) {
-			if(av_local_wanted && !avatar_done && pi_avatar) {
+			if(av_wanted && !avatar_done && pi_avatar) {
 				if(av_rightwithnick) {
 					RECT rcAvatar = rcContent;
 
 					rcAvatar.left = rcContent.right - (g_CluiData.avatarSize - 1);
-					DrawAvatar(hdcMem, &rcAvatar, contact, y, dat, (WORD)(iImage ? cstatus : 0), rowHeight, cEntry->dwDFlags);
+					DrawAvatar(hdcMem, &rcAvatar, contact, y, dat, iImage ? cstatus : 0, rowHeight);
 					rcContent.right -= (g_CluiData.avatarSize + 2);
 				}
 				else
-					rcContent.left += DrawAvatar(hdcMem, &rcContent, contact, y, dat, (WORD)(iImage ? cstatus : 0), rowHeight, cEntry->dwDFlags);
+					rcContent.left += DrawAvatar(hdcMem, &rcContent, contact, y, dat, iImage ? cstatus : 0, rowHeight);
 			}
-			else if(dwFlags & CLUI_FRAME_ALWAYSALIGNNICK && !avatar_done && av_local_wanted)
+			else if(dwFlags & CLUI_FRAME_ALWAYSALIGNNICK && !avatar_done && av_wanted)
 				rcContent.left += (dwFlags & (CLUI_FRAME_AVATARSLEFT | CLUI_FRAME_AVATARSRIGHT | CLUI_FRAME_AVATARSRIGHTWITHNICK) ? 0 : g_CluiData.avatarSize + 2);
 		}
 
@@ -1241,12 +1218,7 @@ text:
 
 			rcContent.top = y + g_CluiData.avatarPadding / 2;
 
-            if(g_CluiData.bShowLocalTime)
-                fLocalTime = cEntry->dwDFlags & ECF_HIDELOCALTIME ? 0 : 1;
-            else
-                fLocalTime = cEntry->dwDFlags & ECF_FORCELOCALTIME ? 1 : 0;
-
-			if(cEntry->timezone != -1 && fLocalTime) {
+			if(cEntry->timezone != -1 && g_CluiData.bShowLocalTime) {
 				DBTIMETOSTRING dbtts;
 				char szResult[80];
 				int  idOldFont;
@@ -1488,6 +1460,7 @@ void PaintClc(HWND hwnd, struct ClcData *dat, HDC hdc, RECT *rcPaint)
 	av_left = (g_CluiData.dwFlags & CLUI_FRAME_AVATARSLEFT);
 	av_right = (g_CluiData.dwFlags & CLUI_FRAME_AVATARSRIGHT);
 	av_rightwithnick = (g_CluiData.dwFlags & CLUI_FRAME_AVATARSRIGHTWITHNICK);
+	av_wanted = (g_CluiData.dwFlags & CLUI_FRAME_AVATARS);
 
 	mirror_rtl = (g_CluiData.bUseDCMirroring == 2);
 	mirror_always = (g_CluiData.bUseDCMirroring == 1);
@@ -1495,6 +1468,7 @@ void PaintClc(HWND hwnd, struct ClcData *dat, HDC hdc, RECT *rcPaint)
 
 	g_center = DBGetContactSettingByte(NULL, "CLCExt", "EXBK_CenterGroupnames", 0) && !dat->bisEmbedded;
 	g_ignoreselforgroups = DBGetContactSettingByte(NULL, "CLC", "IgnoreSelforGroups", 0);
+	g_selectiveIcon = (g_CluiData.dwFlags & CLUI_FRAME_SELECTIVEICONS) && (g_CluiData.dwFlags & CLUI_FRAME_AVATARS) && !dat->bisEmbedded;
 	g_exIconSpacing = g_CluiData.exIconScale + 2;
 
 	if (dat->greyoutFlags & pcli->pfnClcStatusToPf2(my_status) || style & WS_DISABLED)
@@ -1630,33 +1604,7 @@ bgdone:
 	if ( dat->row_heights == NULL )
 		RowHeights_CalcRowHeights(dat, hwnd);
 
-    g_list_avatars = 0;
-    while(TRUE)
-    {
-        if (group->scanIndex==group->cl.count) 
-        {
-            group=group->parent;
-            if(group==NULL) break;	// Finished list
-            group->scanIndex++;
-            continue;
-        }
-
-        if(group->cl.items[group->scanIndex]->cFlags & ECF_AVATAR)
-            g_list_avatars++;
-
-        if(group->cl.items[group->scanIndex]->type==CLCIT_GROUP && /*!IsBadCodePtr((FARPROC)group->cl.items[group->scanIndex]->group) && */ (group->cl.items[group->scanIndex]->group->expanded & 0x0000ffff)) {
-            group=group->cl.items[group->scanIndex]->group;
-            group->scanIndex=0;
-            continue;
-        }
-        group->scanIndex++;
-    }
-    g_selectiveIcon = (g_list_avatars > 0) && (g_CluiData.dwFlags & CLUI_FRAME_SELECTIVEICONS) && !dat->bisEmbedded;
-
-    group = &dat->list;
-    group->scanIndex = 0;
-
-    for (index = 0; y< rcPaint->bottom;) {
+	for (index = 0; y< rcPaint->bottom;) {
 		if (group->scanIndex == group->cl.count) {
 			group = group->parent;
 			indent--;
@@ -1669,10 +1617,10 @@ bgdone:
 
 		line_num++;
         if(g_CluiData.bForceRefetchOnPaint)
-            group->cl.items[group->scanIndex]->ace = (struct avatarCacheEntry*)-1;
+            group->cl.items[group->scanIndex]->ace = 0xffffffff;
 
 		if (y > rcPaint->top - dat->row_heights[line_num] && y <= rcPaint->bottom) {
-            if (group->cl.items[group->scanIndex]->ace == (struct avatarCacheEntry*)-1 )
+            if (group->cl.items[group->scanIndex]->ace == 0xffffffff)
                 group->cl.items[group->scanIndex]->ace = (struct avatarCacheEntry *)CallService(MS_AV_GETAVATARBITMAP, (WPARAM)group->cl.items[group->scanIndex]->hContact, 0);
 			RowHeights_GetRowHeight(dat, hwnd, group->cl.items[group->scanIndex], line_num, style);
 			PaintItem(hdcMem, group, group->cl.items[group->scanIndex], indent, y, dat, index, hwnd, style, &clRect, &bFirstNGdrawn, groupCountsFontTopShift, dat->row_heights[line_num]);

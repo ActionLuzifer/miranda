@@ -26,17 +26,15 @@
 
 #include "options.h"
 
+//#define HTTP_GATEWAY
 extern char *szStartMsg;
-extern yahoo_local_account *ylad;
 
 /*
  * Global Variables
  */
-HINSTANCE   hinstance;
-PLUGINLINK* pluginLink;
+HINSTANCE		hinstance;
+PLUGINLINK		*pluginLink;
 char			yahooProtocolName[MAX_PATH];
-
-struct MD5_INTERFACE md5i;
 
 HANDLE		    hNetlibUser = NULL;
 HANDLE			YahooMenuItems[ MENU_ITEMS_COUNT ];
@@ -49,6 +47,8 @@ HANDLE   hHookContactDeleted;
 HANDLE   hHookIdle;
 HANDLE   hYahooNudge = NULL;
 
+pthread_mutex_t connectionHandleMutex;
+
 PLUGININFO pluginInfo={
 		sizeof(PLUGININFO),
 #ifdef YAHOO_CVSBUILD
@@ -60,7 +60,7 @@ PLUGININFO pluginInfo={
 		"Yahoo Protocol support via libyahoo2 library. [Built: "__DATE__" "__TIME__"]",
 		"Gennady Feldman, Laurent Marechal",
 		"gena01@miranda-im.org",
-		"© 2003-2007 G.Feldman",
+		"© 2003-2006 G.Feldman",
 		"http://www.miranda-im.org/download/details.php?action=viewfile&id=1248",
 		0, //not transient
 		0 //DEFMOD_PROTOCOLYAHOO - no core yahoo protocol
@@ -103,12 +103,11 @@ BOOL WINAPI DllMain(HINSTANCE hinst,DWORD fdwReason,LPVOID lpvReserved)
 __declspec(dllexport) PLUGININFO* MirandaPluginInfo(DWORD mirandaVersion)
 {
 	//
-    // We require Miranda 0.7.0.12
-	// This requires the latest trunk... [md5, sha, etc..]
+	// We require Miranda 0.4
 	//
-    if (mirandaVersion < PLUGIN_MAKE_VERSION(0, 7, 0, 12)) {
+    if (mirandaVersion < PLUGIN_MAKE_VERSION(0, 4, 0, 0)) {
 		MessageBox( NULL, 
-				"Yahoo plugin cannot be loaded. It requires Miranda IM 0.7.0.12 or later.", 
+				"Yahoo plugin cannot be loaded. It requires Miranda IM 0.4 or later.", 
 				"Yahoo", 
 				MB_OK|MB_ICONWARNING|MB_SETFOREGROUND|MB_TOPMOST );
 
@@ -133,6 +132,7 @@ int __declspec(dllexport) Unload(void)
 		yahoo_logout();
 
 	YAHOO_DebugLog("Logged out");
+	pthread_mutex_destroy(&connectionHandleMutex);
 
 	LocalEventUnhook(hHookContactDeleted);
 	LocalEventUnhook(hHookIdle);
@@ -141,8 +141,8 @@ int __declspec(dllexport) Unload(void)
 	LocalEventUnhook(hHookSettingChanged);
 	LocalEventUnhook(hHookUserTyping);
 	
-	FREE(szStartMsg);
-	FREE(ylad);
+	if (szStartMsg)
+		free(szStartMsg);
 	
 	YAHOO_DebugLog("Before Netlib_CloseHandle");
     Netlib_CloseHandle( hNetlibUser );
@@ -160,22 +160,12 @@ int OnDetailsInit(WPARAM wParam, LPARAM lParam);
  
 static int OnModulesLoaded( WPARAM wParam, LPARAM lParam )
 {
-	char tModuleDescr[ 100 ];
+	char tModule[ 100 ], tModuleDescr[ 100 ];
 	NETLIBUSER nlu = {0};
 
-	if ( !ServiceExists( MS_DB_CONTACT_GETSETTING_STR )) {
-		MessageBox( NULL, 
-				Translate("Yahoo plugin requires db3x plugin version 0.5.1.0 or later" ), 
-				Translate("Yahoo"), 
-				MB_OK );
-		return 1;
-	}
-	
-	YahooIconsInit();
-	YahooMenuInit();
-	
-	CharUpper( yahooProtocolName );
-	wsprintf(tModuleDescr, "%s plugin connections", yahooProtocolName);
+	CharUpper( lstrcpy( tModule, yahooProtocolName ));
+	lstrcpyn(tModuleDescr, yahooProtocolName , sizeof( tModuleDescr ) - 25);
+	lstrcat(tModuleDescr," plugin connections");
 	
 	nlu.cbSize = sizeof(nlu);
 
@@ -185,16 +175,17 @@ static int OnModulesLoaded( WPARAM wParam, LPARAM lParam )
    	nlu.flags = NUF_OUTGOING | NUF_HTTPCONNS;
 #endif
 
-	nlu.szSettingsModule = yahooProtocolName;
+	nlu.szSettingsModule = tModule;
 	nlu.szDescriptiveName = Translate( tModuleDescr );
 	
 #ifdef HTTP_GATEWAY
 	// Here comes the Gateway Code! 
-	nlu.szHttpGatewayHello = NULL;
-	nlu.szHttpGatewayUserAgent = "User-Agent: Mozilla/4.01 [en] (Win95; I)";
- 	nlu.pfnHttpGatewayInit = YAHOO_httpGatewayInit;
+	nlu.szHttpGatewayHello = NULL;//"http://http.proxy.icq.com/hello";
+	nlu.szHttpGatewayUserAgent = "Mozilla/4.08 [en] (WinNT; U ;Nav)";//"Mozilla/4.5 [en] (X11; U; FreeBSD 2.2.8-STABLE i386)";
+ //"Mozilla/4.01 [en] (Win95; I)";//"Mozilla/4.08 [en] (WinNT; U ;Nav)";//\nTest-Header: boo";
+	nlu.pfnHttpGatewayInit = YAHOO_httpGatewayInit;
 	nlu.pfnHttpGatewayBegin = NULL;
-	nlu.pfnHttpGatewayWrapSend = YAHOO_httpGatewayWrapSend;
+	nlu.pfnHttpGatewayWrapSend = NULL;
 	nlu.pfnHttpGatewayUnwrapRecv = YAHOO_httpGatewayUnwrapRecv;
 #endif	
 	
@@ -224,12 +215,11 @@ static int OnModulesLoaded( WPARAM wParam, LPARAM lParam )
 
 int __declspec(dllexport)Load(PLUGINLINK *link)
 {
-	PROTOCOLDESCRIPTOR pd = { 0 };
+	PROTOCOLDESCRIPTOR pd;
 	char path[MAX_PATH], tNudge[250];
 	char* protocolname;
 	
  	pluginLink=link;
-	mir_getMD5I( &md5i );
 	//
 	// Need to disable threading since we got our own routines.
 	//
@@ -252,32 +242,6 @@ int __declspec(dllexport)Load(PLUGINLINK *link)
 		lstrcpyn(yahooProtocolName, protocolname, MAX_PATH);
 	} else 
 		lstrcpy(yahooProtocolName, "YAHOO");
-	
-	LoadYahooServices();
-
-	mir_snprintf( path, sizeof( path ), "%s/Status", yahooProtocolName );
-	CallService( MS_DB_SETSETTINGRESIDENT, TRUE, ( LPARAM )path );
-
-	mir_snprintf( path, sizeof( path ), "%s/YStatus", yahooProtocolName );
-	CallService( MS_DB_SETSETTINGRESIDENT, TRUE, ( LPARAM )path );
-
-	mir_snprintf( path, sizeof( path ), "%s/YAway", yahooProtocolName );
-	CallService( MS_DB_SETSETTINGRESIDENT, TRUE, ( LPARAM )path );
-
-	mir_snprintf( path, sizeof( path ), "%s/Mobile", yahooProtocolName );
-	CallService( MS_DB_SETSETTINGRESIDENT, TRUE, ( LPARAM )path );
-	
-	mir_snprintf( path, sizeof( path ), "%s/YGMsg", yahooProtocolName );
-	CallService( MS_DB_SETSETTINGRESIDENT, TRUE, ( LPARAM )path );
-	
-	mir_snprintf( path, sizeof( path ), "%s/IdleTS", yahooProtocolName );
-	CallService( MS_DB_SETSETTINGRESIDENT, TRUE, ( LPARAM )path );
-	
-	mir_snprintf( path, sizeof( path ), "%s/PictLastCheck", yahooProtocolName );
-	CallService( MS_DB_SETSETTINGRESIDENT, TRUE, ( LPARAM )path );
-
-	mir_snprintf( path, sizeof( path ), "%s/PictLoading", yahooProtocolName );
-	CallService( MS_DB_SETSETTINGRESIDENT, TRUE, ( LPARAM )path );
 
 	// 1.
 	hHookModulesLoaded = HookEvent( ME_SYSTEM_MODULESLOADED, OnModulesLoaded );
@@ -287,19 +251,21 @@ int __declspec(dllexport)Load(PLUGINLINK *link)
 	hYahooNudge = CreateHookableEvent(tNudge);
 	
 	// 2.
+	ZeroMemory(&pd,sizeof(pd));
 	pd.cbSize=sizeof(pd);
 	pd.szName=yahooProtocolName;
 	pd.type=PROTOTYPE_PROTOCOL;
 	CallService(MS_PROTO_REGISTERMODULE,0,(LPARAM)&pd);
 
-	// Initialize our important variable
-	ylad = y_new0(yahoo_local_account, 1);
-	
 	register_callbacks();
 	// 3.
 	yahoo_logoff_buddies();
 
 	SkinAddNewSoundEx(Translate( "mail" ), yahooProtocolName, "New E-mail available in Inbox" );
-	return 0;
+
+	LoadYahooServices();
+
+	pthread_mutex_init(&connectionHandleMutex);	
+    return 0;
 }
 

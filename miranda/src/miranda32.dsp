@@ -731,10 +731,6 @@ SOURCE=.\modules\utils\hyperlink.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\modules\utils\md5.c
-# End Source File
-# Begin Source File
-
 SOURCE=.\modules\utils\openurl.c
 # End Source File
 # Begin Source File
@@ -744,10 +740,6 @@ SOURCE=.\modules\utils\path.c
 # Begin Source File
 
 SOURCE=.\modules\utils\resizer.c
-# End Source File
-# Begin Source File
-
-SOURCE=.\modules\utils\sha1.c
 # End Source File
 # Begin Source File
 
@@ -811,10 +803,6 @@ SOURCE=.\modules\clist\clistevents.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\modules\clist\clistmenus.c
-# End Source File
-# Begin Source File
-
 SOURCE=.\modules\clist\clistmod.c
 # End Source File
 # Begin Source File
@@ -843,96 +831,11 @@ SOURCE=.\modules\clist\Docking.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\modules\clist\genmenu.c
-# End Source File
-# Begin Source File
-
-SOURCE=.\modules\clist\genmenu.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\modules\clist\genmenuopt.c
-# End Source File
-# Begin Source File
-
 SOURCE=.\modules\clist\groups.c
 # End Source File
 # Begin Source File
 
 SOURCE=.\modules\clist\keyboard.c
-# End Source File
-# Begin Source File
-
-SOURCE=.\modules\clist\movetogroup.c
-# End Source File
-# Begin Source File
-
-SOURCE=.\modules\clist\protocolorder.c
-# End Source File
-# End Group
-# Begin Group "fontservice"
-
-# PROP Default_Filter ""
-# Begin Source File
-
-SOURCE=.\modules\fonts\FontOptions.c
-# End Source File
-# Begin Source File
-
-SOURCE=.\modules\fonts\FontService.c
-# End Source File
-# Begin Source File
-
-SOURCE=.\modules\fonts\FontService.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\modules\fonts\module_fonts.c
-# End Source File
-# Begin Source File
-
-SOURCE=.\modules\fonts\module_fonts.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\modules\fonts\services.c
-# End Source File
-# End Group
-# Begin Group "icolib"
-
-# PROP Default_Filter ""
-# Begin Source File
-
-SOURCE=.\modules\icolib\extracticon.c
-
-!IF  "$(CFG)" == "miranda32 - Win32 Release"
-
-# SUBTRACT CPP /YX /Yc /Yu
-
-!ELSEIF  "$(CFG)" == "miranda32 - Win32 Debug"
-
-# SUBTRACT CPP /YX /Yc /Yu
-
-!ELSEIF  "$(CFG)" == "miranda32 - Win32 Release Unicode"
-
-# SUBTRACT CPP /YX /Yc /Yu
-
-!ELSEIF  "$(CFG)" == "miranda32 - Win32 Debug Unicode"
-
-!ENDIF 
-
-# End Source File
-# Begin Source File
-
-SOURCE=.\modules\icolib\IcoLib.c
-# End Source File
-# Begin Source File
-
-SOURCE=.\modules\icolib\IcoLib.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\modules\icolib\skin2icons.c
 # End Source File
 # End Group
 # Begin Group "updatenotify"
@@ -962,10 +865,6 @@ SOURCE=.\res\blank.ico
 # Begin Source File
 
 SOURCE=.\res\changefont.ico
-# End Source File
-# Begin Source File
-
-SOURCE=..\docs\contributors.txt
 # End Source File
 # Begin Source File
 
@@ -1109,6 +1008,10 @@ SOURCE=.\resource.h
 # End Source File
 # Begin Source File
 
+SOURCE=.\resource.rc
+# End Source File
+# Begin Source File
+
 SOURCE=.\res\searchal.ico
 # End Source File
 # Begin Source File
@@ -1137,10 +1040,6 @@ SOURCE=.\res\timestamp.ico
 # End Source File
 # Begin Source File
 
-SOURCE=.\res\typing.ico
-# End Source File
-# Begin Source File
-
 SOURCE=.\res\url.ico
 # End Source File
 # Begin Source File
@@ -1149,12 +1048,12 @@ SOURCE=.\res\useronli.ico
 # End Source File
 # Begin Source File
 
-SOURCE=.\vc6.rc
-# End Source File
-# Begin Source File
-
 SOURCE=.\res\viewdetails.ico
 # End Source File
 # End Group
+# Begin Source File
+
+SOURCE=..\docs\contributors.txt
+# End Source File
 # End Target
 # End Project

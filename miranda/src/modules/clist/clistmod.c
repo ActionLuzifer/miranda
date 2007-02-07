@@ -35,14 +35,11 @@ int GetContactDisplayName(WPARAM wParam, LPARAM lParam);
 int InvalidateDisplayName(WPARAM wParam, LPARAM lParam);
 int InitGroupServices(void);
 int Docking_IsDocked(WPARAM wParam, LPARAM lParam);
+int MenuProcessCommand(WPARAM wParam, LPARAM lParam);
 void InitDisplayNameCache(void);
 void FreeDisplayNameCache(void);
 void InitTray(void);
 void LoadCLUIModule();
-
-pfnMyMonitorFromPoint  MyMonitorFromPoint = NULL;
-pfnMyMonitorFromWindow MyMonitorFromWindow = NULL;
-pfnMyGetMonitorInfo    MyGetMonitorInfo = NULL;
 
 HANDLE hContactDoubleClicked, hContactIconChangedEvent;
 HIMAGELIST hCListImages;
@@ -50,7 +47,6 @@ BOOL(WINAPI * MySetProcessWorkingSetSize) (HANDLE, SIZE_T, SIZE_T);
 extern BYTE nameOrder[];
 static int statusModeList[] = { ID_STATUS_OFFLINE, ID_STATUS_ONLINE, ID_STATUS_AWAY, ID_STATUS_NA, ID_STATUS_OCCUPIED, ID_STATUS_DND, ID_STATUS_FREECHAT, ID_STATUS_INVISIBLE, ID_STATUS_ONTHEPHONE, ID_STATUS_OUTTOLUNCH };
 static int skinIconStatusList[] = { SKINICON_STATUS_OFFLINE, SKINICON_STATUS_ONLINE, SKINICON_STATUS_AWAY, SKINICON_STATUS_NA, SKINICON_STATUS_OCCUPIED, SKINICON_STATUS_DND, SKINICON_STATUS_FREE4CHAT, SKINICON_STATUS_INVISIBLE, SKINICON_STATUS_ONTHEPHONE, SKINICON_STATUS_OUTTOLUNCH };
-static int skinIconStatusFlags[] = { 0xFFFFFFFF, PF2_ONLINE, PF2_SHORTAWAY, PF2_LONGAWAY, PF2_LIGHTDND, PF2_HEAVYDND, PF2_FREECHAT, PF2_INVISIBLE, PF2_ONTHEPHONE, PF2_OUTTOLUNCH };
 struct ProtoIconIndex
 {
 	char *szProto;
@@ -68,58 +64,57 @@ TCHAR* fnGetStatusModeDescription( int mode, int flags )
 	int    noPrefixReqd = 0;
 	switch (mode) {
 	case ID_STATUS_OFFLINE:
-		descr = _T("Offline");
+		descr = TranslateT("Offline");
 		noPrefixReqd = 1;
 		break;
 	case ID_STATUS_CONNECTING:
-		descr = _T("Connecting");
+		descr = TranslateT("Connecting");
 		noPrefixReqd = 1;
 		break;
 	case ID_STATUS_ONLINE:
-		descr = _T("Online");
+		descr = TranslateT("Online");
 		noPrefixReqd = 1;
 		break;
 	case ID_STATUS_AWAY:
-		descr = _T("Away");
+		descr = TranslateT("Away");
 		break;
 	case ID_STATUS_DND:
-		descr = _T("DND");
+		descr = TranslateT("DND");
 		break;
 	case ID_STATUS_NA:
-		descr = _T("NA");
+		descr = TranslateT("NA");
 		break;
 	case ID_STATUS_OCCUPIED:
-		descr = _T("Occupied");
+		descr = TranslateT("Occupied");
 		break;
 	case ID_STATUS_FREECHAT:
-		descr = _T("Free for chat");
+		descr = TranslateT("Free for chat");
 		break;
 	case ID_STATUS_INVISIBLE:
-		descr = _T("Invisible");
+		descr = TranslateT("Invisible");
 		break;
 	case ID_STATUS_OUTTOLUNCH:
-		descr = _T("Out to lunch");
+		descr = TranslateT("Out to lunch");
 		break;
 	case ID_STATUS_ONTHEPHONE:
-		descr = _T("On the phone");
+		descr = TranslateT("On the phone");
 		break;
 	case ID_STATUS_IDLE:
-		descr = _T("Idle");
+		descr = TranslateT("Idle");
 		break;
 	default:
 		if (mode > ID_STATUS_CONNECTING && mode < ID_STATUS_CONNECTING + MAX_CONNECT_RETRIES) {
-			const TCHAR* connFmt = _T("Connecting (attempt %d)");
-			mir_sntprintf(szMode, SIZEOF(szMode), (flags&GSMDF_UNTRANSLATED)?connFmt:TranslateTS(connFmt), mode - ID_STATUS_CONNECTING + 1);
+			mir_sntprintf(szMode, SIZEOF(szMode), TranslateT("Connecting (attempt %d)"), mode - ID_STATUS_CONNECTING + 1);
 			return szMode;
 		}
 		return NULL;
 	}
 	if (noPrefixReqd || !(flags & GSMDF_PREFIXONLINE))
-		return ( flags & GSMDF_UNTRANSLATED ) ? descr : TranslateTS( descr );
+		return descr;
 
-	lstrcpy( szMode, TranslateT( "Online" ));
-	lstrcat( szMode, _T(": "));
-	lstrcat( szMode, ( flags & GSMDF_UNTRANSLATED ) ? descr : TranslateTS( descr ));
+	lstrcpy(szMode, TranslateT("Online"));
+	lstrcat(szMode, _T(": "));
+	lstrcat(szMode, descr);
 	return szMode;
 }
 
@@ -130,7 +125,7 @@ static int GetStatusModeDescription(WPARAM wParam, LPARAM lParam)
 		{
 			static char szMode[64]={0};
 			TCHAR* buf1 = (TCHAR*)cli.pfnGetStatusModeDescription(wParam,lParam);
-			char *buf2 = u2a(buf1);
+			char *buf2=u2a(buf1);
 			_snprintf(szMode,sizeof(szMode),"%s",buf2);
 			mir_free(buf2);
 			return (int)szMode;
@@ -162,25 +157,26 @@ static int ProtocolAck(WPARAM wParam, LPARAM lParam)
 					if (DBGetContactSettingByte(hContact, "CList", "Delete", 0))
 						CallService(MS_DB_CONTACT_DELETE, (WPARAM) hContact, 0);
 				hContact = (HANDLE) CallService(MS_DB_CONTACT_FINDNEXT, (WPARAM) hContact, 0);
-	}	}	}
+			}
+		}
+	}
 
 	cli.pfnTrayIconUpdateBase(ack->szModule);
 	return 0;
 }
 
-int fnIconFromStatusMode(const char *szProto, int status, HANDLE hContact)
+int fnIconFromStatusMode(const char *szProto, int status)
 {
 	int index, i;
 
-	for ( index = 0; index < SIZEOF(statusModeList); index++ )
-		if ( status == statusModeList[index] )
+	for (index = 0; index < SIZEOF(statusModeList); index++)
+		if (status == statusModeList[index])
 			break;
-
-	if ( index == SIZEOF(statusModeList))
+	if (index == SIZEOF(statusModeList))
 		index = 0;
 	if (szProto == NULL)
 		return index + 1;
-	for ( i = 0; i < protoIconIndexCount; i++ ) {
+	for (i = 0; i < protoIconIndexCount; i++) {
 		if (strcmp(szProto, protoIconIndex[i].szProto))
 			continue;
 		return protoIconIndex[i].iIconBase + index;
@@ -232,7 +228,7 @@ static int ContactListModulesLoaded(WPARAM wParam, LPARAM lParam)
 		protoIconIndex = (struct ProtoIconIndex *) mir_realloc(protoIconIndex, sizeof(struct ProtoIconIndex) * (protoIconIndexCount + 1));
 		protoIconIndex[protoIconIndexCount].szProto = protoList[i]->szName;
 		for (j = 0; j < SIZEOF(statusModeList); j++) {
-			iImg = ImageList_AddIcon_ProtoIconLibLoaded(hCListImages, protoList[i]->szName, statusModeList[j] );
+			iImg = ImageList_AddIcon(hCListImages, LoadSkinnedProtoIcon(protoList[i]->szName, statusModeList[j]));
 			if (j == 0)
 				protoIconIndex[protoIconIndexCount].iIconBase = iImg;
 		}
@@ -274,14 +270,14 @@ static int CListIconsChanged(WPARAM wParam, LPARAM lParam)
 	int i, j;
 
 	for (i = 0; i < SIZEOF(statusModeList); i++)
-		ImageList_ReplaceIcon_IconLibLoaded(hCListImages, i + 1, LoadSkinnedIcon(skinIconStatusList[i]));
-	ImageList_ReplaceIcon_IconLibLoaded(hCListImages, IMAGE_GROUPOPEN, LoadSkinnedIcon(SKINICON_OTHER_GROUPOPEN));
-	ImageList_ReplaceIcon_IconLibLoaded(hCListImages, IMAGE_GROUPSHUT, LoadSkinnedIcon(SKINICON_OTHER_GROUPSHUT));
+		ImageList_ReplaceIcon(hCListImages, i + 1, LoadSkinnedIcon(skinIconStatusList[i]));
+	ImageList_ReplaceIcon(hCListImages, IMAGE_GROUPOPEN, LoadSkinnedIcon(SKINICON_OTHER_GROUPOPEN));
+	ImageList_ReplaceIcon(hCListImages, IMAGE_GROUPSHUT, LoadSkinnedIcon(SKINICON_OTHER_GROUPSHUT));
 	for (i = 0; i < protoIconIndexCount; i++)
 		for (j = 0; j < SIZEOF(statusModeList); j++)
-			ImageList_ReplaceIcon_IconLibLoaded(hCListImages, protoIconIndex[i].iIconBase + j, LoadSkinnedProtoIcon(protoIconIndex[i].szProto, statusModeList[j]));
+			ImageList_ReplaceIcon(hCListImages, protoIconIndex[i].iIconBase + j, LoadSkinnedProtoIcon(protoIconIndex[i].szProto, statusModeList[j]));
 	cli.pfnTrayIconIconsChanged();
-	cli.pfnInvalidateRect( cli.hwndContactList, NULL, TRUE);
+	cli.pfnInvalidateRect((HWND) CallService(MS_CLUI_GETHWND, 0, 0), NULL, TRUE);
 	return 0;
 }
 
@@ -365,7 +361,7 @@ int fnShowHide(WPARAM wParam, LPARAM lParam)
 	}
 	if (bShow == TRUE) {
 		WINDOWPLACEMENT pl = { 0 };
-
+		HMONITOR(WINAPI * MyMonitorFromWindow) (HWND, DWORD);
 		RECT rcScreen, rcWindow;
 		int offScreen = 0;
 
@@ -377,13 +373,16 @@ int fnShowHide(WPARAM wParam, LPARAM lParam)
 		SetForegroundWindow(cli.hwndContactList);
 		DBWriteContactSettingByte(NULL, "CList", "State", SETTING_STATE_NORMAL);
 		//this forces the window onto the visible screen
+		MyMonitorFromWindow = (HMONITOR(WINAPI *) (HWND, DWORD)) GetProcAddress(GetModuleHandleA("USER32"), "MonitorFromWindow");
 		GetWindowRect(cli.hwndContactList, &rcWindow);
 		if (MyMonitorFromWindow) {
 			if (MyMonitorFromWindow(cli.hwndContactList, 0) == NULL) {
+				BOOL(WINAPI * MyGetMonitorInfoA) (HMONITOR, LPMONITORINFO);
 				MONITORINFO mi = { 0 };
 				HMONITOR hMonitor = MyMonitorFromWindow(cli.hwndContactList, 2);
+				MyGetMonitorInfoA = (BOOL(WINAPI *) (HMONITOR, LPMONITORINFO)) GetProcAddress(GetModuleHandleA("USER32"), "GetMonitorInfoA");
 				mi.cbSize = sizeof(mi);
-				MyGetMonitorInfo(hMonitor, &mi);
+				MyGetMonitorInfoA(hMonitor, &mi);
 				rcScreen = mi.rcWork;
 				offScreen = 1;
 			}
@@ -511,32 +510,17 @@ int LoadContactListModule2(void)
 	InitGroupServices();
 	InitTray();
 
-	{
-		HINSTANCE hUser = GetModuleHandleA("USER32");
-		MyMonitorFromPoint  = ( pfnMyMonitorFromPoint )GetProcAddress( hUser,"MonitorFromPoint" );
-		MyMonitorFromWindow = ( pfnMyMonitorFromWindow )GetProcAddress( hUser, "MonitorFromWindow" );
-		#if defined( _UNICODE )
-			MyGetMonitorInfo = ( pfnMyGetMonitorInfo )GetProcAddress( hUser, "GetMonitorInfoW");
-		#else
-			MyGetMonitorInfo = ( pfnMyGetMonitorInfo )GetProcAddress( hUser, "GetMonitorInfoA");
-		#endif
-	}
-
 	hCListImages = ImageList_Create(16, 16, ILC_MASK | (IsWinVerXPPlus()? ILC_COLOR32 : ILC_COLOR16), 13, 0);
 	HookEvent(ME_SKIN_ICONSCHANGED, CListIconsChanged);
 	CreateServiceFunction(MS_CLIST_GETICONSIMAGELIST, GetIconsImageList);
-
-	ImageList_AddIcon_NotShared(hCListImages, MAKEINTRESOURCE(IDI_BLANK));
-
+	ImageList_AddIcon(hCListImages, LoadIcon(cli.hInst, MAKEINTRESOURCE(IDI_BLANK)));
 	{
 		int i;
-		//now all core skin icons are loaded via icon lib. so lets release them
 		for (i = 0; i < SIZEOF(statusModeList); i++)
-			ImageList_AddIcon_IconLibLoaded(hCListImages, skinIconStatusList[i] );
+			ImageList_AddIcon(hCListImages, LoadSkinnedIcon(skinIconStatusList[i]));
 	}
-
 	//see IMAGE_GROUP... in clist.h if you add more images above here
-	ImageList_AddIcon_IconLibLoaded(hCListImages, SKINICON_OTHER_GROUPOPEN );
-	ImageList_AddIcon_IconLibLoaded(hCListImages, SKINICON_OTHER_GROUPSHUT );
+	ImageList_AddIcon(hCListImages, LoadSkinnedIcon(SKINICON_OTHER_GROUPOPEN));
+	ImageList_AddIcon(hCListImages, LoadSkinnedIcon(SKINICON_OTHER_GROUPSHUT));
 	return 0;
 }

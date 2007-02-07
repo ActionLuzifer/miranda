@@ -403,3 +403,4 @@ wchar_t* a2u( const char* src )
 	result[ cbLen ] = 0;
 	return result;
 }
+

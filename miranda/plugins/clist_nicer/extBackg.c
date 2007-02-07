@@ -31,6 +31,7 @@ extern struct ClcData *g_clcData;
 
 extern HWND g_hwndViewModeFrame;
 extern HIMAGELIST himlExtraImages;
+extern HANDLE hPreBuildStatusMenuEvent;
 extern struct CluiTopButton top_buttons[];
 extern BOOL (WINAPI *MySetLayeredWindowAttributes)(HWND, COLORREF, BYTE, DWORD);
 extern BOOL (WINAPI *MyEnableThemeDialogTexture)(HANDLE, DWORD);
@@ -47,7 +48,6 @@ int ID_EXTBK_LAST = ID_EXTBK_LAST_D;
 void SetTBSKinned(int mode);
 void ReloadThemedOptions();
 void ReloadExtraIcons();
-static void SaveCompleteStructToDB(void);
 
 static StatusItems_t _StatusItems[] = {
     {"Offline", "EXBK_Offline", ID_STATUS_OFFLINE, 
@@ -396,19 +396,19 @@ static void SaveCompleteStructToDB(void)
             DBWriteContactSettingDword(NULL, "CLCExt", buffer, StatusItems[n].TEXTCOLOR);
 
             lstrcpyA(buffer, StatusItems[n].szDBname); lstrcatA(buffer, "_ALPHA");
-            DBWriteContactSettingByte(NULL, "CLCExt", buffer, (BYTE)StatusItems[n].ALPHA);
+            DBWriteContactSettingByte(NULL, "CLCExt", buffer, StatusItems[n].ALPHA);
 
             lstrcpyA(buffer, StatusItems[n].szDBname); lstrcatA(buffer, "_MRGN_LEFT");
-            DBWriteContactSettingByte(NULL, "CLCExt", buffer, (BYTE)StatusItems[n].MARGIN_LEFT);
+            DBWriteContactSettingByte(NULL, "CLCExt", buffer, StatusItems[n].MARGIN_LEFT);
 
             lstrcpyA(buffer, StatusItems[n].szDBname); lstrcatA(buffer, "_MRGN_TOP");
-            DBWriteContactSettingByte(NULL, "CLCExt", buffer, (BYTE)StatusItems[n].MARGIN_TOP);
+            DBWriteContactSettingByte(NULL, "CLCExt", buffer, StatusItems[n].MARGIN_TOP);
 
             lstrcpyA(buffer, StatusItems[n].szDBname); lstrcatA(buffer, "_MRGN_RIGHT");
-            DBWriteContactSettingByte(NULL, "CLCExt", buffer, (BYTE)StatusItems[n].MARGIN_RIGHT);
+            DBWriteContactSettingByte(NULL, "CLCExt", buffer, StatusItems[n].MARGIN_RIGHT);
 
             lstrcpyA(buffer, StatusItems[n].szDBname); lstrcatA(buffer, "_MRGN_BOTTOM");
-            DBWriteContactSettingByte(NULL, "CLCExt", buffer, (BYTE)StatusItems[n].MARGIN_BOTTOM);
+            DBWriteContactSettingByte(NULL, "CLCExt", buffer, StatusItems[n].MARGIN_BOTTOM);
 
             lstrcpyA(buffer, StatusItems[n].szDBname); lstrcatA(buffer, "_BDRSTYLE");
             DBWriteContactSettingDword(NULL, "CLCExt", buffer, StatusItems[n].BORDERSTYLE);
@@ -454,9 +454,9 @@ void SaveNonStatusItemsSettings(HWND hwndDlg)
 {
     BOOL translated;
     
-    DBWriteContactSettingByte(NULL, "CLCExt", "EXBK_EqualSelection", (BYTE)IsDlgButtonChecked(hwndDlg, IDC_EQUALSELECTION));
-    DBWriteContactSettingByte(NULL, "CLCExt", "EXBK_SelBlend", (BYTE)IsDlgButtonChecked(hwndDlg, IDC_SELBLEND));  
-    DBWriteContactSettingByte(NULL, "CLCExt", "EXBK_FillWallpaper", (BYTE)IsDlgButtonChecked(hwndDlg, IDC_FILLWALLPAPER));
+    DBWriteContactSettingByte(NULL, "CLCExt", "EXBK_EqualSelection", IsDlgButtonChecked(hwndDlg, IDC_EQUALSELECTION));
+    DBWriteContactSettingByte(NULL, "CLCExt", "EXBK_SelBlend", IsDlgButtonChecked(hwndDlg, IDC_SELBLEND));  
+    DBWriteContactSettingByte(NULL, "CLCExt", "EXBK_FillWallpaper", IsDlgButtonChecked(hwndDlg, IDC_FILLWALLPAPER));
 
     g_CluiData.cornerRadius = GetDlgItemInt(hwndDlg, IDC_CORNERRAD, &translated, FALSE);
     g_CluiData.bApplyIndentToBg = IsDlgButtonChecked(hwndDlg, IDC_APPLYINDENTBG) ? 1 : 0;
@@ -467,10 +467,10 @@ void SaveNonStatusItemsSettings(HWND hwndDlg)
     g_CluiData.group_padding = GetDlgItemInt(hwndDlg, IDC_GRPTOPPADDING, &translated, FALSE);
 
     DBWriteContactSettingByte(NULL, "CLCExt", "CornerRad", g_CluiData.cornerRadius);
-    DBWriteContactSettingByte(NULL, "CLCExt", "applyindentbg", (BYTE)g_CluiData.bApplyIndentToBg);
-    DBWriteContactSettingByte(NULL, "CLCExt", "useperproto", (BYTE)g_CluiData.bUsePerProto);
-    DBWriteContactSettingByte(NULL, "CLCExt", "override_status", (BYTE)g_CluiData.bOverridePerStatusColors);
-    DBWriteContactSettingByte(NULL, "CLCExt", "bskinned", (BYTE)(IsDlgButtonChecked(hwndDlg, IDC_SETALLBUTTONSKINNED) ? 1 : 0));
+    DBWriteContactSettingByte(NULL, "CLCExt", "applyindentbg", g_CluiData.bApplyIndentToBg);
+    DBWriteContactSettingByte(NULL, "CLCExt", "useperproto", g_CluiData.bUsePerProto);
+    DBWriteContactSettingByte(NULL, "CLCExt", "override_status", g_CluiData.bOverridePerStatusColors);
+    DBWriteContactSettingByte(NULL, "CLCExt", "bskinned", IsDlgButtonChecked(hwndDlg, IDC_SETALLBUTTONSKINNED) ? 1 : 0);
 	DBWriteContactSettingByte(NULL, "CLCExt", "FastGradients", g_CluiData.bWantFastGradients);
     DBWriteContactSettingByte(NULL, "CLC", "IgnoreSelforGroups", (BYTE) IsDlgButtonChecked(hwndDlg, IDC_IGNORESELFORGROUPS));
 
@@ -1312,7 +1312,7 @@ void IMG_LoadItems()
     if(g_CLUIImageItem) {
         g_CluiData.bFullTransparent = TRUE;
         g_CluiData.dwFlags &= ~CLUI_FRAME_CLISTSUNKEN;
-        DBWriteContactSettingByte(NULL, "CLUI", "fulltransparent", (BYTE)g_CluiData.bFullTransparent);
+        DBWriteContactSettingByte(NULL, "CLUI", "fulltransparent", g_CluiData.bFullTransparent);
         DBWriteContactSettingByte(NULL, "CLUI", "WindowStyle", SETTING_WINDOWSTYLE_NOBORDER);
         ApplyCLUIBorderStyle(pcli->hwndContactList);
         SetWindowLong(pcli->hwndContactList, GWL_EXSTYLE, GetWindowLong(pcli->hwndContactList, GWL_EXSTYLE) | WS_EX_LAYERED);
@@ -1390,7 +1390,7 @@ void LoadPerContactSkins(char *file)
                             DBWriteContactSettingDword(hContact, "EXTBK", "TEXT", items[j].TEXTCOLOR);
                             DBWriteContactSettingDword(hContact, "EXTBK", "COLOR1", items[j].COLOR);
                             DBWriteContactSettingDword(hContact, "EXTBK", "COLOR2", items[j].COLOR2);
-                            DBWriteContactSettingByte(hContact, "EXTBK", "ALPHA", (BYTE)items[j].ALPHA);
+                            DBWriteContactSettingByte(hContact, "EXTBK", "ALPHA", items[j].ALPHA);
 
                             DBWriteContactSettingByte(hContact, "EXTBK", "LEFT", (BYTE)items[j].MARGIN_LEFT);
                             DBWriteContactSettingByte(hContact, "EXTBK", "RIGHT", (BYTE)items[j].MARGIN_RIGHT);
@@ -1543,10 +1543,7 @@ void extbk_import(char *file, HWND hwndDlg)
             IcoLibReloadIcons();
         else {
             CLN_LoadAllIcons(0);
-            //FYR: may be better to call pfnReloadProtoMenus
-            pcli->pfnReloadProtoMenus();
-            //FYR: Not necessary. It is already notified in pfnReloadProtoMenus
-            //NotifyEventHooks(pcli->hPreBuildStatusMenuEvent, 0, 0);
+            NotifyEventHooks(hPreBuildStatusMenuEvent, 0, 0);
             ReloadExtraIcons();
         }
         pcli->pfnClcBroadcast(CLM_AUTOREBUILD, 0, 0);
@@ -1625,7 +1622,7 @@ static BOOL CALLBACK DlgProcSkinOpts(HWND hwndDlg, UINT msg, WPARAM wParam, LPAR
                 {
                     int useskin = IsDlgButtonChecked(hwndDlg, IDC_USESKIN);
 
-                    DBWriteContactSettingByte(NULL, "CLUI", "useskin", (BYTE)(useskin ? 1 : 0));
+                    DBWriteContactSettingByte(NULL, "CLUI", "useskin", useskin ? 1 : 0);
                     break;
                 }
                 case IDC_UNLOAD:
@@ -1668,7 +1665,7 @@ static BOOL CALLBACK DlgProcSkinOpts(HWND hwndDlg, UINT msg, WPARAM wParam, LPAR
                                 skinChanged = TRUE;
 
                             DBWriteContactSettingString(NULL, "CLC", "AdvancedSkin", final_path);
-                            DBWriteContactSettingByte(NULL, "CLUI", "skin_changed", (BYTE)skinChanged);
+                            DBWriteContactSettingByte(NULL, "CLUI", "skin_changed", skinChanged);
                             SetDlgItemTextA(hwndDlg, IDC_SKINFILE, final_path);
                         }
                         break;
@@ -1739,6 +1736,7 @@ BOOL CALLBACK OptionsDlgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
              MyEnableThemeDialogTexture((HWND)tci.lParam, ETDT_ENABLETAB);
 
          if(ServiceExists(MS_CLNSE_INVOKE)) {
+
              ZeroMemory(&sd, sizeof(sd));
              sd.cbSize = sizeof(sd);
              sd.StatusItems = StatusItems;
@@ -1852,7 +1850,7 @@ BOOL CALLBACK OptionsDlgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
                         tci.mask = TCIF_PARAM;
                         TabCtrl_GetItem(GetDlgItem(hwnd,IDC_OPTIONSTAB),TabCtrl_GetCurSel(GetDlgItem(hwnd,IDC_OPTIONSTAB)),&tci);
                         ShowWindow((HWND)tci.lParam,SW_SHOW);
-                        DBWriteContactSettingByte(NULL, "CLUI", "opage", (BYTE)TabCtrl_GetCurSel(GetDlgItem(hwnd, IDC_OPTIONSTAB)));
+                        DBWriteContactSettingByte(NULL, "CLUI", "opage", TabCtrl_GetCurSel(GetDlgItem(hwnd, IDC_OPTIONSTAB)));
                         EnableWindow(GetDlgItem(hwnd, IDC_EXPORT), TabCtrl_GetCurSel(GetDlgItem(hwnd, IDC_OPTIONSTAB)) != 0);
                         EnableWindow(GetDlgItem(hwnd, IDC_IMPORT), TabCtrl_GetCurSel(GetDlgItem(hwnd, IDC_OPTIONSTAB)) != 0);
                      }

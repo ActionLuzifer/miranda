@@ -721,8 +721,9 @@ static void __cdecl JabberWaitAndReconnectThread( int unused )
 {
 	JabberLog("Reconnecting after with new X-GOOGLE-TOKEN");
 	Sleep(1000);
-
-	ThreadData* thread = new ThreadData( JABBER_SESSION_NORMAL );
+	ThreadData* thread = ( ThreadData* ) mir_alloc( sizeof( ThreadData ));
+	ZeroMemory( thread, sizeof( ThreadData ));
+	thread->type = JABBER_SESSION_NORMAL;
 	thread->hThread = ( HANDLE ) mir_forkthread(( pThreadFunc )JabberServerThread, thread );
 }
 
@@ -1841,18 +1842,4 @@ static void __cdecl JabberKeepAliveThread( JABBER_SOCKET s )
 			JabberSend( s, " \t " );
 	}
 	JabberLog( "Exiting KeepAliveThread" );
-}
-
-/////////////////////////////////////////////////////////////////////////////////////////
-// ThreadData constructor & destructor
-
-ThreadData::ThreadData( JABBER_SESSION_TYPE parType )
-{
-	memset( this, 0, sizeof( *this ));
-	type = parType;
-}
-
-ThreadData::~ThreadData()
-{
-	delete auth;
 }

@@ -66,8 +66,7 @@ __inline int mir_strlen (const char *a)
  	 	
 #define strlen(a) mir_strlen(a)
 #define strcmp(a,b) mir_strcmp(a,b)
- 	
-/*
+ 	 	
 __inline void *mir_calloc( size_t num, size_t size )
 {
  	void *p=mir_alloc(num*size);
@@ -75,7 +74,7 @@ __inline void *mir_calloc( size_t num, size_t size )
 	memset(p,0,num*size);
     return p;
 };
-*/
+
 extern __inline wchar_t * mir_strdupW(const wchar_t * src)
 {
 	wchar_t * p;
@@ -222,16 +221,12 @@ __inline BOOL mod_DeleteDC(HDC hdc)
 #define DeleteObject(a) DebugDeleteObject(a)
 #endif 
 
-
-// load small icon (shared) it's not need to be destroyed
-
 HICON LoadSmallIconShared(HINSTANCE hInstance, LPCTSTR lpIconName)
 {
 		int cx=GetSystemMetrics(SM_CXSMICON);
 		return LoadImage(hInstance,lpIconName, IMAGE_ICON,cx,cx, LR_DEFAULTCOLOR|LR_SHARED);
 }
 
-// load small icon (not shared) it IS NEED to be destroyed
 HICON LoadSmallIcon(HINSTANCE hInstance, LPCTSTR lpIconName)
 {
 	HICON hIcon=NULL;				  // icon handle 
@@ -240,19 +235,6 @@ HICON LoadSmallIcon(HINSTANCE hInstance, LPCTSTR lpIconName)
 	GetModuleFileName(hInstance,filename,MAX_PATH);
  	ExtractIconEx(filename,index,NULL,&hIcon,1);
 	return hIcon;
-}
-
-// load small icon from hInstance
-HICON LoadIconEx(HINSTANCE hInstance, LPCTSTR lpIconName, BOOL bShared)
-{
-    HICON hResIcon=bShared?LoadSmallIcon(hInstance,lpIconName):LoadSmallIconShared(hInstance,lpIconName);
-    if (!hResIcon) //Icon not found in hInstance lets try to load it from core
-    {
-        HINSTANCE hCoreInstance=GetModuleHandle(NULL);
-        if (hCoreInstance!=hInstance)
-            hResIcon=bShared?LoadSmallIcon(hInstance,lpIconName):LoadSmallIconShared(hInstance,lpIconName);
-    }
-    return hResIcon;
 }
 
 BOOL DestroyIcon_protect(HICON icon)

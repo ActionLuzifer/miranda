@@ -119,6 +119,12 @@ typedef struct _wndFrame{
     HRGN UpdateRgn;
 
 } wndFrame;
+//static wndFrame Frames[MAX_FRAMES];
+
+
+
+//extern wndFrame *Frames=NULL;
+//extern int nFramescount=0;
 
 #define OFFSET_PROTOPOS 200
 #define OFFSET_VISIBLE 400

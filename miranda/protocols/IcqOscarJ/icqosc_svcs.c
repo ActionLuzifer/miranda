@@ -5,7 +5,7 @@
 // Copyright © 2000,2001 Richard Hughes, Roland Rabien, Tristan Van de Vreede
 // Copyright © 2001,2002 Jon Keating, Richard Hughes
 // Copyright © 2002,2003,2004 Martin Öberg, Sam Kothari, Robert Rainwater
-// Copyright © 2004,2005,2006,2007 Joe Kucera
+// Copyright © 2004,2005,2006 Joe Kucera
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -184,7 +184,7 @@ int IcqGetAvatarInfo(WPARAM wParam, LPARAM lParam)
 
   if (!gbAvatarsEnabled) return GAIR_NOAVATAR;
 
-  if (ICQGetContactSetting(pai->hContact, "AvatarHash", &dbv) || dbv.type != DBVT_BLOB || (dbv.cpbVal != 0x14 && dbv.cpbVal != 0x09))
+  if (ICQGetContactSetting(pai->hContact, "AvatarHash", &dbv) || dbv.cpbVal != 0x14)
     return GAIR_NOAVATAR; // we did not found avatar hash or hash invalid - no avatar available
 
   if (ICQGetContactSettingUID(pai->hContact, &dwUIN, &szUID))
@@ -201,7 +201,7 @@ int IcqGetAvatarInfo(WPARAM wParam, LPARAM lParam)
 
     pai->format = dwPaFormat; 
 
-    if (!IsAvatarSaved(pai->hContact, dbv.pbVal, dbv.cpbVal))
+    if (!IsAvatarSaved(pai->hContact, dbv.pbVal))
     { // hashes are the same
       if (access(pai->filename, 0) == 0)
       {
@@ -212,7 +212,7 @@ int IcqGetAvatarInfo(WPARAM wParam, LPARAM lParam)
     }
   }
 
-  if (IsAvatarSaved(pai->hContact, dbv.pbVal, dbv.cpbVal))
+  if (IsAvatarSaved(pai->hContact, dbv.pbVal))
   { // we didn't received the avatar before - this ensures we will not request avatar again and again
     if ((wParam & GAIF_FORCE) != 0 && pai->hContact != 0)
     { // request avatar data
@@ -288,8 +288,7 @@ int IcqSetMyAvatar(WPARAM wParam, LPARAM lParam)
       DeleteObject(avt);
     }
     GetFullAvatarFileName(0, NULL, dwPaFormat, szMyFile, MAX_PATH);
-    // if not in our storage, copy
-    if (strcmpnull(szFile, szMyFile) && !CopyFile(szFile, szMyFile, FALSE))
+    if (stricmp(szFile, szMyFile) && !CopyFile(szFile, szMyFile, FALSE))
     {
       NetLog_Server("Failed to copy our avatar to local storage.");
       return iRet;
@@ -301,7 +300,7 @@ int IcqSetMyAvatar(WPARAM wParam, LPARAM lParam)
       char* ihash = (char*)_alloca(0x14);
       // upload hash to server
       ihash[0] = 0;    //unknown
-      ihash[1] = dwPaFormat == PA_FORMAT_XML ? AVATAR_HASH_FLASH : AVATAR_HASH_STATIC; //hash type
+      ihash[1] = dwPaFormat == PA_FORMAT_XML ? 8 : 1; //hash type
       ihash[2] = 1;    //hash status
       ihash[3] = 0x10; //hash len
       memcpy(ihash+4, hash, 0x10);
@@ -1024,29 +1023,37 @@ int IcqChangeInfoEx(WPARAM wParam, LPARAM lParam)
 
 
 
+static int messageRate = 0;
+static DWORD lastMessageTick = 0;
 int IcqGetInfo(WPARAM wParam, LPARAM lParam)
 {
   if (lParam && icqOnline)
-  {
+  { // TODO: add checking for SGIF_ONOPEN, otherwise max one per 10sec
     CCSDATA* ccs = (CCSDATA*)lParam;
     DWORD dwUin;
     uid_str szUid;
-    DWORD dwCookie;
 
     if (ICQGetContactSettingUID(ccs->hContact, &dwUin, &szUid))
     {
-      return 1; // Invalid contact
+      return 0; // Invalid contact
     }
 
-    if (dwUin)
-      dwCookie = icq_sendGetInfoServ(ccs->hContact, dwUin, (ccs->wParam & SGIF_MINIMAL) != 0, (ccs->wParam & SGIF_ONOPEN) != 0);
-    else // TODO: this needs something better
-      dwCookie = icq_sendGetAimProfileServ(ccs->hContact, szUid);
+    messageRate -= (GetTickCount() - lastMessageTick)/10;
+    if (messageRate<0) // TODO: this is bad, needs centralising
+      messageRate = 0;
+    lastMessageTick = GetTickCount();
+    messageRate += 67; // max 1.5 msgs/sec when rate is high
 
-    if (dwCookie)
+    // server kicks if 100 msgs sent instantly, so send max 50 instantly
+    if (messageRate < 67*50)
+    {
+      if (dwUin)
+        icq_sendGetInfoServ(dwUin, (ccs->wParam & SGIF_MINIMAL) != 0);
+      else
+        icq_sendGetAimProfileServ(ccs->hContact, szUid);
+
       return 0; // Success
-    else
-      return 1; // Failure
+    }
   }
 
   return 1; // Failure
@@ -1060,34 +1067,24 @@ int IcqFileAllow(WPARAM wParam, LPARAM lParam)
   {
     CCSDATA* ccs = (CCSDATA*)lParam;
     DWORD dwUin;
-    uid_str szUid;
 
-    if (ICQGetContactSettingUID(ccs->hContact, &dwUin, &szUid))
+    if (ICQGetContactSettingUID(ccs->hContact, &dwUin, NULL))
       return 0; // Invalid contact
 
-    if (icqOnline && ccs->hContact && ccs->lParam && ccs->wParam)
-    { // approve old fashioned file transfer
-      basic_filetransfer* ft = ((basic_filetransfer *)ccs->wParam);
+    if (dwUin && icqOnline && ccs->hContact && ccs->lParam && ccs->wParam)
+    {
+      filetransfer* ft = ((filetransfer *)ccs->wParam);
 
-      if (dwUin && ft->ft_magic == FT_MAGIC_ICQ)
-      {
-        filetransfer* ft = ((filetransfer *)ccs->wParam);
+      ft->szSavePath = null_strdup((char *)ccs->lParam);
+      AddExpectedFileRecv(ft);
 
-        ft->szSavePath = null_strdup((char *)ccs->lParam);
-        AddExpectedFileRecv(ft);
+      // Was request received thru DC and have we a open DC, send through that
+      if (ft->bDC && IsDirectConnectionOpen(ccs->hContact, DIRECTCONN_STANDARD))
+        icq_sendFileAcceptDirect(ccs->hContact, ft);
+      else
+        icq_sendFileAcceptServ(dwUin, ft, 0);
 
-        // Was request received thru DC and have we a open DC, send through that
-        if (ft->bDC && IsDirectConnectionOpen(ccs->hContact, DIRECTCONN_STANDARD, 0))
-          icq_sendFileAcceptDirect(ccs->hContact, ft);
-        else
-          icq_sendFileAcceptServ(dwUin, ft, 0);
-
-        return ccs->wParam; // Success
-      }
-      else if (ft->ft_magic == FT_MAGIC_OSCAR)
-      { // approve oscar file transfer
-        return oftFileAllow(ccs->hContact, ccs->wParam, ccs->lParam);
-      }
+      return ccs->wParam; // Success
     }
   }
 
@@ -1103,31 +1100,21 @@ int IcqFileDeny(WPARAM wParam, LPARAM lParam)
   if (lParam)
   {
     CCSDATA *ccs = (CCSDATA *)lParam;
+    filetransfer *ft = (filetransfer*)ccs->wParam;
     DWORD dwUin;
-    uid_str szUid;
 
-    if (ICQGetContactSettingUID(ccs->hContact, &dwUin, &szUid))
+    if (ICQGetContactSettingUID(ccs->hContact, &dwUin, NULL))
       return 1; // Invalid contact
 
-    if (icqOnline && ccs->wParam && ccs->hContact) 
+    if (icqOnline && dwUin && ccs->wParam && ccs->hContact) 
     {
-      basic_filetransfer *ft = (basic_filetransfer*)ccs->wParam;
+      // Was request received thru DC and have we a open DC, send through that
+      if (ft->bDC && IsDirectConnectionOpen(ccs->hContact, DIRECTCONN_STANDARD))
+        icq_sendFileDenyDirect(ccs->hContact, ft, (char*)ccs->lParam);
+      else
+        icq_sendFileDenyServ(dwUin, ft, (char*)ccs->lParam, 0);
 
-      if (dwUin && ft->ft_magic == FT_MAGIC_ICQ)
-      { // deny old fashioned file transfer
-        filetransfer *ft = (filetransfer*)ccs->wParam;
-        // Was request received thru DC and have we a open DC, send through that
-        if (ft->bDC && IsDirectConnectionOpen(ccs->hContact, DIRECTCONN_STANDARD, 0))
-          icq_sendFileDenyDirect(ccs->hContact, ft, (char*)ccs->lParam);
-        else
-          icq_sendFileDenyServ(dwUin, ft, (char*)ccs->lParam, 0);
-
-        nReturnValue = 0; // Success
-      }
-      else if (ft->ft_magic == FT_MAGIC_OSCAR)
-      { // deny oscar file transfer
-        return oftFileDeny(ccs->hContact, ccs->wParam, ccs->lParam);
-      }
+      nReturnValue = 0; // Success
     }
     /* FIXME: ft leaks (but can get double freed?) */
   }
@@ -1143,27 +1130,17 @@ int IcqFileCancel(WPARAM wParam, LPARAM lParam)
   {
     CCSDATA* ccs = (CCSDATA*)lParam;
     DWORD dwUin;
-    uid_str szUid;
 
-    if (ICQGetContactSettingUID(ccs->hContact, &dwUin, &szUid))
+    if (ICQGetContactSettingUID(ccs->hContact, &dwUin, NULL))
       return 1; // Invalid contact
 
-    if (ccs->hContact && ccs->wParam)
+    if (ccs->hContact && dwUin && ccs->wParam)
     {
-      basic_filetransfer *ft = (basic_filetransfer *)ccs->wParam;
+      filetransfer * ft = (filetransfer * ) ccs->wParam;
 
-      if (dwUin && ft->ft_magic == FT_MAGIC_ICQ)
-      { // cancel old fashioned file transfer
-        filetransfer * ft = (filetransfer * ) ccs->wParam;
+      icq_CancelFileTransfer(ccs->hContact, ft);
 
-        icq_CancelFileTransfer(ccs->hContact, ft);
-
-        return 0; // Success
-      }
-      else if (ft->ft_magic = FT_MAGIC_OSCAR)
-      { // cancel oscar file transfer
-        return oftFileCancel(ccs->hContact, ccs->wParam, ccs->lParam);
-      }
+      return 0; // Success
     }
   }
 
@@ -1177,18 +1154,8 @@ int IcqFileResume(WPARAM wParam, LPARAM lParam)
   if (icqOnline && wParam)
   {
     PROTOFILERESUME *pfr = (PROTOFILERESUME*)lParam;
-    basic_filetransfer *ft = (basic_filetransfer *)wParam;
 
-    if (ft->ft_magic == FT_MAGIC_ICQ)
-    {
-      icq_sendFileResume((filetransfer *)wParam, pfr->action, pfr->szFilename);
-    }
-    else if (ft->ft_magic == FT_MAGIC_OSCAR)
-    {
-      oftFileResume((oscar_filetransfer *)wParam, pfr->action, pfr->szFilename);
-    }
-    else
-      return 1; // Failure
+    icq_sendFileResume((filetransfer *)wParam, pfr->action, pfr->szFilename);
 
     return 0; // Success
   }
@@ -1236,23 +1203,10 @@ int IcqSetApparentMode(WPARAM wParam, LPARAM lParam)
           // yet so we just ignore this for now.
           if (icqOnline)
           {
-            if (oldMode != 0)
-            { // Remove from old list
-              if (oldMode == ID_STATUS_OFFLINE && ICQGetContactSettingWord(ccs->hContact, "SrvIgnoreID", 0))
-              { // Need to remove Ignore item as well
-                icq_removeServerPrivacyItem(ccs->hContact, uin, uid, ICQGetContactSettingWord(ccs->hContact, "SrvIgnoreID", 0), SSI_ITEM_IGNORE);
-
-                ICQWriteContactSettingWord(ccs->hContact, "SrvIgnoreID", 0);
-              }
+            if (oldMode != 0) // Remove from old list
               icq_sendChangeVisInvis(ccs->hContact, uin, uid, oldMode==ID_STATUS_OFFLINE, 0);
-            }
-            if (ccs->wParam != 0)
-            { // Add to new list
-              if (ccs->wParam==ID_STATUS_OFFLINE && ICQGetContactSettingWord(ccs->hContact, "SrvIgnoreID", 0))
-                return 0; // Success: offline by ignore item
-
+            if (ccs->wParam != 0) // Add to new list
               icq_sendChangeVisInvis(ccs->hContact, uin, uid, ccs->wParam==ID_STATUS_OFFLINE, 1);
-            }
           }
 
           return 0; // Success
@@ -1313,12 +1267,12 @@ int IcqGetAwayMsg(WPARAM wParam,LPARAM lParam)
 
       if (wMessageType)
       {
-        if (gbDCMsgEnabled && IsDirectConnectionOpen(ccs->hContact, DIRECTCONN_STANDARD, 0))
+        if (gbDCMsgEnabled && IsDirectConnectionOpen(ccs->hContact, DIRECTCONN_STANDARD))
         {
           int iRes = icq_sendGetAwayMsgDirect(ccs->hContact, wMessageType);
           if (iRes) return iRes; // we succeded, return
         }
-        return icq_sendGetAwayMsgServ(ccs->hContact, dwUin, wMessageType, 
+        return icq_sendGetAwayMsgServ(dwUin, wMessageType, 
           (WORD)(ICQGetContactSettingWord(ccs->hContact, "Version", 0)==9?9:ICQ_VERSION)); // Success
       }
     }
@@ -1326,7 +1280,7 @@ int IcqGetAwayMsg(WPARAM wParam,LPARAM lParam)
     {
       if (wStatus == ID_STATUS_AWAY)
       {
-        return icq_sendGetAimAwayMsgServ(ccs->hContact, szUID, MTYPE_AUTOAWAY);
+        return icq_sendGetAimAwayMsgServ(szUID, MTYPE_AUTOAWAY);
       }
     }
   }
@@ -1375,7 +1329,7 @@ int IcqSendMessage(WPARAM wParam, LPARAM lParam)
         return dwCookie;
       }
 
-      if (gbTempVisListEnabled && gnCurrentStatus == ID_STATUS_INVISIBLE)
+      if (dwUin && gbTempVisListEnabled && gnCurrentStatus == ID_STATUS_INVISIBLE)
         makeContactTemporaryVisible(ccs->hContact);  // make us temporarily visible to contact
 
       pszText = (char*)ccs->lParam;
@@ -1388,10 +1342,10 @@ int IcqSendMessage(WPARAM wParam, LPARAM lParam)
         dwCookie = GenerateCookie(0);
         icq_SendProtoAck(ccs->hContact, dwCookie, ACKRESULT_FAILED, ACKTYPE_MESSAGE, ICQTranslate("You cannot send messages when you are offline."));
       }
-      else if ((wRecipientStatus == ID_STATUS_OFFLINE) && (strlennull(pszText) > 4096))
+      else if ((wRecipientStatus == ID_STATUS_OFFLINE) && (strlennull(pszText) > 450))
       {
         dwCookie = GenerateCookie(0);
-        icq_SendProtoAck(ccs->hContact, dwCookie, ACKRESULT_FAILED, ACKTYPE_MESSAGE, ICQTranslate("Messages to offline contacts must be shorter than 4096 characters."));
+        icq_SendProtoAck(ccs->hContact, dwCookie, ACKRESULT_FAILED, ACKTYPE_MESSAGE, ICQTranslate("Messages to offline contacts must be shorter than 450 characters."));
       }
       // Looks OK
       else
@@ -1440,29 +1394,14 @@ int IcqSendMessage(WPARAM wParam, LPARAM lParam)
         NetLog_Server("Send message - Message cap is %u", CheckContactCapabilities(ccs->hContact, CAPF_SRV_RELAY));
         NetLog_Server("Send message - Contact status is %u", wRecipientStatus);
 #endif
-        if (dwUin && gbDCMsgEnabled && IsDirectConnectionOpen(ccs->hContact, DIRECTCONN_STANDARD, 0))
+        if (dwUin && gbDCMsgEnabled && IsDirectConnectionOpen(ccs->hContact, DIRECTCONN_STANDARD))
         {
-          int iRes = icq_SendDirectMessage(ccs->hContact, pszText, strlennull(pszText), 1, pCookieData, NULL);
+          int iRes = icq_SendDirectMessage(dwUin, ccs->hContact, pszText, strlennull(pszText), 1, pCookieData, NULL);
           if (iRes) return iRes; // we succeded, return
         }
 
         if ((!dwUin || !CheckContactCapabilities(ccs->hContact, CAPF_SRV_RELAY)) || (wRecipientStatus == ID_STATUS_OFFLINE))
         {
-          // set flag for offline messages - to allow proper error handling
-          if (wRecipientStatus == ID_STATUS_OFFLINE) ((message_cookie_data_ex*)pCookieData)->isOffline = TRUE;
-
-          if (strlennull(pszText) > MAX_MESSAGESNACSIZE)
-          { // max length check // TLV(2) is currently limited to 0xA00 bytes in online mode
-            // only limit to not get disconnected, all other will be handled by error 0x0A
-            SAFE_FREE(&pCookieData);
-            if (!dwUin) SAFE_FREE(&pszText);
-
-            dwCookie = GenerateCookie(0);
-            icq_SendProtoAck(ccs->hContact, dwCookie, ACKRESULT_FAILED, ACKTYPE_MESSAGE, ICQTranslate("The message could not be delivered, it is too long."));
-
-            return dwCookie;
-          }
-
           dwCookie = icq_SendChannel1Message(dwUin, szUID, ccs->hContact, pszText, pCookieData);
         }
         else
@@ -1474,17 +1413,7 @@ int IcqSendMessage(WPARAM wParam, LPARAM lParam)
           else
             wPriority = 0x0021;
 
-          if (strlennull(pszText) > MAX_MESSAGESNACSIZE - 102)
-          { // max length check
-            SAFE_FREE(&pCookieData);
-
-            dwCookie = GenerateCookie(0);
-            icq_SendProtoAck(ccs->hContact, dwCookie, ACKRESULT_FAILED, ACKTYPE_MESSAGE, ICQTranslate("The message could not be delivered, it is too long."));
-
-            return dwCookie;
-          }
-
-          dwCookie = icq_SendChannel2Message(dwUin, ccs->hContact, pszText, strlennull(pszText), wPriority, pCookieData, NULL);
+          dwCookie = icq_SendChannel2Message(dwUin, pszText, strlennull(pszText), wPriority, pCookieData, NULL);
         }
 
         // This will stop the message dialog from waiting for the real message delivery ack
@@ -1561,7 +1490,7 @@ int IcqSendMessageW(WPARAM wParam, LPARAM lParam)
         return dwCookie;
       }
 
-      if (gbTempVisListEnabled && gnCurrentStatus == ID_STATUS_INVISIBLE)
+      if (dwUin && gbTempVisListEnabled && gnCurrentStatus == ID_STATUS_INVISIBLE)
         makeContactTemporaryVisible(ccs->hContact); // make us temporarily visible to contact
 
       pszText = (wchar_t*)((char*)ccs->lParam+strlennull((char*)ccs->lParam)+1); // get the UTF-16 part
@@ -1604,12 +1533,12 @@ int IcqSendMessageW(WPARAM wParam, LPARAM lParam)
         NetLog_Server("Send unicode message - Message cap is %u", CheckContactCapabilities(ccs->hContact, CAPF_SRV_RELAY));
         NetLog_Server("Send unicode message - Contact status is %u", wRecipientStatus);
 #endif
-        if (dwUin && gbDCMsgEnabled && IsDirectConnectionOpen(ccs->hContact, DIRECTCONN_STANDARD, 0))
+        if (dwUin && gbDCMsgEnabled && IsDirectConnectionOpen(ccs->hContact, DIRECTCONN_STANDARD))
         {
           char* utf8msg = make_utf8_string(pszText);
           int iRes;
 
-          iRes = icq_SendDirectMessage(ccs->hContact, utf8msg, strlennull(utf8msg), 1, pCookieData, CAP_UTF8MSGS);
+          iRes = icq_SendDirectMessage(dwUin, ccs->hContact, utf8msg, strlennull(utf8msg), 1, pCookieData, CAP_UTF8MSGS);
           SAFE_FREE(&utf8msg);
 
           if (iRes) return iRes; // we succeded, return
@@ -1635,17 +1564,6 @@ int IcqSendMessageW(WPARAM wParam, LPARAM lParam)
             SAFE_FREE(&tmp);
           }
 
-          if (wcslen(pszText)*sizeof(wchar_t) > MAX_MESSAGESNACSIZE)
-          { // max length check // TLV(2) is currently limited to 0xA00 bytes in online mode
-            // only limit to not get disconnected, all other will be handled by error 0x0A
-            SAFE_FREE(&pCookieData);
-            if (!dwUin) SAFE_FREE(&pszText);
-
-            dwCookie = GenerateCookie(0);
-            icq_SendProtoAck(ccs->hContact, dwCookie, ACKRESULT_FAILED, ACKTYPE_MESSAGE, ICQTranslate("The message could not be delivered, it is too long."));
-
-            return dwCookie;
-          }
           dwCookie = icq_SendChannel1MessageW(dwUin, szUID, ccs->hContact, pszText, pCookieData);
 
           if (!dwUin) SAFE_FREE(&pszText);
@@ -1661,19 +1579,7 @@ int IcqSendMessageW(WPARAM wParam, LPARAM lParam)
             wPriority = 0x0021;
 
           utf8msg = make_utf8_string(pszText);
-
-          if (strlennull(utf8msg) > MAX_MESSAGESNACSIZE - 144)
-          { // max length check
-            SAFE_FREE(&pCookieData);
-            SAFE_FREE(&utf8msg);
-
-            dwCookie = GenerateCookie(0);
-            icq_SendProtoAck(ccs->hContact, dwCookie, ACKRESULT_FAILED, ACKTYPE_MESSAGE, ICQTranslate("The message could not be delivered, it is too long."));
-
-            return dwCookie;
-          }
-
-          dwCookie = icq_SendChannel2Message(dwUin, ccs->hContact, utf8msg, strlennull(utf8msg), wPriority, pCookieData, CAP_UTF8MSGS);
+          dwCookie = icq_SendChannel2Message(dwUin, utf8msg, strlennull(utf8msg), wPriority, pCookieData, CAP_UTF8MSGS);
 
           SAFE_FREE(&utf8msg);
         }
@@ -1750,9 +1656,9 @@ int IcqSendUrl(WPARAM wParam, LPARAM lParam)
         strcpy(szBody + nDescLen + 1, szUrl);
 
 
-        if (gbDCMsgEnabled && IsDirectConnectionOpen(ccs->hContact, DIRECTCONN_STANDARD, 0))
+        if (gbDCMsgEnabled && IsDirectConnectionOpen(ccs->hContact, DIRECTCONN_STANDARD))
         {
-          int iRes = icq_SendDirectMessage(ccs->hContact, szBody, nBodyLen, 1, pCookieData, NULL);
+          int iRes = icq_SendDirectMessage(dwUin, ccs->hContact, szBody, nBodyLen, 1, pCookieData, NULL);
           if (iRes) return iRes; // we succeded, return
         }
 
@@ -1760,7 +1666,7 @@ int IcqSendUrl(WPARAM wParam, LPARAM lParam)
         if (!CheckContactCapabilities(ccs->hContact, CAPF_SRV_RELAY) ||
           wRecipientStatus == ID_STATUS_OFFLINE)
         {
-          dwCookie = icq_SendChannel4Message(dwUin, ccs->hContact, MTYPE_URL,
+          dwCookie = icq_SendChannel4Message(dwUin, MTYPE_URL,
             (WORD)nBodyLen, szBody, pCookieData);
         }
         else
@@ -1772,7 +1678,7 @@ int IcqSendUrl(WPARAM wParam, LPARAM lParam)
           else
             wPriority = 0x0021;
 
-          dwCookie = icq_SendChannel2Message(dwUin, ccs->hContact, szBody, nBodyLen, wPriority, pCookieData, NULL);
+          dwCookie = icq_SendChannel2Message(dwUin, szBody, nBodyLen, wPriority, pCookieData, NULL);
         }
 
         // This will stop the message dialog from waiting for the real message delivery ack
@@ -1896,9 +1802,9 @@ int IcqSendContacts(WPARAM wParam, LPARAM lParam)
             // Set up the ack type
             pCookieData = CreateMsgCookieData(MTYPE_CONTACTS, ccs->hContact, dwUin);
 
-            if (gbDCMsgEnabled && IsDirectConnectionOpen(ccs->hContact, DIRECTCONN_STANDARD, 0))
+            if (gbDCMsgEnabled && IsDirectConnectionOpen(ccs->hContact, DIRECTCONN_STANDARD))
             {
-              int iRes = icq_SendDirectMessage(ccs->hContact, pBody, nBodyLength, 1, pCookieData, NULL);
+              int iRes = icq_SendDirectMessage(dwUin, ccs->hContact, pBody, nBodyLength, 1, pCookieData, NULL);
 
               if (iRes)
               {
@@ -1920,7 +1826,7 @@ int IcqSendContacts(WPARAM wParam, LPARAM lParam)
             if (!CheckContactCapabilities(ccs->hContact, CAPF_SRV_RELAY) ||
               wRecipientStatus == ID_STATUS_OFFLINE)
             {
-              dwCookie = icq_SendChannel4Message(dwUin, ccs->hContact, MTYPE_CONTACTS,
+              dwCookie = icq_SendChannel4Message(dwUin, MTYPE_CONTACTS,
                 (WORD)nBodyLength, pBody, pCookieData);
             }
             else
@@ -1932,7 +1838,7 @@ int IcqSendContacts(WPARAM wParam, LPARAM lParam)
               else
                 wPriority = 0x0021;
 
-              dwCookie = icq_SendChannel2Message(dwUin, ccs->hContact, pBody, nBodyLength, wPriority, pCookieData, NULL);
+              dwCookie = icq_SendChannel2Message(dwUin, pBody, nBodyLength, wPriority, pCookieData, NULL);
             }
 
             // This will stop the message dialog from waiting for the real message delivery ack
@@ -1987,18 +1893,13 @@ int IcqSendFile(WPARAM wParam, LPARAM lParam)
       char** files = (char**)ccs->lParam;
       char* pszDesc = (char*)ccs->wParam;
       DWORD dwUin;
-      uid_str szUid;
 
-      if (ICQGetContactSettingUID(hContact, &dwUin, &szUid))
+      if (ICQGetContactSettingUID(hContact, &dwUin, NULL))
         return 0; // Invalid contact
 
-      if (ICQGetContactStatus(hContact) != ID_STATUS_OFFLINE)
+      if (dwUin)
       {
-        if (CheckContactCapabilities(hContact, CAPF_OSCAR_FILE))
-        {
-          return oftInitTransfer(hContact, dwUin, szUid, files, pszDesc);
-        }
-        else if (dwUin)
+        if (ICQGetContactStatus(hContact) != ID_STATUS_OFFLINE)
         {
           WORD wClientVersion;
 
@@ -2033,7 +1934,7 @@ int IcqSendFile(WPARAM wParam, LPARAM lParam)
             ft->sending = 1;
             ft->fileId = -1;
             ft->iCurrentFile = 0;
-            ft->dwCookie = AllocateCookie(CKT_FILE, 0, hContact, ft);
+            ft->dwCookie = AllocateCookie(CKT_FILE, 0, dwUin, ft);
             ft->hConnection = NULL;
 
             // Send file transfer request
@@ -2062,7 +1963,7 @@ int IcqSendFile(WPARAM wParam, LPARAM lParam)
               {
                 if (ft->nVersion == 7)
                 {
-                  if (gbDCMsgEnabled && IsDirectConnectionOpen(hContact, DIRECTCONN_STANDARD, 0))
+                  if (gbDCMsgEnabled && IsDirectConnectionOpen(hContact, DIRECTCONN_STANDARD))
                   {
                     int iRes = icq_sendFileSendDirectv7(ft, pszFiles); 
                     if (iRes) return (int)(HANDLE)ft; // Success
@@ -2072,7 +1973,7 @@ int IcqSendFile(WPARAM wParam, LPARAM lParam)
                 }
                 else
                 {
-                  if (gbDCMsgEnabled && IsDirectConnectionOpen(hContact, DIRECTCONN_STANDARD, 0))
+                  if (gbDCMsgEnabled && IsDirectConnectionOpen(hContact, DIRECTCONN_STANDARD))
                   {
                     int iRes = icq_sendFileSendDirectv8(ft, pszFiles); 
                     if (iRes) return (int)(HANDLE)ft; // Success
@@ -2169,8 +2070,6 @@ int IcqGrantAuthorization(WPARAM wParam, LPARAM lParam)
 
     // send without reason, do we need any ?
     icq_sendGrantAuthServ(dwUin, szUid, NULL);
-    // auth granted, remove contact menu item
-    ICQDeleteContactSetting((HANDLE)wParam, "Grant");
   }
 
   return 0;
@@ -2243,19 +2142,8 @@ static void ICQAddRecvEvent(HANDLE hContact, WORD wType, PROTORECVEVENT* pre, DW
 {
   DWORD flags = (pre->flags & PREF_CREATEREAD) ? DBEF_READ : 0;
 
-  if (hContact && DBGetContactSettingByte(hContact, "CList", "Hidden", 0))
-  {
-    DWORD dwUin;
-    uid_str szUid;
-
+  if (hContact)
     SetContactHidden(hContact, 0);
-    // if the contact was hidden, add to client-list if not in server-list authed
-    if (!ICQGetContactSettingWord(hContact, "ServerId", 0) || ICQGetContactSettingByte(hContact, "Auth", 0))
-    {
-      ICQGetContactSettingUID(hContact, &dwUin, &szUid);
-      icq_sendNewContact(dwUin, szUid);
-    }
-  }
 
   ICQAddEvent(hContact, wType, pre->timestamp, flags, cbBlob, pBlob);
 }

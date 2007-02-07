@@ -31,6 +31,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 struct UrlRcvData {
 	HANDLE hContact;
 	HANDLE hDbEvent;
+	HICON hIcons[4];
 };
 
 struct UrlSendData {
@@ -38,4 +39,5 @@ struct UrlSendData {
 	HANDLE hSendId;
 	HANDLE hAckEvent;
 	char *sendBuffer;
+	HICON hIcons[4];
 };

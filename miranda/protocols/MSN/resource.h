@@ -2,12 +2,11 @@
 // Microsoft Visual C++ generated include file.
 // Used by msn.rc
 //
-#define IDI_MSN                         101
-#define IDD_USEROPTS                    104
+#define IDI_MSN                         1
+#define IDD_USEROPTS                    105
 #define IDD_OPT_MSN_CONN                106
 #define IDD_HOTMAIL_OPT_POPUP           107
 #define IDI_MSNBLOCK                    108
-#define IDI_SERVICES                    109
 #define IDI_INBOX                       112
 #define IDI_INVITE                      113
 #define IDI_NETMEETING                  114
@@ -19,10 +18,13 @@
 #define IDI_LIST_BL                     122
 #define IDI_LIST_RL                     123
 #define IDI_AVATAR                      125
-#define IDI_NUDGE                       126
+#define IDI_NUDGE                       128
+#define IDI_SERVICES                    129
 #define IDI_ICON2                       130
 #define IDD_DIALOG1                     131
 #define IDD_SETAVATAR                   132
+#define IDD_OPT_MSNMAIN					184
+#define IDC_OPTIONSTAB					101
 #define IDD_OPT_MSN                     185
 #define IDD_SETNICKNAME                 226
 #define IDC_STMSNGROUP                  1002

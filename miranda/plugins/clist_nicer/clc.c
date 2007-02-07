@@ -44,7 +44,7 @@ extern BOOL (WINAPI *MySetLayeredWindowAttributes)(HWND, COLORREF, BYTE, DWORD);
 extern int during_sizing;
 extern StatusItems_t *StatusItems;
 extern int g_shutDown;
-extern int g_nextExtraCacheEntry;
+extern int g_nextExtraCacheEntry, g_maxExtraCacheEntry;
 extern struct ExtraCache *g_ExtraCache;
 
 HIMAGELIST hCListImages;
@@ -60,6 +60,35 @@ LONG g_cxsmIcon, g_cysmIcon;
 
 void  ShutdownGdiPlus();
 void  SetDBButtonStates(HANDLE hContact);
+
+int GetProtocolVisibility(char *ProtoName)
+{
+	int i;
+	int res=0;
+	DBVARIANT dbv;
+	char buf2[10];
+	int count;
+
+	if(ProtoName == NULL)
+		return 0;
+
+	count = (int)DBGetContactSettingDword(0, "Protocols", "ProtoCount", -1);
+	if (count == -1)
+		return 1;
+	for (i = 0; i < count; i++) {
+		_itoa(i, buf2, 10);
+		if (!DBGetContactSetting(NULL, "Protocols", buf2, &dbv)) {
+			if (strcmp(ProtoName, dbv.pszVal) == 0) {
+				mir_free(dbv.pszVal);
+				_itoa(i + 400, buf2, 10);
+				res= DBGetContactSettingDword(NULL, "Protocols", buf2, 0);
+				return res;
+			}
+			mir_free(dbv.pszVal);
+		}
+	}
+	return 0;
+}
 
 HMENU BuildGroupPopupMenu( struct ClcGroup* group )
 {
@@ -223,7 +252,6 @@ static int ClcPreshutdown(WPARAM wParam, LPARAM lParam)
 	if (hIcoLibChanged)
 		UnhookEvent(hIcoLibChanged);
 
-    DBWriteContactSettingString(NULL, "CList", "LastViewMode", g_CluiData.current_viewmode);
 	return 0;
 }
 
@@ -506,20 +534,6 @@ LBL_Def:
 			if(!FindItem(hwnd, dat, (HANDLE)wParam, &contact, NULL, NULL))
 				return 0;
 			contact->ace = cEntry;
-            if(cEntry == NULL)
-                contact->cFlags &= ~ECF_AVATAR;
-            else {
-				DWORD dwFlags;
-
-                if(contact->extraCacheEntry >= 0 && contact->extraCacheEntry < g_nextExtraCacheEntry)
-                    dwFlags = g_ExtraCache[contact->extraCacheEntry].dwDFlags;
-                else
-                    dwFlags = DBGetContactSettingDword(contact->hContact, "CList", "CLN_Flags", 0);
-                if(g_CluiData.dwFlags & CLUI_FRAME_AVATARS)
-                    contact->cFlags = (dwFlags & ECF_HIDEAVATAR ? contact->cFlags & ~ECF_AVATAR : contact->cFlags | ECF_AVATAR);
-                else
-                    contact->cFlags = (dwFlags & ECF_FORCEAVATAR ? contact->cFlags | ECF_AVATAR : contact->cFlags & ~ECF_AVATAR);
-            }
 			PostMessage(hwnd, INTM_INVALIDATE, 0, (LPARAM)contact->hContact);
 			goto LBL_Def;
 		}
@@ -549,9 +563,13 @@ LBL_Def:
 
 			wStatus = DBGetContactSettingWord((HANDLE)wParam, contact->proto, "Status", ID_STATUS_OFFLINE);
 			if(g_CluiData.bNoOfflineAvatars && wStatus != ID_STATUS_OFFLINE && contact->wStatus == ID_STATUS_OFFLINE) {
-                contact->wStatus = wStatus;
-				if(g_CluiData.bAvatarServiceAvail && contact->ace == NULL)
-                    LoadAvatarForContact(contact);
+				if(g_CluiData.bAvatarServiceAvail && contact->ace == NULL) {
+					contact->ace = (struct avatarCacheEntry *)CallService(MS_AV_GETAVATARBITMAP, wParam, 0);
+					if (contact->ace != NULL && contact->ace->cbSize != sizeof(struct avatarCacheEntry))
+						contact->ace = NULL;
+					if (contact->ace != NULL)
+						contact->ace->t_lastAccess = time(NULL);
+				}
 			}
 			contact->wStatus = wStatus;
 			goto LBL_Def;
@@ -587,7 +605,7 @@ LBL_Def:
 			struct ClcContact *contact = NULL;
 
 			if(FindItem(hwnd, dat, (HANDLE)lParam, &contact, NULL, 0)) {
-				if(contact && contact->extraCacheEntry >= 0 && contact->extraCacheEntry < g_nextExtraCacheEntry && g_ExtraCache[contact->extraCacheEntry].floater)
+				if(contact && contact->extraCacheEntry >= 0 && contact->extraCacheEntry <= g_nextExtraCacheEntry && g_ExtraCache[contact->extraCacheEntry].floater)
 					FLT_Update(dat, contact);
 			}
 		}
@@ -660,7 +678,7 @@ LBL_Def:
 						HANDLE hMasterContact = (HANDLE)DBGetContactSettingDword((HANDLE)wParam, "MetaContacts", "Handle", 0);
 						if(hMasterContact && hMasterContact != (HANDLE)wParam)				// avoid recursive call of settings handler
 							DBWriteContactSettingByte(hMasterContact, "MetaContacts", "XStatusId", 
-													  (BYTE)DBGetContactSettingByte((HANDLE)wParam, szProto, "XStatusId", 0));
+													  DBGetContactSettingByte((HANDLE)wParam, szProto, "XStatusId", 0));
 						break;
 					}
 				}
@@ -808,7 +826,7 @@ LBL_Def:
 				if (contact->type == CLCIT_GROUP) {
 					hMenu = (HMENU)CallService(MS_CLIST_MENUBUILDSUBGROUP, (WPARAM)contact->group, 0);
 					ClientToScreen(hwnd,&pt);
-					TrackPopupMenu(hMenu,TPM_TOPALIGN|TPM_LEFTALIGN|TPM_RIGHTBUTTON,pt.x,pt.y,0,pcli->hwndContactList,NULL);
+					TrackPopupMenu(hMenu,TPM_TOPALIGN|TPM_LEFTALIGN|TPM_RIGHTBUTTON,pt.x,pt.y,0,(HWND)CallService(MS_CLUI_GETHWND,0,0),NULL);
 					return 0;
 					CheckMenuItem(hMenu, POPUP_GROUPHIDEOFFLINE, contact->group->hideOffline ? MF_CHECKED : MF_UNCHECKED);
 				} else if (contact->type == CLCIT_CONTACT)
