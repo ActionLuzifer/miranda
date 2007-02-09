@@ -48,7 +48,7 @@ CLEAN :
 	-@erase "$(INTDIR)\msn_http.obj"
 	-@erase "$(INTDIR)\msn_libstr.obj"
 	-@erase "$(INTDIR)\msn_lists.obj"
-	-@erase "$(INTDIR)\msn_menu.obj"
+	-@erase "$(INTDIR)\msn_md5c.obj"
 	-@erase "$(INTDIR)\msn_mime.obj"
 	-@erase "$(INTDIR)\msn_misc.obj"
 	-@erase "$(INTDIR)\msn_msgqueue.obj"
@@ -64,6 +64,7 @@ CLEAN :
 	-@erase "$(INTDIR)\msn_useropts.obj"
 	-@erase "$(INTDIR)\msn_ws.obj"
 	-@erase "$(INTDIR)\resource.res"
+	-@erase "$(INTDIR)\sha1.obj"
 	-@erase "$(INTDIR)\vc60.idb"
 	-@erase "$(INTDIR)\vc60.pdb"
 	-@erase "$(OUTDIR)\msn.exp"
@@ -131,7 +132,7 @@ LINK32_OBJS= \
 	"$(INTDIR)\msn_http.obj" \
 	"$(INTDIR)\msn_libstr.obj" \
 	"$(INTDIR)\msn_lists.obj" \
-	"$(INTDIR)\msn_menu.obj" \
+	"$(INTDIR)\msn_md5c.obj" \
 	"$(INTDIR)\msn_mime.obj" \
 	"$(INTDIR)\msn_misc.obj" \
 	"$(INTDIR)\msn_msgqueue.obj" \
@@ -146,6 +147,7 @@ LINK32_OBJS= \
 	"$(INTDIR)\msn_threads.obj" \
 	"$(INTDIR)\msn_useropts.obj" \
 	"$(INTDIR)\msn_ws.obj" \
+	"$(INTDIR)\sha1.obj" \
 	"$(INTDIR)\resource.res"
 
 "..\..\bin\release\plugins\msn.dll" : "$(OUTDIR)" $(DEF_FILE) $(LINK32_OBJS)
@@ -188,8 +190,8 @@ CLEAN :
 	-@erase "$(INTDIR)\msn_libstr.sbr"
 	-@erase "$(INTDIR)\msn_lists.obj"
 	-@erase "$(INTDIR)\msn_lists.sbr"
-	-@erase "$(INTDIR)\msn_menu.obj"
-	-@erase "$(INTDIR)\msn_menu.sbr"
+	-@erase "$(INTDIR)\msn_md5c.obj"
+	-@erase "$(INTDIR)\msn_md5c.sbr"
 	-@erase "$(INTDIR)\msn_mime.obj"
 	-@erase "$(INTDIR)\msn_mime.sbr"
 	-@erase "$(INTDIR)\msn_misc.obj"
@@ -219,6 +221,8 @@ CLEAN :
 	-@erase "$(INTDIR)\msn_ws.obj"
 	-@erase "$(INTDIR)\msn_ws.sbr"
 	-@erase "$(INTDIR)\resource.res"
+	-@erase "$(INTDIR)\sha1.obj"
+	-@erase "$(INTDIR)\sha1.sbr"
 	-@erase "$(INTDIR)\vc60.idb"
 	-@erase "$(INTDIR)\vc60.pdb"
 	-@erase "$(OUTDIR)\msn.bsc"
@@ -282,7 +286,7 @@ BSC32_SBRS= \
 	"$(INTDIR)\msn_http.sbr" \
 	"$(INTDIR)\msn_libstr.sbr" \
 	"$(INTDIR)\msn_lists.sbr" \
-	"$(INTDIR)\msn_menu.sbr" \
+	"$(INTDIR)\msn_md5c.sbr" \
 	"$(INTDIR)\msn_mime.sbr" \
 	"$(INTDIR)\msn_misc.sbr" \
 	"$(INTDIR)\msn_msgqueue.sbr" \
@@ -296,7 +300,8 @@ BSC32_SBRS= \
 	"$(INTDIR)\msn_switchboard.sbr" \
 	"$(INTDIR)\msn_threads.sbr" \
 	"$(INTDIR)\msn_useropts.sbr" \
-	"$(INTDIR)\msn_ws.sbr"
+	"$(INTDIR)\msn_ws.sbr" \
+	"$(INTDIR)\sha1.sbr"
 
 "$(OUTDIR)\msn.bsc" : "$(OUTDIR)" $(BSC32_SBRS)
     $(BSC32) @<<
@@ -319,7 +324,7 @@ LINK32_OBJS= \
 	"$(INTDIR)\msn_http.obj" \
 	"$(INTDIR)\msn_libstr.obj" \
 	"$(INTDIR)\msn_lists.obj" \
-	"$(INTDIR)\msn_menu.obj" \
+	"$(INTDIR)\msn_md5c.obj" \
 	"$(INTDIR)\msn_mime.obj" \
 	"$(INTDIR)\msn_misc.obj" \
 	"$(INTDIR)\msn_msgqueue.obj" \
@@ -334,6 +339,7 @@ LINK32_OBJS= \
 	"$(INTDIR)\msn_threads.obj" \
 	"$(INTDIR)\msn_useropts.obj" \
 	"$(INTDIR)\msn_ws.obj" \
+	"$(INTDIR)\sha1.obj" \
 	"$(INTDIR)\resource.res"
 
 "..\..\bin\debug\plugins\msn.dll" : "$(OUTDIR)" $(DEF_FILE) $(LINK32_OBJS)
@@ -362,7 +368,7 @@ CLEAN :
 	-@erase "$(INTDIR)\msn_http.obj"
 	-@erase "$(INTDIR)\msn_libstr.obj"
 	-@erase "$(INTDIR)\msn_lists.obj"
-	-@erase "$(INTDIR)\msn_menu.obj"
+	-@erase "$(INTDIR)\msn_md5c.obj"
 	-@erase "$(INTDIR)\msn_mime.obj"
 	-@erase "$(INTDIR)\msn_misc.obj"
 	-@erase "$(INTDIR)\msn_msgqueue.obj"
@@ -378,6 +384,7 @@ CLEAN :
 	-@erase "$(INTDIR)\msn_useropts.obj"
 	-@erase "$(INTDIR)\msn_ws.obj"
 	-@erase "$(INTDIR)\resource.res"
+	-@erase "$(INTDIR)\sha1.obj"
 	-@erase "$(INTDIR)\vc60.idb"
 	-@erase "$(INTDIR)\vc60.pdb"
 	-@erase "$(OUTDIR)\msn.exp"
@@ -445,7 +452,7 @@ LINK32_OBJS= \
 	"$(INTDIR)\msn_http.obj" \
 	"$(INTDIR)\msn_libstr.obj" \
 	"$(INTDIR)\msn_lists.obj" \
-	"$(INTDIR)\msn_menu.obj" \
+	"$(INTDIR)\msn_md5c.obj" \
 	"$(INTDIR)\msn_mime.obj" \
 	"$(INTDIR)\msn_misc.obj" \
 	"$(INTDIR)\msn_msgqueue.obj" \
@@ -460,6 +467,7 @@ LINK32_OBJS= \
 	"$(INTDIR)\msn_threads.obj" \
 	"$(INTDIR)\msn_useropts.obj" \
 	"$(INTDIR)\msn_ws.obj" \
+	"$(INTDIR)\sha1.obj" \
 	"$(INTDIR)\resource.res"
 
 "..\..\bin\Release Unicode\plugins\msn.dll" : "$(OUTDIR)" $(DEF_FILE) $(LINK32_OBJS)
@@ -502,8 +510,8 @@ CLEAN :
 	-@erase "$(INTDIR)\msn_libstr.sbr"
 	-@erase "$(INTDIR)\msn_lists.obj"
 	-@erase "$(INTDIR)\msn_lists.sbr"
-	-@erase "$(INTDIR)\msn_menu.obj"
-	-@erase "$(INTDIR)\msn_menu.sbr"
+	-@erase "$(INTDIR)\msn_md5c.obj"
+	-@erase "$(INTDIR)\msn_md5c.sbr"
 	-@erase "$(INTDIR)\msn_mime.obj"
 	-@erase "$(INTDIR)\msn_mime.sbr"
 	-@erase "$(INTDIR)\msn_misc.obj"
@@ -533,6 +541,8 @@ CLEAN :
 	-@erase "$(INTDIR)\msn_ws.obj"
 	-@erase "$(INTDIR)\msn_ws.sbr"
 	-@erase "$(INTDIR)\resource.res"
+	-@erase "$(INTDIR)\sha1.obj"
+	-@erase "$(INTDIR)\sha1.sbr"
 	-@erase "$(INTDIR)\vc60.idb"
 	-@erase "$(INTDIR)\vc60.pdb"
 	-@erase "$(OUTDIR)\msn.bsc"
@@ -595,7 +605,7 @@ BSC32_SBRS= \
 	"$(INTDIR)\msn_http.sbr" \
 	"$(INTDIR)\msn_libstr.sbr" \
 	"$(INTDIR)\msn_lists.sbr" \
-	"$(INTDIR)\msn_menu.sbr" \
+	"$(INTDIR)\msn_md5c.sbr" \
 	"$(INTDIR)\msn_mime.sbr" \
 	"$(INTDIR)\msn_misc.sbr" \
 	"$(INTDIR)\msn_msgqueue.sbr" \
@@ -609,7 +619,8 @@ BSC32_SBRS= \
 	"$(INTDIR)\msn_switchboard.sbr" \
 	"$(INTDIR)\msn_threads.sbr" \
 	"$(INTDIR)\msn_useropts.sbr" \
-	"$(INTDIR)\msn_ws.sbr"
+	"$(INTDIR)\msn_ws.sbr" \
+	"$(INTDIR)\sha1.sbr"
 
 "$(OUTDIR)\msn.bsc" : "$(OUTDIR)" $(BSC32_SBRS)
     $(BSC32) @<<
@@ -632,7 +643,7 @@ LINK32_OBJS= \
 	"$(INTDIR)\msn_http.obj" \
 	"$(INTDIR)\msn_libstr.obj" \
 	"$(INTDIR)\msn_lists.obj" \
-	"$(INTDIR)\msn_menu.obj" \
+	"$(INTDIR)\msn_md5c.obj" \
 	"$(INTDIR)\msn_mime.obj" \
 	"$(INTDIR)\msn_misc.obj" \
 	"$(INTDIR)\msn_msgqueue.obj" \
@@ -647,6 +658,7 @@ LINK32_OBJS= \
 	"$(INTDIR)\msn_threads.obj" \
 	"$(INTDIR)\msn_useropts.obj" \
 	"$(INTDIR)\msn_ws.obj" \
+	"$(INTDIR)\sha1.obj" \
 	"$(INTDIR)\resource.res"
 
 "..\..\bin\Debug Unicode\plugins\msn.dll" : "$(OUTDIR)" $(DEF_FILE) $(LINK32_OBJS)
@@ -991,30 +1003,30 @@ SOURCE=.\msn_lists.cpp
 
 !ENDIF
 
-SOURCE=.\msn_menu.cpp
+SOURCE=.\msn_md5c.cpp
 
 !IF  "$(CFG)" == "msn - Win32 Release"
 
 
-"$(INTDIR)\msn_menu.obj" : $(SOURCE) "$(INTDIR)" "$(INTDIR)\msn.pch"
+"$(INTDIR)\msn_md5c.obj" : $(SOURCE) "$(INTDIR)" "$(INTDIR)\msn.pch"
 
 
 !ELSEIF  "$(CFG)" == "msn - Win32 Debug"
 
 
-"$(INTDIR)\msn_menu.obj"	"$(INTDIR)\msn_menu.sbr" : $(SOURCE) "$(INTDIR)" "$(INTDIR)\msn.pch"
+"$(INTDIR)\msn_md5c.obj"	"$(INTDIR)\msn_md5c.sbr" : $(SOURCE) "$(INTDIR)" "$(INTDIR)\msn.pch"
 
 
 !ELSEIF  "$(CFG)" == "msn - Win32 Release Unicode"
 
 
-"$(INTDIR)\msn_menu.obj" : $(SOURCE) "$(INTDIR)" "$(INTDIR)\msn.pch"
+"$(INTDIR)\msn_md5c.obj" : $(SOURCE) "$(INTDIR)" "$(INTDIR)\msn.pch"
 
 
 !ELSEIF  "$(CFG)" == "msn - Win32 Debug Unicode"
 
 
-"$(INTDIR)\msn_menu.obj"	"$(INTDIR)\msn_menu.sbr" : $(SOURCE) "$(INTDIR)" "$(INTDIR)\msn.pch"
+"$(INTDIR)\msn_md5c.obj"	"$(INTDIR)\msn_md5c.sbr" : $(SOURCE) "$(INTDIR)" "$(INTDIR)\msn.pch"
 
 
 !ENDIF
@@ -1407,6 +1419,50 @@ SOURCE=.\msn_ws.cpp
 
 
 "$(INTDIR)\msn_ws.obj"	"$(INTDIR)\msn_ws.sbr" : $(SOURCE) "$(INTDIR)" "$(INTDIR)\msn.pch"
+
+
+!ENDIF
+
+SOURCE=.\sha1.c
+
+!IF  "$(CFG)" == "msn - Win32 Release"
+
+CPP_SWITCHES=/nologo /MD /W3 /Zi /O1 /Oy /I "../../include" /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "MSN_EXPORTS" /FAcs /Fa"$(INTDIR)\\" /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /c
+
+"$(INTDIR)\sha1.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) @<<
+  $(CPP_SWITCHES) $(SOURCE)
+<<
+
+
+!ELSEIF  "$(CFG)" == "msn - Win32 Debug"
+
+CPP_SWITCHES=/nologo /MDd /W3 /Gm /Gi /ZI /Od /I "../../include" /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "MSN_EXPORTS" /FR"$(INTDIR)\\" /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /GZ /c
+
+"$(INTDIR)\sha1.obj"	"$(INTDIR)\sha1.sbr" : $(SOURCE) "$(INTDIR)"
+	$(CPP) @<<
+  $(CPP_SWITCHES) $(SOURCE)
+<<
+
+
+!ELSEIF  "$(CFG)" == "msn - Win32 Release Unicode"
+
+CPP_SWITCHES=/nologo /MD /W3 /Zi /O1 /Oy /I "../../include" /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "UNICODE" /D "_USRDLL" /D "MSN_EXPORTS" /FAcs /Fa"$(INTDIR)\\" /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /c
+
+"$(INTDIR)\sha1.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) @<<
+  $(CPP_SWITCHES) $(SOURCE)
+<<
+
+
+!ELSEIF  "$(CFG)" == "msn - Win32 Debug Unicode"
+
+CPP_SWITCHES=/nologo /MDd /W3 /Gm /Gi /ZI /Od /I "../../include" /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "UNICODE" /D "_USRDLL" /D "MSN_EXPORTS" /FR"$(INTDIR)\\" /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /GZ /c
+
+"$(INTDIR)\sha1.obj"	"$(INTDIR)\sha1.sbr" : $(SOURCE) "$(INTDIR)"
+	$(CPP) @<<
+  $(CPP_SWITCHES) $(SOURCE)
+<<
 
 
 !ENDIF

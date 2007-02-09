@@ -24,8 +24,7 @@ UNICODE done
 
 */
 #include "commonheaders.h"
-#include <m_findadd.h>
-#include <m_icq.h>
+#include "../../include/m_findadd.h"
 #include "m_updater.h"
 #include "cluiframes/cluiframes.h"
 #include "coolsb/coolscroll.h"
@@ -43,6 +42,7 @@ static LONG g_CLUI_x_off, g_CLUI_y_off, g_CLUI_y1_off, g_CLUI_x1_off;
 static RECT rcWPC;
 
 static HMODULE hUserDll;
+HMENU hMenuMain;
 static int transparentFocus = 1;
 static byte oldhideoffline;
 static int disableautoupd=1;
@@ -60,7 +60,9 @@ extern HWND g_hwndViewModeFrame, g_hwndEventArea;
 struct ClcData *g_clcData = NULL;
 struct ExtraCache *g_ExtraCache = NULL;
 int g_nextExtraCacheEntry = 0;
+int g_maxExtraCacheEntry = 0;
 
+extern HANDLE hPreBuildStatusMenuEvent;
 extern ImageItem *g_CLUIImageItem;
 extern HBRUSH g_CLUISkinnedBkColor;
 extern StatusItems_t *StatusItems;
@@ -88,6 +90,7 @@ BOOL (WINAPI *MyUpdateLayeredWindow)(HWND hwnd, HDC hdcDst, POINT *pptDst,SIZE *
 extern LRESULT CALLBACK EventAreaWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
 extern HANDLE hNotifyFrame;
 
+int CluiOptInit(WPARAM wParam, LPARAM lParam);
 int SortList(WPARAM wParam, LPARAM lParam);
 int LoadCluiServices(void);
 void InitGroupMenus();
@@ -459,7 +462,7 @@ static void InitIcoLib()
 
 static int IcoLibChanged(WPARAM wParam, LPARAM lParam)
 {
-    IcoLibReloadIcons();
+	IcoLibReloadIcons();
 	return 0;
 }
 
@@ -469,14 +472,38 @@ static int IcoLibChanged(WPARAM wParam, LPARAM lParam)
 
 void CLN_LoadAllIcons(BOOL mode)
 {
-    if(mode) {
-        InitIcoLib();
-        hIcoLibChanged = HookEvent(ME_SKIN2_ICONSCHANGED, IcoLibChanged);
-        g_CluiData.hIconVisible = (HICON) CallService(MS_SKIN2_GETICON, 0, (LPARAM) "CLN_visible");
-        g_CluiData.hIconInvisible = (HICON) CallService(MS_SKIN2_GETICON, 0, (LPARAM) "CLN_invisible");
-        g_CluiData.hIconChatactive = (HICON) CallService(MS_SKIN2_GETICON, 0, (LPARAM) "CLN_chatactive");
-    }
-    CacheClientIcons();
+	int i;
+	HICON hIcon;
+
+	if (g_CluiData.IcoLib_Avail) {
+		if(mode) {
+			InitIcoLib();
+			hIcoLibChanged = HookEvent(ME_SKIN2_ICONSCHANGED, IcoLibChanged);
+			g_CluiData.hIconVisible = (HICON) CallService(MS_SKIN2_GETICON, 0, (LPARAM) "CLN_visible");
+			g_CluiData.hIconInvisible = (HICON) CallService(MS_SKIN2_GETICON, 0, (LPARAM) "CLN_invisible");
+			g_CluiData.hIconChatactive = (HICON) CallService(MS_SKIN2_GETICON, 0, (LPARAM) "CLN_chatactive");
+		}
+		CacheClientIcons();
+	} else {
+		if(mode) {
+			for (i = IDI_OVL_OFFLINE; i <= IDI_OVL_OUTTOLUNCH; i++)
+				overlayicons[i - IDI_OVL_OFFLINE] = LoadImage(g_hInst, MAKEINTRESOURCE(i), IMAGE_ICON, g_cxsmIcon, g_cysmIcon, LR_SHARED);
+			g_CluiData.hIconVisible = LoadImage(g_hInst, MAKEINTRESOURCE(IDI_CLVISIBLE), IMAGE_ICON, g_cxsmIcon, g_cysmIcon, LR_SHARED);
+			g_CluiData.hIconInvisible = LoadImage(g_hInst, MAKEINTRESOURCE(IDI_CLINVISIBLE), IMAGE_ICON, g_cxsmIcon, g_cysmIcon, LR_SHARED);
+			g_CluiData.hIconChatactive = LoadImage(g_hInst, MAKEINTRESOURCE(IDI_OVL_FREEFORCHAT), IMAGE_ICON, g_cxsmIcon, g_cysmIcon, LR_SHARED);
+			g_CluiData.hIconConnecting = LoadImage(g_hInst, MAKEINTRESOURCE(IDI_PROTOCONNECTING), IMAGE_ICON, g_cxsmIcon, g_cysmIcon, LR_SHARED);
+		}
+		hIcon = LoadImage(g_hInst, MAKEINTRESOURCE(IDI_EMAIL), IMAGE_ICON, g_cxsmIcon, g_cysmIcon, LR_SHARED);
+		ImageList_AddIcon(himlExtraImages, hIcon);
+		DestroyIcon(hIcon);
+		hIcon = LoadImage(g_hInst, MAKEINTRESOURCE(IDI_URL), IMAGE_ICON, g_cxsmIcon, g_cysmIcon, LR_SHARED);
+		ImageList_AddIcon(himlExtraImages, hIcon);
+		DestroyIcon(hIcon);
+		hIcon = LoadImage(g_hInst, MAKEINTRESOURCE(IDI_SMS), IMAGE_ICON, g_cxsmIcon, g_cysmIcon, LR_SHARED);
+		ImageList_AddIcon(himlExtraImages, hIcon);
+		ImageList_AddIcon(himlExtraImages, hIcon);
+		DestroyIcon(hIcon);
+	}
 }
 
 void ConfigureEventArea(HWND hwnd)
@@ -539,10 +566,8 @@ void IcoLibReloadIcons()
 			continue;
 
 		hIcon = (HICON) CallService(MS_SKIN2_GETICON, 0, (LPARAM) top_buttons[i].szIcoLibIcon);
-        if(top_buttons[i].hwnd && IsWindow(top_buttons[i].hwnd)) {
-            SendMessage(top_buttons[i].hwnd, BM_SETIMAGE, IMAGE_ICON, (LPARAM) hIcon);
-            InvalidateRect(top_buttons[i].hwnd, NULL, TRUE);
-        }
+		SendMessage(top_buttons[i].hwnd, BM_SETIMAGE, IMAGE_ICON, (LPARAM) hIcon);
+		InvalidateRect(top_buttons[i].hwnd, NULL, TRUE);
 	}
 	g_CluiData.hIconVisible = (HICON) CallService(MS_SKIN2_GETICON, 0, (LPARAM) "CLN_visible");
 	g_CluiData.hIconInvisible = (HICON) CallService(MS_SKIN2_GETICON, 0, (LPARAM) "CLN_invisible");
@@ -554,16 +579,15 @@ void IcoLibReloadIcons()
     {
         int i;
 
-        for(i = 0; i < g_nextExtraCacheEntry; i++) {
+        for(i = 0; i < g_maxExtraCacheEntry; i++) {
             if(g_ExtraCache[i].hContact)
                 NotifyEventHooks(hExtraImageApplying, (WPARAM)g_ExtraCache[i].hContact, 0);
         }
     }
     //
 	pcli->pfnClcBroadcast(CLM_AUTOREBUILD, 0, 0);
-	pcli->pfnReloadProtoMenus();
-	//FYR: Not necessary. It is already notified in pfnReloadProtoMenus
-    //NotifyEventHooks(pcli->hPreBuildStatusMenuEvent, 0, 0);
+	MenuModulesLoaded(0, 0);
+    NotifyEventHooks(hPreBuildStatusMenuEvent, 0, 0);
 	SendMessage(g_hwndViewModeFrame, WM_USER + 100, 0, 0);
 }
 
@@ -1149,6 +1173,7 @@ static void ShowCLUI(HWND hwnd)
 	int onTop = DBGetContactSettingByte(NULL, "CList", "OnTop", SETTING_ONTOP_DEFAULT);
 
 	SendMessage(hwnd, WM_SETREDRAW, FALSE, FALSE);
+	hMenuMain = GetMenu(pcli->hwndContactList);
 	if (!DBGetContactSettingByte(NULL, "CLUI", "ShowMainMenu", SETTING_SHOWMAINMENU_DEFAULT))
 		SetMenu(pcli->hwndContactList, NULL);
 	if (state == SETTING_STATE_NORMAL) {
@@ -1246,11 +1271,10 @@ LRESULT CALLBACK ContactListWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM l
 		break;
 	case M_CREATECLC:
 		{
-			if(DBGetContactSettingByte(NULL, "CLUI", "useskin", 0))
-				IMG_LoadItems();
-			CreateButtonBar(hwnd);
-            //FYR: to be checked: otherwise it raises double xStatus items
-            //NotifyEventHooks(pcli->hPreBuildStatusMenuEvent, 0, 0);
+            if(DBGetContactSettingByte(NULL, "CLUI", "useskin", 0))
+                IMG_LoadItems();
+            CreateButtonBar(hwnd);
+		    NotifyEventHooks(hPreBuildStatusMenuEvent, 0, 0);
 			SendMessage(hwnd, WM_SETREDRAW, FALSE, FALSE);
 			{
 				BYTE windowStyle = DBGetContactSettingByte(NULL, "CLUI", "WindowStyle", 0);
@@ -1281,17 +1305,7 @@ LRESULT CALLBACK ContactListWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM l
             }
 
 			DBWriteContactSettingByte(NULL, "CList", "State", old_cliststate);
-
-            if(DBGetContactSettingByte(NULL, "CList", "AutoApplyLastViewMode", 0)) {
-                DBVARIANT dbv = {0};
-                if(!DBGetContactSetting(NULL, "CList", "LastViewMode", &dbv)) {
-                    if(lstrlenA(dbv.pszVal) > 2) {
-                        if(DBGetContactSettingDword(NULL, CLVM_MODULE, dbv.pszVal, -1) != 0xffffffff)
-                            ApplyViewMode((char *)dbv.pszVal);
-                    }
-                    DBFreeVariant(&dbv);
-                }
-            }
+			
 			if(!g_CluiData.autosize)
 				ShowCLUI(hwnd);
 			else {
@@ -1717,7 +1731,7 @@ LRESULT CALLBACK ContactListWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM l
 			if (wParam) {
 				sourceAlpha = 0;
 				destAlpha = g_CluiData.isTransparent ? g_CluiData.alpha : 255;
-				MySetLayeredWindowAttributes(hwnd, g_CluiData.bFullTransparent ? (COLORREF)g_CluiData.colorkey : RGB(0, 0, 0), (BYTE)sourceAlpha, LWA_ALPHA | (g_CluiData.bFullTransparent ? LWA_COLORKEY : 0));
+				MySetLayeredWindowAttributes(hwnd, g_CluiData.bFullTransparent ? g_CluiData.colorkey : RGB(0, 0, 0), sourceAlpha, LWA_ALPHA | (g_CluiData.bFullTransparent ? LWA_COLORKEY : 0));
 				noRecurse = 1;
 				ShowWindow(hwnd, SW_SHOW);
 				RedrawWindow(hwnd, NULL, NULL, RDW_INVALIDATE|RDW_UPDATENOW|RDW_ALLCHILDREN);
@@ -1738,6 +1752,27 @@ LRESULT CALLBACK ContactListWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM l
 			}
 			MySetLayeredWindowAttributes(hwnd, g_CluiData.bFullTransparent ? g_CluiData.colorkey : RGB(0, 0, 0), (BYTE) (destAlpha), LWA_ALPHA | (g_CluiData.bFullTransparent ? LWA_COLORKEY : 0));
 			return DefWindowProc(hwnd, msg, wParam, lParam);
+		}
+	case WM_MENUSELECT:
+		{
+			POINT pt;
+			int pos;
+
+			if((HMENU)lParam != hMenuMain)
+				break;
+
+			GetCursorPos(&pt);
+			pos = LOWORD(wParam); //MenuItemFromPoint(hwnd, hMenuMain, pt);
+			if ((pos == 0 || pos == 1) && HIWORD(wParam) & MF_POPUP && MenuItemFromPoint(hwnd, hMenuMain, pt) != -1) {
+				MENUITEMINFO mii;
+
+				ZeroMemory(&mii, sizeof(mii));
+				mii.cbSize = MENUITEMINFO_V4_SIZE;
+				mii.fMask = MIIM_SUBMENU;
+				mii.hSubMenu = (pos == 0) ? (HMENU)CallService(MS_CLIST_MENUGETMAIN, 0, 0) : (HMENU)CallService(MS_CLIST_MENUGETSTATUS, 0, 0);
+				SetMenuItemInfo(hMenuMain, pos, TRUE, &mii);
+			}
+			break;
 		}
     case WM_SYSCOMMAND:
         if (wParam == SC_MAXIMIZE)
@@ -1867,6 +1902,7 @@ LRESULT CALLBACK ContactListWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM l
 						RECT rc;
 						HMENU hMenu = (HMENU) CallService(MS_CLIST_MENUGETMAIN, 0, 0);
 
+						//HMENU hmenu = GetSubMenu(hMenuMain, 0);
 						GetWindowRect(GetDlgItem(hwnd, LOWORD(wParam)), &rc);
 						TrackPopupMenu(hMenu, TPM_TOPALIGN|TPM_LEFTALIGN|TPM_RIGHTBUTTON, rc.left, LOWORD(wParam) == IDC_TBMENU ? rc.top : rc.bottom, 0, hwnd, NULL);
 						return 0;
@@ -1892,8 +1928,8 @@ LRESULT CALLBACK ContactListWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM l
 				case IDC_TBSOUND:
 					{
 						g_CluiData.soundsOff = !g_CluiData.soundsOff;
-						DBWriteContactSettingByte(NULL, "CLUI", "NoSounds", (BYTE)g_CluiData.soundsOff);
-						DBWriteContactSettingByte(NULL, "Skin", "UseSound", (BYTE)(g_CluiData.soundsOff ? 0 : 1));
+						DBWriteContactSettingByte(NULL, "CLUI", "NoSounds", g_CluiData.soundsOff);
+						DBWriteContactSettingByte(NULL, "Skin", "UseSound", g_CluiData.soundsOff ? 0 : 1);
 						return 0;
 					}
 				case IDC_TBSELECTVIEWMODE:
@@ -2246,7 +2282,7 @@ buttons_done:
 				case ID_BUTTONBAR_SKINNEDTOOLBAR:
 					g_CluiData.bSkinnedToolbar = !g_CluiData.bSkinnedToolbar;
 					SetTBSKinned(g_CluiData.bSkinnedToolbar);
-					DBWriteContactSettingByte(NULL, "CLUI", "tb_skinned", (BYTE)g_CluiData.bSkinnedToolbar);
+					DBWriteContactSettingByte(NULL, "CLUI", "tb_skinned", g_CluiData.bSkinnedToolbar);
 					PostMessage(hwnd, CLUIINTM_REDRAW, 0, 0);
 					break;
 				}
@@ -2292,8 +2328,21 @@ buttons_done:
 
 				if (showOpts & 1) {
 					HICON hIcon;
+					BYTE xStatusID = 0;
+					BOOL bDestroy = FALSE;
 
-					if(status >= ID_STATUS_CONNECTING && status < ID_STATUS_OFFLINE) {
+					if(g_CluiData.bShowXStatusOnSbar && status > ID_STATUS_OFFLINE && DBGetContactSettingByte(NULL, szProto, "XStatusEnabled", 0) && (xStatusID = DBGetContactSettingByte(NULL, szProto, "XStatusId", 0)) > 0) {
+						if(xStatusID > 0 && xStatusID <= 32) {
+							char szServiceName[128];
+
+							mir_snprintf(szServiceName, 128, "%s/GetXStatusIcon", pd->RealName);
+							if(ServiceExists(szServiceName)) {
+								hIcon = (HICON)CallProtoService(pd->RealName, "/GetXStatusIcon", 0, 0);	// get OWN xStatus icon (if set)
+								bDestroy = TRUE;
+							}
+						}
+					}
+					else if(status >= ID_STATUS_CONNECTING && status < ID_STATUS_OFFLINE) {
 						if(g_CluiData.IcoLib_Avail) {
 							char szBuffer[128];
 							mir_snprintf(szBuffer, 128, "%s_conn", pd->RealName);
@@ -2301,21 +2350,6 @@ buttons_done:
 						}
 						else
 							hIcon = g_CluiData.hIconConnecting;
-					}
-					else if(g_CluiData.bShowXStatusOnSbar && status > ID_STATUS_OFFLINE) {
-						ICQ_CUSTOM_STATUS cst = {0};
-						char szServiceName[128];
-						int xStatus;
-
-						mir_snprintf(szServiceName, 128, "%s%s", pd->RealName, PS_ICQ_GETCUSTOMSTATUSEX);
-						cst.cbSize = sizeof(ICQ_CUSTOM_STATUS);
-						cst.flags = CSSF_MASK_STATUS;
-						cst.status = &xStatus;
-						if(ServiceExists(szServiceName) && !CallService(szServiceName, 0, (LPARAM)&cst) && xStatus > 0) {
-							hIcon = (HICON)CallProtoService(pd->RealName, PS_ICQ_GETCUSTOMSTATUSICON, 0, LR_SHARED);	// get OWN xStatus icon (if set)
-						}
-						else
-							hIcon = LoadSkinnedProtoIcon(szProto, status);
 					}
 					else
 						hIcon = LoadSkinnedProtoIcon(szProto, status);
@@ -2347,6 +2381,8 @@ buttons_done:
                             DeleteObject(hbr);
                         }
                     }
+					if(bDestroy)
+						DestroyIcon(hIcon);
 					x += 18;
 				} else {
 					x += 2;
@@ -2565,6 +2601,7 @@ void LoadCLUIModule(void)
 	WNDCLASS wndclass;
 
 	HookEvent(ME_SYSTEM_MODULESLOADED, CluiModulesLoaded);
+	HookEvent(ME_OPT_INITIALISE, CluiOptInit);
 	HookEvent(ME_MC_DEFAULTTCHANGED, MetaChanged);
 	HookEvent(ME_MC_SUBCONTACTSCHANGED, MetaChanged);
 

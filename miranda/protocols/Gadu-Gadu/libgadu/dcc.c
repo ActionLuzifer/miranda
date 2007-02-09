@@ -1,9 +1,8 @@
 /* $Id$ */
 
 /*
- *  (C) Copyright 2001-2006 Wojtek Kaniewski <wojtekka@irc.pl>
+ *  (C) Copyright 2001-2002 Wojtek Kaniewski <wojtekka@irc.pl>
  *                          Tomasz Chiliñski <chilek@chilan.com>
- *                          Adam Wysocki <gophi@ekg.chmurka.net>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU Lesser General Public License Version
@@ -19,8 +18,6 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307,
  *  USA.
  */
-
-#include "libgadu-config.h"
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -43,9 +40,7 @@
 
 #include "compat.h"
 #include "libgadu.h"
-#ifdef __GG_LIBGADU_MIRANDA
-#undef small
-#endif
+#undef small /* Miranda IM fix */
 
 #ifndef GG_DEBUG_DISABLE
 /*
@@ -170,11 +165,8 @@ int gg_dcc_fill_file_info2(struct gg_dcc *d, const char *filename, const char *l
 		return -1;
 	}
 
-#ifdef __GG_LIBGADU_MIRANDA
+	/* Miranda IM fix */
 	if ((d->file_fd = fopen(filename, "rb")) == NULL) {
-#else
-	if ((d->file_fd = open(local_filename, O_RDONLY)) == -1) {
-#endif
 		gg_debug(GG_DEBUG_MISC, "// gg_dcc_fill_file_info2() open() failed (%s)\n", strerror(errno));
 		return -1;
 	}
@@ -191,11 +183,8 @@ int gg_dcc_fill_file_info2(struct gg_dcc *d, const char *filename, const char *l
 	d->file_info.size = gg_fix32(st.st_size);
 	d->file_info.mode = gg_fix32(0x20);	/* FILE_ATTRIBUTE_ARCHIVE */
 
-#ifdef __GG_LIBGADU_MIRANDA
+	/* Miranda IM Fix */
 	if (!(name = strrchr(filename, '\\')))
-#else
-	if (!(name = strrchr(filename, '/')))
-#endif
 		name = filename;
 	else
 		name++;
@@ -281,11 +270,7 @@ static struct gg_dcc *gg_dcc_transfer(uint32_t ip, uint16_t port, uin_t my_uin, 
 	d->state = GG_STATE_CONNECTING;
 	d->type = type;
 	d->timeout = GG_DEFAULT_TIMEOUT;
-#ifdef __GG_LIBGADU_MIRANDA
-	d->file_fd = NULL;
-#else
-	d->file_fd = -1;
-#endif
+	d->file_fd = NULL; /* Miranda IM fix */
 	d->active = 1;
 	d->fd = -1;
 	d->uin = my_uin;
@@ -892,7 +877,6 @@ struct gg_event *gg_dcc_watch_fd(struct gg_dcc *h)
 
 				if (!(h->voice_buf = malloc(h->chunk_size))) {
 					gg_debug(GG_DEBUG_MISC, "// gg_dcc_watch_fd() out of memory for voice frame\n");
-					free(e);
 					return NULL;
 				}
 

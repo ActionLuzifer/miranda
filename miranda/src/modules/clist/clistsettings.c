@@ -176,7 +176,7 @@ TCHAR* fnGetContactDisplayName( HANDLE hContact, int mode )
 
 	CallContactService(hContact, PSS_GETINFO, SGIF_MINIMAL, 0);
 	buffer = TranslateT("(Unknown Contact)");
-	return ( cacheEntry == NULL ) ? mir_tstrdup( buffer ) : buffer;
+	return buffer;
 }
 
 int GetContactDisplayName(WPARAM wParam, LPARAM lParam)
@@ -310,7 +310,8 @@ int ContactSettingChanged(WPARAM wParam, LPARAM lParam)
 				return 0;
 			}
 			cli.pfnSortContacts();
-	}	}
+		}
+	}
 
 	if (!strcmp(cws->szModule, "CList")) {
 		if (!strcmp(cws->szSetting, "Hidden")) {
@@ -321,8 +322,9 @@ int ContactSettingChanged(WPARAM wParam, LPARAM lParam)
 			else
 				CallService(MS_CLUI_CONTACTDELETED, wParam, 0);
 		}
-		if (!strcmp(cws->szSetting, "MyHandle"))
+		if (!strcmp(cws->szSetting, "MyHandle")) {
 			cli.pfnInvalidateDisplayNameCacheEntry(hContact);
+		}
 	}
 
 	if (!strcmp(cws->szModule, "Protocol")) {
@@ -336,11 +338,14 @@ int ContactSettingChanged(WPARAM wParam, LPARAM lParam)
 				cli.pfnIconFromStatusMode(szProto,
 					szProto == NULL ? ID_STATUS_OFFLINE : DBGetContactSettingWord(hContact, szProto, "Status",
 					ID_STATUS_OFFLINE), hContact), 0);
-	}	}
+		}
+	}
 
 	// Clean up
 	if (dbv.pszVal)
 		mir_free(dbv.pszVal);
 
 	return 0;
+
 }
+

@@ -73,23 +73,8 @@ struct ClcGroup;
 
 #define EXTRAIMAGECACHESIZE 1000
 
-// extra cache contact flags
-
 #define ECF_RTLNICK 1
 #define ECF_RTLSTATUSMSG 2
-#define ECF_FORCEAVATAR 4
-#define ECF_HIDEAVATAR 8
-#define ECF_FORCEOVERLAY 16
-#define ECF_HIDEOVERLAY 32
-#define ECF_FORCELOCALTIME 64
-#define ECF_HIDELOCALTIME 128
-#define ECF_FORCEVISIBILITY 256
-#define ECF_HIDEVISIBILITY  512
-
-// other contact flags (struct ClCContact;
-
-#define ECF_AVATAR 1
-#define ECF_SECONDLINE 2
 
 struct ContactFloater {
 	struct ContactFloater *pNextFloater;
@@ -101,37 +86,6 @@ struct ContactFloater {
 
 typedef struct ContactFloater CONTACTFLOATER;
 
-#define DSPF_CENTERSTATUSICON 1
-#define DSPF_DIMIDLE 2
-#define DSPF_NOFFLINEAVATARS 4
-#define DSPF_SHOWLOCALTIME 8
-#define DSPF_LOCALTIMESELECTIVE 16
-#define DSPF_DONTSEPARATEOFFLINE 32
-#define DSPF_CENTERGROUPNAMES 64
-
-struct DisplayProfile {
-    UINT    uID;
-    TCHAR   tszName[60];
-    DWORD   dwFlags;
-    DWORD   dwExtraImageMask;
-    int     exIconScale;
-    BOOL    bCenterStatusIcons;
-    BOOL    bDimIdle, bNoOfflineAvatars, bShowLocalTime, bShowLocalTimeSelective, bDontSeparateOffline, bCenterGroupNames;
-    BYTE    dualRowMode;
-    COLORREF avatarBorder;
-    DWORD    avatarRadius;
-    int      avatarSize;
-    DWORD    clcExStyle;
-    DWORD    clcOfflineModes;
-    BYTE     sortOrder[3], bUseDCMirroring, bGroupAlign;
-    BYTE     avatarPadding;
-    BYTE     bLeftMargin, bRightMargin, bRowSpacing, bGroupIndent, bRowHeight, bGroupRowHeight;
-};
-
-#define DSP_PROFILES_MODULE "CLN_DspProfiles"           // db module for display profiles
-
-typedef struct DisplayProfile DISPLAYPROFILE;
-
 struct ExtraCache {
 	BYTE iExtraImage[MAXEXTRACOLUMNS];
 	HANDLE hContact;
@@ -142,8 +96,6 @@ struct ExtraCache {
 	DWORD timezone;
 	DWORD timediff;
 	DWORD dwCFlags;
-    DWORD dwDFlags;     // display flags for caching only
-    DWORD dwXMask;      // local extra icon mask, calculated from CLN_xmask
 	StatusItems_t *status_item, *proto_status_item;
 	CONTACTFLOATER *floater;
 	DWORD dwLastMsgTime;
@@ -180,9 +132,6 @@ struct ClcContact {
 	int extraCacheEntry;
 	int avatarLeft, extraIconRightBegin;
 	int isRtl;
-    DWORD cFlags;
-    BYTE  bSecondLine;
-    //int iRowHeight;   // index into the row height table (for caching)
 };
 
 #define DRAGSTAGE_NOTMOVED  0
@@ -492,6 +441,7 @@ int __fastcall GetStatusOnlineness(int status);
 void GetExtendedInfo(struct ClcContact *contact, struct ClcData *dat);
 extern LRESULT CALLBACK NewStatusBarWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
 void HideShowNotifyFrame();
+int GetProtocolVisibility(char * ProtoName);
 DWORD GetCLUIWindowStyle(BYTE style);
 void ApplyCLUIBorderStyle(HWND hwnd);
 
@@ -520,10 +470,6 @@ char* Utf8Encode( const char* src );
 void CreateViewModeFrame();
 int GetExtraCache(HANDLE hContact, char *szProto);
 void ReloadExtraInfo(HANDLE hContact);
-void LoadAvatarForContact(struct ClcContact *p);
-void ApplyViewMode(const char *name);
-DWORD CalcXMask(HANDLE hContact);
-
 //clcpaint.c
 void PaintClc(HWND hwnd, struct ClcData *dat, HDC hdc, RECT *rcPaint);
 void __inline PaintItem(HDC hdcMem, struct ClcGroup *group, struct ClcContact *contact, int indent, int y, struct ClcData *dat, int index, HWND hwnd, DWORD style, RECT *clRect, BOOL *bFirstNGdrawn, int groupCountsFontTopShift, int rowHeight);
@@ -573,6 +519,7 @@ int Docking_IsDocked(WPARAM wParam, LPARAM lParam);
 
 // Menus
 
+int MenuModulesLoaded(WPARAM wParam, LPARAM lParam);
 int ClcSoundHook(WPARAM wParam, LPARAM lParam);
 
 void IMG_DeleteItems();

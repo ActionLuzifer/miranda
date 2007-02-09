@@ -186,7 +186,9 @@ static bool sttSetAvatar( HWND hwndDlg )
 	}
 
 	MSN_SaveBitmapAsAvatar( hAvatar = hBitmap, szFileName );
-	MSN_SetServerStatus( msnStatusMode );
+
+	if ( msnLoggedIn )
+		MSN_SetServerStatus( msnStatusMode );
 
 	return true;
 }
@@ -231,7 +233,7 @@ BOOL CALLBACK AvatarDlgProc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam
 				char tFileName[ MAX_PATH ];
 				MSN_GetAvatarFileName( NULL, tFileName, sizeof tFileName );
 				DeleteFileA( tFileName );
-				MSN_DeleteSetting( NULL, "PictObject" );
+				DBDeleteContactSetting( NULL, msnProtocolName, "PictObject" );
 				InvalidateRect( hwndDlg, NULL, TRUE );
 				break;
 		}	}
@@ -279,7 +281,7 @@ int MsnOnDetailsInit( WPARAM wParam, LPARAM lParam )
 		odp.pfnDlgProc = MsnDlgProc;
 		odp.position = -1900000000;
 		odp.pszTemplate = MAKEINTRESOURCEA(IDD_USEROPTS);
-		odp.pszTitle = MSN_Translate(msnProtocolName);
+		odp.pszTitle = Translate(msnProtocolName);
 		MSN_CallService(MS_USERINFO_ADDPAGE, wParam, (LPARAM)&odp);
 	}
 	return 0;

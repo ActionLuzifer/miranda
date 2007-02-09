@@ -25,7 +25,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #define SECURITY_WIN32
 #include <security.h>
-#include <rpcdce.h>
 
 static HMODULE g_hSecurity = NULL;
 static PSecurityFunctionTableA g_pSSPI = NULL;
@@ -129,7 +128,7 @@ void NetlibDestroySecurityProvider(char* provider, HANDLE hSecurity)
 	ReleaseMutex(hSecMutex);
 }
 
-char* NtlmCreateResponseFromChallenge(HANDLE hSecurity, char *szChallenge, char* login, char* psw)
+char* NtlmCreateResponseFromChallenge(HANDLE hSecurity, char *szChallenge)
 {
 	SECURITY_STATUS sc;
 	SecBufferDesc outputBufferDescriptor,inputBufferDescriptor;
@@ -165,18 +164,7 @@ char* NtlmCreateResponseFromChallenge(HANDLE hSecurity, char *szChallenge, char*
 			g_pSSPI->FreeCredentialsHandle(&hNtlm->hClientCredential);
 		}
 
-		if ( login != NULL ) {
-			SEC_WINNT_AUTH_IDENTITY_A auth = { 0 };
-			auth.User = login;
-			auth.UserLength = lstrlenA(login);
-			auth.Password = psw;
-			auth.PasswordLength = lstrlenA(psw);
-			auth.Flags = SEC_WINNT_AUTH_IDENTITY_ANSI;
-
-			sc = g_pSSPI->AcquireCredentialsHandleA(NULL, "NTLM", SECPKG_CRED_BOTH,
-				NULL, &auth, NULL, NULL, &hNtlm->hClientCredential, &tokenExpiration);
-		}
-		else sc = g_pSSPI->AcquireCredentialsHandleA(NULL, "NTLM", SECPKG_CRED_OUTBOUND,
+		sc = g_pSSPI->AcquireCredentialsHandleA(NULL, "NTLM", SECPKG_CRED_OUTBOUND,
 			NULL, NULL, NULL, NULL, &hNtlm->hClientCredential, &tokenExpiration);
 		hNtlm->stage = 0;
 	}
@@ -236,8 +224,7 @@ static int DestroySecurityProviderService( WPARAM wParam, LPARAM lParam )
 
 static int NtlmCreateResponseService( WPARAM wParam, LPARAM lParam )
 {
-	NETLIBNTLMREQUEST* req = ( NETLIBNTLMREQUEST* )lParam;
-	return (int)NtlmCreateResponseFromChallenge(( HANDLE )wParam, req->szChallenge, req->userName, req->password );
+	return (int)NtlmCreateResponseFromChallenge(( HANDLE )wParam, ( char* )lParam );
 }
 
 void NetlibSecurityInit(void)

@@ -2,32 +2,70 @@
 // Microsoft Visual C++ generated include file.
 // Used by resource.rc
 //
+#define IDC_AUTHICON                    1
+#define IDC_NOTOALL                     3
 #define IDC_APPLY                       3
-// ID marked as '//!!!' have to be same as in //miranda/src/resource.h
-
-#define IDI_MIRANDA                     102 //!!!
-#define IDI_SMS                         103 //!!!
-#define IDI_URL                         138 //!!!
-#define IDI_FINDUSER                    161 //!!!
-#define IDI_OPTIONS                     163 //!!!
-#define IDI_RENAME                      173 //!!!
-#define IDI_DELETE                      175 //!!!
-#define IDC_DROP                        183 //!!!
-#define IDI_SENDEMAIL                   193 //!!!
-#define IDI_BLANK                       200 //!!!
-#define IDI_NOTICK                      205 //!!!
-#define IDI_TICK                        206 //!!!
-#define IDC_DROPUSER                    215 //!!!
-
+#define MIM_V1                          10
+#define IDI_GLOBUS                      11
+#define MIM_V2                          20
+#define MIM_V3                          30
+#define MIM_V4                          30
+#define IDI_MIRANDA                     102
 #define IDD_OPT_ITEM_CONTACT_TIME       102
+#define IDD_ABOUT                       103
+#define IDI_SMS                         103
 #define IDD_OPT_ROWTMPL                 103
+#define IDI_ONLINE                      104
+#define IDI_OFFLINE                     105
+#define IDD_GNUPL                       110
+#define IDD_ADDED                       115
+#define IDD_URLSEND                     119
+#define IDD_URLRECV                     120
+#define IDD_AUTHREQ                     121
+#define IDD_DETAILS                     125
 #define IDD_OPT_CLIST                   126
+#define IDD_HISTORY                     127
+#define IDI_AWAY                        128
+#define IDI_FREE4CHAT                   129
+#define IDI_INVISIBLE                   130
+#define IDI_NA                          131
 #define IDD_OPT_SOUND                   134
 #define IDD_OPT_HOTKEYS                 134
-
+#define IDI_SENDURL                     135
+#define IDI_RECVMSG                     136
+#define IDI_SENDMSG                     137
+#define IDI_URL                         138
+#define IDI_DND                         158
+#define IDI_OCCUPIED                    159
+#define IDI_USERDETAILS                 160
+#define IDI_FINDUSER                    161
+#define IDI_HELP                        162
+#define IDI_OPTIONS                     163
+#define IDI_MIRANDAWEBSITE              172
+#define IDI_RENAME                      173
+#define IDI_HISTORY                     174
+#define IDI_DELETE                      175
 #define IDR_CONTEXT                     180
+#define IDC_DROP                        183
+#define IDD_OPT_HOTKEY                  184
+#define IDD_HISTORY_FIND                192
+#define IDI_SENDEMAIL                   193
+#define IDD_FILERECV                    194
+#define IDD_PROFILEMANAGER              197
+#define IDD_NEWPROFILE                  198
 #define IDR_CLISTMENU                   199
-
+#define IDI_BLANK                       200
+#define IDD_FINDADD                     201
+#define IDI_USERONLINE                  201
+#define IDD_OPT_AUTOAWAY                202
+#define IDI_GROUPSHUT                   202
+#define IDD_OPTIONS                     203
+#define IDI_GROUPOPEN                   203
+#define IDD_PLUGINCONFLICT              204
+#define IDD_FILESEND                    205
+#define IDI_NOTICK                      205
+#define IDD_OPT_PLUGINS                 206
+#define IDI_TICK                        206
 #define IDD_OPT_ICONS                   207
 #define IDI_FILE                        207
 #define IDI_TIMESTAMP                   208
@@ -38,6 +76,7 @@
 #define IDD_READAWAYMSG                 213
 #define IDI_EMPTYBLOB                   213
 #define IDD_OPT_IGNORE                  214
+#define IDC_HYPERLINKHAND               214
 #define IDD_OPT_VISIBILITY              215
 #define IDD_SETAWAYMSG                  216
 #define IDI_DETAILSLOGO                 216
@@ -77,6 +116,8 @@
 #define IDI_DOWNARROW                   264
 #define IDD_CREDITS                     265
 #define IDD_OPT_IDLE                    268
+#define IDI_EMAIL                       277
+#define IDI_BLANK1                      278
 #define IDD_OPT_META_CLC                279
 #define IDI_NEWGROUP                    282
 #define IDI_NEWGROUP2                   283
@@ -141,10 +182,6 @@
 #define IDI_ICON5                       455
 #define IDI_CHAT                        455
 #define IDI_LISTENING_TO                456
-#define IDI_FAVORITE_0                  500
-#define IDI_FAVORITE_1                  501
-#define IDI_FAVORITE_2                  502
-#define IDI_FAVORITE_3                  503
 #define IDC_RESETPROTOCOLDATA           1000
 #define IDC_SAVE                        1001
 #define IDC_DEFBKCOLOR                  1001
@@ -416,7 +453,7 @@
 #define IDC_DONTCYCLE                   1315
 #define IDC_PRIMARYSTATUS               1316
 #define IDC_CYCLE                       1317
-
+#define IDC_DROPUSER                    1317
 #define IDC_CYCLETIME                   1318
 #define IDC_CYCLETIMESPIN               1319
 #define IDC_HIDETIMESPIN                1320
@@ -711,9 +748,6 @@
 #define IDC_SC_STATIC                   1768
 #define IDC_COMBO_SAME                  1768
 #define IDC_TRANSPARENTOVERLAY          1768
-#define IDC_IDC_MULTI_COUNT             1771
-#define IDC_MULTI_COUNT                 1771
-#define IDC_MULTI_SPIN                  1772
 #define IDC_EDIT_FILENAME               1773
 #define IDC_EDIT_FILENAME2              1774
 #define IDC_EDIT_SKIN_FILENAME          1774
@@ -872,11 +906,10 @@
 #define IDC_CONTUP                      1969
 #define IDC_BUTTON3                     1970
 #define IDC_CONTDOWN                    1970
-#define IDC_MULTI                       2000
-#define IDC_MULTI_2                     2001
 #define IDC_CLSORT1                     6666
 #define IDC_CLSORT2                     6667
 #define IDC_CLSORT3                     6668
+#define IDD_OPT_GENMENU                 11267
 #define IDD_OPT_CLCBKG3                 11268
 #define IDD_OPT_ITEM_EXTRAICONS         11269
 #define IDC_MENUITEMS                   11710
@@ -908,33 +941,6 @@
 #define IDC_EFFECT_COLOUR_SPIN2         11806
 #define IDC_LEFTMARGIN2                 12931
 #define IDC_LEFTMARGINSPIN4             12981
-#define IDD_OPT_VIEWMODES               19100
-#define IDC_VIEWMODES                   19102
-#define IDC_PROTOCOLS                   19103
-#define IDC_ADDVIEWMODE                 19104
-#define IDC_DELETEVIEWMODE              19105
-#define IDC_NEWVIEMODE                  19106
-#define IDC_GROUPS                      19107
-#define IDC_STATUSMODES                 19108
-#define IDC_CLIST                       19109
-#define IDC_CLEARALL                    19110
-#define IDC_PROTOGROUPOP                19111
-#define IDC_GROUPSTATUSOP               19112
-#define IDC_STATIC14                    19113
-#define IDC_AUTOCLEAR                   19114
-#define IDC_AUTOCLEARVAL                19115
-#define IDC_AUTOCLEARSPIN               19116
-#define IDC_STATIC15                    19117
-#define IDC_STATIC16                    19118
-#define IDC_CURVIEWMODE2                19119
-#define IDC_LASTMSG                     19120
-#define IDC_LASTMESSAGEOP               19121
-#define IDC_LASTMSGVALUE                19122
-#define IDC_LASTMESSAGEUNIT             19123
-#define IDC_STATIC1                     19124
-#define IDC_RESETMODES                  19125
-#define IDC_SELECTMODE                  19126
-#define IDC_CONFIGUREMODES              19127
 #define IDI_SEARCHALL                   32548
 #define ID_ICQ_EXIT                     40001
 #define IDM_COPY                        40001
@@ -966,9 +972,9 @@
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        461
+#define _APS_NEXT_RESOURCE_VALUE        456
 #define _APS_NEXT_COMMAND_VALUE         40020
-#define _APS_NEXT_CONTROL_VALUE         2002
+#define _APS_NEXT_CONTROL_VALUE         2000
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

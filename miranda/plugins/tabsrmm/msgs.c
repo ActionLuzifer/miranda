@@ -36,10 +36,11 @@ $Id$
 
 static char *relnotes[] = {
     "{\\rtf1\\ansi\\deff0\\pard\\li%u\\fi-%u\\ri%u\\tx%u}",
-    "\\par\t\\b\\ul1 Release notes for version 1.1.0.18\\b0\\ul0\\par ",
-    "*\tCorrected slightly wrong Shift-Enter behaviour (group chats).\\par",
-    "*\tTab tooltips no longer remain sticky when closing the tab.\\par",
-    "*\tIt is now possible to send files to offline users via drag and drop (note, not all protocols support this feature).\\par",
+    "\\par\t\\b\\ul1 Release notes for version 1.0.0.2\\b0\\ul0\\par ",
+	"*\tFixed forgetting the tab nickname length limit.\\par",
+	"*\tFixed a few visual glitches in the option pages.\\par",
+	"*\tAuto-bidi mode for the message editor is now only enabled when a valid RTL language is installed on the system.\\par",
+	"*\tWorkaround for avatar display problems (loadavatars related).\\par",
     NULL
 };
 
@@ -48,6 +49,8 @@ BOOL show_relnotes = FALSE;
 MYGLOBALS myGlobals;
 NEN_OPTIONS nen_options;
 extern PLUGININFO pluginInfo;
+
+CRITICAL_SECTION cs_sessions;
 
 static void InitREOleCallback(void);
 static void UnloadIcons();
@@ -97,7 +100,6 @@ extern      int g_nrSkinIcons;
 extern      struct RTFColorTable *rtf_ctable;
 
 HANDLE g_hEvent_MsgWin;
-HANDLE g_hEvent_MsgPopup;
 
 static struct MsgLogIcon ttb_Slist = {0}, ttb_Traymenu = {0};
 
@@ -121,7 +123,6 @@ static int SmileyAddOptionsChanged(WPARAM wParam, LPARAM lParam)
     return 0;
 }
 
-/*
 static int ContactSecureChanged(WPARAM wParam, LPARAM lParam)
 {
     HWND hwnd;
@@ -132,7 +133,7 @@ static int ContactSecureChanged(WPARAM wParam, LPARAM lParam)
     }
     return 0;
 }
-*/
+
 /*
  * Message API 0.0.0.3 services
  */
@@ -167,7 +168,6 @@ static int GetWindowData(WPARAM wParam, LPARAM lParam)
 		mwod->local = GetParent(GetParent(hwnd));
 		SendMessage(hwnd, DM_GETWINDOWSTATE, 0, 0);
 		mwod->uState = GetWindowLong(hwnd, DWL_MSGRESULT);
-        return 0;
 	}
     else if((si = SM_FindSessionByHCONTACT(mwid->hContact)) != NULL && si->hWnd != 0) {
         mwod->uFlags = MSG_WINDOW_UFLAG_MSG_BOTH;
@@ -175,16 +175,11 @@ static int GetWindowData(WPARAM wParam, LPARAM lParam)
         mwod->local = GetParent(GetParent(si->hWnd));
         SendMessage(si->hWnd, DM_GETWINDOWSTATE, 0, 0);
         mwod->uState = GetWindowLong(si->hWnd, DWL_MSGRESULT);
-        return 0;
     }
-	else {
-        mwod->uState = 0;
-        mwod->hContact = 0;
-        mwod->hwndWindow = 0;
-        mwod->uFlags = 0;
-    }
+	else
+		mwod->uState = 0;
 		
-	return 1;
+	return 0;
 }
 
 /*
@@ -425,7 +420,7 @@ static int ReadMessageCommand(WPARAM wParam, LPARAM lParam)
     HANDLE hContact = ((CLISTEVENT *) lParam)->hContact;
     struct ContainerWindowData *pContainer = 0;
     
-    //EnterCriticalSection(&cs_sessions);
+    EnterCriticalSection(&cs_sessions);
     hwndExisting = WindowList_Find(hMessageWindowList, hContact);
     
     if (hwndExisting != NULL) {
@@ -441,7 +436,7 @@ static int ReadMessageCommand(WPARAM wParam, LPARAM lParam)
             pContainer = CreateContainer(szName, FALSE, hContact);
 		CreateNewTabForContact (pContainer, hContact, 0, NULL, TRUE, TRUE, FALSE, 0);
     }
-    //LeaveCriticalSection(&cs_sessions);
+    LeaveCriticalSection(&cs_sessions);
     return 0;
 }
 
@@ -568,25 +563,25 @@ static int MessageEventAdded(WPARAM wParam, LPARAM lParam)
      * for tray support, we add the event to the tray menu. otherwise we send it back to
      * the contact list for flashing
      */
-nowindowcreate:
+nowindowcreate:    
     if(!(dbei.flags & DBEF_READ)) {
-        UpdateTrayMenu(0, 0, dbei.szModule, NULL, (HANDLE)wParam, 1);
-        if(!nen_options.bTraySupport || myGlobals.m_WinVerMajor < 5) {
-             TCHAR toolTip[256], *contactName;
-            ZeroMemory(&cle, sizeof(cle));
-            cle.cbSize = sizeof(cle);
-            cle.hContact = (HANDLE) wParam;
-            cle.hDbEvent = (HANDLE) lParam;
-              cle.flags = CLEF_TCHAR;
-            cle.hIcon = LoadSkinnedIcon(SKINICON_EVENT_MESSAGE);
-            cle.pszService = "SRMsg/ReadMessage";
-            contactName = (TCHAR*) CallService(MS_CLIST_GETCONTACTDISPLAYNAME, wParam, GCDNF_TCHAR);
-            mir_sntprintf(toolTip, SIZEOF(toolTip), TranslateT("Message from %s"), contactName);
-            cle.ptszTooltip = toolTip;
-            CallService(MS_CLIST_ADDEVENT, 0, (LPARAM) & cle);
-        }
-        tabSRMM_ShowPopup(wParam, lParam, dbei.eventType, 0, 0, 0, dbei.szModule, 0);
-    }
+	    UpdateTrayMenu(0, 0, dbei.szModule, NULL, (HANDLE)wParam, 1);
+		if(!nen_options.bTraySupport || myGlobals.m_WinVerMajor < 5) {
+			TCHAR toolTip[256], *contactName;
+			ZeroMemory(&cle, sizeof(cle));
+			cle.cbSize = sizeof(cle);
+			cle.hContact = (HANDLE) wParam;
+			cle.hDbEvent = (HANDLE) lParam;
+			cle.flags = CLEF_TCHAR;
+			cle.hIcon = LoadSkinnedIcon(SKINICON_EVENT_MESSAGE);
+			cle.pszService = "SRMsg/ReadMessage";
+			contactName = (TCHAR*) CallService(MS_CLIST_GETCONTACTDISPLAYNAME, wParam, GCDNF_TCHAR);
+			mir_sntprintf(toolTip, SIZEOF(toolTip), TranslateT("Message from %s"), contactName);
+			cle.ptszTooltip = toolTip;
+			CallService(MS_CLIST_ADDEVENT, 0, (LPARAM) & cle);
+		}
+		tabSRMM_ShowPopup(wParam, lParam, dbei.eventType, 0, 0, 0, dbei.szModule, 0);
+	}
     return 0;
 }
 
@@ -612,7 +607,7 @@ int SendMessageCommand_W(WPARAM wParam, LPARAM lParam)
             PostMessage(myGlobals.g_hwndHotkeyHandler, DM_SENDMESSAGECOMMANDW, wParam, 0);
         return 0;
     }
-    
+
     /* does the HCONTACT's protocol support IM messages? */
     szProto = (char *) CallService(MS_PROTO_GETCONTACTBASEPROTO, wParam, 0);
     if (szProto) {
@@ -624,7 +619,7 @@ int SendMessageCommand_W(WPARAM wParam, LPARAM lParam)
         return 0;
     }
 
-    //EnterCriticalSection(&cs_sessions);
+    EnterCriticalSection(&cs_sessions);
     if (hwnd = WindowList_Find(hMessageWindowList, (HANDLE) wParam)) {
         if (lParam) {
             HWND hEdit;
@@ -643,7 +638,7 @@ int SendMessageCommand_W(WPARAM wParam, LPARAM lParam)
          */
         if(DBGetContactSettingByte(NULL, SRMSGMOD_T, "trayfix", 0)) {
             if(myGlobals.hLastOpenedContact == (HANDLE)wParam) {
-                //LeaveCriticalSection(&cs_sessions);
+                LeaveCriticalSection(&cs_sessions);
                 return 0;
             }
         }
@@ -654,7 +649,7 @@ int SendMessageCommand_W(WPARAM wParam, LPARAM lParam)
             pContainer = CreateContainer(szName, FALSE, (HANDLE)wParam);
 		CreateNewTabForContact(pContainer, (HANDLE) wParam, 1, (const char *)lParam, TRUE, TRUE, FALSE, 0);
     }
-    //LeaveCriticalSection(&cs_sessions);
+    LeaveCriticalSection(&cs_sessions);
     return 0;
 }
 
@@ -667,7 +662,7 @@ int SendMessageCommand(WPARAM wParam, LPARAM lParam)
     struct NewMessageWindowLParam newData = { 0 };
     struct ContainerWindowData *pContainer = 0;
     int isSplit = 1;
-
+    
     if(GetCurrentThreadId() != myGlobals.dwThreadID) {
         //_DebugTraceA("sendmessagecommand called from different thread (%d), main thread = %d", GetCurrentThreadId(), myGlobals.dwThreadID);
         if(lParam) {
@@ -693,7 +688,7 @@ int SendMessageCommand(WPARAM wParam, LPARAM lParam)
         return 0;
     }
 
-    //EnterCriticalSection(&cs_sessions);
+    EnterCriticalSection(&cs_sessions);
     if (hwnd = WindowList_Find(hMessageWindowList, (HANDLE) wParam)) {
         if (lParam) {
             HWND hEdit;
@@ -712,7 +707,7 @@ int SendMessageCommand(WPARAM wParam, LPARAM lParam)
          */
         if(DBGetContactSettingByte(NULL, SRMSGMOD_T, "trayfix", 0)) {
             if(myGlobals.hLastOpenedContact == (HANDLE)wParam) {
-                //LeaveCriticalSection(&cs_sessions);
+                LeaveCriticalSection(&cs_sessions);
                 return 0;
             }
         }
@@ -723,7 +718,7 @@ int SendMessageCommand(WPARAM wParam, LPARAM lParam)
             pContainer = CreateContainer(szName, FALSE, (HANDLE)wParam);
 		CreateNewTabForContact(pContainer, (HANDLE) wParam, 0, (const char *) lParam, TRUE, TRUE, FALSE, 0);
     }
-    //LeaveCriticalSection(&cs_sessions);
+    LeaveCriticalSection(&cs_sessions);
     return 0;
 }
 
@@ -852,9 +847,6 @@ static int MessageSettingChanged(WPARAM wParam, LPARAM lParam)
     if(hwnd) {
         if(strstr("MyHandle,Status,Nick,ApparentMode,Default,ForceSend,IdleTS,XStatusId", cws->szSetting))
             SendMessage(hwnd, DM_UPDATETITLE, 0, 0);
-        else if(lstrlenA(cws->szSetting) > 6 && !strncmp(cws->szSetting, "Status", 6)) {
-            SendMessage(hwnd, DM_UPDATETITLE, 0, 1);
-        }
         else if(!strcmp(cws->szSetting, "MirVer"))
             SendMessage(hwnd, DM_CLIENTCHANGED, 0, 0);
         else if(strstr("StatusMsg,StatusDescr,XStatusMsg,YMsg", cws->szSetting))
@@ -957,12 +949,8 @@ static int SplitmsgModulesLoaded(WPARAM wParam, LPARAM lParam)
     }
 #endif    
     UnhookEvent(hModulesLoadedEvent);
-    hEventDbSettingChange = HookEvent(ME_DB_CONTACT_SETTINGCHANGED, MessageSettingChanged);
-    hEventContactDeleted = HookEvent(ME_DB_CONTACT_DELETED, ContactDeleted);
-
     hEventDispatch = HookEvent(ME_DB_EVENT_ADDED, DispatchNewEvent);
     hEventDbEventAdded = HookEvent(ME_DB_EVENT_ADDED, MessageEventAdded);
-
     ZeroMemory(&mi, sizeof(mi));
     mi.cbSize = sizeof(mi);
     mi.position = -2000090000;
@@ -1033,7 +1021,7 @@ static int SplitmsgModulesLoaded(WPARAM wParam, LPARAM lParam)
 
     myGlobals.m_hwndClist = (HWND)CallService(MS_CLUI_GETHWND, 0, 0);
 #ifdef __MATHMOD_SUPPORT    		
-     myGlobals.m_MathModAvail = ServiceExists(MATH_RTF_REPLACE_FORMULAE) && DBGetContactSettingByte(NULL, SRMSGMOD_T, "wantmathmod", 1);
+     myGlobals.m_MathModAvail = ServiceExists(MATH_RTF_REPLACE_FORMULAE) && DBGetContactSettingByte(NULL, SRMSGMOD_T, "wantmathmod", 0);
      if(myGlobals.m_MathModAvail) {
          char *szDelim = (char *)CallService(MATH_GET_STARTDELIMITER, 0, 0);
          if(szDelim) {
@@ -1050,6 +1038,9 @@ static int SplitmsgModulesLoaded(WPARAM wParam, LPARAM lParam)
     
     if(ServiceExists(MS_MC_GETDEFAULTCONTACT))
         myGlobals.g_MetaContactsAvail = 1;
+
+    if(ServiceExists("SecureIM/IsContactSecured"))
+        myGlobals.g_SecureIMAvail = 1;
 
     if(ServiceExists(MS_POPUP_ADDPOPUPEX))
         myGlobals.g_PopupAvail = 1;
@@ -1168,13 +1159,11 @@ static int PreshutdownSendRecv(WPARAM wParam, LPARAM lParam)
     DestroyServiceFunction(hSVC[H_MS_TABMSG_TRAYSUPPORT]);
     DestroyServiceFunction(hSVC[H_MSG_MOD_GETWINDOWFLAGS]);
 
-    SI_DeinitStatusIcons();
     /*
      * the event API
      */
 
 	DestroyHookableEvent(g_hEvent_MsgWin);
-    DestroyHookableEvent(g_hEvent_MsgPopup);
 
 	NEN_WriteOptions(&nen_options);
     DestroyWindow(myGlobals.g_hwndHotkeyHandler);
@@ -1221,6 +1210,7 @@ int SplitmsgShutdown(void)
         free(rtf_ctable);
 
     UnloadTSButtonModule(0, 0);
+    
 	if(sendJobs) {
 		for(i = 0; i < NR_SENDJOBS; i++) {
 		    if(sendJobs[i].sendBuffer != NULL)
@@ -1242,6 +1232,7 @@ int SplitmsgShutdown(void)
     if(g_skinIcons)
         free(g_skinIcons);
 
+    DeleteCriticalSection(&cs_sessions);
     return 0;
 }
 
@@ -1274,7 +1265,6 @@ static int AvatarChanged(WPARAM wParam, LPARAM lParam)
             dat->ace = ace;
             if(dat->hwndFlash == 0)
                 dat->panelWidth = -1;				// force new size calculations (not for flash avatars)
-            DM_RecalcPictureSize(hwnd, dat);
             if(dat->showPic == 0 || dat->showInfoPic == 0)
                 GetAvatarVisibility(hwnd, dat);
             ShowPicture(hwnd, dat, TRUE);
@@ -1384,9 +1374,10 @@ tzdone:
     sendJobs = (struct SendJob *)malloc(NR_SENDJOBS * sizeof(struct SendJob));
     ZeroMemory(sendJobs, NR_SENDJOBS * sizeof(struct SendJob));
 
+    InitializeCriticalSection(&cs_sessions);
     InitOptions();
-    //hEventDbSettingChange = HookEvent(ME_DB_CONTACT_SETTINGCHANGED, MessageSettingChanged);
-    //hEventContactDeleted = HookEvent(ME_DB_CONTACT_DELETED, ContactDeleted);
+    hEventDbSettingChange = HookEvent(ME_DB_CONTACT_SETTINGCHANGED, MessageSettingChanged);
+    hEventContactDeleted = HookEvent(ME_DB_CONTACT_DELETED, ContactDeleted);
     hModulesLoadedEvent = HookEvent(ME_SYSTEM_MODULESLOADED, SplitmsgModulesLoaded);
     HookEvent(ME_SKIN_ICONSCHANGED, IconsChanged);
     HookEvent(ME_PROTO_CONTACTISTYPING, TypingMessage);
@@ -1394,8 +1385,8 @@ tzdone:
     HookEvent(ME_SYSTEM_PRESHUTDOWN, PreshutdownSendRecv);
     HookEvent(ME_SYSTEM_OKTOEXIT, OkToExit);
 
-	//HookEvent("SecureIM/Established",ContactSecureChanged);
-	//HookEvent("SecureIM/Disabled",ContactSecureChanged);
+	HookEvent("SecureIM/Established",ContactSecureChanged);
+	HookEvent("SecureIM/Disabled",ContactSecureChanged);
     InitAPI();
     
     SkinAddNewSoundEx("RecvMsgActive", Translate("Messages"), Translate("Incoming (Focused Window)"));
@@ -1835,26 +1826,20 @@ static void InitAPI()
     hSVC[H_MS_TABMSG_TRAYSUPPORT] =  CreateServiceFunction(MS_TABMSG_TRAYSUPPORT, Service_OpenTrayMenu);
     hSVC[H_MSG_MOD_GETWINDOWFLAGS] =  CreateServiceFunction(MS_MSG_MOD_GETWINDOWFLAGS,GetMessageWindowFlags); 
 
-    SI_InitStatusIcons();
-
     /*
      * the event API
      */
 
     g_hEvent_MsgWin = CreateHookableEvent(ME_MSG_WINDOWEVENT);
-    g_hEvent_MsgPopup = CreateHookableEvent(ME_MSG_WINDOWPOPUP);
 }
 
 int TABSRMM_FireEvent(HANDLE hContact, HWND hwnd, unsigned int type, unsigned int subType)
 {
     MessageWindowEventData mwe = { 0 };
     struct TABSRMM_SessionInfo se = { 0 };
-    struct MessageWindowData *dat = (struct MessageWindowData *)GetWindowLong(hwnd, GWL_USERDATA);
-    BYTE bType = dat ? dat->bType : SESSIONTYPE_IM;
     
     if (hContact == NULL || hwnd == NULL) 
-        return 0;
-
+		return 0;
     if (!DBGetContactSettingByte(NULL, SRMSGMOD_T, "eventapi", 1))
         return 0;
     mwe.cbSize = sizeof(mwe);
@@ -1866,13 +1851,13 @@ int TABSRMM_FireEvent(HANDLE hContact, HWND hwnd, unsigned int type, unsigned in
     mwe.szModule = "tabSRMsg";
 #endif    
     mwe.uType = type;
-	mwe.hwndInput = GetDlgItem(hwnd, bType == SESSIONTYPE_IM ? IDC_MESSAGE : IDC_CHAT_MESSAGE);
-	mwe.hwndLog = GetDlgItem(hwnd, bType == SESSIONTYPE_IM ? IDC_LOG : IDC_CHAT_LOG);
+    if(type = MSG_WINDOW_EVT_CUSTOM) {
+        struct MessageWindowData *dat = (struct MessageWindowData *)GetWindowLong(hwnd, GWL_USERDATA);
 
-    if(type == MSG_WINDOW_EVT_CUSTOM) {
         se.cbSize = sizeof(se);
         se.evtCode = HIWORD(subType);
         se.hwnd = hwnd;
+        se.hwndInput = GetDlgItem(hwnd, IDC_MESSAGE);
         se.extraFlags = (unsigned int)(LOWORD(subType));
         se.local = (void *)dat->sendBuffer;
         mwe.local = (void *)&se;
@@ -1918,8 +1903,8 @@ static ICONDESC _deficons[] = {
     "tabSRMM_container", "Static container icon", &myGlobals.g_iconContainer, -IDI_CONTAINER, 1,
     "tabSRMM_mtn_on", "Sending typing notify is on", &myGlobals.g_buttonBarIcons[12], -IDI_SELFTYPING_ON, 1,
     "tabSRMM_mtn_off", "Sending typing notify is off", &myGlobals.g_buttonBarIcons[13], -IDI_SELFTYPING_OFF, 1,
-    "tabSRMM_secureim_on", "RESERVED (currently not in use)", &myGlobals.g_buttonBarIcons[14], -IDI_SECUREIM_ENABLED, 1,
-    "tabSRMM_secureim_off", "RESERVED (currently not in use)", &myGlobals.g_buttonBarIcons[15], -IDI_SECUREIM_DISABLED, 1,
+    "tabSRMM_secureim_on", "SecureIM is on", &myGlobals.g_buttonBarIcons[14], -IDI_SECUREIM_ENABLED, 1,
+    "tabSRMM_secureim_off", "SecureIM is off", &myGlobals.g_buttonBarIcons[15], -IDI_SECUREIM_DISABLED, 1,
     "tabSRMM_sounds_on", "Sounds are On", &myGlobals.g_buttonBarIcons[22], -IDI_SOUNDSON, 1,
     "tabSRMM_sounds_off", "Sounds are off", &myGlobals.g_buttonBarIcons[23], -IDI_SOUNDSOFF, 1,
     "tabSRMM_log_frozen", "Message Log frozen", &myGlobals.g_buttonBarIcons[24], -IDI_MSGERROR, 1,
@@ -2040,6 +2025,7 @@ static int LoadFromIconLib()
         }
         n++;
     }
+    
     CacheMsgLogIcons();
     WindowList_Broadcast(hMessageWindowList, DM_LOADBUTTONBARICONS, 0, 0);
     return 0;
@@ -2051,16 +2037,54 @@ static int LoadFromIconLib()
 
 static void LoadIconTheme()
 {
+    char szFilename[MAX_PATH];
     int cxIcon = GetSystemMetrics(SM_CXSMICON);
     int cyIcon = GetSystemMetrics(SM_CYSMICON);
     int i = 0, version = 0, n = 0;
     //char szDebug[80];
     
-    if(SetupIconLibConfig() == 0)
+    if(ServiceExists(MS_SKIN2_ADDICON)) {               // ico lib present...
+        if(SetupIconLibConfig() == 0)
+            return;
+        else
+            LoadFromIconLib();
         return;
-    else
-        LoadFromIconLib();
-    return;
+    }
+
+    // no icolib present, load it the default way...
+    
+    if(g_hIconDLL == 0) {                               // first time, load the library...
+        strncpy(szFilename, "plugins\\tabsrmm_icons.dll", MAX_PATH);
+        g_hIconDLL = LoadLibraryA(szFilename);
+        if(g_hIconDLL == 0) {
+            strncpy(szFilename, "icons\\tabsrmm_icons.dll", MAX_PATH);
+            g_hIconDLL = LoadLibraryA(szFilename);
+        }
+    }
+
+    if(g_hIconDLL == NULL)
+        MessageBoxA(0, "Critical: cannot load resource DLL (no icons will be shown)", "tabSRMM", MB_OK);
+    else {
+        version = GetIconPackVersion(g_hIconDLL);
+        myGlobals.g_hbmUnknown = LoadImage(g_hIconDLL, MAKEINTRESOURCE(IDB_UNKNOWNAVATAR), IMAGE_BITMAP, 0, 0, 0);
+        if(myGlobals.g_hbmUnknown == 0) {
+            HDC dc = GetDC(0);
+            myGlobals.g_hbmUnknown = CreateCompatibleBitmap(dc, 20, 20);
+            ReleaseDC(0, dc);
+        }
+        while(ICONBLOCKS[n].szSection) {
+            i = 0;
+            while(ICONBLOCKS[n].idesc[i].szDesc) {
+                *(ICONBLOCKS[n].idesc[i].phIcon) = (HICON)LoadImage(g_hIconDLL, MAKEINTRESOURCE(abs(ICONBLOCKS[n].idesc[i].uId)),
+                                                                    IMAGE_ICON, ICONBLOCKS[n].idesc[i].bForceSmall ? cxIcon : 0, ICONBLOCKS[n].idesc[i].bForceSmall ? cyIcon : 0, 0);
+                i++;
+            }
+            n++;
+        }
+        CacheMsgLogIcons();
+        WindowList_Broadcast(hMessageWindowList, DM_LOADBUTTONBARICONS, 0, 0);
+        return;
+    }
 }
 
 static void UnloadIcons()

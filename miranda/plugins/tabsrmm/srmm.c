@@ -36,8 +36,6 @@ HINSTANCE g_hInst;
 extern MYGLOBALS myGlobals;
 struct MM_INTERFACE memoryManagerInterface;
 
-pfnSetMenuInfo fnSetMenuInfo = NULL;
-
 PLUGININFO pluginInfo = {
     sizeof(PLUGININFO),
 #ifdef _UNICODE
@@ -53,13 +51,13 @@ PLUGININFO pluginInfo = {
         "tabSRMsg",
     #endif    
 #endif
-    PLUGIN_MAKE_VERSION(1, 1, 0, 18),
+    PLUGIN_MAKE_VERSION(1, 0, 0, 2),
     "Chat module for instant messaging and group chat, offering a tabbed interface and many advanced features.",
     "The Miranda developers team",
     "silvercircle@gmail.com",
-    "© 2000-2007 Miranda Project",
+    "© 2000-2006 Miranda Project",
     "http://tabsrmm.sourceforge.net",
-    UNICODE_AWARE,
+    0,
     DEFMOD_SRMESSAGE            // replace internal version (if any)
 };
 
@@ -80,22 +78,20 @@ __declspec(dllexport)
 
 int __declspec(dllexport) Load(PLUGINLINK * link)
 {
-	pluginLink = link;
+    pluginLink = link;
 
 #ifdef _DEBUG //mem leak detector :-) Thanks Tornado!
-	{
-		int flag = _CrtSetDbgFlag(_CRTDBG_REPORT_FLAG); // Get current flag
-		flag |= (_CRTDBG_LEAK_CHECK_DF | _CRTDBG_ALLOC_MEM_DF | _CRTDBG_CHECK_CRT_DF); // Turn on leak-checking bit
-		_CrtSetDbgFlag(flag); // Set flag to the new value
-	}
+    {
+        int flag = _CrtSetDbgFlag(_CRTDBG_REPORT_FLAG); // Get current flag
+        flag |= (_CRTDBG_LEAK_CHECK_DF | _CRTDBG_ALLOC_MEM_DF | _CRTDBG_CHECK_CRT_DF); // Turn on leak-checking bit
+        _CrtSetDbgFlag(flag); // Set flag to the new value
+    }
 #endif
 
-	memset(&memoryManagerInterface, 0, sizeof(memoryManagerInterface));
-	memoryManagerInterface.cbSize = sizeof(memoryManagerInterface);
-	CallService(MS_SYSTEM_GET_MMI, 0, (LPARAM) &memoryManagerInterface);
-
-	fnSetMenuInfo = ( pfnSetMenuInfo )GetProcAddress( GetModuleHandleA( "USER32.DLL" ), "GetMenuInfo" );
-
+    memset(&memoryManagerInterface, 0, sizeof(memoryManagerInterface));
+    memoryManagerInterface.cbSize = sizeof(memoryManagerInterface);
+    CallService(MS_SYSTEM_GET_MMI, 0, (LPARAM) &memoryManagerInterface);
+    
 	Chat_Load(pluginLink);
 	return LoadSendRecvMessageModule();
 }
@@ -122,8 +118,6 @@ int _DebugTraceW(const wchar_t *fmt, ...)
 	return 0;
 }
 #endif
-#endif
-
 int _DebugTraceA(const char *fmt, ...)
 {
     char    debug[2048];
@@ -133,25 +127,10 @@ int _DebugTraceA(const char *fmt, ...)
 
 	lstrcpyA(debug, "TABSRMM: ");
 	_vsnprintf(&debug[9], ibsize - 10, fmt, va);
-#ifdef _DEBUG
     OutputDebugStringA(debug);
-#else
-    {
-        char szLogFileName[MAX_PATH], szDataPath[MAX_PATH];
-        FILE *f;
-
-        CallService(MS_DB_GETPROFILEPATH, MAX_PATH, (LPARAM)szDataPath);
-        mir_snprintf(szLogFileName, MAX_PATH, "%s\\%s", szDataPath, "tabsrmm_debug.log");
-        f = fopen(szLogFileName, "a+");
-        if(f) {
-            fputs(debug, f);
-            fputs("\n", f);
-            fclose(f);
-        }
-    }
-#endif
 	return 0;
 }
+#endif
 
 /*
  * output a notification message.

@@ -47,7 +47,6 @@ struct CPTABLE cpTable[] = {
     {	950,	_T("Traditional Chinese") },
     {	1250,	_T("Central European") },
     {	1251,	_T("Cyrillic") },
-    {   20866,  _T("Cyrillic KOI8-R") },
     {	1252,	_T("Latin I") },
     {	1253,	_T("Greek") },
     {	1254,	_T("Turkish") },
@@ -1134,7 +1133,7 @@ nounicode:
                 case 't':
                 case 'T':
                     if(showTime) {
-                        szFinalTimestamp = Template_MakeRelativeDate(dat, final_time, g_groupBreak, (unsigned short)(dwEffectiveFlags & MWF_LOG_SHOWSECONDS ? cc : (TCHAR)'t'));
+                        szFinalTimestamp = Template_MakeRelativeDate(dat, final_time, g_groupBreak, dwEffectiveFlags & MWF_LOG_SHOWSECONDS ? cc : (TCHAR)'t');
                         AppendTimeStamp(szFinalTimestamp, isSent, &buffer, &bufferEnd, &bufferAlloced, skipFont, dat, iFontIDOffset);
                     }
                     else
@@ -1201,12 +1200,7 @@ nounicode:
                     AppendToBufferWithRTF(0, &buffer, &bufferEnd, &bufferAlloced, "%s", isSent ? dat->myUin : dat->uin);
                     break;
                 case 'e':           // error message
-#if defined(_UNICODE)
-                    AppendToBuffer(&buffer, &bufferEnd, &bufferAlloced, "%s ", GetRTFFont(MSGFONTID_ERROR));
-                    AppendUnicodeToBuffer(&buffer, &bufferEnd, &bufferAlloced, (wchar_t *)dbei.szModule, MAKELONG(isSent, dat->isHistory));
-#else
                     AppendToBuffer(&buffer, &bufferEnd, &bufferAlloced, "%s %s", GetRTFFont(MSGFONTID_ERROR), dbei.szModule);
-#endif
                     break;
                 case 'M':           // message
                 {
@@ -1301,8 +1295,8 @@ nounicode:
                     break;
                 }
                 case '|':       // tab
-                    if(dwEffectiveFlags & MWF_LOG_INDENT)
-                        AppendToBuffer(&buffer, &bufferEnd, &bufferAlloced, "\\tab");
+					if(dwEffectiveFlags & MWF_LOG_INDENT)
+						AppendToBuffer(&buffer, &bufferEnd, &bufferAlloced, "\\tab");
                     else
                         AppendToBuffer(&buffer, &bufferEnd, &bufferAlloced, " ");
                     break;
@@ -1532,44 +1526,6 @@ void StreamInEvents(HWND hwndDlg, HANDLE hDbEventFirst, int count, int fAppend, 
         CallService(MS_IEVIEW_EVENT, 0, (LPARAM)&event);
         //SendMessage(hwndDlg, DM_FORCESCROLL, (WPARAM)&pt, (LPARAM)&si);
         DM_ScrollToBottom(hwndDlg, dat, 0, 0);
-        if(fAppend)
-            dat->hDbEventLast = hDbEventFirst;
-        else
-            dat->hDbEventLast = (HANDLE)CallService(MS_DB_EVENT_FINDLAST, (WPARAM)dat->hContact, 0);
-        return;
-    }
-    if(dat->hwndHPP != 0) {
-        IEVIEWEVENT event;
-
-        event.cbSize = sizeof(IEVIEWEVENT);
-        event.hwnd = dat->hwndHPP;
-        event.hContact = dat->hContact;
-#if defined(_UNICODE)
-        event.dwFlags = (dat->dwFlags & MWF_LOG_RTL) ? IEEF_RTL : 0;
-        if(dat->sendMode & SMODE_FORCEANSI) {
-            event.dwFlags |= IEEF_NO_UNICODE;
-            event.codepage = dat->codePage;
-        }
-        else
-            event.codepage = 0;
-#else
-        event.dwFlags = ((dat->dwFlags & MWF_LOG_RTL) ? IEEF_RTL : 0) | IEEF_NO_UNICODE;
-        event.codepage = 0;
-#endif        
-        if (!fAppend) {
-            event.iType = IEE_CLEAR_LOG;
-            CallService(MS_HPP_EG_EVENT, 0, (LPARAM)&event);
-        }
-        event.iType = IEE_LOG_EVENTS;
-        event.hDbEventFirst = hDbEventFirst;
-        event.count = count;
-        CallService(MS_HPP_EG_EVENT, 0, (LPARAM)&event);
-        //SendMessage(hwndDlg, DM_FORCESCROLL, (WPARAM)&pt, (LPARAM)&si);
-        DM_ScrollToBottom(hwndDlg, dat, 0, 0);
-        if(fAppend)
-            dat->hDbEventLast = hDbEventFirst;
-        else
-            dat->hDbEventLast = (HANDLE)CallService(MS_DB_EVENT_FINDLAST, (WPARAM)dat->hContact, 0);
         return;
     }
 
@@ -1616,8 +1572,9 @@ void StreamInEvents(HWND hwndDlg, HANDLE hDbEventFirst, int count, int fAppend, 
         fi.chrg.cpMin = 0;
         dat->isAutoRTL = 0;
     }
-    startAt = fi.chrg.cpMin;
 
+    startAt = fi.chrg.cpMin;
+    
     SendMessage(hwndrtf, WM_SETREDRAW, FALSE, 0);
 
 	SendDlgItemMessage(hwndDlg, IDC_LOG, EM_STREAMIN, fAppend ? SFF_SELECTION | SF_RTF : SFF_SELECTION |  SF_RTF, (LPARAM) & stream);
@@ -1676,6 +1633,7 @@ static void ReplaceIcons(HWND hwndDlg, struct MessageWindowData *dat, LONG start
 
     hwndrtf = GetDlgItem(hwndDlg, IDC_LOG);
     fi.chrg.cpMin = startAt;
+
     if(dat->clr_added) {
         unsigned int length;
         int index;
@@ -1685,7 +1643,7 @@ static void ReplaceIcons(HWND hwndDlg, struct MessageWindowData *dat, LONG start
         ZeroMemory((void *)&cf2, sizeof(cf2));
         cf2.cbSize = sizeof(cf2);
         cf2.dwMask = CFM_COLOR;
-        while(SendMessageA(hwndrtf, EM_FINDTEXTEX, FR_DOWN, (LPARAM)&fi) > -1) {
+        while (SendMessageA(hwndrtf, EM_FINDTEXTEX, FR_DOWN, (LPARAM)&fi) > -1) {
             tr.chrg.cpMin = fi.chrgText.cpMin;
             tr.chrg.cpMax = tr.chrg.cpMin + 18;
             trbuffer[0] = 0;

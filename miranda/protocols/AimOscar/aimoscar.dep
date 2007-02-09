@@ -2,7 +2,6 @@
 
 .\aim.cpp : \
 	"..\..\include\m_addcontact.h"\
-	"..\..\include\m_button.h"\
 	"..\..\include\m_clist.h"\
 	"..\..\include\m_clui.h"\
 	"..\..\include\m_database.h"\
@@ -33,6 +32,7 @@
 	".\flap.h"\
 	".\links.h"\
 	".\m_cluiframes.h"\
+	".\md5.h"\
 	".\packets.h"\
 	".\popup.h"\
 	".\proxy.h"\
@@ -40,19 +40,14 @@
 	".\services.h"\
 	".\snac.h"\
 	".\strl.h"\
-	".\theme.h"\
 	".\thread.h"\
 	".\tlv.h"\
 	".\utility.h"\
 	".\windows.h"\
-	{$(INCLUDE)}"SchemaDef.h"\
-	{$(INCLUDE)}"Tmschema.h"\
-	{$(INCLUDE)}"windows.h"\
 	
 
 .\client.cpp : \
 	"..\..\include\m_addcontact.h"\
-	"..\..\include\m_button.h"\
 	"..\..\include\m_clist.h"\
 	"..\..\include\m_clui.h"\
 	"..\..\include\m_database.h"\
@@ -83,6 +78,7 @@
 	".\flap.h"\
 	".\links.h"\
 	".\m_cluiframes.h"\
+	".\md5.h"\
 	".\packets.h"\
 	".\popup.h"\
 	".\proxy.h"\
@@ -90,19 +86,14 @@
 	".\services.h"\
 	".\snac.h"\
 	".\strl.h"\
-	".\theme.h"\
 	".\thread.h"\
 	".\tlv.h"\
 	".\utility.h"\
 	".\windows.h"\
-	{$(INCLUDE)}"SchemaDef.h"\
-	{$(INCLUDE)}"Tmschema.h"\
-	{$(INCLUDE)}"windows.h"\
 	
 
 .\connection.cpp : \
 	"..\..\include\m_addcontact.h"\
-	"..\..\include\m_button.h"\
 	"..\..\include\m_clist.h"\
 	"..\..\include\m_clui.h"\
 	"..\..\include\m_database.h"\
@@ -133,6 +124,7 @@
 	".\flap.h"\
 	".\links.h"\
 	".\m_cluiframes.h"\
+	".\md5.h"\
 	".\packets.h"\
 	".\popup.h"\
 	".\proxy.h"\
@@ -140,19 +132,14 @@
 	".\services.h"\
 	".\snac.h"\
 	".\strl.h"\
-	".\theme.h"\
 	".\thread.h"\
 	".\tlv.h"\
 	".\utility.h"\
 	".\windows.h"\
-	{$(INCLUDE)}"SchemaDef.h"\
-	{$(INCLUDE)}"Tmschema.h"\
-	{$(INCLUDE)}"windows.h"\
 	
 
 .\conv.cpp : \
 	"..\..\include\m_addcontact.h"\
-	"..\..\include\m_button.h"\
 	"..\..\include\m_clist.h"\
 	"..\..\include\m_clui.h"\
 	"..\..\include\m_database.h"\
@@ -183,6 +170,7 @@
 	".\flap.h"\
 	".\links.h"\
 	".\m_cluiframes.h"\
+	".\md5.h"\
 	".\packets.h"\
 	".\popup.h"\
 	".\proxy.h"\
@@ -190,19 +178,14 @@
 	".\services.h"\
 	".\snac.h"\
 	".\strl.h"\
-	".\theme.h"\
 	".\thread.h"\
 	".\tlv.h"\
 	".\utility.h"\
 	".\windows.h"\
-	{$(INCLUDE)}"SchemaDef.h"\
-	{$(INCLUDE)}"Tmschema.h"\
-	{$(INCLUDE)}"windows.h"\
 	
 
 .\direct_connect.cpp : \
 	"..\..\include\m_addcontact.h"\
-	"..\..\include\m_button.h"\
 	"..\..\include\m_clist.h"\
 	"..\..\include\m_clui.h"\
 	"..\..\include\m_database.h"\
@@ -233,6 +216,7 @@
 	".\flap.h"\
 	".\links.h"\
 	".\m_cluiframes.h"\
+	".\md5.h"\
 	".\packets.h"\
 	".\popup.h"\
 	".\proxy.h"\
@@ -240,19 +224,14 @@
 	".\services.h"\
 	".\snac.h"\
 	".\strl.h"\
-	".\theme.h"\
 	".\thread.h"\
 	".\tlv.h"\
 	".\utility.h"\
 	".\windows.h"\
-	{$(INCLUDE)}"SchemaDef.h"\
-	{$(INCLUDE)}"Tmschema.h"\
-	{$(INCLUDE)}"windows.h"\
 	
 
 .\error.cpp : \
 	"..\..\include\m_addcontact.h"\
-	"..\..\include\m_button.h"\
 	"..\..\include\m_clist.h"\
 	"..\..\include\m_clui.h"\
 	"..\..\include\m_database.h"\
@@ -283,6 +262,7 @@
 	".\flap.h"\
 	".\links.h"\
 	".\m_cluiframes.h"\
+	".\md5.h"\
 	".\packets.h"\
 	".\popup.h"\
 	".\proxy.h"\
@@ -290,19 +270,14 @@
 	".\services.h"\
 	".\snac.h"\
 	".\strl.h"\
-	".\theme.h"\
 	".\thread.h"\
 	".\tlv.h"\
 	".\utility.h"\
 	".\windows.h"\
-	{$(INCLUDE)}"SchemaDef.h"\
-	{$(INCLUDE)}"Tmschema.h"\
-	{$(INCLUDE)}"windows.h"\
 	
 
 .\file.cpp : \
 	"..\..\include\m_addcontact.h"\
-	"..\..\include\m_button.h"\
 	"..\..\include\m_clist.h"\
 	"..\..\include\m_clui.h"\
 	"..\..\include\m_database.h"\
@@ -333,6 +308,7 @@
 	".\flap.h"\
 	".\links.h"\
 	".\m_cluiframes.h"\
+	".\md5.h"\
 	".\packets.h"\
 	".\popup.h"\
 	".\proxy.h"\
@@ -340,69 +316,18 @@
 	".\services.h"\
 	".\snac.h"\
 	".\strl.h"\
-	".\theme.h"\
 	".\thread.h"\
 	".\tlv.h"\
 	".\utility.h"\
 	".\windows.h"\
-	{$(INCLUDE)}"SchemaDef.h"\
-	{$(INCLUDE)}"Tmschema.h"\
-	{$(INCLUDE)}"windows.h"\
 	
 
 .\flap.cpp : \
-	"..\..\include\m_addcontact.h"\
-	"..\..\include\m_button.h"\
-	"..\..\include\m_clist.h"\
-	"..\..\include\m_clui.h"\
-	"..\..\include\m_database.h"\
-	"..\..\include\m_idle.h"\
-	"..\..\include\m_langpack.h"\
-	"..\..\include\m_message.h"\
-	"..\..\include\m_netlib.h"\
-	"..\..\include\m_options.h"\
-	"..\..\include\m_plugins.h"\
-	"..\..\include\m_popup.h"\
-	"..\..\include\m_protocols.h"\
-	"..\..\include\m_protomod.h"\
-	"..\..\include\m_protosvc.h"\
-	"..\..\include\m_skin.h"\
-	"..\..\include\m_system.h"\
-	"..\..\include\m_userinfo.h"\
-	"..\..\include\m_utils.h"\
-	"..\..\include\newpluginapi.h"\
-	"..\..\include\statusmodes.h"\
-	".\aim.h"\
-	".\client.h"\
-	".\connection.h"\
-	".\conv.h"\
-	".\defines.h"\
-	".\direct_connect.h"\
-	".\error.h"\
-	".\file.h"\
 	".\flap.h"\
-	".\links.h"\
-	".\m_cluiframes.h"\
-	".\packets.h"\
-	".\popup.h"\
-	".\proxy.h"\
-	".\server.h"\
-	".\services.h"\
-	".\snac.h"\
-	".\strl.h"\
-	".\theme.h"\
-	".\thread.h"\
-	".\tlv.h"\
-	".\utility.h"\
-	".\windows.h"\
-	{$(INCLUDE)}"SchemaDef.h"\
-	{$(INCLUDE)}"Tmschema.h"\
-	{$(INCLUDE)}"windows.h"\
 	
 
 .\links.cpp : \
 	"..\..\include\m_addcontact.h"\
-	"..\..\include\m_button.h"\
 	"..\..\include\m_clist.h"\
 	"..\..\include\m_clui.h"\
 	"..\..\include\m_database.h"\
@@ -433,6 +358,7 @@
 	".\flap.h"\
 	".\links.h"\
 	".\m_cluiframes.h"\
+	".\md5.h"\
 	".\packets.h"\
 	".\popup.h"\
 	".\proxy.h"\
@@ -440,19 +366,18 @@
 	".\services.h"\
 	".\snac.h"\
 	".\strl.h"\
-	".\theme.h"\
 	".\thread.h"\
 	".\tlv.h"\
 	".\utility.h"\
 	".\windows.h"\
-	{$(INCLUDE)}"SchemaDef.h"\
-	{$(INCLUDE)}"Tmschema.h"\
-	{$(INCLUDE)}"windows.h"\
+	
+
+.\md5.cpp : \
+	".\md5.h"\
 	
 
 .\packets.cpp : \
 	"..\..\include\m_addcontact.h"\
-	"..\..\include\m_button.h"\
 	"..\..\include\m_clist.h"\
 	"..\..\include\m_clui.h"\
 	"..\..\include\m_database.h"\
@@ -483,6 +408,7 @@
 	".\flap.h"\
 	".\links.h"\
 	".\m_cluiframes.h"\
+	".\md5.h"\
 	".\packets.h"\
 	".\popup.h"\
 	".\proxy.h"\
@@ -490,19 +416,14 @@
 	".\services.h"\
 	".\snac.h"\
 	".\strl.h"\
-	".\theme.h"\
 	".\thread.h"\
 	".\tlv.h"\
 	".\utility.h"\
 	".\windows.h"\
-	{$(INCLUDE)}"SchemaDef.h"\
-	{$(INCLUDE)}"Tmschema.h"\
-	{$(INCLUDE)}"windows.h"\
 	
 
 .\popup.cpp : \
 	"..\..\include\m_addcontact.h"\
-	"..\..\include\m_button.h"\
 	"..\..\include\m_clist.h"\
 	"..\..\include\m_clui.h"\
 	"..\..\include\m_database.h"\
@@ -533,6 +454,7 @@
 	".\flap.h"\
 	".\links.h"\
 	".\m_cluiframes.h"\
+	".\md5.h"\
 	".\packets.h"\
 	".\popup.h"\
 	".\proxy.h"\
@@ -540,19 +462,14 @@
 	".\services.h"\
 	".\snac.h"\
 	".\strl.h"\
-	".\theme.h"\
 	".\thread.h"\
 	".\tlv.h"\
 	".\utility.h"\
 	".\windows.h"\
-	{$(INCLUDE)}"SchemaDef.h"\
-	{$(INCLUDE)}"Tmschema.h"\
-	{$(INCLUDE)}"windows.h"\
 	
 
 .\proxy.cpp : \
 	"..\..\include\m_addcontact.h"\
-	"..\..\include\m_button.h"\
 	"..\..\include\m_clist.h"\
 	"..\..\include\m_clui.h"\
 	"..\..\include\m_database.h"\
@@ -583,6 +500,7 @@
 	".\flap.h"\
 	".\links.h"\
 	".\m_cluiframes.h"\
+	".\md5.h"\
 	".\packets.h"\
 	".\popup.h"\
 	".\proxy.h"\
@@ -590,19 +508,14 @@
 	".\services.h"\
 	".\snac.h"\
 	".\strl.h"\
-	".\theme.h"\
 	".\thread.h"\
 	".\tlv.h"\
 	".\utility.h"\
 	".\windows.h"\
-	{$(INCLUDE)}"SchemaDef.h"\
-	{$(INCLUDE)}"Tmschema.h"\
-	{$(INCLUDE)}"windows.h"\
 	
 
 .\server.cpp : \
 	"..\..\include\m_addcontact.h"\
-	"..\..\include\m_button.h"\
 	"..\..\include\m_clist.h"\
 	"..\..\include\m_clui.h"\
 	"..\..\include\m_database.h"\
@@ -633,6 +546,7 @@
 	".\flap.h"\
 	".\links.h"\
 	".\m_cluiframes.h"\
+	".\md5.h"\
 	".\packets.h"\
 	".\popup.h"\
 	".\proxy.h"\
@@ -640,19 +554,14 @@
 	".\services.h"\
 	".\snac.h"\
 	".\strl.h"\
-	".\theme.h"\
 	".\thread.h"\
 	".\tlv.h"\
 	".\utility.h"\
 	".\windows.h"\
-	{$(INCLUDE)}"SchemaDef.h"\
-	{$(INCLUDE)}"Tmschema.h"\
-	{$(INCLUDE)}"windows.h"\
 	
 
 .\services.cpp : \
 	"..\..\include\m_addcontact.h"\
-	"..\..\include\m_button.h"\
 	"..\..\include\m_clist.h"\
 	"..\..\include\m_clui.h"\
 	"..\..\include\m_database.h"\
@@ -683,6 +592,7 @@
 	".\flap.h"\
 	".\links.h"\
 	".\m_cluiframes.h"\
+	".\md5.h"\
 	".\packets.h"\
 	".\popup.h"\
 	".\proxy.h"\
@@ -690,124 +600,22 @@
 	".\services.h"\
 	".\snac.h"\
 	".\strl.h"\
-	".\theme.h"\
 	".\thread.h"\
 	".\tlv.h"\
 	".\utility.h"\
 	".\windows.h"\
-	{$(INCLUDE)}"SchemaDef.h"\
-	{$(INCLUDE)}"Tmschema.h"\
-	{$(INCLUDE)}"windows.h"\
 	
 
 .\snac.cpp : \
-	"..\..\include\m_addcontact.h"\
-	"..\..\include\m_button.h"\
-	"..\..\include\m_clist.h"\
-	"..\..\include\m_clui.h"\
-	"..\..\include\m_database.h"\
-	"..\..\include\m_idle.h"\
-	"..\..\include\m_langpack.h"\
-	"..\..\include\m_message.h"\
-	"..\..\include\m_netlib.h"\
-	"..\..\include\m_options.h"\
-	"..\..\include\m_plugins.h"\
-	"..\..\include\m_popup.h"\
-	"..\..\include\m_protocols.h"\
-	"..\..\include\m_protomod.h"\
-	"..\..\include\m_protosvc.h"\
-	"..\..\include\m_skin.h"\
-	"..\..\include\m_system.h"\
-	"..\..\include\m_userinfo.h"\
-	"..\..\include\m_utils.h"\
-	"..\..\include\newpluginapi.h"\
-	"..\..\include\statusmodes.h"\
-	".\aim.h"\
-	".\client.h"\
-	".\connection.h"\
-	".\conv.h"\
-	".\defines.h"\
-	".\direct_connect.h"\
-	".\error.h"\
-	".\file.h"\
-	".\flap.h"\
-	".\links.h"\
-	".\m_cluiframes.h"\
-	".\packets.h"\
-	".\popup.h"\
-	".\proxy.h"\
-	".\server.h"\
-	".\services.h"\
 	".\snac.h"\
-	".\strl.h"\
-	".\theme.h"\
-	".\thread.h"\
-	".\tlv.h"\
-	".\utility.h"\
-	".\windows.h"\
-	{$(INCLUDE)}"SchemaDef.h"\
-	{$(INCLUDE)}"Tmschema.h"\
-	{$(INCLUDE)}"windows.h"\
 	
 
 .\strl.cpp : \
 	".\strl.h"\
-	{$(INCLUDE)}"windows.h"\
-	
-
-.\theme.cpp : \
-	"..\..\include\m_addcontact.h"\
-	"..\..\include\m_button.h"\
-	"..\..\include\m_clist.h"\
-	"..\..\include\m_clui.h"\
-	"..\..\include\m_database.h"\
-	"..\..\include\m_idle.h"\
-	"..\..\include\m_langpack.h"\
-	"..\..\include\m_message.h"\
-	"..\..\include\m_netlib.h"\
-	"..\..\include\m_options.h"\
-	"..\..\include\m_plugins.h"\
-	"..\..\include\m_popup.h"\
-	"..\..\include\m_protocols.h"\
-	"..\..\include\m_protomod.h"\
-	"..\..\include\m_protosvc.h"\
-	"..\..\include\m_skin.h"\
-	"..\..\include\m_system.h"\
-	"..\..\include\m_userinfo.h"\
-	"..\..\include\m_utils.h"\
-	"..\..\include\newpluginapi.h"\
-	"..\..\include\statusmodes.h"\
-	".\aim.h"\
-	".\client.h"\
-	".\connection.h"\
-	".\conv.h"\
-	".\defines.h"\
-	".\direct_connect.h"\
-	".\error.h"\
-	".\file.h"\
-	".\flap.h"\
-	".\links.h"\
-	".\m_cluiframes.h"\
-	".\packets.h"\
-	".\popup.h"\
-	".\proxy.h"\
-	".\server.h"\
-	".\services.h"\
-	".\snac.h"\
-	".\strl.h"\
-	".\theme.h"\
-	".\thread.h"\
-	".\tlv.h"\
-	".\utility.h"\
-	".\windows.h"\
-	{$(INCLUDE)}"SchemaDef.h"\
-	{$(INCLUDE)}"Tmschema.h"\
-	{$(INCLUDE)}"windows.h"\
 	
 
 .\thread.cpp : \
 	"..\..\include\m_addcontact.h"\
-	"..\..\include\m_button.h"\
 	"..\..\include\m_clist.h"\
 	"..\..\include\m_clui.h"\
 	"..\..\include\m_database.h"\
@@ -838,6 +646,7 @@
 	".\flap.h"\
 	".\links.h"\
 	".\m_cluiframes.h"\
+	".\md5.h"\
 	".\packets.h"\
 	".\popup.h"\
 	".\proxy.h"\
@@ -845,69 +654,18 @@
 	".\services.h"\
 	".\snac.h"\
 	".\strl.h"\
-	".\theme.h"\
 	".\thread.h"\
 	".\tlv.h"\
 	".\utility.h"\
 	".\windows.h"\
-	{$(INCLUDE)}"SchemaDef.h"\
-	{$(INCLUDE)}"Tmschema.h"\
-	{$(INCLUDE)}"windows.h"\
 	
 
 .\tlv.cpp : \
-	"..\..\include\m_addcontact.h"\
-	"..\..\include\m_button.h"\
-	"..\..\include\m_clist.h"\
-	"..\..\include\m_clui.h"\
-	"..\..\include\m_database.h"\
-	"..\..\include\m_idle.h"\
-	"..\..\include\m_langpack.h"\
-	"..\..\include\m_message.h"\
-	"..\..\include\m_netlib.h"\
-	"..\..\include\m_options.h"\
-	"..\..\include\m_plugins.h"\
-	"..\..\include\m_popup.h"\
-	"..\..\include\m_protocols.h"\
-	"..\..\include\m_protomod.h"\
-	"..\..\include\m_protosvc.h"\
-	"..\..\include\m_skin.h"\
-	"..\..\include\m_system.h"\
-	"..\..\include\m_userinfo.h"\
-	"..\..\include\m_utils.h"\
-	"..\..\include\newpluginapi.h"\
-	"..\..\include\statusmodes.h"\
-	".\aim.h"\
-	".\client.h"\
-	".\connection.h"\
-	".\conv.h"\
-	".\defines.h"\
-	".\direct_connect.h"\
-	".\error.h"\
-	".\file.h"\
-	".\flap.h"\
-	".\links.h"\
-	".\m_cluiframes.h"\
-	".\packets.h"\
-	".\popup.h"\
-	".\proxy.h"\
-	".\server.h"\
-	".\services.h"\
-	".\snac.h"\
-	".\strl.h"\
-	".\theme.h"\
-	".\thread.h"\
 	".\tlv.h"\
-	".\utility.h"\
-	".\windows.h"\
-	{$(INCLUDE)}"SchemaDef.h"\
-	{$(INCLUDE)}"Tmschema.h"\
-	{$(INCLUDE)}"windows.h"\
 	
 
 .\utility.cpp : \
 	"..\..\include\m_addcontact.h"\
-	"..\..\include\m_button.h"\
 	"..\..\include\m_clist.h"\
 	"..\..\include\m_clui.h"\
 	"..\..\include\m_database.h"\
@@ -938,6 +696,7 @@
 	".\flap.h"\
 	".\links.h"\
 	".\m_cluiframes.h"\
+	".\md5.h"\
 	".\packets.h"\
 	".\popup.h"\
 	".\proxy.h"\
@@ -945,19 +704,14 @@
 	".\services.h"\
 	".\snac.h"\
 	".\strl.h"\
-	".\theme.h"\
 	".\thread.h"\
 	".\tlv.h"\
 	".\utility.h"\
 	".\windows.h"\
-	{$(INCLUDE)}"SchemaDef.h"\
-	{$(INCLUDE)}"Tmschema.h"\
-	{$(INCLUDE)}"windows.h"\
 	
 
 .\windows.cpp : \
 	"..\..\include\m_addcontact.h"\
-	"..\..\include\m_button.h"\
 	"..\..\include\m_clist.h"\
 	"..\..\include\m_clui.h"\
 	"..\..\include\m_database.h"\
@@ -988,6 +742,7 @@
 	".\flap.h"\
 	".\links.h"\
 	".\m_cluiframes.h"\
+	".\md5.h"\
 	".\packets.h"\
 	".\popup.h"\
 	".\proxy.h"\
@@ -995,14 +750,10 @@
 	".\services.h"\
 	".\snac.h"\
 	".\strl.h"\
-	".\theme.h"\
 	".\thread.h"\
 	".\tlv.h"\
 	".\utility.h"\
 	".\windows.h"\
-	{$(INCLUDE)}"SchemaDef.h"\
-	{$(INCLUDE)}"Tmschema.h"\
-	{$(INCLUDE)}"windows.h"\
 	
 
 .\aim.rc : \
@@ -1010,27 +761,12 @@
 	".\icons\admin.ico"\
 	".\icons\aol.ico"\
 	".\icons\away.ico"\
-	".\icons\backgroundcolor.ico"\
-	".\icons\bold.ico"\
 	".\icons\bot.ico"\
 	".\icons\confirmed.ico"\
-	".\icons\foregroundcolor.ico"\
 	".\icons\hiptop.ico"\
 	".\icons\icq.ico"\
 	".\icons\idle.ico"\
-	".\icons\inbox.ico"\
-	".\icons\italic.ico"\
-	".\icons\nbold.ico"\
-	".\icons\nitalic.ico"\
-	".\icons\nnormalscript.ico"\
-	".\icons\normalscript.ico"\
-	".\icons\nsubscript.ico"\
-	".\icons\nsuperscript.ico"\
-	".\icons\nunderline.ico"\
 	".\icons\oscar.ico"\
 	".\icons\profile.ico"\
-	".\icons\subscript.ico"\
-	".\icons\superscript.ico"\
 	".\icons\unconfirmed.ico"\
-	".\icons\underline.ico"\
 	

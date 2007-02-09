@@ -181,6 +181,11 @@ SOURCE=.\CLUIFrames\m_cluiframes.h
 # End Source File
 # Begin Source File
 
+SOURCE=.\CLUIFrames\protocolorder.c
+# ADD CPP /Yu"../commonheaders.h"
+# End Source File
+# Begin Source File
+
 SOURCE=.\CLUIFrames\statusbar.c
 # ADD CPP /Yu"../commonheaders.h"
 # End Source File
@@ -516,6 +521,14 @@ SOURCE=.\forkthread.c
 # End Source File
 # Begin Source File
 
+SOURCE=.\genmenu.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\genmenuopt.c
+# End Source File
+# Begin Source File
+
 SOURCE=.\groupmenu.c
 # End Source File
 # Begin Source File
@@ -558,6 +571,10 @@ SOURCE=.\keyboard.c
 !ENDIF 
 
 # End Source File
+# Begin Source File
+
+SOURCE=.\movetogroup.c
+# End Source File
 # End Group
 # Begin Group "Header Files"
 
@@ -581,6 +598,14 @@ SOURCE=.\commonheaders.h
 # Begin Source File
 
 SOURCE=.\forkthread.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\genmenu.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\m_genmenu.h
 # End Source File
 # Begin Source File
 

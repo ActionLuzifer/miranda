@@ -4,8 +4,8 @@
 //
 // Copyright © 2000,2001 Richard Hughes, Roland Rabien, Tristan Van de Vreede
 // Copyright © 2001,2002 Jon Keating, Richard Hughes
-// Copyright © 2002,2003,2004 Martin  berg, Sam Kothari, Robert Rainwater
-// Copyright © 2004,2005,2006,2007 Joe Kucera
+// Copyright © 2002,2003,2004 Martin Öberg, Sam Kothari, Robert Rainwater
+// Copyright © 2004,2005,2006 Joe Kucera
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -23,7 +23,7 @@
 //
 // -----------------------------------------------------------------------------
 //
-// File name      : $Url: /cvsroot/miranda/miranda/protocols/IcqOscarJ/fam_01service.c,v $
+// File name      : $Source: /cvsroot/miranda/miranda/protocols/IcqOscarJ/fam_01service.c,v $
 // Revision       : $Revision$
 // Last change on : $Date$
 // Last change by : $Author$
@@ -39,8 +39,11 @@
 
 extern int gbIdleAllow;
 extern int icqGoingOnlineStatus;
+extern BYTE gbOverRate;
 extern int pendingAvatarsStart;
+extern DWORD dwLocalInternalIP;
 extern WORD wListenPort;
+extern DWORD dwLocalDirectConnCookie;
 extern CRITICAL_SECTION modeMsgsMutex;
 
 extern const capstr capXStatus[];
@@ -100,9 +103,7 @@ void handleServiceFam(unsigned char* pBuffer, WORD wBufferLength, snac_header* p
     NetLog_Server("Server sent Rate Info");
     NetLog_Server("Sending Rate Info Ack");
 #endif
-    /* init rates management */
-    gRates = ratesCreate(pBuffer, wBufferLength);
-    /* ack rate levels */
+    /* Don't really care about this now, just send the ack */
     serverPacketInit(&packet, 20);
     packFNACHeader(&packet, ICQ_SERVICE_FAMILY, ICQ_CLIENT_RATE_ACK);
     packDWord(&packet, 0x00010002);
@@ -283,9 +284,6 @@ void handleServiceFam(unsigned char* pBuffer, WORD wBufferLength, snac_header* p
       BYTE bUinLen;
       oscar_tlv_chain *chain;
 
-#ifdef _DEBUG
-      NetLog_Server("Received self info");
-#endif
       unpackByte(&pBuffer, &bUinLen);
       pBuffer += bUinLen;
       pBuffer += 4;      /* warning level & user class */
@@ -334,30 +332,23 @@ void handleServiceFam(unsigned char* pBuffer, WORD wBufferLength, snac_header* p
     {
       WORD wStatus;
       WORD wClass;
-      DWORD dwLevel;
-      // We now have global rate management, although controlled are only some
-      // areas. This should not arrive in most cases. If it does, update our
-      // local rate levels & issue broadcast.
+      // This is a horrible simplification, but the only
+      // area where we have rate control is in the user info
+      // auto request part.
       unpackWord(&pBuffer, &wStatus);
       unpackWord(&pBuffer, &wClass);
-      pBuffer += 20;
-      unpackDWord(&pBuffer, &dwLevel);
-      EnterCriticalSection(&ratesMutex);
-      ratesUpdateLevel(gRates, wClass, dwLevel);
-      LeaveCriticalSection(&ratesMutex);
 
       if (wStatus == 2 || wStatus == 3)
       { // this is only the simplest solution, needs rate management to every section
         ICQBroadcastAck(NULL, ICQACKTYPE_RATEWARNING, ACKRESULT_STATUS, (HANDLE)wClass, wStatus);
-        if (wStatus == 2)
-          NetLog_Server("Rates #%u: Alert", wClass);
-        else
-          NetLog_Server("Rates #%u: Limit", wClass);
+        gbOverRate = 1; // block user requests (user info, status messages, etc.)
+        icq_PauseUserLookup(); // pause auto-info update thread
       }
       else if (wStatus == 4)
       {
         ICQBroadcastAck(NULL, ICQACKTYPE_RATEWARNING, ACKRESULT_STATUS, (HANDLE)wClass, wStatus);
-        NetLog_Server("Rates #%u: Clear", wClass);
+        gbOverRate = 0; // enable user requests
+        icq_EnableUserLookup(TRUE);
       }
     }
 
@@ -416,7 +407,7 @@ void handleServiceFam(unsigned char* pBuffer, WORD wBufferLength, snac_header* p
       nloc.szHost = pServer; 
       nloc.wPort = wPort;
 
-      hConnection = NetLib_OpenConnection(ghServerNetlibUser, wFamily == ICQ_AVATAR_FAMILY ? "Avatar " : NULL, &nloc);
+      hConnection = NetLib_OpenConnection(ghServerNetlibUser, &nloc);
       
       if (hConnection == NULL)
       {
@@ -440,27 +431,6 @@ void handleServiceFam(unsigned char* pBuffer, WORD wBufferLength, snac_header* p
 
     if ((wBufferLength >= 0x14) && gbAvatarsEnabled)
     {
-      if (!info->bMyAvatarInited) // signal the server after login
-      { // this refreshes avatar state - it used to work automatically, but now it does not
-        if (ICQGetContactSettingByte(NULL, "ForceOurAvatar", 0))
-        { // keep our avatar
-          char* file = loadMyAvatarFileName();
-
-          IcqSetMyAvatar(0, (LPARAM)file);
-          SAFE_FREE(&file);
-        }
-        else // only change avatar hash to the same one
-        {
-          char hash[0x14];
-
-          memcpy(hash, pBuffer, 0x14);
-          hash[2] = 1; // update image status
-          updateServAvatarHash(hash, 0x14);
-        }
-        info->bMyAvatarInited = TRUE;
-        break;
-      }
-
       switch (pBuffer[2])
       {
         case 1: // our avatar is on the server
@@ -504,7 +474,7 @@ void handleServiceFam(unsigned char* pBuffer, WORD wBufferLength, snac_header* p
                 NetLog_Server("Our avatar is different, set our new hash.");
 
                 pHash[0] = 0;
-                pHash[1] = dwPaFormat == PA_FORMAT_XML ? AVATAR_HASH_FLASH : AVATAR_HASH_STATIC;
+                pHash[1] = dwPaFormat == PA_FORMAT_XML ? 8 : 1;
                 pHash[2] = 1; // state of the hash
                 pHash[3] = 0x10; // len of the hash
                 memcpy(pHash + 4, hash, 0x10);
@@ -565,7 +535,7 @@ void handleServiceFam(unsigned char* pBuffer, WORD wBufferLength, snac_header* p
 
             if (cbFileSize != 0)
             {
-              SetAvatarData(NULL, (WORD)(dwPaFormat == PA_FORMAT_XML ? AVATAR_HASH_FLASH : AVATAR_HASH_STATIC), ppMap, cbFileSize);
+              SetAvatarData(NULL, (WORD)(dwPaFormat == PA_FORMAT_XML ? 8 : 1), ppMap, cbFileSize);
               LinkContactPhotoToFile(NULL, file);
             }
 
@@ -581,7 +551,7 @@ void handleServiceFam(unsigned char* pBuffer, WORD wBufferLength, snac_header* p
             NetLog_Server("Our file is different, set our new hash.");
 
             pHash[0] = 0;
-            pHash[1] = dwPaFormat == PA_FORMAT_XML ? AVATAR_HASH_FLASH : AVATAR_HASH_STATIC;
+            pHash[1] = dwPaFormat == PA_FORMAT_XML ? 8 : 1;
             pHash[2] = 1; // state of the hash
             pHash[3] = 0x10; // len of the hash
             memcpy(pHash + 4, hash, 0x10);
@@ -631,8 +601,8 @@ void handleServiceFam(unsigned char* pBuffer, WORD wBufferLength, snac_header* p
 
 char* calcMD5Hash(char* szFile)
 {
-  mir_md5_state_t state;
-  mir_md5_byte_t digest[16];
+  md5_state_t state;
+  md5_byte_t digest[16];
 
   if (szFile)
   {
@@ -649,9 +619,9 @@ char* calcMD5Hash(char* szFile)
     res = (char*)SAFE_MALLOC(16*sizeof(char));
     if (cbFileSize != 0 && res)
     {
-      mir_md5_init(&state);
-      mir_md5_append(&state, (const mir_md5_byte_t *)ppMap, cbFileSize);
-      mir_md5_finish(&state, digest);
+      md5_init(&state);
+      md5_append(&state, (const md5_byte_t *)ppMap, cbFileSize);
+      md5_finish(&state, digest);
       memcpy(res, digest, 16);
     }
 
@@ -707,7 +677,7 @@ static char* buildUinList(int subtype, WORD wMaxLen, HANDLE* hContactResume)
         add = ICQGetContactSettingByte(hContact, "TemporaryVisible", 0);
         // clear temporary flag
         // Here we assume that all temporary contacts will be in one packet
-        ICQWriteContactSettingByte(hContact, "TemporaryVisible", 0);
+        ICQDeleteContactSetting(hContact, "TemporaryVisible");
         break;
 
       default:
@@ -819,9 +789,6 @@ void setUserInfo()
 #ifdef DBG_CAPXTRAZ
   wAdditionalData += 16;
 #endif
-#ifdef DBG_OSCARFT
-  wAdditionalData += 16;
-#endif
   if (gbAvatarsEnabled)
     wAdditionalData += 16;
   if (bXStatus)
@@ -876,12 +843,7 @@ void setUserInfo()
   if (gbAvatarsEnabled)
   {
     packNewCap(&packet, 0x134C);    // CAP_DEVILS
-  }
-#ifdef DBG_OSCARFT
-  {
-    packNewCap(&packet, 0x1343);    // CAP_AIM_FILE
-  } // Broadcasts the capability to receive Oscar File Transfers
-#endif
+  } 
   if (gbAimEnabled)
   {
     packNewCap(&packet, 0x134D);    // Tells the server we can speak to AIM
@@ -891,7 +853,7 @@ void setUserInfo()
     packBuffer(&packet, capXStatus[bXStatus-1], 0x10);
   }
 
-  packNewCap(&packet, 0x1344);      // AIM_CAPS_ICQDIRECT
+  packNewCap(&packet, 0x1344);      // AIM_CAPS_ICQ
 
   packDWord(&packet, 0x4D697261);   // Miranda Signature
   packDWord(&packet, 0x6E64614D);
@@ -933,8 +895,6 @@ void handleServUINSettings(int nPort, serverthread_info *info)
   // SNAC 1,1E: Set status
   {
     WORD wStatus;
-    DWORD dwDirectCookie = rand() ^ (rand() << 16);
-
 
     // Get status
     wStatus = MirandaStatusToIcq(icqGoingOnlineStatus);
@@ -950,7 +910,7 @@ void handleServUINSettings(int nPort, serverthread_info *info)
     packDWord(&packet, nPort);
     packByte(&packet, DC_TYPE);                 // TCP/FLAG firewall settings
     packWord(&packet, ICQ_VERSION);
-    packDWord(&packet, dwDirectCookie);         // DC Cookie
+    packDWord(&packet, dwLocalDirectConnCookie);// DC Cookie
     packDWord(&packet, WEBFRONTPORT);           // Web front port
     packDWord(&packet, CLIENTFEATURES);         // Client features
     packDWord(&packet, 0xffffffff);             // Abused timestamp
@@ -1007,9 +967,6 @@ void handleServUINSettings(int nPort, serverthread_info *info)
   // login sequence is complete enter logged-in mode
   info->bLoggedIn = 1;
 
-  // enable auto info-update routine
-  icq_EnableUserLookup(TRUE);
-
   if (!info->isMigrating)
   { /* Get Offline Messages Reqeust */
     serverPacketInit(&packet, 24);
@@ -1028,7 +985,7 @@ void handleServUINSettings(int nPort, serverthread_info *info)
     icq_RescanInfoUpdate();
 
     // Start sending Keep-Alive packets
-    StartKeepAlive(info);
+    StartKeepAlive();
   
     if (gbAvatarsEnabled)
     { // Send SNAC 1,4 - request avatar family 0x10 connection

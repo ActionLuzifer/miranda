@@ -43,22 +43,24 @@ CLEAN :
 	-@erase "$(INTDIR)\crypt.obj"
 	-@erase "$(INTDIR)\file_transfer.obj"
 	-@erase "$(INTDIR)\http_gateway.obj"
-	-@erase "$(INTDIR)\icolib.obj"
 	-@erase "$(INTDIR)\im.obj"
 	-@erase "$(INTDIR)\libyahoo2.obj"
 	-@erase "$(INTDIR)\main.obj"
+	-@erase "$(INTDIR)\md5.obj"
 	-@erase "$(INTDIR)\options.obj"
+	-@erase "$(INTDIR)\pthread.obj"
 	-@erase "$(INTDIR)\search.obj"
 	-@erase "$(INTDIR)\server.obj"
 	-@erase "$(INTDIR)\services.obj"
 	-@erase "$(INTDIR)\sha.obj"
+	-@erase "$(INTDIR)\utf8.obj"
 	-@erase "$(INTDIR)\util.obj"
 	-@erase "$(INTDIR)\vc60.idb"
 	-@erase "$(INTDIR)\vc60.pdb"
 	-@erase "$(INTDIR)\webcam.obj"
 	-@erase "$(INTDIR)\yahoo.obj"
 	-@erase "$(INTDIR)\Yahoo.res"
-	-@erase "$(INTDIR)\yahoo_auth.obj"
+	-@erase "$(INTDIR)\yahoo_fn.obj"
 	-@erase "$(INTDIR)\yahoo_httplib.obj"
 	-@erase "$(INTDIR)\yahoo_list.obj"
 	-@erase "$(INTDIR)\yahoo_util.obj"
@@ -83,26 +85,28 @@ LINK32_FLAGS=kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi3
 LINK32_OBJS= \
 	"$(INTDIR)\crypt.obj" \
 	"$(INTDIR)\libyahoo2.obj" \
+	"$(INTDIR)\md5.obj" \
 	"$(INTDIR)\sha.obj" \
-	"$(INTDIR)\yahoo_auth.obj" \
+	"$(INTDIR)\yahoo_fn.obj" \
 	"$(INTDIR)\yahoo_httplib.obj" \
 	"$(INTDIR)\yahoo_list.obj" \
 	"$(INTDIR)\yahoo_util.obj" \
 	"$(INTDIR)\avatar.obj" \
+	"$(INTDIR)\main.obj" \
+	"$(INTDIR)\options.obj" \
+	"$(INTDIR)\pthread.obj" \
+	"$(INTDIR)\server.obj" \
+	"$(INTDIR)\services.obj" \
+	"$(INTDIR)\utf8.obj" \
+	"$(INTDIR)\util.obj" \
+	"$(INTDIR)\yahoo.obj" \
+	"$(INTDIR)\Yahoo.res" \
+	"$(INTDIR)\im.obj" \
 	"$(INTDIR)\chat.obj" \
 	"$(INTDIR)\file_transfer.obj" \
 	"$(INTDIR)\http_gateway.obj" \
-	"$(INTDIR)\icolib.obj" \
-	"$(INTDIR)\im.obj" \
-	"$(INTDIR)\main.obj" \
-	"$(INTDIR)\options.obj" \
-	"$(INTDIR)\search.obj" \
-	"$(INTDIR)\server.obj" \
-	"$(INTDIR)\services.obj" \
-	"$(INTDIR)\util.obj" \
 	"$(INTDIR)\webcam.obj" \
-	"$(INTDIR)\yahoo.obj" \
-	"$(INTDIR)\Yahoo.res"
+	"$(INTDIR)\search.obj"
 
 "..\..\Bin\Release\Plugins\Yahoo.dll" : "$(OUTDIR)" $(DEF_FILE) $(LINK32_OBJS)
     $(LINK32) @<<
@@ -123,22 +127,24 @@ CLEAN :
 	-@erase "$(INTDIR)\crypt.obj"
 	-@erase "$(INTDIR)\file_transfer.obj"
 	-@erase "$(INTDIR)\http_gateway.obj"
-	-@erase "$(INTDIR)\icolib.obj"
 	-@erase "$(INTDIR)\im.obj"
 	-@erase "$(INTDIR)\libyahoo2.obj"
 	-@erase "$(INTDIR)\main.obj"
+	-@erase "$(INTDIR)\md5.obj"
 	-@erase "$(INTDIR)\options.obj"
+	-@erase "$(INTDIR)\pthread.obj"
 	-@erase "$(INTDIR)\search.obj"
 	-@erase "$(INTDIR)\server.obj"
 	-@erase "$(INTDIR)\services.obj"
 	-@erase "$(INTDIR)\sha.obj"
+	-@erase "$(INTDIR)\utf8.obj"
 	-@erase "$(INTDIR)\util.obj"
 	-@erase "$(INTDIR)\vc60.idb"
 	-@erase "$(INTDIR)\vc60.pdb"
 	-@erase "$(INTDIR)\webcam.obj"
 	-@erase "$(INTDIR)\yahoo.obj"
 	-@erase "$(INTDIR)\Yahoo.res"
-	-@erase "$(INTDIR)\yahoo_auth.obj"
+	-@erase "$(INTDIR)\yahoo_fn.obj"
 	-@erase "$(INTDIR)\yahoo_httplib.obj"
 	-@erase "$(INTDIR)\yahoo_list.obj"
 	-@erase "$(INTDIR)\yahoo_util.obj"
@@ -163,26 +169,28 @@ LINK32_FLAGS=kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi3
 LINK32_OBJS= \
 	"$(INTDIR)\crypt.obj" \
 	"$(INTDIR)\libyahoo2.obj" \
+	"$(INTDIR)\md5.obj" \
 	"$(INTDIR)\sha.obj" \
-	"$(INTDIR)\yahoo_auth.obj" \
+	"$(INTDIR)\yahoo_fn.obj" \
 	"$(INTDIR)\yahoo_httplib.obj" \
 	"$(INTDIR)\yahoo_list.obj" \
 	"$(INTDIR)\yahoo_util.obj" \
 	"$(INTDIR)\avatar.obj" \
+	"$(INTDIR)\main.obj" \
+	"$(INTDIR)\options.obj" \
+	"$(INTDIR)\pthread.obj" \
+	"$(INTDIR)\server.obj" \
+	"$(INTDIR)\services.obj" \
+	"$(INTDIR)\utf8.obj" \
+	"$(INTDIR)\util.obj" \
+	"$(INTDIR)\yahoo.obj" \
+	"$(INTDIR)\Yahoo.res" \
+	"$(INTDIR)\im.obj" \
 	"$(INTDIR)\chat.obj" \
 	"$(INTDIR)\file_transfer.obj" \
 	"$(INTDIR)\http_gateway.obj" \
-	"$(INTDIR)\icolib.obj" \
-	"$(INTDIR)\im.obj" \
-	"$(INTDIR)\main.obj" \
-	"$(INTDIR)\options.obj" \
-	"$(INTDIR)\search.obj" \
-	"$(INTDIR)\server.obj" \
-	"$(INTDIR)\services.obj" \
-	"$(INTDIR)\util.obj" \
 	"$(INTDIR)\webcam.obj" \
-	"$(INTDIR)\yahoo.obj" \
-	"$(INTDIR)\Yahoo.res"
+	"$(INTDIR)\search.obj"
 
 "..\..\Bin\Debug\Plugins\Yahoo.dll" : "$(OUTDIR)" $(DEF_FILE) $(LINK32_OBJS)
     $(LINK32) @<<
@@ -244,15 +252,21 @@ SOURCE=.\libyahoo2\libyahoo2.c
 	$(CPP) $(CPP_PROJ) $(SOURCE)
 
 
+SOURCE=.\libyahoo2\md5.c
+
+"$(INTDIR)\md5.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
 SOURCE=.\libyahoo2\sha.c
 
 "$(INTDIR)\sha.obj" : $(SOURCE) "$(INTDIR)"
 	$(CPP) $(CPP_PROJ) $(SOURCE)
 
 
-SOURCE=.\libyahoo2\yahoo_auth.c
+SOURCE=.\libyahoo2\yahoo_fn.c
 
-"$(INTDIR)\yahoo_auth.obj" : $(SOURCE) "$(INTDIR)"
+"$(INTDIR)\yahoo_fn.obj" : $(SOURCE) "$(INTDIR)"
 	$(CPP) $(CPP_PROJ) $(SOURCE)
 
 
@@ -294,11 +308,6 @@ SOURCE=.\http_gateway.c
 "$(INTDIR)\http_gateway.obj" : $(SOURCE) "$(INTDIR)"
 
 
-SOURCE=.\icolib.c
-
-"$(INTDIR)\icolib.obj" : $(SOURCE) "$(INTDIR)"
-
-
 SOURCE=.\im.c
 
 "$(INTDIR)\im.obj" : $(SOURCE) "$(INTDIR)"
@@ -314,6 +323,11 @@ SOURCE=.\options.c
 "$(INTDIR)\options.obj" : $(SOURCE) "$(INTDIR)"
 
 
+SOURCE=.\pthread.c
+
+"$(INTDIR)\pthread.obj" : $(SOURCE) "$(INTDIR)"
+
+
 SOURCE=.\search.c
 
 "$(INTDIR)\search.obj" : $(SOURCE) "$(INTDIR)"
@@ -327,6 +341,11 @@ SOURCE=.\server.c
 SOURCE=.\services.c
 
 "$(INTDIR)\services.obj" : $(SOURCE) "$(INTDIR)"
+
+
+SOURCE=.\utf8.c
+
+"$(INTDIR)\utf8.obj" : $(SOURCE) "$(INTDIR)"
 
 
 SOURCE=.\util.c

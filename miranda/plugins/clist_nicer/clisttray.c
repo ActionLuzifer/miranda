@@ -32,6 +32,7 @@ UNICODE done
 static VOID CALLBACK TrayCycleTimerProc(HWND hwnd, UINT message, UINT idEvent, DWORD dwTime);
 
 extern HIMAGELIST hCListImages;
+extern int currentStatusMenuItem, currentDesiredStatusMode;
 
 extern struct CluiData g_CluiData;
 
@@ -90,12 +91,12 @@ static TCHAR* TrayIconMakeTooltip(const TCHAR *szPrefix, const char *szProto)
 		int count, netProtoCount, i;
 		CallService(MS_PROTO_ENUMPROTOCOLS, (WPARAM) &count, (LPARAM) &protos);
 		for (i = 0,netProtoCount = 0; i < count; i++) {
-			if (protos[i]->type == PROTOTYPE_PROTOCOL && pcli->pfnGetProtocolVisibility(protos[i]->szName))
+			if (protos[i]->type == PROTOTYPE_PROTOCOL && GetProtocolVisibility(protos[i]->szName))
 				netProtoCount++;
 		}
 		if (netProtoCount == 1)
 			for (i = 0; i < count; i++) {
-				if (protos[i]->type == PROTOTYPE_PROTOCOL && pcli->pfnGetProtocolVisibility(protos[i]->szName))
+				if (protos[i]->type == PROTOTYPE_PROTOCOL && GetProtocolVisibility(protos[i]->szName))
 					return TrayIconMakeTooltip(szPrefix, protos[i]->szName);
 			}
 			if (szPrefix && szPrefix[0]) {
@@ -106,7 +107,7 @@ static TCHAR* TrayIconMakeTooltip(const TCHAR *szPrefix, const char *szProto)
 				szTip[0] = '\0';
 			szTip[tipSize - 1] = '\0';
 			for (i = count - 1; i >= 0; i--) {
-				if (protos[i]->type != PROTOTYPE_PROTOCOL || !pcli->pfnGetProtocolVisibility(protos[i]->szName))
+				if (protos[i]->type != PROTOTYPE_PROTOCOL || !GetProtocolVisibility(protos[i]->szName))
 					continue;
 				CallProtoService(protos[i]->szName, PS_GETNAME, sizeof(szProtoName), (LPARAM) szProtoName);
 				szStatus = pcli->pfnGetStatusModeDescription(CallProtoService(protos[i]->szName, PS_GETSTATUS, 0, 0), 0);
@@ -244,7 +245,7 @@ static int TrayIconInit(HWND hwnd)
 	}
 	CallService(MS_PROTO_ENUMPROTOCOLS, (WPARAM) &count, (LPARAM) &protos);
 	for (i = 0,netProtoCount = 0; i < count; i++) {
-		if (protos[i]->type != PROTOTYPE_PROTOCOL || !pcli->pfnGetProtocolVisibility(protos[i]->szName))
+		if (protos[i]->type != PROTOTYPE_PROTOCOL || !GetProtocolVisibility(protos[i]->szName))
 			continue;
 
 		cycleStep = i;
@@ -261,7 +262,7 @@ static int TrayIconInit(HWND hwnd)
 	if (DBGetContactSettingByte(NULL, "CList", "TrayIcon", SETTING_TRAYICON_DEFAULT) == SETTING_TRAYICON_MULTI && (averageMode <= 0 || DBGetContactSettingByte(NULL, "CList", "AlwaysMulti", SETTING_ALWAYSMULTI_DEFAULT))) {
 		int i;
 		for (i = count - 1; i >= 0; i--) {
-			if (!pcli->pfnGetProtocolVisibility(protos[i]->szName))
+			if (!GetProtocolVisibility(protos[i]->szName))
 				continue;
 			if (protos[i]->type == PROTOTYPE_PROTOCOL)
 				TrayIconAdd(hwnd, protos[i]->szName, NULL, CallProtoService(protos[i]->szName, PS_GETSTATUS, 0, 0));
@@ -311,7 +312,7 @@ int TrayIconUpdate(HICON hNewIcon, const TCHAR *szNewTip, const char *szPreferre
 	char szProto = 0;
 
 	nid.cbSize = ( dviShell.dwMajorVersion >= 5 ) ? sizeof(nid) : NOTIFYICONDATA_V1_SIZE;
-	nid.hWnd = pcli->hwndContactList;
+	nid.hWnd = (HWND) CallService(MS_CLUI_GETHWND, 0, 0);
 	nid.uFlags = NIF_ICON | NIF_TIP;
 	nid.hIcon = hNewIcon;           
 
@@ -330,7 +331,7 @@ int TrayIconUpdate(HICON hNewIcon, const TCHAR *szNewTip, const char *szPreferre
 	}
 	//if there wasn't a suitable icon, change all the icons
 
-	if(szPreferredProto != NULL && !pcli->pfnGetProtocolVisibility((char *)szPreferredProto) && DBGetContactSettingByte(NULL, "CList", "TrayIcon", SETTING_TRAYICON_DEFAULT) == SETTING_TRAYICON_MULTI)
+	if(szPreferredProto != NULL && !GetProtocolVisibility((char *)szPreferredProto) && DBGetContactSettingByte(NULL, "CList", "TrayIcon", SETTING_TRAYICON_DEFAULT) == SETTING_TRAYICON_MULTI)
 		return -1;
 
 	for (i = 0; i < trayIconCount; i++) {
@@ -350,7 +351,7 @@ int TrayIconSetBaseInfo(HICON hIcon, const char *szPreferredProto)
 {
 	int i;
 
-	if(szPreferredProto != (const char *)NULL && !pcli->pfnGetProtocolVisibility((char *)szPreferredProto))
+	if(szPreferredProto != (const char *)NULL && !GetProtocolVisibility((char *)szPreferredProto))
 		return -1;
 
 	for (i = 0; i < trayIconCount; i++) {
@@ -390,7 +391,7 @@ static VOID CALLBACK TrayCycleTimerProc(HWND hwnd, UINT message, UINT idEvent, D
 	for (cycleStep++; ; cycleStep++) {
 		if (cycleStep >= count)
 			cycleStep = 0;
-		if (protos[cycleStep]->type == PROTOTYPE_PROTOCOL && pcli->pfnGetProtocolVisibility(protos[cycleStep]->szName))
+		if (protos[cycleStep]->type == PROTOTYPE_PROTOCOL && GetProtocolVisibility(protos[cycleStep]->szName))
 			break;
 	}
 	DestroyIcon(trayIcon[0].hBaseIcon);
@@ -404,14 +405,14 @@ void TrayIconUpdateBase(const char *szChangedProto)
 	int i,count,netProtoCount,changed = -1;
 	PROTOCOLDESCRIPTOR **protos;
 	int averageMode = 0;
-	HWND hwnd = pcli->hwndContactList;
+	HWND hwnd = (HWND) CallService(MS_CLUI_GETHWND, 0, 0);
 
 	if (cycleTimerId) {
 		KillTimer(NULL, cycleTimerId); cycleTimerId = 0;
 	}
 	CallService(MS_PROTO_ENUMPROTOCOLS, (WPARAM) &count, (LPARAM) &protos);
 	for (i = 0,netProtoCount = 0; i < count; i++) {
-		if (protos[i]->type != PROTOTYPE_PROTOCOL || !pcli->pfnGetProtocolVisibility(protos[i]->szName))
+		if (protos[i]->type != PROTOTYPE_PROTOCOL || !GetProtocolVisibility(protos[i]->szName))
 			continue;
 		netProtoCount++;
 		if (!lstrcmpA(szChangedProto, protos[i]->szName))
@@ -541,7 +542,7 @@ void TrayIconSetToBase(char *szPreferredProto)
 
 void TrayIconIconsChanged(void)
 {
-	HWND hwnd = pcli->hwndContactList;
+	HWND hwnd = (HWND) CallService(MS_CLUI_GETHWND, 0, 0);
 	TrayIconDestroy(hwnd);
 	TrayIconInit(hwnd);
 }
@@ -629,7 +630,7 @@ int CListTrayNotify(MIRANDASYSTRAYNOTIFY *msn)
 		if (trayIcon) {
 			NOTIFYICONDATAA nid = { 0 };
 			nid.cbSize = sizeof(nid); // : NOTIFYICONDATAA_V1_SIZE;
-			nid.hWnd = pcli->hwndContactList;
+			nid.hWnd = (HWND) CallService(MS_CLUI_GETHWND, 0, 0);
 			if (msn->szProto) {
 				int j;
 				for (j = 0; j < trayIconCount; j++) {
