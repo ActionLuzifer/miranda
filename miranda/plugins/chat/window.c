@@ -83,29 +83,29 @@ static void	InitButtons(HWND hwndDlg, SESSION_INFO* si)
 {
 	MODULEINFO * pInfo = MM_FindModule(si->pszModule);
 
-	SendDlgItemMessage( hwndDlg, IDC_SMILEY,       BM_SETIMAGE, IMAGE_ICON, (LPARAM)LoadIconEx( "smiley"    ));
-	SendDlgItemMessage( hwndDlg, IDC_BOLD,         BM_SETIMAGE, IMAGE_ICON, (LPARAM)LoadIconEx( "bold"      ));
-	SendDlgItemMessage( hwndDlg, IDC_ITALICS,      BM_SETIMAGE, IMAGE_ICON, (LPARAM)LoadIconEx( "italics"   ));
-	SendDlgItemMessage( hwndDlg, IDC_UNDERLINE,    BM_SETIMAGE, IMAGE_ICON, (LPARAM)LoadIconEx( "underline" ));
-	SendDlgItemMessage( hwndDlg, IDC_COLOR,        BM_SETIMAGE, IMAGE_ICON, (LPARAM)LoadIconEx( "fgcol"     ));
-	SendDlgItemMessage( hwndDlg, IDC_BKGCOLOR,     BM_SETIMAGE, IMAGE_ICON, (LPARAM)LoadIconEx( "bkgcol"    ));
-	SendDlgItemMessage( hwndDlg, IDC_HISTORY,      BM_SETIMAGE, IMAGE_ICON, (LPARAM)LoadIconEx( "history"   ));
-	SendDlgItemMessage( hwndDlg, IDC_CHANMGR,      BM_SETIMAGE, IMAGE_ICON, (LPARAM)LoadIconEx( "settings"  ));
-	SendDlgItemMessage( hwndDlg, IDC_CLOSE,        BM_SETIMAGE, IMAGE_ICON, (LPARAM)LoadIconEx( "close"     ));
-	SendDlgItemMessage( hwndDlg, IDC_SHOWNICKLIST, BM_SETIMAGE, IMAGE_ICON, (LPARAM)LoadIconEx( si->bNicklistEnabled ? "nicklist" : "nicklist2" ));
-	SendDlgItemMessage( hwndDlg, IDC_FILTER,       BM_SETIMAGE, IMAGE_ICON, (LPARAM)LoadIconEx( si->bFilterEnabled ? "filter" : "filter2" ));
+	SendDlgItemMessage(hwndDlg,IDC_SMILEY,BM_SETIMAGE,IMAGE_ICON,(LPARAM)LoadIconEx(IDI_BSMILEY, "smiley", 0, 0 ));
+	SendDlgItemMessage(hwndDlg,IDC_BOLD,BM_SETIMAGE,IMAGE_ICON,(LPARAM)LoadIconEx(IDI_BBOLD, "bold", 0, 0 ));
+	SendDlgItemMessage(hwndDlg,IDC_ITALICS,BM_SETIMAGE,IMAGE_ICON,(LPARAM)LoadIconEx(IDI_BITALICS, "italics", 0, 0 ));
+	SendDlgItemMessage(hwndDlg,IDC_UNDERLINE,BM_SETIMAGE,IMAGE_ICON,(LPARAM)LoadIconEx(IDI_BUNDERLINE, "underline", 0, 0 ));
+	SendDlgItemMessage(hwndDlg,IDC_COLOR,BM_SETIMAGE,IMAGE_ICON,(LPARAM)LoadIconEx(IDI_COLOR, "fgcol", 0, 0 ));
+	SendDlgItemMessage(hwndDlg,IDC_BKGCOLOR,BM_SETIMAGE,IMAGE_ICON,(LPARAM)LoadIconEx(IDI_BKGCOLOR, "bkgcol", 0, 0 ));
+	SendDlgItemMessage(hwndDlg,IDC_HISTORY,BM_SETIMAGE,IMAGE_ICON,(LPARAM)LoadIconEx(IDI_HISTORY, "history", 0, 0 ));
+	SendDlgItemMessage(hwndDlg,IDC_CHANMGR,BM_SETIMAGE,IMAGE_ICON,(LPARAM)LoadIconEx(IDI_TOPICBUT, "settings", 0, 0 ));
+	SendDlgItemMessage(hwndDlg,IDC_CLOSE,BM_SETIMAGE,IMAGE_ICON,(LPARAM)LoadIconEx(IDI_CLOSE, "close", 0, 0 ));
+	SendDlgItemMessage(hwndDlg,IDC_SHOWNICKLIST,BM_SETIMAGE,IMAGE_ICON,(LPARAM)LoadIconEx(si->bNicklistEnabled?IDI_NICKLIST:IDI_NICKLIST2, si->bNicklistEnabled?"nicklist":"nicklist2", 0, 0 ));
+	SendDlgItemMessage(hwndDlg,IDC_FILTER,BM_SETIMAGE,IMAGE_ICON,(LPARAM)LoadIconEx(si->bFilterEnabled?IDI_FILTER:IDI_FILTER2, si->bFilterEnabled?"filter":"filter2", 0, 0 ));
 
-	SendDlgItemMessage( hwndDlg, IDC_SMILEY,       BUTTONSETASFLATBTN, 0, 0 );
-	SendDlgItemMessage( hwndDlg, IDC_BOLD,         BUTTONSETASFLATBTN, 0, 0 );
-	SendDlgItemMessage( hwndDlg, IDC_ITALICS,      BUTTONSETASFLATBTN, 0, 0 );
-	SendDlgItemMessage( hwndDlg, IDC_UNDERLINE,    BUTTONSETASFLATBTN, 0, 0 );
-	SendDlgItemMessage( hwndDlg, IDC_BKGCOLOR,     BUTTONSETASFLATBTN, 0, 0 );
-	SendDlgItemMessage( hwndDlg, IDC_COLOR,        BUTTONSETASFLATBTN, 0, 0 );
-	SendDlgItemMessage( hwndDlg, IDC_HISTORY,      BUTTONSETASFLATBTN, 0, 0 );
-	SendDlgItemMessage( hwndDlg, IDC_SHOWNICKLIST, BUTTONSETASFLATBTN, 0, 0 );
-	SendDlgItemMessage( hwndDlg, IDC_CHANMGR,      BUTTONSETASFLATBTN, 0, 0 );
-	SendDlgItemMessage( hwndDlg, IDC_FILTER,       BUTTONSETASFLATBTN, 0, 0 );
-	SendDlgItemMessage( hwndDlg, IDC_CLOSE,        BUTTONSETASFLATBTN, 0, 0 );
+	SendDlgItemMessage(hwndDlg,IDC_SMILEY, BUTTONSETASFLATBTN, 0, 0);
+	SendDlgItemMessage(hwndDlg,IDC_BOLD, BUTTONSETASFLATBTN, 0, 0);
+	SendDlgItemMessage(hwndDlg,IDC_ITALICS, BUTTONSETASFLATBTN, 0, 0);
+	SendDlgItemMessage(hwndDlg,IDC_UNDERLINE, BUTTONSETASFLATBTN, 0, 0);
+	SendDlgItemMessage(hwndDlg,IDC_BKGCOLOR, BUTTONSETASFLATBTN, 0, 0);
+	SendDlgItemMessage(hwndDlg,IDC_COLOR, BUTTONSETASFLATBTN, 0, 0);
+	SendDlgItemMessage(hwndDlg,IDC_HISTORY, BUTTONSETASFLATBTN, 0, 0);
+	SendDlgItemMessage(hwndDlg,IDC_SHOWNICKLIST, BUTTONSETASFLATBTN, 0, 0);
+	SendDlgItemMessage(hwndDlg,IDC_CHANMGR, BUTTONSETASFLATBTN, 0, 0);
+	SendDlgItemMessage(hwndDlg,IDC_FILTER, BUTTONSETASFLATBTN, 0, 0);
+	SendDlgItemMessage(hwndDlg,IDC_CLOSE, BUTTONSETASFLATBTN, 0, 0);
 
 	SendMessage(GetDlgItem(hwndDlg,IDC_SMILEY), BUTTONADDTOOLTIP, (WPARAM)Translate("Insert a smiley"), 0);
 	SendMessage(GetDlgItem(hwndDlg,IDC_BOLD), BUTTONADDTOOLTIP, (WPARAM)Translate("Make the text bold (CTRL+B)"), 0);
@@ -1097,6 +1097,31 @@ static LRESULT CALLBACK NicklistSubclassProc(HWND hwnd, UINT msg, WPARAM wParam,
 		}	}
 		break;
 
+	case WM_NOTIFY:
+		{
+			LPNMHDR pNmhdr = (LPNMHDR)lParam;
+			if ( pNmhdr->code = TTN_NEEDTEXT ) {
+				LPNMTTDISPINFO lpttd = (LPNMTTDISPINFO)lParam;
+				POINT p;
+				int item;
+				USERINFO * ui;
+				SESSION_INFO* parentdat =(SESSION_INFO*)GetWindowLong(GetParent(hwnd),GWL_USERDATA);
+
+				GetCursorPos( &p );
+				ScreenToClient( hwnd, &p );
+				item = LOWORD(SendMessage(GetDlgItem(GetParent(hwnd), IDC_LIST), LB_ITEMFROMPOINT, 0, MAKELPARAM(p.x, p.y)));
+				ui = SM_GetUserFromIndex(parentdat->ptszID, parentdat->pszModule, item);
+				if ( ui != NULL ) {
+					static TCHAR ptszBuf[ 1024 ];
+					mir_sntprintf( ptszBuf, SIZEOF(ptszBuf), _T("%s: %s\r\n%s: %s\r\n%s: %s"),
+						TranslateT( "Nick name" ), ui->pszNick, 
+						TranslateT( "Unique id" ), ui->pszUID,
+						TranslateT( "Status" ), TM_WordToString( parentdat->pStatuses, ui->Status ));
+					lpttd->lpszText = ptszBuf;
+				}
+				return 0;
+		}	}
+		break;
 	}
 
 	return CallWindowProc(OldNicklistProc, hwnd, msg, wParam, lParam);
@@ -1207,15 +1232,14 @@ BOOL CALLBACK RoomWndProc(HWND hwndDlg,UINT uMsg,WPARAM wParam,LPARAM lParam)
 			{
 				TOOLINFO ti = {0};
 				ti.cbSize = sizeof(TOOLINFO);
-				ti.uFlags = TTF_IDISHWND | TTF_SUBCLASS | TTF_TRANSPARENT;
+				ti.uFlags = TTF_TRANSPARENT | TTF_IDISHWND | TTF_SUBCLASS;
 				ti.hwnd   = hwndDlg;
 				ti.hinst  = g_hInst;
 				ti.uId    = (UINT)hNickList;
 				ti.lpszText  = LPSTR_TEXTCALLBACK;
-				//GetClientRect( hNickList, &ti.rect );
+				GetClientRect( hNickList, &ti.rect );
 				SendMessage( psi->hwndTooltip, TTM_ADDTOOL, 0, ( LPARAM )&ti );
 				SendMessage( psi->hwndTooltip, TTM_SETDELAYTIME, TTDT_AUTOPOP, 20000 );
-				SendMessage( psi->hwndTooltip, TTM_SETMAXTIPWIDTH, 0, 300);
 
 				//SendMessage( psi->hwndTooltip, TTM_TRACKACTIVATE, TRUE, ( LPARAM )&ti );
 			}
@@ -1259,7 +1283,7 @@ BOOL CALLBACK RoomWndProc(HWND hwndDlg,UINT uMsg,WPARAM wParam,LPARAM lParam)
 
 			SendMessage(hwndDlg, GC_FIXTABICONS, 0, 0);
 			SendMessage(si->hwndStatus, SB_SETICON, 0,(LPARAM)hIcon);
-			SendMessage(hwndDlg,WM_SETICON,ICON_BIG,(LPARAM)LoadIconEx( "window" ));
+			SendMessage(hwndDlg,WM_SETICON,ICON_BIG,(LPARAM)LoadIconEx(IDI_CHANMGR, "window", 0, 0));
 
 			SendMessage(GetDlgItem(hwndDlg, IDC_LOG), EM_SETBKGNDCOLOR , 0, g_Settings.crLogBackground);
 
@@ -2199,7 +2223,7 @@ LABEL_SHOWWINDOW:
 						if (end - start > 0) {
 							TEXTRANGE tr;
 							CHARRANGE cr;
-							static TCHAR szTrimString[] = _T(":;,.!?\'\"><()[]- \r\n");
+							static char szTrimString[] = ":;,.!?\'\"><()[]- \r\n";
 							ZeroMemory(&tr, sizeof(TEXTRANGE));
 
 							cr.cpMin = start;
@@ -2210,8 +2234,8 @@ LABEL_SHOWWINDOW:
 
 							if (iRes > 0) {
 								int iLen = lstrlen(pszWord)-1;
-								while(iLen >= 0 && _tcschr(szTrimString, pszWord[iLen])) {
-									pszWord[iLen] = _T('\0');
+								while(iLen >= 0 && strchr(szTrimString, pszWord[iLen])) {
+									pszWord[iLen] = '\0';
 									iLen--;
 					}	}	}	}
 
@@ -2346,7 +2370,7 @@ LABEL_SHOWWINDOW:
 				break;
 
 			case TTN_NEEDTEXT:
-				if (pNmhdr->idFrom == (UINT)GetDlgItem(hwndDlg,IDC_LIST))
+				if (pNmhdr->idFrom == IDC_LIST) 
 				{
 					LPNMTTDISPINFO lpttd = (LPNMTTDISPINFO)lParam;
 					POINT p;
@@ -2361,7 +2385,7 @@ LABEL_SHOWWINDOW:
 					if ( ui != NULL ) {
 						static TCHAR ptszBuf[ 1024 ];
 						mir_sntprintf( ptszBuf, SIZEOF(ptszBuf), _T("%s: %s\r\n%s: %s\r\n%s: %s"),
-							TranslateT( "Nick name" ), ui->pszNick,
+							TranslateT( "Nick name" ), ui->pszNick, 
 							TranslateT( "Unique id" ), ui->pszUID,
 							TranslateT( "Status" ), TM_WordToString( parentdat->pStatuses, ui->Status ));
 						lpttd->lpszText = ptszBuf;
@@ -2450,7 +2474,7 @@ LABEL_SHOWWINDOW:
 
 			si->bNicklistEnabled = !si->bNicklistEnabled;
 
-			SendDlgItemMessage(hwndDlg,IDC_SHOWNICKLIST,BM_SETIMAGE,IMAGE_ICON,(LPARAM)LoadIconEx( si->bNicklistEnabled ? "nicklist" : "nicklist2" ));
+			SendDlgItemMessage(hwndDlg,IDC_SHOWNICKLIST,BM_SETIMAGE,IMAGE_ICON,(LPARAM)LoadIconEx(si->bNicklistEnabled?IDI_NICKLIST:IDI_NICKLIST2, si->bNicklistEnabled?"nicklist":"nicklist2", 0, 0 ));
 			SendMessage(hwndDlg, GC_SCROLLTOBOTTOM, 0, 0);
 			SendMessage(hwndDlg, WM_SIZE, 0, 0);
 			break;
@@ -2491,9 +2515,10 @@ LABEL_SHOWWINDOW:
 					break;
 
 				if ( pInfo ) {
-					mir_snprintf(szName, MAX_PATH,"%s",pInfo->pszModDispName?pInfo->pszModDispName:si->pszModule);
+					mir_snprintf(szName, MAX_PATH, "%s", pInfo->pszModDispName ? pInfo->pszModDispName : si->pszModule);
 					ValidateFilename(szName);
 					mir_snprintf(szFolder, MAX_PATH,"%s\\%s", g_Settings.pszLogDir, szName );
+
 #if defined(_UNICODE)
                     {
                         wchar_t wszName[MAX_PATH];
@@ -2505,7 +2530,9 @@ LABEL_SHOWWINDOW:
                     mir_snprintf(szName, MAX_PATH,"%s.log",si->ptszID);
 #endif
 					ValidateFilename(szName);
+
 					mir_snprintf(szFile, MAX_PATH,"%s\\%s", szFolder, szName );
+
 					ShellExecuteA(hwndDlg, "open", szFile, NULL, NULL, SW_SHOW);
 			}	}
 			break;
@@ -2525,7 +2552,7 @@ LABEL_SHOWWINDOW:
 				break;
 
 			si->bFilterEnabled = !si->bFilterEnabled;
-			SendDlgItemMessage(hwndDlg,IDC_FILTER,BM_SETIMAGE,IMAGE_ICON,(LPARAM)LoadIconEx( si->bFilterEnabled ? "filter" : "filter2" ));
+			SendDlgItemMessage(hwndDlg,IDC_FILTER,BM_SETIMAGE,IMAGE_ICON,(LPARAM)LoadIconEx(si->bFilterEnabled?IDI_FILTER:IDI_FILTER2, si->bFilterEnabled?"filter":"filter2", 0, 0 ));
 			if (si->bFilterEnabled && DBGetContactSettingByte(NULL, "Chat", "RightClickFilter", 0) == 0) {
 				SendMessage(hwndDlg, GC_SHOWFILTERMENU, 0, 0);
 				break;

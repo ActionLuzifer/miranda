@@ -70,7 +70,7 @@ LINK32=link.exe
 # PROP Use_Debug_Libraries 1
 # PROP Output_Dir "Debug"
 # PROP Intermediate_Dir "Debug"
-# PROP Ignore_Export_Lib 1
+# PROP Ignore_Export_Lib 0
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /MTd /W3 /Gm /GX /ZI /Od /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "MSN_EXPORTS" /YX /FD /GZ /c
 # ADD CPP /nologo /MDd /W3 /Gm /Gi /ZI /Od /I "../../include" /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "MSN_EXPORTS" /FR /Yu"msn_global.h" /FD /GZ /c
@@ -208,7 +208,11 @@ SOURCE=.\msn_lists.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\msn_menu.cpp
+SOURCE=.\msn_md5.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\msn_md5c.cpp
 # End Source File
 # Begin Source File
 
@@ -265,6 +269,15 @@ SOURCE=.\msn_useropts.cpp
 # Begin Source File
 
 SOURCE=.\msn_ws.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=.\sha1.c
+# SUBTRACT CPP /YX /Yc /Yu
+# End Source File
+# Begin Source File
+
+SOURCE=.\sha1.h
 # End Source File
 # Begin Source File
 
@@ -391,5 +404,9 @@ SOURCE=.\resource.rc
 SOURCE=.\Icos\services.ico
 # End Source File
 # End Group
+# Begin Source File
+
+SOURCE=.\msn.def
+# End Source File
 # End Target
 # End Project

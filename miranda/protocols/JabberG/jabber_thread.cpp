@@ -2,7 +2,7 @@
 
 Jabber Protocol Plugin for Miranda IM
 Copyright ( C ) 2002-04  Santithorn Bunchua
-Copyright ( C ) 2005-07  George Hazan
+Copyright ( C ) 2005-06  George Hazan
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -43,6 +43,7 @@ Last change by : $Author$
 int iqIdRegGetReg;
 int iqIdRegSetReg;
 
+static void __cdecl JabberKeepAliveThread( ThreadData* owner );
 static void JabberProcessStreamOpening( XmlNode *node, void *userdata );
 static void JabberProcessStreamClosing( XmlNode *node, void *userdata );
 static void JabberProcessProtocol( XmlNode *node, void *userdata );
@@ -51,9 +52,6 @@ static void JabberProcessPresence( XmlNode *node, void *userdata );
 static void JabberProcessIq( XmlNode *node, void *userdata );
 static void JabberProcessProceed( XmlNode *node, void *userdata );
 static void JabberProcessRegIq( XmlNode *node, void *userdata );
-
-void JabberMenuHideSrmmIcon(HANDLE hContact);
-void JabberMenuUpdateSrmmIcon(JABBER_LIST_ITEM *item);
 
 extern int bSecureIM;
 static VOID CALLBACK JabberDummyApcFunc( DWORD param )
@@ -105,24 +103,6 @@ static VOID CALLBACK JabberOfflineChatWindows( DWORD )
 	gce.cbSize = sizeof(GCEVENT);
 	gce.pDest = &gcd;
 	CallService( MS_GC_EVENT, SESSION_TERMINATE, (LPARAM)&gce );
-}
-
-/////////////////////////////////////////////////////////////////////////////////////////
-// Jabber keep-alive thread
-
-static void __cdecl JabberKeepAliveThread( void* )
-{
-	NETLIBSELECT nls = {0};
-	nls.cbSize = sizeof( NETLIBSELECT );
-	nls.dwTimeout = 60000;	// 60000 millisecond ( 1 minute )
-	nls.hExceptConns[0] = jabberThreadInfo->s;
-	for ( ;; ) {
-		if ( JCallService( MS_NETLIB_SELECT, 0, ( LPARAM )&nls ) != 0 )
-			break;
-		if ( jabberSendKeepAlive )
-			jabberThreadInfo->send( " \t " );
-	}
-	JabberLog( "Exiting KeepAliveThread" );
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////
@@ -215,8 +195,7 @@ void __cdecl JabberServerThread( ThreadData* info )
 			// reconnect.
 			QueueUserAPC( JabberDummyApcFunc, jabberThreadInfo->hThread, 0 );
 			JabberLog( "Thread ended, another normal thread is running" );
-LBL_Exit:
-			delete info;
+			mir_free( info );
 			return;
 		}
 
@@ -228,16 +207,7 @@ LBL_Exit:
 			_tcsncpy( info->username, dbv.ptszVal, SIZEOF( info->username )-1 );
 			JFreeVariant( &dbv );
 		}
-
-		if ( *rtrim(info->username) == '\0' ) {
-			DWORD dwSize = SIZEOF( info->username );
-			if ( GetUserName( info->username, &dwSize ))
-				JSetStringT( NULL, "LoginName", info->username );
-			else
-				info->username[0] = 0;
-		}
-
-		if ( *rtrim(info->username) == '\0' ) {
+		else {
 			JabberLog( "Thread ended, login name is not configured" );
 			JSendBroadcast( NULL, ACKTYPE_LOGIN, ACKRESULT_FAILED, NULL, LOGINERR_BADUSERID );
 LBL_FatalError:
@@ -245,7 +215,15 @@ LBL_FatalError:
 			oldStatus = jabberStatus;
 			jabberStatus = ID_STATUS_OFFLINE;
 			JSendBroadcast( NULL, ACKTYPE_STATUS, ACKRESULT_SUCCESS, ( HANDLE ) oldStatus, jabberStatus );
-         goto LBL_Exit;
+LBL_Exit:
+			mir_free( info );
+			return;
+		}
+
+		if ( *rtrim(info->username) == '\0' ) {
+			JabberLog( "Thread ended, login name is not configured" );
+			JSendBroadcast( NULL, ACKTYPE_LOGIN, ACKRESULT_FAILED, NULL, LOGINERR_BADUSERID );
+			goto LBL_FatalError;
 		}
 
 		if ( !DBGetContactSetting( NULL, jabberProtoName, "LoginServer", &dbv )) {
@@ -444,7 +422,7 @@ LBL_FatalError:
 				jabberSendKeepAlive = TRUE;
 			else
 				jabberSendKeepAlive = FALSE;
-			mir_forkthread(( pThreadFunc )JabberKeepAliveThread, info->s );
+			mir_forkthread(( pThreadFunc )JabberKeepAliveThread, info );
 		}
 
 		xmlStreamInitializeNow( info );
@@ -505,17 +483,12 @@ LBL_FatalError:
 				QueueUserAPC( JabberOfflineChatWindows, hMainThread, 0 );
 
 			JabberListRemoveList( LIST_CHATROOM );
-			JabberListRemoveList( LIST_BOOKMARK );
 			if ( hwndJabberAgents )
 				SendMessage( hwndJabberAgents, WM_JABBER_CHECK_ONLINE, 0, 0 );
 			if ( hwndJabberGroupchat )
 				SendMessage( hwndJabberGroupchat, WM_JABBER_CHECK_ONLINE, 0, 0 );
 			if ( hwndJabberJoinGroupchat )
 				SendMessage( hwndJabberJoinGroupchat, WM_JABBER_CHECK_ONLINE, 0, 0 );
-			if ( hwndJabberBookmarks )
-				SendMessage( hwndJabberBookmarks, WM_JABBER_CHECK_ONLINE, 0, 0 );
-			if ( hwndJabberAddBookmark)
-				SendMessage( hwndJabberAddBookmark, WM_JABBER_CHECK_ONLINE, 0, 0 );
 
 			// Set status to offline
 			oldStatus = jabberStatus;
@@ -526,11 +499,8 @@ LBL_FatalError:
 			HANDLE hContact = ( HANDLE ) JCallService( MS_DB_CONTACT_FINDFIRST, 0, 0 );
 			while ( hContact != NULL ) {
 				if ( !lstrcmpA(( char* )JCallService( MS_PROTO_GETCONTACTBASEPROTO, ( WPARAM ) hContact, 0 ), jabberProtoName ))
-				{
 					if ( JGetWord( hContact, "Status", ID_STATUS_OFFLINE ) != ID_STATUS_OFFLINE )
 						JSetWord( hContact, "Status", ID_STATUS_OFFLINE );
-					JabberMenuHideSrmmIcon(hContact);
-				}
 
 				hContact = ( HANDLE ) JCallService( MS_DB_CONTACT_FINDNEXT, ( WPARAM ) hContact, 0 );
 			}
@@ -1106,15 +1076,12 @@ static void JabberProcessMessage( XmlNode *node, void *userdata )
 			if ( hContact != NULL )
 				JCallService( MS_PROTO_CONTACTISTYPING, ( WPARAM ) hContact, PROTOTYPE_CONTACTTYPING_OFF );
 
-			// no we will monitor last resource in all modes
-			if ( /*item->resourceMode==RSMODE_LASTSEEN &&*/ ( fromResource = _tcschr( from, '/' ))!=NULL ) {
+			if ( item->resourceMode==RSMODE_LASTSEEN && ( fromResource = _tcschr( from, '/' ))!=NULL ) {
 				fromResource++;
 				if ( *fromResource != '\0' ) {
 					for ( int i=0; i<item->resourceCount; i++ ) {
 						if ( !lstrcmp( item->resource[i].resourceName, fromResource )) {
-							if ((item->resourceMode==RSMODE_LASTSEEN) && (i != item->lastSeenResource))
-								JabberUpdateMirVer(item);
-							item->lastSeenResource = i;
+							item->defaultResource = i;
 							break;
 		}	}	}	}	}
 
@@ -1235,7 +1202,6 @@ static void JabberProcessPresence( XmlNode *node, void *userdata )
 			for ( i=0; i < item->resourceCount; i++ )
 				status = JabberCombineStatus( status, item->resource[i].status );
 			item->status = status;
-			JabberMenuUpdateSrmmIcon(item);
 		}
 
 		if ( _tcschr( from, '@' )!=NULL || JGetByte( "ShowTransport", TRUE )==TRUE )
@@ -1309,7 +1275,6 @@ static void JabberProcessPresence( XmlNode *node, void *userdata )
 			for ( i=0; i < item->resourceCount; i++ )
 				status = JabberCombineStatus( status, item->resource[i].status );
 			item->status = status;
-			JabberMenuUpdateSrmmIcon(item);
 		}
 		if (( hContact=JabberHContactFromJID( from )) != NULL ) {
 			if ( _tcschr( from, '@' )!=NULL || JGetByte( "ShowTransport", TRUE )==TRUE )
@@ -1840,6 +1805,22 @@ static void JabberProcessRegIq( XmlNode *node, void *userdata )
 		info->send( "</stream:stream>" );
 }	}
 
+static void __cdecl JabberKeepAliveThread( ThreadData* owner )
+{
+	NETLIBSELECT nls = {0};
+
+	nls.cbSize = sizeof( NETLIBSELECT );
+	nls.dwTimeout = 60000;	// 60000 millisecond ( 1 minute )
+	nls.hExceptConns[0] = owner->s;
+	for ( ;; ) {
+		if ( JCallService( MS_NETLIB_SELECT, 0, ( LPARAM )&nls ) != 0 )
+			break;
+		if ( jabberSendKeepAlive )
+			owner->send( " \t " );
+	}
+	JabberLog( "Exiting KeepAliveThread" );
+}
+
 /////////////////////////////////////////////////////////////////////////////////////////
 // ThreadData constructor & destructor
 
@@ -1847,22 +1828,17 @@ ThreadData::ThreadData( JABBER_SESSION_TYPE parType )
 {
 	memset( this, 0, sizeof( *this ));
 	type = parType;
-	caps = CAPS_BOOKMARK; // assume that the server supports bookmarks
 	InitializeCriticalSection( &iomutex );
 }
 
 ThreadData::~ThreadData()
 {
+	if ( s )
+		Netlib_CloseHandle(s); // New Line
+
 	delete auth;
 	DeleteCriticalSection( &iomutex );
 }
-
-void ThreadData::close()
-{
-	if ( s ) {
-		Netlib_CloseHandle(s);
-		s = NULL;
-}	}
 
 int ThreadData::recv( char* buf, size_t len )
 {

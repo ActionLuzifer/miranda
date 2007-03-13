@@ -1,6 +1,3 @@
-#ifndef modern_statusbar_h__
-#define modern_statusbar_h__
-
 #include "commonprototypes.h"
 
 int ModernDrawStatusBar(HWND hwnd, HDC hDC);
@@ -21,7 +18,5 @@ typedef struct tagSTATUSBARDATA
   DWORD TextEffectColor1;
   DWORD TextEffectColor2;
   BYTE xStatusMode;     // 0-only main, 1-xStatus, 2-main as overlay
-  BYTE nProtosPerLine;
 } STATUSBARDATA;
 
-#endif // modern_statusbar_h__

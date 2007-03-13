@@ -65,8 +65,6 @@ static void NotifyLocalWinEvent(HANDLE hContact, HWND hwnd, unsigned int type) {
 	mwe.szModule = SRMMMOD;
 	mwe.uType = type;
 	mwe.uFlags = MSG_WINDOW_UFLAG_MSG_BOTH;
-	mwe.hwndInput = GetDlgItem(hwnd, IDC_MESSAGE);
-	mwe.hwndLog = GetDlgItem(hwnd, IDC_LOG);
 	NotifyEventHooks(hHookWinEvt, 0, (LPARAM)&mwe);
 }
 
@@ -122,14 +120,10 @@ static void AddToFileList(char ***pppFiles,int *totalCount,const TCHAR* szFilena
 	{
 		TCHAR tszShortName[ MAX_PATH ];
 		char  szShortName[ MAX_PATH ];
-		BOOL  bIsDefaultCharUsed = FALSE;
-		WideCharToMultiByte( CP_ACP, 0, szFilename, -1, szShortName, sizeof( szShortName ), NULL, &bIsDefaultCharUsed );
-		if ( bIsDefaultCharUsed ) {
-			if ( GetShortPathName( szFilename, tszShortName, SIZEOF( tszShortName )) == 0 )
-		      WideCharToMultiByte( CP_ACP, 0, szFilename, -1, szShortName, sizeof( szShortName ), NULL, NULL );
-			else
-				WideCharToMultiByte( CP_ACP, 0, tszShortName, -1, szShortName, sizeof( szShortName ), NULL, NULL );
-		}
+		if ( GetShortPathName( szFilename, tszShortName, SIZEOF( tszShortName )) == 0 )
+         WideCharToMultiByte( CP_ACP, 0, szFilename, -1, szShortName, sizeof( szShortName ), NULL, NULL );
+		else
+         WideCharToMultiByte( CP_ACP, 0, tszShortName, -1, szShortName, sizeof( szShortName ), NULL, NULL );
 		(*pppFiles)[*totalCount-1] = _strdup( szShortName );
 	}
 	#else
@@ -189,7 +183,7 @@ static void SetDialogToType(HWND hwndDlg)
 		SendMessage(dat->hwndStatus, SB_SETMINHEIGHT, GetSystemMetrics(SM_CYSMICON), 0);
 	}
 
-	icons_width = GetStatusIconsCount(dat->hContact) * (GetSystemMetrics(SM_CXSMICON) + 2) + SB_GRIP_WIDTH;
+	icons_width = status_icon_list_size * (GetSystemMetrics(SM_CXSMICON) + 2) + SB_GRIP_WIDTH; 
 	GetWindowRect(dat->hwndStatus, &rc);
 	if (DBGetContactSettingByte(NULL, SRMMMOD, SRMSGSET_CHARCOUNT, SRMSGDEFSET_CHARCOUNT)) {
 		int statwidths[3];
@@ -641,20 +635,6 @@ static void NotifyTyping(struct MessageWindowData *dat, int mode)
 	CallService(MS_PROTO_SELFISTYPING, (WPARAM) dat->hContact, dat->nTypeMode);
 }
 
-void Button_SetIcon_IcoLib(HWND hwndDlg, int itemId, int iconId, const char* tooltip)
-{
-	HWND hWnd = GetDlgItem( hwndDlg, itemId );
-	SendMessage( hWnd, BM_SETIMAGE, IMAGE_ICON, ( LPARAM )LoadSkinnedIcon( iconId ));
-	SendMessage( hWnd, BUTTONSETASFLATBTN, 0, 0 );
-	SendMessage( hWnd, BUTTONADDTOOLTIP, (WPARAM)Translate(tooltip), 0);
-}
-
-void Button_FreeIcon_IcoLib(HWND hwndDlg, int itemId)
-{
-	HICON hIcon = ( HICON )SendDlgItemMessage(hwndDlg, itemId, BM_SETIMAGE, IMAGE_ICON, 0 );
-	CallService(MS_SKIN2_RELEASEICON,(WPARAM)hIcon,0);
-}
-
 BOOL CALLBACK DlgProcMessage(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 {
 	struct MessageWindowData *dat;
@@ -672,14 +652,14 @@ BOOL CALLBACK DlgProcMessage(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lPara
 				NotifyLocalWinEvent(dat->hContact, hwndDlg, MSG_WINDOW_EVT_OPENING);
 				if (newData->szInitialText) {
 					int len;
-					#if defined(_UNICODE)
-						if(newData->isWchar)
-							SetDlgItemText(hwndDlg, IDC_MESSAGE, (TCHAR *)newData->szInitialText);
-						else
-							SetDlgItemTextA(hwndDlg, IDC_MESSAGE, newData->szInitialText);
-					#else
-						SetDlgItemTextA(hwndDlg, IDC_MESSAGE, newData->szInitialText);
-					#endif
+#if defined(_UNICODE)
+                    if(newData->isWchar)
+    					SetDlgItemText(hwndDlg, IDC_MESSAGE, (TCHAR *)newData->szInitialText);
+    				else
+    					SetDlgItemTextA(hwndDlg, IDC_MESSAGE, newData->szInitialText);
+#else
+					SetDlgItemTextA(hwndDlg, IDC_MESSAGE, newData->szInitialText);
+#endif
 					len = GetWindowTextLength(GetDlgItem(hwndDlg, IDC_MESSAGE));
 					PostMessage(GetDlgItem(hwndDlg, IDC_MESSAGE), EM_SETSEL, len, len);
 				}
@@ -737,10 +717,22 @@ BOOL CALLBACK DlgProcMessage(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lPara
 			GetWindowRect(GetDlgItem(hwndDlg, IDC_MESSAGE), &dat->minEditInit);
 			SendMessage(hwndDlg, DM_UPDATESIZEBAR, 0, 0);
 			dat->hwndStatus = NULL;
-			Button_SetIcon_IcoLib(hwndDlg, IDC_ADD, SKINICON_OTHER_ADDCONTACT, "Add Contact Permanently to List" );
-			Button_SetIcon_IcoLib(hwndDlg, IDC_DETAILS, SKINICON_OTHER_USERDETAILS, "View User's Details" );
-			Button_SetIcon_IcoLib(hwndDlg, IDC_HISTORY, SKINICON_OTHER_HISTORY, "View User's History" );
-			Button_SetIcon_IcoLib(hwndDlg, IDC_USERMENU, SKINICON_OTHER_DOWNARROW, "User Menu" );
+			SendDlgItemMessage(hwndDlg, IDC_ADD, BM_SETIMAGE, IMAGE_ICON, (LPARAM) g_dat->hIcons[SMF_ICON_ADD]);
+			SendDlgItemMessage(hwndDlg, IDC_DETAILS, BM_SETIMAGE, IMAGE_ICON, (LPARAM) g_dat->hIcons[SMF_ICON_USERDETAIL]);
+			SendDlgItemMessage(hwndDlg, IDC_HISTORY, BM_SETIMAGE, IMAGE_ICON, (LPARAM) g_dat->hIcons[SMF_ICON_HISTORY]);
+			SendDlgItemMessage(hwndDlg, IDC_USERMENU, BM_SETIMAGE, IMAGE_ICON, (LPARAM) g_dat->hIcons[SMF_ICON_ARROW]);
+			// Make them flat buttons
+			{
+				int i;
+
+				SendMessage(GetDlgItem(hwndDlg, IDC_NAME), BUTTONSETASFLATBTN, 0, 0);
+				for (i = 0; i < SIZEOF(buttonLineControls); i++)
+					SendMessage(GetDlgItem(hwndDlg, buttonLineControls[i]), BUTTONSETASFLATBTN, 0, 0);
+			}
+			SendMessage(GetDlgItem(hwndDlg, IDC_ADD), BUTTONADDTOOLTIP, (WPARAM) Translate("Add Contact Permanently to List"), 0);
+			SendMessage(GetDlgItem(hwndDlg, IDC_USERMENU), BUTTONADDTOOLTIP, (WPARAM) Translate("User Menu"), 0);
+			SendMessage(GetDlgItem(hwndDlg, IDC_DETAILS), BUTTONADDTOOLTIP, (WPARAM) Translate("View User's Details"), 0);
+			SendMessage(GetDlgItem(hwndDlg, IDC_HISTORY), BUTTONADDTOOLTIP, (WPARAM) Translate("View User's History"), 0);
 
 			EnableWindow(GetDlgItem(hwndDlg, IDC_PROTOCOL), FALSE);
 			EnableWindow(GetDlgItem(hwndDlg, IDC_AVATAR), FALSE);
@@ -1418,7 +1410,7 @@ BOOL CALLBACK DlgProcMessage(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lPara
 			KillTimer(hwndDlg, wParam);
 			ShowWindow(hwndDlg, SW_SHOWNORMAL);
 			EnableWindow(hwndDlg, FALSE);
-			dat->hwndErrorDlg = CreateDialogParam(g_hInst, MAKEINTRESOURCE(IDD_MSGSENDERROR), hwndDlg, ErrorDlgProc, (LPARAM) Translate("The message send timed out."));
+			CreateDialogParam(g_hInst, MAKEINTRESOURCE(IDD_MSGSENDERROR), hwndDlg, ErrorDlgProc, (LPARAM) strdup( Translate("The message send timed out.")));
 		}
 		else if (wParam == TIMERID_FLASHWND) {
 			FlashWindow(hwndDlg, TRUE);
@@ -1449,36 +1441,26 @@ BOOL CALLBACK DlgProcMessage(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lPara
 			else {
 				if (dat->nTypeSecs) {
 					TCHAR szBuf[256];
-					TCHAR* szContactName = ( TCHAR* ) CallService(MS_CLIST_GETCONTACTDISPLAYNAME, (WPARAM) dat->hContact, GCDNF_TCHAR);
-					HICON hTyping = LoadSkinnedIcon( SKINICON_OTHER_TYPING );
+					TCHAR *szContactName = ( TCHAR* ) CallService(MS_CLIST_GETCONTACTDISPLAYNAME, (WPARAM) dat->hContact, GCDNF_TCHAR);
 
 					mir_sntprintf(szBuf, SIZEOF(szBuf), TranslateT("%s is typing a message..."), szContactName);
 					dat->nTypeSecs--;
-
 					SendMessage(dat->hwndStatus, SB_SETTEXT, 0, (LPARAM) szBuf);
-					SendMessage(dat->hwndStatus, SB_SETICON, 0, (LPARAM) hTyping);
+					SendMessage(dat->hwndStatus, SB_SETICON, 0, (LPARAM) g_dat->hIcons[SMF_ICON_TYPING]);
 					if ((g_dat->flags&SMF_SHOWTYPINGWIN) && GetForegroundWindow() != hwndDlg)
-						SendMessage(hwndDlg, WM_SETICON, ( WPARAM )ICON_BIG, ( LPARAM )hTyping );
+						SendMessage(hwndDlg, WM_SETICON, (WPARAM) ICON_BIG, (LPARAM) g_dat->hIcons[SMF_ICON_TYPING]);
 					dat->showTyping = 1;
-					CallService(MS_SKIN2_RELEASEICON, ( WPARAM )hTyping, 0);
 				}
 			}
 		}
 		break;
 	case DM_ERRORDECIDED:
-		dat->hwndErrorDlg = NULL;
 		EnableWindow(hwndDlg, TRUE);
 		switch (wParam) {
 		case MSGERROR_CANCEL:
 			EnableWindow(GetDlgItem(hwndDlg, IDOK), TRUE);
 			SendDlgItemMessage(hwndDlg, IDC_MESSAGE, EM_SETREADONLY, FALSE, 0);
 			SetFocus(GetDlgItem(hwndDlg, IDC_MESSAGE));
-			break;
-		case MSGERROR_DONE:
-			// messages were delivered succesfully after timeout
-			SetFocus(GetDlgItem(hwndDlg,IDC_MESSAGE));
-			if (DBGetContactSettingByte(NULL, SRMMMOD, SRMSGSET_AUTOCLOSE, SRMSGDEFSET_AUTOCLOSE))
-				DestroyWindow(hwndDlg);
 			break;
 		case MSGERROR_RETRY:
 			{
@@ -1558,7 +1540,7 @@ BOOL CALLBACK DlgProcMessage(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lPara
 				return CallService(MS_CLIST_MENUDRAWITEM, wParam, lParam);
 			}
 		case WM_COMMAND:
-			if (!lParam && CallService(MS_CLIST_MENUPROCESSCOMMAND, MAKEWPARAM(LOWORD(wParam), MPCF_CONTACTMENU), (LPARAM) dat->hContact))
+			if (CallService(MS_CLIST_MENUPROCESSCOMMAND, MAKEWPARAM(LOWORD(wParam), MPCF_CONTACTMENU), (LPARAM) dat->hContact))
 				break;
 			switch (LOWORD(wParam)) {
 			case IDOK:
@@ -1828,7 +1810,7 @@ BOOL CALLBACK DlgProcMessage(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lPara
 					KillTimer(hwndDlg, TIMERID_MSGSEND);
 					ShowWindow(hwndDlg, SW_SHOWNORMAL);
 					EnableWindow(hwndDlg, FALSE);
-					dat->hwndErrorDlg = CreateDialogParam(g_hInst, MAKEINTRESOURCE(IDD_MSGSENDERROR), hwndDlg, ErrorDlgProc, ack->lParam);
+					CreateDialogParam(g_hInst, MAKEINTRESOURCE(IDD_MSGSENDERROR), hwndDlg, ErrorDlgProc, (ack->lParam == 0) ? 0 : (LPARAM) strdup((char *) ack->lParam));
 					return 0;
 			}
 			if (dat->sendBuffer==NULL) return 0;
@@ -1865,10 +1847,6 @@ BOOL CALLBACK DlgProcMessage(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lPara
 				len = GetWindowTextLength(GetDlgItem(hwndDlg, IDC_MESSAGE));
 				UpdateReadChars(hwndDlg, dat->hwndStatus);
 				EnableWindow(GetDlgItem(hwndDlg, IDOK), len != 0);
-				if (dat->hwndErrorDlg) {
-					SendMessage(dat->hwndErrorDlg, DM_ERRORDECIDED, MSGERROR_DONE, 0);
-					break;
-				}
 				if (DBGetContactSettingByte(NULL, SRMMMOD, SRMSGSET_AUTOCLOSE, SRMSGDEFSET_AUTOCLOSE))
 					DestroyWindow(hwndDlg);
 			}
@@ -1878,7 +1856,6 @@ BOOL CALLBACK DlgProcMessage(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lPara
 	case DM_STATUSICONCHANGE:
 		SendMessage(dat->hwndStatus, SB_SETTEXT, (WPARAM)(SBT_OWNERDRAW | (SendMessage(dat->hwndStatus, SB_GETPARTS, 0, 0) - 1)), (LPARAM)0);
 		return 0;
-
 	case WM_DESTROY:
 		NotifyLocalWinEvent(dat->hContact, hwndDlg, MSG_WINDOW_EVT_CLOSING);
 		if (dat->nTypeMode == PROTOTYPE_SELFTYPING_ON) {
@@ -1922,14 +1899,11 @@ BOOL CALLBACK DlgProcMessage(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lPara
 		if (dat->avatarPic)
 			DeleteObject(dat->avatarPic);
 		NotifyLocalWinEvent(dat->hContact, hwndDlg, MSG_WINDOW_EVT_CLOSE);
-		if (dat->hContact&&DBGetContactSettingByte(NULL, SRMMMOD, SRMSGSET_DELTEMP, SRMSGDEFSET_DELTEMP))
-			if (DBGetContactSettingByte(dat->hContact, "CList", "NotOnList", 0))
+		if (dat->hContact&&DBGetContactSettingByte(NULL, SRMMMOD, SRMSGSET_DELTEMP, SRMSGDEFSET_DELTEMP)) {
+			if (DBGetContactSettingByte(dat->hContact, "CList", "NotOnList", 0)) {
 				CallService(MS_DB_CONTACT_DELETE, (WPARAM)dat->hContact, 0);
-
-		Button_FreeIcon_IcoLib(hwndDlg, IDC_ADD);
-		Button_FreeIcon_IcoLib(hwndDlg, IDC_DETAILS);
-		Button_FreeIcon_IcoLib(hwndDlg, IDC_HISTORY);
-		Button_FreeIcon_IcoLib(hwndDlg, IDC_USERMENU);
+			}
+		}
 		free(dat);
 		SetWindowLong(hwndDlg, GWL_USERDATA, 0);
 		break;

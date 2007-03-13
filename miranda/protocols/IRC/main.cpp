@@ -39,19 +39,17 @@ PREFERENCES*      prefs;
 HMODULE				m_ssleay32 = NULL;
 	
 // Information about the plugin
-PLUGININFOEX pluginInfo =
+PLUGININFO pluginInfo =
 {						
-	sizeof( PLUGININFOEX ),
+	sizeof( PLUGININFO ),
 	"IRC Protocol",
 	PLUGIN_MAKE_VERSION( 0,6,4,0 ),
 	"IRC protocol for Miranda IM.",
 	"Miranda team",
 	"i_am_matrix@users.sourceforge.net",
-	"© 2003-2007 Miranda team",
+	"© 2003-2006 Miranda team",
 	"http://www.miranda-im.org",
-	0,	
-    0,
-    {0xb529402b, 0x53ba, 0x4c81, { 0x9e, 0x27, 0xd4, 0x31, 0xeb, 0xe8, 0xec, 0x36 }} //{B529402B-53BA-4c81-9E27-D431EBE8EC36}
+	0,	0
 }; 
 
 extern "C" BOOL WINAPI DllMain(HINSTANCE hinstDLL,DWORD fdwReason,LPVOID lpvReserved)
@@ -60,7 +58,7 @@ extern "C" BOOL WINAPI DllMain(HINSTANCE hinstDLL,DWORD fdwReason,LPVOID lpvRese
 	return TRUE;
 }
 
-extern "C" __declspec(dllexport) PLUGININFOEX* MirandaPluginInfoEx(DWORD mirandaVersion)
+extern "C" __declspec(dllexport) PLUGININFO* MirandaPluginInfo(DWORD mirandaVersion)
 {
 	if ( mirandaVersion < PLUGIN_MAKE_VERSION( 0, 6, 0, 0 )) {
 		MessageBox( NULL, _T("The IRC protocol plugin cannot be loaded. It requires Miranda IM 0.6.0.0 or later."), _T("IRC Protocol Plugin"), MB_OK|MB_ICONWARNING|MB_SETFOREGROUND|MB_TOPMOST );
@@ -68,12 +66,6 @@ extern "C" __declspec(dllexport) PLUGININFOEX* MirandaPluginInfoEx(DWORD miranda
 	}
 	mirVersion = mirandaVersion;
 	return &pluginInfo;
-}
-
-static const MUUID interfaces[] = {MIID_PROTOCOL, MIID_LAST};
-extern "C" __declspec(dllexport) const MUUID* MirandaPluginInterfaces(void)
-{
-	return interfaces;
 }
 
 static void GetModuleName( void )	 // ripped from msn

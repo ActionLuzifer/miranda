@@ -233,7 +233,7 @@ void MSN_AddServerGroup( const char* pszGroupName, HANDLE hContact )
 	char szBuf[ 200 ];
 	UrlEncode( pszGroupName, szBuf, sizeof szBuf );
 	msnNsThread->sendPacket( "ADG", "%s", szBuf );
-	MSN_DeleteSetting( hContact, "GroupID" );
+	DBDeleteContactSetting( hContact, msnProtocolName, "GroupID" );
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////
@@ -299,7 +299,7 @@ void MSN_SyncContactToServerGroup( HANDLE hContact, char* userId, char* groupId 
 	}
 	else {
 		DBDeleteContactSetting( hContact, "CList", "Group" );
-		MSN_DeleteSetting( hContact, "GroupID" );
+		DBDeleteContactSetting( hContact, msnProtocolName, "GroupID" );
 	}	
 
 	if ( dbv.pszVal != NULL ) MSN_FreeVariant( &dbv );

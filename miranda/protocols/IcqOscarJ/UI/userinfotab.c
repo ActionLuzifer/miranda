@@ -5,7 +5,7 @@
 // Copyright © 2000,2001 Richard Hughes, Roland Rabien, Tristan Van de Vreede
 // Copyright © 2001,2002 Jon Keating, Richard Hughes
 // Copyright © 2002,2003,2004 Martin Öberg, Sam Kothari, Robert Rainwater
-// Copyright © 2004,2005,2006,2007 Joe Kucera
+// Copyright © 2004,2005,2006 Joe Kucera
 // 
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -326,7 +326,7 @@ static BOOL CALLBACK AvatarDlgProc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM
 
       if (!ICQGetContactSettingUID((HANDLE)lParam, &dwUIN, &szUID))
       {
-        if (!ICQGetContactSetting((HANDLE)lParam, "AvatarHash", &dbvHash) && dbvHash.type == DBVT_BLOB)
+        if (!ICQGetContactSetting((HANDLE)lParam, "AvatarHash", &dbvHash))
         {
           dwPaFormat = ICQGetContactSettingByte((HANDLE)lParam, "AvatarType", PA_FORMAT_UNKNOWN);
           if (!pData->hContact || (dwPaFormat != PA_FORMAT_UNKNOWN))
@@ -341,14 +341,14 @@ static BOOL CALLBACK AvatarDlgProc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM
               {
                 strcpy(szAvatar, file);
                 SAFE_FREE(&file);
-                if (dbvHash.pbVal[1] == AVATAR_HASH_FLASH) // we do this by hand, as owner's format is not saved
+                if (dbvHash.pbVal[1] == 8) // we do this by hand, as owner's format is not saved
                   dwPaFormat = PA_FORMAT_XML;
               }
               else
                 szAvatar[0] = '\0';
             }
 
-            if (!pData->hContact || !IsAvatarSaved((HANDLE)lParam, dbvHash.pbVal, dbvHash.cpbVal))
+            if (!pData->hContact || !IsAvatarSaved((HANDLE)lParam, dbvHash.pbVal))
             { // if the file exists, we know we have the current avatar
               if (!access(szAvatar, 0)) bValid = 1;
             }
@@ -371,7 +371,7 @@ static BOOL CALLBACK AvatarDlgProc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM
         else if (pData->hContact) // only retrieve users avatars
         {
           GetAvatarFileName(dwUIN, szUID, szAvatar, 255);
-          GetAvatarData((HANDLE)lParam, dwUIN, szUID, dbvHash.pbVal, dbvHash.cpbVal, szAvatar);
+          GetAvatarData((HANDLE)lParam, dwUIN, szUID, dbvHash.pbVal, 0x14, szAvatar);
         }
       }
 
@@ -555,7 +555,7 @@ static void SetValue(HWND hwndDlg, int idCtrl, HANDLE hContact, char* szModule, 
           null_snprintf(str, 250, "%d", dbv.wVal);
           pstr = str;
 
-          if (hContact && IsDirectConnectionOpen(hContact, DIRECTCONN_STANDARD, 1))
+          if (hContact && IsDirectConnectionOpen(hContact, DIRECTCONN_STANDARD))
           {
             ICQTranslateUtfStatic(" (DC Established)", szExtra);
             strcat(str, szExtra);

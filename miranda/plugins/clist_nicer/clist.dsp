@@ -172,7 +172,31 @@ SOURCE=.\CLUIFrames\framesmenu.c
 # End Source File
 # Begin Source File
 
+SOURCE=.\CLUIFrames\genmenu.c
+# ADD CPP /Yu"../commonheaders.h"
+# End Source File
+# Begin Source File
+
+SOURCE=.\CLUIFrames\genmenu.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\CLUIFrames\genmenuopt.c
+# ADD CPP /Yu"../commonheaders.h"
+# End Source File
+# Begin Source File
+
 SOURCE=.\CLUIFrames\groupmenu.c
+# ADD CPP /Yu"../commonheaders.h"
+# End Source File
+# Begin Source File
+
+SOURCE=.\CLUIFrames\movetogroup.c
+# ADD CPP /Yu"../commonheaders.h"
+# End Source File
+# Begin Source File
+
+SOURCE=.\CLUIFrames\protocolorder.c
 # ADD CPP /Yu"../commonheaders.h"
 # End Source File
 # End Group
@@ -633,11 +657,6 @@ SOURCE=.\init.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\CLUIFrames\movetogroup.c
-# ADD CPP /Yu"../commonheaders.h"
-# End Source File
-# Begin Source File
-
 SOURCE=.\rowheight_funcs.c
 # End Source File
 # Begin Source File
@@ -694,19 +713,7 @@ SOURCE=.\res\addcontact.ico
 # End Source File
 # Begin Source File
 
-SOURCE=.\res\addgoupp.ico
-# End Source File
-# Begin Source File
-
-SOURCE=".\res\arrow-down.ico"
-# End Source File
-# Begin Source File
-
 SOURCE=.\res\away.ico
-# End Source File
-# Begin Source File
-
-SOURCE=.\res\overlay\away.ico
 # End Source File
 # Begin Source File
 
@@ -715,14 +722,6 @@ SOURCE=.\res\blank.ico
 # Begin Source File
 
 SOURCE=.\res\changefont.ico
-# End Source File
-# Begin Source File
-
-SOURCE=.\res\overlay\chat.ico
-# End Source File
-# Begin Source File
-
-SOURCE=.\res\connecting.ico
 # End Source File
 # Begin Source File
 
@@ -735,10 +734,6 @@ SOURCE=.\res\detailsl.ico
 # Begin Source File
 
 SOURCE=.\res\dnd.ico
-# End Source File
-# Begin Source File
-
-SOURCE=.\res\overlay\dnd.ico
 # End Source File
 # Begin Source File
 
@@ -766,10 +761,6 @@ SOURCE=.\res\filledbl.ico
 # End Source File
 # Begin Source File
 
-SOURCE=.\res\find.ico
-# End Source File
-# Begin Source File
-
 SOURCE=.\res\finduser.ico
 # End Source File
 # Begin Source File
@@ -778,15 +769,7 @@ SOURCE=.\res\freechat.ico
 # End Source File
 # Begin Source File
 
-SOURCE=.\res\globus.ico
-# End Source File
-# Begin Source File
-
 SOURCE=.\res\groupope.ico
-# End Source File
-# Begin Source File
-
-SOURCE=.\res\groups.ico
 # End Source File
 # Begin Source File
 
@@ -810,23 +793,7 @@ SOURCE=.\res\invisible.ico
 # End Source File
 # Begin Source File
 
-SOURCE=.\res\overlay\invisible.ico
-# End Source File
-# Begin Source File
-
-SOURCE=.\res\overlay\lunch.ico
-# End Source File
-# Begin Source File
-
-SOURCE=.\res\menu.ico
-# End Source File
-# Begin Source File
-
 SOURCE=.\res\message.ico
-# End Source File
-# Begin Source File
-
-SOURCE=.\res\minimize.ico
 # End Source File
 # Begin Source File
 
@@ -839,10 +806,6 @@ SOURCE=.\res\mirandaw.ico
 # Begin Source File
 
 SOURCE=.\res\multisend.ico
-# End Source File
-# Begin Source File
-
-SOURCE=.\res\overlay\NA.ico
 # End Source File
 # Begin Source File
 
@@ -862,23 +825,7 @@ SOURCE=.\res\occupied.ico
 # End Source File
 # Begin Source File
 
-SOURCE=.\res\overlay\occupied.ico
-# End Source File
-# Begin Source File
-
-SOURCE=.\res\overlay\offline.ico
-# End Source File
-# Begin Source File
-
 SOURCE=.\res\offline2.ico
-# End Source File
-# Begin Source File
-
-SOURCE=.\res\online.ico
-# End Source File
-# Begin Source File
-
-SOURCE=.\res\overlay\online.ico
 # End Source File
 # Begin Source File
 
@@ -894,15 +841,7 @@ SOURCE=.\res\options.ico
 # End Source File
 # Begin Source File
 
-SOURCE=.\res\options_clvm.ico
-# End Source File
-# Begin Source File
-
 SOURCE=.\res\outtolun.ico
-# End Source File
-# Begin Source File
-
-SOURCE=.\res\overlay\phone.ico
 # End Source File
 # Begin Source File
 
@@ -926,10 +865,6 @@ SOURCE=.\res\sendmail.ico
 # End Source File
 # Begin Source File
 
-SOURCE=.\res\slist.ico
-# End Source File
-# Begin Source File
-
 SOURCE=.\res\smalldot.ico
 # End Source File
 # Begin Source File
@@ -946,18 +881,6 @@ SOURCE=.\res\sortcolu.bmp
 # End Source File
 # Begin Source File
 
-SOURCE=.\res\sounds_off.ico
-# End Source File
-# Begin Source File
-
-SOURCE=.\res\sounds_on.ico
-# End Source File
-# Begin Source File
-
-SOURCE=.\res\tabsrmm_menu.ico
-# End Source File
-# Begin Source File
-
 SOURCE=.\res\timestamp.ico
 # End Source File
 # Begin Source File
@@ -971,10 +894,6 @@ SOURCE=.\res\useronli.ico
 # Begin Source File
 
 SOURCE=.\res\viewdetails.ico
-# End Source File
-# Begin Source File
-
-SOURCE=.\res\visible.ico
 # End Source File
 # End Group
 # End Target

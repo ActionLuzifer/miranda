@@ -26,7 +26,7 @@ cd ..\..\miranda\protocols\IcqOscarJ
 nmake /f IcqOscar8.mak CFG="icqoscar8 - Win32 Release"
 if errorlevel 1 goto :Error
 
-cd icons_pack
+cd icon_pack
 nmake /f ICONS.mak CFG="ICONS - Win32 Release"
 if errorlevel 1 goto :Error
 
@@ -54,10 +54,6 @@ rem ---------------------------------------------------------------------------
 rem Plugins
 rem ---------------------------------------------------------------------------
 
-cd ..\..\plugins\zlib
-nmake /f zlib.mak CFG="zlib - Win32 Release"
-if errorlevel 1 goto :Error
-
 cd ..\..\plugins\chat
 nmake /f chat.mak CFG="chat - Win32 Release"
 if errorlevel 1 goto :Error
@@ -66,16 +62,8 @@ cd ..\clist
 nmake /f clist.mak CFG="clist - Win32 Release"
 if errorlevel 1 goto :Error
 
-cd ..\clist_nicer
-nmake /f clist.mak CFG="clist_nicer - Win32 Release"
-if errorlevel 1 goto :Error
-
 cd ..\db3x
 nmake /f db3x.mak CFG="db3x - Win32 Release"
-if errorlevel 1 goto :Error
-
-cd ..\db3x_mmap
-nmake /f db3x_mmap.mak CFG="db3x_mmap - Win32 Release"
 if errorlevel 1 goto :Error
 
 cd ..\import
@@ -86,20 +74,12 @@ cd ..\loadavatars
 nmake /f avatars.mak CFG="loadavatars - Win32 Release"
 if errorlevel 1 goto :Error
 
-cd ..\modernb
-nmake /f modernb.mak CFG="modernb - Win32 Release"
-if errorlevel 1 goto :Error
-
 cd ..\mwclist
 nmake /f mwclist.mak CFG="mwclist - Win32 Release"
 if errorlevel 1 goto :Error
 
 cd ..\png2dib
 nmake /f png2dib.mak CFG="png2dib - Win32 Release"
-if errorlevel 1 goto :Error
-
-cd ..\scriver
-nmake /f scriver.mak CFG="scriver - Win32 Release"
 if errorlevel 1 goto :Error
 
 cd ..\srmm
@@ -128,9 +108,7 @@ call :WriteVer2 %Version% %SubVersion% %3
 goto :eof
 
 :WriteVer2
-echo #include ^<windows.h^>                                                         >..\src\version.rc
-echo #include ^<winres.h^>                                                         >>..\src\version.rc
-echo #ifndef _MAC                                                                  >>..\src\version.rc
+echo #ifndef _MAC >..\src\version.rc
 echo ///////////////////////////////////////////////////////////////////////////// >>..\src\version.rc
 echo //                                                                            >>..\src\version.rc
 echo // Version                                                                    >>..\src\version.rc
@@ -158,7 +136,7 @@ echo             VALUE "CompanyName", " \0"                                     
 echo             VALUE "FileDescription", "Miranda IM\0"                           >>..\src\version.rc
 echo             VALUE "FileVersion", "0.%1.%2 alpha build #%3\0"                  >>..\src\version.rc
 echo             VALUE "InternalName", "miranda32\0"                               >>..\src\version.rc
-echo             VALUE "LegalCopyright", "Copyright © 2000-2007 Miranda IM Project. This software is released under the terms of the GNU General Public License.\0"    >>..\src\version.rc
+echo             VALUE "LegalCopyright", "Copyright c 2000-2006 Miranda IM Project. This software is released under the terms of the GNU General Public License.\0"    >>..\src\version.rc
 echo             VALUE "LegalTrademarks", "\0"                                     >>..\src\version.rc
 echo             VALUE "OriginalFilename", "miranda32.exe\0"                       >>..\src\version.rc
 echo             VALUE "PrivateBuild", "\0"                                        >>..\src\version.rc
@@ -239,13 +217,11 @@ copy ..\..\plugins\chat\Release\chat.pdb               %Temp%\pdba\plugins
 copy ..\..\plugins\clist\Release\clist_classic.pdb     %Temp%\pdba\plugins
 copy ..\..\plugins\clist_nicer\Release\clist_nicer.pdb %Temp%\pdba\plugins
 copy ..\..\plugins\db3x\Release\dbx_3x.pdb             %Temp%\pdba\plugins
-copy ..\..\plugins\db3x_mmap\Release\dbx_mmap.pdb      %Temp%\pdba\plugins
+copy ..\..\plugins\help\Release\help.pdb               %Temp%\pdba\plugins
 copy ..\..\plugins\import\Release\import.pdb           %Temp%\pdba\plugins
-copy ..\..\plugins\loadavatars\Release\loadavatars.pdb %Temp%\pdbw\plugins
 copy ..\..\plugins\modernb\Release\clist_modern.pdb    %Temp%\pdba\plugins
 copy ..\..\plugins\mwclist\Release\clist_mw.pdb        %Temp%\pdba\plugins
 copy ..\..\plugins\png2dib\Release\png2dib.pdb         %Temp%\pdba\plugins
-copy ..\..\plugins\scriver\Release\scriver.pdb         %Temp%\pdba\plugins
 copy ..\..\plugins\srmm\Release\srmm.pdb               %Temp%\pdba\plugins
 copy ..\..\plugins\tabSRMM\Release\tabSRMM.pdb         %Temp%\pdba\plugins
 

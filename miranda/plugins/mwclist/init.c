@@ -30,6 +30,7 @@ CLIST_INTERFACE* pcli = NULL;
 struct LIST_INTERFACE li;
 struct MM_INTERFACE memoryManagerInterface;
 static HANDLE hCListShutdown = 0;
+extern int LoadMoveToGroup();
 
 HMENU BuildGroupPopupMenu( struct ClcGroup* group );
 
@@ -73,8 +74,8 @@ int TrayIconProcessMessage(WPARAM wParam,LPARAM lParam);
 extern int BGModuleLoad();
 extern int BGModuleUnload();
 
-PLUGININFOEX pluginInfo = {
-	sizeof(PLUGININFOEX),
+PLUGININFO pluginInfo = {
+	sizeof(PLUGININFO),
 	#if defined( _UNICODE )
 		"MultiWindow Contact List Unicode",
 	#else
@@ -87,12 +88,7 @@ PLUGININFOEX pluginInfo = {
 	"Copyright 2000-2006 Miranda-IM project ["__DATE__" "__TIME__"]",
 	"http://www.miranda-im.org",
 	UNICODE_AWARE,
-	DEFMOD_CLISTALL,
-	#if defined( _UNICODE )
-		{0x2a417ab9, 0x16f2, 0x472d, { 0x9a, 0xe3, 0x41, 0x51, 0x3, 0xc7, 0x8a, 0x64 }} //{2A417AB9-16F2-472d-9AE3-415103C78A64}
-	#else
-		{0x7ab05d31, 0x9972, 0x4406, { 0x82, 0x3e, 0xe, 0xd7, 0x45, 0xef, 0x7c, 0x56 }} //{7AB05D31-9972-4406-823E-0ED745EF7C56}
-	#endif
+	DEFMOD_CLISTALL
 };
 
 BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD dwReason, LPVOID reserved)
@@ -102,16 +98,10 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD dwReason, LPVOID reserved)
 	return TRUE;
 }
 
-__declspec(dllexport) PLUGININFOEX* MirandaPluginInfoEx(DWORD mirandaVersion)
+__declspec(dllexport) PLUGININFO* MirandaPluginInfo(DWORD mirandaVersion)
 {
 	if ( mirandaVersion < PLUGIN_MAKE_VERSION(0,3,4,3) ) return NULL;
 	return &pluginInfo;
-}
-
-static const MUUID interfaces[] = {MIID_CLIST, MIID_LAST};
-__declspec(dllexport) const MUUID * MirandaPluginInterfaces(void)
-{
-	return interfaces;
 }
 
 int LoadContactListModule(void);
@@ -182,13 +172,9 @@ int __declspec(dllexport) CListInitialise(PLUGINLINK * link)
 
 		pcli = ( CLIST_INTERFACE* )CallService(MS_CLIST_RETRIEVE_INTERFACE, 0, (LPARAM)g_hInst);
 		if ( (int)pcli == CALLSERVICE_NOTFOUND ) {
-LBL_Error:
-			MessageBoxA( NULL, "This version of plugin requires Miranda IM 0.7.0.8 or later", "Fatal error", MB_OK );
+			MessageBoxA( NULL, "This version of plugin requires Miranda IM 0.5 or later", "Fatal error", MB_OK );
 			return 1;
 		}
-		if ( pcli->version < 4 )
-			goto LBL_Error;
-
 		pcli->pfnBuildGroupPopupMenu = BuildGroupPopupMenu;
 		pcli->pfnCalcEipPosition = CalcEipPosition;
 		pcli->pfnCheckCacheItem = CheckPDNCE;
@@ -228,6 +214,7 @@ LBL_Error:
 		if (rc==0) rc=LoadCLCModule();
 
 		HookEvent(ME_SYSTEM_MODULESLOADED, systemModulesLoaded);
+		LoadMoveToGroup();
 		BGModuleLoad();
 
 		OutputDebugStringA("CListInitialise ClistMW...Done\r\n");

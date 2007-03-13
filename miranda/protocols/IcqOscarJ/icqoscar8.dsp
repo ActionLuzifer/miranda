@@ -118,6 +118,10 @@ SOURCE=.\families.h
 # End Source File
 # Begin Source File
 
+SOURCE=.\forkthread.h
+# End Source File
+# Begin Source File
+
 SOURCE=.\globals.h
 # End Source File
 # Begin Source File
@@ -218,7 +222,11 @@ SOURCE=.\UI\loginpassword.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\oscar_filetransfer.h
+SOURCE=.\m_icq.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\md5.h
 # End Source File
 # Begin Source File
 
@@ -611,6 +619,10 @@ SOURCE=.\cookies.c
 # End Source File
 # Begin Source File
 
+SOURCE=.\forkthread.c
+# End Source File
+# Begin Source File
+
 SOURCE=.\i18n.c
 # End Source File
 # Begin Source File
@@ -668,7 +680,7 @@ SOURCE=.\icqoscar.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\oscar_filetransfer.c
+SOURCE=.\md5.c
 # End Source File
 # Begin Source File
 

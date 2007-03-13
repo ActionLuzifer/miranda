@@ -58,7 +58,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <m_protosvc.h>
 #include <m_skin.h>
 #include <m_system.h>
-#include <m_system_cpp.h>
 #include <m_userinfo.h>
 #include <m_utils.h>
 #include <win2k.h>
@@ -130,6 +129,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define MSN_VIEW_PROFILE "/ViewProfile"
 #define MSN_SEND_NUDGE	 "/SendNudge"
 
+#define MENU_ITEMS_COUNT 2
 #define MS_GOTO_INBOX		"/GotoInbox"
 #define MS_EDIT_PROFILE		"/EditProfile"
 #define MS_VIEW_STATUS		"/ViewMsnStatus"
@@ -166,7 +166,7 @@ WCHAR*   __stdcall   HtmlEncodeW( const WCHAR* str );
 	#define  HtmlEncodeT HtmlEncode
 #endif
 bool txtParseParam (const char* szData, const char* presearch, const char* start, const char* finish, char* param, const int size);
-void MSN_Base64Decode( const char* str, size_t len, char* res, size_t reslen );
+void MSN_Base64Decode( const char* str, char* res, size_t reslen );
 
 void		__stdcall	UrlDecode( char*str );
 void		__stdcall	UrlEncode( const char* src, char* dest, int cbDest );
@@ -208,7 +208,6 @@ int		__stdcall	MSN_CallService( const char* szSvcName, WPARAM wParam, LPARAM lPa
 #endif
 
 HANDLE   __stdcall   MSN_CreateProtoServiceFunction( const char*, MIRANDASERVICE );
-void     __stdcall   MSN_DeleteSetting( HANDLE hContact, const char* valueName );
 void     __stdcall   MSN_EnableMenuItems( BOOL );
 void     __fastcall  MSN_FreeVariant( DBVARIANT* dbv );
 char*    __stdcall   MSN_GetContactName( HANDLE hContact );
@@ -232,19 +231,14 @@ int      __stdcall   MSN_EnterBitmapFileName( char* szDest );
 int      __stdcall   MSN_SaveBitmapAsAvatar( HBITMAP hBitmap, const char* szFileName );
 HBITMAP  __stdcall   MSN_StretchBitmap( HBITMAP hBitmap );
 
-VOID		CALLBACK    MSNMainTimerProc( HWND hwnd, UINT uMsg, UINT idEvent, DWORD dwTime );
-LRESULT	CALLBACK    NullWindowProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
-DWORD		WINAPI	   MsnShowMailThread( LPVOID );
-
-HANDLE   __stdcall   GetIconHandle( int iconId );
-HICON    __stdcall   LoadIconEx( const char* );
-void     __stdcall   ReleaseIconEx( const char* );
-
-void     MsnInitIcons( void );
-void     MsnInitMenus( void );
-
 TCHAR* EscapeChatTags(TCHAR* pszText);
 TCHAR* UnEscapeChatTags(TCHAR* str_in);
+
+VOID		CALLBACK MSNMainTimerProc( HWND hwnd, UINT uMsg, UINT idEvent, DWORD dwTime );
+LRESULT	CALLBACK NullWindowProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
+DWORD		WINAPI	MsnShowMailThread( LPVOID );
+
+int IsWinver( void );
 
 TCHAR* a2tf( const TCHAR* str, BOOL unicode );
 void   overrideStr( TCHAR*& dest, const TCHAR* src, BOOL unicode, const TCHAR* def = NULL );
@@ -257,13 +251,6 @@ void   strdel( char* parBuffer, int len );
 // PNG library interface
 
 BOOL __stdcall MSN_LoadPngModule( void );
-
-
-typedef struct
-{
-	unsigned flags;
-	HICON hIcon;
-} PopupData;
 
 /////////////////////////////////////////////////////////////////////////////////////////
 //	MIME headers processing
@@ -456,7 +443,7 @@ struct ThreadData
 
 	//----| internal data buffer |--------------------------------------------------------
 	int            mBytesInData;     // bytes available in data buffer
-	char           mData[8192];      // data buffer for connection
+	char           mData[4096];      // data buffer for connection
 
 	//----| methods |---------------------------------------------------------------------
 	void           applyGatewayData( HANDLE hConn, bool isPoll );
@@ -531,9 +518,6 @@ void __stdcall p2p_unregisterDC( directconnection* dc );
 directconnection* __stdcall p2p_getDCByCallID( const char* CallID );
 
 void ft_startFileSend( ThreadData* info, const char* Invcommand, const char* Invcookie );
-
-void MSN_ChatStart(ThreadData* info);
-void MSN_KillChatSession(TCHAR* id);
 
 /////////////////////////////////////////////////////////////////////////////////////////
 //	Message queue
@@ -611,6 +595,7 @@ typedef struct
 	DWORD		PopupTimeoutHotmail;
 	DWORD		PopupTimeoutOther;
 
+	BOOL		DisableMenu;
 	BOOL		UseGateway;
 	BOOL		UseProxy;
 	BOOL		KeepConnectionAlive;
@@ -660,6 +645,7 @@ extern	ThreadData*	volatile msnNsThread;
 extern	bool			volatile msnLoggedIn;
 
 extern	char*	      msnProtocolName;
+extern	HANDLE      msnMenuItems[ MENU_ITEMS_COUNT ];
 extern	int         msnSearchID;
 extern	char*       msnExternalIP;
 extern	int			msnStatusMode,
@@ -676,8 +662,6 @@ extern	char*       kv;
 extern	char*       passport;
 extern	char*       urlId;
 extern	char*       MSPAuth;
-extern  char*       profileURL;
-extern  char*       rru;
 
 extern	HANDLE		hNetlibUser;
 extern	HINSTANCE	hInst;

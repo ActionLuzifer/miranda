@@ -57,7 +57,7 @@ static BOOL CALLBACK ReadAwayMsgDlgProc(HWND hwndDlg,UINT message,WPARAM wParam,
 				GetDlgItemText(hwndDlg,IDC_RETRIEVING,format,SIZEOF(format));
 				mir_sntprintf(str,SIZEOF(str),format,status);
 				SetDlgItemText(hwndDlg,IDC_RETRIEVING,str);
-				Window_SetProtoIcon_IcoLib(hwndDlg, szProto, dwStatus);
+				SendMessage(hwndDlg, WM_SETICON, ICON_BIG, (LPARAM)LoadSkinnedProtoIcon(szProto, dwStatus));
 			}
 			return TRUE;
 		case HM_AWAYMSG:
@@ -85,10 +85,8 @@ static BOOL CALLBACK ReadAwayMsgDlgProc(HWND hwndDlg,UINT message,WPARAM wParam,
 			DestroyWindow(hwndDlg);
 			break;
 		case WM_DESTROY:
-			if ( dat->hAwayMsgEvent != NULL )
-				UnhookEvent(dat->hAwayMsgEvent);
+			if(dat->hAwayMsgEvent!=NULL) UnhookEvent(dat->hAwayMsgEvent);
 			WindowList_Remove(hWindowList,hwndDlg);
-			Window_FreeIcon_IcoLib(hwndDlg);
 			mir_free(dat);
 			break;
 	}
@@ -127,13 +125,12 @@ static int AwayMsgPreBuildMenu(WPARAM wParam,LPARAM lParam)
 			if(CallProtoService(szProto,PS_GETCAPS,PFLAGNUM_1,0)&PF1_MODEMSGRECV) {
 				if(CallProtoService(szProto,PS_GETCAPS,PFLAGNUM_3,0)&Proto_Status2Flag(status)){
 					clmi.flags=CMIM_FLAGS|CMIM_NAME|CMIF_NOTOFFLINE|CMIM_ICON;
-					clmi.hIcon = LoadSkinProtoIcon(szProto, status);
+					clmi.hIcon = LoadSkinnedProtoIcon(szProto, status);
 				}
 			}
 		}
 	}
 	CallService(MS_CLIST_MODIFYMENUITEM,(WPARAM)hAwayMsgMenuItem,(LPARAM)&clmi);
-    IconLib_ReleaseIcon(clmi.hIcon,0);
 	return 0;
 }
 
@@ -145,17 +142,19 @@ static int AwayMsgPreShutdown(WPARAM wParam, LPARAM lParam)
 
 int LoadAwayMsgModule(void)
 {
-	CLISTMENUITEM mi = { 0 };
+	CLISTMENUITEM mi;
 
-	hWindowList = (HANDLE)CallService(MS_UTILS_ALLOCWINDOWLIST,0,0);
+	hWindowList=(HANDLE)CallService(MS_UTILS_ALLOCWINDOWLIST,0,0);
 	CreateServiceFunction(MS_AWAYMSG_SHOWAWAYMSG,GetMessageCommand);
-	
-	mi.cbSize     = sizeof(mi);
-	mi.position   = -2000005000;
-	mi.flags      = CMIF_NOTOFFLINE;
-	mi.pszName    = "Re&ad Away Message";
-	mi.pszService = MS_AWAYMSG_SHOWAWAYMSG;
-	hAwayMsgMenuItem = ( HANDLE )CallService(MS_CLIST_ADDCONTACTMENUITEM,0,(LPARAM)&mi);
+	ZeroMemory(&mi,sizeof(mi));
+	mi.cbSize=sizeof(mi);
+	mi.position=-2000005000;
+	mi.flags=CMIF_NOTOFFLINE;
+	mi.hIcon=NULL;
+	mi.pszContactOwner=NULL;
+	mi.pszName=Translate("Re&ad Away Message");
+	mi.pszService=MS_AWAYMSG_SHOWAWAYMSG;
+	hAwayMsgMenuItem=(HANDLE)CallService(MS_CLIST_ADDCONTACTMENUITEM,0,(LPARAM)&mi);
 	HookEvent(ME_CLIST_PREBUILDCONTACTMENU,AwayMsgPreBuildMenu);
 	HookEvent(ME_SYSTEM_PRESHUTDOWN,AwayMsgPreShutdown);
 	return LoadAwayMessageSending();

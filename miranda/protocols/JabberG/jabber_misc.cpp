@@ -2,7 +2,7 @@
 
 Jabber Protocol Plugin for Miranda IM
 Copyright ( C ) 2002-04  Santithorn Bunchua
-Copyright ( C ) 2005-07  George Hazan
+Copyright ( C ) 2005-06  George Hazan
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -48,7 +48,6 @@ void JabberAddContactToRoster( const TCHAR* jid, const TCHAR* nick, const TCHAR*
 	if ( grpName != NULL )
 		item->addChild( "group", grpName );
 	jabberThreadInfo->send( iq );
-
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -391,27 +390,4 @@ char* UnEscapeChatTags(char* str_in)
 	}
 	*d = 0;
 	return str_in;
-}
-
-//////////////////////////////////////////////////////////////////////////
-// update MirVer with data for active resource
-
-void   JabberUpdateMirVer(JABBER_LIST_ITEM *item)
-{
-	HANDLE hContact = JabberHContactFromJID(item->jid);
-	if (!hContact)
-		return;
-
-	int resource = -1;
-	if (item->resourceMode == RSMODE_LASTSEEN)
-		resource = item->lastSeenResource;
-	else if (item->resourceMode == RSMODE_MANUAL)
-		resource = item->manualResource;
-	if ((resource < 0) || (resource >= item->resourceCount))
-		return;
-
-	if (!item->resource[resource].software)
-		return;
-
-	JSetStringT(hContact, "MirVer", item->resource[resource].software);
 }

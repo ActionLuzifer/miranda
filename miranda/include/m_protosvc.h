@@ -350,13 +350,6 @@ typedef struct {
 //This function is only available if the PF1_EXTSEARCHUI capability is set
 #define PS_SEARCHBYADVANCED          "/SearchByAdvanced"
 
-typedef struct {
-	size_t nSize;
-	int nFieldCount;
-	TCHAR ** pszFields;
-	PROTOSEARCHRESULT psr;
-} CUSTOMSEARCHRESULTS;
-
 //Adds a search result to the contact list
 //wParam=flags
 //lParam=(LPARAM)(PROTOSEARCHRESULT*)&psr

@@ -16,8 +16,8 @@
 	<Configurations>
 		<Configuration
 			Name="Release|Win32"
-			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
-			IntermediateDirectory="$(SolutionDir)$(ConfigurationName)/Obj/$(ProjectName)"
+			OutputDirectory="$(SolutionDir)/Release"
+			IntermediateDirectory="$(SolutionDir)/Release/Obj/$(ProjectName)"
 			ConfigurationType="1"
 			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops"
 			UseOfMFC="0"
@@ -120,8 +120,8 @@
 		</Configuration>
 		<Configuration
 			Name="Debug|Win32"
-			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
-			IntermediateDirectory="$(SolutionDir)$(ConfigurationName)/Obj/$(ProjectName)"
+			OutputDirectory="$(SolutionDir)/Debug"
+			IntermediateDirectory="$(SolutionDir)/Debug/Obj/$(ProjectName)"
 			ConfigurationType="1"
 			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops"
 			UseOfMFC="0"
@@ -212,8 +212,8 @@
 		</Configuration>
 		<Configuration
 			Name="Release Unicode|Win32"
-			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
-			IntermediateDirectory="$(SolutionDir)$(ConfigurationName)/Obj/$(ProjectName)"
+			OutputDirectory="$(SolutionDir)/Release"
+			IntermediateDirectory="$(SolutionDir)/Release/Obj/$(ProjectName)"
 			ConfigurationType="1"
 			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops"
 			UseOfMFC="0"
@@ -319,8 +319,8 @@
 		</Configuration>
 		<Configuration
 			Name="Debug Unicode|Win32"
-			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
-			IntermediateDirectory="$(SolutionDir)$(ConfigurationName)/Obj/$(ProjectName)"
+			OutputDirectory="$(SolutionDir)/Debug"
+			IntermediateDirectory="$(SolutionDir)/Debug/Obj/$(ProjectName)"
 			ConfigurationType="1"
 			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops"
 			UseOfMFC="0"
@@ -2872,14 +2872,6 @@
 				</File>
 			</Filter>
 			<Filter
-				Name="updater"
-				>
-				<File
-					RelativePath=".\modules\updatenotify\updatenotify.c"
-					>
-				</File>
-			</Filter>
-			<Filter
 				Name="userinfo"
 				>
 				<File
@@ -3200,10 +3192,6 @@
 					</FileConfiguration>
 				</File>
 				<File
-					RelativePath=".\modules\utils\md5.c"
-					>
-				</File>
-				<File
 					RelativePath="modules\utils\openurl.c"
 					>
 					<FileConfiguration
@@ -3334,10 +3322,6 @@
 							PreprocessorDefinitions=""
 						/>
 					</FileConfiguration>
-				</File>
-				<File
-					RelativePath=".\modules\utils\sha1.c"
-					>
 				</File>
 				<File
 					RelativePath=".\modules\utils\utf.c"
@@ -3520,10 +3504,6 @@
 					>
 				</File>
 				<File
-					RelativePath=".\modules\clist\clistmenus.c"
-					>
-				</File>
-				<File
 					RelativePath=".\modules\clist\clistmod.c"
 					>
 				</File>
@@ -3552,111 +3532,11 @@
 					>
 				</File>
 				<File
-					RelativePath=".\modules\clist\genmenu.c"
-					>
-				</File>
-				<File
-					RelativePath=".\modules\clist\genmenu.h"
-					>
-				</File>
-				<File
-					RelativePath=".\modules\clist\genmenuopt.c"
-					>
-				</File>
-				<File
 					RelativePath=".\modules\clist\groups.c"
 					>
 				</File>
 				<File
 					RelativePath=".\modules\clist\keyboard.c"
-					>
-				</File>
-				<File
-					RelativePath=".\modules\clist\movetogroup.c"
-					>
-				</File>
-				<File
-					RelativePath=".\modules\clist\protocolorder.c"
-					>
-				</File>
-			</Filter>
-			<Filter
-				Name="fonts"
-				>
-				<File
-					RelativePath=".\modules\fonts\FontOptions.c"
-					>
-				</File>
-				<File
-					RelativePath=".\modules\fonts\FontService.c"
-					>
-				</File>
-				<File
-					RelativePath=".\modules\fonts\FontService.h"
-					>
-				</File>
-				<File
-					RelativePath=".\modules\fonts\module_fonts.c"
-					>
-				</File>
-				<File
-					RelativePath=".\modules\fonts\module_fonts.h"
-					>
-				</File>
-				<File
-					RelativePath=".\modules\fonts\services.c"
-					>
-				</File>
-			</Filter>
-			<Filter
-				Name="icolib"
-				>
-				<File
-					RelativePath=".\modules\icolib\extracticon.c"
-					>
-					<FileConfiguration
-						Name="Release|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Debug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release Unicode|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Debug Unicode|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-				</File>
-				<File
-					RelativePath=".\modules\icolib\IcoLib.c"
-					>
-				</File>
-				<File
-					RelativePath=".\modules\icolib\IcoLib.h"
-					>
-				</File>
-				<File
-					RelativePath=".\modules\icolib\skin2icons.c"
 					>
 				</File>
 			</Filter>
@@ -3665,7 +3545,99 @@
 			Name="Resources"
 			>
 			<File
+				RelativePath="res\addcontact.ico"
+				>
+			</File>
+			<File
+				RelativePath="res\away.ico"
+				>
+			</File>
+			<File
+				RelativePath="res\blank.ico"
+				>
+			</File>
+			<File
+				RelativePath="res\changefont.ico"
+				>
+			</File>
+			<File
 				RelativePath="..\docs\credits.txt"
+				>
+			</File>
+			<File
+				RelativePath="res\delete.ico"
+				>
+			</File>
+			<File
+				RelativePath="res\detailsl.ico"
+				>
+			</File>
+			<File
+				RelativePath="res\dnd.ico"
+				>
+			</File>
+			<File
+				RelativePath="res\downarrow.ico"
+				>
+			</File>
+			<File
+				RelativePath="res\dragcopy.cur"
+				>
+			</File>
+			<File
+				RelativePath="res\dropuser.cur"
+				>
+			</File>
+			<File
+				RelativePath="res\emptyblo.ico"
+				>
+			</File>
+			<File
+				RelativePath="res\file.ico"
+				>
+			</File>
+			<File
+				RelativePath="res\filledbl.ico"
+				>
+			</File>
+			<File
+				RelativePath="res\finduser.ico"
+				>
+			</File>
+			<File
+				RelativePath="res\freechat.ico"
+				>
+			</File>
+			<File
+				RelativePath="res\groupope.ico"
+				>
+			</File>
+			<File
+				RelativePath="res\groupshu.ico"
+				>
+			</File>
+			<File
+				RelativePath="res\help.ico"
+				>
+			</File>
+			<File
+				RelativePath="res\history.ico"
+				>
+			</File>
+			<File
+				RelativePath="res\hyperlin.cur"
+				>
+			</File>
+			<File
+				RelativePath="res\invisible.ico"
+				>
+			</File>
+			<File
+				RelativePath="res\message.ico"
+				>
+			</File>
+			<File
+				RelativePath="res\miranda.ico"
 				>
 			</File>
 			<File
@@ -3705,6 +3677,58 @@
 				</FileConfiguration>
 			</File>
 			<File
+				RelativePath="res\mirandaw.ico"
+				>
+			</File>
+			<File
+				RelativePath="res\multisend.ico"
+				>
+			</File>
+			<File
+				RelativePath="res\na2.ico"
+				>
+			</File>
+			<File
+				RelativePath="res\notick.ico"
+				>
+			</File>
+			<File
+				RelativePath="res\notick1.ico"
+				>
+			</File>
+			<File
+				RelativePath="res\occupied.ico"
+				>
+			</File>
+			<File
+				RelativePath="res\offline2.ico"
+				>
+			</File>
+			<File
+				RelativePath="res\online2.ico"
+				>
+			</File>
+			<File
+				RelativePath="res\onthepho.ico"
+				>
+			</File>
+			<File
+				RelativePath="res\options.ico"
+				>
+			</File>
+			<File
+				RelativePath="res\outtolun.ico"
+				>
+			</File>
+			<File
+				RelativePath="res\rename.ico"
+				>
+			</File>
+			<File
+				RelativePath="res\reply.ico"
+				>
+			</File>
+			<File
 				RelativePath="resource.h"
 				>
 			</File>
@@ -3713,7 +3737,43 @@
 				>
 			</File>
 			<File
-				RelativePath=".\version.rc"
+				RelativePath="res\searchal.ico"
+				>
+			</File>
+			<File
+				RelativePath="res\sendmail.ico"
+				>
+			</File>
+			<File
+				RelativePath="res\smalldot.ico"
+				>
+			</File>
+			<File
+				RelativePath="res\sms.ico"
+				>
+			</File>
+			<File
+				RelativePath="res\sortcold.bmp"
+				>
+			</File>
+			<File
+				RelativePath="res\sortcolu.bmp"
+				>
+			</File>
+			<File
+				RelativePath="res\timestamp.ico"
+				>
+			</File>
+			<File
+				RelativePath="res\url.ico"
+				>
+			</File>
+			<File
+				RelativePath="res\useronli.ico"
+				>
+			</File>
+			<File
+				RelativePath="res\viewdetails.ico"
 				>
 			</File>
 		</Filter>

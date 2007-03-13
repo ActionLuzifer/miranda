@@ -13,58 +13,6 @@
 #undef APSTUDIO_READONLY_SYMBOLS
 
 /////////////////////////////////////////////////////////////////////////////
-// Neutral resources
-
-#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_NEU)
-#ifdef _WIN32
-LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-#pragma code_page(1251)
-#endif //_WIN32
-
-/////////////////////////////////////////////////////////////////////////////
-//
-// Dialog
-//
-
-IDD_SEARCHUSER DIALOGEX 0, 0, 109, 148
-STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD | WS_SYSMENU
-EXSTYLE WS_EX_CONTROLPARENT
-FONT 8, "MS Shell Dlg", 400, 0, 0x1
-BEGIN
-    COMBOBOX        IDC_SERVER,0,11,92,75,CBS_DROPDOWN | CBS_AUTOHSCROLL | 
-                    WS_VSCROLL | WS_TABSTOP
-    DEFPUSHBUTTON   "Go",IDC_GO,93,11,16,13,WS_DISABLED
-    LTEXT           "Search service",IDC_STATIC,0,1,97,8
-    SCROLLBAR       IDC_VSCROLL,97,49,12,99,SBS_BOTTOMALIGN | SBS_VERT | NOT 
-                    WS_VISIBLE
-    EDITTEXT        IDC_INSTRUCTIONS,0,27,105,22,ES_MULTILINE | 
-                    ES_AUTOVSCROLL | ES_READONLY | NOT WS_BORDER | NOT 
-                    WS_TABSTOP
-    LTEXT           "",IDC_FRAME,0,49,97,99,NOT WS_GROUP
-END
-
-
-/////////////////////////////////////////////////////////////////////////////
-//
-// DESIGNINFO
-//
-
-#ifdef APSTUDIO_INVOKED
-GUIDELINES DESIGNINFO 
-BEGIN
-    IDD_SEARCHUSER, DIALOG
-    BEGIN
-        VERTGUIDE, 97
-        HORZGUIDE, 49
-    END
-END
-#endif    // APSTUDIO_INVOKED
-
-#endif    // Neutral resources
-/////////////////////////////////////////////////////////////////////////////
-
-
-/////////////////////////////////////////////////////////////////////////////
 // English (U.S.) resources
 
 #if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
@@ -72,6 +20,32 @@ END
 LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 #pragma code_page(1252)
 #endif //_WIN32
+
+#ifdef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// TEXTINCLUDE
+//
+
+1 TEXTINCLUDE 
+BEGIN
+    "resource.h\0"
+END
+
+2 TEXTINCLUDE 
+BEGIN
+    "#include ""winres.h""\r\n"
+    "\0"
+END
+
+3 TEXTINCLUDE 
+BEGIN
+    "\r\n"
+    "\0"
+END
+
+#endif    // APSTUDIO_INVOKED
+
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -132,12 +106,12 @@ BEGIN
                     IDC_DOWNLOAD_OPENSSL,"Hyperlink",WS_TABSTOP,16,97,270,11
 END
 
-IDD_OPT_JABBER2 DIALOGEX 0, 0, 304, 211
+IDD_OPT_JABBER2 DIALOGEX 0, 0, 304, 213
 STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD
 EXSTYLE WS_EX_CONTROLPARENT
 FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
-    GROUPBOX        "File Transfer",IDC_STATIC,8,3,290,70
+    GROUPBOX        "File Transfer",IDC_STATIC,8,4,290,69
     CONTROL         "Allow file sending through direct peer-to-peer connection",
                     IDC_DIRECT,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,16,18,
                     202,10
@@ -151,7 +125,7 @@ BEGIN
     CONTROL         "Specify external address",IDC_DIRECT_MANUAL,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,16,30,101,10
     EDITTEXT        IDC_DIRECT_ADDR,124,29,81,12,ES_AUTOHSCROLL
-    GROUPBOX        "Miscellaneous",IDC_STATIC,8,75,290,132
+    GROUPBOX        "Miscellaneous",IDC_STATIC,8,74,290,131
     CONTROL         "Automatically add contact when accept authorization",
                     IDC_AUTO_ADD,"Button",BS_AUTOCHECKBOX | BS_TOP | 
                     WS_TABSTOP,16,90,280,12
@@ -163,19 +137,18 @@ BEGIN
     CONTROL         "Send messages slower, but with full acknowledgement",
                     IDC_MSG_ACK,"Button",BS_AUTOCHECKBOX | BS_TOP | 
                     WS_TABSTOP,16,126,269,10
+    CONTROL         "Disable main menu",IDC_DISABLE_MAINMENU,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,16,138,280,10
     CONTROL         "Show transport agents on contact list",
                     IDC_SHOW_TRANSPORT,"Button",BS_AUTOCHECKBOX | BS_TOP | 
-                    WS_TABSTOP,16,139,280,10
+                    WS_TABSTOP,16,150,280,10
     CONTROL         "Enable avatars",IDC_ENABLE_AVATARS,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,16,165,280,10
+                    BS_AUTOCHECKBOX | WS_TABSTOP,16,162,280,10
     CONTROL         "Disable SASL authentication (for old servers)",
                     IDC_DISABLE_SASL,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,
-                    16,177,279,10
+                    16,174,279,10
     CONTROL         "Validate contacts being added",IDC_VALIDATEADD,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,16,152,280,10
-    CONTROL         "Add room to Bookmarks when adding to roster",
-                    IDC_ROSTER2BOOKMARK,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,16,189,279,10
+                    BS_AUTOCHECKBOX | WS_TABSTOP,16,186,280,10
 END
 
 IDD_INFO_JABBER DIALOGEX 0, 0, 221, 132
@@ -614,46 +587,6 @@ BEGIN
     PUSHBUTTON      "Delete",IDC_DELETEAVATAR,61,112,41,13
 END
 
-IDD_BOOKMARKS DIALOGEX 0, 0, 295, 180
-STYLE DS_SETFONT | DS_MODALFRAME | DS_3DLOOK | DS_FIXEDSYS | DS_CENTER | 
-    WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
-EXSTYLE WS_EX_CONTROLPARENT
-CAPTION "Jabber Bookmarks"
-FONT 8, "MS Shell Dlg", 0, 0, 0x1
-BEGIN
-    CONTROL         "List1",IDC_BM_LIST,"SysListView32",LVS_REPORT | 
-                    LVS_SINGLESEL | LVS_SHOWSELALWAYS | WS_BORDER | 
-                    WS_TABSTOP,5,7,283,150
-    PUSHBUTTON      "Close",IDCLOSE,238,161,50,14
-    PUSHBUTTON      "Add",IDC_ADD,5,161,50,14
-    PUSHBUTTON      "Edit",IDC_EDIT,58,161,50,14
-    PUSHBUTTON      "Remove",IDC_REMOVE,111,161,50,14
-END
-
-IDD_BOOKMARK_ADD DIALOGEX 0, 0, 219, 116
-STYLE DS_SETFONT | DS_MODALFRAME | DS_3DLOOK | DS_FIXEDSYS | DS_CENTER | 
-    WS_POPUP | WS_VISIBLE | WS_CAPTION
-EXSTYLE WS_EX_CONTROLPARENT
-CAPTION "Bookmark Details"
-FONT 8, "MS Shell Dlg", 0, 0, 0x1
-BEGIN
-    LTEXT           "Room JID/ URL:",IDC_STATIC,7,35,52,8
-    EDITTEXT        IDC_ROOM_JID,64,34,148,12,ES_AUTOHSCROLL
-    LTEXT           "Bookmark Name:",IDC_STATIC,7,49,64,8
-    EDITTEXT        IDC_NAME,64,48,148,12,ES_AUTOHSCROLL
-    LTEXT           "Nick name:",IDC_STATIC,7,63,64,8
-    EDITTEXT        IDC_NICK,64,62,148,12,ES_AUTOHSCROLL
-    LTEXT           "Password:",IDC_STATIC,7,77,64,8
-    EDITTEXT        IDC_PASSWORD,64,76,148,12,ES_PASSWORD | ES_AUTOHSCROLL
-    DEFPUSHBUTTON   "OK",IDOK,51,95,50,14
-    PUSHBUTTON      "Cancel",IDCANCEL,117,95,50,14
-    CONTROL         "Conference",IDC_ROOM_RADIO,"Button",BS_AUTORADIOBUTTON | 
-                    WS_GROUP,15,16,53,10
-    GROUPBOX        "Bookmark Type",IDC_BOOKMARK_TYPE,7,7,205,24
-    CONTROL         "URL",IDC_URL_RADIO,"Button",BS_AUTORADIOBUTTON,85,16,29,
-                    10
-END
-
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -673,11 +606,11 @@ BEGIN
 
     IDD_OPT_JABBER2, DIALOG
     BEGIN
-        LEFTMARGIN, 8
+        LEFTMARGIN, 1
         RIGHTMARGIN, 296
         VERTGUIDE, 9
         TOPMARGIN, 3
-        BOTTOMMARGIN, 199
+        BOTTOMMARGIN, 205
     END
 
     IDD_INFO_JABBER, DIALOG
@@ -864,49 +797,7 @@ BEGIN
         TOPMARGIN, 3
         BOTTOMMARGIN, 126
     END
-
-    IDD_BOOKMARKS, DIALOG
-    BEGIN
-        LEFTMARGIN, 5
-        RIGHTMARGIN, 288
-        TOPMARGIN, 7
-        BOTTOMMARGIN, 175
-    END
-
-    IDD_BOOKMARK_ADD, DIALOG
-    BEGIN
-        LEFTMARGIN, 7
-        RIGHTMARGIN, 212
-        TOPMARGIN, 7
-        BOTTOMMARGIN, 109
-    END
 END
-#endif    // APSTUDIO_INVOKED
-
-
-#ifdef APSTUDIO_INVOKED
-/////////////////////////////////////////////////////////////////////////////
-//
-// TEXTINCLUDE
-//
-
-1 TEXTINCLUDE 
-BEGIN
-    "resource.h\0"
-END
-
-2 TEXTINCLUDE 
-BEGIN
-    "#include ""winres.h""\r\n"
-    "\0"
-END
-
-3 TEXTINCLUDE 
-BEGIN
-    "\r\n"
-    "\0"
-END
-
 #endif    // APSTUDIO_INVOKED
 
 
@@ -935,7 +826,6 @@ IDI_SAVE                ICON                    "icos\\save.ico"
 IDI_LOGIN               ICON                    "icos\\login.ico"
 IDI_AUTHREVOKE          ICON                    "icos\\auth_revoke.ico"
 IDI_REFRESH             ICON                    "icos\\refresh.ico"
-IDI_BOOKMARKS           ICON                    "icos\\bookmarks.ico"
 #endif    // English (U.S.) resources
 /////////////////////////////////////////////////////////////////////////////
 
@@ -950,6 +840,4 @@ IDI_BOOKMARKS           ICON                    "icos\\bookmarks.ico"
 
 /////////////////////////////////////////////////////////////////////////////
 #endif    // not APSTUDIO_INVOKED
-
-
 

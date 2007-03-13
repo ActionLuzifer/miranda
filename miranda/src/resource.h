@@ -10,12 +10,6 @@
 #define IDI_SMS                         103
 #define IDI_ONLINE                      104
 #define IDI_OFFLINE                     105
-#define IDD_CUSTOM_FONT                 106
-#define IDD_OPT_FONTS                   107
-#define IDD_OPT_GENMENU                 108
-#define IDD_OPT_PROTOCOLORDER           109
-#define IDD_OPT_ICOLIB                  110
-#define IDD_ICOLIB_IMPORT               111
 #define IDD_ADDED                       115
 #define IDD_URLSEND                     119
 #define IDD_URLRECV                     120
@@ -26,7 +20,6 @@
 #define IDI_FREE4CHAT                   129
 #define IDI_INVISIBLE                   130
 #define IDI_NA                          131
-#define IDI_LOAD                        132
 #define IDD_OPT_SOUND                   134
 #define IDI_RECVMSG                     136
 #define IDI_SENDMSG                     137
@@ -42,7 +35,6 @@
 #define IDI_HISTORY                     174
 #define IDI_DELETE                      175
 #define IDR_CONTEXT                     180
-#define IDR_ICOLIB_CONTEXT              181
 #define IDC_DROP                        183
 #define IDD_HISTORY_FIND                192
 #define IDI_SENDEMAIL                   193
@@ -75,13 +67,9 @@
 #define IDD_SETAWAYMSG                  216
 #define IDI_DETAILSLOGO                 216
 #define IDD_OPT_AWAYMSG                 217
-#define IDI_UNICODE                     218
-#define IDI_ANSI                        219
 #define IDD_INFO_SUMMARY                220
-#define IDI_LOADED                      220
 #define IDD_INFO_CONTACT                221
 #define IDR_CREDITS                     221
-#define IDI_NOTLOADED                   221
 #define IDD_INFO_BACKGROUND             222
 #define IDD_INFO_NOTES                  223
 #define IDD_ADDEMAIL                    226
@@ -108,8 +96,7 @@
 #define IDD_OPT_IDLE                    268
 #define IDD_PROFILE_SELECTION           269
 #define IDD_PROFILE_NEW                 270
-#define IDI_TYPING                      274
-#define IDD_UPDATE_NOTIFY               275
+#define IDD_UPDATE_NOTIFY               274
 #define IDD_OPT_UPDATENOTIFY            276
 #define IDC_SAVE                        1001
 #define IDI_ONTHEPHONE                  1002
@@ -137,20 +124,12 @@
 #define IDC_URLS                        1037
 #define IDC_REPLY                       1039
 #define IDC_URL                         1041
-#define IDC_FONTGROUP                   1042
-#define IDC_COLOURLIST                  1043
-#define IDC_STAT_RESTART                1044
-#define IDC_BTN_RESET                   1045
 #define IDC_REASON                      1046
-#define IDC_BTN_UNDO                    1047
 #define IDC_EMAIL                       1048
 #define IDC_NAMENICK                    1049
 #define IDC_NAMEFIRST                   1050
 #define IDC_NAMELAST                    1051
 #define IDC_NICK                        1053
-#define IDC_BTN_EXPORT                  1054
-#define IDC_FONTLIST                    1056
-#define IDC_CHOOSEFONT                  1057
 #define IDC_GENDER                      1060
 #define IDC_CITY                        1061
 #define IDC_STATE                       1062
@@ -174,16 +153,6 @@
 #define IDC_EDIT                        1078
 #define IDC_LIST                        1079
 #define IDC_HISTORY                     1080
-#define IDC_MENUOBJECTS                 1081
-#define IDC_MENUITEMS                   1082
-#define IDC_NOTSUPPORTWARNING           1083
-#define IDC_INSERTSEPARATOR             1084
-#define IDC_GENMENU_SERVICE             1085
-#define IDC_GENMENU_CUSTOMNAME          1086
-#define IDC_GENMENU_SET                 1087
-#define IDC_GENMENU_SET2                1088
-#define IDC_GENMENU_DEFAULT             1089
-#define IDC_ICONBLINK                   1090
 #define IDC_BUILDTIME                   1108
 #define IDC_CREDITSFILE                 1109
 #define IDC_NUMBER                      1113
@@ -228,7 +197,6 @@
 #define IDC_DONTREPLY                   1209
 #define IDC_NONEICON                    1209
 #define IDC_USEPREVIOUS                 1210
-#define IDC_TYPINGICON                  1210
 #define IDC_NODIALOG                    1211
 #define IDC_USESPECIFIC                 1212
 #define IDC_FILEDIR                     1213
@@ -254,9 +222,7 @@
 #define IDC_PROTOLIST                   1245
 #define IDC_TODEFICON                   1246
 #define IDC_IMPORTMULTI                 1247
-#define IDC_BKGCOLOUR                   1269
 #define IDC_FILENAME                    1271
-#define IDC_FONTCOLOUR                  1282
 #define IDC_INTERESTS                   1305
 #define IDC_EMAILS                      1306
 #define IDC_PAST                        1307
@@ -298,11 +264,6 @@
 #define IDC_ADVANCEDGROUP               1402
 #define IDC_BYADVANCED                  1403
 #define IDC_ADVANCED                    1404
-#define IDC_PROTOCOLORDER               1405
-#define IDC_TINYEXTENDEDGROUP           1406
-#define IDC_RESETPROTOCOLDATA           1407
-#define IDC_BYCUSTOM                    1408
-#define IDC_PROTOCOLORDERWARNING        1409
 #define IDC_STSIMPLERIGHT               1440
 #define IDC_NETLIBUSERS                 1443
 #define IDC_STOFTENPORT                 1445
@@ -391,7 +352,6 @@
 #define IDC_PLUGININFOFRAME             1680
 #define IDC_PLUGINCPYR                  1681
 #define IDC_PLUGINURL                   1682
-#define IDC_PLUGINPID                   1683
 #define IDC_PLUGINEMAIL                 1684
 #define IDC_IDLESPIN                    1687
 #define IDC_NODBDRIVERS                 1690
@@ -400,10 +360,13 @@
 #define IDC_TAB                         1693
 #define IDC_IDLETERMINAL                1694
 #define IDC_ENABLESOUNDS                1695
-#define IDC_NEWVERSIONLABEL             1696
-#define IDC_CURRENTVERSION              1697
+#define IDC_DOWNLOADNOW                 1696
+#define IDC_BUTTON1                     1699
 #define IDC_DOWNLOAD                    1699
-#define IDC_ENABLEUPDATES               1700
+#define IDC_CURRENTVERSION              1700
+#define IDC_CURRENTVERSION2             1701
+#define IDC_NEWVERSIONLABEL             1701
+#define IDC_ENABLEUPDATES               1702
 #define IDI_SEARCHALL                   32548
 #define ID_ICQ_EXIT                     40001
 #define IDM_COPY                        40001
@@ -422,7 +385,6 @@
 #define IDM_OPENEXISTING                40015
 #define IDM_COPYLINK                    40016
 #define POPUP_HIDEMIRANDA               40017
-#define ID_CANCELCHANGE                 40018
 #define ID_TRAY_HIDE                    40038
 #define ID_TRAY_EXIT                    40040
 #define POPUP_NEWGROUP                  40050
@@ -430,12 +392,12 @@
 #define POPUP_DELETEGROUP               40053
 
 // Next default values for new objects
-//
+// 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        277
 #define _APS_NEXT_COMMAND_VALUE         40018
-#define _APS_NEXT_CONTROL_VALUE         1701
+#define _APS_NEXT_CONTROL_VALUE         1703
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

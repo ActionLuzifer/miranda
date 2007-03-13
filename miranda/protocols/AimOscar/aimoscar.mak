@@ -40,8 +40,6 @@ ALL : "..\..\bin\release\plugins\Aim.dll"
 CLEAN :
 	-@erase "$(INTDIR)\aim.obj"
 	-@erase "$(INTDIR)\aim.res"
-	-@erase "$(INTDIR)\avatars.obj"
-	-@erase "$(INTDIR)\away.obj"
 	-@erase "$(INTDIR)\client.obj"
 	-@erase "$(INTDIR)\connection.obj"
 	-@erase "$(INTDIR)\conv.obj"
@@ -50,6 +48,7 @@ CLEAN :
 	-@erase "$(INTDIR)\file.obj"
 	-@erase "$(INTDIR)\flap.obj"
 	-@erase "$(INTDIR)\links.obj"
+	-@erase "$(INTDIR)\md5.obj"
 	-@erase "$(INTDIR)\packets.obj"
 	-@erase "$(INTDIR)\popup.obj"
 	-@erase "$(INTDIR)\proxy.obj"
@@ -57,16 +56,15 @@ CLEAN :
 	-@erase "$(INTDIR)\services.obj"
 	-@erase "$(INTDIR)\snac.obj"
 	-@erase "$(INTDIR)\strl.obj"
-	-@erase "$(INTDIR)\theme.obj"
 	-@erase "$(INTDIR)\thread.obj"
 	-@erase "$(INTDIR)\tlv.obj"
 	-@erase "$(INTDIR)\utility.obj"
 	-@erase "$(INTDIR)\vc60.idb"
 	-@erase "$(INTDIR)\vc60.pdb"
 	-@erase "$(INTDIR)\windows.obj"
-	-@erase "$(OUTDIR)\Aim.exp"
-	-@erase "$(OUTDIR)\Aim.lib"
-	-@erase "$(OUTDIR)\Aim.map"
+	-@erase "$(OUTDIR)\AimOSCAR.exp"
+	-@erase "$(OUTDIR)\AimOSCAR.lib"
+	-@erase "$(OUTDIR)\AimOSCAR.map"
 	-@erase "$(OUTDIR)\Aim.pdb"
 	-@erase "..\..\bin\release\plugins\Aim.dll"
 
@@ -81,7 +79,7 @@ BSC32_FLAGS=/nologo /o"$(OUTDIR)\aimoscar.bsc"
 BSC32_SBRS= \
 	
 LINK32=link.exe
-LINK32_FLAGS=wsock32.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /dll /incremental:no /pdb:"$(OUTDIR)\Aim.pdb" /map:"$(INTDIR)\Aim.map" /debug /machine:I386 /out:"../../bin/release/plugins/Aim.dll" /implib:"$(OUTDIR)\Aim.lib" /ALIGN:4096 /ignore:4108 
+LINK32_FLAGS=wsock32.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /dll /incremental:no /pdb:"$(OUTDIR)\Aim.pdb" /map:"$(INTDIR)\AimOSCAR.map" /debug /machine:I386 /out:"../../bin/release/plugins/Aim.dll" /implib:"$(OUTDIR)\AimOSCAR.lib" /ALIGN:4096 /ignore:4108 
 LINK32_OBJS= \
 	"$(INTDIR)\aim.obj" \
 	"$(INTDIR)\client.obj" \
@@ -89,24 +87,22 @@ LINK32_OBJS= \
 	"$(INTDIR)\conv.obj" \
 	"$(INTDIR)\direct_connect.obj" \
 	"$(INTDIR)\error.obj" \
-	"$(INTDIR)\file.obj" \
 	"$(INTDIR)\flap.obj" \
+	"$(INTDIR)\file.obj" \
 	"$(INTDIR)\links.obj" \
+	"$(INTDIR)\md5.obj" \
 	"$(INTDIR)\packets.obj" \
-	"$(INTDIR)\popup.obj" \
 	"$(INTDIR)\proxy.obj" \
-	"$(INTDIR)\server.obj" \
 	"$(INTDIR)\services.obj" \
 	"$(INTDIR)\snac.obj" \
+	"$(INTDIR)\server.obj" \
 	"$(INTDIR)\strl.obj" \
-	"$(INTDIR)\theme.obj" \
 	"$(INTDIR)\thread.obj" \
-	"$(INTDIR)\tlv.obj" \
 	"$(INTDIR)\utility.obj" \
+	"$(INTDIR)\tlv.obj" \
 	"$(INTDIR)\windows.obj" \
 	"$(INTDIR)\aim.res" \
-	"$(INTDIR)\avatars.obj" \
-	"$(INTDIR)\away.obj"
+	"$(INTDIR)\popup.obj"
 
 "..\..\bin\release\plugins\Aim.dll" : "$(OUTDIR)" $(DEF_FILE) $(LINK32_OBJS)
     $(LINK32) @<<
@@ -128,10 +124,6 @@ CLEAN :
 	-@erase "$(INTDIR)\aim.obj"
 	-@erase "$(INTDIR)\aim.res"
 	-@erase "$(INTDIR)\aim.sbr"
-	-@erase "$(INTDIR)\avatars.obj"
-	-@erase "$(INTDIR)\avatars.sbr"
-	-@erase "$(INTDIR)\away.obj"
-	-@erase "$(INTDIR)\away.sbr"
 	-@erase "$(INTDIR)\client.obj"
 	-@erase "$(INTDIR)\client.sbr"
 	-@erase "$(INTDIR)\connection.obj"
@@ -148,6 +140,8 @@ CLEAN :
 	-@erase "$(INTDIR)\flap.sbr"
 	-@erase "$(INTDIR)\links.obj"
 	-@erase "$(INTDIR)\links.sbr"
+	-@erase "$(INTDIR)\md5.obj"
+	-@erase "$(INTDIR)\md5.sbr"
 	-@erase "$(INTDIR)\packets.obj"
 	-@erase "$(INTDIR)\packets.sbr"
 	-@erase "$(INTDIR)\popup.obj"
@@ -162,8 +156,6 @@ CLEAN :
 	-@erase "$(INTDIR)\snac.sbr"
 	-@erase "$(INTDIR)\strl.obj"
 	-@erase "$(INTDIR)\strl.sbr"
-	-@erase "$(INTDIR)\theme.obj"
-	-@erase "$(INTDIR)\theme.sbr"
 	-@erase "$(INTDIR)\thread.obj"
 	-@erase "$(INTDIR)\thread.sbr"
 	-@erase "$(INTDIR)\tlv.obj"
@@ -174,12 +166,12 @@ CLEAN :
 	-@erase "$(INTDIR)\vc60.pdb"
 	-@erase "$(INTDIR)\windows.obj"
 	-@erase "$(INTDIR)\windows.sbr"
-	-@erase "$(OUTDIR)\Aim.exp"
-	-@erase "$(OUTDIR)\Aim.lib"
-	-@erase "$(OUTDIR)\Aim.pdb"
 	-@erase "$(OUTDIR)\aimoscar.bsc"
+	-@erase "$(OUTDIR)\AimOSCAR.exp"
+	-@erase "$(OUTDIR)\AimOSCAR.lib"
+	-@erase "$(OUTDIR)\Aim.pdb"
 	-@erase "..\..\bin\debug\plugins\Aim.dll"
-	-@erase "..\..\bin\debug\plugins\Aim.ilk"
+	-@erase "..\..\bin\debug\plugins\AimOSCAR.ilk"
 
 "$(OUTDIR)" :
     if not exist "$(OUTDIR)/$(NULL)" mkdir "$(OUTDIR)"
@@ -196,23 +188,21 @@ BSC32_SBRS= \
 	"$(INTDIR)\conv.sbr" \
 	"$(INTDIR)\direct_connect.sbr" \
 	"$(INTDIR)\error.sbr" \
-	"$(INTDIR)\file.sbr" \
 	"$(INTDIR)\flap.sbr" \
+	"$(INTDIR)\file.sbr" \
 	"$(INTDIR)\links.sbr" \
+	"$(INTDIR)\md5.sbr" \
 	"$(INTDIR)\packets.sbr" \
-	"$(INTDIR)\popup.sbr" \
 	"$(INTDIR)\proxy.sbr" \
-	"$(INTDIR)\server.sbr" \
 	"$(INTDIR)\services.sbr" \
 	"$(INTDIR)\snac.sbr" \
+	"$(INTDIR)\server.sbr" \
 	"$(INTDIR)\strl.sbr" \
-	"$(INTDIR)\theme.sbr" \
 	"$(INTDIR)\thread.sbr" \
-	"$(INTDIR)\tlv.sbr" \
 	"$(INTDIR)\utility.sbr" \
+	"$(INTDIR)\tlv.sbr" \
 	"$(INTDIR)\windows.sbr" \
-	"$(INTDIR)\avatars.sbr" \
-	"$(INTDIR)\away.sbr"
+	"$(INTDIR)\popup.sbr"
 
 "$(OUTDIR)\aimoscar.bsc" : "$(OUTDIR)" $(BSC32_SBRS)
     $(BSC32) @<<
@@ -220,7 +210,7 @@ BSC32_SBRS= \
 <<
 
 LINK32=link.exe
-LINK32_FLAGS=wsock32.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /dll /incremental:yes /pdb:"$(OUTDIR)\Aim.pdb" /debug /machine:I386 /out:"../../bin/debug/plugins/Aim.dll" /implib:"$(OUTDIR)\Aim.lib" /pdbtype:sept 
+LINK32_FLAGS=wsock32.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /dll /incremental:yes /pdb:"$(OUTDIR)\Aim.pdb" /debug /machine:I386 /out:"../../bin/debug/plugins/Aim.dll" /implib:"$(OUTDIR)\AimOSCAR.lib" /pdbtype:sept 
 LINK32_OBJS= \
 	"$(INTDIR)\aim.obj" \
 	"$(INTDIR)\client.obj" \
@@ -228,24 +218,22 @@ LINK32_OBJS= \
 	"$(INTDIR)\conv.obj" \
 	"$(INTDIR)\direct_connect.obj" \
 	"$(INTDIR)\error.obj" \
-	"$(INTDIR)\file.obj" \
 	"$(INTDIR)\flap.obj" \
+	"$(INTDIR)\file.obj" \
 	"$(INTDIR)\links.obj" \
+	"$(INTDIR)\md5.obj" \
 	"$(INTDIR)\packets.obj" \
-	"$(INTDIR)\popup.obj" \
 	"$(INTDIR)\proxy.obj" \
-	"$(INTDIR)\server.obj" \
 	"$(INTDIR)\services.obj" \
 	"$(INTDIR)\snac.obj" \
+	"$(INTDIR)\server.obj" \
 	"$(INTDIR)\strl.obj" \
-	"$(INTDIR)\theme.obj" \
 	"$(INTDIR)\thread.obj" \
-	"$(INTDIR)\tlv.obj" \
 	"$(INTDIR)\utility.obj" \
+	"$(INTDIR)\tlv.obj" \
 	"$(INTDIR)\windows.obj" \
 	"$(INTDIR)\aim.res" \
-	"$(INTDIR)\avatars.obj" \
-	"$(INTDIR)\away.obj"
+	"$(INTDIR)\popup.obj"
 
 "..\..\bin\debug\plugins\Aim.dll" : "$(OUTDIR)" $(DEF_FILE) $(LINK32_OBJS)
     $(LINK32) @<<
@@ -307,38 +295,6 @@ SOURCE=.\aim.cpp
 
 
 "$(INTDIR)\aim.obj"	"$(INTDIR)\aim.sbr" : $(SOURCE) "$(INTDIR)"
-
-
-!ENDIF 
-
-SOURCE=.\avatars.cpp
-
-!IF  "$(CFG)" == "aim - Win32 Release"
-
-
-"$(INTDIR)\avatars.obj" : $(SOURCE) "$(INTDIR)"
-
-
-!ELSEIF  "$(CFG)" == "aim - Win32 Debug"
-
-
-"$(INTDIR)\avatars.obj"	"$(INTDIR)\avatars.sbr" : $(SOURCE) "$(INTDIR)"
-
-
-!ENDIF 
-
-SOURCE=.\away.cpp
-
-!IF  "$(CFG)" == "aim - Win32 Release"
-
-
-"$(INTDIR)\away.obj" : $(SOURCE) "$(INTDIR)"
-
-
-!ELSEIF  "$(CFG)" == "aim - Win32 Debug"
-
-
-"$(INTDIR)\away.obj"	"$(INTDIR)\away.sbr" : $(SOURCE) "$(INTDIR)"
 
 
 !ENDIF 
@@ -471,6 +427,22 @@ SOURCE=.\links.cpp
 
 !ENDIF 
 
+SOURCE=.\md5.cpp
+
+!IF  "$(CFG)" == "aim - Win32 Release"
+
+
+"$(INTDIR)\md5.obj" : $(SOURCE) "$(INTDIR)"
+
+
+!ELSEIF  "$(CFG)" == "aim - Win32 Debug"
+
+
+"$(INTDIR)\md5.obj"	"$(INTDIR)\md5.sbr" : $(SOURCE) "$(INTDIR)"
+
+
+!ENDIF 
+
 SOURCE=.\packets.cpp
 
 !IF  "$(CFG)" == "aim - Win32 Release"
@@ -579,22 +551,6 @@ SOURCE=.\strl.cpp
 
 
 "$(INTDIR)\strl.obj"	"$(INTDIR)\strl.sbr" : $(SOURCE) "$(INTDIR)"
-
-
-!ENDIF 
-
-SOURCE=.\theme.cpp
-
-!IF  "$(CFG)" == "aim - Win32 Release"
-
-
-"$(INTDIR)\theme.obj" : $(SOURCE) "$(INTDIR)"
-
-
-!ELSEIF  "$(CFG)" == "aim - Win32 Debug"
-
-
-"$(INTDIR)\theme.obj"	"$(INTDIR)\theme.sbr" : $(SOURCE) "$(INTDIR)"
 
 
 !ENDIF 

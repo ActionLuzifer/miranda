@@ -2,8 +2,8 @@
 
 Miranda IM: the free IM client for Microsoft* Windows*
 
-Copyright 2000-2007 Miranda ICQ/IM project,
-all portions of this codebase are copyrighted to the people
+Copyright 2000-2007 Miranda ICQ/IM project, 
+all portions of this codebase are copyrighted to the people 
 listed in contributors.txt.
 
 This program is free software; you can redistribute it and/or
@@ -48,15 +48,14 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //lParam=flags, below
 //returns a static buffer of the description of the given status mode
 //returns NULL if the status mode was unknown
-#define GSMDF_PREFIXONLINE   1   //prefix "Online: " to all status modes that
-                                 //imply online, eg "Online: Away"
-#define GCMDF_UNICODE        2   //will return TCHAR* instead of char*
+#define GSMDF_PREFIXONLINE  1   //prefix "Online: " to all status modes that
+                  //imply online, eg "Online: Away"
+#define GCMDF_UNICODE        2      //will return TCHAR* instead of char*
 #if defined( _UNICODE )
 	#define GCMDF_TCHAR       GCMDF_UNICODE      //will return TCHAR* instead of char*
 #else
 	#define GCMDF_TCHAR       0      //will return char*, as usual
 #endif
-#define GSMDF_UNTRANSLATED   4
 #define MS_CLIST_GETSTATUSMODEDESCRIPTION  "CList/GetStatusModeDescription"
 
 //add a new item to the main menu
@@ -70,34 +69,32 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //there is a #define PUTPOSITIONSINMENU in clistmenus.c which, when set, will
 //cause the position numbers to be placed in brackets after the menu items
 typedef struct {
-	int cbSize;	            //size in bytes of this structure
+	int cbSize;			//size in bytes of this structure
 	union {
       char*  pszName;      //text of the menu item
 		TCHAR* ptszName;     //Unicode text of the menu item
 	};
-	DWORD flags;            //set of CMIF_* flags
-	int position;           //approx position on the menu. lower numbers go nearer the top
-	union {
-		HICON hIcon;         //icon to put by the item. If this was not loaded from
-                           //a resource, you can delete it straight after the call
-		HANDLE icolibItem;   //set CMIF_ICONFROMICOLIB to pass this value
-	};
-	char* pszService;       //name of service to call when the item gets selected
+	DWORD flags;		//flags
+	int position;		//approx position on the menu. lower numbers go nearer the top
+	HICON hIcon;		//icon to put by the item. If this was not loaded from
+	                    //a resource, you can delete it straight after the call
+	char* pszService;	//name of service to call when the item gets selected
 	union {
 		char* pszPopupName;  //name of the popup menu that this item is on. If this
-		TCHAR* ptszPopupName; //is NULL the item is on the root of the menu
+									//is NULL the item is on the root of the menu
+		TCHAR* ptszPopupName;
 	};
 
-	int popupPosition;      //position of the popup menu on the root menu. Ignored
-                           //if pszPopupName is NULL or the popup menu already
-                           //existed
-	DWORD hotKey;           //keyboard accelerator, same as lParam of WM_HOTKEY,0 for none
-	char *pszContactOwner;  //contact menus only. The protocol module that owns
-                           //the contacts to which this menu item applies. NULL if it
-                           //applies to all contacts. If it applies to multiple but not all
-                           //protocols, add multiple menu items or use ME_CLIST_PREBUILDCONTACTMENU
+	int popupPosition;	//position of the popup menu on the root menu. Ignored
+						//if pszPopupName is NULL or the popup menu already
+						//existed
+	DWORD hotKey;       //keyboard accelerator, same as lParam of WM_HOTKEY
+	                    //0 for none
+	char *pszContactOwner; //contact menus only. The protocol module that owns
+	          //the contacts to which this menu item applies. NULL if it
+			  //applies to all contacts. If it applies to multiple but not all
+			  //protocols, add multiple menu items or use ME_CLIST_PREBUILDCONTACTMENU
 } CLISTMENUITEM;
-
 #define CMIF_GRAYED     1
 #define CMIF_CHECKED    2
 #define CMIF_HIDDEN     4     //only works on contact menus
@@ -105,19 +102,6 @@ typedef struct {
 #define CMIF_NOTONLINE  16	 //          "      online
 #define CMIF_NOTONLIST  32   //item won't appear on standard contacts
 #define CMIF_NOTOFFLIST 64   //item won't appear on contacts that have the 'NotOnList' setting
-#define CMIF_ROOTPOPUP  128   //root item for new popup(save return id for childs)
-#define CMIF_CHILDPOPUP 256   //child for rootpopup menu
-
-#define CMIF_UNICODE        512      //will return TCHAR* instead of char*
-#if defined( _UNICODE )
-	#define CMIF_TCHAR       CMIF_UNICODE      //will return TCHAR* instead of char*
-#else
-	#define CMIF_TCHAR       0       //will return char*, as usual
-#endif
-
-#define CMIF_KEEPUNTRANSLATED  1024 // don't translate a menu item
-#define CMIF_ICONFROMICOLIB    2048 // use icolibName instead of hIcon
-
 #define MS_CLIST_ADDMAINMENUITEM        "CList/AddMainMenuItem"
 
 //add a new item to the user contact menus
@@ -129,7 +113,6 @@ typedef struct {
 //displayed in brackets after the menu item text. This only works in debug
 //builds.
 #define MS_CLIST_ADDCONTACTMENUITEM     "CList/AddContactMenuItem"
-#define MS_CLIST_ADDSTATUSMENUITEM      "CList/AddStatusMenuItem"
 
 //modify an existing menu item     v0.1.0.1+
 //wParam=(WPARAM)(HANDLE)hMenuItem
@@ -232,12 +215,8 @@ typedef struct {
 	int cbSize;          //size in bytes of this structure
 	HANDLE hContact;	 //handle to the contact to put the icon by
 	HICON hIcon;		 //icon to flash
-	DWORD flags;		 //...of course	
-	union
-	{
-		HANDLE hDbEvent;	 //caller defined but should be unique for hContact
-		char * lpszProtocol;
-	};
+	DWORD flags;		 //...of course
+	HANDLE hDbEvent;	 //caller defined but should be unique for hContact
 	LPARAM lParam;		 //caller defined
 	char *pszService;	 //name of the service to call on activation
 	union {
@@ -245,14 +224,11 @@ typedef struct {
 		TCHAR *ptszTooltip;    //tooltip on the system tray
 	};
 } CLISTEVENT;
-#define CLEF_URGENT    1	//flashes the icon even if the user is occupied,
+#define CLEF_URGENT    1   //flashes the icon even if the user is occupied,
 							//and puts the event at the top of the queue
 #define CLEF_ONLYAFEW  2	//the icon will not flash for ever, only a few
 							//times. This is for eg online alert
-#define CLEF_UNICODE   4	//set pszTooltip as unicode
-
-#define CLEF_PROTOCOLGLOBAL   8		//set event globally for protocol, hContact has to be NULL, 
-									//lpszProtocol the protocol ID name to be set
+#define CLEF_UNICODE   4   //set pszTooltip as unicode
 
 #if defined( _UNICODE )
 	#define CLEF_TCHAR       CLEF_UNICODE      //will use TCHAR* instead of char*
@@ -521,13 +497,11 @@ typedef struct {
 
 	Version: 0.3.1a
 */
-#define NIIF_INFO           0x00000001
-#define NIIF_WARNING        0x00000002
-#define NIIF_ERROR          0x00000003
-#define NIIF_ICON_MASK      0x0000000F
-#define NIIF_NOSOUND        0x00000010
-#define NIIF_INTERN_UNICODE 0x00000100
-
+#define NIIF_INFO       0x00000001
+#define NIIF_WARNING    0x00000002
+#define NIIF_ERROR      0x00000003
+#define NIIF_ICON_MASK  0x0000000F
+#define NIIF_NOSOUND    0x00000010
 
 typedef struct {
 	int cbSize;			// sizeof(MIRANDASYSTRAY)
@@ -573,3 +547,4 @@ typedef struct {
 #define SETTING_BRINGTOFRONT_DEFAULT 0
 
 #endif // M_CLIST_H__
+

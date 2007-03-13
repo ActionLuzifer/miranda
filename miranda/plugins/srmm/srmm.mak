@@ -1,31 +1,35 @@
 # Microsoft Developer Studio Generated NMAKE File, Based on srmm.dsp
 !IF "$(CFG)" == ""
-CFG=srmm - Win32 Release Unicode
-!MESSAGE No configuration specified. Defaulting to srmm - Win32 Release Unicode.
-!ENDIF
+CFG=srmm - Win32 Debug Unicode
+!MESSAGE No configuration specified. Defaulting to srmm - Win32 Debug Unicode.
+!ENDIF 
 
 !IF "$(CFG)" != "srmm - Win32 Release" && "$(CFG)" != "srmm - Win32 Debug" && "$(CFG)" != "srmm - Win32 Release Unicode" && "$(CFG)" != "srmm - Win32 Debug Unicode"
 !MESSAGE Invalid configuration "$(CFG)" specified.
 !MESSAGE You can specify a configuration when running NMAKE
 !MESSAGE by defining the macro CFG on the command line. For example:
-!MESSAGE
+!MESSAGE 
 !MESSAGE NMAKE /f "srmm.mak" CFG="srmm - Win32 Debug Unicode"
-!MESSAGE
+!MESSAGE 
 !MESSAGE Possible choices for configuration are:
-!MESSAGE
+!MESSAGE 
 !MESSAGE "srmm - Win32 Release" (based on "Win32 (x86) Dynamic-Link Library")
 !MESSAGE "srmm - Win32 Debug" (based on "Win32 (x86) Dynamic-Link Library")
 !MESSAGE "srmm - Win32 Release Unicode" (based on "Win32 (x86) Dynamic-Link Library")
 !MESSAGE "srmm - Win32 Debug Unicode" (based on "Win32 (x86) Dynamic-Link Library")
-!MESSAGE
+!MESSAGE 
 !ERROR An invalid configuration is specified.
-!ENDIF
+!ENDIF 
 
 !IF "$(OS)" == "Windows_NT"
 NULL=
-!ELSE
+!ELSE 
 NULL=nul
-!ENDIF
+!ENDIF 
+
+CPP=cl.exe
+MTL=midl.exe
+RSC=rc.exe
 
 !IF  "$(CFG)" == "srmm - Win32 Release"
 
@@ -46,7 +50,6 @@ CLEAN :
 	-@erase "$(INTDIR)\resource.res"
 	-@erase "$(INTDIR)\richutil.obj"
 	-@erase "$(INTDIR)\srmm.obj"
-	-@erase "$(INTDIR)\srmm.pch"
 	-@erase "$(INTDIR)\statusicon.obj"
 	-@erase "$(INTDIR)\vc60.idb"
 	-@erase "$(INTDIR)\vc60.pdb"
@@ -58,49 +61,15 @@ CLEAN :
 "$(OUTDIR)" :
     if not exist "$(OUTDIR)/$(NULL)" mkdir "$(OUTDIR)"
 
-CPP=cl.exe
-CPP_PROJ=/nologo /MD /W3 /Zi /O1 /I "../../include" /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "SRMM_EXPORTS" /Fp"$(INTDIR)\srmm.pch" /Yu"commonheaders.h" /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /c
-
-.c{$(INTDIR)}.obj::
-   $(CPP) @<<
-   $(CPP_PROJ) $<
-<<
-
-.cpp{$(INTDIR)}.obj::
-   $(CPP) @<<
-   $(CPP_PROJ) $<
-<<
-
-.cxx{$(INTDIR)}.obj::
-   $(CPP) @<<
-   $(CPP_PROJ) $<
-<<
-
-.c{$(INTDIR)}.sbr::
-   $(CPP) @<<
-   $(CPP_PROJ) $<
-<<
-
-.cpp{$(INTDIR)}.sbr::
-   $(CPP) @<<
-   $(CPP_PROJ) $<
-<<
-
-.cxx{$(INTDIR)}.sbr::
-   $(CPP) @<<
-   $(CPP_PROJ) $<
-<<
-
-MTL=midl.exe
-MTL_PROJ=/nologo /D "NDEBUG" /mktyplib203 /win32
-RSC=rc.exe
-RSC_PROJ=/l 0x809 /fo"$(INTDIR)\resource.res" /i "../../include" /d "NDEBUG"
+CPP_PROJ=/nologo /MD /W3 /Zi /O1 /I "../../include" /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "SRMM_EXPORTS" /Fp"$(INTDIR)\srmm.pch" /YX /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /c 
+MTL_PROJ=/nologo /D "NDEBUG" /mktyplib203 /win32 
+RSC_PROJ=/l 0x809 /fo"$(INTDIR)\resource.res" /i "../../include" /d "NDEBUG" 
 BSC32=bscmake.exe
-BSC32_FLAGS=/nologo /o"$(OUTDIR)\srmm.bsc"
+BSC32_FLAGS=/nologo /o"$(OUTDIR)\srmm.bsc" 
 BSC32_SBRS= \
-
+	
 LINK32=link.exe
-LINK32_FLAGS=comctl32.lib kernel32.lib user32.lib gdi32.lib shell32.lib ole32.lib comdlg32.lib /nologo /dll /incremental:no /pdb:"$(OUTDIR)\srmm.pdb" /map:"$(INTDIR)\srmm.map" /debug /machine:I386 /out:"../../bin/release/plugins/srmm.dll" /implib:"$(OUTDIR)\srmm.lib"
+LINK32_FLAGS=comctl32.lib kernel32.lib user32.lib gdi32.lib shell32.lib ole32.lib comdlg32.lib /nologo /dll /incremental:no /pdb:"$(OUTDIR)\srmm.pdb" /map:"$(INTDIR)\srmm.map" /debug /machine:I386 /out:"../../bin/release/plugins/srmm.dll" /implib:"$(OUTDIR)\srmm.lib" 
 LINK32_OBJS= \
 	"$(INTDIR)\cmdlist.obj" \
 	"$(INTDIR)\globals.obj" \
@@ -111,8 +80,8 @@ LINK32_OBJS= \
 	"$(INTDIR)\msgtimedout.obj" \
 	"$(INTDIR)\richutil.obj" \
 	"$(INTDIR)\srmm.obj" \
-	"$(INTDIR)\statusicon.obj" \
-	"$(INTDIR)\resource.res"
+	"$(INTDIR)\resource.res" \
+	"$(INTDIR)\statusicon.obj"
 
 "..\..\bin\release\plugins\srmm.dll" : "$(OUTDIR)" $(DEF_FILE) $(LINK32_OBJS)
     $(LINK32) @<<
@@ -138,11 +107,11 @@ CLEAN :
 	-@erase "$(INTDIR)\resource.res"
 	-@erase "$(INTDIR)\richutil.obj"
 	-@erase "$(INTDIR)\srmm.obj"
-	-@erase "$(INTDIR)\srmm.pch"
 	-@erase "$(INTDIR)\statusicon.obj"
 	-@erase "$(INTDIR)\vc60.idb"
 	-@erase "$(INTDIR)\vc60.pdb"
 	-@erase "$(OUTDIR)\srmm.exp"
+	-@erase "$(OUTDIR)\srmm.lib"
 	-@erase "$(OUTDIR)\srmm.pdb"
 	-@erase "..\..\bin\debug\Plugins\srmm.dll"
 	-@erase "..\..\bin\debug\Plugins\srmm.ilk"
@@ -150,49 +119,15 @@ CLEAN :
 "$(OUTDIR)" :
     if not exist "$(OUTDIR)/$(NULL)" mkdir "$(OUTDIR)"
 
-CPP=cl.exe
-CPP_PROJ=/nologo /MDd /W3 /Gm /GX /ZI /Od /I "../../include" /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "SRMM_EXPORTS" /Fp"$(INTDIR)\srmm.pch" /Yu"commonheaders.h" /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /GZ /c
-
-.c{$(INTDIR)}.obj::
-   $(CPP) @<<
-   $(CPP_PROJ) $<
-<<
-
-.cpp{$(INTDIR)}.obj::
-   $(CPP) @<<
-   $(CPP_PROJ) $<
-<<
-
-.cxx{$(INTDIR)}.obj::
-   $(CPP) @<<
-   $(CPP_PROJ) $<
-<<
-
-.c{$(INTDIR)}.sbr::
-   $(CPP) @<<
-   $(CPP_PROJ) $<
-<<
-
-.cpp{$(INTDIR)}.sbr::
-   $(CPP) @<<
-   $(CPP_PROJ) $<
-<<
-
-.cxx{$(INTDIR)}.sbr::
-   $(CPP) @<<
-   $(CPP_PROJ) $<
-<<
-
-MTL=midl.exe
-MTL_PROJ=/nologo /D "_DEBUG" /mktyplib203 /win32
-RSC=rc.exe
-RSC_PROJ=/l 0x809 /fo"$(INTDIR)\resource.res" /i "../../include" /d "_DEBUG"
+CPP_PROJ=/nologo /MDd /W3 /Gm /GX /ZI /Od /I "../../include" /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "SRMM_EXPORTS" /Fp"$(INTDIR)\srmm.pch" /YX /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /GZ /c 
+MTL_PROJ=/nologo /D "_DEBUG" /mktyplib203 /win32 
+RSC_PROJ=/l 0x809 /fo"$(INTDIR)\resource.res" /i "../../include" /d "_DEBUG" 
 BSC32=bscmake.exe
-BSC32_FLAGS=/nologo /o"$(OUTDIR)\srmm.bsc"
+BSC32_FLAGS=/nologo /o"$(OUTDIR)\srmm.bsc" 
 BSC32_SBRS= \
-
+	
 LINK32=link.exe
-LINK32_FLAGS=comctl32.lib kernel32.lib user32.lib gdi32.lib shell32.lib ole32.lib comdlg32.lib /nologo /dll /incremental:yes /pdb:"$(OUTDIR)\srmm.pdb" /debug /machine:I386 /out:"../../bin/debug/Plugins/srmm.dll" /implib:"$(OUTDIR)\srmm.lib" /pdbtype:sept
+LINK32_FLAGS=comctl32.lib kernel32.lib user32.lib gdi32.lib shell32.lib ole32.lib comdlg32.lib /nologo /dll /incremental:yes /pdb:"$(OUTDIR)\srmm.pdb" /debug /machine:I386 /out:"../../bin/debug/Plugins/srmm.dll" /implib:"$(OUTDIR)\srmm.lib" /pdbtype:sept 
 LINK32_OBJS= \
 	"$(INTDIR)\cmdlist.obj" \
 	"$(INTDIR)\globals.obj" \
@@ -203,8 +138,8 @@ LINK32_OBJS= \
 	"$(INTDIR)\msgtimedout.obj" \
 	"$(INTDIR)\richutil.obj" \
 	"$(INTDIR)\srmm.obj" \
-	"$(INTDIR)\statusicon.obj" \
-	"$(INTDIR)\resource.res"
+	"$(INTDIR)\resource.res" \
+	"$(INTDIR)\statusicon.obj"
 
 "..\..\bin\debug\Plugins\srmm.dll" : "$(OUTDIR)" $(DEF_FILE) $(LINK32_OBJS)
     $(LINK32) @<<
@@ -230,7 +165,6 @@ CLEAN :
 	-@erase "$(INTDIR)\resource.res"
 	-@erase "$(INTDIR)\richutil.obj"
 	-@erase "$(INTDIR)\srmm.obj"
-	-@erase "$(INTDIR)\srmm.pch"
 	-@erase "$(INTDIR)\statusicon.obj"
 	-@erase "$(INTDIR)\vc60.idb"
 	-@erase "$(INTDIR)\vc60.pdb"
@@ -242,49 +176,15 @@ CLEAN :
 "$(OUTDIR)" :
     if not exist "$(OUTDIR)/$(NULL)" mkdir "$(OUTDIR)"
 
-CPP=cl.exe
-CPP_PROJ=/nologo /MD /W3 /Zi /O1 /I "../../include" /D "UNICODE" /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "SRMM_EXPORTS" /Fp"$(INTDIR)\srmm.pch" /Yu"commonheaders.h" /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /c
-
-.c{$(INTDIR)}.obj::
-   $(CPP) @<<
-   $(CPP_PROJ) $<
-<<
-
-.cpp{$(INTDIR)}.obj::
-   $(CPP) @<<
-   $(CPP_PROJ) $<
-<<
-
-.cxx{$(INTDIR)}.obj::
-   $(CPP) @<<
-   $(CPP_PROJ) $<
-<<
-
-.c{$(INTDIR)}.sbr::
-   $(CPP) @<<
-   $(CPP_PROJ) $<
-<<
-
-.cpp{$(INTDIR)}.sbr::
-   $(CPP) @<<
-   $(CPP_PROJ) $<
-<<
-
-.cxx{$(INTDIR)}.sbr::
-   $(CPP) @<<
-   $(CPP_PROJ) $<
-<<
-
-MTL=midl.exe
-MTL_PROJ=/nologo /D "NDEBUG" /mktyplib203 /win32
-RSC=rc.exe
-RSC_PROJ=/l 0x809 /fo"$(INTDIR)\resource.res" /i "../../include" /d "NDEBUG"
+CPP_PROJ=/nologo /MD /W3 /Zi /O1 /I "../../include" /D "UNICODE" /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "SRMM_EXPORTS" /Fp"$(INTDIR)\srmm.pch" /YX /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /c 
+MTL_PROJ=/nologo /D "NDEBUG" /mktyplib203 /win32 
+RSC_PROJ=/l 0x809 /fo"$(INTDIR)\resource.res" /i "../../include" /d "NDEBUG" 
 BSC32=bscmake.exe
-BSC32_FLAGS=/nologo /o"$(OUTDIR)\srmm.bsc"
+BSC32_FLAGS=/nologo /o"$(OUTDIR)\srmm.bsc" 
 BSC32_SBRS= \
-
+	
 LINK32=link.exe
-LINK32_FLAGS=comctl32.lib kernel32.lib user32.lib gdi32.lib shell32.lib ole32.lib comdlg32.lib /nologo /dll /incremental:no /pdb:"$(OUTDIR)\srmm.pdb" /map:"$(INTDIR)\srmm.map" /debug /machine:I386 /out:"../../bin/Release Unicode/plugins/srmm.dll" /implib:"$(OUTDIR)\srmm.lib"
+LINK32_FLAGS=comctl32.lib kernel32.lib user32.lib gdi32.lib shell32.lib ole32.lib comdlg32.lib /nologo /dll /incremental:no /pdb:"$(OUTDIR)\srmm.pdb" /map:"$(INTDIR)\srmm.map" /debug /machine:I386 /out:"../../bin/Release Unicode/plugins/srmm.dll" /implib:"$(OUTDIR)\srmm.lib" 
 LINK32_OBJS= \
 	"$(INTDIR)\cmdlist.obj" \
 	"$(INTDIR)\globals.obj" \
@@ -295,8 +195,8 @@ LINK32_OBJS= \
 	"$(INTDIR)\msgtimedout.obj" \
 	"$(INTDIR)\richutil.obj" \
 	"$(INTDIR)\srmm.obj" \
-	"$(INTDIR)\statusicon.obj" \
-	"$(INTDIR)\resource.res"
+	"$(INTDIR)\resource.res" \
+	"$(INTDIR)\statusicon.obj"
 
 "..\..\bin\Release Unicode\plugins\srmm.dll" : "$(OUTDIR)" $(DEF_FILE) $(LINK32_OBJS)
     $(LINK32) @<<
@@ -322,7 +222,6 @@ CLEAN :
 	-@erase "$(INTDIR)\resource.res"
 	-@erase "$(INTDIR)\richutil.obj"
 	-@erase "$(INTDIR)\srmm.obj"
-	-@erase "$(INTDIR)\srmm.pch"
 	-@erase "$(INTDIR)\statusicon.obj"
 	-@erase "$(INTDIR)\vc60.idb"
 	-@erase "$(INTDIR)\vc60.pdb"
@@ -334,49 +233,15 @@ CLEAN :
 "$(OUTDIR)" :
     if not exist "$(OUTDIR)/$(NULL)" mkdir "$(OUTDIR)"
 
-CPP=cl.exe
-CPP_PROJ=/nologo /MDd /W3 /Gm /GX /ZI /Od /I "../../include" /D "UNICODE" /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "SRMM_EXPORTS" /Fp"$(INTDIR)\srmm.pch" /Yu"commonheaders.h" /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /GZ /c
-
-.c{$(INTDIR)}.obj::
-   $(CPP) @<<
-   $(CPP_PROJ) $<
-<<
-
-.cpp{$(INTDIR)}.obj::
-   $(CPP) @<<
-   $(CPP_PROJ) $<
-<<
-
-.cxx{$(INTDIR)}.obj::
-   $(CPP) @<<
-   $(CPP_PROJ) $<
-<<
-
-.c{$(INTDIR)}.sbr::
-   $(CPP) @<<
-   $(CPP_PROJ) $<
-<<
-
-.cpp{$(INTDIR)}.sbr::
-   $(CPP) @<<
-   $(CPP_PROJ) $<
-<<
-
-.cxx{$(INTDIR)}.sbr::
-   $(CPP) @<<
-   $(CPP_PROJ) $<
-<<
-
-MTL=midl.exe
-MTL_PROJ=/nologo /D "_DEBUG" /mktyplib203 /win32
-RSC=rc.exe
-RSC_PROJ=/l 0x809 /fo"$(INTDIR)\resource.res" /i "../../include" /d "_DEBUG"
+CPP_PROJ=/nologo /MDd /W3 /Gm /GX /ZI /Od /I "../../include" /D "UNICODE" /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "SRMM_EXPORTS" /Fp"$(INTDIR)\srmm.pch" /YX /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /GZ /c 
+MTL_PROJ=/nologo /D "_DEBUG" /mktyplib203 /win32 
+RSC_PROJ=/l 0x809 /fo"$(INTDIR)\resource.res" /i "../../include" /d "_DEBUG" 
 BSC32=bscmake.exe
-BSC32_FLAGS=/nologo /o"$(OUTDIR)\srmm.bsc"
+BSC32_FLAGS=/nologo /o"$(OUTDIR)\srmm.bsc" 
 BSC32_SBRS= \
-
+	
 LINK32=link.exe
-LINK32_FLAGS=comctl32.lib kernel32.lib user32.lib gdi32.lib shell32.lib ole32.lib comdlg32.lib /nologo /dll /incremental:yes /pdb:"$(OUTDIR)\srmm.pdb" /debug /machine:I386 /out:"../../bin/Debug Unicode/Plugins/srmm.dll" /implib:"$(OUTDIR)\srmm.lib" /pdbtype:sept
+LINK32_FLAGS=comctl32.lib kernel32.lib user32.lib gdi32.lib shell32.lib ole32.lib comdlg32.lib /nologo /dll /incremental:yes /pdb:"$(OUTDIR)\srmm.pdb" /debug /machine:I386 /out:"../../bin/Debug Unicode/Plugins/srmm.dll" /implib:"$(OUTDIR)\srmm.lib" /pdbtype:sept 
 LINK32_OBJS= \
 	"$(INTDIR)\cmdlist.obj" \
 	"$(INTDIR)\globals.obj" \
@@ -387,114 +252,105 @@ LINK32_OBJS= \
 	"$(INTDIR)\msgtimedout.obj" \
 	"$(INTDIR)\richutil.obj" \
 	"$(INTDIR)\srmm.obj" \
-	"$(INTDIR)\statusicon.obj" \
-	"$(INTDIR)\resource.res"
+	"$(INTDIR)\resource.res" \
+	"$(INTDIR)\statusicon.obj"
 
 "..\..\bin\Debug Unicode\Plugins\srmm.dll" : "$(OUTDIR)" $(DEF_FILE) $(LINK32_OBJS)
     $(LINK32) @<<
   $(LINK32_FLAGS) $(LINK32_OBJS)
 <<
 
-!ENDIF
+!ENDIF 
+
+.c{$(INTDIR)}.obj::
+   $(CPP) @<<
+   $(CPP_PROJ) $< 
+<<
+
+.cpp{$(INTDIR)}.obj::
+   $(CPP) @<<
+   $(CPP_PROJ) $< 
+<<
+
+.cxx{$(INTDIR)}.obj::
+   $(CPP) @<<
+   $(CPP_PROJ) $< 
+<<
+
+.c{$(INTDIR)}.sbr::
+   $(CPP) @<<
+   $(CPP_PROJ) $< 
+<<
+
+.cpp{$(INTDIR)}.sbr::
+   $(CPP) @<<
+   $(CPP_PROJ) $< 
+<<
+
+.cxx{$(INTDIR)}.sbr::
+   $(CPP) @<<
+   $(CPP_PROJ) $< 
+<<
 
 
 !IF "$(NO_EXTERNAL_DEPS)" != "1"
 !IF EXISTS("srmm.dep")
 !INCLUDE "srmm.dep"
-!ELSE
+!ELSE 
 !MESSAGE Warning: cannot find "srmm.dep"
-!ENDIF
-!ENDIF
+!ENDIF 
+!ENDIF 
 
 
 !IF "$(CFG)" == "srmm - Win32 Release" || "$(CFG)" == "srmm - Win32 Debug" || "$(CFG)" == "srmm - Win32 Release Unicode" || "$(CFG)" == "srmm - Win32 Debug Unicode"
 SOURCE=.\cmdlist.c
 
-"$(INTDIR)\cmdlist.obj" : $(SOURCE) "$(INTDIR)" "$(INTDIR)\srmm.pch"
+"$(INTDIR)\cmdlist.obj" : $(SOURCE) "$(INTDIR)"
 
 
 SOURCE=.\globals.c
 
-"$(INTDIR)\globals.obj" : $(SOURCE) "$(INTDIR)" "$(INTDIR)\srmm.pch"
+"$(INTDIR)\globals.obj" : $(SOURCE) "$(INTDIR)"
 
 
 SOURCE=.\msgdialog.c
 
-"$(INTDIR)\msgdialog.obj" : $(SOURCE) "$(INTDIR)" "$(INTDIR)\srmm.pch"
+"$(INTDIR)\msgdialog.obj" : $(SOURCE) "$(INTDIR)"
 
 
 SOURCE=.\msglog.c
 
-"$(INTDIR)\msglog.obj" : $(SOURCE) "$(INTDIR)" "$(INTDIR)\srmm.pch"
+"$(INTDIR)\msglog.obj" : $(SOURCE) "$(INTDIR)"
 
 
 SOURCE=.\msgoptions.c
 
-"$(INTDIR)\msgoptions.obj" : $(SOURCE) "$(INTDIR)" "$(INTDIR)\srmm.pch"
+"$(INTDIR)\msgoptions.obj" : $(SOURCE) "$(INTDIR)"
 
 
 SOURCE=.\msgs.c
 
-"$(INTDIR)\msgs.obj" : $(SOURCE) "$(INTDIR)" "$(INTDIR)\srmm.pch"
+"$(INTDIR)\msgs.obj" : $(SOURCE) "$(INTDIR)"
 
 
 SOURCE=.\msgtimedout.c
 
-"$(INTDIR)\msgtimedout.obj" : $(SOURCE) "$(INTDIR)" "$(INTDIR)\srmm.pch"
+"$(INTDIR)\msgtimedout.obj" : $(SOURCE) "$(INTDIR)"
 
 
 SOURCE=.\richutil.c
 
-"$(INTDIR)\richutil.obj" : $(SOURCE) "$(INTDIR)" "$(INTDIR)\srmm.pch"
+"$(INTDIR)\richutil.obj" : $(SOURCE) "$(INTDIR)"
 
 
 SOURCE=.\srmm.c
 
-!IF  "$(CFG)" == "srmm - Win32 Release"
+"$(INTDIR)\srmm.obj" : $(SOURCE) "$(INTDIR)"
 
-CPP_SWITCHES=/nologo /MD /W3 /Zi /O1 /I "../../include" /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "SRMM_EXPORTS" /Fp"$(INTDIR)\srmm.pch" /Yc"commonheaders.h" /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /c
-
-"$(INTDIR)\srmm.obj"	"$(INTDIR)\srmm.pch" : $(SOURCE) "$(INTDIR)"
-	$(CPP) @<<
-  $(CPP_SWITCHES) $(SOURCE)
-<<
-
-
-!ELSEIF  "$(CFG)" == "srmm - Win32 Debug"
-
-CPP_SWITCHES=/nologo /MDd /W3 /Gm /GX /ZI /Od /I "../../include" /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "SRMM_EXPORTS" /Fp"$(INTDIR)\srmm.pch" /Yc"commonheaders.h" /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /GZ /c
-
-"$(INTDIR)\srmm.obj"	"$(INTDIR)\srmm.pch" : $(SOURCE) "$(INTDIR)"
-	$(CPP) @<<
-  $(CPP_SWITCHES) $(SOURCE)
-<<
-
-
-!ELSEIF  "$(CFG)" == "srmm - Win32 Release Unicode"
-
-CPP_SWITCHES=/nologo /MD /W3 /Zi /O1 /I "../../include" /D "UNICODE" /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "SRMM_EXPORTS" /Fp"$(INTDIR)\srmm.pch" /Yc"commonheaders.h" /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /c
-
-"$(INTDIR)\srmm.obj"	"$(INTDIR)\srmm.pch" : $(SOURCE) "$(INTDIR)"
-	$(CPP) @<<
-  $(CPP_SWITCHES) $(SOURCE)
-<<
-
-
-!ELSEIF  "$(CFG)" == "srmm - Win32 Debug Unicode"
-
-CPP_SWITCHES=/nologo /MDd /W3 /Gm /GX /ZI /Od /I "../../include" /D "UNICODE" /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "SRMM_EXPORTS" /Fp"$(INTDIR)\srmm.pch" /Yc"commonheaders.h" /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /GZ /c
-
-"$(INTDIR)\srmm.obj"	"$(INTDIR)\srmm.pch" : $(SOURCE) "$(INTDIR)"
-	$(CPP) @<<
-  $(CPP_SWITCHES) $(SOURCE)
-<<
-
-
-!ENDIF
 
 SOURCE=.\statusicon.c
 
-"$(INTDIR)\statusicon.obj" : $(SOURCE) "$(INTDIR)" "$(INTDIR)\srmm.pch"
+"$(INTDIR)\statusicon.obj" : $(SOURCE) "$(INTDIR)"
 
 
 SOURCE=.\resource.rc
@@ -504,4 +360,5 @@ SOURCE=.\resource.rc
 
 
 
-!ENDIF
+!ENDIF 
+

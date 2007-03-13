@@ -2,7 +2,7 @@
 
 Jabber Protocol Plugin for Miranda IM
 Copyright ( C ) 2002-04  Santithorn Bunchua
-Copyright ( C ) 2005-07  George Hazan
+Copyright ( C ) 2005-06  George Hazan
 
 Idea & portions of code by Artem Shpynov
 
@@ -31,9 +31,7 @@ Last change by : $Author: rainwater $
 #include "jabber_list.h"
 
 #include <commctrl.h>
-#include "m_icolib.h"
-
-#include "resource.h"
+#include "sdk/m_icolib.h"
 
 #define IDI_ONLINE                      104
 #define IDI_OFFLINE                     105
@@ -64,70 +62,6 @@ static TransportProtoTable[] =
 
 static int skinIconStatusToResourceId[] = {IDI_OFFLINE,IDI_ONLINE,IDI_AWAY,IDI_DND,IDI_NA,IDI_NA,/*IDI_OCCUPIED,*/IDI_FREE4CHAT,IDI_INVISIBLE,IDI_ONTHEPHONE,IDI_OUTTOLUNCH};
 static int skinStatusToJabberStatus[] = {0,1,2,3,4,4,6,7,2,2};
-
-/////////////////////////////////////////////////////////////////////////////////////////
-// Icons init
-
-struct
-{
-	char*  szDescr;
-	char*  szName;
-	int    defIconID;
-	HANDLE hIconLibItem;
-}
-static iconList[] =
-{
-	{	"Protocol icon",         "main",       IDI_JABBER     },
-	{	"Agents list",           "Agents",     IDI_AGENTS     },
-	{	"Change password",       "key",        IDI_KEYS       },
-	{	"Multi-User Conference", "group",      IDI_GROUP      },
-	{	"Personal vCard",        "vcard",      IDI_VCARD      },
-	{	"Request authorization", "Request",    IDI_REQUEST    },
-	{	"Grant authorization",   "Grant",      IDI_GRANT      },
-	{	"Revoke authorization",  "Revoke",     IDI_AUTHREVOKE },
-	{	"Convert to room",       "convert",    IDI_USER2ROOM  },
-	{	"Add to roster",         "addroster",  IDI_ADDROSTER  },
-	{	"Login/logout",          "trlogonoff", IDI_LOGIN      },
-	{	"Resolve nicks",         "trresolve",  IDI_REFRESH    },
-	{	"Bookmarks",             "bookmarks",  IDI_BOOKMARKS  }   
-};
-
-void JabberIconsInit( void )
-{
-	int i;
-	SKINICONDESC sid = {0};
-	char szFile[MAX_PATH];
-	GetModuleFileNameA(hInst, szFile, MAX_PATH);
-
-	sid.cbSize = sizeof(SKINICONDESC);
-	sid.pszDefaultFile = szFile;
-	sid.cx = sid.cy = 16;
-	sid.pszSection = Translate( jabberProtoName );
-
-	for ( i = 0; i < SIZEOF(iconList); i++ ) {
-		char szSettingName[100];
-		mir_snprintf( szSettingName, sizeof( szSettingName ), "%s_%s", jabberProtoName, iconList[i].szName );
-		sid.pszName = szSettingName;
-		sid.pszDescription = Translate( iconList[i].szDescr );
-		sid.iDefaultIndex = -iconList[i].defIconID;
-		iconList[i].hIconLibItem = ( HANDLE )CallService(MS_SKIN2_ADDICON, 0, (LPARAM)&sid);
-}	}
-
-HANDLE __stdcall GetIconHandle( int iconId )
-{
-	for ( int i=0; i < SIZEOF(iconList); i++ )
-		if ( iconList[i].defIconID == iconId )
-			return iconList[i].hIconLibItem;
-
-	return NULL;
-}
-
-HICON LoadIconEx( const char* name )
-{
-	char szSettingName[100];
-	mir_snprintf( szSettingName, sizeof( szSettingName ), "%s_%s", jabberProtoName, name );
-	return ( HICON )JCallService( MS_SKIN2_GETICON, 0, (LPARAM)szSettingName );
-}
 
 /////////////////////////////////////////////////////////////////////////////////////////
 // internal functions

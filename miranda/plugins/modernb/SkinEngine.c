@@ -2,7 +2,7 @@
 
 Miranda IM: the free IM client for Microsoft* Windows*
 
-Copyright 2000-2007 Miranda ICQ/IM project, 
+Copyright 2000-2006 Miranda ICQ/IM project, 
 all portions of this codebase are copyrighted to the people 
 listed in contributors.txt.
 
@@ -24,12 +24,12 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //Include
 #include <assert.h>
 
-#include "commonheaders.h" 
+
 #include <stdio.h>
-//#include <Wingdi.h>
+#include <Wingdi.h>
 #include "m_skin_eng.h"
 #include "mod_skin_selector.h"
-//#include "commonheaders.h" 
+#include "commonheaders.h" 
 #include "CLUIFRAMES\cluiframes.h"
 
 #include <m_png.h>
@@ -44,18 +44,22 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "shlwapi.h"
 #include "math.h"
 
-
+extern struct LISTMODERNMASK *MainModernMaskList;
 /* Global variables */
 
 SKINOBJECTSLIST g_SkinObjectList={0};
 CURRWNDIMAGEDATA * g_pCachedWindow=NULL;
 
-wndFrame * FindFrameByItsHWND(HWND FrameHwnd);	//cluiframes.c
+BOOL    g_bLayered=FALSE;
+BYTE    g_bUseKeyColor=TRUE;
+
+BYTE    g_bCurrentAlpha=255;
+DWORD   g_dwKeyColor=RGB(255,0,255);
 
 BOOL (WINAPI *g_proc_UpdateLayeredWindow)(HWND,HDC,POINT*,SIZE*,HDC,POINT*,COLORREF,BLENDFUNCTION*,DWORD);
 
 BOOL    g_flag_bPostWasCanceled =FALSE,
-		g_flag_bFullRepaint     =FALSE;
+g_flag_bFullRepaint     =FALSE;
 
 BOOL    g_mutex_bLockUpdating   =FALSE;
 
@@ -89,9 +93,11 @@ static CRITICAL_SECTION cs_SkinChanging={0};
 
 
 /* Private module procedures */
-static BOOL SkinEngine_GetMaskBit(BYTE *line, int x);
+
 static int  SkinEngine_Service_AlphaTextOut(WPARAM wParam,LPARAM lParam);
 static BOOL SkinEngine_Service_DrawIconEx(WPARAM wParam,LPARAM lParam);
+static int  SkinEngine_Service_RegisterFramePaintCallbackProcedure(WPARAM wParam, LPARAM lParam);
+
 
 static int  SkinEngine_AlphaTextOut (HDC hDC, LPCTSTR lpString, int nCount, RECT * lpRect, UINT format, DWORD ARGBcolor);
 static void SkinEngine_AddParseTextGlyphObject(char * szGlyphTextID,char * szDefineString,SKINOBJECTSLIST *Skin);
@@ -103,8 +109,6 @@ static HBITMAP SkinEngine_LoadGlyphImageByDecoders(char * szFileName);
 static int  SkinEngine_LoadSkinFromResource();
 static void SkinEngine_PreMultiplyChanells(HBITMAP hbmp,BYTE Mult);
 static int  SkinEngine_ValidateSingleFrameImage(wndFrame * Frame, BOOL SkipBkgBlitting);
-static int SkinEngine_Service_UpdateFrameImage(WPARAM wParam, LPARAM lParam);
-static int SkinEngine_Service_InvalidateFrameImage(WPARAM wParam, LPARAM lParam);
 
 
 //Decoders
@@ -129,7 +133,7 @@ static MODERNEFFECT meCurrentEffect={-1,{0},0,0};
 
 BOOL SkinEngine_AlphaBlend(HDC hdcDest,int nXOriginDest,int nYOriginDest,int nWidthDest,int nHeightDest,HDC hdcSrc,int nXOriginSrc,int nYOriginSrc,int nWidthSrc,int nHeightSrc,BLENDFUNCTION blendFunction)
 {
-    if (!g_CluiData.fGDIPlusFail && blendFunction.BlendFlags&128 ) //Use gdi+ engine
+    if (!gl_b_GDIPlusFail && blendFunction.BlendFlags&128 ) //Use gdi+ engine
     {
         return GDIPlus_AlphaBlend( hdcDest,nXOriginDest,nYOriginDest,nWidthDest,nHeightDest,
             hdcSrc,nXOriginSrc,nYOriginSrc,nWidthSrc,nHeightSrc,
@@ -151,120 +155,6 @@ static int SkinEngine_UnlockSkin()
     return 0;
 }
 
-typedef struct _tagDCBuffer
-{
-	HDC hdcOwnedBy;
-	int nUsageID;
-	int width;
-	int height;
-	void* pImage;
-	HDC hDC;
-	HBITMAP oldBitmap;
-	HBITMAP hBitmap;
-	DWORD dwDestroyAfterTime;
-}DCBUFFER;
-CRITICAL_SECTION BufferListCS={0};
-
-SortedList * BufferList=NULL;
-enum
-{
-	BUFFER_DRAWICON=0,
-	BUFFER_DRAWIMAGE
-};
-
-int SortBufferList(void* it1, void * it2)
-{
-	DCBUFFER * buf1=(DCBUFFER *)it1;
-	DCBUFFER * buf2=(DCBUFFER *)it2;
-	if (buf1->hdcOwnedBy!=buf2->hdcOwnedBy) return (int)(buf1->hdcOwnedBy < buf2->hdcOwnedBy);
-	else if (buf1->nUsageID!=buf2->nUsageID) return (int) (buf1->nUsageID < buf2->nUsageID);
-	else return (int) (buf1->hDC < buf2->hDC);
-}
-
-HDC SkinEngine_RequestBufferDC(HDC hdcOwner, int dcID, int width, int height, BOOL fClear)
-{
-	DCBUFFER buf;
-	DCBUFFER * pBuf;
-	if (BufferList==NULL)
-	{
-		BufferList=li.List_Create(0,2);
-		BufferList->sortFunc=SortBufferList;
-		InitializeCriticalSection(&BufferListCS);
-	}
-	EnterCriticalSection(&BufferListCS);
-	//Try to find DC in buffer list	
-	buf.hdcOwnedBy=hdcOwner;
-	buf.nUsageID=dcID;
-	buf.hDC=NULL;
-	pBuf=li.List_Find(BufferList,(void*)&buf);
-	if (!pBuf)
-	{
-		//if not found - allocate it
-		pBuf=(DCBUFFER *)mir_alloc(sizeof(DCBUFFER));
-        *pBuf=buf;
-		pBuf->width=width;
-		pBuf->height=height;
-		pBuf->hBitmap=SkinEngine_CreateDIB32Point(width,height,&(pBuf->pImage));
-		pBuf->hDC=CreateCompatibleDC(hdcOwner);
-		pBuf->oldBitmap=SelectObject(pBuf->hDC,pBuf->hBitmap);
-		pBuf->dwDestroyAfterTime=0;
-		li.List_InsertPtr(BufferList,pBuf);		
-	}
-	else 
-	{
-		if (pBuf->width!=width || pBuf->height!=height)
-		{
-			//resize
-			SelectObject(pBuf->hDC,pBuf->oldBitmap);
-			DeleteObject(pBuf->hBitmap);
-			pBuf->width=width;
-			pBuf->height=height;
-			pBuf->hBitmap=SkinEngine_CreateDIB32Point(width,height,&(pBuf->pImage));
-			pBuf->oldBitmap=SelectObject(pBuf->hDC,pBuf->hBitmap);
-		}  else	if (fClear)
-			memset(pBuf->pImage,0,width*height*sizeof(DWORD));
-	}
-	pBuf->dwDestroyAfterTime=0;
-	LeaveCriticalSection(&BufferListCS);
-	return pBuf->hDC;
-}
-
-int SkinEngine_ReleaseBufferDC(HDC hDC, int keepTime)
-{
-	DWORD dwCurrentTime=GetTickCount();
-	DCBUFFER * pBuf=NULL;
-	//Try to find DC in buffer list - set flag to be release after time;
-	int i=0;
-	EnterCriticalSection(&BufferListCS);
-	for (i=0; i<BufferList->realCount; i++)
-	{
-		pBuf=(DCBUFFER *)BufferList->items[i];
-		if (pBuf)
-		{
-			if (hDC!=NULL && pBuf->hDC==hDC)
-			{
-				pBuf->dwDestroyAfterTime=dwCurrentTime+keepTime;
-				break;
-			}
-			else  
-			{
-				if ((pBuf->dwDestroyAfterTime && pBuf->dwDestroyAfterTime < dwCurrentTime) || keepTime==-1)
-				{
-					SelectObject(pBuf->hDC,pBuf->oldBitmap);
-					DeleteObject(pBuf->hBitmap);
-					DeleteDC(pBuf->hDC);
-					mir_free(pBuf);
-					li.List_Remove(BufferList,i);
-					i--;
-				}
-			}
-		}
-	}
-	LeaveCriticalSection(&BufferListCS);
-	return 0;
-}
-
-
 int SkinEngine_LoadModule()
 {
     InitializeCriticalSection(&cs_SkinChanging);
@@ -276,10 +166,9 @@ int SkinEngine_LoadModule()
     g_SkinObjectList.pObjects=NULL;
     // Initialize GDI+
     InitGdiPlus();
-	AniAva_InitModule();
     //load decoder
     hImageDecoderModule=NULL;
-    if (g_CluiData.fGDIPlusFail)
+    if (gl_b_GDIPlusFail)
     {
         hImageDecoderModule = LoadLibrary(TEXT("ImgDecoder.dll"));
         if (hImageDecoderModule==NULL) 
@@ -315,7 +204,8 @@ int SkinEngine_LoadModule()
     {       
         //  CreateServiceFunction(MS_SKIN_REGISTEROBJECT,SkinEngine_RegisterObject);
         CreateServiceFunction(MS_SKIN_DRAWGLYPH,SkinEngine_Service_DrawGlyph);
-        //    CreateServiceFunction(MS_SKIN_REGISTERDEFOBJECT,ServCreateGlyphedObjectDefExt);        
+        //    CreateServiceFunction(MS_SKIN_REGISTERDEFOBJECT,ServCreateGlyphedObjectDefExt);
+        CreateServiceFunction(MS_SKINENG_REGISTERPAINTSUB,SkinEngine_Service_RegisterFramePaintCallbackProcedure);
         CreateServiceFunction(MS_SKINENG_UPTATEFRAMEIMAGE,SkinEngine_Service_UpdateFrameImage);
         CreateServiceFunction(MS_SKINENG_INVALIDATEFRAMEIMAGE,SkinEngine_Service_InvalidateFrameImage);
 
@@ -385,7 +275,6 @@ int SkinEngine_UnloadModule()
     DestroyServiceFunction(MS_SKIN_DRAWGLYPH);
     DestroyHookableEvent(hEventServicesCreated);
     if (hImageDecoderModule) FreeLibrary(hImageDecoderModule);
-	AniAva_UnloadModule();
     ShutdownGdiPlus();
     //free variables
     return 1;
@@ -419,7 +308,6 @@ BOOL SkinEngine_SetRectOpaque(HDC memdc,RECT *fr)
     BITMAP bmp;
     HBITMAP hbmp=GetCurrentObject(memdc,OBJ_BITMAP);  
     GetObject(hbmp, sizeof(bmp),&bmp);
-    if (bmp.bmPlanes!=1) return FALSE;
     sx=(fr->left>0)?fr->left:0;
     sy=(fr->top>0)?fr->top:0;
     ex=(fr->right<bmp.bmWidth)?fr->right:bmp.bmWidth;
@@ -1414,7 +1302,7 @@ int SkinEngine_GetFullFilename(char * buf, char *file, char * skinfolder,BOOL ma
 
 static HBITMAP SkinEngine_skinLoadGlyphImage(char * szFileName)
 {
-    if (!g_CluiData.fGDIPlusFail && !wildcmpi(szFileName,"*.tga"))
+    if (!gl_b_GDIPlusFail && !wildcmpi(szFileName,"*.tga"))
         return GDIPlus_LoadGlyphImage(szFileName);
     else 
         return SkinEngine_LoadGlyphImageByDecoders(szFileName);
@@ -1710,7 +1598,7 @@ HBITMAP SkinEngine_LoadGlyphImage(char * szFileName)
 {
     // try to find image in loaded
     DWORD i;HBITMAP hbmp;
-	char szFile [MAX_PATH]={0};
+    char szFile [MAX_PATH];
     SkinEngine_GetFullFilename(szFile,szFileName,g_SkinObjectList.szSkinPlace,TRUE);
     /*{
     _snprintf(fn,sizeof(fn),"%s\\%s",g_SkinObjectList.SkinPlace,szfileName);
@@ -1789,11 +1677,10 @@ int SkinEngine_UnloadSkin(SKINOBJECTSLIST * Skin)
                 {
                     if (sf->szFontID) mir_free_and_nill(sf->szFontID);
                     DeleteObject(sf->hFont);
-					mir_free_and_nill(sf);
                 }
             }
             li.List_Destroy(gl_plSkinFonts);
-			mir_free_and_nill(gl_plSkinFonts);
+            gl_plSkinFonts=NULL;
         }
     }
 
@@ -1825,11 +1712,10 @@ int SkinEngine_UnloadSkin(SKINOBJECTSLIST * Skin)
                                 if (gt->stValueText)  mir_free_and_nill(gt->stValueText);
                                 if (gt->szFontID)     mir_free_and_nill(gt->szFontID);
                                 if (gt->szGlyphTextID)mir_free_and_nill(gt->szGlyphTextID);
-								mir_free_and_nill(gt);
                             }
                         }
                         li.List_Destroy(dt->plTextList);
-						mir_free_and_nill(dt->plTextList);
+                        dt->plTextList=NULL;
                     }
                 }
                 mir_free_and_nill(dt);
@@ -1943,8 +1829,8 @@ static int SkinEngine_GetSkinFromDB(char * szSection, SKINOBJECTSLIST * Skin)
 void SkinEngine_LoadSkinFromDB(void) 
 { 
     SkinEngine_GetSkinFromDB(SKIN,&g_SkinObjectList); 
-    g_CluiData.fUseKeyColor=(BOOL)DBGetContactSettingByte(NULL,"ModernSettings","UseKeyColor",1);
-    g_CluiData.dwKeyColor=DBGetContactSettingDword(NULL,"ModernSettings","KeyColor",(DWORD)RGB(255,0,255));
+    g_bUseKeyColor=DBGetContactSettingByte(NULL,"ModernSettings","g_bUseKeyColor",1);
+    g_dwKeyColor=DBGetContactSettingDword(NULL,"ModernSettings","g_dwKeyColor",(DWORD)RGB(255,0,255));
 }
 
 
@@ -2340,7 +2226,7 @@ BOOL SkinEngine_TextOut(HDC hdc, int x, int y, LPCTSTR lpString, int nCount)
     int ta;
     SIZE sz;
     RECT rc={0};
-    if (!g_CluiData.fGDIPlusFail &&0) ///text via gdi+
+    if (!gl_b_GDIPlusFail &&0) ///text via gdi+
     {
         TextOutWithGDIp(hdc,x,y,lpString,nCount);
         return 0;
@@ -2622,7 +2508,6 @@ static int SkinEngine_AlphaTextOut (HDC hDC, LPCTSTR lpstring, int nCount, RECT 
     int dtex=0;
     RECT workRect;
     workRect=*lpRect;
-	//DEBUG Reduce Usage twice
     if (!bGammaWeightFilled)
     {
         int i;
@@ -2734,7 +2619,7 @@ static int SkinEngine_AlphaTextOut (HDC hDC, LPCTSTR lpstring, int nCount, RECT 
         //if (sz.cy>2000) DebugBreak();
         sz.cx+=4;
         sz.cy+=4;
-        if (sz.cx>0 && sz.cy>0) 
+        if (sz.cx>0 && sz.cy>0)
         {
             //Create text bitmap
             {
@@ -2752,13 +2637,13 @@ static int SkinEngine_AlphaTextOut (HDC hDC, LPCTSTR lpstring, int nCount, RECT 
 
                 TextOut(memdc,2,2,lpString,nCount);
             }
-			{
+            {
                 MODERNEFFECT effect={0};
                 if (SkinEngine_GetTextEffect(hDC,&effect)) 
                     SkinEngine_DrawTextEffect(bufbits,bits,sz.cx,sz.cy,&effect);	
             }
             //RenderText
-            
+            //if (1)
             {
                 DWORD x,y;
                 DWORD width=sz.cx;
@@ -2875,13 +2760,13 @@ BOOL SkinEngine_DrawTextA(HDC hdc, char * lpString, int nCount, RECT * lpRect, U
 BOOL SkinEngine_DrawText(HDC hdc, LPCTSTR lpString, int nCount, RECT * lpRect, UINT format)
 {
     DWORD form=0, color=0;
-    RECT r=*lpRect;	
+    RECT r=*lpRect;
     OffsetRect(&r,1,1);
     if (format&DT_RTLREADING) SetTextAlign(hdc,TA_RTLREADING);
     if (format&DT_CALCRECT) return DrawText(hdc,lpString,nCount,lpRect,format);
     form=format;
     color=GetTextColor(hdc);
-    if (!g_CluiData.fGDIPlusFail &&0) ///text via gdi+
+    if (!gl_b_GDIPlusFail &&0) ///text via gdi+
     {
         TextOutWithGDIp(hdc,lpRect->left,lpRect->top,lpString,nCount);
         return 0;
@@ -2893,378 +2778,91 @@ HICON SkinEngine_ImageList_GetIcon(HIMAGELIST himl, int i, UINT fStyle)
 {
     IMAGEINFO imi={0};
     BITMAP bm={0};
-	if (IsWinVerXPPlus()  && i!=-1)
-	{
-		ImageList_GetImageInfo(himl,i,&imi);
-		GetObject(imi.hbmImage,sizeof(bm),&bm);
-		if (bm.bmBitsPixel==32) //stupid bug of Microsoft 
-								// Icons bitmaps are not premultiplied
-								// So Imagelist_AddIcon - premultiply alpha
-								// But incorrect - it is possible that alpha will
-								// be less than color and
-								// ImageList_GetIcon will return overflowed colors
-								// TODO: Direct draw Icon from imagelist without 
-								// extracting of icon
-		{
-			BYTE * bits=NULL;	
-			bits=bm.bmBits;
-			if (!bits)
-			{
-				bits=malloc(bm.bmWidthBytes*bm.bmHeight);
-				GetBitmapBits(imi.hbmImage,bm.bmWidthBytes*bm.bmHeight,bits);
-			} 
-			{
-				int iy;
-				BYTE *bcbits;
-				int wb=((imi.rcImage.right-imi.rcImage.left)*bm.bmBitsPixel>>3);
-				bcbits=bits+(bm.bmHeight-imi.rcImage.bottom)*bm.bmWidthBytes+(imi.rcImage.left*bm.bmBitsPixel>>3);
-				for (iy=0; iy<imi.rcImage.bottom-imi.rcImage.top; iy++)
-				{
-					int x;
-					// Dummy microsoft fix - alpha can be less than r,g or b
-					// Looks like color channels in icons should be non-premultiplied with alpha
-					// But AddIcon store it premultiplied (incorrectly cause can be Alpha==7F, but R,G or B==80
-					// So i check that alpha is 0x7F and set it to 0x80
-					DWORD *c=((DWORD*)bcbits);
-					for (x=0;x<imi.rcImage.right-imi.rcImage.left; x++)
-					{		  
-						DWORD val=*c;
-						BYTE a= (BYTE)((val)>>24);
-                        if (a!=0)
-                        {
-						    BYTE r= (BYTE)((val&0xFF0000)>>16);
-						    BYTE g= (BYTE)((val&0xFF00)>>8);
-						    BYTE b= (BYTE)(val&0xFF);
-                            if (a<r || a<g || a<b)
-						    {
-							    a=max(max(r,g),b);
-							    val=a<<24|r<<16|g<<8|b;
-							    *c=val;
-						    }
-                        }
-						c++;
-					}
-					bcbits+=bm.bmWidthBytes;
-				}
-			}  
-			if (!bm.bmBits) 
-			{ 
-				SetBitmapBits(imi.hbmImage,bm.bmWidthBytes*bm.bmHeight,bits);
-				free(bits);
-			}
-		}
-	}
+    ImageList_GetImageInfo(himl,i,&imi);
+    GetObject(imi.hbmImage,sizeof(bm),&bm);
+    if (bm.bmBitsPixel==32 && IsWinVerXPPlus()) //stupid bug of microsoft 0x7f in alpha and 0x80 in any color works incorrectly
+    {
+        BYTE * bits=NULL;	  
+        bits=bm.bmBits;
+        if (!bits)
+        {
+            bits=malloc(bm.bmWidthBytes*bm.bmHeight);
+            GetBitmapBits(imi.hbmImage,bm.bmWidthBytes*bm.bmHeight,bits);
+        } 
+        {
+            int iy;
+            BYTE *bcbits;
+            int wb=((imi.rcImage.right-imi.rcImage.left)*bm.bmBitsPixel>>3);
+            bcbits=bits+(bm.bmHeight-imi.rcImage.bottom)*bm.bmWidthBytes+(imi.rcImage.left*bm.bmBitsPixel>>3);
+            for (iy=0; iy<imi.rcImage.bottom-imi.rcImage.top; iy++)
+            {
+                int x;
+                // Dummy microsoft fix - alpha can be less than r,g or b
+                // Looks like color channels in icons should be non-premultiplied with alpha
+                // But AddIcon store it premultiplied (incorrectly cause can be Alpha==7F, but R,G or B==80
+                // So i check that alpha is 0x7F and set it to 0x80
+                DWORD *c=((DWORD*)bcbits);
+                for (x=0;x<imi.rcImage.right-imi.rcImage.left; x++)
+                {		  
+                    if (((*c)&0xFF000000)==0x7F000000) 
+                        (*c)=((*c)&0x00FFFFFF)|0x80000000;
+                    c++;
+                }
+                bcbits+=bm.bmWidthBytes;
+            }
+        }  
+        if (!bm.bmBits) 
+        { 
+            SetBitmapBits(imi.hbmImage,bm.bmWidthBytes*bm.bmHeight,bits);
+            free(bits);
+        }
+    }
     return ImageList_GetIcon(himl,i,ILD_TRANSPARENT);
 }
 
-////////////////////////////////////////////////////////////////////////////
-// This creates new dib image from Imagelist icon ready to alphablend it 
-
-HBITMAP SkinEngine_ExtractDIBFromImagelistIcon( HIMAGELIST himl,int index, int * outWidth, int * outHeight)
-{
-    
-    BITMAP      bmImg,
-                bmMsk;
-    
-    IMAGEINFO   imi;
-
-    HBITMAP     hOutBmp=NULL;
-
-
-    int         iWidth,
-                iHeight;
-
-    int         iRowImgShift,
-                iRowMskShift;
-
-    BOOL        fDibImgBits,
-                fDibMskBits;
-
-    BYTE        *pImg=NULL,
-                *pMsk=NULL,
-                *pDib=NULL;
-
-    BYTE        *pWorkImg=NULL,
-                *pWorkMsk=NULL,
-                *pWorkDib=NULL;
-
-    BOOL        fHasMask,
-                fHasAlpha;
-    
-    if (!ImageList_GetImageInfo(himl, index, &imi)) return NULL;
-    
-    iWidth=imi.rcImage.right-imi.rcImage.left;
-    iHeight=imi.rcImage.bottom-imi.rcImage.top;
-
-    if (iWidth<=0 && iHeight<=0) return NULL;
-    
-    GetObject(imi.hbmImage,sizeof(BITMAP),&bmImg);
-    GetObject(imi.hbmMask,sizeof(BITMAP),&bmMsk);
-
-    if (bmImg.bmBitsPixel!=32) 
-    {
-        // draw it on 32bit using native procedure
-        HBITMAP hResultBmp=SkinEngine_CreateDIB32Point(iWidth,iHeight,&pDib);
-        HDC hTempDC=CreateCompatibleDC(NULL);
-        HBITMAP hOldBmp=SelectObject(hTempDC,hResultBmp);
-        ImageList_DrawEx(himl,index,hTempDC,0,0,iWidth,iHeight,CLR_NONE,CLR_NONE,ILD_IMAGE);
-        SelectObject(hTempDC,hOldBmp);
-        DeleteDC(hTempDC);
-        
-        // and after tune up alpha layer via analyzing mask.       
-        fDibMskBits = (bmMsk.bmBits!=NULL);
-        if (!fDibMskBits)  //there is not dib section for mask
-        {
-            //lets create new pixel map for it
-            DWORD dwSize=sizeof(BYTE)*bmMsk.bmHeight*bmMsk.bmWidthBytes;
-            pMsk=(BYTE*)malloc(dwSize);
-            // and fill it
-            GetBitmapBits(imi.hbmMask,dwSize,pMsk);
-        }
-        else    
-        {
-            pMsk=bmMsk.bmBits;
-        }
-
-        if (!fDibMskBits)
-        {
-            iRowMskShift=bmMsk.bmWidthBytes;
-            pWorkMsk=pMsk+((imi.rcImage.left*bmMsk.bmBitsPixel)>>3)+(imi.rcImage.top*iRowMskShift);  //top to bottom
-        }
-        else
-        {
-            iRowMskShift=-bmMsk.bmWidthBytes;
-            pWorkMsk=pMsk+((imi.rcImage.left*bmMsk.bmBitsPixel)>>3)+((bmMsk.bmHeight-imi.rcImage.top-1)*bmMsk.bmWidthBytes); //bottom to top
-        }
-        
-        if (hResultBmp)
-        {   // lets analize it
-            int x,y;
-            BYTE *pRowDib;
-
-            pWorkDib=pDib+(iHeight-1)*iWidth*4;
-            //ok lets go...
-
-            for (y=0; y<iHeight; y++)
-            {
-                pRowDib=pWorkDib;
-                for (x=0; x<iWidth; x++)
-                {
-                    DWORD dwVal=*((DWORD*)pRowDib);
-                    BOOL fMasked = SkinEngine_GetMaskBit(pWorkMsk,x);
-
-                    if (fMasked) 
-                        dwVal=0;                   // if mask bit is set - point have to be empty
-                    else 
-                        dwVal|=0xFF000000;         // if there not alpha channel let set it opaque
-
-                    *((DWORD*)pRowDib)=dwVal;      // drop out if it is not zero
-
-                    pRowDib+=4; 
-                }
-                pWorkMsk+=iRowMskShift;
-                pWorkDib-=iWidth*sizeof(DWORD);
-            }
-        }
-        //Cleanup
-        if (!fDibMskBits && pMsk) 
-            free(pMsk);
-
-        // finally set output width and height
-        if (outHeight) *outHeight=iHeight;
-        if (outWidth)  *outWidth=iWidth;
-        return hResultBmp; 
-    } //end of non32bit mode
-    
-    // get bytes...
-    fDibImgBits = (bmImg.bmBits!=NULL);
-    fDibMskBits = (bmMsk.bmBits!=NULL);
-
-    if (!fDibImgBits)  //there is not dib section for image
-    {
-        //lets create new pixel map for it
-        DWORD dwSize=sizeof(BYTE)*bmImg.bmHeight*bmImg.bmWidthBytes;
-        pImg=(BYTE*)malloc(dwSize);
-        // and fill it
-        GetBitmapBits(imi.hbmImage,dwSize,pImg);
-    }
-    else    
-    {
-        pImg=bmImg.bmBits;
-    }
-
-    if (!fDibMskBits)  //there is not dib section for mask
-    {
-        //lets create new pixel map for it
-        DWORD dwSize=sizeof(BYTE)*bmMsk.bmHeight*bmMsk.bmWidthBytes;
-        pMsk=(BYTE*)malloc(dwSize);
-        // and fill it
-        GetBitmapBits(imi.hbmMask,dwSize,pMsk);
-    }
-    else    
-    {
-        pMsk=bmMsk.bmBits;
-    }
-    
-    // ok lets shift pointers according required image reference.
-    {
-        if (!fDibImgBits)
-        {
-            iRowImgShift=bmImg.bmWidthBytes; //top to bottom
-            pWorkImg=pImg+((imi.rcImage.left*bmImg.bmBitsPixel)>>3)+(imi.rcImage.top*iRowImgShift);
-        }
-        else
-        {
-            iRowImgShift=-bmImg.bmWidthBytes;
-            pWorkImg=pImg+((imi.rcImage.left*bmImg.bmBitsPixel)>>3)+((bmImg.bmHeight-imi.rcImage.top-1)*bmImg.bmWidthBytes); //bottom to top
-        }
-    
-        if (!fDibMskBits)
-        {
-            iRowMskShift=bmMsk.bmWidthBytes;
-            pWorkMsk=pMsk+((imi.rcImage.left*bmMsk.bmBitsPixel)>>3)+(imi.rcImage.top*iRowMskShift);  //top to bottom
-        }
-        else
-        {
-            iRowMskShift=-bmMsk.bmWidthBytes;
-            pWorkMsk=pMsk+((imi.rcImage.left*bmMsk.bmBitsPixel)>>3)+((bmMsk.bmHeight-imi.rcImage.top-1)*bmMsk.bmWidthBytes); //bottom to top
-        }
-    }
-    //pWork* are poited to start of mask and image area
-
-    // lets check if required image really has non empty mask
-    {
-        BYTE x, y;
-        BYTE * pCheckMsk=pWorkMsk;
-        fHasMask=FALSE;
-        for (y=0; !fHasMask && y<iHeight; y++)
-        {
-            for (x=0; !fHasMask && x<iWidth/8; x++)
-            {
-                if (pCheckMsk[x])
-                {
-                    fHasMask=TRUE;
-                    break;
-                }
-            }
-            pCheckMsk+=iRowMskShift;
-        }
-    }
-
-    // lets check if required image really has not empty alpha channel
-    {
-        BYTE x, y;
-        BYTE * pCheckAlpha=pWorkImg+3;
-        fHasAlpha=FALSE;
-        for (y=0; !fHasAlpha && y<iHeight; y++)
-        {
-            for (x=0; !fHasAlpha && x<iWidth; x++)
-            {
-                if (pCheckAlpha[x<<2])
-                {
-                    fHasAlpha=TRUE;
-                    break;
-                }
-            }
-            pCheckAlpha+=iRowImgShift;
-        }
-    }
-
-    // We are ready to create output DIB image
-    hOutBmp=SkinEngine_CreateDIB32Point(iWidth, iHeight, &pDib);
-    if (hOutBmp)
-    {        
-        int x,y;
-        
-        BYTE *pRowImg;
-        BYTE *pRowDib;
-        
-        pWorkDib=pDib+(iHeight-1)*iWidth*4;
-        //ok lets go...
-        
-        for (y=0; y<iHeight; y++)
-        {
-            pRowImg=pWorkImg;
-            pRowDib=pWorkDib;
-            for (x=0; x<iWidth; x++)
-            {
-                DWORD dwVal=*((DWORD*)pRowImg);
-                BOOL fMasked = fHasMask?SkinEngine_GetMaskBit(pWorkMsk,x):FALSE;
-
-                if (fMasked) 
-                    dwVal=0;                   // if mask bit is set - point have to be empty
-                else if (!fHasAlpha)
-                    dwVal|=0xFF000000; // if there not alpha channel let set it opaque
-                
-                if (dwVal!=0) *((DWORD*)pRowDib)=dwVal; // drop out if it is not zero
-
-                pRowImg+=4;                             //shift to next pixel
-                pRowDib+=4; 
-            }
-            pWorkImg+=iRowImgShift;
-            pWorkMsk+=iRowMskShift;
-            pWorkDib-=iWidth*sizeof(DWORD);
-        }
-
-        // finally set output width and height
-        if (outHeight) *outHeight=iHeight;
-        if (outWidth)  *outWidth=iWidth;
-    }
-    //Cleanup
-    {
-        if (!fDibImgBits && pImg)
-            free(pImg);
-        if (!fDibMskBits && pMsk) 
-            free(pMsk);
-    }
-    return hOutBmp; 
-}
-
 BOOL SkinEngine_ImageList_DrawEx( HIMAGELIST himl,int i,HDC hdcDst,int x,int y,int dx,int dy,COLORREF rgbBk,COLORREF rgbFg,UINT fStyle)
-{    
-    //the routine to directly draw icon from image list without creating icon from there - should be some faster
-    int iWidth, iHeight;
-    BYTE alpha;
+{
+    HICON ic=SkinEngine_ImageList_GetIcon(himl,i,fStyle);
+    int ddx;
+    int ddy;
+    BYTE alpha=255;
+    HBITMAP hbmpold, hbmp;
 
-    HDC hDC;
-    HBITMAP hBitmap;
-    HBITMAP hOldBitmap;    
-
-    BLENDFUNCTION bf={AC_SRC_OVER, 0, 255, AC_SRC_ALPHA };
-    
-    if (i<0) return FALSE;
-
-    hBitmap=SkinEngine_ExtractDIBFromImagelistIcon(himl, i, &iWidth, &iHeight);
-    
     if (fStyle&ILD_BLEND25) alpha=64;
     else if (fStyle&ILD_BLEND50) alpha=128;
-    else alpha=255;
+    ImageList_GetIconSize(himl,&ddx,&ddy);  
+    ddx=dx?dx:ddx;
+    ddy=dy?dy:ddy;
+    if (alpha==255) 
+    {
+        SkinEngine_DrawIconEx(hdcDst,x,y,ic,dx?dx:ddx,dy?dy:ddy,0,NULL,DI_NORMAL);
+        //DrawIconEx(hdcDst,x,y,ic,dx?dx:ddx,dy?dy:ddy,0,NULL,DI_NORMAL);
 
-    if (!hBitmap) 
-    {        
-        HICON hIcon=SkinEngine_ImageList_GetIcon(himl,i,ILD_NORMAL);        
-        if (hIcon) 
-        {
-            SkinEngine_DrawIconEx(hdcDst,x,y,hIcon,dx?dx:iWidth,dy?dy:iHeight,0,NULL,DI_NORMAL|(alpha<<24));
-            DestroyIcon(hIcon);
-            return TRUE;
-        }        
-        return FALSE;
     }
-    
-    // ok looks like al fine lets draw it
-    hDC=CreateCompatibleDC(hdcDst);
-    hOldBitmap=SelectObject(hDC,hBitmap);
+    else
+    {
+        hbmp=SkinEngine_CreateDIB32(ddx,ddy);
+        if (hbmp)
+        {
+            HDC hdc=CreateCompatibleDC(hdcDst);
+            BLENDFUNCTION bf={AC_SRC_OVER, 0, 255, AC_SRC_ALPHA };
+            bf.SourceConstantAlpha=alpha;    
+            hbmpold=SelectObject(hdc,hbmp);
+            SkinEngine_DrawIconEx(hdc,0,0,ic,ddx,ddy,0,NULL,DI_NORMAL);
+            SkinEngine_AlphaBlend(hdcDst,x,y,ddx,ddy,hdc,0,0,ddx,ddy,bf);
+            SelectObject(hdc,hbmpold);
+            DeleteObject(hbmp);
+            mod_DeleteDC(hdc);
+        }
+    }
+    {
+        BOOL ret=DestroyIcon_protect(ic);
+        if (!ret)
+            ret=ret;
 
-    bf.SourceConstantAlpha=alpha;    
-    SkinEngine_AlphaBlend(hdcDst,x,y,dx?dx:iWidth,dy?dy:iHeight,hDC,0,0,iWidth,iHeight,bf);
-
-    SelectObject(hDC,hOldBitmap);
-    DeleteObject(hBitmap);
-    DeleteDC(hDC);    
+    }
     return TRUE;
 }
-
 
 static BOOL SkinEngine_Service_DrawIconEx(WPARAM wParam,LPARAM lParam)
 {
@@ -3272,8 +2870,6 @@ static BOOL SkinEngine_Service_DrawIconEx(WPARAM wParam,LPARAM lParam)
     if (!p) return 0;
     return SkinEngine_DrawIconEx(p->hdc,p->xLeft,p->yTop,p->hIcon,p->cxWidth,p->cyWidth,p->istepIfAniCur,p->hbrFlickerFreeDraw,p->diFlags);
 }
-
-
 BOOL SkinEngine_DrawIconEx(HDC hdcDst,int xLeft,int yTop,HICON hIcon,int cxWidth,int cyWidth, UINT istepIfAniCur, HBRUSH hbrFlickerFreeDraw, UINT diFlags)
 {
 
@@ -3323,27 +2919,12 @@ BOOL SkinEngine_DrawIconEx(HDC hdcDst,int xLeft,int yTop,HICON hIcon,int cxWidth
             otBmp=SelectObject(tempDC1,tBmp);
             DrawIconEx(tempDC1,0,0,hIcon,imbt.bmWidth,imbt.bmHeight,istepIfAniCur,hbrFlickerFreeDraw,DI_IMAGE);   
             noMirrorMask=TRUE;
-
         }
         SelectObject(tempDC1,otBmp);
         mod_DeleteDC(tempDC1);
     }
-   /*
-   if (imbt.bmBitsPixel!=32)
-    {
-        HDC tempDC1;
-        HBITMAP otBmp;
-        no32bit=TRUE;
-        tempDC1=SkinEngine_RequestBufferDC(hdcDst,BUFFER_DRAWICON,imbt.bmWidth,imbt.bmHeight);
-        if (tempDC1) 
-        {
-            DrawIconEx(tempDC1,0,0,hIcon,imbt.bmWidth,imbt.bmHeight,istepIfAniCur,hbrFlickerFreeDraw,DI_IMAGE);   
-            noMirrorMask=TRUE;
-			SkinEngine_ReleaseBufferDC(tempDC1,2000); //keep buffer for 2 seconds
-        }        
-    }
-   */
-   if (imbt.bmBits==NULL)
+
+    if (imbt.bmBits==NULL)
     {
         NoDIBImage=TRUE;
         imimagbits=(BYTE*)malloc(cy*imbt.bmWidthBytes);
@@ -3444,14 +3025,99 @@ BOOL SkinEngine_DrawIconEx(HDC hdcDst,int xLeft,int yTop,HICON hIcon,int cxWidth
     DeleteObject(ici.hbmMask);
     SelectObject(imDC,GetStockObject(DEFAULT_GUI_FONT));
     mod_DeleteDC(imDC);
+    //unlock it;
+
+
+    /*GetObject(ici.hbmColor,sizeof(color),&color);
+    GetObject(ici.hbmMask,sizeof(mask),&mask);
+    memDC=CreateCompatibleDC(NULL);
+    hbitmap=SkinEngine_CreateDIB32(color.bmWidth,color.bmHeight);
+    if (!hbitmap) return FALSE;
+    GetObject(hbitmap,sizeof(bits),&bits);
+    bbit=bits.bmBits;
+    cbit=mir_alloc(color.bmWidthBytes*color.bmHeight);
+    mbit=mir_alloc(mask.bmWidthBytes*mask.bmHeight);
+
+    ob=SelectObject(memDC,hbitmap);
+    GetBitmapBits(ici.hbmColor, color.bmWidthBytes*color.bmHeight,cbit);
+    GetBitmapBits(ici.hbmMask, mask.bmWidthBytes*mask.bmHeight,mbit);
+    {  int x,y;
+    DWORD offset1;
+    DWORD offset2;
+    for (y=0; y<color.bmHeight;y++)
+    {
+    offset1=(y)*color.bmWidthBytes;
+    offset2=(bits.bmHeight-y-1)*bits.bmWidthBytes;
+    for (x=0; x<color.bmWidth; x++)
+    {
+    BYTE *byte;
+    DWORD *a,*b;
+    BYTE m,f,k;
+    a=(DWORD*)(bbit+offset2+x*4);
+    b=(DWORD*)(cbit+offset1+x*4);
+    *a=*b;
+    byte=bbit+offset2+x*4;
+    if (byte[3]==0)
+    {
+    BYTE* byte2=mbit+(y)*mask.bmWidthBytes+x*mask.bmBitsPixel/8;
+    m=*byte2;
+    k=1<<(7-x%8);
+    f=(m&k)!=0;
+    byte[3]=f?0:255;
+    if (f) *a=0;
+    }
+
+    if (byte[3]!=255)
+    {
+    byte[0]=byte[0]*byte[3]/255;
+    byte[1]=byte[1]*byte[3]/255;
+    byte[2]=byte[2]*byte[3]/255;
+    }
+
+    }
+    }
+
+
+    }
+    {
+    BLENDFUNCTION bf={AC_SRC_OVER, 0, 255, AC_SRC_ALPHA };
+    MyAlphaBlend(hdc,xLeft,yTop,cxWidth, cyWidth, memDC,0,0, color.bmWidth,color.bmHeight,bf);
+    }
+    {
+    int res;
+
+    SelectObject(memDC,ob);
+    res=ModernDeleteDC(memDC);
+    res=DeleteObject(hbitmap);
+    DeleteObject(ici.hbmColor);
+    DeleteObject(ici.hbmMask);
+    if (!res)
+    res=res;
+
+    if(cbit) mir_free_and_nill(cbit);
+    if(mbit) mir_free_and_nill(mbit);
+    }*/
+
     return 1;// DrawIconExS(hdc,xLeft,yTop,hIcon,cxWidth,cyWidth,istepIfAniCur,hbrFlickerFreeDraw,diFlags);
 }
 
-
+static int SkinEngine_Service_RegisterFramePaintCallbackProcedure(WPARAM wParam, LPARAM lParam)
+{
+    if (!wParam) return 0;
+    {
+        wndFrame *frm=FindFrameByItsHWND((HWND)wParam);
+        if (!frm) return 0;
+        if (lParam)
+            frm->PaintCallbackProc=(tPaintCallbackProc)lParam;
+        else
+            frm->PaintCallbackProc=NULL;
+        return 1;
+    }
+}
 
 int SkinEngine_PrepeareImageButDontUpdateIt(RECT * r)
 {
-    if (g_CluiData.fLayered)
+    if (g_bLayered)
     {
         mutex_bLockUpdate=1;
         SkinEngine_DrawNonFramedObjects(TRUE,r);
@@ -3468,10 +3134,10 @@ int SkinEngine_PrepeareImageButDontUpdateIt(RECT * r)
 
 int SkinEngine_RedrawCompleteWindow()
 {   
-    if (g_CluiData.fLayered)
+    if (g_bLayered)
     { 
         SkinEngine_DrawNonFramedObjects(TRUE,0);
-        CallService(MS_SKINENG_INVALIDATEFRAMEIMAGE,0,0);   
+        SkinEngine_Service_InvalidateFrameImage(0,0);   
     }
     else
     {
@@ -3484,17 +3150,17 @@ int SkinEngine_RedrawCompleteWindow()
 // lParam = pointer to sPaintRequest (or NULL to redraw all)
 // return 2 - already queued, data updated, 1-have been queued, 0 - failure
 
-static int SkinEngine_Service_UpdateFrameImage(WPARAM wParam, LPARAM lParam)           // Immideately recall paint routines for frame and refresh image
+int SkinEngine_Service_UpdateFrameImage(WPARAM wParam, LPARAM lParam)           // Immideately recall paint routines for frame and refresh image
 {
     RECT wnd;
     wndFrame *frm;
     BOOL NoCancelPost=0;
     BOOL IsAnyQueued=0;
-    if (!g_CluiData.mutexOnEdgeSizing)
+    if (!g_mutex_bOnEdgeSizing)
         GetWindowRect(pcli->hwndContactList,&wnd);
     else
         wnd=g_rcEdgeSizingRect;
-    if (!g_CluiData.fLayered)
+    if (!g_bLayered)
     {
         RedrawWindow((HWND)wParam,NULL,NULL,RDW_UPDATENOW|RDW_ERASE|RDW_INVALIDATE|RDW_FRAME);
         return 0;
@@ -3504,7 +3170,6 @@ static int SkinEngine_Service_UpdateFrameImage(WPARAM wParam, LPARAM lParam)    
     else if (wParam==0) SkinEngine_ValidateFrameImageProc(&wnd);
     else // all Ok Update Single Frame
     {
-		// TO BE LOCKED OR PROXIED
         frm=FindFrameByItsHWND((HWND)wParam);
         if (!frm)  SkinEngine_ValidateFrameImageProc(&wnd);
         // Validate frame, update window image and remove it from queue
@@ -3535,14 +3200,14 @@ static int SkinEngine_Service_UpdateFrameImage(WPARAM wParam, LPARAM lParam)    
     }
     return 1;   
 }
-static int SkinEngine_Service_InvalidateFrameImage(WPARAM wParam, LPARAM lParam)       // Post request for updating
+int SkinEngine_Service_InvalidateFrameImage(WPARAM wParam, LPARAM lParam)       // Post request for updating
 {
 
     if (wParam)
     {
         wndFrame *frm=FindFrameByItsHWND((HWND)wParam);
         sPaintRequest * pr=(sPaintRequest*)lParam;
-        if (!g_CluiData.fLayered || (frm && frm->floating)) return InvalidateRect((HWND)wParam,pr?(RECT*)&(pr->rcUpdate):NULL,FALSE);
+        if (!g_bLayered || (frm && frm->floating)) return InvalidateRect((HWND)wParam,pr?(RECT*)&(pr->rcUpdate):NULL,FALSE);
         if (frm) 
         {
             if (frm->PaintCallbackProc!=NULL)
@@ -3573,10 +3238,10 @@ static int SkinEngine_Service_InvalidateFrameImage(WPARAM wParam, LPARAM lParam)
         }      
         else
         {
-            callProxied_QueueAllFramesUpdating(1);
+            QueueAllFramesUpdating(1);
         }
     }
-    else callProxied_QueueAllFramesUpdating(1);
+    else QueueAllFramesUpdating(1);
     if (!flag_bUpdateQueued||g_flag_bPostWasCanceled)
         if (PostMessage(pcli->hwndContactList,UM_UPDATE,0,0))
         {            
@@ -3603,7 +3268,7 @@ static int SkinEngine_ValidateSingleFrameImage(wndFrame * Frame, BOOL SkipBkgBli
         rcPaint=Frame->wndSize;
         {
             int dx,dy,bx,by;
-            if (g_CluiData.mutexOnEdgeSizing)
+            if (g_mutex_bOnEdgeSizing)
             {
                 dx=rcPaint.left-wnd.left;
                 dy=rcPaint.top-wnd.top;
@@ -3716,6 +3381,7 @@ static int SkinEngine_ValidateSingleFrameImage(wndFrame * Frame, BOOL SkipBkgBli
             //BLENDFUNCTION bf={AC_SRC_OVER, 0, 255, AC_SRC_ALPHA };
             //MyAlphaBlend(g_pCachedWindow->hImageDC,x+x1,y+y1,w1,h1,hdc,x1,y1,w1,h1,bf);  
         }
+        //StartGDIPlus();
         {
             if (GetWindowLong(Frame->hWnd,GWL_STYLE)&WS_VSCROLL)
             {
@@ -3762,6 +3428,10 @@ static int SkinEngine_ValidateSingleFrameImage(wndFrame * Frame, BOOL SkipBkgBli
             }
 
         }
+        //StartGDIPlus();
+        //CallTest(g_pCachedWindow->hImageDC, 0, 0, "Test case");
+        //TerminateGDIPlus();
+
         SelectObject(hdc,o);
         DeleteObject(n);
         mod_DeleteDC(hdc);
@@ -3856,7 +3526,7 @@ int SkinEngine_DrawNonFramedObjects(BOOL Erase,RECT *r)
     RECT w,wnd;
     if (r) w=*r;
     else CLUI_SizingGetWindowRect(pcli->hwndContactList,&w);
-    if (!g_CluiData.fLayered) return SkinEngine_ReCreateBackImage(FALSE,0);
+    if (!g_bLayered) return SkinEngine_ReCreateBackImage(FALSE,0);
     if (g_pCachedWindow==NULL)
         return SkinEngine_ValidateFrameImageProc(&w);
 
@@ -3882,7 +3552,7 @@ int SkinEngine_DrawNonFramedObjects(BOOL Erase,RECT *r)
                 SetRect(&rc,Frames[i].wndSize.left,Frames[i].wndSize.top-g_nTitleBarHeight-g_nGapBetweenTitlebar,Frames[i].wndSize.right,Frames[i].wndSize.top-g_nGapBetweenTitlebar);
                 //GetWindowRect(Frames[i].TitleBar.hwnd,&rc);
                 //OffsetRect(&rc,-wnd.left,-wnd.top);
-                callProxied_DrawTitleBar(g_pCachedWindow->hBackDC,&rc,Frames[i].id);
+                DrawTitleBar(g_pCachedWindow->hBackDC,rc,Frames[i].id);
             }
     }
     g_mutex_bLockUpdating=1;
@@ -3945,7 +3615,7 @@ int SkinEngine_ValidateFrameImageProc(RECT * r)                                /
     if (IsForceAllPainting) 
     { 
         BitBlt(g_pCachedWindow->hImageDC,0,0,g_pCachedWindow->Width,g_pCachedWindow->Height,g_pCachedWindow->hBackDC,0,0,SRCCOPY);
-        callProxied_QueueAllFramesUpdating(1);
+        QueueAllFramesUpdating(1);
     }
     //-- Validating frames
     { 
@@ -3961,7 +3631,7 @@ int SkinEngine_ValidateFrameImageProc(RECT * r)                                /
     if (!mutex_bLockUpdate)  SkinEngine_UpdateWindowImageRect(&wnd);
     //-- Clear queue
     {
-        callProxied_QueueAllFramesUpdating(0);
+        QueueAllFramesUpdating(0);
         flag_bUpdateQueued=0;
         g_flag_bPostWasCanceled=0;
     }
@@ -3972,7 +3642,7 @@ int SkinEngine_UpdateWindowImage()
 {
     if (MirandaExiting()) 
         return 0;
-    if (g_CluiData.fLayered)
+    if (g_bLayered)
     {
         RECT r;
         GetWindowRect(pcli->hwndContactList,&r);
@@ -3990,7 +3660,7 @@ int SkinEngine_UpdateWindowImageRect(RECT * r)                                  
     //if not validity -> ValidateImageProc
     //else Update using current alpha
     RECT wnd=*r;
-    if (!g_CluiData.fLayered) return SkinEngine_ReCreateBackImage(FALSE,0);
+    if (!g_bLayered) return SkinEngine_ReCreateBackImage(FALSE,0);
     if (g_pCachedWindow==NULL) return SkinEngine_ValidateFrameImageProc(&wnd); 
     if (g_pCachedWindow->Width!=wnd.right-wnd.left || g_pCachedWindow->Height!=wnd.bottom-wnd.top) return SkinEngine_ValidateFrameImageProc(&wnd);
     if (g_flag_bFullRepaint) 
@@ -4005,25 +3675,24 @@ int SkinEngine_UpdateWindowImageRect(RECT * r)                                  
 void SkinEngine_ApplyTransluency()
 {
     int IsTransparancy;
-    HWND hwnd=pcli->hwndContactList;
+    HWND hwnd=(HWND)CallService(MS_CLUI_GETHWND,0,0);
     BOOL layered=(GetWindowLong(hwnd, GWL_EXSTYLE) & WS_EX_LAYERED)?TRUE:FALSE;
 
-    IsTransparancy=g_CluiData.fSmoothAnimation || g_bTransparentFlag;
-    if (!g_bTransparentFlag && !g_CluiData.fSmoothAnimation && g_CluiData.bCurrentAlpha!=0)
-        g_CluiData.bCurrentAlpha=255;
-    if (!g_CluiData.fLayered && (/*(g_CluiData.bCurrentAlpha==255)||*/(g_proc_SetLayeredWindowAttributesNew && IsTransparancy)))
+    IsTransparancy=g_bSmoothAnimation || g_bTransparentFlag;
+    if (!g_bTransparentFlag && !g_bSmoothAnimation && g_bCurrentAlpha!=0)
+        g_bCurrentAlpha=255;
+    if (!g_bLayered && (/*(g_bCurrentAlpha==255)||*/(g_proc_SetLayeredWindowAttributesNew && IsTransparancy)))
     {
         if (!layered) SetWindowLong(hwnd, GWL_EXSTYLE, GetWindowLong(hwnd, GWL_EXSTYLE) | WS_EX_LAYERED);
-        if (g_proc_SetLayeredWindowAttributesNew) g_proc_SetLayeredWindowAttributesNew(hwnd, RGB(0,0,0), (BYTE)g_CluiData.bCurrentAlpha, LWA_ALPHA);
+        if (g_proc_SetLayeredWindowAttributesNew) g_proc_SetLayeredWindowAttributesNew(hwnd, RGB(0,0,0), (BYTE)g_bCurrentAlpha, LWA_ALPHA);
     }
-	AniAva_RedrawAllAvatars();
     return;
 }
 
 int SkinEngine_JustUpdateWindowImage()
 {
     RECT r;
-    if (!g_CluiData.fLayered)
+    if (!g_bLayered)
     {
         SkinEngine_ApplyTransluency();
         return 0;
@@ -4034,7 +3703,7 @@ int SkinEngine_JustUpdateWindowImage()
 int SkinEngine_JustUpdateWindowImageRect(RECT * rty)
 //Update window image
 {
-    BLENDFUNCTION bf={AC_SRC_OVER, 0,g_CluiData.bCurrentAlpha, AC_SRC_ALPHA };
+    BLENDFUNCTION bf={AC_SRC_OVER, 0,g_bCurrentAlpha, AC_SRC_ALPHA };
     POINT dest={0}, src={0};
     int res;
     RECT wnd=*rty;
@@ -4042,7 +3711,7 @@ int SkinEngine_JustUpdateWindowImageRect(RECT * rty)
     RECT rect;
     SIZE sz={0};
 
-    if (!g_CluiData.fLayered)
+    if (!g_bLayered)
     {
         SkinEngine_ApplyTransluency();
         return 0;
@@ -4053,11 +3722,11 @@ int SkinEngine_JustUpdateWindowImageRect(RECT * rty)
     dest.y=rect.top;
     sz.cx=rect.right-rect.left;
     sz.cy=rect.bottom-rect.top;
-    if (g_proc_UpdateLayeredWindow && g_CluiData.fLayered)
+    if (g_proc_UpdateLayeredWindow && g_bLayered)
     {
         if (!(GetWindowLong(pcli->hwndContactList, GWL_EXSTYLE)&WS_EX_LAYERED))
             SetWindowLong(pcli->hwndContactList,GWL_EXSTYLE, GetWindowLong(pcli->hwndContactList, GWL_EXSTYLE) |WS_EX_LAYERED);
-        callProxied_SetAlpha(g_CluiData.bCurrentAlpha);
+        SetAlpha(g_bCurrentAlpha);
 
         res=g_proc_UpdateLayeredWindow(pcli->hwndContactList,g_pCachedWindow->hScreenDC,&dest,&sz,g_pCachedWindow->hImageDC,&src,RGB(1,1,1),&bf,ULW_ALPHA);
     }
@@ -4425,7 +4094,6 @@ static DWORD SkinEngine_Blend(DWORD X1,DWORD X2, BYTE alpha)
 
     BYTE a_1=~a1;
     BYTE a_2=~a2;
-	WORD am=(WORD)a1*a_2;
 
     /*  it is possible to use >>8 instead of /255 but it is require additional
     *   checking of alphavalues
@@ -4441,11 +4109,10 @@ static DWORD SkinEngine_Blend(DWORD X1,DWORD X2, BYTE alpha)
 
     //else
     {
-		WORD arm=ar*255;
-		WORD rr=(((WORD)r1*am+(WORD)r2*a2*255))/arm;
-		WORD gr=(((WORD)g1*am+(WORD)g2*a2*255))/arm;
-		WORD br=(((WORD)b1*am+(WORD)b2*a2*255))/arm;
-		return (ar<<24)|(rr<<16)|(gr<<8)|br;
+        WORD rr=(((WORD)r1*a_2+(WORD)r2*a2))/255;
+        WORD gr=(((WORD)g1*a_2+(WORD)g2*a2))/255;
+        WORD br=(((WORD)b1*a_2+(WORD)b2*a2))/255;
+        return (ar<<24)|(rr<<16)|(gr<<8)|br;
     }
 
 }

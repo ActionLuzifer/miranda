@@ -21,8 +21,6 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
-#define NEWSTR_ALLOCA(A) (A==NULL)?NULL:strcpy((char*)alloca(strlen(A)+1),A)
-
 /**** memory.c *************************************************************************/
 
 void*  mir_alloc( size_t );
@@ -50,44 +48,6 @@ TCHAR* LangPackPcharToTchar( const char* pszStr );
 char*  LangPackTranslateString(const char *szEnglish, const int W);
 
 TCHAR*   a2t( const char* str );
-char*    t2a( const TCHAR* src );
 char*    u2a( const wchar_t* src );
 wchar_t* a2u( const char* src );
 
-/**** skin2icons.c *********************************************************************/
-
-HANDLE IcoLib_AddNewIcon( SKINICONDESC* sid );
-HICON  IcoLib_GetIcon( const char* pszIconName );
-HICON  IcoLib_GetIconByHandle( HANDLE hItem );
-HANDLE IcoLib_IsManaged( HICON hIcon );
-int    IcoLib_ReleaseIcon( HICON hIcon, char* szIconName );
-
-/**** skinicons.c **********************************************************************/
-
-HICON LoadSkinProtoIcon( const char* szProto, int status );
-HICON LoadSkinIcon( int idx );
-HANDLE GetSkinIconHandle( int idx );
-
-HICON LoadIconEx(HINSTANCE hInstance, LPCTSTR lpIconName, BOOL bShared);
-int ImageList_AddIcon_NotShared(HIMAGELIST hIml, LPCTSTR szResource);
-int ImageList_ReplaceIcon_NotShared(HIMAGELIST hIml, int iIndex, HINSTANCE hInstance, LPCTSTR szResource);
-
-int ImageList_AddIcon_IconLibLoaded(HIMAGELIST hIml, int iconId);
-int ImageList_AddIcon_ProtoIconLibLoaded(HIMAGELIST hIml, const char* szProto, int iconId);
-int ImageList_ReplaceIcon_IconLibLoaded(HIMAGELIST hIml, int nIndex, HICON hIcon);
-
-void Button_SetIcon_IcoLib(HWND hDlg, int itemId, int iconId, const char* tooltip);
-void Button_FreeIcon_IcoLib(HWND hDlg, int itemId);
-
-void Window_SetIcon_IcoLib(HWND hWnd, int iconId);
-void Window_SetProtoIcon_IcoLib(HWND hWnd, const char* szProto, int iconId);
-void Window_FreeIcon_IcoLib(HWND hWnd);
-
-#define IconLib_ReleaseIcon(hIcon, szName) CallService(MS_SKIN2_RELEASEICON,(WPARAM)hIcon, (LPARAM)szName)
-#define Safe_DestroyIcon(hIcon) if (hIcon) DestroyIcon(hIcon)
-
-/**** clistmenus.c **********************************************************************/
-
-extern int statusModeList[ MAX_STATUS_COUNT ];
-extern int skinIconStatusList[ MAX_STATUS_COUNT ];
-extern int skinIconStatusFlags[ MAX_STATUS_COUNT ];

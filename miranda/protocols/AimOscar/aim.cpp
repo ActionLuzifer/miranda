@@ -1,40 +1,33 @@
 #include "aim.h"
 PLUGINLINK *pluginLink;
-#define AIM_OSCAR_VERSION "\0\0\0\x07"
-char* AIM_CLIENT_ID_STRING="Miranda Oscar Plugin, version 0.0.0.7";
+#define AIM_OSCAR_VERSION "\0\0\0\x06"
+char* AIM_CLIENT_ID_STRING="Miranda Oscar Plugin, version 0.0.0.6";
 char AIM_CAP_MIRANDA[]="MirandaA\0\0\0\0\0\0\0";
-PLUGININFOEX pluginInfo={
-	sizeof(PLUGININFOEX),
-	"AIM OSCAR Plugin - Version 7(Avatar Test Build)",
-	PLUGIN_MAKE_VERSION(0,0,0,7),
+PLUGININFO pluginInfo={
+	sizeof(PLUGININFO),
+	"AIM OSCAR Plugin - Version 6R",
+	PLUGIN_MAKE_VERSION(0,0,0,6),
 	"Provides basic support for AOL® OSCAR Instant Messenger protocol. [Built: "__DATE__" "__TIME__"]",
 	"Aaron Myles Landwehr",
 	"aaron@miranda-im.org",
 	"© 2005-2006 Aaron Myles Landwehr",
 	"http://www.snaphat.com/oscar",
 	0,		//not transient
-	0,		//doesn't replace anything built-in
-    {0xb4ef58c4, 0x4458, 0x4e47, { 0xa7, 0x67, 0x5c, 0xae, 0xe5, 0xe7, 0xc, 0x81 }} //{B4EF58C4-4458-4e47-A767-5CAEE5E70C81}
+	0		//doesn't replace anything built-in
 };
 oscar_data conn;
 file_transfer* fu;
-MD5_INTERFACE  md5i;
 extern "C" __declspec(dllexport) bool WINAPI DllMain(HINSTANCE hinstDLL,DWORD /*fdwReason*/,LPVOID /*lpvReserved*/)
 {
 	conn.hInstance = hinstDLL;
 	return TRUE;
 }
-extern "C" __declspec(dllexport) PLUGININFOEX* MirandaPluginInfoEx(DWORD mirandaVersion)
+extern "C" __declspec(dllexport) PLUGININFO* MirandaPluginInfo(DWORD mirandaVersion)
 {
 	unsigned long mv=_htonl(mirandaVersion);
 	memcpy((char*)&AIM_CAP_MIRANDA[8],&mv,sizeof(DWORD));
 	memcpy((char*)&AIM_CAP_MIRANDA[12],(char*)&AIM_OSCAR_VERSION,sizeof(DWORD));
 	return &pluginInfo;
-}
-static const MUUID interfaces[] = {MIID_PROTOCOL, MIID_LAST};
-extern "C" __declspec(dllexport) const MUUID* MirandaPluginInterfaces(void)
-{
-	return interfaces;
 }
 char* CWD;//current working directory
 char* AIM_PROTOCOL_NAME;
@@ -58,15 +51,29 @@ extern "C" int __declspec(dllexport) Load(PLUGINLINK *link)
 		memcpy(AIM_PROTOCOL_NAME,store,lstrlen(store)+1);
 	}
 	CharUpper(AIM_PROTOCOL_NAME);
-	GROUP_ID_KEY=strlcat(AIM_PROTOCOL_NAME,AIM_MOD_GI);
-	ID_GROUP_KEY=strlcat(AIM_PROTOCOL_NAME,AIM_MOD_IG);
-	FILE_TRANSFER_KEY=strlcat(AIM_PROTOCOL_NAME,AIM_KEY_FT);
-	//create some events
-	conn.hAvatarEvent=CreateEvent (NULL,false,false,NULL);//DO want it to autoreset after setevent()
-	conn.hAwayMsgEvent=CreateEvent(NULL,false,false,NULL);
+	char groupid_key[MAX_PATH];//group to id
+	ZeroMemory(groupid_key,sizeof(groupid_key));
+	memcpy(groupid_key,AIM_PROTOCOL_NAME,lstrlen(AIM_PROTOCOL_NAME));
+	memcpy(&groupid_key[lstrlen(AIM_PROTOCOL_NAME)],AIM_MOD_GI,lstrlen(AIM_MOD_GI));
+	GROUP_ID_KEY=new char[lstrlen(groupid_key)+1];
+	memcpy(GROUP_ID_KEY,groupid_key,lstrlen(groupid_key));
+	memcpy(&GROUP_ID_KEY[lstrlen(groupid_key)],"\0",1);
+	char idgroup_key[MAX_PATH];//id to group
+	ZeroMemory(idgroup_key,sizeof(idgroup_key));
+	memcpy(idgroup_key,AIM_PROTOCOL_NAME,lstrlen(AIM_PROTOCOL_NAME));
+	memcpy(&idgroup_key[lstrlen(AIM_PROTOCOL_NAME)],AIM_MOD_IG,lstrlen(AIM_MOD_IG));
+	ID_GROUP_KEY=new char[lstrlen(idgroup_key)+1];
+	memcpy(ID_GROUP_KEY,idgroup_key,lstrlen(idgroup_key));
+	memcpy(&ID_GROUP_KEY[lstrlen(idgroup_key)],"\0",1);
+	char filetransfer_key[MAX_PATH];//
+	ZeroMemory(filetransfer_key,sizeof(filetransfer_key));
+	memcpy(filetransfer_key,AIM_PROTOCOL_NAME,lstrlen(AIM_PROTOCOL_NAME));
+	memcpy(&filetransfer_key[lstrlen(AIM_PROTOCOL_NAME)],AIM_KEY_FT,lstrlen(AIM_KEY_FT));
+	FILE_TRANSFER_KEY=new char[lstrlen(filetransfer_key)+1];
+	memcpy(FILE_TRANSFER_KEY,filetransfer_key,lstrlen(filetransfer_key));
+	memcpy(&FILE_TRANSFER_KEY[lstrlen(filetransfer_key)],"\0",1);
 	//end location of memory
 	pluginLink = link;
-	mir_getMD5I( &md5i );
 	conn.status=ID_STATUS_OFFLINE;
 	pd.cbSize = sizeof(pd);
     pd.szName = AIM_PROTOCOL_NAME;
@@ -76,11 +83,9 @@ extern "C" int __declspec(dllexport) Load(PLUGINLINK *link)
 	InitializeCriticalSection(&statusMutex);
 	InitializeCriticalSection(&connectionMutex);
 	InitializeCriticalSection(&SendingMutex);
-	InitializeCriticalSection(&avatarMutex);
 	if(DBGetContactSettingByte(NULL, AIM_PROTOCOL_NAME, AIM_KEY_FR, 0)==0)
 		DialogBox(conn.hInstance, MAKEINTRESOURCE(IDD_AIMACCOUNT), NULL, first_run_dialog);
-	if(DBGetContactSettingByte(NULL, AIM_PROTOCOL_NAME, AIM_KEY_KA, 0))
-		ForkThread(aim_keepalive_thread,NULL);
+	ForkThread(aim_keepalive_thread,NULL);
 	CreateServices();
 	return 0;
 }
@@ -145,6 +150,10 @@ int ModulesLoaded(WPARAM /*wParam*/,LPARAM /*lParam*/)
 			DBDeleteContactSetting(NULL, AIM_PROTOCOL_NAME, OLD_KEY_DM);
 		}
 	}
+
+	unsigned long timer=DBGetContactSettingWord(NULL, AIM_PROTOCOL_NAME, AIM_KEY_KA, 0);
+	if(timer>0xffff||timer<15)
+		DBWriteContactSettingWord(NULL, AIM_PROTOCOL_NAME, AIM_KEY_KA, DEFAULT_KEEPALIVE_TIMER);
 	conn.hookEvent[conn.hookEvent_size++]=HookEvent(ME_OPT_INITIALISE, OptionsInit);
 	conn.hookEvent[conn.hookEvent_size++]=HookEvent(ME_USERINFO_INITIALISE, UserInfoInit);
 	conn.hookEvent[conn.hookEvent_size++]=HookEvent(ME_IDLE_CHANGED,IdleChanged);
@@ -211,7 +220,6 @@ int PreShutdown(WPARAM /*wParam*/,LPARAM /*lParam*/)
 	DeleteCriticalSection(&statusMutex);
 	DeleteCriticalSection(&connectionMutex);
 	DeleteCriticalSection(&SendingMutex);
-	DeleteCriticalSection(&avatarMutex);
 	return 0;
 }
 extern "C" int __declspec(dllexport) Unload(void)
@@ -220,8 +228,6 @@ extern "C" int __declspec(dllexport) Unload(void)
 	delete[] CWD;
 	delete[] conn.szModeMsg;
 	delete[] COOKIE;
-	delete[] MAIL_COOKIE;
-	delete[] AVATAR_COOKIE;
 	delete[] GROUP_ID_KEY;
 	delete[] ID_GROUP_KEY;
 	delete[] FILE_TRANSFER_KEY;

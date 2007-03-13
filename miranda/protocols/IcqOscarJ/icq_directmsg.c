@@ -5,7 +5,7 @@
 // Copyright © 2000,2001 Richard Hughes, Roland Rabien, Tristan Van de Vreede
 // Copyright © 2001,2002 Jon Keating, Richard Hughes
 // Copyright © 2002,2003,2004 Martin Öberg, Sam Kothari, Robert Rainwater
-// Copyright © 2004,2005,2006,2007 Joe Kucera
+// Copyright © 2004,2005,2006 Joe Kucera
 // 
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -161,9 +161,7 @@ void handleDirectMessage(directconnect* dc, PBYTE buf, WORD wLen)
           handleMessageTypes(dc->dwRemoteUin, time(NULL), 0, 0, wCookie, dc->wVersion, (int)bMsgType, (int)bMsgFlags, 0, (DWORD)wLen, wTextLen, buf, TRUE);
     
           // Send acknowledgement
-          if ((bMsgType == MTYPE_PLAIN && !CallService(MS_IGNORE_ISIGNORED, (WPARAM)dc->hContact, IGNOREEVENT_MESSAGE))
-            || (bMsgType == MTYPE_URL && !CallService(MS_IGNORE_ISIGNORED, (WPARAM)dc->hContact, IGNOREEVENT_URL))
-            || bMsgType == MTYPE_CONTACTS)
+          if (bMsgType == MTYPE_PLAIN || bMsgType == MTYPE_URL || bMsgType == MTYPE_CONTACTS)
           {
             icq_sendDirectMsgAck(dc, wCookie, bMsgType, bMsgFlags, CAP_RTFMSGS);
           }
@@ -181,16 +179,16 @@ void handleDirectMessage(directconnect* dc, PBYTE buf, WORD wLen)
     }
     else
     {
-      HANDLE hCookieContact;
+      DWORD dwCookieUin;
       message_cookie_data* pCookieData = NULL;
 
-      if (!FindCookie(wCookie, &hCookieContact, &pCookieData))
+      if (!FindCookie(wCookie, &dwCookieUin, &pCookieData))
       {
         NetLog_Direct("Received an unexpected direct ack");
       }
-      else if (hCookieContact != dc->hContact)
+      else if (dwCookieUin != dc->dwRemoteUin)
       {
-        NetLog_Direct("Direct Contact does not match Cookie Contact(0x%x != 0x%x)", dc->hContact, hCookieContact);
+        NetLog_Direct("Direct UIN does not match Cookie UIN(%u != %u)", dc->dwRemoteUin, dwCookieUin);
         ReleaseCookie(wCookie); // This could be a bad idea, but I think it is safe
       }
       else
@@ -241,19 +239,61 @@ void handleDirectMessage(directconnect* dc, PBYTE buf, WORD wLen)
 
 void handleDirectGreetingMessage(directconnect* dc, PBYTE buf, WORD wLen, WORD wCommand, WORD wCookie, BYTE bMsgType, BYTE bMsgFlags, WORD wStatus, WORD wFlags, char* pszText)
 {
+  DWORD dwMsgTypeLen;
   DWORD dwLengthToEnd;
   DWORD dwDataLength;
+  char* szMsgType = NULL;
   char* pszFileName = NULL;
   int typeId;
+  WORD wPacketCommand;
+  DWORD q1,q2,q3,q4;
   WORD qt;
 
 #ifdef _DEBUG
   NetLog_Direct("Handling PEER_MSG_GREETING, command %u, cookie %u, messagetype %u, messageflags %u, status %u, flags %u", wCommand, wCookie, bMsgType, bMsgFlags, wStatus, wFlags);
 #endif
 
-  NetLog_Direct("Parsing Greeting message through direct");
+  // The command in this packet.
+  unpackLEWord(&buf, &wPacketCommand); // TODO: this is most probably length...
+  wLen -= 2;
+  
+  // Data type GUID
+  unpackDWord(&buf, &q1);
+  unpackDWord(&buf, &q2);
+  unpackDWord(&buf, &q3);
+  unpackDWord(&buf, &q4);
+  wLen -= 16;
 
-  if (!unpackPluginTypeId(&buf, &wLen, &typeId, &qt, TRUE)) return;
+  // Data type function id
+  unpackLEWord(&buf, &qt);
+  wLen -= 2;
+
+  // A text string
+  // "ICQ Chat" for chat request, "File" for file request,
+  // "File Transfer" for file request grant/refusal. This text is
+  // displayed in the requester opened by Windows.
+  unpackLEDWord(&buf, &dwMsgTypeLen);
+  wLen -= 4;
+  if (dwMsgTypeLen == 0 || dwMsgTypeLen>256)
+  {
+    NetLog_Direct("Error: Sanity checking failed (%d) in handleDirectGreetingMessage, len is %u", 1, dwMsgTypeLen);
+    return;
+  }
+  szMsgType = (char *)_alloca(dwMsgTypeLen + 1);
+  memcpy(szMsgType, buf, dwMsgTypeLen);
+  szMsgType[dwMsgTypeLen] = '\0';
+  typeId = TypeGUIDToTypeId(q1,q2,q3,q4,qt);
+  if (!typeId)
+    NetLog_Direct("Error: Unknown type {%04x%04x%04x%04x-%02x}: %s", q1,q2,q3,q4,qt,szMsgType);
+
+  buf += dwMsgTypeLen;
+  wLen -= (WORD)dwMsgTypeLen;
+
+  NetLog_Direct("PEER_MSG_GREETING, command: %u, type: %s, typeID: %u", typeId, szMsgType, typeId);
+
+  // Unknown
+  buf += 15;
+  wLen -= 15;
   
   // Length of remaining data
   unpackLEDWord(&buf, &dwLengthToEnd);
@@ -299,8 +339,7 @@ void handleDirectGreetingMessage(directconnect* dc, PBYTE buf, WORD wLen, WORD w
   }
   else if (typeId && wCommand == DIRECT_MESSAGE)
   {
-    if ((typeId == MTYPE_URL && !CallService(MS_IGNORE_ISIGNORED, (WPARAM)dc->hContact, IGNOREEVENT_URL))
-      || typeId == MTYPE_CONTACTS)
+    if (typeId == MTYPE_URL || typeId == MTYPE_CONTACTS)
     { 
       icq_sendDirectMsgAck(dc, wCookie, (BYTE)typeId, 0, CAP_RTFMSGS);
     }
@@ -319,16 +358,16 @@ void handleDirectGreetingMessage(directconnect* dc, PBYTE buf, WORD wLen, WORD w
   }
   else if (typeId && wCommand == DIRECT_ACK)
   {
-    HANDLE hCookieContact;
+    DWORD dwCookieUin;
     message_cookie_data* pCookieData = NULL;
 
-    if (!FindCookie(wCookie, &hCookieContact, &pCookieData))
+    if (!FindCookie(wCookie, &dwCookieUin, &pCookieData))
     {
       NetLog_Direct("Received an unexpected direct ack");
     }
-    else if (hCookieContact != dc->hContact)
+    else if (dwCookieUin != dc->dwRemoteUin)
     {
-      NetLog_Direct("Direct Contact does not match Cookie Contact(0x%x != 0x%x)", dc->hContact, hCookieContact);
+      NetLog_Direct("Direct UIN does not match Cookie UIN(%u != %u)", dc->dwRemoteUin, dwCookieUin);
       ReleaseCookie(wCookie); // This could be a bad idea, but I think it is safe
     }
     else
@@ -355,7 +394,7 @@ void handleDirectGreetingMessage(directconnect* dc, PBYTE buf, WORD wLen, WORD w
             memcpy(szMsg, buf, dwDataLength);
           szMsg[dwDataLength] = '\0';
 
-          handleXtrazNotifyResponse(dc->dwRemoteUin, dc->hContact, wCookie, szMsg, dwDataLength);
+          handleXtrazNotifyResponse(dwCookieUin, dc->hContact, wCookie, szMsg, dwDataLength);
         }
         break;
 
@@ -374,6 +413,6 @@ void handleDirectGreetingMessage(directconnect* dc, PBYTE buf, WORD wLen, WORD w
   }
   else
   {
-    NetLog_Direct("Unsupported plugin message type %s", typeId);
+    NetLog_Direct("Unsupported plugin message type '%s'", szMsgType);
   }
 }

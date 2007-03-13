@@ -31,6 +31,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <fcntl.h>
 #include <sys/stat.h>
 
+#include "msn_md5.h"
+#include "sha1.h"
 #include "resource.h"
 
 #include "version.h"
@@ -145,23 +147,17 @@ int __stdcall MSN_AddUser( HANDLE hContact, const char* email, int flags )
 
 void __stdcall MSN_AddAuthRequest( HANDLE hContact, const char *email, const char *nick )
 {
-	DBWriteContactSettingByte( hContact, "CList", "Hidden", 1 );
-
 	//blob is: UIN=0(DWORD), hContact(DWORD), nick(ASCIIZ), ""(ASCIIZ), ""(ASCIIZ), email(ASCIIZ), ""(ASCIIZ)
 
-	CCSDATA ccs = { 0 };
-	PROTORECVEVENT pre = { 0 };
+	DBEVENTINFO dbei = { 0 };
+	dbei.cbSize    = sizeof( dbei );
+	dbei.szModule  = msnProtocolName;
+	dbei.timestamp = (DWORD)time(NULL);
+	dbei.flags     = 0;
+	dbei.eventType = EVENTTYPE_AUTHREQUEST;
+	dbei.cbBlob    = sizeof(DWORD)*2+strlen(nick)+strlen(email)+5;
 
-    pre.timestamp = ( DWORD )time( NULL );
-	pre.lParam = sizeof( DWORD ) * 2 + strlen( nick ) + strlen( email ) + 5;
-
-	ccs.szProtoService = PSR_AUTH;
-    ccs.hContact = hContact;
-    ccs.lParam = ( LPARAM )&pre;
-
-	PBYTE pCurBlob = ( PBYTE )alloca( pre.lParam );
-	pre.szMessage = ( char* )pCurBlob;
-
+	PBYTE pCurBlob = dbei.pBlob = ( PBYTE )mir_alloc( dbei.cbBlob );
 	*( PDWORD )pCurBlob = 0; pCurBlob+=sizeof( DWORD );
 	*( PDWORD )pCurBlob = ( DWORD )hContact; pCurBlob+=sizeof( DWORD );
 	strcpy(( char* )pCurBlob, nick); pCurBlob += strlen( nick )+1;
@@ -169,8 +165,7 @@ void __stdcall MSN_AddAuthRequest( HANDLE hContact, const char *email, const cha
 	*pCurBlob = '\0'; pCurBlob++;	   //lastName
 	strcpy(( char* )pCurBlob, email ); pCurBlob += strlen( email )+1;
 	*pCurBlob = '\0';         	   //reason
-
-	MSN_CallService( MS_PROTO_CHAINRECV, 0, ( LPARAM )&ccs );
+	MSN_CallService( MS_DB_EVENT_ADD, NULL,( LPARAM )&dbei );
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////
@@ -240,7 +235,10 @@ void __stdcall MSN_GetAvatarFileName( HANDLE hContact, char* pszDest, int cbLen 
 			ltoa(( long )hContact, szEmail, 10 );
 
 		long digest[ 4 ];
-		mir_md5_hash(( BYTE* )szEmail, strlen( szEmail ), ( BYTE* )digest );
+		MD5_CTX ctx;
+		MD5Init( &ctx );
+		MD5Update( &ctx, ( BYTE* )szEmail, strlen( szEmail ));
+		MD5Final(( BYTE* )digest, &ctx );
 
 		tPathLen += mir_snprintf( pszDest + tPathLen, MAX_PATH - tPathLen, "%08lX%08lX%08lX%08lX",
 			digest[0], digest[1], digest[2], digest[3] );
@@ -668,17 +666,17 @@ void __stdcall	MSN_ShowPopup( const char* nickname, const char* msg, int flags )
 	POPUPDATAEX* ppd = ( POPUPDATAEX* )mir_calloc( sizeof( POPUPDATAEX ));
 
 	ppd->lchContact = NULL;
+	ppd->lchIcon = LoadIcon( hInst, MAKEINTRESOURCE( IDI_MSN ));
 	strcpy( ppd->lpzContactName, nickname );
 	strcpy( ppd->lpzText, msg );
 
 	if ( flags & MSN_SHOW_ERROR ) {
-		ppd->lchIcon = ( HICON )LoadImage( NULL, IDI_WARNING, IMAGE_ICON, 0, 0, LR_SHARED );
+		ppd->lchIcon = LoadIcon( NULL, IDI_WARNING );
 		ppd->colorBack = RGB(191,0,0); //Red
 		ppd->colorText = RGB(255,245,225); //Yellow
 		ppd->iSeconds  = 60;
 	}
 	else {
-		ppd->lchIcon = LoadIconEx( "main" );
 		ppd->colorBack = ( MyOptions.UseWinColors ) ? GetSysColor( COLOR_BTNFACE ) : MyOptions.BGColour;
 		ppd->colorText = ( MyOptions.UseWinColors ) ? GetSysColor( COLOR_WINDOWTEXT ) : MyOptions.TextColour;
 		if ( msnUseExtendedPopups )
@@ -686,14 +684,11 @@ void __stdcall	MSN_ShowPopup( const char* nickname, const char* msg, int flags )
 	}
 
 	ppd->PluginWindowProc = ( WNDPROC )NullWindowProc;
-	ppd->PluginData = mir_alloc( sizeof( PopupData ));
-
-	PopupData* pud = ( PopupData* )ppd->PluginData;
-	pud->flags = flags;
-	pud->hIcon = ppd->lchIcon;
+	ppd->PluginData = ( flags & MSN_ALLOW_ENTER ) ? &ppd : NULL;
 
 	QueueUserAPC( sttMainThreadCallback , msnMainThread, ( ULONG )ppd );
 }
+
 
 /////////////////////////////////////////////////////////////////////////////////////////
 // UrlDecode - converts URL chars like %20 into printable characters
@@ -1021,12 +1016,12 @@ directconnection::~directconnection()
 
 char* directconnection::calcHashedNonce(UUID* nonce)
 {
-	mir_sha1_ctx sha1ctx;
-	BYTE sha[ MIR_SHA1_HASH_SIZE ];
+	SHA1Context sha1ctx;
+	BYTE sha[ SHA1HashSize ];
 
-	mir_sha1_init( &sha1ctx );
-	mir_sha1_append( &sha1ctx, ( BYTE* )nonce, sizeof( UUID ));
-	mir_sha1_finish( &sha1ctx, sha );
+	SHA1Reset( &sha1ctx );
+	SHA1Input( &sha1ctx, ( BYTE* )nonce, sizeof( UUID ));
+	SHA1Result( &sha1ctx, sha );
 
 	char* p;
 	UuidToStringA(( UUID* )&sha, ( BYTE** )&p );
@@ -1210,22 +1205,23 @@ bool txtParseParam (const char* szData, const char* presearch, const char* start
 } 
 
 
-void MSN_Base64Decode( const char* str, size_t len, char* res, size_t reslen )
+void MSN_Base64Decode( const char* str, char* res, size_t reslen )
 {
 	if ( str == NULL ) res[0] = 0;
 
 	char* p = const_cast< char* >( str );
-	if ( len & 3 ) { // fix for stupid Kopete's base64 encoder
-		char* p1 = ( char* )alloca( len+5 );
-		memcpy( p1, p, len );
+	int cbLen = strlen( p );
+	if ( cbLen & 3 ) { // fix for stupid Kopete's base64 encoder
+		char* p1 = ( char* )alloca( cbLen+5 );
+		memcpy( p1, p, cbLen );
 		p = p1;
-		p1 += len; 
-		for ( int i = 4 - (len & 3); i > 0; i--, p1++, len++ )
+		p1 += cbLen; 
+		for ( int i = 4 - (cbLen & 3); i > 0; i--, p1++, cbLen++ )
 			*p1 = '=';
 		*p1 = 0;
 	}
 
-	NETLIBBASE64 nlb = { p, len, ( PBYTE )res, reslen };
+	NETLIBBASE64 nlb = { p, cbLen, ( PBYTE )res, reslen };
 	MSN_CallService( MS_NETLIB_BASE64DECODE, 0, LPARAM( &nlb ));
 	res[nlb.cbDecoded] = 0;
 }

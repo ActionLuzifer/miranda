@@ -50,6 +50,7 @@
 				AdditionalOptions="/filealign:512"
 				AdditionalDependencies="odbc32.lib odbccp32.lib wsock32.lib comctl32.lib Rpcrt4.lib"
 				SuppressStartupBanner="TRUE"
+				ModuleDefinitionFile=".\msn.def"
 				GenerateDebugInformation="TRUE"
 				GenerateMapFile="TRUE"
 				OptimizeReferences="2"
@@ -117,6 +118,7 @@
 				AdditionalDependencies="odbc32.lib odbccp32.lib wsock32.lib comctl32.lib Rpcrt4.lib"
 				LinkIncremental="2"
 				SuppressStartupBanner="TRUE"
+				ModuleDefinitionFile=".\msn.def"
 				GenerateDebugInformation="TRUE"
 				ImportLibrary="$(IntDir)/$(TargetName).lib"
 				TargetMachine="1"/>
@@ -181,6 +183,7 @@
 				AdditionalDependencies="odbc32.lib odbccp32.lib wsock32.lib comctl32.lib Rpcrt4.lib"
 				LinkIncremental="2"
 				SuppressStartupBanner="TRUE"
+				ModuleDefinitionFile=".\msn.def"
 				GenerateDebugInformation="TRUE"
 				ImportLibrary="$(IntDir)/$(TargetName).lib"
 				TargetMachine="1"/>
@@ -226,9 +229,8 @@
 				Name="VCCLCompilerTool"
 				Optimization="3"
 				GlobalOptimizations="TRUE"
+				InlineFunctionExpansion="1"
 				FavorSizeOrSpeed="2"
-				OmitFramePointers="FALSE"
-				OptimizeForProcessor="0"
 				AdditionalIncludeDirectories="../../include"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;MSN_EXPORTS"
 				StringPooling="TRUE"
@@ -249,6 +251,7 @@
 				IgnoreImportLibrary="TRUE"
 				AdditionalOptions="/filealign:512"
 				AdditionalDependencies="odbc32.lib odbccp32.lib wsock32.lib comctl32.lib Rpcrt4.lib"
+				ModuleDefinitionFile=".\msn.def"
 				GenerateDebugInformation="TRUE"
 				GenerateMapFile="TRUE"
 				OptimizeReferences="2"
@@ -569,7 +572,41 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\msn_menu.cpp">
+				RelativePath="msn_md5c.cpp">
+				<FileConfiguration
+					Name="Release|Win32">
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="1"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_MBCS;_USRDLL;MSN_EXPORTS;$(NoInherit)"/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug|Win32">
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="0"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_MBCS;_USRDLL;MSN_EXPORTS;$(NoInherit)"
+						BasicRuntimeChecks="3"
+						BrowseInformation="1"/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug Unicode|Win32">
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="0"
+						AdditionalIncludeDirectories=""
+						BasicRuntimeChecks="3"
+						BrowseInformation="1"/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release Unicode|Win32">
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="1"
+						AdditionalIncludeDirectories=""/>
+				</FileConfiguration>
 			</File>
 			<File
 				RelativePath="msn_mime.cpp">
@@ -1021,6 +1058,47 @@
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
+			<File
+				RelativePath="sha1.c">
+				<FileConfiguration
+					Name="Release|Win32">
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="1"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_MBCS;_USRDLL;MSN_EXPORTS;$(NoInherit)"
+						UsePrecompiledHeader="0"/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug|Win32">
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="0"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_MBCS;_USRDLL;MSN_EXPORTS;$(NoInherit)"
+						BasicRuntimeChecks="3"
+						UsePrecompiledHeader="0"
+						BrowseInformation="1"/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug Unicode|Win32">
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="0"
+						AdditionalIncludeDirectories=""
+						BasicRuntimeChecks="3"
+						UsePrecompiledHeader="0"
+						BrowseInformation="1"/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release Unicode|Win32">
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="1"
+						AdditionalIncludeDirectories=""
+						UsePrecompiledHeader="0"/>
+				</FileConfiguration>
+			</File>
 		</Filter>
 		<Filter
 			Name="Resource Files"
@@ -1059,9 +1137,6 @@
 				RelativePath="Icos\netmeeting.ico">
 			</File>
 			<File
-				RelativePath=".\Icos\nudge.ico">
-			</File>
-			<File
 				RelativePath="Icos\profile.ico">
 			</File>
 			<File
@@ -1081,9 +1156,18 @@
 				RelativePath="msn_global.h">
 			</File>
 			<File
+				RelativePath="msn_md5.h">
+			</File>
+			<File
+				RelativePath="sha1.h">
+			</File>
+			<File
 				RelativePath="version.h">
 			</File>
 		</Filter>
+		<File
+			RelativePath="msn.def">
+		</File>
 	</Files>
 	<Globals>
 	</Globals>

@@ -2,7 +2,7 @@
 
 Jabber Protocol Plugin for Miranda IM
 Copyright ( C ) 2002-04  Santithorn Bunchua
-Copyright ( C ) 2005-07  George Hazan
+Copyright ( C ) 2005-06  George Hazan
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -33,7 +33,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define NEWSTR_ALLOCA(A) (A==NULL)?NULL:strcpy((char*)alloca(strlen(A)+1),A)
 #define NEWTSTR_ALLOCA(A) (A==NULL)?NULL:_tcscpy((TCHAR*)alloca(sizeof(TCHAR)*(_tcslen(A)+1)),A)
 
-#include <tchar.h>
 #include <malloc.h>
 
 #ifdef _DEBUG
@@ -183,8 +182,6 @@ enum JABBER_SESSION_TYPE
 	JABBER_SESSION_REGISTER
 };
 
-#define CAPS_BOOKMARK   0x0001
-
 struct ThreadData {
 	ThreadData( JABBER_SESSION_TYPE parType );
 	~ThreadData();
@@ -213,9 +210,7 @@ struct ThreadData {
 	HWND  reg_hwndDlg;
 	BOOL  reg_done, bIsSessionAvailable;
 	class TJabberAuth* auth;
-	int	caps; // capabilities
 
-	void  close( void );
 	int   recv( char* buf, size_t len );
 	int   send( const char* fmt, ... );
 	int   send( struct XmlNode& node );
@@ -370,9 +365,6 @@ extern HWND hwndMucModeratorList;
 extern HWND hwndMucBanList;
 extern HWND hwndMucAdminList;
 extern HWND hwndMucOwnerList;
-extern HWND hwndJabberBookmarks;
-extern HWND hwndJabberAddBookmark;
-
 
 extern const char xmlnsOwner[], xmlnsAdmin[];
 // Service and event handles
@@ -405,7 +397,7 @@ void __cdecl JabberFileServerThread( filetransfer* ft );
 
 //---- jabber_form.c ------------------------------------------------
 
-void JabberFormCreateUI( HWND hwndStatic, XmlNode *xNode, int *formHeight, BOOL bCompact = FALSE );
+void JabberFormCreateUI( HWND hwndStatic, XmlNode *xNode, int *formHeight );
 void JabberFormCreateDialog( XmlNode *xNode, TCHAR* defTitle, JABBER_FORM_SUBMIT_FUNC pfnSubmit, void *userdata );
 
 XmlNode* JabberFormGetData( HWND hwndStatic, XmlNode *xNode );
@@ -426,22 +418,12 @@ void JabberGroupchatProcessPresence( XmlNode *node, void *userdata );
 void JabberGroupchatProcessMessage( XmlNode *node, void *userdata );
 void JabberGroupchatProcessInvite( TCHAR* roomJid, TCHAR* from, TCHAR* reason, TCHAR* password );
 
-
-//---- jabber_bookmarks.c -------------------------------------------
-int JabberMenuHandleBookmarks( WPARAM wParam, LPARAM lParam );
-int JabberAddEditBookmark( WPARAM wParam, LPARAM lParam );
-
-
-
 //---- jabber_icolib.c ----------------------------------------------
 
 void   JabberCheckAllContactsAreTransported( void );
 BOOL   JabberDBCheckIsTransportedContact(const TCHAR* jid, HANDLE hContact);
 int    ReloadIconsEventHook(WPARAM wParam, LPARAM lParam);
 int    JGetAdvancedStatusIcon(WPARAM wParam, LPARAM lParam);
-void   JabberIconsInit( void );
-HICON  LoadIconEx( const char* name );
-HANDLE __stdcall GetIconHandle( int iconId );
 
 //---- jabber_libstr.c ----------------------------------------------
 
@@ -465,16 +447,10 @@ void   JabberResolveTransportNicks( TCHAR* jid );
 void   JabberSetServerStatus( int iNewStatus );
 TCHAR* EscapeChatTags(TCHAR* pszText);
 char*  UnEscapeChatTags(char* str_in);
-void   JabberUpdateMirVer(JABBER_LIST_ITEM *item);
 
 //---- jabber_svc.c -------------------------------------------------
 
 void JabberEnableMenuItems( BOOL bEnable );
-
-//---- jabber_search.cpp -------------------------------------------------
-int JabberSearchCreateAdvUI( WPARAM wParam, LPARAM lParam);
-int JabberSearchByAdvanced( WPARAM wParam, LPARAM lParam );
-
 
 //---- jabber_std.cpp ----------------------------------------------
 

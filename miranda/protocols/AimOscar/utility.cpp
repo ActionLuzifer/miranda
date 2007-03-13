@@ -80,29 +80,25 @@ void start_connection(int initial_status)
 }
 HANDLE find_contact(char * sn)
 {
-	if(char* norm_sn=normalize_name(sn))
+	HANDLE hContact = (HANDLE) CallService(MS_DB_CONTACT_FINDFIRST, 0, 0);
+	while (hContact)
 	{
-		HANDLE hContact = (HANDLE) CallService(MS_DB_CONTACT_FINDFIRST, 0, 0);
-		while (hContact)
+		char *protocol = (char *) CallService(MS_PROTO_GETCONTACTBASEPROTO, (WPARAM) hContact, 0);
+		if (protocol != NULL && !lstrcmp(protocol, AIM_PROTOCOL_NAME))
 		{
-			char *protocol = (char *) CallService(MS_PROTO_GETCONTACTBASEPROTO, (WPARAM) hContact, 0);
-			if (protocol != NULL && !lstrcmp(protocol, AIM_PROTOCOL_NAME))
+			DBVARIANT dbv;
+			if (!DBGetContactSetting(hContact, AIM_PROTOCOL_NAME, AIM_KEY_SN, &dbv))
 			{
-				if (char* db_sn=getSetting(hContact, AIM_PROTOCOL_NAME, AIM_KEY_SN))
-				{
 
-					if (!lstrcmp(norm_sn,db_sn))
-					{
-						delete[] db_sn;
-						delete[] norm_sn;
-						return hContact;
-					}
-					delete[] db_sn;
+				if (!lstrcmp(dbv.pszVal, normalize_name(sn)))
+				{
+					DBFreeVariant(&dbv);
+					return hContact;
 				}
+				DBFreeVariant(&dbv);
 			}
-			hContact = (HANDLE) CallService(MS_DB_CONTACT_FINDNEXT, (WPARAM) hContact, 0);
 		}
-		delete[] norm_sn;
+		hContact = (HANDLE) CallService(MS_DB_CONTACT_FINDNEXT, (WPARAM) hContact, 0);
 	}
 	return 0;
 }
@@ -118,18 +114,15 @@ HANDLE add_contact(char* buddy)
 		}
 		else
 		{
-			if(char* norm_sn=normalize_name(buddy))
-			{
-				DBWriteContactSettingByte(hContact,AIM_PROTOCOL_NAME,AIM_KEY_NC,1);
-				DBWriteContactSettingString(hContact, AIM_PROTOCOL_NAME, AIM_KEY_SN,norm_sn);
-				DBWriteContactSettingString(hContact, AIM_PROTOCOL_NAME, AIM_KEY_NK,buddy);
-				LOG("Adding contact %s to client side list.",norm_sn);
-				delete[] norm_sn;
-				return hContact;
-			}
+			DBWriteContactSettingByte(hContact,AIM_PROTOCOL_NAME,AIM_KEY_NC,1);
+			DBWriteContactSettingString(hContact, AIM_PROTOCOL_NAME, AIM_KEY_SN, normalize_name(buddy));
+			DBWriteContactSettingString(hContact, AIM_PROTOCOL_NAME, AIM_KEY_NK, buddy);
+			LOG("Adding contact %s to client side list.",buddy);
+			return hContact;
 		}
 	}
-	return 0;
+	else
+		return 0;
 }
 void add_contact_to_group(HANDLE hContact,char* group)
 {
@@ -517,11 +510,9 @@ char *normalize_name(const char *s)
 {
     if (s == NULL)
         return NULL;
-	int length=lstrlen(s)+1;
-	char* buf=new char[length]; 
-	// static char buf[64];
+	   static char buf[64];
     int i, j;
-	strlcpy(buf, s, length);
+	strlcpy(buf, s, 65);
     for (i = 0, j = 0; buf[j]; i++, j++)
 	{
         while (buf[j] == ' ')
@@ -768,22 +759,17 @@ char* get_members_of_group(unsigned short group_id,unsigned short &size)//return
 }
 void __cdecl basic_search_ack_success(char *snsearch)
 {
-	if(char *sn = normalize_name((char *) snsearch))// normalize it
-	{
-		PROTOSEARCHRESULT psr;
-		if (lstrlen(sn) > 32) {
-			ProtoBroadcastAck(AIM_PROTOCOL_NAME, NULL, ACKTYPE_SEARCH, ACKRESULT_SUCCESS, (HANDLE) 1, 0);
-			delete[] sn;
-			delete[] snsearch;//should this be here?
-			return;
-		}
-		ZeroMemory(&psr, sizeof(psr));
-		psr.cbSize = sizeof(psr);
-		psr.nick = sn;
-		ProtoBroadcastAck(AIM_PROTOCOL_NAME, NULL, ACKTYPE_SEARCH, ACKRESULT_DATA, (HANDLE) 1, (LPARAM) & psr);
-		ProtoBroadcastAck(AIM_PROTOCOL_NAME, NULL, ACKTYPE_SEARCH, ACKRESULT_SUCCESS, (HANDLE) 1, 0);
-		delete[] sn;
-	}
+	char *sn = normalize_name((char *) snsearch);   // normalize it
+    PROTOSEARCHRESULT psr;
+    if (lstrlen(sn) > 32) {
+        ProtoBroadcastAck(AIM_PROTOCOL_NAME, NULL, ACKTYPE_SEARCH, ACKRESULT_SUCCESS, (HANDLE) 1, 0);
+        return;
+    }
+    ZeroMemory(&psr, sizeof(psr));
+    psr.cbSize = sizeof(psr);
+    psr.nick = sn;
+    ProtoBroadcastAck(AIM_PROTOCOL_NAME, NULL, ACKTYPE_SEARCH, ACKRESULT_DATA, (HANDLE) 1, (LPARAM) & psr);
+    ProtoBroadcastAck(AIM_PROTOCOL_NAME, NULL, ACKTYPE_SEARCH, ACKRESULT_SUCCESS, (HANDLE) 1, 0);
 	delete[] snsearch;
 }
 static int module_size=0;
@@ -918,103 +904,119 @@ void delete_all_empty_groups()
 	module_ptr=NULL;
 	module_size=0;
 }*/
-FILE* open_contact_file(char* sn, char* file, char* mode, char* &path, bool contact_dir)
+void write_away_message(HANDLE hContact,char* sn,char* msg)
 {
-	if(char* norm_sn=normalize_name(sn))
+	int protocol_length=lstrlen(AIM_PROTOCOL_NAME);
+	char* norm_sn=normalize_name(sn);
+	int CWD_length=lstrlen(CWD);
+	char* path= new char[CWD_length+protocol_length+13+lstrlen(norm_sn)];
+	memcpy(path,CWD,CWD_length);
+	memcpy(&path[CWD_length],"\\",1);
+	memcpy(&path[CWD_length+1],AIM_PROTOCOL_NAME,protocol_length);
+	path[CWD_length+protocol_length+1]='\0';
+	int dir=0;
+	if(GetFileAttributes(path)==INVALID_FILE_ATTRIBUTES)
+		dir=CreateDirectory(path,NULL);
+	else
+		dir=1;
+	if(dir)
 	{
-		int sn_length=lstrlen(norm_sn);
-		int file_length=lstrlen(file);
-		int length=lstrlen(CWD)+2+lstrlen(AIM_PROTOCOL_NAME);
-		path= new char[length+sn_length+file_length+5];
-		mir_snprintf(path,length,"%s\\%s",CWD,AIM_PROTOCOL_NAME);
-		int dir=0;
+		memcpy(&path[CWD_length+protocol_length+1],"\\",1);
+		memcpy(&path[CWD_length+protocol_length+2],norm_sn,lstrlen(norm_sn));
+		path[CWD_length+protocol_length+2+lstrlen(norm_sn)]='\0';
+		dir=0;
 		if(GetFileAttributes(path)==INVALID_FILE_ATTRIBUTES)
 			dir=CreateDirectory(path,NULL);
 		else
 			dir=1;
 		if(dir)
 		{
-			dir=0;
-			if(contact_dir)
+			memcpy(&path[CWD_length+protocol_length+2+lstrlen(norm_sn)],"\\away.html",11);
+			//int descr=_open(path,_O_BINARY | _O_CREAT | _O_TRUNC | _O_WRONLY, _S_IREAD | _S_IWRITE);
+			FILE* descr=fopen(path, "wb");
+			if(descr)
 			{
-				mir_snprintf(&path[length-1],2+sn_length,"\\%s",norm_sn);
-				length+=1+sn_length;
+				char* s_msg=strip_special_chars(msg,NULL);
+				CCSDATA ccs;
+				PROTORECVEVENT pre;
+				fwrite("<h3>",1,4,descr);
+				fwrite(norm_sn,1,lstrlen(norm_sn),descr);
+				fwrite("'s Away Message:</h3>",1,21,descr);
+				fwrite(s_msg,1,lstrlen(s_msg),descr);
+				fclose(descr);
+				ccs.szProtoService = PSR_AWAYMSG;
+				ccs.hContact = hContact;
+				ccs.wParam = ID_STATUS_AWAY;
+				ccs.lParam = (LPARAM)&pre;
+				pre.flags = 0;
+				char* txt=strip_html(s_msg);
+				pre.szMessage = txt;
+				pre.timestamp = (DWORD)time(NULL);
+				pre.lParam = 1;
+				CallService(MS_PROTO_CHAINRECV, 0, (LPARAM)&ccs);
+				DBWriteContactSettingString(hContact, MOD_KEY_CL, OTH_KEY_SM,txt);
+				delete[] txt;
+				delete[] s_msg;
 			}
-			if(GetFileAttributes(path)==INVALID_FILE_ATTRIBUTES)
-				dir=CreateDirectory(path,NULL);
 			else
-				dir=1;
-			if(dir)
 			{
-				mir_snprintf(&path[length-1],2+file_length,"\\%s",file);
-				if(FILE* descr=fopen(path, mode))
-				{
-					delete[] norm_sn;
-					return descr;
-				}
+				char* error=_strerror("Failed to open file: ");
+				ShowPopup("Aim Protocol",error, 0);
 			}
 		}
-		delete[] norm_sn;
-		delete[] path;
 	}
-	return 0;
-}
-void write_away_message(HANDLE hContact,char* sn,char* msg)
-{
-	char* path;
-	FILE* descr=open_contact_file(sn,"away.html","wb",path,1);
-	if(descr)
-	{
-		char* s_msg=strip_special_chars(msg,NULL);
-		CCSDATA ccs;
-		PROTORECVEVENT pre;
-		fwrite("<h3>",1,4,descr);
-		fwrite(sn,1,lstrlen(sn),descr);
-		fwrite("'s Away Message:</h3>",1,21,descr);
-		fwrite(s_msg,1,lstrlen(s_msg),descr);
-		fclose(descr);
-		ccs.szProtoService = PSR_AWAYMSG;
-		ccs.hContact = hContact;
-		ccs.wParam = ID_STATUS_AWAY;
-		ccs.lParam = (LPARAM)&pre;
-		pre.flags = 0;
-		char* txt=strip_html(s_msg);
-		pre.szMessage = txt;
-		pre.timestamp = (DWORD)time(NULL);
-		pre.lParam = 1;
-		CallService(MS_PROTO_CHAINRECV, 0, (LPARAM)&ccs);
-		DBWriteContactSettingString(hContact, MOD_KEY_CL, OTH_KEY_SM,txt);
-		delete[] path;
-		delete[] txt;
-		delete[] s_msg;
-	}
-	else
-	{
-		char* error=_strerror("Failed to open file: ");
-		ShowPopup("Aim Protocol",error, 0);
-	}
+	delete[] path;
 }
 void write_profile(char* sn,char* msg)
 {
-	char* path;
-	FILE* descr=open_contact_file(sn,"profile.html","wb", path,1);
-	if(descr)
-	{
-		char* s_msg=strip_special_chars(msg,NULL);
-		fwrite("<h3>",1,4,descr);
-		fwrite(sn,1,lstrlen(sn),descr);
-		fwrite("'s Profile:</h3>",1,16,descr);
-		fwrite(s_msg,1,lstrlen(s_msg),descr);
-		fclose(descr);
-		execute_cmd("http",path);
-		delete[] path;
-		delete[] s_msg;
-	}
+	int protocol_length=lstrlen(AIM_PROTOCOL_NAME);
+	char* norm_sn=normalize_name(sn);
+	int CWD_length=lstrlen(CWD);
+	char* path= new char[CWD_length+protocol_length+16+lstrlen(norm_sn)];
+	memcpy(path,CWD,CWD_length);
+	memcpy(&path[CWD_length],"\\",1);
+	memcpy(&path[CWD_length+1],AIM_PROTOCOL_NAME,protocol_length);
+	path[CWD_length+protocol_length+1]='\0';
+	int dir=0;
+	if(GetFileAttributes(path)==INVALID_FILE_ATTRIBUTES)
+		dir=CreateDirectory(path,NULL);
 	else
+		dir=1;
+	if(dir)
 	{
-		char* error=_strerror("Failed to open file: ");
-		ShowPopup("Aim Protocol",error, 0);
+		memcpy(&path[CWD_length+protocol_length+1],"\\",1);
+		memcpy(&path[CWD_length+protocol_length+2],norm_sn,lstrlen(norm_sn));
+		path[CWD_length+protocol_length+2+lstrlen(norm_sn)]='\0';
+		dir=0;
+		if(GetFileAttributes(path)==INVALID_FILE_ATTRIBUTES)
+			dir=CreateDirectory(path,NULL);
+		else
+			dir=1;
+		if(dir)
+		{
+			memcpy(&path[CWD_length+protocol_length+2+lstrlen(norm_sn)],"\\profile.html",14);
+			//int descr=open(path,_O_BINARY | _O_CREAT | _O_TRUNC | _O_WRONLY, _S_IREAD | _S_IWRITE);
+			FILE* descr=fopen(path, "wb");
+			if(descr)
+			{
+				char* norm_sn=normalize_name(sn);
+				char* s_msg=strip_special_chars(msg,NULL);
+				fwrite("<h3>",1,4,descr);
+				fwrite(norm_sn,1,lstrlen(norm_sn),descr);
+				fwrite("'s Profile:</h3>",1,16,descr);
+				fwrite(s_msg,1,lstrlen(s_msg),descr);
+				fclose(descr);
+				execute_cmd("http",path);
+				delete[] s_msg;
+			}
+			else
+			{
+				char* error=_strerror("Failed to open file: ");
+				ShowPopup("Aim Protocol",error, 0);
+			}
+		}
 	}
+	delete[] path;
 }
 unsigned int aim_oft_checksum_chunk(const unsigned char *buffer, int bufferlen, unsigned long prevcheck)
 {
@@ -1245,52 +1247,4 @@ void assign_modmsg(char* msg)
 	delete[] conn.szModeMsg;
 	conn.szModeMsg=new char[lstrlen(msg)+1];
 	memcpy(conn.szModeMsg,msg,lstrlen(msg)+1);
-}
-char* bytes_to_string(char* bytes, int num_bytes)
-{
-	char* string = new char[num_bytes*2+1];
-	for(int i=0;i<num_bytes;i++)
-	{
-		char store[2];
-		unsigned char bit=(bytes[i]&0xF0)>>4;
-		_itoa(bit,store,16);
-		memcpy(&string[i*2],store,1);
-		bit=(bytes[i]&0x0F);
-		_itoa(bit,store,16);
-		memcpy(&string[i*2+1],store,1);
-	}
-	string[num_bytes*2]='\0';
-	return string;
-}
-void string_to_bytes(char* string, char* bytes)
-{
-	char sbyte[3];
-	sbyte[2]='\0';
-	int length=lstrlen(string);
-	for(int i=0;i<length;i=i+2)
-	{
-		sbyte[0]=string[i];
-		sbyte[1]=string[i+1];
-		bytes[i/2]=(char)strtol(sbyte,NULL,16);
-	}
-}
-unsigned short string_to_bytes_count(char* string)
-{
-	unsigned short i=1;
-	char* string2=strldup(string,lstrlen(string));
-	strtok(string2,";");
-	while(strtok(NULL,";"))
-		i++;
-	return i;
-}
-char* getSetting(HANDLE &hContact,char* module,char* setting)
-{
-	DBVARIANT dbv;
-	if (!DBGetContactSetting(hContact, module, setting, &dbv))
-	{
-		char* store=strldup(dbv.pszVal,lstrlen(dbv.pszVal));
-		DBFreeVariant(&dbv);
-		return store;
-	}
-	return NULL;
 }

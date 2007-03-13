@@ -2,7 +2,7 @@
 
 Jabber Protocol Plugin for Miranda IM
 Copyright ( C ) 2002-04  Santithorn Bunchua
-Copyright ( C ) 2005-07  George Hazan
+Copyright ( C ) 2005-06  George Hazan
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -28,6 +28,7 @@ Last change by : $Author$
 #include "jabber.h"
 #include "jabber_ssl.h"
 #include "jabber_list.h"
+#include "sha1.h"
 
 extern CRITICAL_SECTION mutex;
 extern UINT jabberCodePage;
@@ -270,17 +271,17 @@ void __stdcall JabberUtfToTchar( const char* pszValue, size_t cbLen, LPTSTR& des
 
 char* __stdcall JabberSha1( char* str )
 {
-	mir_sha1_ctx sha;
-	mir_sha1_byte_t digest[20];
+	SHA1Context sha;
+	uint8_t digest[20];
 	char* result;
 	int i;
 
 	if ( str == NULL )
 		return NULL;
 
-	mir_sha1_init( &sha );
-	mir_sha1_append( &sha, (mir_sha1_byte_t* )str, strlen( str ));
-	mir_sha1_finish( &sha, digest );
+	SHA1Reset( &sha );
+	SHA1Input( &sha, ( const unsigned __int8* )str, strlen( str ));
+	SHA1Result( &sha, digest );
 	if (( result=( char* )mir_alloc( 41 )) == NULL )
 		return NULL;
 
@@ -1007,7 +1008,7 @@ TCHAR* a2t( const char* str )
 		return NULL;
 
 	#if defined( _UNICODE )
-		return a2u( str );
+		return ( TCHAR* )JCallService( MS_LANGPACK_PCHARTOTCHAR, 0, (LPARAM)str );
 	#else
 		return mir_strdup( str );
 	#endif

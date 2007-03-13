@@ -35,7 +35,7 @@ struct FindAddDlgData {
 	int bSortAscending;
 	int iLastColumnSortIndex;
 	HIMAGELIST himlComboIcons;
-	int showProtoId,showEmail,showName,showAdvanced,showTiny;
+	int showProtoId,showEmail,showName,showAdvanced;
 	int minDlgHeight;
 	int notSearchedYet;
 	struct ProtoSearchInfo *search;
@@ -44,8 +44,6 @@ struct FindAddDlgData {
 	int throbbing;
 	int pivot;
 	HWND hwndAdvSearch;
-	HWND hwndTinySearch;
-	BOOL bFlexSearchResult;
 };
 
 int CALLBACK SearchResultsCompareFunc(LPARAM lParam1, LPARAM lParam2, LPARAM lParamSort);

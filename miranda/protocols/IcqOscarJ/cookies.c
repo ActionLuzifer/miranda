@@ -5,7 +5,7 @@
 // Copyright © 2000,2001 Richard Hughes, Roland Rabien, Tristan Van de Vreede
 // Copyright © 2001,2002 Jon Keating, Richard Hughes
 // Copyright © 2002,2003,2004 Martin Öberg, Sam Kothari, Robert Rainwater
-// Copyright © 2004,2005,2006,2007 Joe Kucera
+// Copyright © 2004,2005,2006 Joe Kucera
 // 
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -142,7 +142,7 @@ void UninitCookies(void)
 
 
 // Generate and allocate cookie
-DWORD AllocateCookie(BYTE bType, WORD wIdent, HANDLE hContact, void *pvExtra)
+DWORD AllocateCookie(BYTE bType, WORD wIdent, DWORD dwUin, void *pvExtra)
 {
   DWORD dwThisSeq;
 
@@ -161,7 +161,7 @@ DWORD AllocateCookie(BYTE bType, WORD wIdent, HANDLE hContact, void *pvExtra)
 
   cookie[cookieCount].bType = bType;
   cookie[cookieCount].dwCookie = dwThisSeq;
-  cookie[cookieCount].hContact = hContact;
+  cookie[cookieCount].dwUin = dwUin;
   cookie[cookieCount].pvExtra = pvExtra;
   cookie[cookieCount].dwTime = time(NULL);
   cookieCount++;
@@ -206,7 +206,7 @@ int GetCookieType(DWORD dwCookie)
 
 
 
-int FindCookie(DWORD dwCookie, HANDLE *phContact, void **ppvExtra)
+int FindCookie(DWORD dwCookie, DWORD *pdwUin, void **ppvExtra)
 {
   int i;
   int nFound = 0;
@@ -218,8 +218,8 @@ int FindCookie(DWORD dwCookie, HANDLE *phContact, void **ppvExtra)
 
   if (i != INVALID_COOKIE_INDEX)
   {
-    if (phContact)
-      *phContact = cookie[i].hContact;
+    if (pdwUin)
+      *pdwUin = cookie[i].dwUin;
     if (ppvExtra)
       *ppvExtra = cookie[i].pvExtra;
 
@@ -234,7 +234,7 @@ int FindCookie(DWORD dwCookie, HANDLE *phContact, void **ppvExtra)
 
 
 
-int FindCookieByData(void *pvExtra,DWORD *pdwCookie, HANDLE *phContact)
+int FindCookieByData(void *pvExtra,DWORD *pdwCookie, DWORD *pdwUin)
 {
   int i;
   int nFound = 0;
@@ -246,8 +246,8 @@ int FindCookieByData(void *pvExtra,DWORD *pdwCookie, HANDLE *phContact)
   {
     if (pvExtra == cookie[i].pvExtra)
     {
-      if (phContact)
-        *phContact = cookie[i].hContact;
+      if (pdwUin)
+        *pdwUin = cookie[i].dwUin;
       if (pdwCookie)
         *pdwCookie = cookie[i].dwCookie;
 
@@ -265,7 +265,7 @@ int FindCookieByData(void *pvExtra,DWORD *pdwCookie, HANDLE *phContact)
 
 
 
-int FindMessageCookie(DWORD dwMsgID1, DWORD dwMsgID2, DWORD *pdwCookie, HANDLE *phContact, message_cookie_data **ppvExtra)
+int FindMessageCookie(DWORD dwMsgID1, DWORD dwMsgID2, DWORD *pdwCookie, DWORD *pdwUin, message_cookie_data **ppvExtra)
 {
   int i;
   int nFound = 0;
@@ -281,8 +281,8 @@ int FindMessageCookie(DWORD dwMsgID1, DWORD dwMsgID2, DWORD *pdwCookie, HANDLE *
 
       if (pCookie->dwMsgID1 == dwMsgID1 && pCookie->dwMsgID2 == dwMsgID2)
       {
-        if (phContact)
-          *phContact = cookie[i].hContact;
+        if (pdwUin)
+          *pdwUin = cookie[i].dwUin;
         if (pdwCookie)
           *pdwCookie = cookie[i].dwCookie;
         if (ppvExtra)
@@ -341,8 +341,9 @@ void ReleaseCookie(DWORD dwCookie)
 
 
 
-void InitMessageCookie(message_cookie_data *pCookie)
+message_cookie_data *CreateMessageCookie(WORD bMsgType, BYTE bAckType)
 {
+  message_cookie_data *pCookie;
   DWORD dwMsgID1;
   DWORD dwMsgID2;
 
@@ -352,27 +353,13 @@ void InitMessageCookie(message_cookie_data *pCookie)
     dwMsgID2 = RandRange(0, 0x0FFFF);
   } while (FindMessageCookie(dwMsgID1, dwMsgID2, NULL, NULL, NULL));
 
-  if (pCookie)
-  {
-    pCookie->dwMsgID1 = dwMsgID1;
-    pCookie->dwMsgID2 = dwMsgID2;
-  }
-}
-
-
-
-message_cookie_data *CreateMessageCookie(WORD bMsgType, BYTE bAckType)
-{
-  message_cookie_data *pCookie;
-
-  pCookie = (message_cookie_data*)SAFE_MALLOC(bMsgType == MTYPE_PLAIN ? sizeof(message_cookie_data_ex) : sizeof(message_cookie_data));
+  pCookie = (message_cookie_data*)SAFE_MALLOC(sizeof(message_cookie_data));
   if (pCookie)
   {
     pCookie->bMessageType = bMsgType;
     pCookie->nAckType = bAckType;
-
-    InitMessageCookie(pCookie);
+    pCookie->dwMsgID1 = dwMsgID1;
+    pCookie->dwMsgID2 = dwMsgID2;
   }
   return pCookie;
 }
-

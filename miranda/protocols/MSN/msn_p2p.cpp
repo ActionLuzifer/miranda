@@ -27,6 +27,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <io.h>
 #include <fcntl.h>
 #include <sys/stat.h>
+#include "sha1.h"
 
 static char sttP2Pheader[] =
 	"Content-Type: application/x-msnmsgrp2p\r\n"
@@ -100,7 +101,7 @@ static int sttCreateListener(
 		if ( getsockname( s, ( SOCKADDR* )&saddr, &len ) != SOCKET_ERROR )
 			bAllowIncoming = strcmp( ipaddr, inet_ntoa( saddr.sin_addr )) == 0 ||
 				nlb.dwExternalIP != nlb.dwInternalIP || MSN_GetByte( "NLSpecifyIncomingPorts", 0 ) != 0 ;
-			MSN_DebugLog( "NAT Detect %s %s, %x, %x %d", ipaddr, inet_ntoa( saddr.sin_addr ),
+			MSN_DebugLog( "NAT Detect %s %s, %x, %x %d", ipaddr, inet_ntoa( saddr.sin_addr ), 
 				nlb.dwExternalIP, nlb.dwInternalIP, MSN_GetByte( "NLSpecifyIncomingPorts", 0 ));
 	}
 
@@ -178,14 +179,14 @@ static void sttSavePicture2disk( filetransfer* ft )
 	if ( pshad == NULL )
 		return;
 
-	mir_sha1_ctx sha1ctx;
-	BYTE sha[ MIR_SHA1_HASH_SIZE ];
+	SHA1Context sha1ctx;
+	BYTE sha[ SHA1HashSize ];
 	char szSha[ 40 ];
 	NETLIBBASE64 nlb = { szSha, sizeof( szSha ), ( PBYTE )sha, sizeof( sha ) };
 
-	mir_sha1_init( &sha1ctx );
-	mir_sha1_append( &sha1ctx, ( BYTE* )ft->fileBuffer, ft->std.currentFileSize );
-	mir_sha1_finish( &sha1ctx, sha );
+	SHA1Reset( &sha1ctx );
+	SHA1Input( &sha1ctx, ( BYTE* )ft->fileBuffer, ft->std.currentFileSize );
+	SHA1Result( &sha1ctx, sha );
 
 	MSN_CallService( MS_NETLIB_BASE64ENCODE, 0, LPARAM( &nlb ));
 	if ( strncmp( pshad + 7, szSha, strlen( szSha )) != 0 )
@@ -246,17 +247,8 @@ static void sttSavePicture2disk( filetransfer* ft )
 
 		MSN_SetString( ft->std.hContact, "PictSavedContext", tContext );
 		MSN_SendBroadcast( AI.hContact, ACKTYPE_AVATAR, ACKRESULT_SUCCESS, HANDLE( &AI ), NULL );
-
-		// Store also avatar hash
-		char* pshadEnd = strstr( pshad+7, "\"" );
-		if ( pshadEnd != NULL )
-			*pshadEnd = '\0';
-		MSN_SetString( ft->std.hContact, "AvatarSavedHash", pshad+7 );
 	}
-	else {
-		MSN_DeleteSetting( ft->std.hContact, "AvatarHash" );
-		MSN_SendBroadcast( AI.hContact, ACKTYPE_AVATAR, ACKRESULT_FAILED, HANDLE( &AI ), NULL );
-	}
+	else MSN_SendBroadcast( AI.hContact, ACKTYPE_AVATAR, ACKRESULT_FAILED, HANDLE( &AI ), NULL );
 
    GlobalFree( pDib );
 }
@@ -268,24 +260,18 @@ static const char sttVoidSession[] = "ACHTUNG!!! an attempt made to send a messa
 
 void __stdcall p2p_sendAck( filetransfer* ft, ThreadData* info, P2P_Header* hdrdata )
 {
-	char* buf = ( char* )alloca( 1000 + MSN_MAX_EMAIL_LEN );
-
 	if ( ft == NULL ) {
-		if ( info->mJoinedCount == 0 )
-			return;
-
-		if ( MSN_GetStaticString( "e-mail", info->mJoinedContacts[0], buf, MSN_MAX_EMAIL_LEN ))
-			return;
+		MSN_DebugLog( sttVoidSession );
+		return;
 	}
-	else
-		sprintf( buf, sttP2Pheader, ft->p2p_dest );
 
-	char* p = buf + strlen( buf );
+	char* buf = ( char* )alloca( 1000 + strlen( ft->p2p_dest ));
+	char* p = buf + sprintf( buf, sttP2Pheader, ft->p2p_dest );
 
 	P2P_Header* tHdr = ( P2P_Header* )p; p += sizeof( P2P_Header );
 	memset( tHdr, 0, sizeof( P2P_Header ));
 	tHdr->mSessionID = hdrdata->mSessionID;
-	tHdr->mID = ft ? ++ft->p2p_msgid : rand();
+	tHdr->mID = ++ft->p2p_msgid;
 	tHdr->mAckDataSize = hdrdata->mTotalSize;
 	tHdr->mTotalSize = hdrdata->mTotalSize;
 	tHdr->mFlags = 2;
@@ -491,25 +477,6 @@ void __stdcall p2p_sendCancel( ThreadData* info, filetransfer* ft )
 {
 	p2p_sendBye(info, ft);
 	p2p_sendEndSession(info, ft);
-}
-
-void __stdcall p2p_sendNoCall( ThreadData* info, filetransfer* ft )
-{
-	if ( ft == NULL ) {
-		MSN_DebugLog( sttVoidSession );
-		return;
-	}
-
-	MimeHeaders tHeaders(5);
-	tHeaders.addString( "CSeq", "0 " );
-	tHeaders.addString( "Call-ID", ft->p2p_callID );
-	tHeaders.addLong( "Max-Forwards", 0 );
-	tHeaders.addString( "Content-Type", "application/x-msnmsgr-session-failure-respbody" );
-
-	char szContents[ 50 ];
-	p2p_sendSlp( info, ft, tHeaders, 481, szContents,
-		mir_snprintf( szContents, sizeof( szContents ), "SessionID: %lu\r\nSChannelState: 0\r\n\r\n%c",
-		ft->p2p_sessionid, 0 ));
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////
@@ -936,9 +903,8 @@ static void sttInitFileTransfer(
 	}
 
 	{	size_t len = strlen( szContext );
-		size_t reslen = Netlib_GetBase64DecodedBufferSize(len) + 4;
-		char* p = ( char* )alloca( reslen );
-		MSN_Base64Decode( szContext, len, p, reslen );
+		char* p = ( char* )alloca( len + 1 );
+		MSN_Base64Decode( szContext, p, len );
 		szContext = p;
 	}
 
@@ -1705,7 +1671,7 @@ void __stdcall p2p_invite( HANDLE hContact, int iAppID, filetransfer* ft )
 
 		strncpy( tBuffer, ft->p2p_object, sizeof( tBuffer ));
 		tBuffer[ sizeof( tBuffer )-1 ] = 0;
-
+		
 		if (( p = strstr( tBuffer, "Size=\"" )) != NULL )
 			ft->std.totalBytes = ft->std.currentFileSize = atol( p + 6 );
 

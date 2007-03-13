@@ -2,7 +2,7 @@
 
 Miranda IM: the free IM client for Microsoft* Windows*
 
-Copyright 2000-2007 Miranda ICQ/IM project, 
+Copyright 2000-2006 Miranda ICQ/IM project, 
 all portions of this codebase are copyrighted to the people 
 listed in contributors.txt.
 
@@ -26,11 +26,11 @@ Created by Pescuma
 #include "commonheaders.h"
 #include "image_array.h"
 #include "commonprototypes.h"
-
+//extern BYTE gdiPlusFail;
 // To use this code in other places, replace the body of this func by the body of SkinEngine_CreateDIB32
-static HBITMAP ImageArray_CreateBitmapPoint(int cx, int cy, void ** pt)
+static HBITMAP ImageArray_CreateBitmap(int cx, int cy)
 {
-	return SkinEngine_CreateDIB32Point(cx, cy, pt);
+	return SkinEngine_CreateDIB32(cx, cy);
 }
 
 
@@ -233,7 +233,7 @@ int ImageArray_AddImage(LP_IMAGE_ARRAY_DATA iad, HBITMAP hBmp, int pos)
 	}
 
 	// Alloc image
-	hNewBmp = ImageArray_CreateBitmapPoint(new_width, new_height,&(iad->lpBits));
+	hNewBmp = ImageArray_CreateBitmap(new_width, new_height);
 	if (hNewBmp == NULL)
 	{
 		LeaveCriticalSection(&iad->cs);
@@ -402,7 +402,7 @@ BOOL ImageArray_ChangeImage(LP_IMAGE_ARRAY_DATA iad, HBITMAP hBmp, int pos)
 	}
 
 	// Alloc image
-	hNewBmp = ImageArray_CreateBitmapPoint(new_width, new_height,&(iad->lpBits));
+	hNewBmp = ImageArray_CreateBitmap(new_width, new_height);
 	if (hNewBmp == NULL)
 	{
 		LeaveCriticalSection(&iad->cs);
@@ -547,7 +547,7 @@ BOOL ImageArray_RemoveImage(LP_IMAGE_ARRAY_DATA iad, int pos)
 	}
 
 	// Alloc image
-	hNewBmp = ImageArray_CreateBitmapPoint(new_width, new_height,&(iad->lpBits));
+	hNewBmp = ImageArray_CreateBitmap(new_width, new_height);
 	if (hNewBmp == NULL)
 	{
 		LeaveCriticalSection(&iad->cs);
@@ -655,12 +655,13 @@ BOOL ImageArray_RemoveImage(LP_IMAGE_ARRAY_DATA iad, int pos)
 
 
 
-BOOL ImageArray_DrawImage(LP_IMAGE_ARRAY_DATA iad, int pos, HDC hdcDest, int nXDest, int nYDest, BYTE Alpha)
+BOOL ImageArray_DrawImage(LP_IMAGE_ARRAY_DATA iad, int pos, HDC hdcDest, int nXDest, int nYDest)
 {
 	if (hdcDest == NULL || pos < 0 || pos >= iad->nodes_size)
 		return FALSE;
 
 	EnterCriticalSection(&iad->cs);
+
 	{
 		int w, h, i;
 
@@ -682,25 +683,17 @@ BOOL ImageArray_DrawImage(LP_IMAGE_ARRAY_DATA iad, int pos, HDC hdcDest, int nXD
 				w += iad->nodes[i].width;
 			}
 		}
-		{
-			BLENDFUNCTION bf={AC_SRC_OVER, 0, Alpha, AC_SRC_ALPHA };
-			SkinEngine_AlphaBlend(hdcDest, nXDest, nYDest, iad->nodes[pos].width, iad->nodes[pos].height, iad->hdc, w, h, iad->nodes[pos].width, iad->nodes[pos].height,bf);
-		}
+    if (!gl_b_GDIPlusFail) //Use gdi+ engine
+    {
+		  DrawAvatarImageWithGDIp(hdcDest, nXDest, nYDest, iad->nodes[pos].width, iad->nodes[pos].height, iad->img, w, h, iad->nodes[pos].width, iad->nodes[pos].height,0,255);
+    }
+    else
+    {
+      BLENDFUNCTION bf={AC_SRC_OVER, 0, 255, AC_SRC_ALPHA };
+      SkinEngine_AlphaBlend(hdcDest, nXDest, nYDest, iad->nodes[pos].width, iad->nodes[pos].height, iad->hdc, w, h, iad->nodes[pos].width, iad->nodes[pos].height,bf);
+    }
+//		BitBlt(hdcDest, nXDest, nYDest, iad->nodes[pos].width, iad->nodes[pos].height, iad->hdc, w, h, SRCCOPY);
 	}
 
-
-	LeaveCriticalSection(&iad->cs);
 	return FALSE;
-}
-
-BOOL ImageArray_GetImageSize(LP_IMAGE_ARRAY_DATA iad, int pos, SIZE * lpSize)
-{
-	EnterCriticalSection(&iad->cs);
-	if (lpSize)
-	{
-		lpSize->cx=iad->nodes[pos].width;
-		lpSize->cy=iad->nodes[pos].height;
-	}
-	LeaveCriticalSection(&iad->cs);
-	return TRUE;
 }

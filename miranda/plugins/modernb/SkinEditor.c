@@ -2,7 +2,7 @@
 
 Miranda IM: the free IM client for Microsoft* Windows*
 
-Copyright 2000-2007 Miranda ICQ/IM project, 
+Copyright 2000-2006 Miranda ICQ/IM project, 
 all portions of this codebase are copyrighted to the people 
 listed in contributors.txt.
 
@@ -29,6 +29,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "commonprototypes.h"
 
 
+extern void SkinEngine_LoadSkinFromDB(void);
+extern int SkinEngine_RedrawCompleteWindow();
 typedef struct _OPT_OBJECT_DATA
 {
 	char * szName;
@@ -344,7 +346,7 @@ void SetControls(HWND hwndDlg, char * str)
 }
 
 
-
+extern int SkinEngine_GetFullFilename(char * buf, char *file, char * skinfolder,BOOL madeAbsolute);
 int GetShortFileName(char * FullFile)
 {
 	char buf[MAX_PATH]={0};
@@ -810,14 +812,14 @@ BOOL CALLBACK DlgSkinEditorOpts(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lP
 					//ReloadSkin
 					SkinEngine_LoadSkinFromDB();	
 					pcli->pfnClcBroadcast( INTM_RELOADOPTIONS,0,0);
-					callProxied_CLUIFrames_OnClistResize_mod(0,0);
+					CLUIFrames_OnClistResize_mod(0,0,0);
 					SkinEngine_RedrawCompleteWindow();        
-					callProxied_CLUIFrames_OnClistResize_mod(0,0);
+					CLUIFrames_OnClistResize_mod(0,0,0);
 					{
-						HWND hwnd=pcli->hwndContactList;
+						HWND hwnd=(HWND)CallService(MS_CLUI_GETHWND,0,0);
 						RECT rc={0};
 						GetWindowRect(hwnd, &rc);
-						callProxied_CLUIFrames_OnMoving(hwnd,&rc);
+						CLUIFrames_OnMoving(hwnd,&rc);
 					}
 					return TRUE;
 				}
@@ -828,6 +830,29 @@ BOOL CALLBACK DlgSkinEditorOpts(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lP
 		}
 	}
 	return FALSE;
+}
+
+int SkinEditorOptInit(WPARAM wParam,LPARAM lParam)
+{
+	/*
+	OPTIONSDIALOGPAGE odp;
+
+	ZeroMemory(&odp,sizeof(odp));
+	odp.cbSize=sizeof(odp);
+	odp.position=-1000001000;
+	odp.hInstance=g_hInst;
+	odp.pszTemplate=MAKEINTRESOURCEA(IDD_OPT_SKINEDITOR);
+	odp.pszGroup=Translate("Customize");
+	odp.pszTitle=Translate("Skin - Modify objects");
+	odp.pfnDlgProc=DlgSkinEditorOpts;
+	odp.flags=ODPF_BOLDGROUPS;
+	//	odp.nIDBottomSimpleControl=IDC_STCLISTGROUP;
+	//	odp.expertOnlyControls=expertOnlyControls;
+	//	odp.nExpertOnlyControls=sizeof(expertOnlyControls)/sizeof(expertOnlyControls[0]);
+	CallService(MS_OPT_ADDPAGE,wParam,(LPARAM)&odp);
+	*/
+	return 0;
+	
 }
 
 int EnableGroup(HWND hwndDlg, HWND first, BOOL bEnable)

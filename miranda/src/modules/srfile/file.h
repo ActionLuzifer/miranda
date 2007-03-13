@@ -49,6 +49,7 @@ struct FileDlgData {
 	HANDLE hDbEvent;
 	HANDLE hNotifyEvent;
 	char **files;
+	HICON hUIIcons[4];
 	int send;
 	int closeIfFileChooseCancelled;
 	int resumeBehaviour;
@@ -84,5 +85,4 @@ BOOL CALLBACK DlgProcFileExists(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lP
 BOOL CALLBACK DlgProcFileTransfer(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam);
 //fileopts.c
 int FileOptInitialise(WPARAM wParam,LPARAM lParam);
-
 

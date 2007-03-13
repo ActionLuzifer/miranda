@@ -2,7 +2,7 @@
 
 Miranda IM: the free IM client for Microsoft* Windows*
 
-Copyright 2000-2007 Miranda ICQ/IM project,
+Copyright 2000-2006 Miranda ICQ/IM project,
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
 
@@ -125,6 +125,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define TIMERID_INFOTIP        13
 #define TIMERID_REBUILDAFTER   14
 #define TIMERID_DELAYEDRESORTCLC   15
+#define TIMERID_TRAYHOVER      16
+#define TIMERID_TRAYHOVER_2    17
 #define TIMERID_SUBEXPAND		21
 #define TIMERID_INVALIDATE 22
 
@@ -152,9 +154,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define FONTID_CLOSEDGROUPS 19
 #define FONTID_CLOSEDGROUPCOUNTS 20
 #define FONTID_STATUSBAR_PROTONAME 21
-#define FONTID_EVENTAREA	22
-#define FONTID_VIEMODES		23
-#define FONTID_MODERN_MAX 23
+#define FONTID_EVENTAREA 22
+#define FONTID_MODERN_MAX 22
 
 #define DROPTARGET_OUTSIDE    0
 #define DROPTARGET_ONSELF     1
@@ -176,7 +177,6 @@ struct ClcGroup;
 //#define CONTACTF_STATUSMSG 64
 
 #define AVATAR_POS_DONT_HAVE -1
-#define AVATAR_POS_ANIMATED -2
 
 #define TEXT_PIECE_TYPE_TEXT   0
 #define TEXT_PIECE_TYPE_SMILEY 1
@@ -237,23 +237,6 @@ typedef struct tagClcContactTextPiece
 	};
 } ClcContactTextPiece;
 
-#define CIT_PAINT_END	0  //next items are invalids
-#define CIT_AVATAR		1
-#define CIT_ICON		2
-#define CIT_TEXT		3  //the contact name or group name
-#define CIT_SUBTEXT1	4  //the second line for contact or group counter for groups
-#define CIT_SUBTEXT2	5
-#define CIT_TIME		6
-#define CIT_CHECKBOX	7
-#define CIT_SELECTION	8
-#define CIT_EXTRA		64 //use bit compare for extra icon, the mask &0x3F will return number of extra icon
-
-
-typedef struct _tagContactItems
-{
-	BYTE itemType;	   //one of above CIT_ definitions
-	RECT itemRect;
-}tContactItems;
 
 struct ClcContact {
 	BYTE type;
@@ -278,11 +261,22 @@ struct ClcContact {
 	BYTE isSubcontact;
 //	int status;
 	BOOL image_is_special;
-	int avatar_pos;
-	struct avatarCacheEntry *avatar_data;
-	SIZE avatar_size;
+	union
+	{
+		int avatar_pos;
+		struct avatarCacheEntry *avatar_data;
+	};
+
 	SortedList *plText;						// List of ClcContactTextPiece
+	//TCHAR *szSecondLineText;//[120-MAXEXTRACOLUMNS];
+	//SortedList *plSecondLineText;				// List of ClcContactTextPiece
+	//TCHAR *szThirdLineText;//[120-MAXEXTRACOLUMNS];
+	//SortedList *plThirdLineText;				// List of ClcContactTextPiece
     int iTextMaxSmileyHeight;
+	//int iThirdLineMaxSmileyHeight;
+    //int iSecondLineMaxSmileyHeight;
+    //DWORD timezone;
+    //DWORD timediff;
 
 	// For hittest
 	int pos_indent;
@@ -294,12 +288,6 @@ struct ClcContact {
 	RECT pos_contact_time;
 	RECT pos_extra[MAXEXTRACOLUMNS];
     DWORD lastPaintCounter;
-    BYTE bContactRate;
-
-	// For extended layout
-	BYTE ext_nItemsNum;
-	BOOL ext_fItemsValid;
-	tContactItems ext_mpItemsDesc[MAXEXTRACOLUMNS+10];  //up to 10 items
 };
 
 
@@ -455,10 +443,6 @@ struct ClcData {
     BYTE useMetaIcon;
     BYTE drawOverlayedStatus;
     int nInsertionLevel;
-
-	BYTE dbbMetaHideExtra;
-	BYTE dbbBlendInActiveState;
-	BYTE dbbBlend25;
 };
 
 struct SHORTDATA
@@ -571,7 +555,6 @@ char*   u2a( wchar_t* src );
 wchar_t* a2u( char* src );
 
 
-
 //groups.c
 TCHAR*  GetGroupNameTS( int idx, DWORD* pdwFlags );
 int     RenameGroupT(WPARAM groupID, LPARAM newName);
@@ -580,5 +563,7 @@ int     GetContactCachedStatus(HANDLE hContact);
 char   *GetContactCachedProtocol(HANDLE hContact);
 
 ExternDrawer SED;
+extern void (*saveSortCLC) (HWND hwnd, struct ClcData *dat, int useInsertionSort );
+extern HICON listening_to_icon;
 
 #endif _CLC_H_

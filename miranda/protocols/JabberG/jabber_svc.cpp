@@ -2,7 +2,7 @@
 
 Jabber Protocol Plugin for Miranda IM
 Copyright ( C ) 2002-04  Santithorn Bunchua
-Copyright ( C ) 2005-07  George Hazan
+Copyright ( C ) 2005-06  George Hazan
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -785,7 +785,7 @@ int JabberGetCaps( WPARAM wParam, LPARAM lParam )
 {
 	switch( wParam ) {
 	case PFLAGNUM_1:
-		return PF1_IM|PF1_AUTHREQ|PF1_SERVERCLIST|PF1_MODEMSG|PF1_BASICSEARCH/*|PF1_SEARCHBYEMAIL |PF1_SEARCHBYNAME|PF1_EXTSEARCHUI*/ | PF1_EXTSEARCH |PF1_FILE|PF1_VISLIST|PF1_INVISLIST;
+		return PF1_IM|PF1_AUTHREQ|PF1_SERVERCLIST|PF1_MODEMSG|PF1_BASICSEARCH|PF1_SEARCHBYEMAIL|PF1_SEARCHBYNAME|PF1_FILE|PF1_VISLIST|PF1_INVISLIST;
 	case PFLAGNUM_2:
 		return PF2_ONLINE | PF2_INVISIBLE | PF2_SHORTAWAY | PF2_LONGAWAY | PF2_HEAVYDND | PF2_FREECHAT;
 	case PFLAGNUM_3:
@@ -842,10 +842,10 @@ int JabberGetStatus( WPARAM wParam, LPARAM lParam )
 
 int JabberLoadIcon( WPARAM wParam, LPARAM lParam )
 {
-	if (( wParam & 0xffff ) == PLI_PROTOCOL )
-		return ( int )CopyIcon( LoadIconEx( "main" ));
-
-	return ( int ) ( HICON ) NULL;
+	if (( wParam&0xffff ) == PLI_PROTOCOL )
+		return ( int ) LoadImage( hInst, MAKEINTRESOURCE( IDI_JABBER ), IMAGE_ICON, GetSystemMetrics( wParam&PLIF_SMALL?SM_CXSMICON:SM_CXICON ), GetSystemMetrics( wParam&PLIF_SMALL?SM_CYSMICON:SM_CYICON ), 0 );
+	else
+		return ( int ) ( HICON ) NULL;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////
@@ -1276,7 +1276,6 @@ int JabberSetStatus( WPARAM wParam, LPARAM lParam )
  	if ( desiredStatus == ID_STATUS_OFFLINE ) {
 		if ( jabberThreadInfo ) {
 			jabberThreadInfo->send( "</stream:stream>" );
-			jabberThreadInfo->close();
 			jabberThreadInfo = NULL;
 			if ( jabberConnected )
 				jabberConnected = jabberOnline = FALSE;
@@ -1363,8 +1362,40 @@ int ServiceSendXML(WPARAM wParam, LPARAM lParam)
 /////////////////////////////////////////////////////////////////////////////////////////
 // Service initialization code
 
+static HANDLE hEventSettingChanged = NULL;
+static HANDLE hEventContactDeleted = NULL;
+static HANDLE hEventRebuildCMenu = NULL;
+
+static HANDLE hMenuAgent = NULL;
+static HANDLE hMenuChangePassword = NULL;
+static HANDLE hMenuGroupchat = NULL;
+
+int JabberMenuHandleAgents( WPARAM wParam, LPARAM lParam );
+int JabberMenuHandleChangePassword( WPARAM wParam, LPARAM lParam );
+int JabberMenuHandleVcard( WPARAM wParam, LPARAM lParam );
+int JabberMenuHandleRequestAuth( WPARAM wParam, LPARAM lParam );
+int JabberMenuHandleGrantAuth( WPARAM wParam, LPARAM lParam );
+int JabberMenuPrebuildContactMenu( WPARAM wParam, LPARAM lParam );
+
+void JabberEnableMenuItems( BOOL bEnable )
+{
+	CLISTMENUITEM clmi = { 0 };
+	clmi.cbSize = sizeof( CLISTMENUITEM );
+	clmi.flags = CMIM_FLAGS;
+	if ( !bEnable )
+		clmi.flags += CMIF_GRAYED;
+
+	JCallService( MS_CLIST_MODIFYMENUITEM, ( WPARAM )hMenuAgent, ( LPARAM )&clmi );
+	JCallService( MS_CLIST_MODIFYMENUITEM, ( WPARAM )hMenuChangePassword, ( LPARAM )&clmi );
+	JCallService( MS_CLIST_MODIFYMENUITEM, ( WPARAM )hMenuGroupchat, ( LPARAM )&clmi );
+}
+
 int JabberSvcInit( void )
 {
+	hEventSettingChanged = HookEvent( ME_DB_CONTACT_SETTINGCHANGED, JabberDbSettingChanged );
+	hEventContactDeleted = HookEvent( ME_DB_CONTACT_DELETED, JabberContactDeleted );
+	hEventRebuildCMenu   = HookEvent( ME_CLIST_PREBUILDCONTACTMENU, JabberMenuPrebuildContactMenu );
+
 	JCreateServiceFunction( PS_GETCAPS, JabberGetCaps );
 	JCreateServiceFunction( PS_GETNAME, JabberGetName );
 	JCreateServiceFunction( PS_LOADICON, JabberLoadIcon );
@@ -1393,10 +1424,6 @@ int JabberSvcInit( void )
 	JCreateServiceFunction( PSR_FILE, JabberRecvFile );
 	JCreateServiceFunction( PSS_USERISTYPING, JabberUserIsTyping );
 
-	//JEP-055 aware CUSTOM SEARCHING (jabber_search.h)
-	JCreateServiceFunction( PS_CREATEADVSEARCHUI, JabberSearchCreateAdvUI );
-	JCreateServiceFunction( PS_SEARCHBYADVANCED, JabberSearchByAdvanced );
-
 	// Protocol services and events...
 	heventRawXMLIn = JCreateHookableEvent( JE_RAWXMLIN );
 	heventRawXMLOut = JCreateHookableEvent( JE_RAWXMLOUT );
@@ -1405,10 +1432,70 @@ int JabberSvcInit( void )
 	JCreateServiceFunction( JS_GETMYAVATARMAXSIZE, JabberGetAvatarMaxSize );
 	JCreateServiceFunction( JS_GETMYAVATAR, JabberGetAvatar );
 	JCreateServiceFunction( JS_SETMYAVATAR, JabberSetAvatar );
+
+	// Menu items
+	CLISTMENUITEM mi, clmi;
+	memset( &mi, 0, sizeof( CLISTMENUITEM ));
+	mi.cbSize = sizeof( CLISTMENUITEM );
+	memset( &clmi, 0, sizeof( CLISTMENUITEM ));
+	clmi.cbSize = sizeof( CLISTMENUITEM );
+	clmi.flags = CMIM_FLAGS | CMIF_GRAYED;
+
+	// Add Jabber menu to the main menu
+	char text[_MAX_PATH];
+	strcpy( text, jabberProtoName );
+	char* tDest = text + strlen( text );
+
+	if ( !JGetByte( "DisableMainMenu", FALSE )) {
+		// "Agents..."
+		strcpy( tDest, "/Agents" );
+		CreateServiceFunction( text, JabberMenuHandleAgents );
+
+		mi.pszPopupName = jabberModuleName;
+		mi.popupPosition = 500090000;
+		mi.pszName = JTranslate( "Agents..." );
+		mi.position = 2000050000;
+		mi.hIcon = LoadIcon( hInst, MAKEINTRESOURCE( IDI_AGENTS ));
+		mi.pszService = text;
+		hMenuAgent = ( HANDLE ) JCallService( MS_CLIST_ADDMAINMENUITEM, 0, ( LPARAM )&mi );
+		JCallService( MS_CLIST_MODIFYMENUITEM, ( WPARAM ) hMenuAgent, ( LPARAM )&clmi );
+
+		// "Change Password..."
+		strcpy( tDest, "/ChangePassword" );
+		CreateServiceFunction( text, JabberMenuHandleChangePassword );
+		mi.pszName = JTranslate( "Change Password..." );
+		mi.position = 2000050001;
+		mi.hIcon = LoadIcon( hInst, MAKEINTRESOURCE( IDI_KEYS ));
+		mi.pszService = text;
+		hMenuChangePassword = ( HANDLE ) JCallService( MS_CLIST_ADDMAINMENUITEM, 0, ( LPARAM )&mi );
+		JCallService( MS_CLIST_MODIFYMENUITEM, ( WPARAM ) hMenuChangePassword, ( LPARAM )&clmi );
+
+		// "Multi-User Conference..."
+		strcpy( tDest, "/Groupchat" );
+		CreateServiceFunction( text, JabberMenuHandleGroupchat );
+		mi.pszName = JTranslate( "Multi-User Conference..." );
+		mi.position = 2000050002;
+		mi.hIcon = LoadIcon( hInst, MAKEINTRESOURCE( IDI_GROUP ));
+		mi.pszService = text;
+		hMenuGroupchat = ( HANDLE ) JCallService( MS_CLIST_ADDMAINMENUITEM, 0, ( LPARAM )&mi );
+		JCallService( MS_CLIST_MODIFYMENUITEM, ( WPARAM ) hMenuGroupchat, ( LPARAM )&clmi );
+
+		// "Personal vCard..."
+		strcpy( tDest,  "/Vcard" );
+		CreateServiceFunction( text, JabberMenuHandleVcard );
+		mi.pszName = JTranslate( "Personal vCard..." );
+		mi.position = 2000050003;
+		mi.hIcon = LoadIcon( hInst, MAKEINTRESOURCE( IDI_VCARD ));
+		mi.pszService = text;
+		JCallService( MS_CLIST_ADDMAINMENUITEM, 0, ( LPARAM )&mi );
+	}
 	return 0;
 }
 
 int JabberSvcUninit()
 {
+	if ( hEventSettingChanged )   UnhookEvent( hEventSettingChanged );
+	if ( hEventContactDeleted )   UnhookEvent( hEventContactDeleted );
+	if ( hEventRebuildCMenu )     UnhookEvent( hEventRebuildCMenu );
 	return 0;
 }

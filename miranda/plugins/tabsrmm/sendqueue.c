@@ -83,16 +83,7 @@ void HandleQueueError(HWND hwndDlg, struct MessageWindowData *dat, int iEntry)
     
     dat->iCurrentQueueError = iEntry;
     _snprintf(szErrorMsg, 500, "%s", sendJobs[iEntry].szErrorMsg);
-#if defined(_UNICODE)
-    {
-        wchar_t wszErrorMsg[512];
-        MultiByteToWideChar(myGlobals.m_LangPackCP, 0, szErrorMsg, -1, wszErrorMsg, 512);
-        wszErrorMsg[511] = 0;
-        LogErrorMessage(hwndDlg, dat, iEntry, wszErrorMsg);
-    }
-#else
-    LogErrorMessage(hwndDlg, dat, iEntry, szErrorMsg);
-#endif
+    LogErrorMessage(hwndDlg, dat, iEntry, (char *)szErrorMsg);
     RecallFailedMessage(hwndDlg, dat, iEntry);
     ShowErrorControls(hwndDlg, dat, TRUE);
     HandleIconFeedback(hwndDlg, dat, myGlobals.g_iconErr);
@@ -354,7 +345,7 @@ static int SendQueuedMessage(HWND hwndDlg, struct MessageWindowData *dat, int iE
             }
         } while (hContact = (HANDLE) CallService(MS_DB_CONTACT_FINDNEXT, (WPARAM) hContact, 0));
         if (sendJobs[iEntry].sendCount == 0) {
-            LogErrorMessage(hwndDlg, dat, -1, TranslateT("You haven't selected any contacts from the list. Click the checkbox box next to a name to send the message to that person."));
+            LogErrorMessage(hwndDlg, dat, -1, Translate("You haven't selected any contacts from the list. Click the checkbox box next to a name to send the message to that person."));
             return 0;
         }
         
@@ -506,7 +497,7 @@ void CheckSendQueue(HWND hwndDlg, struct MessageWindowData *dat)
  * from the given sendJob (queue index)
  */
 
-void LogErrorMessage(HWND hwndDlg, struct MessageWindowData *dat, int iSendJobIndex, TCHAR *szErrMsg)
+void LogErrorMessage(HWND hwndDlg, struct MessageWindowData *dat, int iSendJobIndex, char *szErrMsg)
 {
     DBEVENTINFO dbei = {0};
     int iMsgLen;
@@ -529,7 +520,7 @@ void LogErrorMessage(HWND hwndDlg, struct MessageWindowData *dat, int iSendJobIn
 #endif
     dbei.cbBlob = iMsgLen;
     dbei.timestamp = time(NULL);
-    dbei.szModule = (char *)szErrMsg;
+    dbei.szModule = szErrMsg;
     StreamInEvents(hwndDlg, NULL, 1, 1, &dbei);
 }
 
@@ -647,39 +638,23 @@ void UpdateSaveAndSendButton(HWND hwndDlg, struct MessageWindowData *dat)
 
 void NotifyDeliveryFailure(HWND hwndDlg, struct MessageWindowData *dat)
 {
-#if defined _UNICODE
-    POPUPDATAW ppd;
-    int     ibsize = 1023;
-
-    if(CallService(MS_POPUP_QUERY, PUQS_GETSTATUS, 0) == 1) {
-        ZeroMemory((void *)&ppd, sizeof(ppd));
-        ppd.lchContact = dat->hContact;
-        mir_sntprintf(ppd.lpwzContactName, MAX_CONTACTNAME, _T("%s"), dat->szNickname);
-        mir_sntprintf(ppd.lpwzText, MAX_SECONDLINE, _T("%s"), TranslateT("A message delivery has failed.\nClick to open the message window."));
-        ppd.colorText = RGB(255, 245, 225);
-        ppd.colorBack = RGB(191,0,0);
-        ppd.PluginData = hwndDlg;
-        ppd.PluginWindowProc = (WNDPROC)PopupDlgProc;
-        ppd.lchIcon = myGlobals.g_iconErr;
-        CallService(MS_POPUP_ADDPOPUPW, (WPARAM)&ppd, 0);
-    }
-#else
     POPUPDATA ppd;
     int     ibsize = 1023;
 
     if(CallService(MS_POPUP_QUERY, PUQS_GETSTATUS, 0) == 1) {
         ZeroMemory((void *)&ppd, sizeof(ppd));
         ppd.lchContact = dat->hContact;
-        mir_sntprintf(ppd.lpzContactName, MAX_CONTACTNAME, "%s", dat->szNickname);
-        mir_sntprintf(ppd.lpzText, MAX_SECONDLINE, "%s", Translate("A message delivery has failed.\nClick to open the message window."));
-        ppd.colorText = RGB(255, 245, 225);
-        ppd.colorBack = RGB(191,0,0);
+        ppd.lchIcon = LoadSkinnedIcon(SKINICON_EVENT_MESSAGE);
+        ppd.lpzContactName[0] = 0;
+        //strncpy(ppd.lpzContactName, dat->szNickname, MAX_CONTACTNAME);
+        strcpy(ppd.lpzText, Translate("A message delivery has failed.\nClick to open the message window."));
+        ppd.colorText = RGB(0,0,0);
+        ppd.colorBack = RGB(255,0,0);
         ppd.PluginData = hwndDlg;
         ppd.PluginWindowProc = (WNDPROC)PopupDlgProc;
         ppd.lchIcon = myGlobals.g_iconErr;
         CallService(MS_POPUP_ADDPOPUP, (WPARAM)&ppd, 0);
     }
-#endif
 }
 
 static int CALLBACK PopupDlgProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)

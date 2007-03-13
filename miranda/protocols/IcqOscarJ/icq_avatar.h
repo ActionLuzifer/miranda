@@ -5,7 +5,7 @@
 // Copyright © 2000,2001 Richard Hughes, Roland Rabien, Tristan Van de Vreede
 // Copyright © 2001,2002 Jon Keating, Richard Hughes
 // Copyright © 2002,2003,2004 Martin Öberg, Sam Kothari, Robert Rainwater
-// Copyright © 2004,2005,2006,2007 Joe Kucera
+// Copyright © 2004,2005 Joe Kucera
 // 
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -39,13 +39,7 @@
 
 extern BOOL AvatarsReady;
 
-extern BYTE hashEmptyAvatar[9];
-
-#define AVATAR_HASH_STATIC  0x01
-#define AVATAR_HASH_FLASH   0x08
-#define AVATAR_HASH_BIGGER  0x0C
-
-void handleAvatarContactHash(DWORD dwUIN, char* szUID, HANDLE hContact, unsigned char* pHash, int nHashLen, WORD wOldStatus);
+void handleAvatarContactHash(DWORD dwUIN, char* szUID, HANDLE hContact, unsigned char* pHash, unsigned int nHashLen, WORD wOldStatus);
 
 char* loadMyAvatarFileName();
 void storeMyAvatarFileName(char* szFile);
@@ -56,15 +50,13 @@ void AddAvatarExt(int dwFormat, char* pszDest);
 
 int DetectAvatarFormat(char* szFile);
 
-int IsAvatarSaved(HANDLE hContact, char* pHash, int nHashLen);
+int IsAvatarSaved(HANDLE hContact, char* pHash);
 
 int GetAvatarData(HANDLE hContact, DWORD dwUin, char* szUid, char* hash, unsigned int hashlen, char* file);
 int SetAvatarData(HANDLE hContact, WORD wRef, char* data, unsigned int datalen);
 
 void StartAvatarThread(HANDLE hConn, char* cookie, WORD cookieLen);
 void StopAvatarThread();
-
-void InitAvatars();
 
 
 #endif /* __ICQ_AVATAR_H */

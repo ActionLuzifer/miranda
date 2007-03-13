@@ -2,7 +2,7 @@
 
 Miranda IM: the free IM client for Microsoft* Windows*
 
-Copyright 2000-2007 Miranda ICQ/IM project, 
+Copyright 2000-2006 Miranda ICQ/IM project, 
 all portions of this codebase are copyrighted to the people 
 listed in contributors.txt.
 
@@ -26,6 +26,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "commonprototypes.h"
 
 //loads of stuff that didn't really fit anywhere else
+extern BOOL CLUI__cliInvalidateRect(HWND hWnd, CONST RECT* lpRect,BOOL bErase );
+
+extern BOOL g_mutex_bSizing;
 
 BOOL RectHitTest(RECT *rc, int testx, int testy)
 {
@@ -38,11 +41,11 @@ int cliHitTest(HWND hwnd,struct ClcData *dat,int testx,int testy,struct ClcConta
 	struct ClcGroup *hitgroup=NULL;
 	int hit=-1;
 	RECT clRect;
-	if (CLUI_TestCursorOnBorders()!=0)
-	{
-		if(flags) *flags=CLCHT_NOWHERE;
-		return -1;
-	}
+ if (CLUI_TestCursorOnBorders()!=0)
+ {
+   	if(flags) *flags=CLCHT_NOWHERE;
+	  return -1;
+ }
 	if(flags) *flags=0;
 	GetClientRect(hwnd,&clRect);
 	if(testx<0 || testy<0 || testy>=clRect.bottom || testx>=clRect.right) {
@@ -74,7 +77,7 @@ int cliHitTest(HWND hwnd,struct ClcData *dat,int testx,int testy,struct ClcConta
 	/////////
 
 	if ( ((testx<hitcontact->pos_indent) && !dat->text_rtl) ||
-		((testx>clRect.right-hitcontact->pos_indent) && dat->text_rtl) ) 
+         ((testx>clRect.right-hitcontact->pos_indent) && dat->text_rtl) ) 
 	{
 		if(flags) *flags|=CLCHT_ONITEMINDENT;
 		return hit;
@@ -160,12 +163,12 @@ void cliScrollTo(HWND hwnd,struct ClcData *dat,int desty,int noSmooth)
 				ScrollWindowEx(hwnd,0,previousy-dat->yScroll,NULL,NULL,NULL,NULL,SW_INVALIDATE);
 			else
 			{
-				CallService(MS_SKINENG_UPTATEFRAMEIMAGE,(WPARAM) hwnd, (LPARAM) 0); 
+				SkinEngine_Service_UpdateFrameImage((WPARAM) hwnd, (LPARAM) 0); 
 				//InvalidateRectZ(hwnd,NULL,FALSE);
 			}
 			previousy=dat->yScroll;
 			SetScrollPos(hwnd,SB_VERT,dat->yScroll,TRUE);
-			CallService(MS_SKINENG_UPTATEFRAMEIMAGE,(WPARAM) hwnd, (LPARAM) 0); 
+			SkinEngine_Service_UpdateFrameImage((WPARAM) hwnd, (LPARAM) 0); 
 			UpdateWindow(hwnd);
 		}
 	}
@@ -177,7 +180,7 @@ void cliScrollTo(HWND hwnd,struct ClcData *dat,int desty,int noSmooth)
 	SetScrollPos(hwnd,SB_VERT,dat->yScroll,TRUE);
 }
 
-
+extern BOOL LOCK_RECALC_SCROLLBAR;
 void cliRecalcScrollBar(HWND hwnd,struct ClcData *dat)
 {
 	SCROLLINFO si={0};
@@ -225,30 +228,27 @@ void cliRecalcScrollBar(HWND hwnd,struct ClcData *dat)
 static WNDPROC OldRenameEditWndProc;
 static LRESULT CALLBACK RenameEditSubclassProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
-	switch(msg) 
-	{
-	case WM_KEYDOWN:
-		switch(wParam) 
-		{
+	switch(msg) {
+		case WM_KEYDOWN:
+			switch(wParam) {
 		case VK_RETURN:
 			pcli->pfnEndRename(GetParent(hwnd),(struct ClcData*)GetWindowLong(hwnd,GWL_USERDATA),1);
 			return 0;
 		case VK_ESCAPE:
 			pcli->pfnEndRename(GetParent(hwnd),(struct ClcData*)GetWindowLong(hwnd,GWL_USERDATA),0);
 			return 0;
-		}
-		break;
-	case WM_GETDLGCODE:
-		if(lParam) 
-		{
-			MSG *msg=(MSG*)lParam;
-			if(msg->message==WM_KEYDOWN && msg->wParam==VK_TAB) return 0;
-			if(msg->message==WM_CHAR && msg->wParam=='\t') return 0;
-		}
-		return DLGC_WANTMESSAGE;
-	case WM_KILLFOCUS:
-		pcli->pfnEndRename(GetParent(hwnd),(struct ClcData*)GetWindowLong(hwnd,GWL_USERDATA),1);
-		return 0;
+			}
+			break;
+		case WM_GETDLGCODE:
+			if(lParam) {
+				MSG *msg=(MSG*)lParam;
+				if(msg->message==WM_KEYDOWN && msg->wParam==VK_TAB) return 0;
+				if(msg->message==WM_CHAR && msg->wParam=='\t') return 0;
+			}
+			return DLGC_WANTMESSAGE;
+		case WM_KILLFOCUS:
+			pcli->pfnEndRename(GetParent(hwnd),(struct ClcData*)GetWindowLong(hwnd,GWL_USERDATA),1);
+			return 0;
 	}
 	return CallWindowProc(OldRenameEditWndProc,hwnd,msg,wParam,lParam);
 }
@@ -348,12 +348,12 @@ int GetDropTargetInformation(HWND hwnd,struct ClcData *dat,POINT pt)
 	struct ClcContact *contact=NULL,*movecontact=NULL;
 	struct ClcGroup *group,*movegroup;
 	DWORD hitFlags;
-	int nSetSelection=-1;
+    int nSetSelection=-1;
 
 	GetClientRect(hwnd,&clRect);
 	dat->selection=dat->iDragItem;
 	dat->iInsertionMark=-1;
-	dat->nInsertionLevel=0;
+    dat->nInsertionLevel=0;
 	if(!PtInRect(&clRect,pt)) return DROPTARGET_OUTSIDE;
 
 	hit=cliHitTest(hwnd,dat,pt.x,pt.y,&contact,&group,&hitFlags);
@@ -374,7 +374,7 @@ int GetDropTargetInformation(HWND hwnd,struct ClcData *dat,POINT pt)
 			topItem=cliGetRowByIndex(dat,topItem,&topcontact,&topgroup);
 			ok=1;
 		} else if ((pt.y+dat->yScroll>=cliGetRowTopY(dat,hit+1)-dat->insertionMarkHitHeight)
-			||(contact->type==CLCIT_GROUP && contact->group->expanded && contact->group->cl.count>0)) 
+                 ||(contact->type==CLCIT_GROUP && contact->group->expanded && contact->group->cl.count>0)) 
 		{
 			//could be insertion mark (below)
 			topItem=hit; bottomItem=hit+1;
@@ -405,11 +405,11 @@ int GetDropTargetInformation(HWND hwnd,struct ClcData *dat,POINT pt)
 					{
 						bottomItem=cliGetRowByIndex(dat,bottomItem-1,&bottomcontact,&bottomgroup);}
 					while (bottomItem>=0 && bottomcontact->type!=CLCIT_GROUP && bottomgroup==gr);
-					nSetSelection=bottomItem;
+                    nSetSelection=bottomItem;
 					bottomItem=cliGetRowByIndex(dat,bottomItem+1,&bottomcontact,&bottomgroup);
 				}
 			}
-
+            
 			if (bottomItem==-1)	bottomItem=topItem+1;
 			{
 				int bi=cliGetRowByIndex(dat,bottomItem,&bottomcontact,&bottomgroup);
@@ -418,11 +418,11 @@ int GetDropTargetInformation(HWND hwnd,struct ClcData *dat,POINT pt)
 					group=bottomgroup;                    
 					if (bottomcontact==movecontact || group==movecontact->group)	return DROPTARGET_ONSELF;
 					dat->nInsertionLevel=-1; // decreasing here
-					for(;group;group=group->parent)
-					{   
-						dat->nInsertionLevel++;
+                    for(;group;group=group->parent)
+                    {   
+                        dat->nInsertionLevel++;
 						if (group==movecontact->group) return DROPTARGET_ONSELF;
-					}
+                    }
 				}
 			}           
 			dat->iInsertionMark=bottomItem;
@@ -431,17 +431,17 @@ int GetDropTargetInformation(HWND hwnd,struct ClcData *dat,POINT pt)
 		}
 	}
 	if(contact->type==CLCIT_GROUP) 
-	{
+    {
 		if(dat->iInsertionMark==-1) 
-		{
+        {
 			if(movecontact->type==CLCIT_GROUP) 
-			{	 //check not moving onto its own subgroup
-				dat->iInsertionMark=hit+1;
+            {	 //check not moving onto its own subgroup
+                dat->iInsertionMark=hit+1;
 				for(;group;group=group->parent) 
-				{
-					dat->nInsertionLevel++;
-					if(group==movecontact->group) return DROPTARGET_ONSELF;
-				}
+                {
+                     dat->nInsertionLevel++;
+                    if(group==movecontact->group) return DROPTARGET_ONSELF;
+                }
 			}
 			dat->selection=hit;            
 			return DROPTARGET_ONGROUP;
@@ -453,10 +453,11 @@ int GetDropTargetInformation(HWND hwnd,struct ClcData *dat,POINT pt)
 	if (contact->isSubcontact && (ServiceExists(MS_MC_ADDTOMETA))) return DROPTARGET_ONSUBCONTACT;
 	return DROPTARGET_ONCONTACT;
 }
+extern int sortNoOfflineBottom;
 void LoadCLCOptions(HWND hwnd, struct ClcData *dat)
 { 
 	int i;
-
+	
 	{	
 		LOGFONTA lf;
 		HFONT holdfont;
@@ -487,10 +488,10 @@ void LoadCLCOptions(HWND hwnd, struct ClcData *dat)
 		ReleaseDC(hwnd,hdc);
 	}
 
-	g_CluiData.bSortByOrder[0]=DBGetContactSettingByte(NULL,"CList","SortBy1",SETTING_SORTBY1_DEFAULT);
-	g_CluiData.bSortByOrder[1]=DBGetContactSettingByte(NULL,"CList","SortBy2",SETTING_SORTBY2_DEFAULT);
-	g_CluiData.bSortByOrder[2]=DBGetContactSettingByte(NULL,"CList","SortBy3",SETTING_SORTBY3_DEFAULT);
-	g_CluiData.fSortNoOfflineBottom=DBGetContactSettingByte(NULL,"CList","NoOfflineBottom",SETTING_NOOFFLINEBOTTOM_DEFAULT);
+	sortBy[0]=DBGetContactSettingByte(NULL,"CList","SortBy1",SETTING_SORTBY1_DEFAULT);
+	sortBy[1]=DBGetContactSettingByte(NULL,"CList","SortBy2",SETTING_SORTBY2_DEFAULT);
+	sortBy[2]=DBGetContactSettingByte(NULL,"CList","SortBy3",SETTING_SORTBY3_DEFAULT);
+	sortNoOfflineBottom=DBGetContactSettingByte(NULL,"CList","NoOfflineBottom",SETTING_NOOFFLINEBOTTOM_DEFAULT);
 
 	// Row
 	dat->row_min_heigh = DBGetContactSettingWord(NULL,"CList","MinRowHeight",CLCDEFAULT_ROWHEIGHT);
@@ -568,8 +569,8 @@ void LoadCLCOptions(HWND hwnd, struct ClcData *dat)
 	{
 		TIME_ZONE_INFORMATION tzinfo;
 		int nOffset=0;
-		DWORD dwResult;
-		dwResult = GetTimeZoneInformation(&tzinfo);
+        DWORD dwResult;
+        dwResult = GetTimeZoneInformation(&tzinfo);
 		nOffset = -(tzinfo.Bias + tzinfo.StandardBias) * 60;
 		dat->local_gmt_diff=dat->local_gmt_diff_dst=(DWORD)nOffset;
 	}
@@ -593,7 +594,7 @@ void LoadCLCOptions(HWND hwnd, struct ClcData *dat)
 	// First line
 	dat->first_line_draw_smileys = DBGetContactSettingByte(NULL,"CList","FirstLineDrawSmileys",1);
 	dat->first_line_append_nick = DBGetContactSettingByte(NULL,"CList","FirstLineAppendNick",0);
-	gl_TrimText=DBGetContactSettingByte(NULL,"CList","TrimText",1);
+    gl_TrimText=DBGetContactSettingByte(NULL,"CList","TrimText",1);
 
 	// Second line
 	if (pcli->hwndContactTree == hwnd || pcli->hwndContactTree==NULL)
@@ -686,11 +687,11 @@ void LoadCLCOptions(HWND hwnd, struct ClcData *dat)
 		dat->bkColour=DBGetContactSettingDword(NULL,"CLC","BkColour",CLCDEFAULT_BKCOLOUR);
 		if(dat->hBmpBackground) {DeleteObject(dat->hBmpBackground); dat->hBmpBackground=NULL;}
 		/*if(DBGetContactSettingByte(NULL,"CLC","UseBitmap",CLCDEFAULT_USEBITMAP)) {
-		if(!DBGetContactSetting(NULL,"CLC","BkBitmap",&dbv)) {
-		dat->hBmpBackground=(HBITMAP)CallService(MS_UTILS_LOADBITMAP,0,(LPARAM)dbv.pszVal);
-		mir_free_and_nill(dbv.pszVal);
-		DBFreeVariant(&dbv);
-		}
+			if(!DBGetContactSetting(NULL,"CLC","BkBitmap",&dbv)) {
+				dat->hBmpBackground=(HBITMAP)CallService(MS_UTILS_LOADBITMAP,0,(LPARAM)dbv.pszVal);
+				mir_free_and_nill(dbv.pszVal);
+				DBFreeVariant(&dbv);
+			}
 		}*/
 		dat->backgroundBmpUse=DBGetContactSettingWord(NULL,"CLC","BkBmpUse",CLCDEFAULT_BKBMPUSE);
 
@@ -721,17 +722,14 @@ void LoadCLCOptions(HWND hwnd, struct ClcData *dat)
 		DBGetContactSettingByte(NULL,"MetaContacts","Enabled",1) && ServiceExists(MS_MC_GETDEFAULTCONTACT);
 	dat->MetaIgnoreEmptyExtra=DBGetContactSettingByte(NULL,"CLC","MetaIgnoreEmptyExtra",1);
 	dat->expandMeta=DBGetContactSettingByte(NULL,"CLC","MetaExpanding",1);
-	dat->useMetaIcon=DBGetContactSettingByte(NULL,"CLC","Meta",0);
-	dat->drawOverlayedStatus=DBGetContactSettingByte(NULL,"CLC","DrawOverlayedStatus",3);
-	dat->dbbMetaHideExtra=DBGetContactSettingByte(NULL,"CLC","MetaHideExtra",0);
-	dat->dbbBlendInActiveState=DBGetContactSettingByte(NULL,"CLC","BlendInActiveState",0);
-	dat->dbbBlend25=DBGetContactSettingByte(NULL,"CLC","Blend25%",1);
+    dat->useMetaIcon=DBGetContactSettingByte(NULL,"CLC","Meta",0);
+    dat->drawOverlayedStatus=DBGetContactSettingByte(NULL,"CLC","DrawOverlayedStatus",3);
 	if ((pcli->hwndContactTree == hwnd || pcli->hwndContactTree==NULL))
 	{
 		IvalidateDisplayNameCache(16);
 
 	}
-
+	
 	{
 		NMHDR hdr;
 		hdr.code=CLN_OPTIONSCHANGED;
@@ -740,5 +738,5 @@ void LoadCLCOptions(HWND hwnd, struct ClcData *dat)
 		SendMessage(GetParent(hwnd),WM_NOTIFY,0,(LPARAM)&hdr);
 	}
 	SendMessage(hwnd,WM_SIZE,0,0);
-
+	
 }

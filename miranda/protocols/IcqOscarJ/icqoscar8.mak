@@ -85,6 +85,8 @@ CLEAN :
 	-@erase "$(INTDIR)\fam_15icqserver.sbr"
 	-@erase "$(INTDIR)\fam_17signon.obj"
 	-@erase "$(INTDIR)\fam_17signon.sbr"
+	-@erase "$(INTDIR)\forkthread.obj"
+	-@erase "$(INTDIR)\forkthread.sbr"
 	-@erase "$(INTDIR)\i18n.obj"
 	-@erase "$(INTDIR)\i18n.sbr"
 	-@erase "$(INTDIR)\iconlib.obj"
@@ -144,8 +146,8 @@ CLEAN :
 	-@erase "$(INTDIR)\loginpassword.sbr"
 	-@erase "$(INTDIR)\main.obj"
 	-@erase "$(INTDIR)\main.sbr"
-	-@erase "$(INTDIR)\oscar_filetransfer.obj"
-	-@erase "$(INTDIR)\oscar_filetransfer.sbr"
+	-@erase "$(INTDIR)\md5.obj"
+	-@erase "$(INTDIR)\md5.sbr"
 	-@erase "$(INTDIR)\resources.res"
 	-@erase "$(INTDIR)\stdpackets.obj"
 	-@erase "$(INTDIR)\stdpackets.sbr"
@@ -250,6 +252,7 @@ BSC32_SBRS= \
 	"$(INTDIR)\upload.sbr" \
 	"$(INTDIR)\capabilities.sbr" \
 	"$(INTDIR)\cookies.sbr" \
+	"$(INTDIR)\forkthread.sbr" \
 	"$(INTDIR)\i18n.sbr" \
 	"$(INTDIR)\iconlib.sbr" \
 	"$(INTDIR)\icq_avatar.sbr" \
@@ -264,7 +267,7 @@ BSC32_SBRS= \
 	"$(INTDIR)\icq_xstatus.sbr" \
 	"$(INTDIR)\icq_xtraz.sbr" \
 	"$(INTDIR)\icqoscar.sbr" \
-	"$(INTDIR)\oscar_filetransfer.sbr" \
+	"$(INTDIR)\md5.sbr" \
 	"$(INTDIR)\stdpackets.sbr" \
 	"$(INTDIR)\tlv.sbr" \
 	"$(INTDIR)\utilities.sbr"
@@ -318,6 +321,7 @@ LINK32_OBJS= \
 	"$(INTDIR)\upload.obj" \
 	"$(INTDIR)\capabilities.obj" \
 	"$(INTDIR)\cookies.obj" \
+	"$(INTDIR)\forkthread.obj" \
 	"$(INTDIR)\i18n.obj" \
 	"$(INTDIR)\iconlib.obj" \
 	"$(INTDIR)\icq_avatar.obj" \
@@ -332,7 +336,7 @@ LINK32_OBJS= \
 	"$(INTDIR)\icq_xstatus.obj" \
 	"$(INTDIR)\icq_xtraz.obj" \
 	"$(INTDIR)\icqoscar.obj" \
-	"$(INTDIR)\oscar_filetransfer.obj" \
+	"$(INTDIR)\md5.obj" \
 	"$(INTDIR)\stdpackets.obj" \
 	"$(INTDIR)\tlv.obj" \
 	"$(INTDIR)\utilities.obj" \
@@ -403,6 +407,8 @@ CLEAN :
 	-@erase "$(INTDIR)\fam_15icqserver.sbr"
 	-@erase "$(INTDIR)\fam_17signon.obj"
 	-@erase "$(INTDIR)\fam_17signon.sbr"
+	-@erase "$(INTDIR)\forkthread.obj"
+	-@erase "$(INTDIR)\forkthread.sbr"
 	-@erase "$(INTDIR)\i18n.obj"
 	-@erase "$(INTDIR)\i18n.sbr"
 	-@erase "$(INTDIR)\iconlib.obj"
@@ -462,8 +468,8 @@ CLEAN :
 	-@erase "$(INTDIR)\loginpassword.sbr"
 	-@erase "$(INTDIR)\main.obj"
 	-@erase "$(INTDIR)\main.sbr"
-	-@erase "$(INTDIR)\oscar_filetransfer.obj"
-	-@erase "$(INTDIR)\oscar_filetransfer.sbr"
+	-@erase "$(INTDIR)\md5.obj"
+	-@erase "$(INTDIR)\md5.sbr"
 	-@erase "$(INTDIR)\resources.res"
 	-@erase "$(INTDIR)\stdpackets.obj"
 	-@erase "$(INTDIR)\stdpackets.sbr"
@@ -569,6 +575,7 @@ BSC32_SBRS= \
 	"$(INTDIR)\upload.sbr" \
 	"$(INTDIR)\capabilities.sbr" \
 	"$(INTDIR)\cookies.sbr" \
+	"$(INTDIR)\forkthread.sbr" \
 	"$(INTDIR)\i18n.sbr" \
 	"$(INTDIR)\iconlib.sbr" \
 	"$(INTDIR)\icq_avatar.sbr" \
@@ -583,7 +590,7 @@ BSC32_SBRS= \
 	"$(INTDIR)\icq_xstatus.sbr" \
 	"$(INTDIR)\icq_xtraz.sbr" \
 	"$(INTDIR)\icqoscar.sbr" \
-	"$(INTDIR)\oscar_filetransfer.sbr" \
+	"$(INTDIR)\md5.sbr" \
 	"$(INTDIR)\stdpackets.sbr" \
 	"$(INTDIR)\tlv.sbr" \
 	"$(INTDIR)\utilities.sbr"
@@ -637,6 +644,7 @@ LINK32_OBJS= \
 	"$(INTDIR)\upload.obj" \
 	"$(INTDIR)\capabilities.obj" \
 	"$(INTDIR)\cookies.obj" \
+	"$(INTDIR)\forkthread.obj" \
 	"$(INTDIR)\i18n.obj" \
 	"$(INTDIR)\iconlib.obj" \
 	"$(INTDIR)\icq_avatar.obj" \
@@ -651,7 +659,7 @@ LINK32_OBJS= \
 	"$(INTDIR)\icq_xstatus.obj" \
 	"$(INTDIR)\icq_xtraz.obj" \
 	"$(INTDIR)\icqoscar.obj" \
-	"$(INTDIR)\oscar_filetransfer.obj" \
+	"$(INTDIR)\md5.obj" \
 	"$(INTDIR)\stdpackets.obj" \
 	"$(INTDIR)\tlv.obj" \
 	"$(INTDIR)\utilities.obj" \
@@ -896,6 +904,11 @@ SOURCE=.\cookies.c
 "$(INTDIR)\cookies.obj"	"$(INTDIR)\cookies.sbr" : $(SOURCE) "$(INTDIR)" "$(INTDIR)\icqoscar8.pch"
 
 
+SOURCE=.\forkthread.c
+
+"$(INTDIR)\forkthread.obj"	"$(INTDIR)\forkthread.sbr" : $(SOURCE) "$(INTDIR)" "$(INTDIR)\icqoscar8.pch"
+
+
 SOURCE=.\i18n.c
 
 "$(INTDIR)\i18n.obj"	"$(INTDIR)\i18n.sbr" : $(SOURCE) "$(INTDIR)" "$(INTDIR)\icqoscar8.pch"
@@ -985,9 +998,9 @@ CPP_SWITCHES=/nologo /MDd /W3 /Gm /GX /ZI /Od /I "../../include" /D "WIN32" /D "
 
 !ENDIF 
 
-SOURCE=.\oscar_filetransfer.c
+SOURCE=.\md5.c
 
-"$(INTDIR)\oscar_filetransfer.obj"	"$(INTDIR)\oscar_filetransfer.sbr" : $(SOURCE) "$(INTDIR)" "$(INTDIR)\icqoscar8.pch"
+"$(INTDIR)\md5.obj"	"$(INTDIR)\md5.sbr" : $(SOURCE) "$(INTDIR)" "$(INTDIR)\icqoscar8.pch"
 
 
 SOURCE=.\stdpackets.c

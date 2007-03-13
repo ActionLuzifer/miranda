@@ -376,16 +376,6 @@ TCHAR* a2t( const char* str )
 	#endif
 }
 
-char* t2a(const TCHAR* src)
-{
-	if (!src) return NULL;
-	#ifdef _UNICODE
-		return u2a( src );
-	#else
-		return mir_strdup( src );
-	#endif
-}
-
 char* u2a( const wchar_t* src )
 {
 	int codepage = LangPackGetDefaultCodePage();
@@ -413,3 +403,4 @@ wchar_t* a2u( const char* src )
 	result[ cbLen ] = 0;
 	return result;
 }
+

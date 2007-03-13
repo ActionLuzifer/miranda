@@ -4,8 +4,8 @@
 // 
 // Copyright © 2000,2001 Richard Hughes, Roland Rabien, Tristan Van de Vreede
 // Copyright © 2001,2002 Jon Keating, Richard Hughes
-// Copyright © 2002,2003,2004 Martin Öberg, Sam Kothari, Robert Rainwater
-// Copyright © 2004,2005,2006,2007 Joe Kucera
+// Copyright © 2002,2003,2004 Martin  berg, Sam Kothari, Robert Rainwater
+// Copyright © 2004,2005,2006 Joe Kucera
 // 
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -23,7 +23,7 @@
 //
 // -----------------------------------------------------------------------------
 //
-// File name      : $URL$
+// File name      : $Source: /cvsroot/miranda/miranda/protocols/IcqOscarJ/m_icq.h,v $
 // Revision       : $Revision$
 // Last change on : $Date$
 // Last change by : $Author$
@@ -82,10 +82,6 @@ typedef struct {
 // Revoke authorization
 // wParam=(WPARAM)hContact
 #define MS_REVOKE_AUTH "/RevokeAuth"
-
-// Add contact to server-list
-// wParam=(WPARAM)hContact
-#define MS_ICQ_ADDSERVCONTACT "/AddServerContact"
 
 // Display XStatus detail (internal use only)
 // wParam=(WPARAM)hContact;
@@ -276,8 +272,8 @@ typedef struct {
 
 // Retrieves specified custom status icon
 //wParam = (int)N  // custom status id (1-32), 0 = my current custom status
-//lParam = flags   // use LR_SHARED for shared HICON
-//return = HICON   // custom status icon (use DestroyIcon to release resources if not LR_SHARED)
+//lParam = 0
+//return = HICON   // custom status icon (use DestroyIcon to release resources)
 #define PS_ICQ_GETCUSTOMSTATUSICON "/GetXStatusIcon"
 
 // Get Custom status DB field names & current owner custom status (obsolete)

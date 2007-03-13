@@ -30,10 +30,6 @@ $Id$
 #include "commonheaders.h"
 #pragma hdrstop
 
-#ifdef __MATHMOD_SUPPORT
-	#include "m_MathModule.h"
-#endif
-
 extern      MYGLOBALS myGlobals;
 extern      NEN_OPTIONS nen_options;
 extern      LOGFONTA logfonts[MSGDLGFONTCOUNT + 2];
@@ -44,6 +40,7 @@ extern      HMODULE g_hInst;
 extern      HANDLE hMessageWindowList;
 extern      StatusItems_t StatusItems[];
 extern      char *xStatusDescr[];
+extern      LRESULT CALLBACK IEViewSubclassProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
 void ShowMultipleControls(HWND hwndDlg, const UINT * controls, int cControls, int state);
 
@@ -71,14 +68,12 @@ unsigned int g_ctable_size;
 #define EVENTTYPE_STATUSMESSAGE_CHANGE 9002
 #define EVENTTYPE_AVATAR_CHANGE 9003
 #define EVENTTYPE_CONTACTLEFTCHANNEL 9004
-#define EVENTTYPE_WAT_ANSWER  9602
 
 static int g_status_events[] = { 
 	EVENTTYPE_STATUSCHANGE,
     EVENTTYPE_STATUSMESSAGE_CHANGE,
     EVENTTYPE_AVATAR_CHANGE,
-    EVENTTYPE_CONTACTLEFTCHANNEL,
-    EVENTTYPE_WAT_ANSWER
+    EVENTTYPE_CONTACTLEFTCHANNEL
 };
 
 static int g_status_events_size = 0;
@@ -124,7 +119,7 @@ void RTF_ColorAdd(const TCHAR *tszColname, size_t length)
     //_DebugTraceA("adding color: %s (%d)", rtf_ctable[g_ctable_size - 1].szName, length);
 }
 
-void RearrangeTab(HWND hwndDlg, struct MessageWindowData *dat, int iMode, BOOL fSavePos)
+void RearrangeTab(HWND hwndDlg, struct MessageWindowData *dat, int iMode)
 {
     TCITEM item = {0};
     HWND hwndTab = GetParent(hwndDlg);
@@ -146,8 +141,7 @@ void RearrangeTab(HWND hwndDlg, struct MessageWindowData *dat, int iMode, BOOL f
         TabCtrl_InsertItem(hwndTab, newIndex, &item);
         BroadCastContainer(dat->pContainer, DM_REFRESHTABINDEX, 0, 0);
         ActivateTabFromHWND(hwndTab, hwndDlg);
-        if(fSavePos)
-            DBWriteContactSettingDword(dat->hContact, SRMSGMOD_T, "tabindex", newIndex * 100);
+        DBWriteContactSettingDword(dat->hContact, SRMSGMOD_T, "tabindex", newIndex * 100);
     }
 }
 /*                                                              
@@ -316,12 +310,11 @@ void CalcDynamicAvatarSize(HWND hwndDlg, struct MessageWindowData *dat, BITMAP *
 		FLASHAVATAR fa ={0};
 		fa.cProto = dat->szProto;
 		fa.id = 25367;
-		fa.hContact = (dat->dwFlagsEx & MWF_SHOW_INFOPANEL) ? NULL : dat->hContact;
 		CallService(MS_FAVATAR_GETINFO, (WPARAM)&fa, 0);
 		if(fa.hWindow) {
-			bminfo->bmHeight = FAVATAR_HEIGHT;
-			bminfo->bmWidth = FAVATAR_WIDTH;		
-        }
+			bminfo->bmHeight = 64;
+			bminfo->bmWidth = 52;
+		}
 	}    
     GetClientRect(hwndDlg, &rc);
     
@@ -706,16 +699,35 @@ int MsgWindowMenuHandler(HWND hwndDlg, struct MessageWindowData *dat, int select
     return 0;
 }
 
+/*
+ * sets tooltips for the visible status bar icons
+ * 1) secure im icon
+ * 2) Sound toggle icon
+ * 3) mtn status icon
+ */
+
+void UpdateStatusBarTooltips(HWND hwndDlg, struct MessageWindowData *dat, int iSecIMStatus)
+{
+    time_t now = time(NULL);
+    now = now - dat->stats.started;
+
+    if(dat->pContainer->hwndStatus && dat->pContainer->hwndActive == hwndDlg) {
+        TCHAR szTipText[256];
+        
+        if(myGlobals.g_SecureIMAvail && iSecIMStatus >= 0) {
+            mir_sntprintf(szTipText, safe_sizeof(szTipText), TranslateT("Secure IM is %s"), iSecIMStatus ? TranslateT("enabled") : TranslateT("disabled"));
+            SendMessage(dat->pContainer->hwndStatus, SB_SETTIPTEXT, 2, (LPARAM)szTipText);
+        }
+        mir_sntprintf(szTipText, safe_sizeof(szTipText), TranslateT("Sounds are %s (click to toggle, SHIFT-click to apply for all containers)"), dat->pContainer->dwFlags & CNT_NOSOUND ? TranslateT("off") : TranslateT("on"));
+        SendMessage(dat->pContainer->hwndStatus, SB_SETTIPTEXT, myGlobals.g_SecureIMAvail ? 3 : 2, (LPARAM)szTipText);
+    }
+}
+
 void UpdateReadChars(HWND hwndDlg, struct MessageWindowData *dat)
 {
-
     if (dat->pContainer->hwndStatus && SendMessage(dat->pContainer->hwndStatus, SB_GETPARTS, 0, 0) >= 3) {
         char buf[128];
         int len;
-        char szIndicators[20];
-        BOOL fCaps, fNum;
-
-        szIndicators[0] = 0;
         if(dat->bType == SESSIONTYPE_CHAT)
             len = GetWindowTextLength(GetDlgItem(hwndDlg, IDC_CHAT_MESSAGE));
         else {
@@ -729,20 +741,7 @@ void UpdateReadChars(HWND hwndDlg, struct MessageWindowData *dat)
             len = GetWindowTextLength(GetDlgItem(hwndDlg, IDC_MESSAGE));
 #endif
         }
-
-        fCaps = (GetKeyState(VK_CAPITAL) & 1);
-        fNum = (GetKeyState(VK_NUMLOCK) & 1);
-
-        if(dat->fInsertMode)
-            lstrcatA(szIndicators, "O");
-        if(fCaps)
-            lstrcatA(szIndicators, "C");
-        if(fNum)
-            lstrcatA(szIndicators, "N");
-        if(dat->fInsertMode || fCaps || fNum)
-            lstrcatA(szIndicators, " | ");
-
-        _snprintf(buf, sizeof(buf), "%s%s %d/%d", szIndicators, dat->lcID, dat->iOpenJobs, len);
+        _snprintf(buf, sizeof(buf), "%s %d/%d", dat->lcID, dat->iOpenJobs, len);
         SendMessageA(dat->pContainer->hwndStatus, SB_SETTEXTA, 1, (LPARAM) buf);
     }
 }
@@ -750,11 +749,31 @@ void UpdateReadChars(HWND hwndDlg, struct MessageWindowData *dat)
 void UpdateStatusBar(HWND hwndDlg, struct MessageWindowData *dat)
 {
     if(dat && dat->pContainer->hwndStatus && dat->pContainer->hwndActive == hwndDlg) {
-        if(dat->bType == SESSIONTYPE_IM)
+        int iSecIMStatus = 0;
+        
+        if(dat->bType == SESSIONTYPE_IM) {
+            SetSelftypingIcon(hwndDlg, dat, DBGetContactSettingByte(dat->hContact, SRMSGMOD, SRMSGSET_TYPING, DBGetContactSettingByte(NULL, SRMSGMOD, SRMSGSET_TYPINGNEW, SRMSGDEFSET_TYPINGNEW)));
             DM_UpdateLastMessage(hwndDlg, dat);
+            if(myGlobals.g_SecureIMAvail) {
+                SendMessage(dat->pContainer->hwndStatus, SB_SETTEXTA, 2, (LPARAM)"");
+                if((iSecIMStatus = CallService("SecureIM/IsContactSecured", (WPARAM)dat->hContact, 0)) != 0)
+                    SendMessage(dat->pContainer->hwndStatus, SB_SETICON, 2, (LPARAM)myGlobals.g_buttonBarIcons[14]);
+                else
+                    SendMessage(dat->pContainer->hwndStatus, SB_SETICON, 2, (LPARAM)myGlobals.g_buttonBarIcons[15]);
+            }
+        }
+        else {
+            if(myGlobals.g_SecureIMAvail)
+                SendMessage(dat->pContainer->hwndStatus, SB_SETICON, 2, (LPARAM)myGlobals.g_buttonBarIcons[14]);
+            SetSelftypingIcon(hwndDlg, dat, -1);
+            if(myGlobals.g_SecureIMAvail)
+                SendMessage(dat->pContainer->hwndStatus, SB_SETICON, 2, 0);
+        }
+        
+		SendMessage(dat->pContainer->hwndStatus, SB_SETTEXTA, (myGlobals.g_SecureIMAvail ? 3 : 2), (LPARAM)"");
+        SendMessage(dat->pContainer->hwndStatus, SB_SETICON, (myGlobals.g_SecureIMAvail ? 3 : 2), (LPARAM)(dat->pContainer->dwFlags & CNT_NOSOUND ? myGlobals.g_buttonBarIcons[23] : myGlobals.g_buttonBarIcons[22]));
         UpdateReadChars(hwndDlg, dat);
-        InvalidateRect(dat->pContainer->hwndStatus, NULL, TRUE);
-        SendMessage(dat->pContainer->hwndStatus, WM_USER + 101, 0, (LPARAM)dat);
+        UpdateStatusBarTooltips(hwndDlg, dat, iSecIMStatus);
     }
 }
 
@@ -817,18 +836,8 @@ int GetAvatarVisibility(HWND hwndDlg, struct MessageWindowData *dat)
 				break;
 			case 3:
 			{
-                FLASHAVATAR fa = {0};
-                HBITMAP hbm = ((dat->ace && !(dat->ace->dwFlags & AVS_HIDEONCLIST)) ? dat->ace->hbmPic : 0);
-
-				if(myGlobals.g_FlashAvatarAvail) {
-					fa.cProto = dat->szProto;
-					fa.id = 25367;
-					fa.hContact = dat->hContact;
-					fa.hParentWindow = GetDlgItem(hwndDlg, IDC_PANELPIC);
-
-					CallService(MS_FAVATAR_MAKE, (WPARAM)&fa, 0);
-				}
-				if((hbm && hbm != myGlobals.g_hbmUnknown) || (fa.hWindow != NULL))
+				HBITMAP hbm = ((dat->ace && !(dat->ace->dwFlags & AVS_HIDEONCLIST)) ? dat->ace->hbmPic : 0);
+				if(hbm && hbm != myGlobals.g_hbmUnknown)
 					dat->showInfoPic = 1;
 				else
 					dat->showInfoPic = 0;
@@ -854,18 +863,8 @@ int GetAvatarVisibility(HWND hwndDlg, struct MessageWindowData *dat)
             case 2:
             case 1:
 			{
-				FLASHAVATAR fa = {0};
 				HBITMAP hbm = (dat->ace && !(dat->ace->dwFlags & AVS_HIDEONCLIST)) ? dat->ace->hbmPic : 0;
-
-				if(myGlobals.g_FlashAvatarAvail) {
-					fa.cProto = dat->szProto;
-					fa.id = 25367;
-					fa.hContact = dat->hContact;
-					fa.hParentWindow = GetDlgItem(hwndDlg, IDC_CONTACTPIC);
-
-					CallService(MS_FAVATAR_MAKE, (WPARAM)&fa, 0);
-				}
-				if((hbm && hbm != myGlobals.g_hbmUnknown) || (fa.hWindow != NULL))
+				if(hbm && hbm != myGlobals.g_hbmUnknown)
 					dat->showPic = 1;
 				else
 					dat->showPic = 0;
@@ -878,6 +877,26 @@ int GetAvatarVisibility(HWND hwndDlg, struct MessageWindowData *dat)
             dat->showPic = hideOverride == 1 ? 1 : dat->showPic;
 	}
     return dat->showPic;
+}
+
+void SetSelftypingIcon(HWND dlg, struct MessageWindowData *dat, int iMode)
+{
+    if(dat->pContainer->hwndStatus && dat->pContainer->hwndActive == dlg) {
+        TCHAR szTipText[64];
+        int nParts = SendMessage(dat->pContainer->hwndStatus, SB_GETPARTS, 0, 0);
+
+        SendMessage(dat->pContainer->hwndStatus, SB_SETTEXTA, (nParts - 1), (LPARAM)"");
+		if(iMode > 0)
+            SendMessage(dat->pContainer->hwndStatus, SB_SETICON, (nParts - 1), (LPARAM)myGlobals.g_buttonBarIcons[12]);
+        else if(iMode == 0)
+            SendMessage(dat->pContainer->hwndStatus, SB_SETICON, (nParts - 1), (LPARAM)myGlobals.g_buttonBarIcons[13]);
+        else
+            SendMessage(dat->pContainer->hwndStatus, SB_SETICON, (nParts - 1), 0);
+        
+        mir_sntprintf(szTipText, safe_sizeof(szTipText), TranslateT("Sending typing notifications is: %s"), iMode ? TranslateT("Enabled") : TranslateT("Disabled"));
+        SendMessage(dat->pContainer->hwndStatus, SB_SETTIPTEXT, myGlobals.g_SecureIMAvail ? 4 : 3, (LPARAM)szTipText);
+        InvalidateRect(dat->pContainer->hwndStatus, NULL, TRUE);
+    }
 }
 
 /*
@@ -1232,6 +1251,7 @@ BOOL DoRtfToTags(TCHAR * pszText, struct MessageWindowData *dat)
 	for(i = 0; i < MM_FindModule(dat->pszModule)->nColorCount ; i++)
 		pIndex[i] = -1;*/
 	CreateColorMap(pszText);
+    
 	// scan the file for rtf commands and remove or parse them
     inColor = 0;
 	p1 = _tcsstr(pszText, _T("\\pard"));
@@ -1340,9 +1360,10 @@ BOOL DoRtfToTags(TCHAR * pszText, struct MessageWindowData *dat)
 				else if(p1[1] == (TCHAR)'\\' || p1[1] == (TCHAR)'{' || p1[1] == (TCHAR)'}' ) // escaped characters
 				{
 					bTextHasStarted = TRUE;
-					//bJustRemovedRTF = TRUE;
+					bJustRemovedRTF = TRUE;
 					iRemoveChars = 2;
 					_sntprintf(InsertThis, safe_sizeof(InsertThis), _T("%c"), p1[1]);
+
 				}
 				else if(p1[1] == (TCHAR)'\'' ) // special character
 				{
@@ -1415,7 +1436,15 @@ BOOL DoRtfToTags(TCHAR * pszText, struct MessageWindowData *dat)
 				iRemoveChars = 1;
 				break;
 
-            case (TCHAR)' ': // remove spaces following a RTF command
+            /*
+			case (TCHAR)'%': // escape chat -> protocol control character
+				bTextHasStarted = TRUE;
+				bJustRemovedRTF = FALSE;
+				iRemoveChars = 1;
+				_sntprintf(InsertThis, sizeof(InsertThis), _T("%%%%"));
+				break;
+            */
+			case (TCHAR)' ': // remove spaces following a RTF command
 				if(bJustRemovedRTF)
 					iRemoveChars = 1;
 				bJustRemovedRTF = FALSE;
@@ -1577,31 +1606,19 @@ void GetContactUIN(HWND hwndDlg, struct MessageWindowData *dat)
 }
 
 static int g_IEViewAvail = -1;
-static int g_HPPAvail = -1;
-
-#define WANT_IEVIEW_LOG 1
-#define WANT_HPP_LOG 2
 
 unsigned int GetIEViewMode(HWND hwndDlg, struct MessageWindowData *dat)
 {
-    int iWantIEView = 0, iWantHPP = 0;
+    int iWantIEView = 0;
 
     if(g_IEViewAvail == -1)
         g_IEViewAvail = ServiceExists(MS_IEVIEW_WINDOW);
 
-    if(g_HPPAvail == -1)
-        g_HPPAvail = ServiceExists("History++/ExtGrid/NewWindow");
-
-    myGlobals.g_WantIEView = g_IEViewAvail && DBGetContactSettingByte(NULL, SRMSGMOD_T, "default_ieview", 0);
-    myGlobals.g_WantHPP = g_HPPAvail && DBGetContactSettingByte(NULL, SRMSGMOD_T, "default_hpp", 0);
-
+    myGlobals.g_WantIEView = g_IEViewAvail && DBGetContactSettingByte(NULL, SRMSGMOD_T, "default_ieview", 1);
     iWantIEView = (myGlobals.g_WantIEView) || (DBGetContactSettingByte(dat->hContact, SRMSGMOD_T, "ieview", 0) == 1 && g_IEViewAvail);
     iWantIEView = (DBGetContactSettingByte(dat->hContact, SRMSGMOD_T, "ieview", 0) == (BYTE)-1) ? 0 : iWantIEView;
 
-    iWantHPP = (myGlobals.g_WantHPP) || (DBGetContactSettingByte(dat->hContact, SRMSGMOD_T, "hpplog", 0) == 1 && g_HPPAvail);
-    iWantHPP = (DBGetContactSettingByte(dat->hContact, SRMSGMOD_T, "hpplog", 0) == (BYTE)-1) ? 0 : iWantHPP;
-
-    return iWantHPP ? WANT_HPP_LOG : (iWantIEView ? WANT_IEVIEW_LOG : 0);
+    return iWantIEView;
 }
 
 void GetRealIEViewWindow(HWND hwndDlg, struct MessageWindowData *dat)
@@ -1609,47 +1626,15 @@ void GetRealIEViewWindow(HWND hwndDlg, struct MessageWindowData *dat)
     POINT pt;
 
     pt.x = 10; pt.y = dat->panelHeight + 10;
-    if(dat->hwndIEView)
-        dat->hwndIWebBrowserControl = ChildWindowFromPointEx(dat->hwndIEView, pt, CWP_SKIPDISABLED);
-    else if(dat->hwndHPP)
-        dat->hwndIWebBrowserControl = ChildWindowFromPointEx(dat->hwndHPP, pt, CWP_SKIPDISABLED);
-}
-
-static void CheckAndDestroyHPP(struct MessageWindowData *dat)
-{
-    if(dat->hwndHPP) {
-        IEVIEWWINDOW ieWindow;
-        ieWindow.cbSize = sizeof(IEVIEWWINDOW);
-        ieWindow.iType = IEW_DESTROY;
-        ieWindow.hwnd = dat->hwndHPP;
-        CallService(MS_HPP_EG_WINDOW, 0, (LPARAM)&ieWindow);
-        dat->hwndHPP = 0;
-    }
-}
-
-static void CheckAndDestroyIEView(struct MessageWindowData *dat)
-{
-    if(dat->hwndIEView) {
-        IEVIEWWINDOW ieWindow;
-        ieWindow.cbSize = sizeof(IEVIEWWINDOW);
-        ieWindow.iType = IEW_DESTROY;
-        ieWindow.hwnd = dat->hwndIEView;
-        if(dat->oldIEViewProc)
-            SetWindowLong(dat->hwndIEView, GWL_WNDPROC, (LONG)dat->oldIEViewProc);
-        CallService(MS_IEVIEW_WINDOW, 0, (LPARAM)&ieWindow);
-        dat->oldIEViewProc = 0;
-        dat->hwndIEView = 0;
-    }
+    dat->hwndIWebBrowserControl = ChildWindowFromPointEx(dat->hwndIEView, pt, CWP_SKIPDISABLED);
 }
 
 void SetMessageLog(HWND hwndDlg, struct MessageWindowData *dat)
 {
-    unsigned int iLogMode = GetIEViewMode(hwndDlg, dat);
+    unsigned int iWantIEView = GetIEViewMode(hwndDlg, dat);
 
-    if (iLogMode == WANT_IEVIEW_LOG && dat->hwndIEView == 0) {
+    if (iWantIEView && dat->hwndIEView == 0) {
         IEVIEWWINDOW ieWindow;
-
-        CheckAndDestroyHPP(dat);
         ieWindow.cbSize = sizeof(IEVIEWWINDOW);
         ieWindow.iType = IEW_CREATE;
         ieWindow.dwFlags = 0;
@@ -1663,49 +1648,36 @@ void SetMessageLog(HWND hwndDlg, struct MessageWindowData *dat)
         dat->hwndIEView = ieWindow.hwnd;
         ShowWindow(GetDlgItem(hwndDlg, IDC_LOG), SW_HIDE);
         EnableWindow(GetDlgItem(hwndDlg, IDC_LOG), FALSE);
+        //GetRealIEViewWindow(hwndDlg, dat);
     }
-    else if(iLogMode == WANT_HPP_LOG && dat->hwndHPP == 0) {
-        IEVIEWWINDOW ieWindow;
-
-        CheckAndDestroyIEView(dat);
-        ieWindow.cbSize = sizeof(IEVIEWWINDOW);
-        ieWindow.iType = IEW_CREATE;
-        ieWindow.dwFlags = 0;
-        ieWindow.dwMode = IEWM_TABSRMM;
-        ieWindow.parent = hwndDlg;
-        ieWindow.x = 0;
-        ieWindow.y = 0;
-        ieWindow.cx = 10;
-        ieWindow.cy = 10;
-        CallService(MS_HPP_EG_WINDOW, 0, (LPARAM)&ieWindow);
-        dat->hwndHPP = ieWindow.hwnd;
-        ShowWindow(GetDlgItem(hwndDlg, IDC_LOG), SW_HIDE);
-        EnableWindow(GetDlgItem(hwndDlg, IDC_LOG), FALSE);
-    }
-    else {
-        if(iLogMode != WANT_IEVIEW_LOG)
-            CheckAndDestroyIEView(dat);
-        if(iLogMode != WANT_HPP_LOG)
-            CheckAndDestroyHPP(dat);
+    else if(!iWantIEView) {
+        if(dat->hwndIEView) {
+            IEVIEWWINDOW ieWindow;
+            ieWindow.cbSize = sizeof(IEVIEWWINDOW);
+            ieWindow.iType = IEW_DESTROY;
+            ieWindow.hwnd = dat->hwndIEView;
+            if(dat->oldIEViewProc)
+                SetWindowLong(dat->hwndIEView, GWL_WNDPROC, (LONG)dat->oldIEViewProc);
+            CallService(MS_IEVIEW_WINDOW, 0, (LPARAM)&ieWindow);
+            dat->oldIEViewProc = 0;
+        }
         ShowWindow(GetDlgItem(hwndDlg, IDC_LOG), SW_SHOW);
         EnableWindow(GetDlgItem(hwndDlg, IDC_LOG), TRUE);
         dat->hwndIEView = 0;
         dat->hwndIWebBrowserControl = 0;
-        dat->hwndHPP = 0;
     }
 }
 
 void SwitchMessageLog(HWND hwndDlg, struct MessageWindowData *dat, int iMode)
 {
-    if(iMode) {            // switch from rtf to IEview or hpp
+    if(iMode) {            // switch from rtf to IEview
         SetDlgItemText(hwndDlg, IDC_LOG, _T(""));
         EnableWindow(GetDlgItem(hwndDlg, IDC_LOG), FALSE);
         ShowWindow(GetDlgItem(hwndDlg, IDC_LOG), SW_HIDE);
         SetMessageLog(hwndDlg, dat);
     }
-    else                      // switch from IEView or hpp to rtf
+    else                      // switch from IEView to rtf
         SetMessageLog(hwndDlg, dat);
-
     SetDialogToType(hwndDlg);
     SendMessage(hwndDlg, DM_REMAKELOG, 0, 0);
     SendMessage(hwndDlg, WM_SIZE, 0, 0);
@@ -1787,8 +1759,8 @@ void SaveSplitter(HWND hwndDlg, struct MessageWindowData *dat)
     }
 
     if(dat->splitterY < MINSPLITTERY || dat->splitterY < 0)
-        dat->splitterY = MINSPLITTERY;
-        
+		dat->splitterY = MINSPLITTERY;
+
     if(dat->dwFlagsEx & MWF_SHOW_SPLITTEROVERRIDE)
         DBWriteContactSettingDword(dat->hContact, SRMSGMOD_T, "splitsplity", dat->splitterY);
     else
@@ -1888,7 +1860,7 @@ void GetLocaleID(struct MessageWindowData *dat, char *szKLName)
     dat->lcID[0] = toupper(szLI[0]);
     dat->lcID[1] = toupper(szLI[1]);
     dat->lcID[2] = 0;
-    GetStringTypeA(dat->lcid, CT_CTYPE2, "הצü", 3, wCtype2);
+    GetStringTypeA(dat->lcid, CT_CTYPE2, "צהü", 3, wCtype2);
     pf2.cbSize = sizeof(pf2);
     pf2.dwMask = PFM_RTLPARA;
     SendDlgItemMessage(dat->hwnd, IDC_MESSAGE, EM_GETPARAFORMAT, 0, (LPARAM)&pf2);
@@ -1910,6 +1882,7 @@ void GetLocaleID(struct MessageWindowData *dat, char *szKLName)
         SendDlgItemMessage(dat->hwnd, IDC_MESSAGE, EM_SETLANGOPTIONS, 0, (LPARAM) SendDlgItemMessage(dat->hwnd, IDC_MESSAGE, EM_GETLANGOPTIONS, 0, 0) & ~IMF_AUTOKEYBOARD);
     }
 }
+
 
 // Returns true if the unicode buffer only contains 7-bit characters.
 BOOL IsUnicodeAscii(const wchar_t* pBuffer, int nSize)
@@ -1983,14 +1956,10 @@ void LoadOwnAvatar(HWND hwndDlg, struct MessageWindowData *dat)
 	if(ServiceExists(MS_AV_GETMYAVATAR))
 		ace = (AVATARCACHEENTRY *)CallService(MS_AV_GETMYAVATAR, 0, (LPARAM)(dat->bIsMeta ? dat->szMetaProto : dat->szProto));
 
-	if(ace) {
-        dat->hOwnPic = ace->hbmPic;
-        dat->ownAce = ace;
-    }
-	else {
-        dat->hOwnPic = myGlobals.g_hbmUnknown;
-        dat->ownAce = NULL;
-    }
+	if(ace)
+		dat->hOwnPic = ace->hbmPic;
+	else
+		dat->hOwnPic = myGlobals.g_hbmUnknown;
 
     if(dat->dwFlagsEx & MWF_SHOW_INFOPANEL) {
         BITMAP bm;
@@ -2168,36 +2137,9 @@ int MsgWindowDrawHandler(WPARAM wParam, LPARAM lParam, HWND hwndDlg, struct Mess
 		HPEN hPenBorder = 0, hPenOld = 0;
 		HRGN clipRgn = 0;
         int  iRad = myGlobals.m_WinVerMajor >= 5 ? 4 : 6;
-        BOOL flashAvatar = FALSE;
-
-		if(myGlobals.g_FlashAvatarAvail && (!bPanelPic || (bPanelPic && dat->showInfoPic == 1))) {
-			FLASHAVATAR fa = {0}; 
-
-			fa.id = 25367;
-			fa.cProto = dat->szProto;
-			if(!bPanelPic && (dat->dwFlagsEx & MWF_SHOW_INFOPANEL)) {
-				fa.hParentWindow = GetDlgItem(hwndDlg, IDC_CONTACTPIC);
-				CallService(MS_FAVATAR_MAKE, (WPARAM)&fa, 0);
-				EnableWindow(GetDlgItem(hwndDlg, IDC_CONTACTPIC), fa.hWindow != 0);
-			} else {
-				fa.hContact = dat->hContact;
-				fa.hParentWindow = GetDlgItem(hwndDlg, (dat->dwFlagsEx & MWF_SHOW_INFOPANEL) ? IDC_PANELPIC : IDC_CONTACTPIC);
-				CallService(MS_FAVATAR_MAKE, (WPARAM)&fa, 0);
-				EnableWindow(GetDlgItem(hwndDlg, (dat->dwFlagsEx & MWF_SHOW_INFOPANEL) ? IDC_PANELPIC : IDC_CONTACTPIC), fa.hWindow != 0);
-				dat->hwndFlash = fa.hWindow;
-			}
-			if(fa.hWindow != 0) {
-				bminfo.bmHeight = FAVATAR_HEIGHT;
-				bminfo.bmWidth = FAVATAR_WIDTH;
-				CallService(MS_FAVATAR_SETBKCOLOR, (WPARAM)&fa, (LPARAM)dat->avatarbg);
-				flashAvatar = TRUE;
-			}
-		}
 
         if(bPanelPic) {
-			if(!flashAvatar) {
-            	GetObject(dat->ace ? dat->ace->hbmPic : myGlobals.g_hbmUnknown, sizeof(bminfo), &bminfo);
-			}
+            GetObject(dat->ace ? dat->ace->hbmPic : myGlobals.g_hbmUnknown, sizeof(bminfo), &bminfo);
 			if((dat->ace && dat->showInfoPic && !(dat->ace->dwFlags & AVS_HIDEONCLIST)) || dat->showInfoPic)
                 aceFlags = dat->ace ? dat->ace->dwFlags : 0;
 			else {
@@ -2213,9 +2155,6 @@ int MsgWindowDrawHandler(WPARAM wParam, LPARAM lParam, HWND hwndDlg, struct Mess
                 if(dat->ace)
                     aceFlags = dat->ace->dwFlags;
             }
-            else if(dat->ownAce)
-                aceFlags = dat->ownAce->dwFlags;
-
             GetObject(dat->dwFlagsEx & MWF_SHOW_INFOPANEL ? dat->hOwnPic : (dat->ace ? dat->ace->hbmPic : myGlobals.g_hbmUnknown), sizeof(bminfo), &bminfo);
         }
     
@@ -2225,6 +2164,14 @@ int MsgWindowDrawHandler(WPARAM wParam, LPARAM lParam, HWND hwndDlg, struct Mess
         cy = rcClient.bottom;
         if(cx < 5 || cy < 5)
             return TRUE;
+
+        hPenBorder = CreatePen(PS_SOLID, 1, (COLORREF)DBGetContactSettingDword(NULL, SRMSGMOD_T, "avborderclr", RGB(0, 0, 0)));
+        
+        hdcDraw = CreateCompatibleDC(dis->hDC);
+        hbmDraw = CreateCompatibleBitmap(dis->hDC, cx, cy);
+        hbmOld = SelectObject(hdcDraw, hbmDraw);
+        
+		hPenOld = SelectObject(hdcDraw, hPenBorder);
 
         if(bPanelPic) {
             if(bminfo.bmHeight > bminfo.bmWidth) {
@@ -2258,18 +2205,6 @@ int MsgWindowDrawHandler(WPARAM wParam, LPARAM lParam, HWND hwndDlg, struct Mess
                 dNewWidth = (double)(rc.right) * 0.8;
             iMaxHeight = dat->iRealAvatarHeight;
         }
-
-		if(flashAvatar) 
-            return TRUE;
-
-        hPenBorder = CreatePen(PS_SOLID, 1, (COLORREF)DBGetContactSettingDword(NULL, SRMSGMOD_T, "avborderclr", RGB(0, 0, 0)));
-        
-        hdcDraw = CreateCompatibleDC(dis->hDC);
-        hbmDraw = CreateCompatibleBitmap(dis->hDC, cx, cy);
-        hbmOld = SelectObject(hdcDraw, hbmDraw);
-        
-		hPenOld = SelectObject(hdcDraw, hPenBorder);
-
         bgBrush = CreateSolidBrush(dat->avatarbg);
         hOldBrush = SelectObject(hdcDraw, bgBrush);
 		rcFrame = rcClient;
@@ -2350,7 +2285,26 @@ int MsgWindowDrawHandler(WPARAM wParam, LPARAM lParam, HWND hwndDlg, struct Mess
         SelectObject(hdcDraw, hOldBrush);
         DeleteObject(bgBrush);
         DeleteObject(hPenBorder);
-        BitBlt(dis->hDC, 0, 0, cx, cy, hdcDraw, 0, 0, SRCCOPY);
+        if(myGlobals.g_FlashAvatarAvail) {
+            FLASHAVATAR fa = {0}; 
+
+            fa.id = 25367;
+            fa.cProto = dat->szProto;
+			if(!bPanelPic && (dat->dwFlagsEx & MWF_SHOW_INFOPANEL)) {
+				//CallService(MS_FAVATAR_GETINFO, (WPARAM)&fa, 0);
+				fa.hParentWindow = GetDlgItem(hwndDlg, IDC_CONTACTPIC);
+				CallService(MS_FAVATAR_MAKE, (WPARAM)&fa, 0);
+			} else {
+				fa.hContact = dat->hContact;
+                fa.hParentWindow = GetDlgItem(hwndDlg, (dat->dwFlagsEx & MWF_SHOW_INFOPANEL) ? IDC_PANELPIC : IDC_CONTACTPIC);
+                CallService(MS_FAVATAR_MAKE, (WPARAM)&fa, 0);
+                dat->hwndFlash = fa.hWindow;
+            }
+            if(fa.hWindow == 0)
+                BitBlt(dis->hDC, 0, 0, cx, cy, hdcDraw, 0, 0, SRCCOPY);
+        }
+        else
+            BitBlt(dis->hDC, 0, 0, cx, cy, hdcDraw, 0, 0, SRCCOPY);
         SelectObject(hdcDraw, hbmOld);
         DeleteObject(hbmDraw);
         DeleteDC(hdcDraw);
@@ -2818,9 +2772,6 @@ int MY_GetContactDisplayNameW(HANDLE hContact, wchar_t *szwBuf, unsigned int siz
 	CONTACTINFO ci;
     char *szBasenick = NULL;
         
-    if(szProto == NULL)
-        szProto = (char *)CallService(MS_PROTO_GETCONTACTBASEPROTO, (WPARAM)hContact, 0);
-
     if(myGlobals.bUnicodeBuild) {
     	ZeroMemory(&ci, sizeof(ci));
     	ci.cbSize = sizeof(ci);
@@ -3048,10 +2999,10 @@ void GetMyNick(HWND hwndDlg, struct MessageWindowData *dat)
         else if(ci.type == CNFT_DWORD)
             _ltow(ci.dVal, dat->szMyNickname, 10);
         else
-            _tcsncpy(dat->szMyNickname, _T("<undef>"), 110);                // that really should *never* happen
+            _tcsncpy(dat->szMyNickname, _T("<undef>"), 110);
     }
     else
-        _tcsncpy(dat->szMyNickname, _T("<undef>"), 110);                    // same here
+        _tcsncpy(dat->szMyNickname, _T(""), 110);
 #else
     if(!CallService(MS_CONTACT_GETCONTACTINFO, 0, (LPARAM)&ci)) {
         if(ci.type == CNFT_ASCIIZ) {
@@ -3115,65 +3066,3 @@ int FindRTLLocale(struct MessageWindowData *dat)
 
     return result;
 }
-
-HICON MY_GetContactIcon(struct MessageWindowData *dat)
-{
-    if(dat->bIsMeta)
-        return CopyIcon(LoadSkinnedProtoIcon(dat->szMetaProto, dat->wMetaStatus));
-
-    if (ServiceExists(MS_CLIST_GETCONTACTICON) && ServiceExists(MS_CLIST_GETICONSIMAGELIST)) 
-    {
-        HIMAGELIST iml = (HIMAGELIST)CallService(MS_CLIST_GETICONSIMAGELIST,0,0);
-        int index = CallService(MS_CLIST_GETCONTACTICON,(WPARAM)dat->hContact,0);
-        if (iml && index>=0)
-            return ImageList_GetIcon(iml,index,ILD_NORMAL);
-    }
-    return CopyIcon(LoadSkinnedProtoIcon(dat->szProto, dat->wStatus));
-}
-
-#ifdef __MATHMOD_SUPPORT
-void MTH_updatePreview(HWND hwndDlg, struct MessageWindowData *dat)
-{	
-	TMathWindowInfo mathWndInfo;
-    HWND hwndEdit = GetDlgItem(hwndDlg, dat->bType == SESSIONTYPE_IM ? IDC_MESSAGE : IDC_CHAT_MESSAGE);
-	int len = GetWindowTextLengthA(hwndEdit);
-	RECT windRect;
-	char * thestr = malloc(len+5);
-
-	GetWindowTextA(hwndEdit, thestr, len+1);
-	GetWindowRect(dat->pContainer->hwnd,&windRect);
-	mathWndInfo.top=windRect.top;
-	mathWndInfo.left=windRect.left;
-	mathWndInfo.right=windRect.right;
-	mathWndInfo.bottom=windRect.bottom;
-
-	CallService(MTH_SETFORMULA,0,(LPARAM) thestr);
-	CallService(MTH_RESIZE,0,(LPARAM) &mathWndInfo);
-	free(thestr);
-}
-
-void MTH_updateMathWindow(HWND hwndDlg, struct MessageWindowData *dat)
-{
-    WINDOWPLACEMENT cWinPlace;
-
-    if(!myGlobals.m_MathModAvail)
-        return;
-    
-    MTH_updatePreview(hwndDlg, dat);
-    CallService(MTH_SHOW, 0, 0);
-    cWinPlace.length=sizeof(WINDOWPLACEMENT);
-    GetWindowPlacement(dat->pContainer->hwnd, &cWinPlace);
-    return;
-    /*
-    if (cWinPlace.showCmd == SW_SHOWMAXIMIZED)
-    {
-        RECT rcWindow;
-        GetWindowRect(hwndDlg, &rcWindow);
-        if(CallService(MTH_GET_PREVIEW_SHOWN,0,0))
-            MoveWindow(dat->pContainer->hwnd,rcWindow.left,rcWindow.top,rcWindow.right-rcWindow.left,GetSystemMetrics(SM_CYSCREEN)-CallService(MTH_GET_PREVIEW_HEIGHT ,0,0),1);
-        else
-            MoveWindow(dat->pContainer->hwnd,rcWindow.left,rcWindow.top,rcWindow.right-rcWindow.left,GetSystemMetrics(SM_CYSCREEN),1);
-    }*/
-}
-#endif
-

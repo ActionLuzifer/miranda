@@ -43,9 +43,10 @@ extern int SetHideOffline(WPARAM wParam, LPARAM lParam);
 extern struct CluiData g_CluiData;
 extern struct ExtraCache *g_ExtraCache;
 extern int g_nextExtraCacheEntry;
-int g_maxExtraCacheEntry = 0;
+extern int g_maxExtraCacheEntry;
 extern pfnDrawAlpha pDrawAlpha;
 extern DWORD g_gdiplusToken;
+extern HANDLE hSoundHook, hIcoLibChanged;
 extern HIMAGELIST himlExtraImages;
 extern DWORD ( WINAPI *pfnSetLayout )(HDC, DWORD);
 
@@ -53,10 +54,14 @@ struct LIST_INTERFACE li;
 struct MM_INTERFACE memoryManagerInterface;
 
 HMENU  BuildGroupPopupMenu( struct ClcGroup* group );
+int    CListTrayNotify( MIRANDASYSTRAYNOTIFY *msn );
 struct ClcContact* CreateClcContact( void );
 struct CListEvent* fnCreateEvent( void );
 void   ReloadThemedOptions();
+void   TrayIconIconsChanged(void);
+void   TrayIconSetToBase(char *szPreferredProto);
 void   TrayIconUpdateBase(const char *szChangedProto);
+void   TrayIconUpdateWithImageList(int iImage, const TCHAR *szNewTip, char *szPreferredProto);
 void    RegisterCLUIFrameClasses();
 
 void GetDefaultFontSetting(int i, LOGFONT *lf, COLORREF *colour);
@@ -102,36 +107,17 @@ int TrayIconProcessMessage(WPARAM wParam, LPARAM lParam);
 void ( *saveRecalcScrollBar )(HWND hwnd, struct ClcData *dat);
 void RecalcScrollBar(HWND hwnd, struct ClcData *dat);
 
-PLUGININFOEX pluginInfo = {
+PLUGININFO pluginInfo = {
 #if defined(_UNICODE)
-		sizeof(PLUGININFOEX), "CList Nicer+ (Unicode)", PLUGIN_MAKE_VERSION(0, 7, 2, 0),
+	sizeof(PLUGININFO), "CList Nicer+ (Unicode)", PLUGIN_MAKE_VERSION(0, 7, 0, 5),
 #else
-		sizeof(PLUGININFOEX), "CList Nicer+", PLUGIN_MAKE_VERSION(0, 7, 2, 0),
-#endif		
-		"Display contacts, event notifications, protocol status",
-		"Pixel, egoDust, cyreve, Nightwish", "", "Copyright 2000-2006 Miranda-IM project", "http://www.miranda-im.org",
-		UNICODE_AWARE,
-		DEFMOD_CLISTALL,
-#if defined(_UNICODE)
-		{0x8f79b4ee, 0xeb48, 0x4a03, { 0x87, 0x3e, 0x27, 0xbe, 0x6b, 0x7e, 0x9a, 0x25 }} //{8F79B4EE-EB48-4a03-873E-27BE6B7E9A25}
-#else
-		{0x5a070cec, 0xb2ab, 0x4bbe, { 0x8e, 0x48, 0x9c, 0x8d, 0xcd, 0xda, 0x14, 0xc3 }} //{5A070CEC-B2AB-4bbe-8E48-9C8DCDDA14C3}
-#endif
-};
-
-/*
-PLUGININFO oldPluginInfo = {
-#if defined(_UNICODE)
-		sizeof(PLUGININFO), "CList Nicer+ (Unicode)", PLUGIN_MAKE_VERSION(0, 7, 2, 0),
-#else
-		sizeof(PLUGININFO), "CList Nicer+", PLUGIN_MAKE_VERSION(0, 7, 2, 0),
+	sizeof(PLUGININFO), "CList Nicer+", PLUGIN_MAKE_VERSION(0, 7, 0, 5),
 #endif
 		"Display contacts, event notifications, protocol status",
 		"Pixel, egoDust, cyreve, Nightwish", "", "Copyright 2000-2006 Miranda-IM project", "http://www.miranda-im.org",
 		UNICODE_AWARE,
 		DEFMOD_CLISTALL
 };
-*/
 
 #if defined(_UNICODE)
 void __forceinline _DebugTraceW(const wchar_t *fmt, ...)
@@ -185,36 +171,16 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD dwReason, LPVOID reserved)
 	return TRUE;
 }
 
-__declspec(dllexport) PLUGININFOEX * MirandaPluginInfoEx(DWORD mirandaVersion)
+__declspec(dllexport) PLUGININFO * MirandaPluginInfo(DWORD mirandaVersion)
 {
 #if defined(_UNICODE)
-	pluginInfo.flags |= UNICODE_AWARE;
+	pluginInfo.isTransient |= UNICODE_AWARE;
 	if (mirandaVersion < PLUGIN_MAKE_VERSION(0, 4, 2, 0))
 #else
 	if (mirandaVersion < PLUGIN_MAKE_VERSION(0, 4, 0, 1))
 #endif
 		return NULL;
 	return &pluginInfo;
-}
-
-/*
-__declspec(dllexport) PLUGININFO * MirandaPluginInfo(DWORD mirandaVersion)
-{
-#if defined(_UNICODE)
-	pluginInfo.flags |= UNICODE_AWARE;
-	if (mirandaVersion < PLUGIN_MAKE_VERSION(0, 4, 2, 0))
-#else
-	if (mirandaVersion < PLUGIN_MAKE_VERSION(0, 4, 0, 1))
-#endif
-		return NULL;
-	return &oldPluginInfo;
-}
-*/
-
-static const MUUID interfaces[] = {MIID_CLIST, MIID_LAST};
-__declspec(dllexport) const MUUID * MirandaPluginInterfaces(void)
-{
-	return interfaces;
 }
 
 int  LoadContactListModule(void);
@@ -224,6 +190,13 @@ int  InitGdiPlus();
 
 static int systemModulesLoaded(WPARAM wParam, LPARAM lParam)
 {
+#if defined(_UNICODE)
+	if ( !ServiceExists( MS_DB_CONTACT_GETSETTING_STR )) {
+		MessageBox(NULL, TranslateT( "This plugin requires miranda database plugin version 0.5.1.0 or later" ), _T("CList Nicer+"), MB_OK );
+		return 1;
+	}
+#endif
+
 	g_CluiData.bMetaAvail = ServiceExists(MS_MC_GETDEFAULTCONTACT) ? TRUE : FALSE;
 	if(g_CluiData.bMetaAvail)
 		mir_snprintf(g_CluiData.szMetaName, 256, "%s", (char *)CallService(MS_MC_GETPROTOCOLNAME, 0, 0));
@@ -264,8 +237,8 @@ int __declspec(dllexport) CListInitialise(PLUGINLINK * link)
 	pfnSetLayout = (DWORD ( WINAPI *)(HDC, DWORD))GetProcAddress( GetModuleHandleA( "GDI32.DLL" ), "SetLayout" );
 
 	InitGdiPlus();
-	LoadCLCButtonModule();
-	RegisterCLUIFrameClasses();
+    LoadCLCButtonModule();
+    RegisterCLUIFrameClasses();
 	hUserDll = GetModuleHandleA("user32.dll");
 	if (hUserDll) {
 		MySetLayeredWindowAttributes = (BOOL(WINAPI *)(HWND, COLORREF, BYTE, DWORD))GetProcAddress(hUserDll, "SetLayeredWindowAttributes");
@@ -286,10 +259,7 @@ int __declspec(dllexport) CListInitialise(PLUGINLINK * link)
 	{
 		int iCount = CallService(MS_DB_CONTACT_GETCOUNT, 0, 0);
 		
-		iCount += 20;
-        if(iCount < 300)
-            iCount = 300;
-
+		iCount += 10;
 		g_ExtraCache = malloc(sizeof(struct ExtraCache) * iCount);
 		ZeroMemory(g_ExtraCache, sizeof(struct ExtraCache) * iCount);
 		g_nextExtraCacheEntry = 0;
@@ -330,7 +300,7 @@ int __declspec(dllexport) CListInitialise(PLUGINLINK * link)
 	g_CluiData.bShowXStatusOnSbar = DBGetContactSettingByte(NULL, "CLUI", "xstatus_sbar", 0);
 	g_CluiData.bLayeredHack = DBGetContactSettingByte(NULL, "CLUI", "layeredhack", 1);
 	g_CluiData.bFirstRun = DBGetContactSettingByte(NULL, "CLUI", "firstrun", 1);
-	g_CluiData.langPackCP = CallService(MS_LANGPACK_GETCODEPAGE, 0, 0);
+    g_CluiData.langPackCP = CallService(MS_LANGPACK_GETCODEPAGE, 0, 0);
 	{
 		DWORD sortOrder = DBGetContactSettingDword(NULL, "CList", "SortOrder", SORTBY_NAME);
 		g_CluiData.sortOrder[0] = LOBYTE(LOWORD(sortOrder));
@@ -364,19 +334,20 @@ int __declspec(dllexport) CListInitialise(PLUGINLINK * link)
 		pDrawAlpha = (g_CluiData.dwFlags & CLUI_FRAME_GDIPLUS && g_gdiplusToken) ? (pfnDrawAlpha)GDIp_DrawAlpha : (pfnDrawAlpha)DrawAlpha;
 
 	if(DBGetContactSettingByte(NULL, "Skin", "UseSound", 0) != g_CluiData.soundsOff)
-		DBWriteContactSettingByte(NULL, "Skin", "UseSound", (BYTE)(g_CluiData.soundsOff ? 0 : 1));
+		DBWriteContactSettingByte(NULL, "Skin", "UseSound", g_CluiData.soundsOff ? 0 : 1);
 
 	// get the clist interface
 	pcli = ( CLIST_INTERFACE* )CallService(MS_CLIST_RETRIEVE_INTERFACE, 0, (LPARAM)g_hInst);
 	if ( (int)pcli == CALLSERVICE_NOTFOUND ) {
 LBL_Error:
-		MessageBoxA( NULL, "This plugin requires Miranda IM 0.7.0.8 or later", "Fatal error", MB_OK );
+		MessageBoxA( NULL, "This plugin requires Miranda IM 0.5 or later", "Fatal error", MB_OK );
 		return 1;
 	}
-	if ( pcli->version < 4 ) // don't join it with the previous if()
+	if ( pcli->version < 3 ) // don't join it with the previous if()
 		goto LBL_Error;
 
 	pcli->pfnBuildGroupPopupMenu = BuildGroupPopupMenu;
+	pcli->pfnCListTrayNotify = CListTrayNotify;
 	pcli->pfnCluiProtocolStatusChanged = CluiProtocolStatusChanged;
 	pcli->pfnCompareContacts = CompareContacts;
 	pcli->pfnCreateClcContact = CreateClcContact;
@@ -395,8 +366,11 @@ LBL_Error:
 	pcli->pfnRebuildEntireList = RebuildEntireList;
 	pcli->pfnRowHitTest = RowHeights_HitTest;
 	pcli->pfnScrollTo = ScrollTo;
+	pcli->pfnTrayIconIconsChanged = TrayIconIconsChanged;
+	pcli->pfnTrayIconSetToBase = TrayIconSetToBase;
 	pcli->pfnTrayIconUpdateBase = TrayIconUpdateBase;
-	pcli->pfnSetHideOffline = SetHideOffline;
+	pcli->pfnTrayIconUpdateWithImageList = TrayIconUpdateWithImageList;
+    pcli->pfnSetHideOffline = SetHideOffline;
 	pcli->pfnShowHide = ShowHide;
 
 	saveAddContactToGroup = pcli->pfnAddContactToGroup; pcli->pfnAddContactToGroup = AddContactToGroup;
@@ -419,6 +393,7 @@ LBL_Error:
 	if (rc == 0)
 		rc = LoadCLCModule();
 	HookEvent(ME_SYSTEM_MODULESLOADED, systemModulesLoaded);
+	HookEvent(ME_SYSTEM_MODULESLOADED, MenuModulesLoaded);
 	return rc;
 }
 

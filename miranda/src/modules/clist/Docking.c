@@ -32,14 +32,20 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define DOCKED_RIGHT   2
 static int docked;
 
+typedef HMONITOR WINAPI MyMonitorFromPoint(POINT, DWORD);
+typedef BOOL WINAPI MyGetMonitorInfo(HMONITOR, LPMONITORINFO);
+
 static void Docking_GetMonitorRectFromPoint(POINT pt, RECT * rc)
 {
-	if ( MyMonitorFromPoint ) {
+	HMODULE hUserInstance = GetModuleHandleA("user32");
+
+	MyMonitorFromPoint *LPMyMonitorFromPoint = (MyMonitorFromPoint *) GetProcAddress(hUserInstance, "MonitorFromPoint");
+	if (LPMyMonitorFromPoint) {
 		MONITORINFO monitorInfo;
-		HMONITOR hMonitor = MyMonitorFromPoint(pt, MONITOR_DEFAULTTONEAREST); // always returns a valid value
+		HMONITOR hMonitor = LPMyMonitorFromPoint(pt, MONITOR_DEFAULTTONEAREST); // always returns a valid value
 		monitorInfo.cbSize = sizeof(MONITORINFO);
 
-		if ( MyGetMonitorInfo(hMonitor, &monitorInfo)) {
+		if ((MyGetMonitorInfo *) GetProcAddress(hUserInstance, "GetMonitorInfoA") (hMonitor, &monitorInfo)) {
 			CopyMemory(rc, &monitorInfo.rcMonitor, sizeof(RECT));
 			return;
 		}

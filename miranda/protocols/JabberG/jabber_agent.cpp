@@ -2,7 +2,7 @@
 
 Jabber Protocol Plugin for Miranda IM
 Copyright ( C ) 2002-04  Santithorn Bunchua
-Copyright ( C ) 2005-07  George Hazan
+Copyright ( C ) 2005-06  George Hazan
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -19,7 +19,7 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 File name      : $Source: /cvsroot/miranda/miranda/protocols/JabberG/jabber_agent.cpp,v $
-)Revision       : $Revision$
+Revision       : $Revision$
 Last change on : $Date$
 Last change by : $Author$
 
@@ -65,7 +65,7 @@ static BOOL CALLBACK JabberAgentsDlgProc( HWND hwndDlg, UINT msg, WPARAM wParam,
 	switch ( msg ) {
 	case WM_INITDIALOG:
 		hwndJabberAgents = hwndDlg;
-		SendMessage( hwndDlg, WM_SETICON, ICON_BIG, ( LPARAM )LoadIconEx( "Agents" ));
+		SendMessage( hwndDlg, WM_SETICON, ICON_BIG, ( LPARAM )LoadIcon( hInst, MAKEINTRESOURCE( IDI_AGENTS )) );
 		TranslateDialogDefault( hwndDlg );
 		// Add columns to the top list
 		lv = GetDlgItem( hwndDlg, IDC_AGENT_LIST );
@@ -501,7 +501,7 @@ static BOOL CALLBACK JabberAgentManualRegDlgProc( HWND hwndDlg, UINT msg, WPARAM
 	case WM_INITDIALOG:
 		EnableWindow( GetParent( hwndDlg ), FALSE );
 		dontEnableParent = FALSE;
-		SendMessage( hwndDlg, WM_SETICON, ICON_BIG, ( LPARAM )LoadIconEx( "Agents" ));
+		SendMessage( hwndDlg, WM_SETICON, ICON_BIG, ( LPARAM )LoadIcon( hInst, MAKEINTRESOURCE( IDI_AGENTS )) );
 		TranslateDialogDefault( hwndDlg );
 		return TRUE;
 	case WM_COMMAND:

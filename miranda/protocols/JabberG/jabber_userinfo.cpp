@@ -2,7 +2,7 @@
 
 Jabber Protocol Plugin for Miranda IM
 Copyright ( C ) 2002-04  Santithorn Bunchua
-Copyright ( C ) 2005-07  George Hazan
+Copyright ( C ) 2005-06  George Hazan
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -30,6 +30,7 @@ Last change by : $Author$
 #include <commctrl.h>
 #include "jabber_list.h"
 #include "resource.h"
+#include "sha1.h"
 
 /////////////////////////////////////////////////////////////////////////////////////////
 // JabberUserInfoDlgProc - main user info dialog

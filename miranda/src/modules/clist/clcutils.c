@@ -74,26 +74,10 @@ int fnHitTest(HWND hwnd, struct ClcData *dat, int testx, int testy, struct ClcCo
 	RECT clRect;
 	HFONT hFont;
 	DWORD style = GetWindowLong(hwnd, GWL_STYLE);
-	POINT pt;
-	HWND hwndTmp, hwndRoot;
 
 	if ( flags )
 		*flags = 0;
 	
-	pt.x = testx;
-	pt.y = testy;
-	MapWindowPoints(hwnd, GetDesktopWindow(), &pt, 1);
-
-	hwndRoot = hwnd;
-	while (hwndTmp = GetParent(hwndRoot))
-		hwndRoot = hwndTmp;
-	hwndTmp = ChildWindowFromPointEx(GetDesktopWindow(), pt, CWP_SKIPINVISIBLE|CWP_SKIPTRANSPARENT);
-	if (// [our root window is not under cursor]
-		(hwndTmp != hwndRoot) &&
-		// AND [desktop ("Progman" class) is not under cursor OR our root window is not it's child located under cursor (pinned mode)]
-		!(hwndTmp == FindWindowA("Progman",0)) && (ChildWindowFromPointEx(hwndTmp, pt, CWP_SKIPINVISIBLE|CWP_SKIPTRANSPARENT) == hwndRoot))
-		return -1;
-
 	GetClientRect(hwnd, &clRect);
 	if ( testx < 0 || testy < 0 || testy >= clRect.bottom || testx >= clRect.right ) {
 		if ( flags ) {
@@ -326,8 +310,7 @@ void fnSetGroupExpand(HWND hwnd, struct ClcData *dat, struct ClcGroup *group, in
 	if (newY > posY)
 		newY = posY;
 	cli.pfnRecalcScrollBar(hwnd, dat);
-	if (group->expanded)
-		cli.pfnScrollTo(hwnd, dat, newY, 0);
+	cli.pfnScrollTo(hwnd, dat, newY, 0);
 	nm.hdr.code = CLN_EXPANDED;
 	nm.hdr.hwndFrom = hwnd;
 	nm.hdr.idFrom = GetDlgCtrlID(hwnd);
@@ -440,12 +423,14 @@ void fnDeleteFromContactList(HWND hwnd, struct ClcData *dat)
 		return;
 	switch (contact->type) {
 	case CLCIT_GROUP:
-		CallService(MS_CLIST_GROUPDELETE, (WPARAM)contact->groupId, 0);
+		CallService(MS_CLIST_GROUPDELETE, (WPARAM) (HANDLE) contact->groupId, 0);
 		break;
 	case CLCIT_CONTACT:
-		CallService("CList/DeleteContactCommand", (WPARAM)contact->hContact, (LPARAM)hwnd );
+		CallService("CList/DeleteContactCommand", (WPARAM) (HANDLE)
+			contact->hContact, (LPARAM) hwnd);
 		break;
-}	}
+	}
+}
 
 static WNDPROC OldRenameEditWndProc;
 static LRESULT CALLBACK RenameEditSubclassProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)

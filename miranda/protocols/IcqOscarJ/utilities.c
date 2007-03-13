@@ -5,7 +5,7 @@
 // Copyright © 2000,2001 Richard Hughes, Roland Rabien, Tristan Van de Vreede
 // Copyright © 2001,2002 Jon Keating, Richard Hughes
 // Copyright © 2002,2003,2004 Martin Öberg, Sam Kothari, Robert Rainwater
-// Copyright © 2004,2005,2006,2007 Joe Kucera
+// Copyright © 2004,2005,2006 Joe Kucera
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -23,7 +23,7 @@
 //
 // -----------------------------------------------------------------------------
 //
-// File name      : $URL$
+// File name      : $Source: /cvsroot/miranda/miranda/protocols/IcqOscarJ/utilities.c,v $
 // Revision       : $Revision$
 // Last change on : $Date$
 // Last change by : $Author$
@@ -63,6 +63,8 @@ static int cacheCount = 0;
 static int cacheListSize = 0;
 static CRITICAL_SECTION cacheMutex;
 
+extern BYTE gbOverRate;
+extern DWORD gtLastRequest;
 extern BOOL bIsSyncingCL;
 
 
@@ -908,43 +910,6 @@ char *EliminateHtml(const char *string, int len)
 
 
 
-char* ApplyEncoding(const char *string, const char* pszEncoding)
-{ // decode encoding to Utf-8
-  if (string && pszEncoding)
-  { // we do only encodings known to icq5.1 // TODO: check if this is enough
-    if (!strnicmp(pszEncoding, "utf-8", 5))
-    { // it is utf-8 encoded
-      return null_strdup(string);
-    }
-    else if (!strnicmp(pszEncoding, "unicode-2-0", 11))
-    { // it is UCS-2 encoded
-      int wLen = wcslen((wchar_t*)string) + 1;
-      wchar_t *szStr = (wchar_t*)_alloca(wLen*2);
-      char *tmp = (char*)string;
-
-      unpackWideString(&tmp, szStr, (WORD)(wLen*2));
-
-      return make_utf8_string(szStr);
-    }
-    else if (!strnicmp(pszEncoding, "iso-8859-1", 10))
-    { // we use "Latin I" instead - it does the job
-      char *szRes = ansi_to_utf8_codepage(string, 1252);
-      
-      return szRes;
-    }
-  }
-  if (string)
-  { // consider it CP_ACP
-    char *szRes = ansi_to_utf8(string);
-
-    return szRes;
-  }
-
-  return NULL;
-}
-
-
-
 void ResetSettingsOnListReload()
 {
   HANDLE hContact;
@@ -977,6 +942,9 @@ void ResetSettingsOnConnect()
 {
   HANDLE hContact;
 
+  gbOverRate = 0; // init
+  gtLastRequest = 0;
+
   // Reset a bunch of session specific settings
   ICQWriteContactSettingByte(NULL, "SrvVisibility", 0);
   ICQWriteContactSettingDword(NULL, "IdleTS", 0);
@@ -988,7 +956,7 @@ void ResetSettingsOnConnect()
     ICQWriteContactSettingDword(hContact, "LogonTS", 0);
     ICQWriteContactSettingDword(hContact, "IdleTS", 0);
     ICQWriteContactSettingDword(hContact, "TickTS", 0);
-    ICQWriteContactSettingByte(hContact, "TemporaryVisible", 0);
+    ICQDeleteContactSetting(hContact, "TemporaryVisible");
 
     // All these values will be restored during the login
     if (ICQGetContactStatus(hContact) != ID_STATUS_OFFLINE)
@@ -1022,8 +990,6 @@ void ResetSettingsOnLoad()
       ICQDeleteContactSetting(hContact, DBSETTING_XSTATUSNAME);
       ICQDeleteContactSetting(hContact, DBSETTING_XSTATUSMSG);
     }
-    ICQWriteContactSettingByte(hContact, "DCStatus", 0);
-
     hContact = ICQFindNextContact(hContact);
   }
 }
@@ -1059,7 +1025,7 @@ BOOL IsStringUIN(char* pszString)
 
 
 
-static DWORD __stdcall icq_ProtocolAckThread(icq_ack_args* pArguments)
+void __cdecl icq_ProtocolAckThread(icq_ack_args* pArguments)
 {
   ICQBroadcastAck(pArguments->hContact, pArguments->nAckType, pArguments->nAckResult, pArguments->hSequence, pArguments->pszMessage);
 
@@ -1071,7 +1037,7 @@ static DWORD __stdcall icq_ProtocolAckThread(icq_ack_args* pArguments)
   SAFE_FREE((char **)&pArguments->pszMessage);
   SAFE_FREE(&pArguments);
 
-  return 0;
+  return;
 }
 
 
@@ -1089,7 +1055,7 @@ void icq_SendProtoAck(HANDLE hContact, DWORD dwCookie, int nAckResult, int nAckT
   pArgs->nAckType = nAckType;
   pArgs->pszMessage = (LPARAM)null_strdup(pszMessage);
 
-  ICQCreateThread(icq_ProtocolAckThread, pArgs);
+  forkthread(icq_ProtocolAckThread, 0, pArgs);
 }
 
 
@@ -1411,42 +1377,15 @@ void ContactPhotoSettingChanged(HANDLE hContact)
 
 
 
-HANDLE NetLib_OpenConnection(HANDLE hUser, const char* szIdent, NETLIBOPENCONNECTION* nloc)
+HANDLE NetLib_OpenConnection(HANDLE hUser, NETLIBOPENCONNECTION* nloc)
 {
-  HANDLE hConnection;
-
-  Netlib_Logf(hUser, "%sConnecting to %s:%u", szIdent?szIdent:"", nloc->szHost, nloc->wPort);
-
-  hConnection = (HANDLE)CallService(MS_NETLIB_OPENCONNECTION, (WPARAM)hUser, (LPARAM)nloc);
+  HANDLE hConnection = (HANDLE)CallService(MS_NETLIB_OPENCONNECTION, (WPARAM)hUser, (LPARAM)nloc);
   if (!hConnection && (GetLastError() == 87))
   { // this ensures, an old Miranda will be able to connect also
     nloc->cbSize = NETLIBOPENCONNECTION_V1_SIZE;
     hConnection = (HANDLE)CallService(MS_NETLIB_OPENCONNECTION, (WPARAM)hUser, (LPARAM)nloc);
   }
   return hConnection;
-}
-
-
-
-HANDLE NetLib_BindPort(NETLIBNEWCONNECTIONPROC_V2 pFunc, void* lParam, WORD* pwPort, DWORD* pdwIntIP)
-{
-  NETLIBBIND nlb = {0};
-  HANDLE hBoundPort;
-
-  nlb.cbSize = sizeof(NETLIBBIND); 
-  nlb.pfnNewConnectionV2 = pFunc;
-  nlb.pExtra = lParam;
-  SetLastError(ERROR_INVALID_PARAMETER); // this must be here - NetLib does not set any error :((
-  hBoundPort = (HANDLE)CallService(MS_NETLIB_BINDPORT, (WPARAM)ghDirectNetlibUser, (LPARAM)&nlb);
-  if (!hBoundPort && (GetLastError() == ERROR_INVALID_PARAMETER))
-  { // this ensures older Miranda also can bind a port for a dc - pre 0.6
-    nlb.cbSize = NETLIBBIND_SIZEOF_V2;
-    hBoundPort = (HANDLE)CallService(MS_NETLIB_BINDPORT, (WPARAM)ghDirectNetlibUser, (LPARAM)&nlb);
-  }
-  if (pwPort) *pwPort = nlb.wPort;
-  if (pdwIntIP) *pdwIntIP = nlb.dwInternalIP;
-
-  return hBoundPort;
 }
 
 
@@ -1594,34 +1533,6 @@ char* __fastcall ICQTranslateUtfStatic(const char* src, char* buf)
 
 
 
-HANDLE ICQCreateThreadEx(pThreadFuncEx AFunc, void* arg, DWORD* pThreadID)
-{
-  FORK_THREADEX_PARAMS params;
-  DWORD dwThreadId;
-  HANDLE hThread;
-
-  params.pFunc      = AFunc;
-  params.arg        = arg;
-  params.iStackSize = 0;
-  params.threadID   = &dwThreadId;
-  hThread = (HANDLE)CallService(MS_SYSTEM_FORK_THREAD_EX, 0, (LPARAM)&params);
-  if (pThreadID)
-    *pThreadID = dwThreadId;
-
-  return hThread;
-}
-
-
-
-void ICQCreateThread(pThreadFuncEx AFunc, void* arg)
-{
-  HANDLE hThread = ICQCreateThreadEx(AFunc, arg, NULL);
-
-  CloseHandle(hThread);
-}
-
-
-
 char* GetUserPassword(BOOL bAlways)
 {
   if (gpszPassword[0] != '\0' && (gbRememberPwd || bAlways))
@@ -1670,148 +1581,6 @@ WORD GetMyStatusFlags()
       break;
   }
   return wFlags;
-}
-
-
-
-char* FileNameToUtf(const char *filename)
-{
-  if (gbUnicodeAPI)
-  { // reasonable only on NT systems
-    HINSTANCE hKernel;
-    DWORD (CALLBACK *RealGetLongPathName)(LPCWSTR, LPWSTR, DWORD);
-
-    hKernel = GetModuleHandle("KERNEL32");
-    *(FARPROC *)&RealGetLongPathName = GetProcAddress(hKernel, "GetLongPathNameW");
-
-    if (RealGetLongPathName)
-    { // the function is available (it is not on old NT systems)
-      wchar_t *unicode, *usFileName = NULL;
-      int wchars;
-
-      wchars = MultiByteToWideChar(CP_ACP, MB_PRECOMPOSED, filename,
-        strlennull(filename), NULL, 0);
-
-      unicode = (wchar_t*)_alloca((wchars + 1) * sizeof(wchar_t));
-      unicode[wchars] = 0;
-
-      MultiByteToWideChar(CP_ACP, MB_PRECOMPOSED, filename,
-        strlennull(filename), unicode, wchars);
-
-      wchars = RealGetLongPathName(unicode, usFileName, 0);
-      usFileName = (wchar_t*)_alloca((wchars + 1) * sizeof(wchar_t));
-      RealGetLongPathName(unicode, usFileName, wchars);
-
-      return make_utf8_string(usFileName);
-    }
-    else
-      return ansi_to_utf8(filename);
-  }
-  else
-    return ansi_to_utf8(filename);
-}
-
-
-
-int FileStatUtf(const char *path, struct _stati64 *buffer)
-{
-  int wRes = -1;
-
-  if (gbUnicodeAPI)
-  {
-    wchar_t* usPath = make_unicode_string(path);
-
-    wRes = _wstati64(usPath, buffer);
-    SAFE_FREE(&usPath);
-  }
-  else
-  {
-    int size = strlennull(path)+2;
-    char* szAnsiPath = (char*)_alloca(size);
-
-    if (utf8_decode_static(path, szAnsiPath, size))
-      wRes = _stati64(szAnsiPath, buffer);
-  }
-  return wRes;
-}
-
-
-
-int MakeDirUtf(const char *dir)
-{
-  int wRes = -1;
-  char *szLast;
-
-  if (gbUnicodeAPI)
-  {
-    wchar_t* usDir = make_unicode_string(dir);
-
-    wRes = _wmkdir(usDir);
-    if (wRes)
-    {
-      szLast = strrchr(dir, '\\');
-      if (!szLast) szLast = strrchr(dir, '/');
-      if (szLast)
-      {
-        char cOld = *szLast;
-
-        *szLast = '\0';
-        if (!MakeDirUtf(dir))
-          wRes = _wmkdir(usDir);
-        *szLast = cOld;
-      }
-    }
-    SAFE_FREE(&usDir);
-  }
-  else
-  {
-    int size = strlennull(dir)+2;
-    char* szAnsiDir = (char*)_alloca(size);
-
-    if (utf8_decode_static(dir, szAnsiDir, size))
-    { // _mkdir can created only one dir at once
-      wRes = _mkdir(szAnsiDir);
-      if (wRes)
-      { // failed, try one directory less first
-        szLast = strrchr(dir, '\\');
-        if (!szLast) szLast = strrchr(dir, '/');
-        if (szLast)
-        {
-          char cOld = *szLast;
-
-          *szLast = '\0';
-          if (!MakeDirUtf(dir))
-            wRes = _mkdir(szAnsiDir);
-          *szLast = cOld;
-        }
-      }
-    }
-  }
-  return wRes;
-}
-
-
-
-int OpenFileUtf(const char *filename, int oflag, int pmode)
-{
-  int hFile = -1;
-
-  if (gbUnicodeAPI)
-  {
-    wchar_t* usFile = make_unicode_string(filename);
-
-    hFile = _wopen(usFile, oflag, pmode);
-    SAFE_FREE(&usFile);
-  }
-  else
-  {
-    int size = strlennull(filename)+2;
-    char* szAnsiFile = (char*)_alloca(size);
-
-    if (utf8_decode_static(filename, szAnsiFile, size))
-      hFile = _open(szAnsiFile, oflag, pmode); 
-  }
-  return hFile;
 }
 
 

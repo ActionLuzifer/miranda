@@ -5,7 +5,7 @@
 // Copyright © 2000,2001 Richard Hughes, Roland Rabien, Tristan Van de Vreede
 // Copyright © 2001,2002 Jon Keating, Richard Hughes
 // Copyright © 2002,2003,2004 Martin Öberg, Sam Kothari, Robert Rainwater
-// Copyright © 2004,2005,2006,2007 Joe Kucera
+// Copyright © 2004,2005,2006 Joe Kucera
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -38,6 +38,7 @@
 
 
 extern HANDLE hServerConn;
+extern HANDLE hServerPacketRecver;
 
 static void handleMigration(serverthread_info *info);
 static int connectNewServer(serverthread_info *info);
@@ -66,8 +67,6 @@ void handleCloseChannel(unsigned char *buf, WORD datalen, serverthread_info *inf
         icq_LogUsingErrorCode(LOG_ERROR, GetLastError(), "Unable to connect to migrated ICQ communication server");
       else
         icq_LogUsingErrorCode(LOG_ERROR, GetLastError(), "Unable to connect to ICQ communication server");
-
-      SetCurrentStatus(ID_STATUS_OFFLINE);
 
       info->isMigrating = 0;
     }
@@ -178,16 +177,17 @@ static int connectNewServer(serverthread_info *info)
   if (!gbGatewayMode)
   {
     { /* Time to release packet receiver, connection already closed */
-      NetLib_SafeCloseHandle(&info->hPacketRecver, FALSE);
+      NetLib_SafeCloseHandle(&hServerPacketRecver, FALSE);
 
       NetLog_Server("Closed connection to login server");
     }
 
-    hServerConn = NetLib_OpenConnection(ghServerNetlibUser, NULL, &nloc);
+    NetLog_Server("Connecting to %s", info->newServer);
+    hServerConn = NetLib_OpenConnection(ghServerNetlibUser, &nloc);
     if (hServerConn)
     { /* Time to recreate the packet receiver */
-      info->hPacketRecver = (HANDLE)CallService(MS_NETLIB_CREATEPACKETRECVER, (WPARAM)hServerConn, 8192);
-      if (!info->hPacketRecver)
+      hServerPacketRecver = (HANDLE)CallService(MS_NETLIB_CREATEPACKETRECVER, (WPARAM)hServerConn, 8192);
+      if (!hServerPacketRecver)
       {
         NetLog_Server("Error: Failed to create packet receiver.");
       }
@@ -262,7 +262,7 @@ static void handleSignonError(WORD wError)
     icq_LogFatalParam("Connection failed.\nServer has too many connections from your IP (%d).", wError);
     break;
 
-  case 0x18: // Reservation rate limit exceeded
+  case 0x18: // Rate limit exceeded (reserved)
   case 0x1D: // Rate limit exceeded
     icq_LogFatalParam("Connection failed.\nYou have connected too quickly,\nplease wait and retry 10 to 20 minutes later (%d).", wError);
     break;
@@ -283,7 +283,7 @@ static void handleSignonError(WORD wError)
     icq_LogMessage(LOG_FATAL, "Connection failed.\nSecure (MD5) login is not supported on this account.");
     break;
 
-  case 0:    // No error
+  case 0:
     break;
 
   case 0x08: // Deleted account
@@ -291,23 +291,10 @@ static void handleSignonError(WORD wError)
   case 0x0A: // No access to database
   case 0x0B: // No access to resolver
   case 0x0E: // Bad resolver status
-  case 0x0F: // Internal error
   case 0x11: // Suspended account
-  case 0x12: // Database send error
-  case 0x13: // Database link error
   case 0x19: // User too heavily warned
-  case 0x1F: // Token server timeout
-  case 0x20: // Invalid SecureID number
-  case 0x21: // MC error
-  case 0x22: // Age restriction
-  case 0x23: // RequireRevalidation
-  case 0x24: // Link rule rejected
-  case 0x25: // Missing information or bad SNAC format
-  case 0x26: // Link broken
-  case 0x27: // Invalid client IP
-  case 0x28: // Partner rejected
-  case 0x29: // SecureID missing
-  case 0x2A: // Blocked account | Bump user
+  case 0x22: // Account suspended due to your age
+  case 0x2A: // Blocked account
 
   default:
     icq_LogFatalParam("Connection failed.\nUnknown error during sign on: 0x%02x", wError);

@@ -22,7 +22,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
 #include "msn_global.h"
-#include "m_icolib.h"
 #include "version.h"
 
 #pragma comment( lib, "shlwapi.lib" )
@@ -33,8 +32,6 @@ PLUGINLINK *pluginLink;
 MM_INTERFACE   mmi;
 LIST_INTERFACE li;
 UTF8_INTERFACE utfi;
-MD5_INTERFACE  md5i;
-SHA1_INTERFACE sha1i;
 
 /////////////////////////////////////////////////////////////////////////////////////////
 // Initialization routines
@@ -84,43 +81,37 @@ char* msnProductID  = NULL;
 char* mailsoundname;
 char* ModuleName;
 
-PLUGININFOEX pluginInfo =
+PLUGININFO pluginInfo =
 {
-	sizeof(PLUGININFOEX),
-	"MSN Protocol",
+	sizeof(PLUGININFO),
+	#if defined( _UNICODE )
+		"MSN Protocol (Unicode)",
+	#else
+		"MSN Protocol",
+	#endif
 	__VERSION_DWORD,
 	"Adds support for communicating with users of the MSN Messenger network",
 	"George Hazan",
 	"george_hazan@hotmail.com",
 	"© 2001-5 Richard Hughes, George Hazan",
-	"http://miranda-im.org",
-	UNICODE_AWARE,	
-	0,
-    #if defined( _UNICODE )
-	{0xdc39da8a, 0x8385, 0x4cd9, {0xb2, 0x98, 0x80, 0x67, 0x7b, 0x8f, 0xe6, 0xe4}} //{DC39DA8A-8385-4cd9-B298-80677B8FE6E4}
-    #else
-    {0x29aa3a80, 0x3368, 0x4b78, { 0x82, 0xc1, 0xdf, 0xc7, 0x29, 0x6a, 0x58, 0x99 }} //{29AA3A80-3368-4b78-82C1-DFC7296A5899}
-    #endif
+	"http://miranda-im.org/download/details.php?action=viewfile&id=702",
+	0,	0
 };
 
 bool			volatile msnLoggedIn = false;
 ThreadData*	volatile msnNsThread = NULL;
 
 int				msnStatusMode,
-				msnDesiredStatus;
+					msnDesiredStatus;
+HANDLE			msnMenuItems[ MENU_ITEMS_COUNT ];
 HANDLE			hNetlibUser = NULL;
 HANDLE			hInitChat = NULL;
+
+static HANDLE hHookHandle[8] = { 0 };
+
 bool				msnUseExtendedPopups;
 
-int CompareHandles( const void* p1, const void* p2 )
-{	return (long)p1 - (long)p2;
-}
-static LIST<void> arHooks( 20, CompareHandles );
-
-int MsnContactDeleted( WPARAM wParam, LPARAM lParam );
-int MsnDbSettingChanged(WPARAM wParam,LPARAM lParam);
 int MsnOnDetailsInit( WPARAM wParam, LPARAM lParam );
-int MsnRebuildContactMenu( WPARAM wParam, LPARAM lParam );
 int MsnIdleChanged( WPARAM wParam, LPARAM lParam );
 
 int MSN_GCEventHook( WPARAM wParam, LPARAM lParam );
@@ -155,6 +146,9 @@ static int OnModulesLoaded( WPARAM wParam, LPARAM lParam )
 
 	char szBuffer[ MAX_PATH ];
 
+	if ( MSN_GetStaticString( "MsnPassportHost", NULL, szBuffer, sizeof szBuffer ))
+		MSN_SetString( NULL, "MsnPassportHost", "https://loginnet.passport.com/login2.srf" );
+
 	WORD wPort = MSN_GetWord( NULL, "YourPort", 0xFFFF );
 	if ( wPort != 0xFFFF ) {
 		MSN_SetByte( "NLSpecifyIncomingPorts", 1 );
@@ -162,7 +156,7 @@ static int OnModulesLoaded( WPARAM wParam, LPARAM lParam )
 		ltoa( wPort, szBuffer, 10 );
 		MSN_SetString( NULL, "NLIncomingPorts", szBuffer );
 
-		MSN_DeleteSetting( NULL, "YourPort" );
+		DBDeleteContactSetting( NULL, msnProtocolName, "YourPort" );
 	}
 
 	mir_snprintf( szBuffer, sizeof(szBuffer), MSN_Translate("%s plugin connections"), msnProtocolName );
@@ -238,24 +232,19 @@ static int OnModulesLoaded( WPARAM wParam, LPARAM lParam )
 		gcr.pszModule = msnProtocolName;
 		MSN_CallService( MS_GC_REGISTER, NULL, ( LPARAM )&gcr );
 
-		arHooks.insert( HookEvent( ME_GC_EVENT, MSN_GCEventHook ));
-		arHooks.insert( HookEvent( ME_GC_BUILDMENU, MSN_GCMenuHook ));
+		hHookHandle[0] = HookEvent( ME_GC_EVENT, MSN_GCEventHook );
+		hHookHandle[1] = HookEvent( ME_GC_BUILDMENU, MSN_GCMenuHook );
 
 		char szEvent[ 200 ];
 		mir_snprintf( szEvent, sizeof szEvent, "%s\\ChatInit", msnProtocolName );
 		hInitChat = CreateHookableEvent( szEvent );
-		arHooks.insert( HookEvent( szEvent, MSN_ChatInit ));
+		hHookHandle[2] = HookEvent( szEvent, MSN_ChatInit );
 	}
 
-	MsnInitMenus();
-
 	msnUseExtendedPopups = ServiceExists( MS_POPUP_ADDPOPUPEX ) != 0;
-	arHooks.insert( HookEvent( ME_USERINFO_INITIALISE, MsnOnDetailsInit ));
-	arHooks.insert( HookEvent( ME_MSG_WINDOWEVENT, MsnWindowEvent ));
-	arHooks.insert( HookEvent( ME_IDLE_CHANGED, MsnIdleChanged ));
-	arHooks.insert( HookEvent( ME_DB_CONTACT_DELETED, MsnContactDeleted ));
-	arHooks.insert( HookEvent( ME_DB_CONTACT_SETTINGCHANGED, MsnDbSettingChanged ));
-	arHooks.insert( HookEvent( ME_CLIST_PREBUILDCONTACTMENU, MsnRebuildContactMenu ));
+	hHookHandle[3] = HookEvent( ME_USERINFO_INITIALISE, MsnOnDetailsInit );
+	hHookHandle[4] = HookEvent( ME_MSG_WINDOWEVENT, MsnWindowEvent );
+	hHookHandle[5] = HookEvent( ME_IDLE_CHANGED, MsnIdleChanged );
 	return 0;
 }
 
@@ -280,8 +269,6 @@ extern "C" int __declspec(dllexport) Load( PLUGINLINK* link )
 	mir_getLI( &li );
 	mir_getMMI( &mmi );
 	mir_getUTFI( &utfi );
-	mir_getMD5I( &md5i );
-    mir_getSHA1I( &sha1i );
 
 	char path[MAX_PATH];
 	char* protocolname;
@@ -299,23 +286,17 @@ extern "C" int __declspec(dllexport) Load( PLUGINLINK* link )
 	mir_snprintf( path, sizeof( path ), "%s:HotmailNotify", protocolname );
 	ModuleName = mir_strdup( path );
 
-	mir_snprintf( path, sizeof( path ), "%s/Status", protocolname );
-	MSN_CallService( MS_DB_SETSETTINGRESIDENT, TRUE, ( LPARAM )path );
-
-	mir_snprintf( path, sizeof( path ), "%s/IdleTS", protocolname );
-	MSN_CallService( MS_DB_SETSETTINGRESIDENT, TRUE, ( LPARAM )path );
-
-	//	Uninstalling purposes
+//	Uninstalling purposes
 //	if (ServiceExists("PluginSweeper/Add"))
 //		MSN_CallService("PluginSweeper/Add",(WPARAM)MSN_Translate(ModuleName),(LPARAM)ModuleName);
 
-	arHooks.insert( HookEvent( ME_SYSTEM_MODULESLOADED, OnModulesLoaded ));
+	hHookHandle[5] = HookEvent( ME_SYSTEM_MODULESLOADED, OnModulesLoaded );
 
 	srand(( unsigned int )time( NULL ));
 
 	LoadOptions();
-	arHooks.insert( HookEvent( ME_OPT_INITIALISE, MsnOptInit ));
-	arHooks.insert( HookEvent( ME_SYSTEM_PRESHUTDOWN, OnPreShutdown ));
+	hHookHandle[6] = HookEvent( ME_OPT_INITIALISE, MsnOptInit );
+	hHookHandle[7] = HookEvent( ME_SYSTEM_PRESHUTDOWN, OnPreShutdown );
 
 	char evtname[250];
 	sprintf(evtname,"%s/Nudge",protocolname);
@@ -348,7 +329,6 @@ extern "C" int __declspec(dllexport) Load( PLUGINLINK* link )
 	ZeroMemory(&msnCurrentMedia, sizeof(msnCurrentMedia));
 	msnLoggedIn = false;
 	LoadMsnServices();
-	MsnInitIcons();
 	Lists_Init();
 	MsgQueue_Init();
 	P2pSessions_Init();
@@ -358,6 +338,9 @@ extern "C" int __declspec(dllexport) Load( PLUGINLINK* link )
 /////////////////////////////////////////////////////////////////////////////////////////
 // Unload a plugin
 
+extern char* rru;
+extern char* profileURL;
+
 extern "C" int __declspec( dllexport ) Unload( void )
 {
 	int i;
@@ -365,9 +348,10 @@ extern "C" int __declspec( dllexport ) Unload( void )
 	if ( msnLoggedIn )
 		msnNsThread->sendPacket( "OUT", NULL );
 
-	for ( i=0; i < arHooks.getCount(); i++ )
-		UnhookEvent( arHooks[i] );
-	arHooks.destroy();
+	for ( i=0; i<sizeof(hHookHandle)/sizeof(HANDLE); i++ ) {
+		if ( hHookHandle[i] != NULL )
+			UnhookEvent( hHookHandle[i] );
+	}
 
 	if ( hInitChat )
 		DestroyHookableEvent( hInitChat );
@@ -409,23 +393,14 @@ extern "C" int __declspec( dllexport ) Unload( void )
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////
-// MirandaPluginInfoEx - returns an information about a plugin
+// MirandaPluginInfo - returns an information about a plugin
 
-extern "C" __declspec(dllexport) PLUGININFOEX* MirandaPluginInfoEx(DWORD mirandaVersion)
+extern "C" __declspec(dllexport) PLUGININFO* MirandaPluginInfo(DWORD mirandaVersion)
 {
-	if ( mirandaVersion < PLUGIN_MAKE_VERSION( 0, 7, 0, 0 )) {
-		MessageBox( NULL, _T("The MSN protocol plugin cannot be loaded. It requires Miranda IM 0.7.0.1 or later."), _T("MSN Protocol Plugin"), MB_OK|MB_ICONWARNING|MB_SETFOREGROUND|MB_TOPMOST );
+	if ( mirandaVersion < PLUGIN_MAKE_VERSION( 0, 6, 0, 0 )) {
+		MessageBox( NULL, _T("The MSN protocol plugin cannot be loaded. It requires Miranda IM 0.6.0.15 or later."), _T("MSN Protocol Plugin"), MB_OK|MB_ICONWARNING|MB_SETFOREGROUND|MB_TOPMOST );
 		return NULL;
 	}
 
 	return &pluginInfo;
 }
-
-/////////////////////////////////////////////////////////////////////////////////////////
-// MirandaPluginInterfaces - returns the protocol interface to the core
-static const MUUID interfaces[] = {MIID_PROTOCOL, MIID_LAST};
-extern "C" __declspec(dllexport) const MUUID* MirandaPluginInterfaces(void)
-{
-	return interfaces;
-}
-

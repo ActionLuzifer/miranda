@@ -2,8 +2,8 @@
 
 Miranda IM: the free IM client for Microsoft* Windows*
 
-Copyright 2000-2007 Miranda ICQ/IM project,
-all portions of this codebase are copyrighted to the people
+Copyright 2000-2007 Miranda ICQ/IM project, 
+all portions of this codebase are copyrighted to the people 
 listed in contributors.txt.
 
 This program is free software; you can redistribute it and/or
@@ -23,446 +23,334 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "commonheaders.h"
 #include "clc.h"
 
-#define TOOLTIP_TOLERANCE 5
+#define TRAYICON_ID_BASE    100
+#define TIM_CALLBACK   (WM_USER+1857)
+#define TIM_CREATE     (WM_USER+1858)
+
+static VOID CALLBACK TrayCycleTimerProc(HWND hwnd, UINT message, UINT idEvent, DWORD dwTime);
+void fnTrayIconUpdateBase(const char *szChangedProto);
 
 extern HIMAGELIST hCListImages;
+extern int currentStatusMenuItem, currentDesiredStatusMode;
 extern BOOL(WINAPI * MySetProcessWorkingSetSize) (HANDLE, SIZE_T, SIZE_T);
 
-int GetAverageMode();
-
 static UINT WM_TASKBARCREATED;
-static BOOL mToolTipTrayTips = FALSE;
 static int cycleTimerId = 0, cycleStep = 0;
 static int RefreshTimerId=0;   /////by FYR
-static CRITICAL_SECTION trayLockCS;
+
+struct trayIconInfo_t
+{
+	int id;
+	char *szProto;
+	HICON hBaseIcon;
+	int isBase;
+};
+static struct trayIconInfo_t *trayIcon = NULL;
+static int trayIconCount;
 
 // don't move to win2k.h, need new and old versions to work on 9x/2000/XP
 #define NIF_STATE       0x00000008
 #define NIF_INFO        0x00000010
 
-#define lock cli.pfnLockTray()
-#define ulock cli.pfnUnlockTray()
-
-#define initcheck if(!fTrayInited) return
-
-static BOOL fTrayInited=FALSE;
-
-static TCHAR* sttGetXStatus( const char* szProto )
+typedef struct _DllVersionInfo
 {
-	TCHAR* result = NULL;
-
-	if ( CallProtoService( szProto, PS_GETSTATUS, 0, 0 ) > ID_STATUS_OFFLINE ) {
-		char str[MAXMODULELABELLENGTH];
-		mir_snprintf( str, sizeof(str), "%s/GetXStatus", szProto );
-		if ( ServiceExists( str )) {
-			char* dbTitle = "XStatusName";
-			char* dbTitle2 = NULL;
-			int xstatus = CallProtoService( szProto, "/GetXStatus", ( WPARAM )&dbTitle, ( LPARAM )&dbTitle2 );
-			if ( dbTitle && xstatus ) {
-				DBVARIANT dbv={0};
-				if ( !DBGetContactSettingTString(NULL, szProto, dbTitle, &dbv )) {
-					if ( dbv.ptszVal[0] != 0 )
-						result = mir_tstrdup(dbv.ptszVal);
-					DBFreeVariant(&dbv);
-	}	}	}	}
-
-	return result;
+	DWORD cbSize;
+	DWORD dwMajorVersion;       // Major version
+	DWORD dwMinorVersion;       // Minor version
+	DWORD dwBuildNumber;        // Build number
+	DWORD dwPlatformID;         // DLLVER_PLATFORM_*
 }
+	DLLVERSIONINFO;
 
-TCHAR* fnTrayIconMakeTooltip( const TCHAR *szPrefix, const char *szProto )
+#define DLLVER_PLATFORM_WINDOWS         0x00000001      // Windows 95
+#define DLLVER_PLATFORM_NT              0x00000002      // Windows NT
+typedef HRESULT(CALLBACK * DLLGETVERSIONPROC) (DLLVERSIONINFO *);
+
+static DLLVERSIONINFO dviShell;
+
+static TCHAR *TrayIconMakeTooltip(const TCHAR *szPrefix, const char *szProto)
 {
+	static TCHAR szTip[128];
 	char szProtoName[32];
 	TCHAR *szStatus, *szSeparator, *sztProto;
-	TCHAR *ProtoXStatus=NULL;
-	int t,cn;
-	initcheck NULL;
-	lock;
-	if ( !mToolTipTrayTips )
-		szSeparator = (IsWinVerMEPlus()) ? szSeparator = _T("\n") : _T(" | ");
-	else
-		szSeparator = _T("\n");
+
+	szSeparator = (IsWinVerMEPlus())? szSeparator = _T("\n") : _T(" | ");
 
 	if (szProto == NULL) {
 		PROTOCOLDESCRIPTOR **protos;
 		int count, netProtoCount, i;
-		CallService(MS_PROTO_ENUMPROTOCOLS, (WPARAM) &count, (LPARAM) &protos);
-		for (i = 0,netProtoCount = 0; i < count; i++) {
+		CallService(MS_PROTO_ENUMPROTOCOLS, (WPARAM) & count, (LPARAM) & protos);
+		for (i = 0, netProtoCount = 0; i < count; i++)
 			if (protos[i]->type == PROTOTYPE_PROTOCOL)
 				netProtoCount++;
-		}
-		if (netProtoCount == 1) {
-			for (i = 0; i < count; i++) {
-				if ( protos[i]->type == PROTOTYPE_PROTOCOL )
-				{ ulock; return cli.pfnTrayIconMakeTooltip(szPrefix, protos[i]->szName); }
-		}	}
-
+		if (netProtoCount == 1)
+			for (i = 0; i < count; i++)
+				if (protos[i]->type == PROTOTYPE_PROTOCOL)
+					return TrayIconMakeTooltip(szPrefix, protos[i]->szName);
 		if (szPrefix && szPrefix[0]) {
-			lstrcpyn(cli.szTip, szPrefix, MAX_TIP_SIZE);
+			lstrcpyn(szTip, szPrefix, SIZEOF(szTip));
 			if (!DBGetContactSettingByte(NULL, "CList", "AlwaysStatus", SETTING_ALWAYSSTATUS_DEFAULT))
-			{ ulock; return cli.szTip; }
-		} 
-		else cli.szTip[0] = '\0';
-		cli.szTip[ MAX_TIP_SIZE-1 ] = '\0';
-
-		t=0;
-		cn=DBGetContactSettingDword(NULL,"Protocols","ProtoCount",-1);
-		if ( cn == -1 )
-		{ ulock; return NULL; }
-
-		for ( t=0; t < cn; t++ ) {
-			i = cli.pfnGetProtoIndexByPos(protos, count,t);
-			if ( i == -1 )
-			{ ulock; return _T("???"); }
-
-			if ( protos[i]->type == PROTOTYPE_PROTOCOL && cli.pfnGetProtocolVisibility( protos[i]->szName ))
-				ProtoXStatus = sttGetXStatus( protos[i]->szName );
-
-			CallProtoService( protos[i]->szName, PS_GETNAME, sizeof(szProtoName), (LPARAM) szProtoName );
-			szStatus = cli.pfnGetStatusModeDescription( CallProtoService( protos[i]->szName, PS_GETSTATUS, 0, 0), 0);
-			if ( szStatus ) {
-				if ( mToolTipTrayTips ) {
-					TCHAR tipline[256];
-					#if defined( _UNICODE )
-						mir_sntprintf(tipline, SIZEOF(tipline), _T("<b>%-12.12S</b>\t%s"), szProtoName, szStatus);
-					#else
-						mir_sntprintf(tipline, SIZEOF(tipline), _T("<b>%-12.12s</b>\t%s"), szProtoName, szStatus);
-					#endif
-					if ( cli.szTip[0] )
-						_tcsncat(cli.szTip, szSeparator, MAX_TIP_SIZE - _tcslen(cli.szTip));
-					_tcsncat(cli.szTip, tipline, MAX_TIP_SIZE - _tcslen(cli.szTip));
-					if (ProtoXStatus) {
-						mir_sntprintf(tipline, SIZEOF(tipline), _T("%-24.24s\n"), ProtoXStatus);
-						if ( cli.szTip[0] )
-							_tcsncat(cli.szTip, szSeparator, MAX_TIP_SIZE - _tcslen(cli.szTip));
-						_tcsncat(cli.szTip, tipline, MAX_TIP_SIZE - _tcslen(cli.szTip));
-						mir_free( ProtoXStatus );
-					}
-				}
-				else {
-					if (cli.szTip[0])
-						_tcsncat(cli.szTip, szSeparator, MAX_TIP_SIZE - _tcslen(cli.szTip));
-					#if defined( _UNICODE )
-					{
-						TCHAR* p = a2u( szProtoName );
-						_tcsncat(cli.szTip, p, MAX_TIP_SIZE - _tcslen(cli.szTip));
-						mir_free( p );
-					}
-					#else
-						_tcsncat(cli.szTip, szProtoName, MAX_TIP_SIZE - _tcslen(cli.szTip));
-					#endif
-					_tcsncat(cli.szTip, _T(" "), MAX_TIP_SIZE - _tcslen(cli.szTip));
-					_tcsncat(cli.szTip, szStatus, MAX_TIP_SIZE - _tcslen(cli.szTip));
-	}	}	}	}
+				return szTip;
+		}
+		else
+			szTip[0] = '\0';
+		szTip[ SIZEOF(szTip) - 1] = '\0';
+		for (i = count - 1; i >= 0; i--) {
+			if (protos[i]->type != PROTOTYPE_PROTOCOL)
+				continue;
+			CallProtoService(protos[i]->szName, PS_GETNAME, SIZEOF(szProtoName), (LPARAM) szProtoName);
+			szStatus = cli.pfnGetStatusModeDescription( CallProtoService(protos[i]->szName, PS_GETSTATUS, 0, 0), 0);
+			if (szTip[0])
+				_tcsncat(szTip, szSeparator, SIZEOF(szTip) - 1 - _tcslen(szTip));
+			#if defined( _UNICODE )
+			{	TCHAR* p = a2u( szProtoName );
+				_tcsncat(szTip, p, SIZEOF(szTip) - 1 - _tcslen(szTip));
+				mir_free( p );
+			}
+			#else
+				_tcsncat(szTip, szProtoName, SIZEOF(szTip) - 1 - _tcslen(szTip));
+			#endif
+			_tcsncat(szTip, _T(" "), SIZEOF(szTip) - 1 - _tcslen(szTip));
+			_tcsncat(szTip, szStatus, SIZEOF(szTip) - 1 - _tcslen(szTip));
+		}
+	}
 	else {
-		CallProtoService(szProto, PS_GETNAME, sizeof(szProtoName), (LPARAM) szProtoName);
+		CallProtoService(szProto, PS_GETNAME, SIZEOF(szProtoName), (LPARAM) szProtoName);
 		#if defined( _UNICODE )
 			sztProto = a2u( szProtoName );
 		#else
 			sztProto = szProtoName;
 		#endif
-		ProtoXStatus = sttGetXStatus( szProto );
+
 		szStatus = cli.pfnGetStatusModeDescription(CallProtoService(szProto, PS_GETSTATUS, 0, 0), 0);
-		if ( szPrefix && szPrefix[0] ) {
-			if ( DBGetContactSettingByte( NULL, "CList", "AlwaysStatus", SETTING_ALWAYSSTATUS_DEFAULT )) {
-				if ( mToolTipTrayTips ) {
-					if ( ProtoXStatus )
-						mir_sntprintf(cli.szTip, MAX_TIP_SIZE, _T("%s%s<b>%-12.12s</b>\t%s%s%-24.24s"), szPrefix, szSeparator, sztProto, szStatus,szSeparator,ProtoXStatus);
-					else
-						mir_sntprintf(cli.szTip, MAX_TIP_SIZE, _T("%s%s<b>%-12.12s</b>\t%s"), szPrefix, szSeparator, sztProto, szStatus);
-				}
-				else mir_sntprintf(cli.szTip, MAX_TIP_SIZE, _T("%s%s%s %s"), szPrefix, szSeparator, sztProto, szStatus);
-			}
-			else lstrcpyn(cli.szTip, szPrefix, MAX_TIP_SIZE);
+		if (szPrefix && szPrefix[0]) {
+			if (DBGetContactSettingByte(NULL, "CList", "AlwaysStatus", SETTING_ALWAYSSTATUS_DEFAULT))
+				mir_sntprintf(szTip, SIZEOF(szTip), _T("%s%s%s %s"), szPrefix, szSeparator, sztProto, szStatus);
+			else
+				lstrcpyn(szTip, szPrefix, SIZEOF(szTip));
 		}
-		else {
-			if ( mToolTipTrayTips ) {
-				if ( ProtoXStatus )
-					mir_sntprintf( cli.szTip, MAX_TIP_SIZE, _T("<b>%-12.12s</b>\t%s\n%-24.24s"), sztProto, szStatus,ProtoXStatus);
-				else
-					mir_sntprintf( cli.szTip, MAX_TIP_SIZE, _T("<b>%-12.12s</b>\t%s"), sztProto, szStatus);
-			}
-			else mir_sntprintf(cli.szTip, MAX_TIP_SIZE, _T("%s %s"), sztProto, szStatus);
-		}
-		if (ProtoXStatus) mir_free(ProtoXStatus);
+		else mir_sntprintf(szTip, SIZEOF(szTip), _T("%s %s"), sztProto, szStatus);
+
 		#if defined( _UNICODE )
 			mir_free(sztProto);
 		#endif
 	}
-	{ ulock;  return cli.szTip; }
+	return szTip;
 }
 
-int fnTrayIconAdd(HWND hwnd, const char *szProto, const char *szIconProto, int status)
+static int TrayIconAdd(HWND hwnd, const char *szProto, const char *szIconProto, int status)
 {
 	NOTIFYICONDATA nid = { 0 };
 	int i;
-	initcheck 0;
-	lock;
-	for (i = 0; i < cli.trayIconCount; i++)
-		if (cli.trayIcon[i].id == 0)
+
+	for (i = 0; i < trayIconCount; i++)
+		if (trayIcon[i].id == 0)
 			break;
 
-	cli.trayIcon[i].id = TRAYICON_ID_BASE + i;
-	cli.trayIcon[i].szProto = (char *) szProto;
-	cli.trayIcon[i].hBaseIcon = cli.pfnGetIconFromStatusMode( NULL, szIconProto ? szIconProto : cli.trayIcon[i].szProto, status );
+	trayIcon[i].id = TRAYICON_ID_BASE + i;
+	trayIcon[i].szProto = (char *) szProto;
 
-	nid.cbSize = ( cli.shellVersion >= 5 ) ? sizeof(nid) : NOTIFYICONDATA_V1_SIZE;
+	nid.cbSize = ( dviShell.dwMajorVersion >= 5 ) ? sizeof(nid) : NOTIFYICONDATA_V1_SIZE;
 	nid.hWnd = hwnd;
-	nid.uID = cli.trayIcon[i].id;
+	nid.uID = trayIcon[i].id;
 	nid.uFlags = NIF_ICON | NIF_MESSAGE | NIF_TIP;
 	nid.uCallbackMessage = TIM_CALLBACK;
-	nid.hIcon = cli.trayIcon[i].hBaseIcon;
+	trayIcon[i].hBaseIcon = ImageList_GetIcon(hCListImages, cli.pfnIconFromStatusMode(szIconProto ? szIconProto : trayIcon[i].szProto, status, NULL), ILD_NORMAL);
+	nid.hIcon = trayIcon[i].hBaseIcon;
 
-	if (cli.shellVersion >= 5)
+	if (dviShell.dwMajorVersion >= 5)
 		nid.uFlags |= NIF_INFO;
 
-	cli.pfnTrayIconMakeTooltip( NULL, cli.trayIcon[i].szProto );
-	if ( !mToolTipTrayTips )
-		lstrcpyn( nid.szTip, cli.szTip, SIZEOF( nid.szTip ));
-	cli.trayIcon[i].ptszToolTip = mir_tstrdup( cli.szTip );
-
+	lstrcpyn(nid.szTip, TrayIconMakeTooltip(NULL, trayIcon[i].szProto), SIZEOF(nid.szTip));
 	Shell_NotifyIcon(NIM_ADD, &nid);
-	cli.trayIcon[i].isBase = 1;
-	{ ulock; return i; }
+	trayIcon[i].isBase = 1;
+	return i;
 }
 
-void fnTrayIconRemove(HWND hwnd, const char *szProto)
+static void TrayIconRemove(HWND hwnd, const char *szProto)
 {
 	int i;
-	initcheck;
-	lock;
-	for ( i = 0; i < cli.trayIconCount; i++ ) {
-		struct trayIconInfo_t* pii = &cli.trayIcon[i];
-		if ( pii->id != 0 && !lstrcmpA( szProto, pii->szProto )) {
-			NOTIFYICONDATA nid = { 0 };
-			nid.cbSize = ( cli.shellVersion >= 5 ) ? sizeof(nid) : NOTIFYICONDATA_V1_SIZE;
-			nid.hWnd = hwnd;
-			nid.uID = pii->id;
-			Shell_NotifyIcon(NIM_DELETE, &nid);
+	NOTIFYICONDATA nid = { 0 };
 
-			DestroyIcon(pii->hBaseIcon);
-			mir_free(pii->ptszToolTip); pii->ptszToolTip = NULL;
-			pii->id = 0;
-			break;
-	}	}	
-	ulock;
+	nid.cbSize = ( dviShell.dwMajorVersion >= 5 ) ? sizeof(nid) : NOTIFYICONDATA_V1_SIZE;
+	nid.hWnd = hwnd;
+	for (i = 0; i < trayIconCount; i++) {
+		if (trayIcon[i].id == 0)
+			continue;
+		if (lstrcmpA(szProto, trayIcon[i].szProto))
+			continue;
+		nid.uID = trayIcon[i].id;
+		Shell_NotifyIcon(NIM_DELETE, &nid);
+
+		DestroyIcon(trayIcon[i].hBaseIcon);
+		trayIcon[i].id = 0;
+		break;
+	}
 }
 
-int fnTrayIconInit(HWND hwnd)
+static int TrayIconInit(HWND hwnd)
 {
-	int count;
-	int averageMode = GetAverageMode();
+	int count, netProtoCount, i;
+	int averageMode = 0;
 	PROTOCOLDESCRIPTOR **protos;
-	initcheck 0;
-	lock;
-	mToolTipTrayTips = ServiceExists("mToolTip/ShowTip") ? TRUE : FALSE;
 
-	if ( cli.cycleTimerId ) {
-		KillTimer(NULL, cli.cycleTimerId);
-		cli.cycleTimerId = 0;
+	if (cycleTimerId) {
+		KillTimer(NULL, cycleTimerId);
+		cycleTimerId = 0;
 	}
-	CallService(MS_PROTO_ENUMPROTOCOLS, ( WPARAM )&count, ( LPARAM )&protos);
-	
-	if (DBGetContactSettingByte(NULL,"CList","TrayIcon",SETTING_TRAYICON_DEFAULT) == SETTING_TRAYICON_MULTI) {
-		int netProtoCount, i;
-		for (i = 0, netProtoCount = 0; i < count; i++)
-			if (protos[i]->type == PROTOTYPE_PROTOCOL && cli.pfnGetProtocolVisibility( protos[i]->szName ))
-				netProtoCount++;
-		cli.trayIconCount = netProtoCount;
+	CallService(MS_PROTO_ENUMPROTOCOLS, (WPARAM) & count, (LPARAM) & protos);
+	for (i = 0, netProtoCount = 0; i < count; i++) {
+		if (protos[i]->type != PROTOTYPE_PROTOCOL)
+			continue;
+		cycleStep = i;
+		netProtoCount++;
+		if (averageMode == 0)
+			averageMode = CallProtoService(protos[i]->szName, PS_GETSTATUS, 0, 0);
+		else if (averageMode != CallProtoService(protos[i]->szName, PS_GETSTATUS, 0, 0)) {
+			averageMode = -1;
+			break;
+		}
 	}
-	else cli.trayIconCount = 1;
-
-	cli.trayIcon = (struct trayIconInfo_t *) mir_alloc(sizeof(struct trayIconInfo_t) * count);
-	memset(cli.trayIcon, 0, sizeof(struct trayIconInfo_t) * count);
-	if ( DBGetContactSettingByte(NULL, "CList", "TrayIcon", SETTING_TRAYICON_DEFAULT) == SETTING_TRAYICON_MULTI 
-	     && (averageMode <= 0 || DBGetContactSettingByte(NULL, "CList", "AlwaysMulti", SETTING_ALWAYSMULTI_DEFAULT ))) {
-		int i;
-		for (i = count - 1; i >= 0; i--) {
-			int j = cli.pfnGetProtoIndexByPos( protos, count, i);
-			if ( j > -1 )
-				if ( protos[j]->type == PROTOTYPE_PROTOCOL && cli.pfnGetProtocolVisibility( protos[j]->szName ))
-					cli.pfnTrayIconAdd(hwnd, protos[j]->szName, NULL, CallProtoService(protos[j]->szName, PS_GETSTATUS, 0, 0));
-	}	}
-	else if (averageMode <= 0 && DBGetContactSettingByte(NULL, "CList", "cli.trayIcon", SETTING_TRAYICON_DEFAULT) == SETTING_TRAYICON_SINGLE) {
+	trayIconCount = count;
+	trayIcon = (struct trayIconInfo_t *) mir_alloc(sizeof(struct trayIconInfo_t) * count);
+	ZeroMemory(trayIcon, sizeof(struct trayIconInfo_t) * count);
+	if (DBGetContactSettingByte(NULL, "CList", "TrayIcon", SETTING_TRAYICON_DEFAULT) == SETTING_TRAYICON_MULTI &&
+		(averageMode <= 0 || DBGetContactSettingByte(NULL, "CList", "AlwaysMulti", SETTING_ALWAYSMULTI_DEFAULT))) {
+			int i;
+			for (i = count - 1; i >= 0; i--)
+				if (protos[i]->type == PROTOTYPE_PROTOCOL)
+					TrayIconAdd(hwnd, protos[i]->szName, NULL, CallProtoService(protos[i]->szName, PS_GETSTATUS, 0, 0));
+		}
+	else if (averageMode <= 0 && DBGetContactSettingByte(NULL, "CList", "TrayIcon", SETTING_TRAYICON_DEFAULT) == SETTING_TRAYICON_SINGLE) {
 		DBVARIANT dbv = { DBVT_DELETED };
 		char *szProto;
 		if (DBGetContactSetting(NULL, "CList", "PrimaryStatus", &dbv))
 			szProto = NULL;
 		else
 			szProto = dbv.pszVal;
-		cli.pfnTrayIconAdd(hwnd, NULL, szProto, szProto ? CallProtoService(szProto, PS_GETSTATUS, 0, 0) : CallService(MS_CLIST_GETSTATUSMODE, 0, 0));
+		TrayIconAdd(hwnd, NULL, szProto, szProto ? CallProtoService(szProto, PS_GETSTATUS, 0, 0) : CallService(MS_CLIST_GETSTATUSMODE, 0, 0));
 		DBFreeVariant(&dbv);
 	}
 	else
-		cli.pfnTrayIconAdd(hwnd, NULL, NULL, averageMode);
+		TrayIconAdd(hwnd, NULL, NULL, averageMode);
 	if (averageMode <= 0 && DBGetContactSettingByte(NULL, "CList", "TrayIcon", SETTING_TRAYICON_DEFAULT) == SETTING_TRAYICON_CYCLE)
-		cli.cycleTimerId = SetTimer(NULL, 0, DBGetContactSettingWord(NULL, "CList", "CycleTime", SETTING_CYCLETIME_DEFAULT) * 1000, cli.pfnTrayCycleTimerProc);
-	{ ulock; return 0; }
+		cycleTimerId = SetTimer(NULL, 0, DBGetContactSettingWord(NULL, "CList", "CycleTime", SETTING_CYCLETIME_DEFAULT) * 1000, TrayCycleTimerProc);
+	return 0;
 }
 
-int fnTrayIconDestroy(HWND hwnd)
+static void TrayIconDestroy(HWND hwnd)
 {
 	NOTIFYICONDATA nid = { 0 };
 	int i;
-	initcheck 0;
-	lock;
-	nid.cbSize = ( cli.shellVersion >= 5 ) ? sizeof(nid) : NOTIFYICONDATA_V1_SIZE;
+
+	nid.cbSize = ( dviShell.dwMajorVersion >= 5 ) ? sizeof(nid) : NOTIFYICONDATA_V1_SIZE;
 	nid.hWnd = hwnd;
-	for ( i = 0; i < cli.trayIconCount; i++ ) {
-		if ( cli.trayIcon[i].id == 0 )
+	for (i = 0; i < trayIconCount; i++) {
+		if (trayIcon[i].id == 0)
 			continue;
-		nid.uID = cli.trayIcon[i].id;
-		Shell_NotifyIcon( NIM_DELETE, &nid );
-		DestroyIcon( cli.trayIcon[i].hBaseIcon );
-		mir_free( cli.trayIcon[i].ptszToolTip );
+		nid.uID = trayIcon[i].id;
+		Shell_NotifyIcon(NIM_DELETE, &nid);
+		DestroyIcon(trayIcon[i].hBaseIcon);
 	}
-	mir_free(cli.trayIcon);
-	cli.trayIcon = NULL;
-	cli.trayIconCount = 0;
-	{ ulock; return 0; }
+	if (trayIcon)
+		mir_free(trayIcon);
+	trayIcon = NULL;
+	trayIconCount = 0;
 }
 
 //called when Explorer crashes and the taskbar is remade
-void fnTrayIconTaskbarCreated(HWND hwnd)
+static void TrayIconTaskbarCreated(HWND hwnd)
 {
-	initcheck;
-	cli.pfnTrayIconDestroy(hwnd);
-	cli.pfnTrayIconInit(hwnd);
+	TrayIconDestroy(hwnd);
+	TrayIconInit(hwnd);
 }
 
-////////////////////////////////////////////////////////////
-
-static VOID CALLBACK RefreshTimerProc(HWND hwnd,UINT message,UINT idEvent,DWORD dwTime)
-{
-	int count,i;
-	PROTOCOLDESCRIPTOR **protos;
-	if(RefreshTimerId) {KillTimer(NULL,RefreshTimerId); RefreshTimerId=0;}
-	CallService(MS_PROTO_ENUMPROTOCOLS,(WPARAM)&count,(LPARAM)&protos);
-	for (i=0; i<count; i++)
-		if(protos[i]->type==PROTOTYPE_PROTOCOL &&
-			(cli.pfnGetProtocolVisibility(protos[i]->szName)!=0))
-			cli.pfnTrayIconUpdateBase(protos[i]->szName);
-
-}
-//////// End by FYR /////////
-
-int fnTrayIconUpdate(HICON hNewIcon, const TCHAR *szNewTip, const char *szPreferredProto, int isBase)
+static int TrayIconUpdate(HICON hNewIcon, const TCHAR *szNewTip, const char *szPreferredProto, int isBase)
 {
 	NOTIFYICONDATA nid = { 0 };
 	int i;
 
-	initcheck -1;
-	lock;
-	nid.cbSize = ( cli.shellVersion >= 5 ) ? sizeof(nid) : NOTIFYICONDATA_V1_SIZE;
-	nid.hWnd = cli.hwndContactList;
+	nid.cbSize = ( dviShell.dwMajorVersion >= 5 ) ? sizeof(nid) : NOTIFYICONDATA_V1_SIZE;
+	nid.hWnd = (HWND) CallService(MS_CLUI_GETHWND, 0, 0);
 	nid.uFlags = NIF_ICON | NIF_TIP;
 	nid.hIcon = hNewIcon;
-	if (!hNewIcon)
-	{ ulock; return -1; }
 
-	for (i = 0; i < cli.trayIconCount; i++) {
-		if (cli.trayIcon[i].id == 0)
+	for (i = 0; i < trayIconCount; i++) {
+		if (trayIcon[i].id == 0)
 			continue;
-		if (lstrcmpA(cli.trayIcon[i].szProto, szPreferredProto))
+		if (lstrcmpA(trayIcon[i].szProto, szPreferredProto))
 			continue;
-
-		nid.uID = cli.trayIcon[i].id;
-		cli.pfnTrayIconMakeTooltip(szNewTip, cli.trayIcon[i].szProto);
-		mir_free( cli.trayIcon[i].ptszToolTip );
-		cli.trayIcon[i].ptszToolTip = mir_tstrdup( cli.szTip );
-		if(!mToolTipTrayTips)
-			lstrcpyn(nid.szTip, cli.szTip, SIZEOF(nid.szTip));
+		nid.uID = trayIcon[i].id;
+		lstrcpyn(nid.szTip, TrayIconMakeTooltip(szNewTip, trayIcon[i].szProto), SIZEOF(nid.szTip));
 		Shell_NotifyIcon(NIM_MODIFY, &nid);
 
-		cli.trayIcon[i].isBase = isBase;
-		{ ulock; return i; }
+		trayIcon[i].isBase = isBase;
+		return i;
 	}
 
 	//if there wasn't a suitable icon, change all the icons
-	{
-		for (i = 0; i < cli.trayIconCount; i++) {
-			if (cli.trayIcon[i].id == 0)
-				continue;
-			nid.uID = cli.trayIcon[i].id;
-	
-			cli.pfnTrayIconMakeTooltip(szNewTip, cli.trayIcon[i].szProto);
-			mir_free( cli.trayIcon[i].ptszToolTip );
-			cli.trayIcon[i].ptszToolTip = mir_tstrdup( cli.szTip );
-			if(!mToolTipTrayTips)
-				lstrcpyn(nid.szTip, cli.szTip, SIZEOF(nid.szTip));
-			Shell_NotifyIcon(NIM_MODIFY, &nid);
-	
-			cli.trayIcon[i].isBase = isBase;
-			if (DBGetContactSettingByte(NULL,"CList","TrayIcon",SETTING_TRAYICON_DEFAULT) == SETTING_TRAYICON_MULTI)
-			{
-				if(RefreshTimerId) {KillTimer(NULL,RefreshTimerId); RefreshTimerId=0;}
-				RefreshTimerId=SetTimer(NULL,0,DBGetContactSettingWord(NULL,"CList","CycleTime",SETTING_CYCLETIME_DEFAULT)*200,RefreshTimerProc);	// if unknown base was changed - than show preffered proto icon for 2 sec and reset it to original one after timeout
-			}
-			{ ulock; return i; }
-		}
+	for (i = 0; i < trayIconCount; i++) {
+		if (trayIcon[i].id == 0)
+			continue;
+		nid.uID = trayIcon[i].id;
+		lstrcpyn(nid.szTip, TrayIconMakeTooltip(szNewTip, trayIcon[i].szProto), SIZEOF(nid.szTip));
+		Shell_NotifyIcon(NIM_MODIFY, &nid);
+
+		trayIcon[i].isBase = isBase;
 	}
-	{ ulock; return -1; }
+	return -1;
 }
 
-int fnTrayIconSetBaseInfo(HICON hIcon, const char *szPreferredProto)
+static int TrayIconSetBaseInfo(HICON hIcon, char *szPreferredProto)
 {
 	int i;
-	initcheck -1;
-	lock;
-	if (szPreferredProto)
-	{
-		for (i = 0; i < cli.trayIconCount; i++) {
-			if (cli.trayIcon[i].id == 0)
-				continue;
-			if (lstrcmpA(cli.trayIcon[i].szProto, szPreferredProto))
-				continue;
-			DestroyIcon(cli.trayIcon[i].hBaseIcon);
-			cli.trayIcon[i].hBaseIcon = hIcon;
-			{ ulock; return i; }
-		}
-		if ((cli.pfnGetProtocolVisibility(szPreferredProto)) &&
-			(GetAverageMode()==-1) &&
-			(DBGetContactSettingByte(NULL,"CList","TrayIcon",SETTING_TRAYICON_DEFAULT)==SETTING_TRAYICON_MULTI) &&
-			!(DBGetContactSettingByte(NULL,"CList","AlwaysMulti",SETTING_ALWAYSMULTI_DEFAULT)))
-		{ ulock; return -1; }
-	}
-	
-	//if there wasn't a specific icon, there will only be one suitable
-	for (i = 0; i < cli.trayIconCount; i++) {
-		if (cli.trayIcon[i].id == 0)
+
+	for (i = 0; i < trayIconCount; i++) {
+		if (trayIcon[i].id == 0)
 			continue;
-		DestroyIcon(cli.trayIcon[i].hBaseIcon);
-		cli.trayIcon[i].hBaseIcon = hIcon;
-		{ ulock; return i; }
+		if (lstrcmpA(trayIcon[i].szProto, szPreferredProto))
+			continue;
+		DestroyIcon(trayIcon[i].hBaseIcon);
+		trayIcon[i].hBaseIcon = hIcon;
+		return i;
+	}
+	//if there wasn't a specific icon, there will only be one suitable
+	for (i = 0; i < trayIconCount; i++) {
+		if (trayIcon[i].id == 0)
+			continue;
+		DestroyIcon(trayIcon[i].hBaseIcon);
+		trayIcon[i].hBaseIcon = hIcon;
+		return i;
 	}
 	DestroyIcon(hIcon);
-	{ ulock; return -1; }
+	return -1;
 }
 
 void fnTrayIconUpdateWithImageList(int iImage, const TCHAR *szNewTip, char *szPreferredProto)
 {
 	HICON hIcon = ImageList_GetIcon(hCListImages, iImage, ILD_NORMAL);
-	int res=cli.pfnTrayIconUpdate(hIcon, szNewTip, szPreferredProto, 0);
+	TrayIconUpdate(hIcon, szNewTip, szPreferredProto, 0);
 	DestroyIcon(hIcon);
 }
 
-VOID CALLBACK fnTrayCycleTimerProc(HWND hwnd, UINT message, UINT idEvent, DWORD dwTime)
+static VOID CALLBACK TrayCycleTimerProc(HWND hwnd, UINT message, UINT idEvent, DWORD dwTime)
 {
 	int count;
 	PROTOCOLDESCRIPTOR **protos;
-	initcheck;
-	lock;
+
 	CallService(MS_PROTO_ENUMPROTOCOLS, (WPARAM) & count, (LPARAM) & protos);
 	for (cycleStep++;; cycleStep++) {
 		if (cycleStep >= count)
 			cycleStep = 0;
-		if (protos[cycleStep]->type == PROTOTYPE_PROTOCOL && (cli.pfnGetProtocolVisibility(protos[cycleStep]->szName)) )
+		if (protos[cycleStep]->type == PROTOTYPE_PROTOCOL)
 			break;
 	}
-	DestroyIcon(cli.trayIcon[0].hBaseIcon);
-	cli.trayIcon[0].hBaseIcon = cli.pfnGetIconFromStatusMode(NULL,protos[cycleStep]->szName,CallProtoService(protos[cycleStep]->szName,PS_GETSTATUS,0,0));
-	if (cli.trayIcon[0].isBase)
-		cli.pfnTrayIconUpdate(cli.trayIcon[0].hBaseIcon, NULL, NULL, 1);
-	ulock;
+	DestroyIcon(trayIcon[0].hBaseIcon);
+	trayIcon[0].hBaseIcon =
+		ImageList_GetIcon(hCListImages,
+		cli.pfnIconFromStatusMode(protos[cycleStep]->szName, CallProtoService(protos[cycleStep]->szName, PS_GETSTATUS, 0, 0), NULL), ILD_NORMAL);
+	if (trayIcon[0].isBase)
+		TrayIconUpdate(trayIcon[0].hBaseIcon, NULL, NULL, 1);
 }
 
 void fnTrayIconUpdateBase(const char *szChangedProto)
@@ -470,12 +358,11 @@ void fnTrayIconUpdateBase(const char *szChangedProto)
 	int i, count, netProtoCount, changed = -1;
 	PROTOCOLDESCRIPTOR **protos;
 	int averageMode = 0;
-	HWND hwnd = cli.hwndContactList;
-	initcheck;
-	lock;
-	if (cli.cycleTimerId) {
-		KillTimer(NULL, cli.cycleTimerId);
-		cli.cycleTimerId = 0;
+	HWND hwnd = (HWND) CallService(MS_CLUI_GETHWND, 0, 0);
+
+	if (cycleTimerId) {
+		KillTimer(NULL, cycleTimerId);
+		cycleTimerId = 0;
 	}
 	CallService(MS_PROTO_ENUMPROTOCOLS, (WPARAM) & count, (LPARAM) & protos);
 	for (i = 0, netProtoCount = 0; i < count; i++) {
@@ -495,17 +382,16 @@ void fnTrayIconUpdateBase(const char *szChangedProto)
 		if (averageMode > 0) {
 			if (DBGetContactSettingByte(NULL, "CList", "TrayIcon", SETTING_TRAYICON_DEFAULT) == SETTING_TRAYICON_MULTI) {
 				if (DBGetContactSettingByte(NULL, "CList", "AlwaysMulti", SETTING_ALWAYSMULTI_DEFAULT))
-					//changed = cli.pfnTrayIconSetBaseInfo( cli.pfnGetIconFromStatusMode((char*)szChangedProto, NULL, averageMode), (char*)szChangedProto);
-					changed = cli.pfnTrayIconSetBaseInfo( cli.pfnGetIconFromStatusMode( NULL, szChangedProto, CallProtoService(szChangedProto, PS_GETSTATUS, 0, 0)), (char*)szChangedProto );
-				else if (cli.trayIcon && cli.trayIcon[0].szProto != NULL) {
-					cli.pfnTrayIconDestroy(hwnd);
-					cli.pfnTrayIconInit(hwnd);
+					changed = TrayIconSetBaseInfo(ImageList_GetIcon(hCListImages, cli.pfnIconFromStatusMode(szChangedProto, averageMode, NULL), ILD_NORMAL), (char*)szChangedProto);
+				else if (trayIcon && trayIcon[0].szProto != NULL) {
+					TrayIconDestroy(hwnd);
+					TrayIconInit(hwnd);
 				}
 				else
-					changed = cli.pfnTrayIconSetBaseInfo( cli.pfnGetIconFromStatusMode(NULL, NULL, averageMode), NULL );
+					changed = TrayIconSetBaseInfo(ImageList_GetIcon(hCListImages, cli.pfnIconFromStatusMode(NULL, averageMode, NULL), ILD_NORMAL), NULL);
 			}
 			else
-				changed = cli.pfnTrayIconSetBaseInfo( cli.pfnGetIconFromStatusMode(NULL, NULL, averageMode), NULL);
+				changed = TrayIconSetBaseInfo(ImageList_GetIcon(hCListImages, cli.pfnIconFromStatusMode(NULL, averageMode, NULL), ILD_NORMAL), NULL);
 		}
 		else {
 			switch (DBGetContactSettingByte(NULL, "CList", "TrayIcon", SETTING_TRAYICON_DEFAULT)) {
@@ -517,155 +403,88 @@ void fnTrayIconUpdateBase(const char *szChangedProto)
 						szProto = NULL;
 					else
 						szProto = dbv.pszVal;
-					changed = cli.pfnTrayIconSetBaseInfo( cli.pfnGetIconFromStatusMode( NULL, szProto, szProto ? CallProtoService(szProto, PS_GETSTATUS, 0,0) : CallService(MS_CLIST_GETSTATUSMODE, 0, 0)), szProto );
+					changed = TrayIconSetBaseInfo(ImageList_GetIcon(hCListImages,cli.pfnIconFromStatusMode(szProto,szProto ? CallProtoService(szProto, PS_GETSTATUS, 0,0) : CallService(MS_CLIST_GETSTATUSMODE, 0, 0), NULL),ILD_NORMAL), NULL);
 					DBFreeVariant(&dbv);
 					break;
 				}
 			case SETTING_TRAYICON_CYCLE:
-				cli.cycleTimerId =
-					SetTimer(NULL, 0, DBGetContactSettingWord(NULL, "CList", "CycleTime", SETTING_CYCLETIME_DEFAULT) * 1000, cli.pfnTrayCycleTimerProc);
+				cycleTimerId =
+					SetTimer(NULL, 0, DBGetContactSettingWord(NULL, "CList", "CycleTime", SETTING_CYCLETIME_DEFAULT) * 1000, TrayCycleTimerProc);
 				changed =
-					cli.pfnTrayIconSetBaseInfo(ImageList_GetIcon
+					TrayIconSetBaseInfo(ImageList_GetIcon
 					(hCListImages, cli.pfnIconFromStatusMode(szChangedProto, CallProtoService(szChangedProto, PS_GETSTATUS, 0, 0), NULL),
 					ILD_NORMAL), NULL);
 				break;
 			case SETTING_TRAYICON_MULTI:
-				if (!cli.trayIcon) {
-					cli.pfnTrayIconRemove(NULL, NULL);
+				if (!trayIcon) {
+					TrayIconRemove(NULL, NULL);
 				}
-				else if (DBGetContactSettingByte( NULL, "CList", "AlwaysMulti", SETTING_ALWAYSMULTI_DEFAULT ))
-					changed = cli.pfnTrayIconSetBaseInfo( cli.pfnGetIconFromStatusMode( NULL, szChangedProto, CallProtoService(szChangedProto, PS_GETSTATUS, 0, 0)), (char*)szChangedProto );
+				else if (DBGetContactSettingByte(NULL, "CList", "AlwaysMulti", SETTING_ALWAYSMULTI_DEFAULT))
+					changed = TrayIconSetBaseInfo(ImageList_GetIcon(hCListImages, cli.pfnIconFromStatusMode(szChangedProto, CallProtoService(szChangedProto, PS_GETSTATUS, 0, 0), NULL), ILD_NORMAL), (char*)szChangedProto);
 				else {
-					cli.pfnTrayIconDestroy(hwnd);
-					cli.pfnTrayIconInit(hwnd);
+					TrayIconDestroy(hwnd);
+					TrayIconInit(hwnd);
 				}
 				break;
 			}
 		}
 	}
 	else
-		changed = cli.pfnTrayIconSetBaseInfo(ImageList_GetIcon(hCListImages, cli.pfnIconFromStatusMode(NULL, averageMode, NULL), ILD_NORMAL), NULL);
-	if (changed != -1 && cli.trayIcon[changed].isBase)
-		cli.pfnTrayIconUpdate(cli.trayIcon[changed].hBaseIcon, NULL, cli.trayIcon[changed].szProto, 1);
-	ulock;
+		changed = TrayIconSetBaseInfo(ImageList_GetIcon(hCListImages, cli.pfnIconFromStatusMode(NULL, averageMode, NULL), ILD_NORMAL), NULL);
+	if (changed != -1 && trayIcon[changed].isBase)
+		TrayIconUpdate(trayIcon[changed].hBaseIcon, NULL, trayIcon[changed].szProto, 1);
 }
 
 void fnTrayIconSetToBase(char *szPreferredProto)
 {
 	int i;
-	initcheck;
-	lock;
-	for (i = 0; i < cli.trayIconCount; i++) {
-		if ( cli.trayIcon[i].id == 0 )
-			continue;
-		if ( lstrcmpA( cli.trayIcon[i].szProto, szPreferredProto ))
-			continue;
-		cli.pfnTrayIconUpdate( cli.trayIcon[i].hBaseIcon, NULL, szPreferredProto, 1);
-		{ ulock; return; }
-	}
 
-	//if there wasn't a specific icon, there will only be one suitable
-	for ( i = 0; i < cli.trayIconCount; i++) {
-		if ( cli.trayIcon[i].id == 0 )
+	for (i = 0; i < trayIconCount; i++) {
+		if (trayIcon[i].id == 0)
 			continue;
-		cli.pfnTrayIconUpdate( cli.trayIcon[i].hBaseIcon, NULL, szPreferredProto, 1);
-		{ ulock; return; }
+		if (lstrcmpA(trayIcon[i].szProto, szPreferredProto))
+			continue;
+		TrayIconUpdate(trayIcon[i].hBaseIcon, NULL, szPreferredProto, 1);
+		return;
 	}
-	{ ulock; return; }
+	//if there wasn't a specific icon, there will only be one suitable
+	for (i = 0; i < trayIconCount; i++) {
+		if (trayIcon[i].id == 0)
+			continue;
+		TrayIconUpdate(trayIcon[i].hBaseIcon, NULL, szPreferredProto, 1);
+		return;
+	}
 }
 
 void fnTrayIconIconsChanged(void)
 {
-	initcheck;
-	lock;
-	cli.pfnTrayIconDestroy(cli.hwndContactList);
-	cli.pfnTrayIconInit(cli.hwndContactList);
-	ulock;
+	HWND hwnd = (HWND) CallService(MS_CLUI_GETHWND, 0, 0);
+	TrayIconDestroy(hwnd);
+	TrayIconInit(hwnd);
 }
 
 static int autoHideTimerId;
 static VOID CALLBACK TrayIconAutoHideTimer(HWND hwnd, UINT message, UINT idEvent, DWORD dwTime)
 {
 	HWND hwndClui;
-	initcheck;
-	lock;
 	KillTimer(hwnd, idEvent);
-	hwndClui = cli.hwndContactList;
+	hwndClui = (HWND) CallService(MS_CLUI_GETHWND, 0, 0);
 	if (GetActiveWindow() == hwndClui)
-	{ ulock; return; }
+		return;
 	ShowWindow(hwndClui, SW_HIDE);
 	if (MySetProcessWorkingSetSize != NULL)
 		MySetProcessWorkingSetSize(GetCurrentProcess(), -1, -1);
-	{ ulock; return; }
 }
 
 int fnTrayIconPauseAutoHide(WPARAM wParam, LPARAM lParam)
 {
-	initcheck 0;
-	lock;
 	if (DBGetContactSettingByte(NULL, "CList", "AutoHide", SETTING_AUTOHIDE_DEFAULT)) {
-		if ( GetActiveWindow() != cli.hwndContactList ) {
+		if (GetActiveWindow() != (HWND) CallService(MS_CLUI_GETHWND, 0, 0)) {
 			KillTimer(NULL, autoHideTimerId);
 			autoHideTimerId = SetTimer(NULL, 0, 1000 * DBGetContactSettingWord(NULL, "CList", "HideTime", SETTING_HIDETIME_DEFAULT), TrayIconAutoHideTimer);
 		}
 	}
-	{ ulock; return 0; }
-}
-
-/////////////////////////////////////////////////////////////////////////////////////////
-// processes tray icon's messages
-
-static BYTE s_LastHoverIconID = 0;
-static BOOL g_trayTooltipActive = FALSE;
-static POINT tray_hover_pos = {0};
-
-static void CALLBACK TrayHideToolTipTimerProc(HWND hwnd, UINT msg, UINT_PTR id, DWORD elapsed)
-{
-	if ( g_trayTooltipActive ) {
-		POINT pt;
-		GetCursorPos(&pt);
-		if ( abs(pt.x - tray_hover_pos.x) > TOOLTIP_TOLERANCE || abs(pt.y - tray_hover_pos.y) > TOOLTIP_TOLERANCE ) {
-			CallService("mToolTip/HideTip", 0, 0);
-			g_trayTooltipActive = FALSE;
-			KillTimer( hwnd, TIMERID_TRAYHOVER_2 );
-		}
-	}
-	else KillTimer( hwnd, TIMERID_TRAYHOVER_2 );
-}
-
-static void CALLBACK TrayToolTipTimerProc(HWND hwnd, UINT msg, UINT_PTR id, DWORD elapsed)
-{
-	if ( !g_trayTooltipActive && !cli.bTrayMenuOnScreen ) {
-		CLCINFOTIP ti = {0};
-		POINT pt;
-		GetCursorPos( &pt );
-		if ( abs(pt.x - tray_hover_pos.x) <= TOOLTIP_TOLERANCE && abs(pt.y - tray_hover_pos.y) <= TOOLTIP_TOLERANCE ) {
-			TCHAR* szTipCur = cli.szTip;
-			{
-				int n = s_LastHoverIconID-100;
-				if ( n >= 0 && n < cli.trayIconCount )
-					szTipCur = cli.trayIcon[n].ptszToolTip;
-			}
-			ti.rcItem.left   = pt.x - 10;
-			ti.rcItem.right  = pt.x + 10;
-			ti.rcItem.top    = pt.y - 10;
-			ti.rcItem.bottom = pt.y + 10;
-			ti.cbSize = sizeof( ti );
-			ti.isTreeFocused = GetFocus() == cli.hwndContactList ? 1 : 0;
-			#if defined( _UNICODE )
-			{	char* p = u2a( szTipCur );
-	        	CallService( "mToolTip/ShowTip", (WPARAM)p, (LPARAM)&ti );
-				mir_free( p );
-			}
-			#else
-	        	CallService( "mToolTip/ShowTip", (WPARAM)szTipCur, (LPARAM)&ti );
-			#endif
-			GetCursorPos( &tray_hover_pos );
-			SetTimer( cli.hwndContactList, TIMERID_TRAYHOVER_2, 600, TrayHideToolTipTimerProc );
-			g_trayTooltipActive = TRUE;
-	}	}
-
-	KillTimer(hwnd, id);
+	return 0;
 }
 
 int fnTrayIconProcessMessage(WPARAM wParam, LPARAM lParam)
@@ -678,9 +497,8 @@ int fnTrayIconProcessMessage(WPARAM wParam, LPARAM lParam)
 		break;
 	}
 	case TIM_CREATE:
-		cli.pfnTrayIconInit(msg->hwnd);
+		TrayIconInit(msg->hwnd);
 		break;
-
 	case WM_ACTIVATE:
 		if (DBGetContactSettingByte(NULL, "CList", "AutoHide", SETTING_AUTOHIDE_DEFAULT)) {
 			if (LOWORD(msg->wParam) == WA_INACTIVE)
@@ -689,26 +507,22 @@ int fnTrayIconProcessMessage(WPARAM wParam, LPARAM lParam)
 				KillTimer(NULL, autoHideTimerId);
 		}
 		break;
-
 	case WM_DESTROY:
-		cli.pfnTrayIconDestroy(msg->hwnd);
-		cli.pfnUninitTray();
+		TrayIconDestroy(msg->hwnd);
 		break;
-
 	case TIM_CALLBACK:
-		if ( msg->lParam == WM_RBUTTONDOWN || msg->lParam == WM_LBUTTONDOWN || msg->lParam == WM_RBUTTONDOWN && g_trayTooltipActive ) {
-			CallService("mToolTip/HideTip", 0, 0);
-			g_trayTooltipActive = FALSE;
-		}
-
-		if ( msg->lParam == WM_MBUTTONUP )
+		if (msg->lParam == WM_MBUTTONUP) {
 			cli.pfnShowHide(0, 0);
-		else if (msg->lParam == (DBGetContactSettingByte(NULL, "CList", "Tray1Click", SETTING_TRAY1CLICK_DEFAULT) ? WM_LBUTTONUP : WM_LBUTTONDBLCLK)) {
-			if ((GetAsyncKeyState(VK_CONTROL) & 0x8000))
-				cli.pfnShowHide(0, 0);
-			else if (cli.pfnEventsProcessTrayDoubleClick())
-				cli.pfnShowHide(0, 0);
 		}
+		else if (msg->lParam ==
+			(DBGetContactSettingByte(NULL, "CList", "Tray1Click", SETTING_TRAY1CLICK_DEFAULT) ? WM_LBUTTONUP : WM_LBUTTONDBLCLK)) {
+				if ((GetAsyncKeyState(VK_CONTROL) & 0x8000))
+					cli.pfnShowHide(0, 0);
+				else {
+					if (cli.pfnEventsProcessTrayDoubleClick())
+						cli.pfnShowHide(0, 0);
+				}
+			}
 		else if (msg->lParam == WM_RBUTTONUP) {
 			MENUITEMINFO mi;
 			POINT pt;
@@ -737,183 +551,82 @@ int fnTrayIconProcessMessage(WPARAM wParam, LPARAM lParam)
 			RemoveMenu(hMenu, 1, MF_BYPOSITION);
 			DestroyMenu(hMainMenu);
 		}
-		else if ( msg->lParam == WM_MOUSEMOVE ) {
-			s_LastHoverIconID = msg->wParam;
-			if ( g_trayTooltipActive ) {
-				POINT pt;
-				GetCursorPos( &pt );
-				if ( abs(pt.x - tray_hover_pos.x) > TOOLTIP_TOLERANCE || abs(pt.y - tray_hover_pos.y) > TOOLTIP_TOLERANCE ) {
-					CallService("mToolTip/HideTip", 0, 0);
-					g_trayTooltipActive = FALSE;
-					ReleaseCapture();
-				}
-			}
-			else {
-				GetCursorPos(&tray_hover_pos);
-				SetTimer(cli.hwndContactList, TIMERID_TRAYHOVER, 600, TrayToolTipTimerProc);
-			}
-			break;
-		}
-
 		*((LRESULT *) lParam) = 0;
 		return TRUE;
-	
 	default:
-		if ( msg->message == WM_TASKBARCREATED ) {
-			cli.pfnTrayIconTaskbarCreated(msg->hwnd);
+		if (msg->message == WM_TASKBARCREATED) {
+			TrayIconTaskbarCreated(msg->hwnd);
 			*((LRESULT *) lParam) = 0;
 			return TRUE;
-	}	}
+		}
+	}
 
 	return FALSE;
 }
 
-/////////////////////////////////////////////////////////////////////////////////////////
-// processes tray icon's notifications
-
 int fnCListTrayNotify(MIRANDASYSTRAYNOTIFY *msn)
 {
- #if defined(_UNICODE)
-	if ( msn->dwInfoFlags & NIIF_INTERN_UNICODE ) {
-		if (msn && msn->cbSize == sizeof(MIRANDASYSTRAYNOTIFY) && msn->szInfo && msn->szInfoTitle) {
-			if (cli.trayIcon) {
-				NOTIFYICONDATAW nid = {0};
-				nid.cbSize = ( cli.shellVersion >= 5 ) ? sizeof(nid) : NOTIFYICONDATAW_V1_SIZE;
-				nid.hWnd = cli.hwndContactList;
-				if (msn->szProto) {
-					int j;
-					for (j = 0; j < cli.trayIconCount; j++) {
-						if (cli.trayIcon[j].szProto != NULL) {
-							if (strcmp(msn->szProto, cli.trayIcon[j].szProto) == 0) {
-								nid.uID = cli.trayIcon[j].id;
-								j = cli.trayIconCount;
-								continue;
-							}
-						} else {
-							if (cli.trayIcon[j].isBase) {
-								nid.uID = cli.trayIcon[j].id;
-								j = cli.trayIconCount;
-								continue;
-							}
+	if (msn && msn->cbSize == sizeof(MIRANDASYSTRAYNOTIFY) && msn->szInfo && msn->szInfoTitle) {
+		if (trayIcon) {
+			NOTIFYICONDATAA nid = { 0 };
+			nid.cbSize = ( dviShell.dwMajorVersion >= 5 ) ? sizeof(nid) : NOTIFYICONDATAA_V1_SIZE;
+			nid.hWnd = (HWND) CallService(MS_CLUI_GETHWND, 0, 0);
+			if (msn->szProto) {
+				int j;
+				for (j = 0; j < trayIconCount; j++) {
+					if (trayIcon[j].szProto != NULL) {
+						if (strcmp(msn->szProto, trayIcon[j].szProto) == 0) {
+							nid.uID = trayIcon[j].id;
+							j = trayIconCount;
+							continue;
 						}
-					} //for
-				} else {
-					nid.uID = cli.trayIcon[0].id;
-				}
-				nid.uFlags = NIF_INFO;
-				lstrcpynW(nid.szInfo, (WCHAR *)msn->szInfo, SIZEOF(nid.szInfo));
-				lstrcpynW(nid.szInfoTitle, (WCHAR *)msn->szInfoTitle, SIZEOF(nid.szInfoTitle));
-				nid.szInfo[SIZEOF(nid.szInfo) - 1] = 0;
-				nid.szInfoTitle[SIZEOF(nid.szInfoTitle) - 1] = 0;
-				nid.uTimeout = msn->uTimeout;
-				nid.dwInfoFlags = (msn->dwInfoFlags & ~NIIF_INTERN_UNICODE);
-				return Shell_NotifyIconW(NIM_MODIFY, (void*) &nid) == 0;
+					}
+					else {
+						if (trayIcon[j].isBase) {
+							nid.uID = trayIcon[j].id;
+							j = trayIconCount;
+							continue;
+						}
+					}
+				}               //for
 			}
-			return 2;
+			else {
+				nid.uID = trayIcon[0].id;
+			}
+			nid.uFlags = NIF_INFO;
+			lstrcpynA(nid.szInfo, msn->szInfo, sizeof(nid.szInfo));
+			lstrcpynA(nid.szInfoTitle, msn->szInfoTitle, sizeof(nid.szInfoTitle));
+			nid.uTimeout = msn->uTimeout;
+			nid.dwInfoFlags = msn->dwInfoFlags;
+			return Shell_NotifyIconA(NIM_MODIFY, (void *) &nid) == 0;
 		}
+		return 2;
 	}
-	else 
-	#endif
-		if (msn && msn->cbSize == sizeof(MIRANDASYSTRAYNOTIFY) && msn->szInfo && msn->szInfoTitle) {
-			if (cli.trayIcon) {
-				NOTIFYICONDATAA nid = { 0 };
-				nid.cbSize = ( cli.shellVersion >= 5 ) ? sizeof(nid) : NOTIFYICONDATAA_V1_SIZE;
-				nid.hWnd = cli.hwndContactList;
-				if (msn->szProto) {
-					int j;
-					for (j = 0; j < cli.trayIconCount; j++) {
-						if (cli.trayIcon[j].szProto != NULL) {
-							if (strcmp(msn->szProto, cli.trayIcon[j].szProto) == 0) {
-								nid.uID = cli.trayIcon[j].id;
-								j = cli.trayIconCount;
-								continue;
-							}
-						}
-						else {
-							if (cli.trayIcon[j].isBase) {
-								nid.uID = cli.trayIcon[j].id;
-								j = cli.trayIconCount;
-								continue;
-							}
-						}
-					}               //for
-				}
-				else {
-					nid.uID = cli.trayIcon[0].id;
-				}
-				nid.uFlags = NIF_INFO;
-				lstrcpynA(nid.szInfo, msn->szInfo, sizeof(nid.szInfo));
-				lstrcpynA(nid.szInfoTitle, msn->szInfoTitle, sizeof(nid.szInfoTitle));
-				nid.uTimeout = msn->uTimeout;
-				nid.dwInfoFlags = msn->dwInfoFlags;
-				return Shell_NotifyIconA(NIM_MODIFY, (void *) &nid) == 0;
-			}
-			return 2;
-		}
 	return 1;
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////
 
-typedef struct _DllVersionInfo
-{
-	DWORD cbSize;
-	DWORD dwMajorVersion;       // Major version
-	DWORD dwMinorVersion;       // Minor version
-	DWORD dwBuildNumber;        // Build number
-	DWORD dwPlatformID;         // DLLVER_PLATFORM_*
-}
-	DLLVERSIONINFO;
-
-typedef HRESULT(CALLBACK * DLLGETVERSIONPROC) (DLLVERSIONINFO *);
-
-static DLLVERSIONINFO dviShell;
-
 static int pfnCListTrayNotifyStub(WPARAM wParam, LPARAM lParam )
 {	return cli.pfnCListTrayNotify(( MIRANDASYSTRAYNOTIFY* )lParam );
 }
 
-void fnInitTray( void )
+void InitTray(void)
 {
-	HINSTANCE hLib = LoadLibraryA("shell32.dll");
-	if ( hLib ) {
+	HINSTANCE hLib;
+
+	hLib = LoadLibraryA("shell32.dll");
+	if (hLib) {
 		DLLGETVERSIONPROC proc;
 		dviShell.cbSize = sizeof(dviShell);
-		proc = ( DLLGETVERSIONPROC )GetProcAddress( hLib, "DllGetVersion" );
+		proc = (DLLGETVERSIONPROC) GetProcAddress(hLib, "DllGetVersion");
 		if (proc) {
-			proc( &dviShell );
-			cli.shellVersion = dviShell.dwMajorVersion;
+			proc(&dviShell);
 		}
- 		FreeLibrary(hLib);
+		FreeLibrary(hLib);
 	}
-	InitializeCriticalSection(&trayLockCS);	
-	if ( cli.shellVersion >= 5 )
+	if (dviShell.dwMajorVersion >= 5)
 		CreateServiceFunction(MS_CLIST_SYSTRAY_NOTIFY, pfnCListTrayNotifyStub );
-	fTrayInited=TRUE;
-}
 
-void fnUninitTray( void )
-{
-	fTrayInited=FALSE;
-	DeleteCriticalSection( &trayLockCS );
+	return;
 }
-void   fnLockTray( void )
-{
-//	return;				//stub to be removed
-	initcheck;
-	EnterCriticalSection( &trayLockCS );
-}
-
-void   fnUnlockTray( void )
-{
-//	return;				//stub to be removed
-	initcheck;
-#ifdef _DEBUG
-	if (trayLockCS.RecursionCount==0) DebugBreak();	   //try to unlock already 
-#endif
-	LeaveCriticalSection( &trayLockCS );
-}
-
-#undef lock
-#undef ulock
-#undef initcheck

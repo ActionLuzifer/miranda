@@ -5,7 +5,7 @@
 // Copyright © 2000,2001 Richard Hughes, Roland Rabien, Tristan Van de Vreede
 // Copyright © 2001,2002 Jon Keating, Richard Hughes
 // Copyright © 2002,2003,2004 Martin Öberg, Sam Kothari, Robert Rainwater
-// Copyright © 2004,2005,2006,2007 Angeli-Ka, Joe Kucera
+// Copyright © 2004,2005,2006 Angeli-Ka, Joe Kucera
 // 
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -48,6 +48,7 @@ static int bXStatusMenuBuilt = 0;
 static HANDLE hHookExtraIconsRebuild = NULL;
 static HANDLE hHookStatusBuild = NULL;
 static HANDLE hHookExtraIconsApply = NULL;
+static HMODULE hXStatusIconsDLL = NULL;
 static HANDLE hXStatusIcons[32];
 static HANDLE hXStatusItems[33];
 
@@ -85,11 +86,8 @@ static DWORD requestXStatusDetails(HANDLE hContact, BOOL bAllowDelay)
 
   rr.hContact = hContact;
   rr.bType = RIT_XSTATUS_REQUEST;
-  rr.nRequestType = 0x101; // request
+  rr.rate_group = 0x101; // request
   rr.nMinDelay = 1000;    // delay at least 1s
-  EnterCriticalSection(&ratesMutex);
-  rr.wGroup = ratesGroupFromSNAC(gRates, ICQ_MSG_FAMILY, ICQ_MSG_SRV_SEND);
-  LeaveCriticalSection(&ratesMutex);
 
   if (!handleRateItem(&rr, bAllowDelay))
     return sendXStatusDetailsRequest(hContact, !bAllowDelay);
@@ -119,7 +117,6 @@ static HANDLE LoadXStatusIconLibrary(char* path, const char* sub)
 static char* InitXStatusIconLibrary(char* buf)
 {
 	char path[2*MAX_PATH];
-  HMODULE hXStatusIconsDLL;
 
   // get miranda's exe path
   GetModuleFileNameA(NULL, path, MAX_PATH);
@@ -133,31 +130,46 @@ static char* InitXStatusIconLibrary(char* buf)
     strcpy(buf, path);
 
     if (LoadStringA(hXStatusIconsDLL, IDS_IDENTIFY, path, sizeof(path)) == 0 || strcmpnull(path, "# Custom Status Icons #"))
-    { // library is invalid
-      *buf = '\0';
+    {
+      FreeLibrary(hXStatusIconsDLL);
+      hXStatusIconsDLL = NULL;
     }
-    FreeLibrary(hXStatusIconsDLL);
+    else
+      return buf;
   }
-  else
-    *buf = '\0';
+  *buf = '\0';
 
   return buf;
 }
 
 
 
+HICON LoadDefaultXStatusIcon(int bStatus, UINT flags)
+{
+  if (hXStatusIconsDLL)
+    return LoadImage(hXStatusIconsDLL, MAKEINTRESOURCE(IDI_XSTATUS1 + bStatus - 1), IMAGE_ICON, 0, 0, flags & LR_SHARED);
+  else
+    return NULL;
+}
+
+
+
 HICON GetXStatusIcon(int bStatus, UINT flags)
 {
-  char szTemp[64];
-  HICON icon;
+  if (IconLibInstalled())
+  {
+    char szTemp[64];
+    HICON icon;
 
-  null_snprintf(szTemp, sizeof(szTemp), "xstatus%d", bStatus - 1);
-  icon = IconLibGetIcon(szTemp);
+    null_snprintf(szTemp, sizeof(szTemp), "xstatus%d", bStatus - 1);
+    icon = IconLibProcess(NULL, szTemp);
 
-  if (flags & LR_SHARED)
-    return icon;
-  else
-    return CopyIcon(icon);
+    if (flags & LR_SHARED)
+      return icon;
+    else
+      return CopyIcon(icon);
+  }
+  return LoadDefaultXStatusIcon(bStatus, flags);
 }
 
 
@@ -421,8 +433,6 @@ typedef struct SetXStatusData_s {
 typedef struct InitXStatusData_s {
   BYTE bAction;
   BYTE bXStatus;
-  char *szXStatusName;
-  char *szXStatusMsg;
   HANDLE hContact;
 } InitXStatusData;
 
@@ -468,6 +478,9 @@ static BOOL CALLBACK SetXStatusDlgProc(HWND hwndDlg,UINT message,WPARAM wParam,L
 
       if (!init->bAction)
       { // set our xStatus
+        char szSetting[64];
+        char* szValue;
+
         dat->bXStatus = init->bXStatus;
         SendDlgItemMessage(hwndDlg, IDC_XTITLE, EM_LIMITTEXT, 256, 0);
         SendDlgItemMessage(hwndDlg, IDC_XMSG, EM_LIMITTEXT, 1024, 0);
@@ -475,12 +488,19 @@ static BOOL CALLBACK SetXStatusDlgProc(HWND hwndDlg,UINT message,WPARAM wParam,L
         OldMessageEditProc = (WNDPROC)SetWindowLongUtf(GetDlgItem(hwndDlg,IDC_XMSG),GWL_WNDPROC,(LONG)MessageEditSubclassProc);
         dat->okButtonFormat = GetDlgItemTextUtf(hwndDlg,IDOK);
 
-        SetDlgItemTextUtf(hwndDlg, IDC_XTITLE, init->szXStatusName);
-        SetDlgItemTextUtf(hwndDlg, IDC_XMSG, init->szXStatusMsg);
-
         dat->countdown=5;
         SendMessage(hwndDlg, WM_TIMER, 0, 0);
         SetTimer(hwndDlg,1,1000,0);
+
+        sprintf(szSetting, "XStatus%dName", dat->bXStatus);
+        szValue = ICQGetContactSettingUtf(NULL, szSetting, "");
+        SetDlgItemTextUtf(hwndDlg, IDC_XTITLE, szValue);
+        SAFE_FREE(&szValue);
+
+        sprintf(szSetting, "XStatus%dMsg", dat->bXStatus);
+        szValue = ICQGetContactSettingUtf(NULL, szSetting, "");
+        SetDlgItemTextUtf(hwndDlg, IDC_XMSG, szValue);
+        SAFE_FREE(&szValue);
       }
       else
       { // retrieve contact's xStatus
@@ -565,7 +585,6 @@ static BOOL CALLBACK SetXStatusDlgProc(HWND hwndDlg,UINT message,WPARAM wParam,L
         char szSetting[64];
         char* szValue;
 
-        ICQWriteContactSettingByte(NULL, DBSETTING_XSTATUSID, dat->bXStatus);
         szValue = GetDlgItemTextUtf(hwndDlg,IDC_XMSG);
         sprintf(szSetting, "XStatus%dMsg", dat->bXStatus);
         ICQWriteContactSettingUtf(NULL, szSetting, szValue);
@@ -609,19 +628,25 @@ static void setXStatusEx(BYTE bXStatus, BYTE bQuiet)
     CallService(MS_CLIST_MODIFYMENUITEM, (WPARAM)hXStatusItems[bOldXStatus], (LPARAM)&mi);
   }
 
-  mi.flags = CMIM_FLAGS | CMIF_CHECKED;
+  ICQWriteContactSettingByte(NULL, DBSETTING_XSTATUSID, bXStatus);
+  mi.flags = CMIM_FLAGS | (bXStatus?CMIF_CHECKED:0);
   CallService(MS_CLIST_MODIFYMENUITEM, (WPARAM)hXStatusItems[bXStatus], (LPARAM)&mi);
 
   if (bXStatus)
   {
     char szSetting[64];
     char str[MAX_PATH];
-    char *szName, *szMsg;
+    char* szUtf;
 
     sprintf(szSetting, "XStatus%dName", bXStatus);
-    szName = ICQGetContactSettingUtf(NULL, szSetting, ICQTranslateUtfStatic(nameXStatus[bXStatus-1], str));
+    szUtf = ICQGetContactSettingUtf(NULL, szSetting, ICQTranslateUtfStatic(nameXStatus[bXStatus-1], str));
+    ICQWriteContactSettingUtf(NULL, DBSETTING_XSTATUSNAME, szUtf);
+    SAFE_FREE(&szUtf);
+
     sprintf(szSetting, "XStatus%dMsg", bXStatus);
-    szMsg = ICQGetContactSettingUtf(NULL, szSetting, "");
+    szUtf = ICQGetContactSettingUtf(NULL, szSetting, "");
+    ICQWriteContactSettingUtf(NULL, DBSETTING_XSTATUSMSG, szUtf);
+    SAFE_FREE(&szUtf);
 
     sprintf(szSetting, "XStatus%dStat", bXStatus);
     if (!bQuiet && !ICQGetContactSettingByte(NULL, szSetting, 0))
@@ -630,24 +655,13 @@ static void setXStatusEx(BYTE bXStatus, BYTE bQuiet)
 
       init.bAction = 0; // set
       init.bXStatus = bXStatus;
-      init.szXStatusName = szName;
-      init.szXStatusMsg = szMsg;
       DialogBoxUtf(FALSE, hInst, MAKEINTRESOURCEA(IDD_SETXSTATUS),NULL,SetXStatusDlgProc,(LPARAM)&init);
     }
     else
-    {
-      ICQWriteContactSettingByte(NULL, DBSETTING_XSTATUSID, bXStatus);
-      ICQWriteContactSettingUtf(NULL, DBSETTING_XSTATUSNAME, szName);
-      ICQWriteContactSettingUtf(NULL, DBSETTING_XSTATUSMSG, szMsg);
-
       setUserInfo();
-    }
-    SAFE_FREE(&szName);
-    SAFE_FREE(&szMsg);
   }
   else
   {
-    ICQWriteContactSettingByte(NULL, DBSETTING_XSTATUSID, bXStatus);
     ICQDeleteContactSetting(NULL, DBSETTING_XSTATUSNAME);
     ICQDeleteContactSetting(NULL, DBSETTING_XSTATUSMSG);
 

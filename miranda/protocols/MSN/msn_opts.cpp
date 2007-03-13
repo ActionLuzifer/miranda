@@ -27,85 +27,16 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <direct.h>
 
 #include "resource.h"
+#include "msn_md5.h"
 #include "uxtheme.h"
 
-#include "m_icolib.h"
-
 #define STYLE_DEFAULTBGCOLOUR     RGB(173,206,247)
-
-/////////////////////////////////////////////////////////////////////////////////////////
-// Icons init
-
-struct
-{
-	char*  szDescr;
-	char*  szName;
-	int    defIconID;
-	HANDLE hIconLibItem;
-}
-static iconList[] =
-{
-	{	"Protocol icon",          "main",        IDI_MSN        },
-	{	"Hotmail Inbox",          "inbox",       IDI_INBOX      },
-	{	"Profile",                "profile",     IDI_PROFILE    },
-	{	"MSN Services",           "services",    IDI_SERVICES   },
-	{	"Set Avatar",             "avatar",      IDI_AVATAR     },
-	{	"Block user",             "block",       IDI_MSNBLOCK   },
-	{	"Invite to chat",         "invite",      IDI_INVITE     },
-	{	"Start Netmeeting",       "netmeeting",  IDI_NETMEETING },
-	{	"Contact list",           "list_fl",     IDI_LIST_FL    },
-	{	"Allowed list",           "list_al",     IDI_LIST_AL    },
-	{	"Blocked list",           "list_bl",     IDI_LIST_BL    },
-	{	"Relative list",          "list_rl",     IDI_LIST_RL    }
-};
-
-void MsnInitIcons( void )
-{
-	char szFile[MAX_PATH];
-	GetModuleFileNameA(hInst, szFile, MAX_PATH);
-
-	SKINICONDESC sid = {0};
-	sid.cbSize = sizeof(SKINICONDESC);
-	sid.pszDefaultFile = szFile;
-	sid.cx = sid.cy = 16;
-	sid.pszSection = MSN_Translate( msnProtocolName );
-
-	for ( int i = 0; i < SIZEOF(iconList); i++ ) {
-		char szSettingName[100];
-		mir_snprintf( szSettingName, sizeof( szSettingName ), "%s_%s", msnProtocolName, iconList[i].szName );
-		sid.pszName = szSettingName;
-		sid.pszDescription = MSN_Translate( iconList[i].szDescr );
-		sid.iDefaultIndex = -iconList[i].defIconID;
-		iconList[i].hIconLibItem = ( HANDLE )CallService(MS_SKIN2_ADDICON, 0, (LPARAM)&sid);
-}	}
-
-HICON __stdcall LoadIconEx( const char* name )
-{
-	char szSettingName[100];
-	mir_snprintf( szSettingName, sizeof( szSettingName ), "%s_%s", msnProtocolName, name );
-	return ( HICON )MSN_CallService( MS_SKIN2_GETICON, 0, (LPARAM)szSettingName );
-}
-
-HANDLE __stdcall GetIconHandle( int iconId )
-{
-	for ( int i=0; i < SIZEOF(iconList); i++ )
-		if ( iconList[i].defIconID == iconId )
-			return iconList[i].hIconLibItem;
-
-	return NULL;
-}
-
-void __stdcall ReleaseIconEx( const char* name )
-{
-	char szSettingName[100];
-	mir_snprintf( szSettingName, sizeof( szSettingName ), "%s_%s", msnProtocolName, name );
-	MSN_CallService( MS_SKIN2_RELEASEICON, 0, (LPARAM)szSettingName );
-}
 
 /////////////////////////////////////////////////////////////////////////////////////////
 // External data declarations
 
 extern unsigned long sl;
+extern char *rru;
 
 static BOOL (WINAPI *pfnEnableThemeDialogTexture)(HANDLE, DWORD) = 0;
 
@@ -139,6 +70,7 @@ static BOOL CALLBACK DlgProcMsnOpts(HWND hwndDlg, UINT msg, WPARAM wParam, LPARA
 		if ( !msnLoggedIn )
 			EnableWindow( wnd, FALSE );
 
+		CheckDlgButton( hwndDlg, IDC_DISABLE_MAIN_MENU, MSN_GetByte( "DisableSetNickname", 0 ));
 		CheckDlgButton( hwndDlg, IDC_ENABLE_AVATARS,    MSN_GetByte( "EnableAvatars", TRUE ));
 		CheckDlgButton( hwndDlg, IDC_SENDFONTINFO,      MSN_GetByte( "SendFontInfo", 1 ));
 		CheckDlgButton( hwndDlg, IDC_USE_OWN_NICKNAME,  MSN_GetByte( "NeverUpdateNickname", 0 ));
@@ -187,7 +119,7 @@ static BOOL CALLBACK DlgProcMsnOpts(HWND hwndDlg, UINT msg, WPARAM wParam, LPARA
             EnableWindow( GetDlgItem( hwndDlg, IDC_DELETEAVATAR ), tIsChosen );
 			}
 
-			case IDC_SENDFONTINFO:
+			case IDC_DISABLE_MAIN_MENU:			case IDC_SENDFONTINFO:
 			case IDC_DISABLE_ANOTHER_CONTACTS:	case IDC_USE_OWN_NICKNAME:
 			case IDC_AWAY_AS_BRB:
 			LBL_Apply:
@@ -301,6 +233,7 @@ LBL_Continue:
 			MSN_SetByte( "SendFontInfo", ( BYTE )IsDlgButtonChecked( hwndDlg, IDC_SENDFONTINFO ));
 			MSN_SetByte( "RunMailerOnHotmail", ( BYTE )IsDlgButtonChecked( hwndDlg, IDC_RUN_APP_ON_HOTMAIL ));
 			MSN_SetByte( "NeverUpdateNickname", ( BYTE )IsDlgButtonChecked( hwndDlg, IDC_USE_OWN_NICKNAME ));
+			MSN_SetByte( "DisableSetNickname", ( BYTE )IsDlgButtonChecked( hwndDlg, IDC_DISABLE_MAIN_MENU ));
 			MSN_SetByte( "AwayAsBrb", ( BYTE )IsDlgButtonChecked( hwndDlg, IDC_AWAY_AS_BRB ));
 			MSN_SetByte( "ManageServer", ( BYTE )IsDlgButtonChecked( hwndDlg, IDC_MANAGEGROUPS ));
 
@@ -346,17 +279,12 @@ static BOOL CALLBACK DlgProcMsnConnOpts(HWND hwndDlg, UINT msg, WPARAM wParam, L
 				SetDlgItemInt( hwndDlg, IDC_MSNPORT, MSN_GetWord( NULL, "MSNMPort", 1863 ), FALSE );
 		}	}
 
+		CheckDlgButton( hwndDlg, IDC_KEEPALIVE,	MSN_GetByte( "KeepAlive",   0 ));
 		CheckDlgButton( hwndDlg, IDC_AUTOGETHOST,	MSN_GetByte( "AutoGetHost", 1 ));
 		CheckDlgButton( hwndDlg, IDC_USEIEPROXY,  MSN_GetByte( "UseIeProxy",  0 ));
 		CheckDlgButton( hwndDlg, IDC_SLOWSEND,    MSN_GetByte( "SlowSend",    0 ));
 		CheckDlgButton( hwndDlg, IDC_USEMSNP11,   MSN_GetByte( "UseMSNP11",   1 ));
-
-		char fpath[MAX_PATH], *fpathp;
-		if ( SearchPathA(NULL, "LIBSSL32.DLL", NULL, sizeof(fpath), fpath, &fpathp) != 0 &&
-			 SearchPathA(NULL, "LIBEAY32.DLL", NULL, sizeof(fpath), fpath, &fpathp) != 0 )
-			CheckDlgButton( hwndDlg, IDC_USEOPENSSL, MSN_GetByte( "UseOpenSSL", 0 ));
-		else
-			EnableWindow( GetDlgItem( hwndDlg, IDC_USEOPENSSL ), FALSE);
+		CheckDlgButton( hwndDlg, IDC_USEOPENSSL, MSN_GetByte( "UseOpenSSL", 0 ));
 
 		if ( !DBGetContactSetting( NULL, msnProtocolName, "YourHost", &dbv )) {
 			if ( !MSN_GetByte( "AutoGetHost", 1 ))
@@ -414,7 +342,7 @@ static BOOL CALLBACK DlgProcMsnConnOpts(HWND hwndDlg, UINT msg, WPARAM wParam, L
 				EnableWindow( GetDlgItem( hwndDlg, IDC_YOURHOST), tValue );
 			}
 
-			case IDC_USEIEPROXY:		case IDC_SLOWSEND:
+			case IDC_KEEPALIVE:			case IDC_USEIEPROXY:		case IDC_SLOWSEND:
 			case IDC_USEMSNP11:        case IDC_USEOPENSSL:
 			LBL_Apply:
 				SendMessage( GetParent( hwndDlg ), PSM_CHANGED, 0, 0 );
@@ -476,6 +404,7 @@ static BOOL CALLBACK DlgProcMsnConnOpts(HWND hwndDlg, UINT msg, WPARAM wParam, L
 			}
 
 			MSN_SetByte( "UseIeProxy",    ( BYTE )IsDlgButtonChecked( hwndDlg, IDC_USEIEPROXY    ));
+			MSN_SetByte( "KeepAlive",     ( BYTE )IsDlgButtonChecked( hwndDlg, IDC_KEEPALIVE     ));
 			MSN_SetByte( "AutoGetHost",   ( BYTE )IsDlgButtonChecked( hwndDlg, IDC_AUTOGETHOST   ));
 			MSN_SetByte( "SlowSend",      ( BYTE )IsDlgButtonChecked( hwndDlg, IDC_SLOWSEND      ));
 
@@ -525,7 +454,6 @@ static BOOL CALLBACK DlgProcHotmailPopUpOpts( HWND hwndDlg, UINT msg, WPARAM wPa
 		CheckDlgButton( hwndDlg, IDC_NOTIFY_USERTYPE,     MSN_GetByte( "DisplayTyping", 0 ));
 		CheckDlgButton( hwndDlg, IDC_NOTIFY_ENDSESSION,   MSN_GetByte( "EnableSessionPopup", 0 ));
 		CheckDlgButton( hwndDlg, IDC_NOTIFY_FIRSTMSG,     MSN_GetByte( "EnableDeliveryPopup", 1 ));
-		CheckDlgButton( hwndDlg, IDC_NOTIFY_CUSTOMSMILEY, MSN_GetByte( "EnableCustomSmileyPopup", 1 ));
 		CheckDlgButton( hwndDlg, IDC_ERRORS_USING_POPUPS, MSN_GetByte( "ShowErrorsAsPopups", 0 ));
 
 		int tTimeout = MSN_GetDword( NULL, "PopupTimeout", 3 );
@@ -554,7 +482,6 @@ static BOOL CALLBACK DlgProcHotmailPopUpOpts( HWND hwndDlg, UINT msg, WPARAM wPa
 			EnableWindow( GetDlgItem( hwndDlg, IDC_PREVIEW ), toSet );
 		}
 
-		case IDC_NOTIFY_CUSTOMSMILEY:
 		case IDC_DISABLEHOTJUNK:
 		case IDC_NOTIFY_USERTYPE:
 		case IDC_NOTIFY_ENDSESSION:
@@ -619,9 +546,8 @@ static BOOL CALLBACK DlgProcHotmailPopUpOpts( HWND hwndDlg, UINT msg, WPARAM wPa
 				MyOptions.ShowErrorsAsPopups = ( BYTE )IsDlgButtonChecked( hwndDlg, IDC_ERRORS_USING_POPUPS );
 				MSN_SetByte( "ShowErrorsAsPopups", MyOptions.ShowErrorsAsPopups );
 
-				MSN_SetByte( "UseWinColors",	( BYTE )IsDlgButtonChecked( hwndDlg, IDC_USEWINCOLORS ));
-				MSN_SetByte( "EnableCustomSmileyPopup", ( BYTE )IsDlgButtonChecked( hwndDlg, IDC_NOTIFY_CUSTOMSMILEY ));
-				MSN_SetByte( "DisplayTyping",	( BYTE )IsDlgButtonChecked( hwndDlg, IDC_NOTIFY_USERTYPE ));
+				MSN_SetByte( "UseWinColors", ( BYTE )IsDlgButtonChecked( hwndDlg, IDC_USEWINCOLORS ));
+				MSN_SetByte( "DisplayTyping", ( BYTE )IsDlgButtonChecked( hwndDlg, IDC_NOTIFY_USERTYPE ));
 				MSN_SetByte( "DisableHotmail", ( BYTE )IsDlgButtonChecked( hwndDlg, IDC_DISABLEHOTMAIL ));
 				MSN_SetByte( "DisableHotmailJunk",( BYTE )IsDlgButtonChecked( hwndDlg, IDC_DISABLEHOTJUNK ));
 				MSN_SetByte( "EnableDeliveryPopup", ( BYTE )IsDlgButtonChecked( hwndDlg, IDC_NOTIFY_FIRSTMSG ));
@@ -694,6 +620,7 @@ void __stdcall LoadOptions()
 		DBGetContactSettingDword( NULL, ModuleName, "TextColour", GetSysColor( COLOR_WINDOWTEXT ));
 
 	MyOptions.AwayAsBrb = MSN_GetByte( "AwayAsBrb", FALSE );
+	MyOptions.DisableMenu = MSN_GetByte( "DisableSetNickname", FALSE );
 	MyOptions.EnableAvatars = MSN_GetByte( "EnableAvatars", TRUE );
 	MyOptions.KeepConnectionAlive = MSN_GetByte( "KeepAlive", FALSE );
 	MyOptions.ManageServer = MSN_GetByte( "ManageServer", TRUE );
@@ -733,7 +660,10 @@ DWORD WINAPI MsnShowMailThread( LPVOID )
 
 	//Digest it
 	unsigned char digest[16];
-	mir_md5_hash(( BYTE* )hippy, challen, digest );
+	MD5_CTX context;
+	MD5Init( &context);
+	MD5Update( &context, ( BYTE* )hippy, challen );
+	MD5Final( digest, &context );
 
 	if ( rru && passport )
 	{
@@ -762,8 +692,8 @@ LRESULT CALLBACK NullWindowProc( HWND hWnd, UINT message, WPARAM wParam, LPARAM 
 {
 	switch( message ) {
 		case WM_COMMAND: {
-			PopupData* tData = ( PopupData* )PUGetPluginData( hWnd );
-			if ( tData != NULL && ( tData->flags & MSN_ALLOW_ENTER )) {
+			void* tData = PUGetPluginData( hWnd );
+			if ( tData != NULL ) {
 				MsnShowMailThread( NULL );
 				PUDeletePopUp( hWnd );
 			}
@@ -773,16 +703,6 @@ LRESULT CALLBACK NullWindowProc( HWND hWnd, UINT message, WPARAM wParam, LPARAM 
 		case WM_CONTEXTMENU:
 			PUDeletePopUp( hWnd );
 			break;
-
-		case UM_FREEPLUGINDATA:	{
-			PopupData* tData = ( PopupData* )PUGetPluginData( hWnd );
-			if ( tData != NULL && tData != (void*)CALLSERVICE_NOTFOUND)
-			{
-				CallService( MS_SKIN2_RELEASEICON, (WPARAM)tData->hIcon, 0 );
-				mir_free( tData );
-			}
-			break;
-		}
 	}
 
 	return DefWindowProc(hWnd, message, wParam, lParam);
