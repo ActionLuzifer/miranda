@@ -2691,4 +2691,3 @@ UpdateWindowImage()
 }
 #endif
 
-

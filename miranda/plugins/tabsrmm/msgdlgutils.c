@@ -3206,4 +3206,3 @@ void MTH_updateMathWindow(HWND hwndDlg, struct MessageWindowData *dat)
 }
 #endif
 
-

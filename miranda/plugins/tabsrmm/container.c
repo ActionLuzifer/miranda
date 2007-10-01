@@ -3710,4 +3710,3 @@ void UpdateContainerMenu(HWND hwndDlg, struct MessageWindowData *dat)
 }
 
 
-

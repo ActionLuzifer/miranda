@@ -1678,4 +1678,3 @@ static BOOL CALLBACK DlgProcClcBkgOpts(HWND hwndDlg, UINT msg, WPARAM wParam, LP
     return FALSE;
 }
 
-
