@@ -676,25 +676,6 @@ int SearchNextContact(HWND hwnd, struct ClcData *dat, int index, const TCHAR *te
 	return -1;
 }
 
-BOOL CLCItems_IsNotHiddenOffline(struct ClcData * dat, struct ClcGroup* group, struct ClcContact * contact)
-{
-	PDNCE pdnce;
-
-	if (!group) return FALSE;
-	if (!contact) return FALSE;
-	if (group->hideOffline) return FALSE;
-	if (g_CluiData.bFilterEffective) return FALSE;				
-
-	if (CLCItems_IsShowOfflineGroup(group)) return TRUE;
-	
-	pdnce=(PDNCE)pcli->pfnGetCacheEntry( contact->hContact);
-	if (!pdnce) return FALSE;
-	if (pdnce->noHiddenOffline) return TRUE;
-
-	return FALSE;
-	
-}
-
 LRESULT CALLBACK cli_ContactListControlWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {     
 	struct ClcData *dat;
@@ -914,16 +895,11 @@ case INTM_ICONCHANGED:
 		}
 		else 
 		{
-
 			//item in list already
 			DWORD style = GetWindowLong(hwnd, GWL_STYLE);
 			if (contact->iImage == lParam)
 				return 0;
-			if ( !shouldShow && !(style & CLS_NOHIDEOFFLINE) && (style & CLS_HIDEOFFLINE) && CLCItems_IsNotHiddenOffline(dat, group, contact))
-			{
-				shouldShow=TRUE;
-			}
-			if (!shouldShow && !(style & CLS_NOHIDEOFFLINE) && ((style & CLS_HIDEOFFLINE) || group->hideOffline || g_CluiData.bFilterEffective) ) // CLVM changed
+			if (!shouldShow && !(style & CLS_NOHIDEOFFLINE) && (style & CLS_HIDEOFFLINE || group->hideOffline || g_CluiData.bFilterEffective)) // CLVM changed
 			{
 				if (dat->selection >= 0 && pcli->pfnGetRowByIndex(dat, dat->selection, &selcontact, NULL) != -1)
 					hSelItem = pcli->pfnContactToHItem(selcontact);
@@ -1118,14 +1094,13 @@ case INTM_STATUSCHANGED:
 
 case INTM_RELOADOPTIONS:
 	{
-		saveContactListControlWndProc(hwnd, msg, wParam, lParam);	
 		pcli->pfnLoadClcOptions(hwnd,dat);
 		LoadCLCOptions(hwnd,dat);
 		pcli->pfnSaveStateAndRebuildList(hwnd,dat);
 		pcli->pfnSortCLC(hwnd,dat,1);
 		if (IsWindowVisible(hwnd))
 			pcli->pfnInvalidateRect(GetParent(hwnd), NULL, FALSE);
-		return TRUE;
+		break;
 	}
 case WM_CHAR:
 	{
@@ -1363,7 +1338,7 @@ case WM_TIMER:
 		{
 			KillTimer(hwnd,TIMERID_INVALIDATE_FULL);
 			pcli->pfnRecalcScrollBar(hwnd,dat);
-			pcli->pfnInvalidateRect(hwnd,NULL,0);
+			SkinInvalidateFrame(hwnd,NULL,0);
 		}
 		else if (wParam==TIMERID_INVALIDATE)
 		{

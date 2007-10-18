@@ -125,7 +125,7 @@ static INT_PTR CALLBACK DlgProcMsnOpts(HWND hwndDlg, UINT msg, WPARAM wParam, LP
 		}
 		EnableWindow(wnd, msnLoggedIn);
 		EnableWindow(GetDlgItem(hwndDlg, IDC_MOBILESEND), msnLoggedIn && 
-			MSN_GetByte( "MobileEnabled", 0) && MSN_GetByte( "MobileAllowed", 0));
+			(MSN_GetByte( "MobileEnabled", 0) || MSN_GetByte( "MobileAllowed", 0)));
 
 		CheckDlgButton( hwndDlg, IDC_MOBILESEND,        MSN_GetByte( "MobileAllowed", 0 ));
 		CheckDlgButton( hwndDlg, IDC_SENDFONTINFO,      MSN_GetByte( "SendFontInfo", 1 ));
@@ -279,9 +279,7 @@ LBL_Continue:
 
 			unsigned tValue = IsDlgButtonChecked( hwndDlg, IDC_DISABLE_ANOTHER_CONTACTS );
 			if ( tValue != msnOtherContactsBlocked && msnLoggedIn ) {
-				msnOtherContactsBlocked = tValue;
-				msnNsThread->sendPacket( "BLP", tValue ? "BL" : "AL" );
-				MSN_ABUpdateAttr("MSN.IM.BLP", !tValue);
+				msnNsThread->sendPacket( "BLP", ( tValue ) ? "BL" : "AL" );
 				break;
 			}
 

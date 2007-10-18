@@ -38,6 +38,8 @@
 
 
 
+extern void handleXStatusCaps(HANDLE hContact, char* caps, int capsize);
+
 extern CRITICAL_SECTION connectionHandleMutex;
 extern WORD wLocalSequence;
 extern CRITICAL_SECTION localSeqMutex;
@@ -193,7 +195,7 @@ static DWORD __stdcall icq_serverThread(serverthread_start_info* infoParam)
         {
           ICQWriteContactSettingWord(hContact, "Status", ID_STATUS_OFFLINE);
 
-          handleXStatusCaps(hContact, NULL, 0, NULL, 0);
+          handleXStatusCaps(hContact, NULL, 0);
         }
       }
 

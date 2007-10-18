@@ -318,11 +318,6 @@ int JabberGcMenuHook( WPARAM wParam, LPARAM lParam )
 
 		gcmi->nItems = sizeof( sttLogListItems ) / sizeof( sttLogListItems[0] );
 		gcmi->Item = sttLogListItems;
-		
-		for( int i=3; i<=16; i++ ) {
-			if (i >= 11 && i <= 13) continue;
-			sttLogListItems[i].bDisabled = TRUE;
-		}
 
 		if ( me != NULL ) {
 			if ( me->role == ROLE_MODERATOR )
@@ -347,7 +342,6 @@ int JabberGcMenuHook( WPARAM wParam, LPARAM lParam )
 			{ TranslateT( "Ban" ),                    IDM_BAN,       MENU_ITEM, TRUE },
 			{ NULL, 0, MENU_SEPARATOR, FALSE },
 			{ TranslateT( "Toggle &Voice" ),          IDM_VOICE,     MENU_ITEM, TRUE },
-			{ TranslateT( "Toggle Member" ),          IDM_MEMBER,    MENU_ITEM, TRUE },
 			{ TranslateT( "Toggle Moderator" ),       IDM_MODERATOR, MENU_ITEM, TRUE },
 			{ TranslateT( "Toggle Admin" ),           IDM_ADMIN,     MENU_ITEM, TRUE },
 			{ TranslateT( "Toggle Owner" ),           IDM_OWNER,     MENU_ITEM, TRUE }};
@@ -355,24 +349,18 @@ int JabberGcMenuHook( WPARAM wParam, LPARAM lParam )
 		gcmi->nItems = sizeof( sttListItems )/sizeof( sttListItems[0] );
 		gcmi->Item = sttListItems;
 
-		for (int i=3; i<=10; i++) sttListItems[i].bDisabled = TRUE;
-		if ( me != NULL && him != NULL && me != him) {
-			if ( me->role == ROLE_MODERATOR && (me->role > him->role) ) {
-				sttListItems[3].bDisabled =	sttListItems[6].bDisabled = FALSE;
-			}
+		if ( me != NULL && him != NULL ) {
+			if ( me->role == ROLE_MODERATOR )
+				if ( him->affiliation != AFFILIATION_ADMIN && him->affiliation != AFFILIATION_OWNER )
+					sttListItems[3].bDisabled = sttListItems[4].bDisabled = FALSE;
 
-			switch( me->affiliation )
-			{
-				case AFFILIATION_ADMIN:
-					if ( me->affiliation > him->affiliation )
-						sttListItems[4].bDisabled = sttListItems[7].bDisabled = sttListItems[8].bDisabled = FALSE;
-				break;
-				case AFFILIATION_OWNER:
-					if ( me->affiliation > him->affiliation )
-						sttListItems[8].bDisabled = FALSE;
-					sttListItems[4].bDisabled = sttListItems[7].bDisabled = sttListItems[9].bDisabled = sttListItems[10].bDisabled = FALSE;
-				break;
+			if ( me->affiliation == AFFILIATION_ADMIN ) {
+				if ( him->affiliation != AFFILIATION_ADMIN && him->affiliation != AFFILIATION_OWNER )
+					sttListItems[6].bDisabled = sttListItems[7].bDisabled = FALSE;
 			}
+			else if ( me->affiliation == AFFILIATION_OWNER )
+				sttListItems[6].bDisabled = sttListItems[7].bDisabled =
+				sttListItems[8].bDisabled = sttListItems[9].bDisabled = FALSE;
 	}	}
 
 	return 0;
@@ -651,11 +639,6 @@ static void sttNickListHook( JABBER_LIST_ITEM* item, GCHOOK* gch )
 		JabberAdminSet( item->jid, xmlnsAdmin, "nick", him->resourceName,
 			"role", ( him->role == ROLE_PARTICIPANT ) ? _T("visitor") : _T("participant"));
 		break;
-
-	case IDM_MEMBER:
-		JabberAdminSet( item->jid, xmlnsAdmin, "nick", him->resourceName,
-			"affiliation", ( him->affiliation != AFFILIATION_MEMBER ) ? _T("member") : _T("none"));
-	break;
 
 	case IDM_MODERATOR:
 		JabberAdminSet( item->jid, xmlnsAdmin, "nick", him->resourceName,

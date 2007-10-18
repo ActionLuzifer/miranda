@@ -2039,4 +2039,3 @@ void DrawDimmedIcon(HDC hdc, LONG left, LONG top, LONG dx, LONG dy, HICON hIcon,
     DeleteDC(dcMem);
 }
 
-

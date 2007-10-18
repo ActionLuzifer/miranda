@@ -771,7 +771,7 @@ static UINT _o2chatcontrols[] = { IDC_CHAT_SPIN2, IDC_LOGTIMESTAMP, IDC_TIMESTAM
     IDC_OUTSTAMP, IDC_INSTAMP, IDC_HIGHLIGHT, IDC_HIGHLIGHTWORDS, IDC_CHAT_SPIN2, IDC_CHAT_SPIN3, IDC_NICKROW2, IDC_LOGLIMIT, 
     IDC_NICKCOLOR, IDC_NICKCOLORS, 0 };
     
-BOOL CALLBACK DlgProcOptions2(HWND hwndDlg,UINT uMsg,WPARAM wParam,LPARAM lParam)
+static BOOL CALLBACK DlgProcOptions2(HWND hwndDlg,UINT uMsg,WPARAM wParam,LPARAM lParam)
 {
 	static HBRUSH hBkgColourBrush;
 	static HBRUSH hListColourBrush;
@@ -1323,6 +1323,17 @@ int Chat_OptionsInitialize(WPARAM wParam, LPARAM lParam)
 {
 	OPTIONSDIALOGPAGE odp = {0};
 
+
+	odp.cbSize = sizeof(odp);
+	odp.position = 910000001;
+	odp.hInstance = g_hInst;
+	odp.pszTemplate = MAKEINTRESOURCEA(IDD_OPTIONS2);
+	odp.pszTitle = LPGEN("Fonts and colors");
+	odp.pszGroup = LPGEN("Message Sessions");
+	odp.pfnDlgProc = DlgProcOptions2;
+	odp.flags = ODPF_BOLDGROUPS;
+	CallService(MS_OPT_ADDPAGE, wParam, (LPARAM)&odp);
+
 	if ( !g_chat_integration_enabled )
         return 0;
      
@@ -1510,5 +1521,4 @@ int OptionsUnInit(void)
 	DeleteObject(g_Settings.NameFont);
 	return 0;
 }
-
 

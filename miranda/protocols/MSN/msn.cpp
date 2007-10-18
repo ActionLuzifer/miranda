@@ -43,8 +43,6 @@ int		LoadMsnServices( void );
 void    UnloadMsnServices( void );
 void	MsgQueue_Init( void );
 void	MsgQueue_Uninit( void );
-void	Lists_Init( void );
-void	Lists_Uninit( void );
 void	P2pSessions_Uninit( void );
 void	P2pSessions_Init( void );
 void	Threads_Uninit( void );
@@ -54,7 +52,7 @@ void	UninitSsl( void );
 /////////////////////////////////////////////////////////////////////////////////////////
 // Global variables
 
-char*    abchMigrated = NULL;
+int      msnSearchID = -1;
 char*    msnExternalIP = NULL;
 char*    msnPreviousUUX = NULL;
 HANDLE   msnMainThread;
@@ -83,7 +81,7 @@ char* mailsoundname;
 char* alertsoundname;
 char* ModuleName;
 
-bool avsPresent = false;
+int avsPresent = -1;
 
 PLUGININFOEX pluginInfo =
 {
@@ -263,7 +261,7 @@ static int OnPreShutdown( WPARAM wParam, LPARAM lParam )
 /////////////////////////////////////////////////////////////////////////////////////////
 // Performs a primary set of actions upon plugin loading
 
-extern "C" int __declspec(dllexport) Load( PLUGINLINK* link )
+extern "C" int __declspec(dllexport) Load( PLUGINLINK* link )  
 {
 	pluginLink = link;
 	DuplicateHandle( GetCurrentProcess(), GetCurrentThread(), GetCurrentProcess(), &msnMainThread, THREAD_SET_CONTEXT, FALSE, 0 );
@@ -300,6 +298,9 @@ extern "C" int __declspec(dllexport) Load( PLUGINLINK* link )
 	MSN_CallService( MS_DB_SETSETTINGRESIDENT, TRUE, ( LPARAM )path );
 
 	mir_snprintf( path, sizeof( path ), "%s/p2pMsgId", protocolname );
+	MSN_CallService( MS_DB_SETSETTINGRESIDENT, TRUE, ( LPARAM )path );
+
+	mir_snprintf( path, sizeof( path ), "%s/AccList", protocolname );
 	MSN_CallService( MS_DB_SETSETTINGRESIDENT, TRUE, ( LPARAM )path );
 
 	mir_snprintf( path, sizeof( path ), "%s/MobileEnabled", protocolname );
@@ -369,7 +370,6 @@ extern "C" int __declspec(dllexport) Load( PLUGINLINK* link )
 	msnLoggedIn = false;
 	LoadMsnServices();
 	MsnInitIcons();
-	Lists_Init();
 	MsgQueue_Init();
 	P2pSessions_Init();
 	return 0;
@@ -398,7 +398,6 @@ extern "C" int __declspec( dllexport ) Unload( void )
 	MSN_FreeGroups();
 	Threads_Uninit();
 	MsgQueue_Uninit();
-	Lists_Uninit();
 	P2pSessions_Uninit();
 	CachedMsg_Uninit();
 	Netlib_CloseHandle( hNetlibUser );

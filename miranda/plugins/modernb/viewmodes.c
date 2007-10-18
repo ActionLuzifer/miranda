@@ -1529,4 +1529,3 @@ void ApplyViewMode(const char *Name)
 }
 
 
-
