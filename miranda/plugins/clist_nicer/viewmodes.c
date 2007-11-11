@@ -1273,4 +1273,3 @@ void ApplyViewMode(const char *name)
     DBWriteContactSettingString(NULL, "CList", "LastViewMode", g_CluiData.current_viewmode);
 }
 
-

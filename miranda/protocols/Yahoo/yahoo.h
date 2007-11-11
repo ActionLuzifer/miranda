@@ -37,7 +37,7 @@
 // Build is a cvs build
 //
 // If defined, the build will add cvs info to the plugin info
-#define YAHOO_CVSBUILD
+//#define YAHOO_CVSBUILD
 
 #define YAHOO_LOGINSERVER                 "LoginServer"
 #define YAHOO_LOGINPORT                   "LoginPort"
@@ -198,5 +198,4 @@ int YahooGotoMailboxCommand( WPARAM wParam, LPARAM lParam );
 void YahooMenuInit( void );
 void YahooIconsInit( void );
 HICON LoadIconEx( const char* name );
-int YahooIdleEvent(WPARAM wParam, LPARAM lParam);
 #endif

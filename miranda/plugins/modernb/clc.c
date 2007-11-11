@@ -221,19 +221,6 @@ static int ClcSettingChanged(WPARAM wParam,LPARAM lParam)
 	return 0;
 }
 
-int ExpandMetaContact(HWND hwnd, struct ClcContact * contact, struct ClcData * dat, BOOL bExpand)
-{
-	struct ClcContact * ht=NULL;
-	KillTimer(hwnd,TIMERID_SUBEXPAND);
-	if (contact->type!=CLCIT_CONTACT ||contact->SubAllocated==0 || contact->SubExpanded==bExpand || !DBGetContactSettingByte(NULL,"CLC","MetaExpanding",SETTING_METAEXPANDING_DEFAULT)) return 0;
-	contact->SubExpanded=bExpand;
-	DBWriteContactSettingByte(contact->hContact,"CList","Expanded",contact->SubExpanded);
-	dat->NeedResort=1;
-	pcli->pfnSortCLC(hwnd,dat,1);		
-	cliRecalcScrollBar(hwnd,dat);
-	return contact->SubExpanded;
-}
-
 /*
 *	IcoLib hook to handle icon changes
 */
@@ -422,6 +409,7 @@ int ClcProtoAck(WPARAM wParam,LPARAM lParam)
 				pcli->clcProto[i].dwStatus = (WORD) ack->lParam;
 				if (pcli->clcProto[i].dwStatus>=ID_STATUS_OFFLINE)
 					pcli->pfnTrayIconUpdateBase(pcli->clcProto[i].szProto);
+				//TODO call update icons here
 				if(ExtraImage_ExtraIDToColumnNum(EXTRA_ICON_VISMODE)!=-1)
 					ExtraImage_SetAllExtraIcons(pcli->hwndContactTree,(HANDLE)NULL);				
 				return 0;
@@ -688,25 +676,6 @@ int SearchNextContact(HWND hwnd, struct ClcData *dat, int index, const TCHAR *te
 	return -1;
 }
 
-BOOL CLCItems_IsNotHiddenOffline(struct ClcData * dat, struct ClcGroup* group, struct ClcContact * contact)
-{
-	PDNCE pdnce;
-
-	if (!group) return FALSE;
-	if (!contact) return FALSE;
-	if (group->hideOffline) return FALSE;
-	if (g_CluiData.bFilterEffective) return FALSE;				
-
-	if (CLCItems_IsShowOfflineGroup(group)) return TRUE;
-	
-	pdnce=(PDNCE)pcli->pfnGetCacheEntry( contact->hContact);
-	if (!pdnce) return FALSE;
-	if (pdnce->noHiddenOffline) return TRUE;
-
-	return FALSE;
-	
-}
-
 LRESULT CALLBACK cli_ContactListControlWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {     
 	struct ClcData *dat;
@@ -879,43 +848,6 @@ case WM_SIZE:
 	}
 
 	return 0;
-case INTM_GROUPCHANGED:
-	{
-		struct ClcContact *contact;
-		BYTE iExtraImage[MAXEXTRACOLUMNS];
-		WORD iWideExtraImage[MAXEXTRACOLUMNS];
-		BYTE flags = 0;
-		if (!pcli->pfnFindItem(hwnd, dat, (HANDLE) wParam, &contact, NULL, NULL))
-		{
-			memset(iExtraImage, 0xFF, SIZEOF(iExtraImage));
-			memset((void*)iWideExtraImage, 0xFF, sizeof(iWideExtraImage));
-		}
-		else {
-			CopyMemory(iExtraImage, contact->iExtraImage, SIZEOF(iExtraImage));
-			CopyMemory((void*)iWideExtraImage, (void*)contact->iWideExtraImage, sizeof(iWideExtraImage));
-			flags = contact->flags;
-		}
-		pcli->pfnDeleteItemFromTree(hwnd, (HANDLE) wParam);
-		if (GetWindowLong(hwnd, GWL_STYLE) & CLS_SHOWHIDDEN || !DBGetContactSettingByte((HANDLE) wParam, "CList", "Hidden", 0)) {
-			NMCLISTCONTROL nm;
-			pcli->pfnAddContactToTree(hwnd, dat, (HANDLE) wParam, 1, 1);
-			if (pcli->pfnFindItem(hwnd, dat, (HANDLE) wParam, &contact, NULL, NULL)) {
-				CopyMemory(contact->iExtraImage, iExtraImage, SIZEOF(iExtraImage));
-				CopyMemory((void*)contact->iWideExtraImage, (void*)iWideExtraImage, sizeof(iWideExtraImage));
-				if(flags & CONTACTF_CHECKED)
-					contact->flags |= CONTACTF_CHECKED;
-			}
-			nm.hdr.code = CLN_CONTACTMOVED;
-			nm.hdr.hwndFrom = hwnd;
-			nm.hdr.idFrom = GetDlgCtrlID(hwnd);
-			nm.flags = 0;
-			nm.hItem = (HANDLE) wParam;
-			SendMessage(GetParent(hwnd), WM_NOTIFY, 0, (LPARAM) & nm);
-			dat->NeedResort = 1;
-		}
-		SetTimer(hwnd,TIMERID_REBUILDAFTER,1,NULL);
-		return 0;
-	}
 case INTM_ICONCHANGED:
 	{
 		struct ClcContact *contact = NULL;
@@ -963,16 +895,11 @@ case INTM_ICONCHANGED:
 		}
 		else 
 		{
-
 			//item in list already
 			DWORD style = GetWindowLong(hwnd, GWL_STYLE);
 			if (contact->iImage == lParam)
 				return 0;
-			if ( !shouldShow && !(style & CLS_NOHIDEOFFLINE) && (style & CLS_HIDEOFFLINE) && CLCItems_IsNotHiddenOffline(dat, group, contact))
-			{
-				shouldShow=TRUE;
-			}
-			if (!shouldShow && !(style & CLS_NOHIDEOFFLINE) && ((style & CLS_HIDEOFFLINE) || group->hideOffline || g_CluiData.bFilterEffective) ) // CLVM changed
+			if (!shouldShow && !(style & CLS_NOHIDEOFFLINE) && (style & CLS_HIDEOFFLINE || group->hideOffline || g_CluiData.bFilterEffective)) // CLVM changed
 			{
 				if (dat->selection >= 0 && pcli->pfnGetRowByIndex(dat, dat->selection, &selcontact, NULL) != -1)
 					hSelItem = pcli->pfnContactToHItem(selcontact);
@@ -1167,14 +1094,13 @@ case INTM_STATUSCHANGED:
 
 case INTM_RELOADOPTIONS:
 	{
-		saveContactListControlWndProc(hwnd, msg, wParam, lParam);	
 		pcli->pfnLoadClcOptions(hwnd,dat);
 		LoadCLCOptions(hwnd,dat);
 		pcli->pfnSaveStateAndRebuildList(hwnd,dat);
 		pcli->pfnSortCLC(hwnd,dat,1);
 		if (IsWindowVisible(hwnd))
 			pcli->pfnInvalidateRect(GetParent(hwnd), NULL, FALSE);
-		return TRUE;
+		break;
 	}
 case WM_CHAR:
 	{
@@ -1412,7 +1338,7 @@ case WM_TIMER:
 		{
 			KillTimer(hwnd,TIMERID_INVALIDATE_FULL);
 			pcli->pfnRecalcScrollBar(hwnd,dat);
-			pcli->pfnInvalidateRect(hwnd,NULL,0);
+			SkinInvalidateFrame(hwnd,NULL,0);
 		}
 		else if (wParam==TIMERID_INVALIDATE)
 		{
@@ -2121,9 +2047,7 @@ case WM_DESTROY:
 
 		ImageArray_Clear(&dat->avatar_cache);
 		mod_DeleteDC(dat->avatar_cache.hdc);			
-		ImageArray_Free(&dat->avatar_cache, FALSE);	
-		if (dat->himlHighlight)
-			ImageList_Destroy(dat->himlHighlight);
+		ImageArray_Free(&dat->avatar_cache, FALSE);		
 
 		RowHeights_Free(dat);
 		saveContactListControlWndProc(hwnd, msg, wParam, lParam);			

@@ -24,7 +24,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "m_clc.h"
 #include "clc.h"
 #include "commonprototypes.h"
-#include "defsettings.h"
 
 //loads of stuff that didn't really fit anywhere else
 
@@ -730,7 +729,7 @@ void LoadCLCOptions(HWND hwnd, struct ClcData *dat)
 		dat->MenuBkHiColor=sttGetColor("Menu","SelBkColour",CLCDEFAULT_SELBKCOLOUR);
 
 		dat->MenuTextColor=sttGetColor("Menu","TextColour",CLCDEFAULT_TEXTCOLOUR);
-		dat->MenuTextHiColor=sttGetColor("Menu","SelTextColour",CLCDEFAULT_MODERN_SELTEXTCOLOUR);
+		dat->MenuTextHiColor=sttGetColor("Menu","SelTextColour",CLCDEFAULT_SELTEXTCOLOUR);
 		
 		if(DBGetContactSettingByte(NULL,"Menu","UseBitmap",CLCDEFAULT_USEBITMAP)) {
 			if(!DBGetContactSettingString(NULL,"Menu","BkBitmap",&dbv)) {
@@ -741,13 +740,13 @@ void LoadCLCOptions(HWND hwnd, struct ClcData *dat)
 		}
 		dat->MenuBmpUse=DBGetContactSettingWord(NULL,"Menu","BkBmpUse",CLCDEFAULT_BKBMPUSE);
 	}
-	
+
 	dat->greyoutFlags=DBGetContactSettingDword(NULL,"CLC","GreyoutFlags",CLCDEFAULT_GREYOUTFLAGS);
 	dat->offlineModes=DBGetContactSettingDword(NULL,"CLC","OfflineModes",CLCDEFAULT_OFFLINEMODES);
 	dat->selBkColour=sttGetColor("CLC","SelBkColour",CLCDEFAULT_SELBKCOLOUR);
-	dat->selTextColour=DBGetContactSettingDword(NULL,"CLC","SelTextColour",CLCDEFAULT_MODERN_SELTEXTCOLOUR);
-	dat->hotTextColour=DBGetContactSettingDword(NULL,"CLC","HotTextColour",CLCDEFAULT_MODERN_HOTTEXTCOLOUR);
-	dat->quickSearchColour=DBGetContactSettingDword(NULL,"CLC","QuickSearchColour",CLCDEFAULT_MODERN_QUICKSEARCHCOLOUR);
+	dat->selTextColour=DBGetContactSettingDword(NULL,"CLC","SelTextColour",CLCDEFAULT_SELTEXTCOLOUR);
+	dat->hotTextColour=DBGetContactSettingDword(NULL,"CLC","HotTextColour",CLCDEFAULT_HOTTEXTCOLOUR);
+	dat->quickSearchColour=DBGetContactSettingDword(NULL,"CLC","QuickSearchColour",CLCDEFAULT_QUICKSEARCHCOLOUR);
 	if(!meta_module && ServiceExists(MS_MC_GETPROTOCOLNAME)) meta_module = (char *)CallService(MS_MC_GETPROTOCOLNAME, 0, 0);
 	dat->IsMetaContactsEnabled=(!(GetWindowLong(hwnd,GWL_STYLE)&CLS_MANUALUPDATE)) &&
 		meta_module && DBGetContactSettingByte(NULL,meta_module,"Enabled",1) && ServiceExists(MS_MC_GETDEFAULTCONTACT);
@@ -776,73 +775,4 @@ void LoadCLCOptions(HWND hwnd, struct ClcData *dat)
 	}
 	SendMessage(hwnd,WM_SIZE,0,0);
 
-}
-
-int ExpandMetaContact(HWND hwnd, struct ClcContact * contact, struct ClcData * dat, BOOL bExpand);
-
-int cliFindRowByText(HWND hwnd, struct ClcData *dat, const TCHAR *text, int prefixOk)
-{
-	struct ClcGroup *group = &dat->list;
-	int testlen = lstrlen(text);
-	struct ClcContact *contact=NULL;
-	int SubCount=0;
-
-	group->scanIndex = 0;
-	for (;;) {
-		if (group->scanIndex == group->cl.count) {
-			group = group->parent;
-			if (group == NULL)
-				break;
-			group->scanIndex++;
-			continue;
-		}
-		contact=group->cl.items[group->scanIndex];
-		if (contact->type != CLCIT_DIVIDER) 
-		{			
-			if ((prefixOk && !_tcsnicmp(text, contact->szText, testlen)) ||
-				(!prefixOk && !lstrcmpi(text, contact->szText))) 
-			{
-				struct ClcGroup *contactGroup = group;
-				int contactScanIndex = group->scanIndex;
-				for (; group; group = group->parent)
-					pcli->pfnSetGroupExpand(hwnd, dat, group, 1);
-				return pcli->pfnGetRowsPriorTo(&dat->list, contactGroup, contactScanIndex+SubCount);
-			}
-			if (group->cl.items[group->scanIndex]->type == CLCIT_GROUP) 
-			{
-				if (!(dat->exStyle & CLS_EX_QUICKSEARCHVISONLY) || group->cl.items[group->scanIndex]->group->expanded) {
-					group = group->cl.items[group->scanIndex]->group;
-					group->scanIndex = 0;
-					SubCount=0;
-					continue;
-				}
-			}
-		}
-		if (contact->type==CLCIT_CONTACT && contact->SubAllocated)			
-		{
-			if (!(dat->exStyle & CLS_EX_QUICKSEARCHVISONLY) || contact->SubExpanded )
-			{
-				int i=0;
-				for (i=0; i<contact->SubAllocated; i++)
-				{
-					struct ClcContact * subcontact=&(contact->subcontacts[i]);
-					if ((prefixOk && !_tcsnicmp(text, subcontact->szText, testlen)) ||
-						(!prefixOk && !lstrcmpi(text, subcontact->szText))) 
-					{
-						struct ClcGroup *contactGroup = group;
-						int contactScanIndex = group->scanIndex;
-						for (; group; group = group->parent)
-							pcli->pfnSetGroupExpand(hwnd, dat, group, 1);
-						if (!contact->SubExpanded)
-							ExpandMetaContact(hwnd, contact, dat, 1 );
-						return pcli->pfnGetRowsPriorTo(&dat->list, contactGroup, contactScanIndex+SubCount+i+1);
-					}
-				}
-			}
-		}
-		if (contact->type==CLCIT_CONTACT && contact->SubAllocated && contact->SubExpanded)
-			SubCount+=contact->SubAllocated;
-		group->scanIndex++;
-	}
-	return -1;
 }

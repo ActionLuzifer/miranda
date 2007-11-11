@@ -1,7 +1,7 @@
                    Miranda Instant Messenger Release Notes
                    ---------------------------------------
 
-                                    v0.7
+                                   v0.7.2
 
                           http://www.miranda-im.org
 
@@ -22,6 +22,48 @@ Contents
 
 1. New in this version
 ----------------------
+* New in 0.7.2
+Enhancements:
+ - Jabber: Added "Toggle Member" item
+ - Jabber: Added items count in jid lists
+ - Jabber: Added display of quit messages
+
+Bugfixes:
+ - IRC: Handle on the phone and out to lunch events
+ - Jabber: Wrong timestamp for message forwarded from another client
+ - MSN: Potential buffer overflow issue
+ - MSN: Block MSN system alerts
+ - Yahoo: Potential buffer overflow issue
+ 
+* New in 0.7.1
+Enhancements:
+ - Improved icon skinning engine performance
+ - ICQ: Enable ICQ 6 photo handling
+ - Jabber: Improved avatar processing
+ - MSN: Added per message nickname display
+ - MSN: Improved status message processing
+ 
+Bugfixes:
+ - Image services plugin wasn't loaded correctly sometimes
+ - Standard message dialog didn't draw user id button correctly
+ - Network log issue creating log file name correctly
+ - ICQ: Handle non-standard offline messages
+ - ICQ: Buffer overflow vulnerability
+ - IRC: Warning message was cut off
+ - IRC: Buffer overflow vulnerability in IRC options
+ - IRC: Russian nicks parsed incorrectly
+ - IRC: Fixed clickable timestamps in group chats
+ - Jabber: urn:xmpp:time returns month number off by 1
+ - Jabber: Jabber displayed self in contact list
+ - Jabber: Wrong timestamp for offline messages
+ - Jabber: Crash in Jabber multi-user conference
+ - Jabber: Buffer overflow vulnerability in Jabber forms
+ - Jabber: Can't change icons to gadu gadu transport contacts
+ - MSN: Changed gateway polling frequency
+ - MSN: Fixed MSN alert url creation
+ - MSN: Remove Yahoo alert 
+ - Yahoo: Buffer overflow vulnerability
+ 
 * New in 0.7
 Enhancements:
  - Added Gadu-Gadu protocol support

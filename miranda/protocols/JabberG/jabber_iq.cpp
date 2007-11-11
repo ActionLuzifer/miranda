@@ -28,6 +28,7 @@ Last change by : $Author$
 
 #include "jabber.h"
 #include "jabber_iq.h"
+#include "jabber_xmlns.h"
 #include "jabber_caps.h"
 #include "jabber_iq_handlers.h"
 #include "jabber_privacy.h"
@@ -171,7 +172,7 @@ BOOL CJabberIqManager::FillPermanentHandlers()
 	AddPermanentHandler( JabberHandleSiRequest, JABBER_IQ_TYPE_SET, JABBER_IQ_PARSE_FROM | JABBER_IQ_PARSE_ID_STR | JABBER_IQ_PARSE_CHILD_TAG_NODE, _T(JABBER_FEAT_SI), FALSE, _T("si"));
 
 	// roster push requests
-	AddPermanentHandler( JabberHandleRosterPushRequest, JABBER_IQ_TYPE_SET, JABBER_IQ_PARSE_FROM | JABBER_IQ_PARSE_ID_STR | JABBER_IQ_PARSE_CHILD_TAG_NODE | JABBER_IQ_PARSE_TO, _T(JABBER_FEAT_IQ_ROSTER), FALSE, _T("query"));
+	AddPermanentHandler( JabberHandleRosterPushRequest, JABBER_IQ_TYPE_SET, JABBER_IQ_PARSE_FROM | JABBER_IQ_PARSE_ID_STR | JABBER_IQ_PARSE_CHILD_TAG_NODE, _T(JABBER_FEAT_IQ_ROSTER), FALSE, _T("query"));
 
 	// OOB file transfers
 	AddPermanentHandler( JabberHandleIqRequestOOB, JABBER_IQ_TYPE_SET, JABBER_IQ_PARSE_FROM | JABBER_IQ_PARSE_HCONTACT | JABBER_IQ_PARSE_ID_STR | JABBER_IQ_PARSE_CHILD_TAG_NODE, _T(JABBER_FEAT_OOB), FALSE, _T("query"));

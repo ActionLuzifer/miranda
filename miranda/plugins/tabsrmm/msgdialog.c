@@ -440,6 +440,16 @@ static void MsgWindowUpdateState(HWND hwndDlg, struct MessageWindowData *dat, UI
             }
             dat->hwndIWebBrowserControl = WindowFromPoint(pt);
         }
+        else if(dat->hwndHPP) {
+            dat->hwndIWebBrowserControl = dat->hwndHPP;
+            if(dat->oldIEViewProc == NULL &&  DBGetContactSettingByte(NULL, SRMSGMOD_T, "subclassIEView", 0)) {
+                if(OldHppProc == 0)
+                    OldHppProc = (WNDPROC)GetWindowLong(dat->hwndHPP, GWL_WNDPROC);
+                SetWindowLong(dat->hwndHPP, GWL_WNDPROC, (LONG)IEViewSubclassProc);
+                dat->oldIEViewProc = OldHppProc;
+            }
+        }
+
         if(dat->dwFlagsEx & MWF_EX_DELAYEDSPLITTER) {
             dat->dwFlagsEx &= ~MWF_EX_DELAYEDSPLITTER;
             ShowWindow(dat->pContainer->hwnd, SW_RESTORE);
@@ -1311,8 +1321,6 @@ LRESULT CALLBACK SplitterSubclassProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM
 					if(dat) {
 						GetClientRect(hwnd, &rc);
 						dat->savedSplitter = rc.right > rc.bottom ? (short) HIWORD(GetMessagePos()) + rc.bottom / 2 : (short) LOWORD(GetMessagePos()) + rc.right / 2;
-                        dat->savedSplitY = dat->splitterY;
-                        dat->savedDynaSplit = dat->dynaSplitter;
 					}
 				}
 				SetCapture(hwnd);
@@ -1456,11 +1464,7 @@ LRESULT CALLBACK SplitterSubclassProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM
                             break;
                         }
                         default:
-                            dat->splitterY = dat->savedSplitY;
-                            dat->dynaSplitter = dat->savedDynaSplit;
-                            DM_RecalcPictureSize(hwndParent, dat);
-                            SendMessage(hwndParent, WM_SIZE, 0, 0);
-                            //SendMessage(hwndParent, DM_SPLITTERMOVEDGLOBAL, dat->savedSplitter, (LPARAM) hwnd);
+                            SendMessage(hwndParent, DM_SPLITTERMOVED, dat->savedSplitter, (LPARAM) hwnd);
                             DM_ScrollToBottom(hwndParent, dat, 0, 1);
                             break;
                     }
@@ -5367,7 +5371,7 @@ quote_from_last:
             if((isForced = DBGetContactSettingDword(dat->hContact, SRMSGMOD_T, "tabSRMM_forced", -1)) >= 0) {
                 char szTemp[64];
                 mir_snprintf(szTemp, sizeof(szTemp), "Status%d", isForced);
-                if(DBGetContactSettingWord(dat->hContact, myGlobals.szMetaName, szTemp, 0) == ID_STATUS_OFFLINE) {
+                if(DBGetContactSettingWord(dat->hContact, "MetaContacts", szTemp, 0) == ID_STATUS_OFFLINE) {
                     TCHAR szBuffer[200];
                     mir_sntprintf(szBuffer, 200, TranslateT("Warning: you have selected a subprotocol for sending the following messages which is currently offline"));
                     SendMessage(hwndDlg, DM_ACTIVATETOOLTIP, IDC_MESSAGE, (LPARAM)szBuffer);

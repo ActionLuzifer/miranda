@@ -183,8 +183,6 @@ enum {
 #define JE_RAWXMLIN                "/RawXMLIn"
 #define JE_RAWXMLOUT               "/RawXMLOut"
 
-#define JS_PARSE_XMPP_URI          "/ParseXmppURI"
-
 // Called when contact changes custom status and extra icon is set to clist_mw
 //wParam = hContact    // contact changing status
 //lParam = hIcon       // HANDLE to clist extra icon set as custom status
@@ -216,8 +214,6 @@ enum JABBER_SESSION_TYPE
 #define CAPS_BOOKMARKS_LOADED 0x8000
 
 #define ZLIB_CHUNK_SIZE 2048
-
-#include "jabber_caps.h"
 
 struct ThreadData
 {
@@ -253,8 +249,7 @@ struct ThreadData
 	HWND  reg_hwndDlg;
 	BOOL  reg_done, bIsSessionAvailable;
 	class TJabberAuth* auth;
-	JabberCapsBits jabberServerCaps;
-	BOOL bBookmarksLoaded;
+	int	caps; // capabilities
 
 	// connection & login data
 	TCHAR username[128];
@@ -414,6 +409,7 @@ extern BOOL   jabberChangeStatusMessageOnly;
 extern BOOL   jabberSendKeepAlive;
 extern BOOL   jabberPepSupported;
 extern BOOL   jabberChatDllPresent;
+extern JabberCapsBits jabberServerCaps;
 
 extern HWND hwndJabberAgents;
 extern HWND hwndAgentReg;
@@ -432,6 +428,7 @@ extern HWND hwndMucAdminList;
 extern HWND hwndMucOwnerList;
 extern HWND hwndJabberBookmarks;
 extern HWND hwndJabberAddBookmark;
+extern HWND hwndJabberInfo;
 extern HWND hwndPrivacyLists;
 extern HWND hwndPrivacyRule;
 extern HWND hwndServiceDiscovery;
@@ -446,11 +443,6 @@ extern HANDLE heventXStatusChanged;
 
 // Transports list
 extern LIST<TCHAR> jabberTransports;
-
-// Theme API
-extern BOOL (WINAPI *JabberAlphaBlend)(HDC, int, int, int, int, HDC, int, int, int, int, BLENDFUNCTION);
-extern BOOL (WINAPI *JabberIsThemeActive)();
-extern HRESULT (WINAPI *JabberDrawThemeParentBackground)(HWND, HDC, RECT *);
 
 /*******************************************************************
  * Function declarations
@@ -533,12 +525,11 @@ BOOL JabberFtHandleIbbRequest( XmlNode *iqNode, BOOL bOpen );
 //---- jabber_groupchat.c -------------------------------------------
 
 int JabberMenuHandleGroupchat( WPARAM wParam, LPARAM lParam );
-int JabberMenuHandleJoinGroupchat( WPARAM wParam, LPARAM lParam );
 void JabberGroupchatJoinRoom( const TCHAR* server, const TCHAR* room, const TCHAR* nick, const TCHAR* password );
 void JabberGroupchatProcessPresence( XmlNode *node, void *userdata );
 void JabberGroupchatProcessMessage( XmlNode *node, void *userdata );
 void JabberGroupchatProcessInvite( TCHAR* roomJid, TCHAR* from, TCHAR* reason, TCHAR* password );
-void JabberGroupchatJoinRoomByJid(HWND hwndParent, TCHAR *jid);
+
 
 //---- jabber_bookmarks.c -------------------------------------------
 int JabberMenuHandleBookmarks( WPARAM wParam, LPARAM lParam );
@@ -578,7 +569,6 @@ void   JabberResolveTransportNicks( TCHAR* jid );
 void   JabberSetServerStatus( int iNewStatus );
 TCHAR* EscapeChatTags(TCHAR* pszText);
 char*  UnEscapeChatTags(char* str_in);
-void   JabberFormatMirVer(JABBER_RESOURCE_STATUS *resource, TCHAR *buf, int bufSize);
 void   JabberUpdateMirVer(JABBER_LIST_ITEM *item);
 void   JabberUpdateMirVer(HANDLE hContact, JABBER_RESOURCE_STATUS *resource);
 int    JabberGetEventTextChatStates( WPARAM wParam, LPARAM lParam );
@@ -610,7 +600,6 @@ int JabberContactMenuRunCommands(WPARAM wParam, LPARAM lParam);
 //---- jabber_svc.c -------------------------------------------------
 
 void JabberEnableMenuItems( BOOL bEnable );
-HANDLE AddToListByJID( const TCHAR* newJid, DWORD flags );
 
 //---- jabber_search.cpp -------------------------------------------------
 int JabberSearchCreateAdvUI( WPARAM wParam, LPARAM lParam);
@@ -706,7 +695,6 @@ TCHAR*        __stdcall JabberGetClientJID( const TCHAR* jid, TCHAR*, size_t );
 TCHAR*        __stdcall JabberStripJid( const TCHAR* jid, TCHAR* dest, size_t destLen );
 int           __stdcall JabberGetPictureType( const char* buf );
 int           __stdcall JabberGetPacketID( XmlNode* n );
-TCHAR*                  JabberGetXmlLang();
 
 #if defined( _UNICODE )
 	#define JabberUnixToDosT JabberUnixToDosW
@@ -714,16 +702,9 @@ TCHAR*                  JabberGetXmlLang();
 	#define JabberUnixToDosT JabberUnixToDos
 #endif
 
-#define JABBER_COMBO_RECENT_COUNT 10
-void JabberComboLoadRecentStrings(HWND hwndDlg, UINT idcCombo, char *param);
-void JabberComboAddRecentString(HWND hwndDlg, UINT idcCombo, char *param, TCHAR *string);
-void JabberUtilsRebuildStatusMenu();
-void JabberBitmapPremultiplyChannels(HBITMAP hBitmap);
-
 //---- jabber_vcard.c -----------------------------------------------
 
 int JabberSendGetVcard( const TCHAR* jid );
-void JabberUpdateVCardPhoto( char * szPhotoFileName );
 
 //---- jabber_ws.c -------------------------------------------------
 
@@ -751,8 +732,5 @@ void JabberUpdateContactExtraIcon( HANDLE hContact );
 int JabberGetXStatusIcon( WPARAM wParam, LPARAM lParam );
 int JabberGetXStatus( WPARAM wParam, LPARAM lParam );
 int JabberSetXStatus( WPARAM wParam, LPARAM lParam );
-
-//---- jabber_userinfo.c --------------------------------------------
-void JabberUserInfoUpdate(HANDLE hContact);
 
 #endif

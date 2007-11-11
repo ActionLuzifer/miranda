@@ -105,6 +105,10 @@ SOURCE=.\libyahoo2\libyahoo2.c
 # End Source File
 # Begin Source File
 
+SOURCE=.\libyahoo2\sha.c
+# End Source File
+# Begin Source File
+
 SOURCE=.\libyahoo2\yahoo2_callbacks.h
 # End Source File
 # Begin Source File

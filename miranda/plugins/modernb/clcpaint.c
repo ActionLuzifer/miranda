@@ -806,8 +806,7 @@ static void CLCPaint_ModernInternalPaintRowItems(HWND hwnd, HDC hdcMem, struct C
     BOOL InClistWindow=(dat->hWnd==pcli->hwndContactTree);
     PDNCE pdnce=NULL;
     int height=RowHeight_CalcRowHeight(dat, hwnd, Drawing, -1);
-	
-	// TO DO DEPRECATE OLD ROW LAYOUT
+
 
     if (Drawing->type == CLCIT_CONTACT)
         pdnce=(PDNCE)pcli->pfnGetCacheEntry(Drawing->hContact);
@@ -895,7 +894,7 @@ static void CLCPaint_ModernInternalPaintRowItems(HWND hwnd, HDC hdcMem, struct C
                 {
                     COLORREF colourFg=dat->selBkColour;
                     int mode=BlendedInActiveState?BlendValue:ILD_NORMAL;
-                    if(Drawing->iExtraImage[iImage] == 0xFF && Drawing->iWideExtraImage[iImage]==0xFFFF)
+                    if(Drawing->iExtraImage[iImage] == 0xFF)
                     {
                         {
                             x+=(x>0)?dat->extraColumnSpacing:ICON_HEIGHT;
@@ -924,13 +923,8 @@ static void CLCPaint_ModernInternalPaintRowItems(HWND hwnd, HDC hdcMem, struct C
                     if (dat->text_rtl!=0) CLCPaint_RTLRect(&rc, free_row_rc.right, dx);
                     Drawing->pos_extra[iImage] = rc;
                     Drawing->pos_extra[iImage] = rc;
-					if (Drawing->iExtraImage[iImage]!=0xFF)
-						ske_ImageList_DrawEx(dat->himlExtraColumns,Drawing->iExtraImage[iImage],hdcMem,
-						 rc.left, rc.top,0,0,CLR_NONE,colourFg,mode);
-					else if (Drawing->iWideExtraImage[iImage]!=0xFFFF)
-						ske_ImageList_DrawEx(dat->himlWideExtraColumns,Drawing->iWideExtraImage[iImage],hdcMem,
-						 rc.left, rc.top,0,0,CLR_NONE,colourFg,mode);
-
+                    ske_ImageList_DrawEx(dat->himlExtraColumns,Drawing->iExtraImage[iImage],hdcMem,
+                        rc.left, rc.top,0,0,CLR_NONE,colourFg,mode);
                 }
                 fr_rc.right-=x;
             }
@@ -1168,6 +1162,7 @@ static void CLCPaint_ModernInternalPaintRowItems(HWND hwnd, HDC hdcMem, struct C
             case TC_TEXT1:
                 {
                     //paint text 1
+                    //TODO Center/Right group names
                     SIZE text_size;
                     UINT uTextFormat=(dat->text_rtl ? DT_RTLREADING : 0) ;
                     text_size.cx=p_rect.right-p_rect.left;
@@ -1668,7 +1663,7 @@ static void CLCPaint_ModernInternalPaintRowItems(HWND hwnd, HDC hdcMem, struct C
                         {
                             COLORREF colourFg=dat->selBkColour;
                             int mode=BlendedInActiveState?BlendValue:ILD_NORMAL;
-                            if(Drawing->iExtraImage[iImage] == 0xFF && Drawing->iWideExtraImage[iImage]==0xFFFF)
+                            if(Drawing->iExtraImage[iImage] == 0xFF)
                             {
                                 if (!dat->MetaIgnoreEmptyExtra)
                                 {
@@ -1698,12 +1693,8 @@ static void CLCPaint_ModernInternalPaintRowItems(HWND hwnd, HDC hdcMem, struct C
                             count++;
                             if (dat->text_rtl!=0) CLCPaint_RTLRect(&rc, free_row_rc.right, 0);
                             Drawing->pos_extra[iImage] = rc;
-							if (Drawing->iExtraImage[iImage]!=0xFF)
-								ske_ImageList_DrawEx(dat->himlExtraColumns,Drawing->iExtraImage[iImage],hdcMem,
-								rc.left, rc.top,0,0,CLR_NONE,colourFg,mode);
-							else if (Drawing->iWideExtraImage[iImage]!=0xFFFF)
-								ske_ImageList_DrawEx(dat->himlWideExtraColumns,Drawing->iWideExtraImage[iImage],hdcMem,
-								rc.left, rc.top,0,0,CLR_NONE,colourFg,mode);
+                            ske_ImageList_DrawEx(dat->himlExtraColumns,Drawing->iExtraImage[iImage],hdcMem,
+                                rc.left, rc.top,0,0,CLR_NONE,colourFg,mode);
                         }
                     }
                     break;
@@ -1723,7 +1714,7 @@ static void CLCPaint_ModernInternalPaintRowItems(HWND hwnd, HDC hdcMem, struct C
                     {
                         int eNum=gl_RowTabAccess[i]->type-TC_EXTRA1;
                         if (eNum<dat->extraColumnsCount)
-                            if (Drawing->iExtraImage[eNum]!=0xFF || Drawing->iWideExtraImage[eNum]!=0xFFFF)
+                            if (Drawing->iExtraImage[eNum]!=255)
                             {
                                 int mode=0;
                                 int BlendedInActiveState = dat->dbbBlendInActiveState;
@@ -1746,12 +1737,8 @@ static void CLCPaint_ModernInternalPaintRowItems(HWND hwnd, HDC hdcMem, struct C
                                 }
                                 if (dat->text_rtl!=0) CLCPaint_RTLRect(&p_rect, free_row_rc.right, 0);
                                 Drawing->pos_extra[eNum] = p_rect;
-								if (Drawing->iExtraImage[eNum]!=0xFF)
-									ske_ImageList_DrawEx(dat->himlExtraColumns,Drawing->iExtraImage[eNum],hdcMem,
-									p_rect.left, p_rect.top,0,0,CLR_NONE,colourFg,mode);
-								else if (Drawing->iWideExtraImage[eNum]!=0xFFFF)
-									ske_ImageList_DrawEx(dat->himlWideExtraColumns,Drawing->iWideExtraImage[eNum],hdcMem,
-									p_rect.left, p_rect.top,0,0,CLR_NONE,colourFg,mode);
+                                ske_ImageList_DrawEx(dat->himlExtraColumns,Drawing->iExtraImage[eNum],hdcMem,
+                                    p_rect.left, p_rect.top,0,0,CLR_NONE,colourFg,mode);
                             }
                     }
                 }
@@ -2387,31 +2374,6 @@ static void StoreItemPos(struct ClcContact *contact, int ItemType, RECT * rc)
     contact->ext_mpItemsDesc[contact->ext_nItemsNum].itemType=ItemType;
     contact->ext_mpItemsDesc[contact->ext_nItemsNum].itemRect=*rc;
     contact->ext_nItemsNum++;
-	switch (ItemType)
-	{
-	case CIT_AVATAR:
-		contact->pos_avatar=*rc;
-		break;
-	case CIT_ICON:
-		contact->pos_icon=*rc;
-		break;
-	case CIT_TIME:
-		contact->pos_contact_time=*rc;
-		break;
-	case CIT_TEXT:
-		//	RECT pos_label;//TODO label (CIT_TEXT???)
-		//	RECT pos_rename; //TODO		(CIT_TEXT???)
-		break;
-	case CIT_CHECKBOX:
-		break;
-	default:
-		if ((ItemType&CIT_EXTRA)==CIT_EXTRA)
-		{
-			int iImage=ItemType&0x3F;
-			contact->pos_extra[iImage] = *rc;
-		}
-		break;
-	}
 }
 static void setstrT(IN OUT TCHAR * lpText, IN TCHAR * Value)
 {
@@ -2486,6 +2448,7 @@ static void CLCPaint_CalulateContactItemsPositions(HWND hwnd, HDC hdcMem, struct
 
                             // Store position
                             StoreItemPos(Drawing,CIT_ICON,&rc);
+                            Drawing->pos_icon = rc;  //TODO remove
                         }
                     }
                     else
@@ -2527,6 +2490,7 @@ static void CLCPaint_CalulateContactItemsPositions(HWND hwnd, HDC hdcMem, struct
                 if (rc.left < rc.right) {
                     // Store position
                     StoreItemPos( Drawing, CIT_AVATAR, &rc );
+                    Drawing->pos_avatar = rc;
                 }
                 //TO DO: CALC avatar overlays
                 break;
@@ -2554,6 +2518,7 @@ static void CLCPaint_CalulateContactItemsPositions(HWND hwnd, HDC hdcMem, struct
                         if (rc.left < rc.right) {
                             // Store position
                             StoreItemPos( Drawing, CIT_ICON, &rc );
+                            Drawing->pos_icon = rc;
                         }
                     }
                     break;
@@ -2591,6 +2556,7 @@ static void CLCPaint_CalulateContactItemsPositions(HWND hwnd, HDC hdcMem, struct
                     {
                         // Store position
                         StoreItemPos(Drawing, CIT_ICON, &rc);
+                        Drawing->pos_icon = rc;
                     }
                 }
                 break;
@@ -2663,7 +2629,7 @@ static void CLCPaint_CalulateContactItemsPositions(HWND hwnd, HDC hdcMem, struct
 
                     for( iImage = dat->extraColumnsCount-1 ; iImage >= 0 ; iImage -- )
                     {
-                        if(Drawing->iExtraImage[iImage] != 0xFF || Drawing->iWideExtraImage[iImage] != 0xFFFF || !dat->MetaIgnoreEmptyExtra)
+                        if(Drawing->iExtraImage[iImage] != 0xFF || !dat->MetaIgnoreEmptyExtra)
                         {
                             rc = CLCPaint_GetRectangle(dat, &row_rc, &free_row_rc, &left_pos, &right_pos,
                                 left, dat->extraColumnSpacing, dat->extraColumnSpacing, ICON_HEIGHT, 0);
@@ -2671,7 +2637,7 @@ static void CLCPaint_CalulateContactItemsPositions(HWND hwnd, HDC hdcMem, struct
                             {
                                 // Store position
                                 StoreItemPos(Drawing,CIT_EXTRA|(iImage&0x3F),&rc);
-                                //Drawing->pos_extra[iImage] = rc;
+                                Drawing->pos_extra[iImage] = rc;
                                 count++;
                             }
                         }
@@ -3151,7 +3117,10 @@ static void CLCPaint_DrawContactItems(HWND hwnd, HDC hdcMem, struct ClcData *dat
         (dat->text_align_right ? DT_RIGHT : 0)|
         (gl_TrimText?DT_END_ELLIPSIS:0)|
         ((dat->force_in_dialog || dat->bkChanged) ? DT_FORCENATIVERENDER:0);
-  
+
+    if (!Drawing->ext_fItemsValid) 
+        CLCPaint_CalulateContactItemsPositions(hwnd, hdcMem, dat, Drawing, row_rc, free_row_rc, left_pos, right_pos, selected, hottrack);
+
     text_rc=*row_rc;
 
     text_rc.right=row_rc->left;
@@ -3365,7 +3334,6 @@ static void CLCPaint_DrawContactItems(HWND hwnd, HDC hdcMem, struct ClcData *dat
                             else if(hottrack)
                                 CLCPaint_SetHotTrackColour(hdcMem,dat);
                             ske_DrawTextA( hdcMem, szCounts, -1,rc, uTextFormat);
-							ske_ResetTextEffect(hdcMem);
                         }                       
                     }
                     else if ( Drawing->type == CLCIT_CONTACT )
@@ -3442,12 +3410,8 @@ static void CLCPaint_DrawContactItems(HWND hwnd, HDC hdcMem, struct ClcData *dat
                     if (iImage!=-1)
                     {
                         GetBlendMode(dat, Drawing, selected, hottrack, GIM_EXTRAICON_AFFECT, &colourFg, &mode);
-						if (Drawing->iExtraImage[iImage]!=0xFF)
-							ske_ImageList_DrawEx(dat->himlExtraColumns,Drawing->iExtraImage[iImage],hdcMem,
-							rc->left, rc->top,0,0,CLR_NONE,colourFg,mode);
-						else if (Drawing->iWideExtraImage[iImage]!=0xFFFF)
-							ske_ImageList_DrawEx(dat->himlWideExtraColumns,Drawing->iWideExtraImage[iImage],hdcMem,
-							rc->left, rc->top,0,0,CLR_NONE,colourFg,mode);
+                        ske_ImageList_DrawEx(dat->himlExtraColumns,Drawing->iExtraImage[iImage],hdcMem,
+                            rc->left, rc->top,0,0,CLR_NONE,colourFg,mode);
                     }
                 }
                 break;
@@ -3468,15 +3432,6 @@ static void CLCPaint_DrawContactItems(HWND hwnd, HDC hdcMem, struct ClcData *dat
             RECT rcTemp=rc1;
             IntersectRect(&rc1, &rcTemp, rcPaint);
         }   
-
-		{	//Subtract icon rect from left and right.
-			RECT rcTemp;
-			IntersectRect(&rcTemp, &Drawing->pos_icon, &rc1);
-			if (!IsRectEmpty(&rcTemp)) rc1.right=rcTemp.left;
-			IntersectRect(&rcTemp, &Drawing->pos_icon, &rc2);
-			if (!IsRectEmpty(&rcTemp)) rc2.left=rcTemp.right;
-		}
-
         if (rc1.right-rc1.left>=6 && !IsRectEmpty(&rc1))
         {
             DrawEdge(hdcMem,&rc1,BDR_SUNKENOUTER,BF_RECT);
@@ -3496,17 +3451,18 @@ static void CLCPaint_DrawContactItems(HWND hwnd, HDC hdcMem, struct ClcData *dat
 }
 static void CLCPaint_InternalPaintRowItems (HWND hwnd, HDC hdcMem, struct ClcData *dat, struct ClcContact *Drawing, RECT row_rc, RECT free_row_rc, int left_pos, int right_pos, int selected,int hottrack, RECT *rcPaint)
 {
-	//Extended LAYOUT
-	if (gl_RowRoot && (dat->hWnd==pcli->hwndContactTree))
+    /*
+    #ifndef EXTLAYOUT 
+    CLCPaint_OldInternalPaintRowItems(hwnd, hdcMem, dat, Drawing, row_rc, free_row_rc, left_pos, right_pos, selected, hottrack, rcPaint);
+    return;
+    #endif
+    */
+    if (gl_RowRoot && (dat->hWnd==pcli->hwndContactTree))
     {
         CLCPaint_ModernInternalPaintRowItems(hwnd,hdcMem,dat,Drawing,row_rc,free_row_rc,left_pos,right_pos,selected,hottrack,rcPaint);
-		ske_ResetTextEffect(hdcMem);
         return;
     }
-	//END OFF Extended LAYOUT
-	if (!Drawing->ext_fItemsValid) CLCPaint_CalulateContactItemsPositions(hwnd, hdcMem, dat, Drawing, &row_rc, &free_row_rc, left_pos, right_pos, selected, hottrack);
     CLCPaint_DrawContactItems(hwnd, hdcMem, dat, Drawing, &row_rc, &free_row_rc, left_pos, right_pos, selected, hottrack, rcPaint);
-	ske_ResetTextEffect(hdcMem);
 }
 
 /* TODO Render items 
@@ -3525,7 +3481,7 @@ Milestones to implement Extended row layout
 
 -   1. Implement separate Row item position calculation and drawing
 V       a. Separation of painting and positions calculation 
-V       b. Use Items rect array for hit test
+.       b. Use Items rect array for hit test
 .       c. Calculate row height via appropriate function
 .       d. Invalidate row items only when needed
 
