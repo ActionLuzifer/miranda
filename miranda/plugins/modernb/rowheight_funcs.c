@@ -153,7 +153,6 @@ int mod_CalcRowHeight_worker(struct ClcData *dat, HWND hwnd, struct ClcContact *
             }
             gl_RowTabAccess[i]->w=size.cx;
 			SelectObject(hdc,GetStockObject(DEFAULT_GUI_FONT));
-			ske_ResetTextEffect(hdc);
 			mod_DeleteDC(hdc);
           }
           gl_RowTabAccess[i]->h=tmp;
@@ -180,7 +179,6 @@ int mod_CalcRowHeight_worker(struct ClcData *dat, HWND hwnd, struct ClcContact *
               CLCPaint_GetTextSize(&size,hdc,dummyRect,pdnce->szSecondLineText,pdnce->plSecondLineText,0, dat->text_resize_smileys ? 0 : pdnce->iSecondLineMaxSmileyHeight);
               gl_RowTabAccess[i]->w=size.cx;
               SelectObject(hdc,GetStockObject(DEFAULT_GUI_FONT));
-			  ske_ResetTextEffect(hdc);
 			  mod_DeleteDC(hdc);
             }
           }
@@ -206,7 +204,6 @@ int mod_CalcRowHeight_worker(struct ClcData *dat, HWND hwnd, struct ClcContact *
               CLCPaint_GetTextSize(&size,hdc,dummyRect,pdnce->szThirdLineText,pdnce->plThirdLineText,0, dat->text_resize_smileys ? 0 : pdnce->iThirdLineMaxSmileyHeight);
               gl_RowTabAccess[i]->w=size.cx;
               SelectObject(hdc,GetStockObject(DEFAULT_GUI_FONT));
-			  ske_ResetTextEffect(hdc);
 			  mod_DeleteDC(hdc);
             }
           }
@@ -269,7 +266,7 @@ int mod_CalcRowHeight_worker(struct ClcData *dat, HWND hwnd, struct ClcContact *
             int k;
             int width=0;
             for (k=0; k<dat->extraColumnsCount; k++)
-              if (contact->iExtraImage[k]!=0xFF || contact->iWideExtraImage[k]!=0xFFFF  || !dat->MetaIgnoreEmptyExtra) 
+              if (contact->iExtraImage[k]!=255 || !dat->MetaIgnoreEmptyExtra) 
               {
                 hasExtra=TRUE;
                 if (item!=-1) break;
@@ -298,7 +295,7 @@ int mod_CalcRowHeight_worker(struct ClcData *dat, HWND hwnd, struct ClcContact *
 			{
 				int eNum=gl_RowTabAccess[i]->type-TC_EXTRA1;
 				if (eNum<dat->extraColumnsCount)
-					if (contact->iExtraImage[eNum]!=255 || contact->iWideExtraImage[eNum]!=0xFFFF || !dat->MetaIgnoreEmptyExtra)
+					if (contact->iExtraImage[eNum]!=255 || !dat->MetaIgnoreEmptyExtra)
 					{
 						gl_RowTabAccess[i]->h=ICON_HEIGHT;
 						gl_RowTabAccess[i]->w=ICON_HEIGHT;
@@ -338,7 +335,6 @@ int mod_CalcRowHeight_worker(struct ClcData *dat, HWND hwnd, struct ClcContact *
                 // Get text size
                 text_size.cy = ske_DrawText(hdc, szResult, lstrlen(szResult), &rc, DT_CALCRECT | DT_NOPREFIX | DT_SINGLELINE);
                 SelectObject(hdc,GetStockObject(DEFAULT_GUI_FONT));
-				ske_ResetTextEffect(hdc);
 				mod_DeleteDC(hdc);
                 text_size.cx = rc.right - rc.left;
                 gl_RowTabAccess[i]->w=text_size.cx;

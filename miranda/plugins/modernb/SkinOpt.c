@@ -40,7 +40,7 @@ typedef struct _SkinListData
 } SkinListData;
 
 HBITMAP hPreviewBitmap=NULL;
-extern HANDLE hEventBkgrChanged;
+
 static int AddItemToTree(HWND hTree, char * folder, char * itemName, void * data);
 
 int AddSkinToListFullName(HWND hwndDlg,char * fullName);
@@ -97,7 +97,7 @@ static BOOL CALLBACK DlgSkinOpts(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM l
 				/* Text Colors */
 				DWORD c1,c2,c3,c4;
 				c1=DBGetContactSettingDword(NULL,"Menu", "TextColour", CLCDEFAULT_TEXTCOLOUR);
-				c2=DBGetContactSettingDword(NULL,"Menu", "SelTextColour", CLCDEFAULT_MODERN_SELTEXTCOLOUR);
+				c2=DBGetContactSettingDword(NULL,"Menu", "SelTextColour", CLCDEFAULT_SELTEXTCOLOUR);
 				c3=DBGetContactSettingDword(NULL,"FrameTitleBar", "TextColour", CLCDEFAULT_TEXTCOLOUR);
 				c4=DBGetContactSettingDword(NULL,"StatusBar", "TextColour", CLCDEFAULT_TEXTCOLOUR);
 				SendDlgItemMessage(hwndDlg,IDC_COLOUR_MENUNORMAL,CPM_SETCOLOUR,0,c1);                  
@@ -446,7 +446,7 @@ static BOOL CALLBACK DlgSkinOpts(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM l
 						/* End of Text colors */
 					}
 					pcli->pfnClcBroadcast( INTM_RELOADOPTIONS,0,0);
-					NotifyEventHooks(hEventBkgrChanged,0,0);
+					NotifyEventHooks(ME_BACKGROUNDCONFIG_CHANGED,0,0);
 					pcli->pfnClcBroadcast( INTM_INVALIDATE,0,0);	
 					RedrawWindow(GetParent(pcli->hwndContactTree),NULL,NULL,RDW_INVALIDATE|RDW_FRAME|RDW_ALLCHILDREN);
 				}

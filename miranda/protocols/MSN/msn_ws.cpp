@@ -106,7 +106,8 @@ bool ThreadData::isTimeout( void )
 			if ( res ) 
 			{	
 				WORD status = MSN_GetWord(mJoinedContacts[0], "Status", ID_STATUS_OFFLINE);
-				if ((status == ID_STATUS_OFFLINE || status == ID_STATUS_INVISIBLE || msnStatusMode == ID_STATUS_INVISIBLE)) 
+				if ((status == ID_STATUS_OFFLINE || status == ID_STATUS_INVISIBLE) && 
+					Lists_IsInList(LIST_FL, mJoinedContacts[0]))
 					res = false;
 			}
 		}

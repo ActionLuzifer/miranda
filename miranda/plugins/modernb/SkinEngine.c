@@ -253,7 +253,7 @@ int ske_UnloadModule()
 
 BOOL ske_AlphaBlend(HDC hdcDest,int nXOriginDest,int nYOriginDest,int nWidthDest,int nHeightDest,HDC hdcSrc,int nXOriginSrc,int nYOriginSrc,int nWidthSrc,int nHeightSrc,BLENDFUNCTION blendFunction)
 {
-	if (g_CluiData.fDisableSkinEngine && !(!g_CluiData.fGDIPlusFail && blendFunction.BlendFlags&128))
+	if (g_CluiData.fDisableSkinEngine)
 	{
 		if (nWidthDest!=nWidthSrc || nHeightDest!=nHeightSrc) 
 			return StretchBlt(hdcDest,nXOriginDest,nYOriginDest,nWidthDest,nHeightDest,hdcSrc,nXOriginSrc,nYOriginSrc,nWidthSrc,nHeightSrc, SRCCOPY);
@@ -3392,8 +3392,8 @@ BOOL ske_DrawIconEx(HDC hdcDst,int xLeft,int yTop,HICON hIcon,int cxWidth,int cy
 	BYTE hasalpha=FALSE;
 	alpha=alpha?alpha:255;
 
-	if ( g_CluiData.fDisableSkinEngine && !(diFlags&0x80) )
-		return DrawIconEx(hdcDst,xLeft,yTop,hIcon,cxWidth,cyWidth,istepIfAniCur,hbrFlickerFreeDraw,diFlags&0xFFFF7F);
+	if (g_CluiData.fDisableSkinEngine)
+		return DrawIconEx(hdcDst,xLeft,yTop,hIcon,cxWidth,cyWidth,istepIfAniCur,hbrFlickerFreeDraw,diFlags&0xFFFFFF);
 
 	if (!GetIconInfo(hIcon,&ici))  return 0;
 
@@ -3531,6 +3531,7 @@ BOOL ske_DrawIconEx(HDC hdcDst,int xLeft,int yTop,HICON hIcon,int cxWidth,int cy
 		BLENDFUNCTION bf={AC_SRC_OVER, diFlags&128, alpha, AC_SRC_ALPHA };   
 		ske_AlphaBlend(hdcDst,xLeft,yTop,cxWidth, cyWidth, imDC,0,0, cx,icy,bf);
 	}
+
 	if (immaskbt.bmBits==NULL) free(immaskbits);
 	if (imbt.bmBits==NULL) free(imimagbits);
 	SelectObject(imDC,oldBmp);
@@ -4210,7 +4211,7 @@ static DWORD ske_HexToARGB(char * Hex)
 static TCHAR *ske_ReAppend(TCHAR *lfirst, TCHAR * lsecond, int len)
 { 
 	int l1=lfirst?lstrlen(lfirst):0;
-	int l2=(len?len:(lstrlen(lsecond)+1));
+	int l2=(len?len:lstrlen(lsecond));
 	TCHAR *buf=mir_alloc((l1+l2+1)*sizeof(TCHAR));
 	if (lfirst) memmove(buf,lfirst,l1*sizeof(TCHAR));
 	memmove(buf+l1,lsecond,l2*sizeof(TCHAR));

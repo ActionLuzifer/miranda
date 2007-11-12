@@ -58,7 +58,6 @@ int cliGetRowsPriorTo(struct ClcGroup *group,struct ClcGroup *subgroup,int conta
 {
 	int count=0;
 	BYTE k;
-	int subcontactscount=0;
 	k=DBGetContactSettingByte(NULL,"CLC","MetaExpanding",SETTING_METAEXPANDING_DEFAULT);
 	group->scanIndex=0;
 	for(;;) {
@@ -68,7 +67,7 @@ int cliGetRowsPriorTo(struct ClcGroup *group,struct ClcGroup *subgroup,int conta
 			group->scanIndex++;
 			continue;
 		}
-		if(group==subgroup && contactIndex-subcontactscount==group->scanIndex) return count;
+		if(group==subgroup && contactIndex==group->scanIndex) return count;
 		count++;
 		
 		/*		if ((group->cl.items[group->scanIndex]->type==CLCIT_CONTACT) && (group->cl.items[group->scanIndex].flags & CONTACTF_STATUSMSG)) {
@@ -81,7 +80,6 @@ int cliGetRowsPriorTo(struct ClcGroup *group,struct ClcGroup *subgroup,int conta
 			if(group->cl.items[group->scanIndex]->group->expanded) {
 				group=group->cl.items[group->scanIndex]->group;
 				group->scanIndex=0;
-				subcontactscount=0;
 				continue;
 			}
 		}
@@ -97,7 +95,6 @@ int cliGetRowsPriorTo(struct ClcGroup *group,struct ClcGroup *subgroup,int conta
 		if(group->cl.items[group->scanIndex]->type==CLCIT_CONTACT)
 		{
 			count+=(group->cl.items[group->scanIndex]->SubAllocated*group->cl.items[group->scanIndex]->SubExpanded*k);
-			subcontactscount+=(group->cl.items[group->scanIndex]->SubAllocated*group->cl.items[group->scanIndex]->SubExpanded*k);
 		}
 		group->scanIndex++;
 	}

@@ -327,7 +327,6 @@ protected:
 	CPrivacyList *m_pLists;
 	CRITICAL_SECTION m_cs;
 	BOOL m_bModified;
-
 public:
 	CPrivacyListManager()
 	{
@@ -428,15 +427,7 @@ public:
 		}
 		return TRUE;
 	}
-
-	void QueryLists()
-	{
-		XmlNodeIq iq( g_JabberIqManager.AddHandler( JabberIqResultPrivacyLists ) );
-		XmlNode* query = iq.addQuery( JABBER_FEAT_PRIVACY_LISTS );
-		jabberThreadInfo->send( iq );
-	}
 };
 
-extern CPrivacyListManager g_PrivacyListManager;
 
 #endif //_JABBER_PRIVACY_H_

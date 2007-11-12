@@ -335,7 +335,7 @@ struct MessageWindowData {
 	HANDLE  hDbEventFirst,hDbEventLast, hDbEventLastFeed;
 	int     sendMode;
 	HBRUSH  hBkgBrush, hInputBkgBrush;
-	int     splitterY, originalSplitterY, dynaSplitter, savedSplitter, savedSplitY, savedDynaSplit;
+	int     splitterY, originalSplitterY, dynaSplitter, savedSplitter;
 	int     multiSplitterX;
 	char    *sendBuffer;
     int     iSendBufferSize;
@@ -590,7 +590,6 @@ typedef struct _globals {
     BOOL        m_autoSplit;
     int         rtf_ctablesize;
     DWORD       dwThreadID;
-    char        szMetaName[256];
 } MYGLOBALS;
 
 typedef struct _tag_ICONDESC {

@@ -344,6 +344,11 @@ SOURCE=.\jabber_xml.cpp
 # End Source File
 # Begin Source File
 
+SOURCE=.\jabber_xmlns.cpp
+# ADD CPP /Yu
+# End Source File
+# Begin Source File
+
 SOURCE=.\jabber_xstatus.cpp
 # End Source File
 # Begin Source File
@@ -417,6 +422,10 @@ SOURCE=.\jabber_ssl.h
 # Begin Source File
 
 SOURCE=.\jabber_xml.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\jabber_xmlns.h
 # End Source File
 # End Group
 # Begin Group "Resource Files"

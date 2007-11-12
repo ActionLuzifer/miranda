@@ -103,7 +103,7 @@ extern int g_titleButtonTopOff, g_captionOffset, g_captionPadding, g_sidebarTopO
 
 static BOOL CALLBACK ContainerWndProc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam);
 
-static TCHAR *menuBarNames[] = {_T("File"), _T("View"), _T("Message Log"), _T("Container"), _T("Help") };
+static TCHAR *menuBarNames[] = {_T("File"), _T("View"), _T(""), _T("Message Log"), _T("Container"), _T("Help") };
 static TCHAR *menuBarNames_translated[6];
 static BOOL  menuBarNames_done = FALSE;
 
@@ -486,8 +486,7 @@ LRESULT CALLBACK StatusBarSubclassProc(HWND hWnd, UINT msg, WPARAM wParam, LPARA
                     if(dat && PtInRect(&rc,pt)) {
                         int gap = 2;
                         struct StatusIconListNode *current = status_icon_list;
-                        struct StatusIconListNode *clicked = NULL;
-                        
+						struct StatusIconListNode *clicked = NULL;
                         unsigned int iconNum = (pt.x - rc.left ) / (myGlobals.m_smcxicon + gap);
                         unsigned int list_icons = 0;
                         char         buff[100];
@@ -878,7 +877,7 @@ static BOOL CALLBACK ContainerWndProc(HWND hwndDlg, UINT msg, WPARAM wParam, LPA
 					rcText.left = 26; rcText.right = rcWindow.right - 3 * g_titleBarButtonSize.cx - 11;
 					rcText.top = g_captionOffset + myGlobals.bClipBorder; rcText.bottom = rcText.top + tm.tmHeight;
                     rcText.left += g_captionPadding;
-					DrawText(dcMem, szWindowText, -1, &rcText, DT_SINGLELINE | DT_VCENTER | DT_END_ELLIPSIS | DT_NOPREFIX);
+					DrawText(dcMem, szWindowText, -1, &rcText, DT_SINGLELINE | DT_VCENTER | DT_END_ELLIPSIS);
 					SelectObject(dcMem, hOldFont);
 					/*
 					 * icon
@@ -937,7 +936,7 @@ static BOOL CALLBACK ContainerWndProc(HWND hwndDlg, UINT msg, WPARAM wParam, LPA
 
                         dis.hDC = dcMem;
                         dis.CtlType = ODT_MENU;
-                        for(i = 0; i <= 4; i++) {
+                        for(i = 0; i <= 5; i++) {
                             dis.itemID = 0xffff5000 + i;
                             GetMenuItemRect(hwndDlg, pContainer->hMenu, i, &rcItem);
 
@@ -1114,7 +1113,7 @@ static BOOL CALLBACK DlgProcContainer(HWND hwndDlg, UINT msg, WPARAM wParam, LPA
                 if(!menuBarNames_done) {
                     int j;
 
-                    for(j = 0; j < 5; j++)
+                    for(j = 0; j < 6; j++)
                         menuBarNames_translated[j] = TranslateTS(menuBarNames[j]);
                     menuBarNames_done = TRUE;
                 }
@@ -2289,6 +2288,29 @@ panel_found:
             GetCursorPos(&pt);
             pos = MenuItemFromPoint(hwndDlg, pContainer->hMenu, pt);
 
+            /* temporary disabled because of genmenu issues with menu ids
+            if(pos == 2) {
+                HANDLE hContact;
+
+                SendMessage(pContainer->hwndActive, DM_QUERYHCONTACT, 0, (LPARAM)&hContact);
+                if(hContact) {
+                    MENUITEMINFO mii = {0};
+					int iSel = 0;
+
+                    hMenu = (HMENU) CallService(MS_CLIST_MENUBUILDCONTACT, (WPARAM) hContact, 0);
+                    mii.cbSize = sizeof(mii);
+                    mii.fMask = MIIM_FTYPE | MIIM_SUBMENU;
+                    mii.fType = MFT_OWNERDRAW;
+                    mii.hSubMenu = hMenu;
+                    SetMenuItemInfo(pContainer->hMenu, 2, TRUE, &mii);
+                    //ModifyMenuA(pContainer->hMenu, 2, MF_BYPOSITION | MF_POPUP | MF_OWNERDRAW, (UINT_PTR) hMenu, Translate("&User"));
+                    DrawMenuBar(hwndDlg);
+                    GetCursorPos(&pt);
+                    TrackPopupMenu(hMenu, TPM_RETURNCMD, pt.x, pt.y, 0, hwndDlg, NULL);
+                    DestroyMenu(hMenu);
+                }
+            }*/
+
             hMenu = pContainer->hMenu;
             CheckMenuItem(hMenu, ID_VIEW_SHOWMENUBAR, MF_BYCOMMAND | pContainer->dwFlags & CNT_NOMENUBAR ? MF_UNCHECKED : MF_CHECKED);
             CheckMenuItem(hMenu, ID_VIEW_SHOWSTATUSBAR, MF_BYCOMMAND | pContainer->dwFlags & CNT_NOSTATUSBAR ? MF_UNCHECKED : MF_CHECKED);
@@ -2611,7 +2633,7 @@ panel_found:
                     mii.dwItemData = 0xf0f0f0f0;
                     pContainer->hMenu = LoadMenu(g_hInst, MAKEINTRESOURCE(IDR_MENUBAR));
                     CallService(MS_LANGPACK_TRANSLATEMENU, (WPARAM)pContainer->hMenu, 0);
-                    for(i = 0; i <= 4; i++) {
+                    for(i = 0; i <= 5; i++) {
                         mii.wID = 0xffff5000 + i;
                         SetMenuItemInfo(pContainer->hMenu, i, TRUE, &mii);
                     }
@@ -3519,7 +3541,7 @@ HMENU BuildMCProtocolMenu(HWND hwndDlg)
 
     for(i = 0; i < iNumProtos; i++) {
         mir_snprintf(szTemp, sizeof(szTemp), "Protocol%d", i);
-        if(DBGetContactSettingString(dat->hContact, myGlobals.szMetaName, szTemp, &dbv))
+        if(DBGetContactSettingString(dat->hContact, "MetaContacts", szTemp, &dbv))
             continue;
 #if defined(_UNICODE)
         tzProtoName = (TCHAR *)CallService(MS_LANGPACK_PCHARTOTCHAR, 0, (LPARAM)dbv.pszVal);
@@ -3527,10 +3549,10 @@ HMENU BuildMCProtocolMenu(HWND hwndDlg)
         tzProtoName = dbv.pszVal;
 #endif
         mir_snprintf(szTemp, sizeof(szTemp), "Handle%d", i);
-        if((handle = (HANDLE)DBGetContactSettingDword(dat->hContact, myGlobals.szMetaName, szTemp, 0)) != 0) {
+        if((handle = (HANDLE)DBGetContactSettingDword(dat->hContact, "MetaContacts", szTemp, 0)) != 0) {
             nick = (TCHAR *)CallService(MS_CLIST_GETCONTACTDISPLAYNAME, (WPARAM)handle, GCDNF_TCHAR);
             mir_snprintf(szTemp, sizeof(szTemp), "Status%d", i);
-            wStatus = (WORD)DBGetContactSettingWord(dat->hContact, myGlobals.szMetaName, szTemp, 0);
+            wStatus = (WORD)DBGetContactSettingWord(dat->hContact, "MetaContacts", szTemp, 0);
             szStatusText = (TCHAR *) CallService(MS_CLIST_GETSTATUSMODEDESCRIPTION, wStatus, GCMDF_TCHAR);
         }
         mir_sntprintf(szMenuLine, safe_sizeof(szMenuLine), _T("%s: %s [%s] %s"), tzProtoName, nick, szStatusText, i == isForced ? TranslateT("(Forced)") : _T(""));
@@ -3679,13 +3701,12 @@ void UpdateContainerMenu(HWND hwndDlg, struct MessageWindowData *dat)
             fDisable = TRUE;
     }
     if(dat->pContainer->hMenu) {
-        EnableMenuItem(dat->pContainer->hMenu, 2, MF_BYPOSITION | (fDisable ? MF_GRAYED | MF_DISABLED : MF_ENABLED));
+        EnableMenuItem(dat->pContainer->hMenu, 3, MF_BYPOSITION | (fDisable ? MF_GRAYED | MF_DISABLED : MF_ENABLED));
         if(!(dat->pContainer->dwFlags & CNT_NOMENUBAR))
             DrawMenuBar(dat->pContainer->hwnd);
     }
     if(dat->bType == SESSIONTYPE_IM)
         EnableWindow(GetDlgItem(hwndDlg, IDC_TIME), fDisable ? FALSE : TRUE);
 }
-
 
 

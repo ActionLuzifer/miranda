@@ -37,8 +37,8 @@ $Id$
 
 static char *relnotes[] = {
     "{\\rtf1\\ansi\\deff0\\pard\\li%u\\fi-%u\\ri%u\\tx%u}",
-    "\\par\t\\b\\ul1 Release notes for version 2.0.0.2\\b0\\ul0\\par ",
-    "*\tBug fixes only.\\par",
+    "\\par\t\\b\\ul1 Release notes for version 1.1.1.2\\b0\\ul0\\par ",
+    "*\tBugfixes (quoting, message grouping).\\par",
     NULL
 };
 
@@ -858,7 +858,7 @@ static int MessageSettingChanged(WPARAM wParam, LPARAM lParam)
     
     // metacontacts support
 
-    if(!lstrcmpA(cws->szModule, myGlobals.szMetaName) && !lstrcmpA(cws->szSetting, "Nick"))       // filter out this setting to avoid infinite loops while trying to obtain the most online contact
+    if(!lstrcmpA(cws->szModule, "MetaContacts") && !lstrcmpA(cws->szSetting, "Nick"))       // filter out this setting to avoid infinite loops while trying to obtain the most online contact
         return 0;
     
     if(hwnd) {
@@ -952,16 +952,16 @@ static int SplitmsgModulesLoaded(WPARAM wParam, LPARAM lParam)
 	static Update upd = {0};
 #if defined(_UNICODE)
 	static char szCurrentVersion[30];
-	static char *szVersionUrl = "http://miranda.or.at/files/tabsrmm/2/tabsrmm.txt";
-	static char *szUpdateUrl = "http://miranda.or.at/files/tabsrmm/2/tabsrmmW.zip";
-	static char *szFLVersionUrl = "http://addons.miranda-im.org/details.php?action=viewfile&id=3699";
-	static char *szFLUpdateurl = "http://addons.miranda-im.org/feed.php?dlfile=3699";
+	static char *szVersionUrl = "http://miranda.or.at/files/tabsrmm/tabsrmm.txt";
+	static char *szUpdateUrl = "http://miranda.or.at/files/tabsrmm/tabsrmmW.zip";
+	static char *szFLVersionUrl = "http://addons.miranda-im.org/details.php?action=viewfile&id=2457";
+	static char *szFLUpdateurl = "http://addons.miranda-im.org/feed.php?dlfile=2457";
 #else
 	static char szCurrentVersion[30];
-	static char *szVersionUrl = "http://miranda.or.at/files/tabsrmm/2/version.txt";
-	static char *szUpdateUrl = "http://miranda.or.at/files/tabsrmm/2/tabsrmm.zip";
-	static char *szFLVersionUrl = "http://addons.miranda-im.org/details.php?action=viewfile&id=3698";
-	static char *szFLUpdateurl = "http://addons.miranda-im.org/feed.php?dlfile=3698";
+	static char *szVersionUrl = "http://miranda.or.at/files/tabsrmm/version.txt";
+	static char *szUpdateUrl = "http://miranda.or.at/files/tabsrmm/tabsrmm.zip";
+	static char *szFLVersionUrl = "http://addons.miranda-im.org/details.php?action=viewfile&id=1401";
+	static char *szFLUpdateurl = "http://addons.miranda-im.org/feed.php?dlfile=1401";
 #endif    
 	static char *szPrefix = "tabsrmm ";
 
@@ -1071,11 +1071,6 @@ static int SplitmsgModulesLoaded(WPARAM wParam, LPARAM lParam)
     
 	if(ServiceExists(MS_MC_GETDEFAULTCONTACT))
 		myGlobals.g_MetaContactsAvail = 1;
-
-    if(myGlobals.g_MetaContactsAvail)
-        mir_snprintf(myGlobals.szMetaName, 256, "%s", (char *)CallService(MS_MC_GETPROTOCOLNAME, 0, 0));
-    else
-        myGlobals.szMetaName[0] = 0;
 
 	if(ServiceExists(MS_POPUP_ADDPOPUPEX))
 		myGlobals.g_PopupAvail = 1;
@@ -2006,7 +2001,7 @@ static int SetupIconLibConfig()
 		strncpy(szFilename, "icons\\tabsrmm_icons.dll", MAX_PATH);
 		g_hIconDLL = LoadLibraryA(szFilename);
 		if(g_hIconDLL == 0) {
-			MessageBox(0, TranslateT("Critical: cannot init IcoLib, no resource DLL found."), _T("tabSRMM"), MB_OK);
+			MessageBoxA(0, "Critical: cannot init IcoLib, no resource DLL found.", "tabSRMM", MB_OK);
 			return 0;
 		}
 	}
@@ -2134,7 +2129,6 @@ HICON *BTN_GetIcon(char *szIconName)
     }
     return NULL;
 }
-
 
 
 

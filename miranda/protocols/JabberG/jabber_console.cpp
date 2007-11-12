@@ -243,38 +243,39 @@ static void sttRtfAppendXml(StringBuf *buf, XmlNode *node, DWORD flags, int inde
 	if (node->numChild || node->text)
 	{
 		sttAppendBufRaw(buf, ">");
-		if (node->numChild)
-			sttAppendBufRaw(buf, RTF_ENDTAG);
+		sttAppendBufRaw(buf, RTF_ENDTAG);
 	}
 
 	if (node->text)
 	{
-		if (node->numChild)
-		{
-			sttAppendBufRaw(buf, RTF_BEGINTEXT);
-			char *indentTextLevel = (char *)mir_alloc(128);
-			mir_snprintf( indentTextLevel, 128, RTF_TEXTINDENT_FMT, (int)(( indent + 1) * 200 ));
-			sttAppendBufRaw(buf, indentTextLevel);
-			mir_free(indentTextLevel);
-		}
+		sttAppendBufRaw(buf, RTF_BEGINTEXT);
 
-		if (flags & JCPF_UTF8)
+		char *indentTextLevel = (char *)mir_alloc(128);
+		mir_snprintf(indentTextLevel, 128, RTF_TEXTINDENT_FMT,
+			(int)((indent+1)*200)
+			);
+		sttAppendBufRaw(buf, indentTextLevel);
+		mir_free(indentTextLevel);
+
+		if (node->text)
 		{
-			wchar_t *tmp = mir_utf8decodeW(node->sendText);
+			if (flags & JCPF_UTF8)
+			{
+				wchar_t *tmp = mir_utf8decodeW(node->sendText);
 #if defined( _UNICODE )
-			sttAppendBufW(buf, tmp);
+				sttAppendBufW(buf, tmp);
 #else
-			char *szTmp2 = mir_u2a(tmp);
-			sttAppendBufA(buf, szTmp2);
-			mir_free(szTmp2);
+				char *szTmp2 = mir_u2a(tmp);
+				sttAppendBufA(buf, szTmp2);
+				mir_free(szTmp2);
 #endif
-			mir_free(tmp);
-		} else
-		{
-			sttAppendBufT(buf, node->text);
+				mir_free(tmp);
+			} else
+			{
+				sttAppendBufT(buf, node->text);
+			}
 		}
-		if (node->numChild)
-			sttAppendBufRaw(buf, RTF_ENDTEXT);
+		sttAppendBufRaw(buf, RTF_ENDTEXT);
 	}
 
 	for (i = 0; i < node->numChild; ++i)

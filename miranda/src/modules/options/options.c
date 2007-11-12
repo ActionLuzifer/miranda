@@ -68,7 +68,6 @@ struct OptionsPageData
 	DWORD flags;
 	TCHAR *pszTitle, *pszGroup, *pszTab;
 	BOOL insideTab;
-	LPARAM dwInitParam;
 };
 
 struct OptionsDlgData
@@ -261,7 +260,6 @@ static BOOL CALLBACK OptionsDlgProc(HWND hdlg,UINT message,WPARAM wParam,LPARAM 
 			dat->opd[i].nExpertOnlyControls=odp[i].nExpertOnlyControls;
 			dat->opd[i].expertOnlyControls=odp[i].expertOnlyControls;
 			dat->opd[i].flags=odp[i].flags;
-			dat->opd[i].dwInitParam=odp[i].dwInitParam;
 			if ( odp[i].pszTitle == NULL )
 				dat->opd[i].pszTitle = NULL;
 			else if ( odp[i].flags & ODPF_UNICODE ) {
@@ -354,22 +352,10 @@ static BOOL CALLBACK OptionsDlgProc(HWND hdlg,UINT message,WPARAM wParam,LPARAM 
 		tvis.item.mask = TVIF_TEXT | TVIF_STATE | TVIF_PARAM;
 		tvis.item.state = tvis.item.stateMask = TVIS_EXPANDED;
 		for ( i=0; i < dat->pageCount; i++ ) {
-			static TCHAR *fullTitle=NULL;
-			TCHAR * useTitle;
-			if (fullTitle) mir_free(fullTitle);
-			fullTitle=NULL;
 			if ( FilterInst!=NULL && dat->opd[i].hInst!=FilterInst ) continue;
 			if (( dat->opd[i].flags & ODPF_SIMPLEONLY ) && IsDlgButtonChecked( hdlg, IDC_EXPERT )) continue;
 			if (( dat->opd[i].flags & ODPF_EXPERTONLY ) && !IsDlgButtonChecked( hdlg, IDC_EXPERT )) continue;
 			tvis.hParent = NULL;
-			if ( FilterInst!=NULL ) {
-				size_t sz=dat->opd[i].pszGroup?_tcslen(dat->opd[i].pszGroup)+1:0;
-				if (sz) sz+=3;
-				sz+=dat->opd[i].pszTitle?_tcslen(dat->opd[i].pszTitle)+1:0;
-				fullTitle=mir_alloc(sz*sizeof(TCHAR));
-				mir_sntprintf(fullTitle,sz,(dat->opd[i].pszGroup && dat->opd[i].pszTitle)?_T("%s - %s"):_T("%s%s"),dat->opd[i].pszGroup?dat->opd[i].pszGroup:_T(""),dat->opd[i].pszTitle?dat->opd[i].pszTitle:_T("") );
-			}
-			useTitle=fullTitle?fullTitle:dat->opd[i].pszTitle;
 			if(dat->opd[i].pszGroup != NULL && FilterInst==NULL) {
 				tvis.hParent = FindNamedTreeItemAtRoot(GetDlgItem(hdlg,IDC_PAGETREE),dat->opd[i].pszGroup);
 				if(tvis.hParent == NULL) {
@@ -380,7 +366,7 @@ static BOOL CALLBACK OptionsDlgProc(HWND hdlg,UINT message,WPARAM wParam,LPARAM 
 			}
 			else {
 				TVITEM tvi;
-				tvi.hItem = FindNamedTreeItemAtRoot(GetDlgItem(hdlg,IDC_PAGETREE),useTitle);
+				tvi.hItem = FindNamedTreeItemAtRoot(GetDlgItem(hdlg,IDC_PAGETREE),dat->opd[i].pszTitle);
 				if( tvi.hItem != NULL ) {
 					if ( i == dat->currentPage ) dat->hCurrentPage=tvi.hItem;
 					tvi.mask = TVIF_PARAM;
@@ -394,9 +380,9 @@ static BOOL CALLBACK OptionsDlgProc(HWND hdlg,UINT message,WPARAM wParam,LPARAM 
 			if ( dat->opd[i].pszTab != NULL ) {
 				HTREEITEM hItem;
 				if (tvis.hParent == NULL)
-					hItem = FindNamedTreeItemAtRoot(GetDlgItem(hdlg,IDC_PAGETREE),useTitle);
+					hItem = FindNamedTreeItemAtRoot(GetDlgItem(hdlg,IDC_PAGETREE),dat->opd[i].pszTitle);
 				else
-					hItem = FindNamedTreeItemAtChildren(GetDlgItem(hdlg,IDC_PAGETREE),tvis.hParent,useTitle);
+					hItem = FindNamedTreeItemAtChildren(GetDlgItem(hdlg,IDC_PAGETREE),tvis.hParent,dat->opd[i].pszTitle);
 				if( hItem != NULL ) {
 					if ( i == dat->currentPage ) {
 						TVITEM tvi;
@@ -410,14 +396,11 @@ static BOOL CALLBACK OptionsDlgProc(HWND hdlg,UINT message,WPARAM wParam,LPARAM 
 				}
 			}
 
-			tvis.item.pszText = useTitle;
+			tvis.item.pszText = dat->opd[i].pszTitle;
 			tvis.item.lParam = i;
 			dat->opd[i].hTreeItem = TreeView_InsertItem( GetDlgItem(hdlg,IDC_PAGETREE), &tvis);
 			if ( i == dat->currentPage )
-				dat->hCurrentPage = dat->opd[i].hTreeItem;	
-
-			if (fullTitle) mir_free(fullTitle);
-			fullTitle=NULL;
+				dat->hCurrentPage = dat->opd[i].hTreeItem;
 		}
 		tvi.mask = TVIF_TEXT | TVIF_STATE;
 		tvi.pszText = str;
@@ -504,7 +487,7 @@ static BOOL CALLBACK OptionsDlgProc(HWND hdlg,UINT message,WPARAM wParam,LPARAM 
 							RECT rcControl,rc;
 							int w,h,pages=0;
 
-							dat->opd[dat->currentPage].hwnd=CreateDialogIndirectParamA(dat->opd[dat->currentPage].hInst,dat->opd[dat->currentPage].pTemplate,hdlg,dat->opd[dat->currentPage].dlgProc,dat->opd[dat->currentPage].dwInitParam);
+							dat->opd[dat->currentPage].hwnd=CreateDialogIndirectA(dat->opd[dat->currentPage].hInst,dat->opd[dat->currentPage].pTemplate,hdlg,dat->opd[dat->currentPage].dlgProc);
 							if(dat->opd[dat->currentPage].flags&ODPF_BOLDGROUPS)
 								EnumChildWindows(dat->opd[dat->currentPage].hwnd,BoldGroupTitlesEnumChildren,(LPARAM)dat->hBoldFont);
 							GetClientRect(dat->opd[dat->currentPage].hwnd,&rcPage);
@@ -842,8 +825,7 @@ static int AddOptionsPage(WPARAM wParam,LPARAM lParam)
 	if(odp==NULL||opi==NULL) return 1;
 	if(odp->cbSize!=sizeof(OPTIONSDIALOGPAGE)
 			&& odp->cbSize != OPTIONPAGE_OLD_SIZE
-			&& odp->cbSize != OPTIONPAGE_OLD_SIZE2
-			&& odp->cbSize != OPTIONPAGE_OLD_SIZE3)
+			&& odp->cbSize != OPTIONPAGE_OLD_SIZE2)
 		return 1;
 
 	opi->odp=(OPTIONSDIALOGPAGE*)mir_realloc(opi->odp,sizeof(OPTIONSDIALOGPAGE)*(opi->pageCount+1));
