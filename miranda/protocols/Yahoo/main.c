@@ -19,7 +19,7 @@
 #include <m_skin.h>
 #include <m_idle.h>
 #include <m_userinfo.h>
-#include <time.h>
+
 #include "options.h"
 
 extern char *szStartMsg;
@@ -30,24 +30,22 @@ extern yahoo_local_account *ylad;
  */
 HINSTANCE   hinstance;
 PLUGINLINK* pluginLink;
-char		yahooProtocolName[MAX_PATH];
+char			yahooProtocolName[MAX_PATH];
 
-struct MM_INTERFACE		mmi;
-struct UTF8_INTERFACE	utfi;
-struct MD5_INTERFACE	md5i;
+struct MM_INTERFACE   mmi;
+struct UTF8_INTERFACE utfi;
+struct MD5_INTERFACE md5i;
 struct SHA1_INTERFACE	sha1i;
 
-HANDLE					hNetlibUser = NULL;
-HANDLE					YahooMenuItems[ MENU_ITEMS_COUNT ];
-static HANDLE   		hHookOptsInit;
-static HANDLE   		hHookModulesLoaded;
-static HANDLE   		hHookSettingChanged;
-static HANDLE   		hHookUserTyping;
-HANDLE   				hHookContactDeleted;
-HANDLE   				hHookIdle;
-HANDLE   				hYahooNudge = NULL;
-int    					yahooStatus = ID_STATUS_OFFLINE;
-BOOL					yahooLoggedIn = FALSE;
+HANDLE		    hNetlibUser = NULL;
+HANDLE			YahooMenuItems[ MENU_ITEMS_COUNT ];
+static HANDLE   hHookOptsInit;
+static HANDLE   hHookModulesLoaded;
+static HANDLE   hHookSettingChanged;
+static HANDLE   hHookUserTyping;
+HANDLE   hHookContactDeleted;
+HANDLE   hHookIdle;
+HANDLE   hYahooNudge = NULL;
 
 PLUGININFOEX pluginInfo={
 		sizeof(PLUGININFOEX),
@@ -67,6 +65,9 @@ PLUGININFOEX pluginInfo={
         {0xa6648b6c, 0x6fb8, 0x4551, { 0xb4, 0xe7, 0x1, 0x36, 0xf9, 0x16, 0xd4, 0x85 }} //{A6648B6C-6FB8-4551-B4E7-0136F916D485}
 };
 
+int    yahooStatus = ID_STATUS_OFFLINE;
+BOOL   yahooLoggedIn = FALSE;
+
 /*
  * WINAPI DllMain - main entry point into a DLL
  * Parameters: 
@@ -79,8 +80,7 @@ PLUGININFOEX pluginInfo={
  */
 BOOL WINAPI DllMain(HINSTANCE hinst,DWORD fdwReason,LPVOID lpvReserved)
 {
-	hinstance = hinst;
-	
+	hinstance=hinst;
 	return TRUE;
 }
 
@@ -93,6 +93,15 @@ static int OnModulesLoaded( WPARAM wParam, LPARAM lParam )
 	char tModuleDescr[ 100 ];
 	NETLIBUSER nlu = {0};
 
+	if ( !ServiceExists( MS_DB_CONTACT_GETSETTING_STR )) {
+		MessageBox( NULL, 
+				Translate("Yahoo plugin requires db3x plugin version 0.5.1.0 or later" ), 
+				Translate("Yahoo"), 
+				MB_OK );
+		return 1;
+	}
+	
+	CharUpper( yahooProtocolName );
 	wsprintf(tModuleDescr, "%s plugin connections", yahooProtocolName);
 	
 	nlu.cbSize = sizeof(nlu);
@@ -120,9 +129,17 @@ static int OnModulesLoaded( WPARAM wParam, LPARAM lParam )
 
 	YahooMenuInit();
 	
+	hHookOptsInit = HookEvent( ME_OPT_INITIALISE, YahooOptInit );
 	hHookSettingChanged = HookEvent(ME_DB_CONTACT_SETTINGCHANGED, YAHOO_util_dbsettingchanged);
 	hHookIdle = HookEvent(ME_IDLE_CHANGED, YahooIdleEvent);
 	
+	// Add support for Plugin Uninstaller
+	//DBWriteContactSettingString(NULL, "Uninstall", "Yahoo", yahooProtocolName);
+
+	//add as a known module in DB Editor ++
+	CallService("DBEditorpp/RegisterSingleModule",(WPARAM)yahooProtocolName, 0);
+	
+	//start_timer();
 	return 0;
 }
 
@@ -139,16 +156,16 @@ int __declspec(dllexport)Load(PLUGINLINK *link)
 	char path[MAX_PATH], tNudge[250];
 	char* protocolname;
 	
- 	pluginLink = link;
+ 	pluginLink=link;
 	mir_getMMI( &mmi );
 	mir_getUTFI( &utfi );
 	mir_getMD5I( &md5i );
 	mir_getSHA1I( &sha1i );
 	
-	/*
-	 * Need to disable threading since we got our own routines.
-	 */
-	DisableThreadLibraryCalls( hinstance );
+	//
+	// Need to disable threading since we got our own routines.
+	//
+	DisableThreadLibraryCalls(hinstance);
 	
 	GetModuleFileName( hinstance, path, sizeof( path ));
 
@@ -167,7 +184,6 @@ int __declspec(dllexport)Load(PLUGINLINK *link)
 		lstrcpyn(yahooProtocolName, protocolname, MAX_PATH);
 	} else 
 		lstrcpy(yahooProtocolName, "YAHOO");
-
 	
 	mir_snprintf( path, sizeof( path ), "%s/Status", yahooProtocolName );
 	CallService( MS_DB_SETSETTINGRESIDENT, TRUE, ( LPARAM )path );
@@ -196,10 +212,6 @@ int __declspec(dllexport)Load(PLUGINLINK *link)
 	// 1.
 	hHookModulesLoaded = HookEvent( ME_SYSTEM_MODULESLOADED, OnModulesLoaded );
 	
-	srand(( unsigned int )time( NULL ));
-
-	hHookOptsInit = HookEvent( ME_OPT_INITIALISE, YahooOptInit );
-
 	// Create nudge event
 	lstrcpyn(tNudge, yahooProtocolName , sizeof( tNudge ) - 7);
 	lstrcat(tNudge, "/Nudge");
@@ -224,7 +236,6 @@ int __declspec(dllexport)Load(PLUGINLINK *link)
 	LoadYahooServices();
 
 	YahooIconsInit();
-	
 	return 0;
 }
 
@@ -264,13 +275,13 @@ int __declspec(dllexport) Unload(void)
  */
 __declspec(dllexport) PLUGININFOEX* MirandaPluginInfoEx(DWORD mirandaVersion)
 {
-	/*
-     * We require Miranda 0.7.0.12
-	 * This requires the latest trunk... [md5, sha, etc..]
-	 */
-    if (mirandaVersion < PLUGIN_MAKE_VERSION(0, 8, 0, 1)) {
+	//
+    // We require Miranda 0.7.0.12
+	// This requires the latest trunk... [md5, sha, etc..]
+	//
+    if (mirandaVersion < PLUGIN_MAKE_VERSION(0, 7, 0, 12)) {
 		MessageBox( NULL, 
-				"Yahoo plugin cannot be loaded. It requires Miranda IM 0.8 or later.", 
+				"Yahoo plugin cannot be loaded. It requires Miranda IM 0.7.0.12 or later.", 
 				"Yahoo", 
 				MB_OK|MB_ICONWARNING|MB_SETFOREGROUND|MB_TOPMOST );
 

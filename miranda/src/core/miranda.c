@@ -2,7 +2,7 @@
 
 Miranda IM: the free IM client for Microsoft* Windows*
 
-Copyright 2000-2008 Miranda ICQ/IM project,
+Copyright 2000-2007 Miranda ICQ/IM project,
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
 
@@ -29,8 +29,21 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 int InitialiseModularEngine(void);
 void DestroyModularEngine(void);
-void UnloadNewPluginsModule(void);
-void UnloadDefaultModules(void);
+void FreeWindowList(void);
+int UnloadNewPluginsModule(void);
+void UnloadButtonModule(void);
+void UnloadClcModule(void);
+void UnloadContactListModule(void);
+void UnloadEventsModule(void);
+void UnloadIdleModule(void);
+void UnloadLangPackModule(void);
+void UnloadNetlibModule(void);
+void UnloadNewPlugins(void);
+void UnloadUpdateNotifyModule(void);
+void UninitSkin2Icons(void);
+void UninitSkinSounds(void);
+void UnloadNetlibModule(void);
+void UnloadProtocolsModule(void);
 
 HINSTANCE GetInstByAddress( void* codePtr );
 
@@ -396,55 +409,24 @@ static DWORD MsgWaitForMultipleObjectsExWorkaround(DWORD nCount, const HANDLE *p
 
 static int SystemShutdownProc(WPARAM wParam,LPARAM lParam)
 {
-	UnloadDefaultModules();
+	UnloadNewPlugins();
+	UnloadProtocolsModule();
+
+	UninitSkin2Icons();
+	UninitSkinSounds();
+	FreeWindowList();
+
+	UnloadButtonModule();
+	UnloadClcModule();
+	UnloadContactListModule();
+	UnloadEventsModule();
+	UnloadIdleModule();
+	UnloadUpdateNotifyModule();
+
+	UnloadNetlibModule();
+	UnloadLangPackModule();
 	return 0;
 }
-
-#define MIRANDA_PROCESS_WAIT_TIMEOUT        60000
-#define MIRANDA_PROCESS_WAIT_RESOLUTION     1000
-#define MIRANDA_PROCESS_WAIT_STEPS          (MIRANDA_PROCESS_WAIT_TIMEOUT/MIRANDA_PROCESS_WAIT_RESOLUTION)
-static BOOL CALLBACK WaitForProcessDlgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
-{
-	switch (msg)
-	{
-	case WM_INITDIALOG:
-		SetWindowLong(hwnd, GWL_USERDATA, lParam);
-		SendDlgItemMessage(hwnd, IDC_PROGRESSBAR, PBM_SETRANGE, 0, MAKELPARAM(0, MIRANDA_PROCESS_WAIT_STEPS));
-		SendDlgItemMessage(hwnd, IDC_PROGRESSBAR, PBM_SETSTEP, 1, 0);
-		SetTimer(hwnd, 1, MIRANDA_PROCESS_WAIT_RESOLUTION, NULL);
-		break;
-
-	case WM_TIMER:
-		if (SendDlgItemMessage(hwnd, IDC_PROGRESSBAR, PBM_STEPIT, 0, 0) == MIRANDA_PROCESS_WAIT_STEPS)
-			EndDialog(hwnd, 0);
-		if (WaitForSingleObject((HANDLE)GetWindowLong(hwnd, GWL_USERDATA), 1) != WAIT_TIMEOUT)
-		{
-			SendDlgItemMessage(hwnd, IDC_PROGRESSBAR, PBM_SETPOS, MIRANDA_PROCESS_WAIT_STEPS, 0);
-			EndDialog(hwnd, 0);
-		}
-		break;
-
-	case WM_COMMAND:
-		if (HIWORD(wParam) == IDCANCEL)
-		{
-			SendDlgItemMessage(hwnd, IDC_PROGRESSBAR, PBM_SETPOS, MIRANDA_PROCESS_WAIT_STEPS, 0);
-			EndDialog(hwnd, 0);
-		}
-		break;
-	}
-	return FALSE;
-}
-
-static void ParseCommandLine()
-{
-	char* cmdline = GetCommandLineA();
-	char* p = strstr( cmdline, "/restart:" );
-	if ( p ) {
-		HANDLE hProcess = OpenProcess( SYNCHRONIZE, FALSE, atol( p+9 ));
-		if ( hProcess ) {
-			DialogBoxParam(GetModuleHandle(NULL), MAKEINTRESOURCE(IDD_WAITRESTART), NULL, WaitForProcessDlgProc, (LPARAM)hProcess);
-			CloseHandle( hProcess );
-}	}	}
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
@@ -455,12 +437,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	_CrtSetDbgFlag( _CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
 #endif
 
-	ParseCommandLine();
-
 	if (InitialiseModularEngine())
 	{
 		NotifyEventHooks(hShutdownEvent,0,0);
-		UnloadDefaultModules();
 		UnloadNewPluginsModule();
 		DestroyModularEngine();
 		return 1;
@@ -504,7 +483,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 				dying++;
 				SetEvent(hMirandaShutdown);
 				NotifyEventHooks(hPreShutdownEvent, 0, 0);
-				
+
 				// this spins and processes the msg loop, objects and APC.
 				UnwindThreadWait();
 				NotifyEventHooks(hShutdownEvent, 0, 0);
@@ -683,14 +662,6 @@ int GetUtfInterface(WPARAM wParam, LPARAM lParam)
 int LoadSystemModule(void)
 {
 	InitCommonControls();
-
-	if (IsWinVerXPPlus())
-	{
-		hAPCWindow=CreateWindowEx(0,_T("ComboLBox"),NULL,0, 0,0,0,0, NULL,NULL,NULL,NULL);
-		SetClassLong(hAPCWindow, GCL_STYLE, GetClassLong(hAPCWindow, GCL_STYLE) | CS_DROPSHADOW);
-		DestroyWindow(hAPCWindow);
-		hAPCWindow = NULL;
-	}
 
 	hAPCWindow=CreateWindowEx(0,_T("STATIC"),NULL,0, 0,0,0,0, NULL,NULL,NULL,NULL); // lame
 	SetWindowLong(hAPCWindow,GWL_WNDPROC,(LONG)APCWndProc);

@@ -1,31 +1,35 @@
 # Microsoft Developer Studio Generated NMAKE File, Based on miranda32.dsp
 !IF "$(CFG)" == ""
 CFG=miranda32 - Win32 Release Unicode
-!MESSAGE No configuration specified. Defaulting to miranda32 - Win32 Debug Unicode.
-!ENDIF 
+!MESSAGE No configuration specified. Defaulting to miranda32 - Win32 Release Unicode.
+!ENDIF
 
 !IF "$(CFG)" != "miranda32 - Win32 Release" && "$(CFG)" != "miranda32 - Win32 Debug" && "$(CFG)" != "miranda32 - Win32 Release Unicode" && "$(CFG)" != "miranda32 - Win32 Debug Unicode"
 !MESSAGE Invalid configuration "$(CFG)" specified.
 !MESSAGE You can specify a configuration when running NMAKE
 !MESSAGE by defining the macro CFG on the command line. For example:
-!MESSAGE 
+!MESSAGE
 !MESSAGE NMAKE /f "miranda32.mak" CFG="miranda32 - Win32 Debug Unicode"
-!MESSAGE 
+!MESSAGE
 !MESSAGE Possible choices for configuration are:
-!MESSAGE 
+!MESSAGE
 !MESSAGE "miranda32 - Win32 Release" (based on "Win32 (x86) Application")
 !MESSAGE "miranda32 - Win32 Debug" (based on "Win32 (x86) Application")
 !MESSAGE "miranda32 - Win32 Release Unicode" (based on "Win32 (x86) Application")
 !MESSAGE "miranda32 - Win32 Debug Unicode" (based on "Win32 (x86) Application")
-!MESSAGE 
+!MESSAGE
 !ERROR An invalid configuration is specified.
-!ENDIF 
+!ENDIF
 
 !IF "$(OS)" == "Windows_NT"
 NULL=
-!ELSE 
+!ELSE
 NULL=nul
-!ENDIF 
+!ENDIF
+
+CPP=cl.exe
+MTL=midl.exe
+RSC=rc.exe
 
 !IF  "$(CFG)" == "miranda32 - Win32 Release"
 
@@ -127,8 +131,6 @@ CLEAN :
 	-@erase "$(INTDIR)\FontOptions.sbr"
 	-@erase "$(INTDIR)\FontService.obj"
 	-@erase "$(INTDIR)\FontService.sbr"
-	-@erase "$(INTDIR)\ftmanager.obj"
-	-@erase "$(INTDIR)\ftmanager.sbr"
 	-@erase "$(INTDIR)\genmenu.obj"
 	-@erase "$(INTDIR)\genmenu.sbr"
 	-@erase "$(INTDIR)\genmenuopt.obj"
@@ -139,10 +141,10 @@ CLEAN :
 	-@erase "$(INTDIR)\help.sbr"
 	-@erase "$(INTDIR)\history.obj"
 	-@erase "$(INTDIR)\history.sbr"
-	-@erase "$(INTDIR)\hotkeys.obj"
-	-@erase "$(INTDIR)\hotkeys.sbr"
 	-@erase "$(INTDIR)\hyperlink.obj"
 	-@erase "$(INTDIR)\hyperlink.sbr"
+	-@erase "$(INTDIR)\IcoLib.obj"
+	-@erase "$(INTDIR)\IcoLib.sbr"
 	-@erase "$(INTDIR)\idle.obj"
 	-@erase "$(INTDIR)\idle.sbr"
 	-@erase "$(INTDIR)\ignore.obj"
@@ -198,18 +200,14 @@ CLEAN :
 	-@erase "$(INTDIR)\path.sbr"
 	-@erase "$(INTDIR)\profilemanager.obj"
 	-@erase "$(INTDIR)\profilemanager.sbr"
-	-@erase "$(INTDIR)\protoaccs.obj"
-	-@erase "$(INTDIR)\protoaccs.sbr"
 	-@erase "$(INTDIR)\protochains.obj"
 	-@erase "$(INTDIR)\protochains.sbr"
 	-@erase "$(INTDIR)\protocolorder.obj"
 	-@erase "$(INTDIR)\protocolorder.sbr"
 	-@erase "$(INTDIR)\protocols.obj"
 	-@erase "$(INTDIR)\protocols.sbr"
-	-@erase "$(INTDIR)\protoint.obj"
-	-@erase "$(INTDIR)\protoint.sbr"
-	-@erase "$(INTDIR)\protoopts.obj"
-	-@erase "$(INTDIR)\protoopts.sbr"
+	-@erase "$(INTDIR)\protodir.obj"
+	-@erase "$(INTDIR)\protodir.sbr"
 	-@erase "$(INTDIR)\resizer.obj"
 	-@erase "$(INTDIR)\resizer.sbr"
 	-@erase "$(INTDIR)\searchresults.obj"
@@ -220,6 +218,8 @@ CLEAN :
 	-@erase "$(INTDIR)\services.sbr"
 	-@erase "$(INTDIR)\sha1.obj"
 	-@erase "$(INTDIR)\sha1.sbr"
+	-@erase "$(INTDIR)\skin.obj"
+	-@erase "$(INTDIR)\skin.sbr"
 	-@erase "$(INTDIR)\skin2icons.obj"
 	-@erase "$(INTDIR)\skin2icons.sbr"
 	-@erase "$(INTDIR)\skinicons.obj"
@@ -257,45 +257,11 @@ CLEAN :
 "$(OUTDIR)" :
     if not exist "$(OUTDIR)/$(NULL)" mkdir "$(OUTDIR)"
 
-CPP=cl.exe
-CPP_PROJ=/nologo /MD /W3 /GX /Zi /O1 /I "../include" /D "NDEBUG" /D "WIN32" /D "_WINDOWS" /D "_NOSDK" /D "_STATIC" /Fr"$(INTDIR)\\" /Fp"$(INTDIR)\miranda32.pch" /Yu"commonheaders.h" /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /c 
-
-.c{$(INTDIR)}.obj::
-   $(CPP) @<<
-   $(CPP_PROJ) $< 
-<<
-
-.cpp{$(INTDIR)}.obj::
-   $(CPP) @<<
-   $(CPP_PROJ) $< 
-<<
-
-.cxx{$(INTDIR)}.obj::
-   $(CPP) @<<
-   $(CPP_PROJ) $< 
-<<
-
-.c{$(INTDIR)}.sbr::
-   $(CPP) @<<
-   $(CPP_PROJ) $< 
-<<
-
-.cpp{$(INTDIR)}.sbr::
-   $(CPP) @<<
-   $(CPP_PROJ) $< 
-<<
-
-.cxx{$(INTDIR)}.sbr::
-   $(CPP) @<<
-   $(CPP_PROJ) $< 
-<<
-
-MTL=midl.exe
-MTL_PROJ=/nologo /D "NDEBUG" /mktyplib203 /o "NUL" /win32 
-RSC=rc.exe
-RSC_PROJ=/l 0x409 /fo"$(INTDIR)\vc6.res" /d "NDEBUG" 
+CPP_PROJ=/nologo /MD /W3 /GX /Zi /O1 /I "../include" /D "NDEBUG" /D "WIN32" /D "_WINDOWS" /D "_NOSDK" /D "_STATIC" /Fr"$(INTDIR)\\" /Fp"$(INTDIR)\miranda32.pch" /Yu"commonheaders.h" /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /c
+MTL_PROJ=/nologo /D "NDEBUG" /mktyplib203 /o "NUL" /win32
+RSC_PROJ=/l 0x409 /fo"$(INTDIR)\vc6.res" /d "NDEBUG"
 BSC32=bscmake.exe
-BSC32_FLAGS=/nologo /o"$(OUTDIR)\miranda32.bsc" 
+BSC32_FLAGS=/nologo /o"$(OUTDIR)\miranda32.bsc"
 BSC32_SBRS= \
 	"$(INTDIR)\commonheaders.sbr" \
 	"$(INTDIR)\memory.sbr" \
@@ -333,12 +299,10 @@ BSC32_SBRS= \
 	"$(INTDIR)\netlibupnp.sbr" \
 	"$(INTDIR)\options.sbr" \
 	"$(INTDIR)\newplugins.sbr" \
-	"$(INTDIR)\protoaccs.sbr" \
 	"$(INTDIR)\protochains.sbr" \
 	"$(INTDIR)\protocols.sbr" \
-	"$(INTDIR)\protoint.sbr" \
-	"$(INTDIR)\protoopts.sbr" \
-	"$(INTDIR)\hotkeys.sbr" \
+	"$(INTDIR)\protodir.sbr" \
+	"$(INTDIR)\skin.sbr" \
 	"$(INTDIR)\skinicons.sbr" \
 	"$(INTDIR)\sounds.sbr" \
 	"$(INTDIR)\auth.sbr" \
@@ -352,7 +316,6 @@ BSC32_SBRS= \
 	"$(INTDIR)\filerecvdlg.sbr" \
 	"$(INTDIR)\filesenddlg.sbr" \
 	"$(INTDIR)\filexferdlg.sbr" \
-	"$(INTDIR)\ftmanager.sbr" \
 	"$(INTDIR)\url.sbr" \
 	"$(INTDIR)\urldialogs.sbr" \
 	"$(INTDIR)\contactinfo.sbr" \
@@ -398,6 +361,7 @@ BSC32_SBRS= \
 	"$(INTDIR)\module_fonts.sbr" \
 	"$(INTDIR)\services.sbr" \
 	"$(INTDIR)\extracticon.sbr" \
+	"$(INTDIR)\IcoLib.sbr" \
 	"$(INTDIR)\skin2icons.sbr" \
 	"$(INTDIR)\updatenotify.sbr"
 
@@ -407,7 +371,7 @@ BSC32_SBRS= \
 <<
 
 LINK32=link.exe
-LINK32_FLAGS=wsock32.lib comctl32.lib winmm.lib version.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:windows /incremental:no /pdb:"$(OUTDIR)\miranda32.pdb" /map:"$(INTDIR)\miranda32.map" /debug /machine:I386 /out:"../bin/release/miranda32.exe" /fixed /ALIGN:4096 /ignore:4108 
+LINK32_FLAGS=wsock32.lib comctl32.lib winmm.lib version.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:windows /incremental:no /pdb:"$(OUTDIR)\miranda32.pdb" /map:"$(INTDIR)\miranda32.map" /debug /machine:I386 /out:"../bin/release/miranda32.exe" /fixed /ALIGN:4096 /ignore:4108
 LINK32_OBJS= \
 	"$(INTDIR)\commonheaders.obj" \
 	"$(INTDIR)\memory.obj" \
@@ -445,12 +409,10 @@ LINK32_OBJS= \
 	"$(INTDIR)\netlibupnp.obj" \
 	"$(INTDIR)\options.obj" \
 	"$(INTDIR)\newplugins.obj" \
-	"$(INTDIR)\protoaccs.obj" \
 	"$(INTDIR)\protochains.obj" \
 	"$(INTDIR)\protocols.obj" \
-	"$(INTDIR)\protoint.obj" \
-	"$(INTDIR)\protoopts.obj" \
-	"$(INTDIR)\hotkeys.obj" \
+	"$(INTDIR)\protodir.obj" \
+	"$(INTDIR)\skin.obj" \
 	"$(INTDIR)\skinicons.obj" \
 	"$(INTDIR)\sounds.obj" \
 	"$(INTDIR)\auth.obj" \
@@ -464,7 +426,6 @@ LINK32_OBJS= \
 	"$(INTDIR)\filerecvdlg.obj" \
 	"$(INTDIR)\filesenddlg.obj" \
 	"$(INTDIR)\filexferdlg.obj" \
-	"$(INTDIR)\ftmanager.obj" \
 	"$(INTDIR)\url.obj" \
 	"$(INTDIR)\urldialogs.obj" \
 	"$(INTDIR)\contactinfo.obj" \
@@ -510,6 +471,7 @@ LINK32_OBJS= \
 	"$(INTDIR)\module_fonts.obj" \
 	"$(INTDIR)\services.obj" \
 	"$(INTDIR)\extracticon.obj" \
+	"$(INTDIR)\IcoLib.obj" \
 	"$(INTDIR)\skin2icons.obj" \
 	"$(INTDIR)\updatenotify.obj" \
 	"$(INTDIR)\vc6.res"
@@ -619,8 +581,6 @@ CLEAN :
 	-@erase "$(INTDIR)\FontOptions.sbr"
 	-@erase "$(INTDIR)\FontService.obj"
 	-@erase "$(INTDIR)\FontService.sbr"
-	-@erase "$(INTDIR)\ftmanager.obj"
-	-@erase "$(INTDIR)\ftmanager.sbr"
 	-@erase "$(INTDIR)\genmenu.obj"
 	-@erase "$(INTDIR)\genmenu.sbr"
 	-@erase "$(INTDIR)\genmenuopt.obj"
@@ -631,10 +591,10 @@ CLEAN :
 	-@erase "$(INTDIR)\help.sbr"
 	-@erase "$(INTDIR)\history.obj"
 	-@erase "$(INTDIR)\history.sbr"
-	-@erase "$(INTDIR)\hotkeys.obj"
-	-@erase "$(INTDIR)\hotkeys.sbr"
 	-@erase "$(INTDIR)\hyperlink.obj"
 	-@erase "$(INTDIR)\hyperlink.sbr"
+	-@erase "$(INTDIR)\IcoLib.obj"
+	-@erase "$(INTDIR)\IcoLib.sbr"
 	-@erase "$(INTDIR)\idle.obj"
 	-@erase "$(INTDIR)\idle.sbr"
 	-@erase "$(INTDIR)\ignore.obj"
@@ -690,18 +650,14 @@ CLEAN :
 	-@erase "$(INTDIR)\path.sbr"
 	-@erase "$(INTDIR)\profilemanager.obj"
 	-@erase "$(INTDIR)\profilemanager.sbr"
-	-@erase "$(INTDIR)\protoaccs.obj"
-	-@erase "$(INTDIR)\protoaccs.sbr"
 	-@erase "$(INTDIR)\protochains.obj"
 	-@erase "$(INTDIR)\protochains.sbr"
 	-@erase "$(INTDIR)\protocolorder.obj"
 	-@erase "$(INTDIR)\protocolorder.sbr"
 	-@erase "$(INTDIR)\protocols.obj"
 	-@erase "$(INTDIR)\protocols.sbr"
-	-@erase "$(INTDIR)\protoint.obj"
-	-@erase "$(INTDIR)\protoint.sbr"
-	-@erase "$(INTDIR)\protoopts.obj"
-	-@erase "$(INTDIR)\protoopts.sbr"
+	-@erase "$(INTDIR)\protodir.obj"
+	-@erase "$(INTDIR)\protodir.sbr"
 	-@erase "$(INTDIR)\resizer.obj"
 	-@erase "$(INTDIR)\resizer.sbr"
 	-@erase "$(INTDIR)\searchresults.obj"
@@ -712,6 +668,8 @@ CLEAN :
 	-@erase "$(INTDIR)\services.sbr"
 	-@erase "$(INTDIR)\sha1.obj"
 	-@erase "$(INTDIR)\sha1.sbr"
+	-@erase "$(INTDIR)\skin.obj"
+	-@erase "$(INTDIR)\skin.sbr"
 	-@erase "$(INTDIR)\skin2icons.obj"
 	-@erase "$(INTDIR)\skin2icons.sbr"
 	-@erase "$(INTDIR)\skinicons.obj"
@@ -750,45 +708,11 @@ CLEAN :
 "$(OUTDIR)" :
     if not exist "$(OUTDIR)/$(NULL)" mkdir "$(OUTDIR)"
 
-CPP=cl.exe
-CPP_PROJ=/nologo /MDd /W3 /Gm /GX /ZI /Od /I "../include" /D "_DEBUG" /D "WIN32" /D "_WINDOWS" /D "_NOSDK" /D "_STATIC" /Fr"$(INTDIR)\\" /Fp"$(INTDIR)\miranda32.pch" /Yu"commonheaders.h" /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /c 
-
-.c{$(INTDIR)}.obj::
-   $(CPP) @<<
-   $(CPP_PROJ) $< 
-<<
-
-.cpp{$(INTDIR)}.obj::
-   $(CPP) @<<
-   $(CPP_PROJ) $< 
-<<
-
-.cxx{$(INTDIR)}.obj::
-   $(CPP) @<<
-   $(CPP_PROJ) $< 
-<<
-
-.c{$(INTDIR)}.sbr::
-   $(CPP) @<<
-   $(CPP_PROJ) $< 
-<<
-
-.cpp{$(INTDIR)}.sbr::
-   $(CPP) @<<
-   $(CPP_PROJ) $< 
-<<
-
-.cxx{$(INTDIR)}.sbr::
-   $(CPP) @<<
-   $(CPP_PROJ) $< 
-<<
-
-MTL=midl.exe
-MTL_PROJ=/nologo /D "_DEBUG" /mktyplib203 /o "NUL" /win32 
-RSC=rc.exe
-RSC_PROJ=/l 0x409 /fo"$(INTDIR)\vc6.res" /d "_DEBUG" 
+CPP_PROJ=/nologo /MDd /W3 /Gm /GX /ZI /Od /I "../include" /D "_DEBUG" /D "WIN32" /D "_WINDOWS" /D "_NOSDK" /D "_STATIC" /Fr"$(INTDIR)\\" /Fp"$(INTDIR)\miranda32.pch" /Yu"commonheaders.h" /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /c
+MTL_PROJ=/nologo /D "_DEBUG" /mktyplib203 /o "NUL" /win32
+RSC_PROJ=/l 0x409 /fo"$(INTDIR)\vc6.res" /d "_DEBUG"
 BSC32=bscmake.exe
-BSC32_FLAGS=/nologo /o"$(OUTDIR)\miranda32.bsc" 
+BSC32_FLAGS=/nologo /o"$(OUTDIR)\miranda32.bsc"
 BSC32_SBRS= \
 	"$(INTDIR)\commonheaders.sbr" \
 	"$(INTDIR)\memory.sbr" \
@@ -826,12 +750,10 @@ BSC32_SBRS= \
 	"$(INTDIR)\netlibupnp.sbr" \
 	"$(INTDIR)\options.sbr" \
 	"$(INTDIR)\newplugins.sbr" \
-	"$(INTDIR)\protoaccs.sbr" \
 	"$(INTDIR)\protochains.sbr" \
 	"$(INTDIR)\protocols.sbr" \
-	"$(INTDIR)\protoint.sbr" \
-	"$(INTDIR)\protoopts.sbr" \
-	"$(INTDIR)\hotkeys.sbr" \
+	"$(INTDIR)\protodir.sbr" \
+	"$(INTDIR)\skin.sbr" \
 	"$(INTDIR)\skinicons.sbr" \
 	"$(INTDIR)\sounds.sbr" \
 	"$(INTDIR)\auth.sbr" \
@@ -845,7 +767,6 @@ BSC32_SBRS= \
 	"$(INTDIR)\filerecvdlg.sbr" \
 	"$(INTDIR)\filesenddlg.sbr" \
 	"$(INTDIR)\filexferdlg.sbr" \
-	"$(INTDIR)\ftmanager.sbr" \
 	"$(INTDIR)\url.sbr" \
 	"$(INTDIR)\urldialogs.sbr" \
 	"$(INTDIR)\contactinfo.sbr" \
@@ -891,6 +812,7 @@ BSC32_SBRS= \
 	"$(INTDIR)\module_fonts.sbr" \
 	"$(INTDIR)\services.sbr" \
 	"$(INTDIR)\extracticon.sbr" \
+	"$(INTDIR)\IcoLib.sbr" \
 	"$(INTDIR)\skin2icons.sbr" \
 	"$(INTDIR)\updatenotify.sbr"
 
@@ -900,7 +822,7 @@ BSC32_SBRS= \
 <<
 
 LINK32=link.exe
-LINK32_FLAGS=wsock32.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib comctl32.lib winmm.lib version.lib /nologo /subsystem:windows /incremental:yes /pdb:"$(OUTDIR)\miranda32.pdb" /map:"$(INTDIR)\miranda32.map" /debug /machine:I386 /out:"../bin/debug/miranda32.exe" 
+LINK32_FLAGS=wsock32.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib comctl32.lib winmm.lib version.lib /nologo /subsystem:windows /incremental:yes /pdb:"$(OUTDIR)\miranda32.pdb" /map:"$(INTDIR)\miranda32.map" /debug /machine:I386 /out:"../bin/debug/miranda32.exe"
 LINK32_OBJS= \
 	"$(INTDIR)\commonheaders.obj" \
 	"$(INTDIR)\memory.obj" \
@@ -938,12 +860,10 @@ LINK32_OBJS= \
 	"$(INTDIR)\netlibupnp.obj" \
 	"$(INTDIR)\options.obj" \
 	"$(INTDIR)\newplugins.obj" \
-	"$(INTDIR)\protoaccs.obj" \
 	"$(INTDIR)\protochains.obj" \
 	"$(INTDIR)\protocols.obj" \
-	"$(INTDIR)\protoint.obj" \
-	"$(INTDIR)\protoopts.obj" \
-	"$(INTDIR)\hotkeys.obj" \
+	"$(INTDIR)\protodir.obj" \
+	"$(INTDIR)\skin.obj" \
 	"$(INTDIR)\skinicons.obj" \
 	"$(INTDIR)\sounds.obj" \
 	"$(INTDIR)\auth.obj" \
@@ -957,7 +877,6 @@ LINK32_OBJS= \
 	"$(INTDIR)\filerecvdlg.obj" \
 	"$(INTDIR)\filesenddlg.obj" \
 	"$(INTDIR)\filexferdlg.obj" \
-	"$(INTDIR)\ftmanager.obj" \
 	"$(INTDIR)\url.obj" \
 	"$(INTDIR)\urldialogs.obj" \
 	"$(INTDIR)\contactinfo.obj" \
@@ -1003,6 +922,7 @@ LINK32_OBJS= \
 	"$(INTDIR)\module_fonts.obj" \
 	"$(INTDIR)\services.obj" \
 	"$(INTDIR)\extracticon.obj" \
+	"$(INTDIR)\IcoLib.obj" \
 	"$(INTDIR)\skin2icons.obj" \
 	"$(INTDIR)\updatenotify.obj" \
 	"$(INTDIR)\vc6.res"
@@ -1065,14 +985,13 @@ CLEAN :
 	-@erase "$(INTDIR)\findadd.obj"
 	-@erase "$(INTDIR)\FontOptions.obj"
 	-@erase "$(INTDIR)\FontService.obj"
-	-@erase "$(INTDIR)\ftmanager.obj"
 	-@erase "$(INTDIR)\genmenu.obj"
 	-@erase "$(INTDIR)\genmenuopt.obj"
 	-@erase "$(INTDIR)\groups.obj"
 	-@erase "$(INTDIR)\help.obj"
 	-@erase "$(INTDIR)\history.obj"
-	-@erase "$(INTDIR)\hotkeys.obj"
 	-@erase "$(INTDIR)\hyperlink.obj"
+	-@erase "$(INTDIR)\IcoLib.obj"
 	-@erase "$(INTDIR)\idle.obj"
 	-@erase "$(INTDIR)\ignore.obj"
 	-@erase "$(INTDIR)\keyboard.obj"
@@ -1101,17 +1020,16 @@ CLEAN :
 	-@erase "$(INTDIR)\options.obj"
 	-@erase "$(INTDIR)\path.obj"
 	-@erase "$(INTDIR)\profilemanager.obj"
-	-@erase "$(INTDIR)\protoaccs.obj"
 	-@erase "$(INTDIR)\protochains.obj"
 	-@erase "$(INTDIR)\protocolorder.obj"
 	-@erase "$(INTDIR)\protocols.obj"
-	-@erase "$(INTDIR)\protoint.obj"
-	-@erase "$(INTDIR)\protoopts.obj"
+	-@erase "$(INTDIR)\protodir.obj"
 	-@erase "$(INTDIR)\resizer.obj"
 	-@erase "$(INTDIR)\searchresults.obj"
 	-@erase "$(INTDIR)\sendmsg.obj"
 	-@erase "$(INTDIR)\services.obj"
 	-@erase "$(INTDIR)\sha1.obj"
+	-@erase "$(INTDIR)\skin.obj"
 	-@erase "$(INTDIR)\skin2icons.obj"
 	-@erase "$(INTDIR)\skinicons.obj"
 	-@erase "$(INTDIR)\sounds.obj"
@@ -1135,49 +1053,15 @@ CLEAN :
 "$(OUTDIR)" :
     if not exist "$(OUTDIR)/$(NULL)" mkdir "$(OUTDIR)"
 
-CPP=cl.exe
-CPP_PROJ=/nologo /MD /W3 /GX /Zi /O1 /I "../include" /D "NDEBUG" /D "WIN32" /D "_WINDOWS" /D "_NOSDK" /D "UNICODE" /D "_STATIC" /Fp"$(INTDIR)\miranda32.pch" /Yu"commonheaders.h" /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /c 
-
-.c{$(INTDIR)}.obj::
-   $(CPP) @<<
-   $(CPP_PROJ) $< 
-<<
-
-.cpp{$(INTDIR)}.obj::
-   $(CPP) @<<
-   $(CPP_PROJ) $< 
-<<
-
-.cxx{$(INTDIR)}.obj::
-   $(CPP) @<<
-   $(CPP_PROJ) $< 
-<<
-
-.c{$(INTDIR)}.sbr::
-   $(CPP) @<<
-   $(CPP_PROJ) $< 
-<<
-
-.cpp{$(INTDIR)}.sbr::
-   $(CPP) @<<
-   $(CPP_PROJ) $< 
-<<
-
-.cxx{$(INTDIR)}.sbr::
-   $(CPP) @<<
-   $(CPP_PROJ) $< 
-<<
-
-MTL=midl.exe
-MTL_PROJ=/nologo /D "NDEBUG" /mktyplib203 /o "NUL" /win32 
-RSC=rc.exe
-RSC_PROJ=/l 0x409 /fo"$(INTDIR)\vc6.res" /d "NDEBUG" 
+CPP_PROJ=/nologo /MD /W3 /GX /Zi /O1 /I "../include" /D "NDEBUG" /D "WIN32" /D "_WINDOWS" /D "_NOSDK" /D "UNICODE" /D "_STATIC" /Fp"$(INTDIR)\miranda32.pch" /Yu"commonheaders.h" /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /c
+MTL_PROJ=/nologo /D "NDEBUG" /mktyplib203 /o "NUL" /win32
+RSC_PROJ=/l 0x409 /fo"$(INTDIR)\vc6.res" /d "NDEBUG"
 BSC32=bscmake.exe
-BSC32_FLAGS=/nologo /o"$(OUTDIR)\miranda32.bsc" 
+BSC32_FLAGS=/nologo /o"$(OUTDIR)\miranda32.bsc"
 BSC32_SBRS= \
-	
+
 LINK32=link.exe
-LINK32_FLAGS=wsock32.lib comctl32.lib winmm.lib version.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:windows /incremental:no /pdb:"$(OUTDIR)\miranda32.pdb" /map:"$(INTDIR)\miranda32.map" /debug /machine:I386 /out:"../bin/Release Unicode/miranda32.exe" /fixed /ALIGN:4096 /ignore:4108 
+LINK32_FLAGS=wsock32.lib comctl32.lib winmm.lib version.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:windows /incremental:no /pdb:"$(OUTDIR)\miranda32.pdb" /map:"$(INTDIR)\miranda32.map" /debug /machine:I386 /out:"../bin/Release Unicode/miranda32.exe" /fixed /ALIGN:4096 /ignore:4108
 LINK32_OBJS= \
 	"$(INTDIR)\commonheaders.obj" \
 	"$(INTDIR)\memory.obj" \
@@ -1215,12 +1099,10 @@ LINK32_OBJS= \
 	"$(INTDIR)\netlibupnp.obj" \
 	"$(INTDIR)\options.obj" \
 	"$(INTDIR)\newplugins.obj" \
-	"$(INTDIR)\protoaccs.obj" \
 	"$(INTDIR)\protochains.obj" \
 	"$(INTDIR)\protocols.obj" \
-	"$(INTDIR)\protoint.obj" \
-	"$(INTDIR)\protoopts.obj" \
-	"$(INTDIR)\hotkeys.obj" \
+	"$(INTDIR)\protodir.obj" \
+	"$(INTDIR)\skin.obj" \
 	"$(INTDIR)\skinicons.obj" \
 	"$(INTDIR)\sounds.obj" \
 	"$(INTDIR)\auth.obj" \
@@ -1234,7 +1116,6 @@ LINK32_OBJS= \
 	"$(INTDIR)\filerecvdlg.obj" \
 	"$(INTDIR)\filesenddlg.obj" \
 	"$(INTDIR)\filexferdlg.obj" \
-	"$(INTDIR)\ftmanager.obj" \
 	"$(INTDIR)\url.obj" \
 	"$(INTDIR)\urldialogs.obj" \
 	"$(INTDIR)\contactinfo.obj" \
@@ -1280,6 +1161,7 @@ LINK32_OBJS= \
 	"$(INTDIR)\module_fonts.obj" \
 	"$(INTDIR)\services.obj" \
 	"$(INTDIR)\extracticon.obj" \
+	"$(INTDIR)\IcoLib.obj" \
 	"$(INTDIR)\skin2icons.obj" \
 	"$(INTDIR)\updatenotify.obj" \
 	"$(INTDIR)\vc6.res"
@@ -1389,8 +1271,6 @@ CLEAN :
 	-@erase "$(INTDIR)\FontOptions.sbr"
 	-@erase "$(INTDIR)\FontService.obj"
 	-@erase "$(INTDIR)\FontService.sbr"
-	-@erase "$(INTDIR)\ftmanager.obj"
-	-@erase "$(INTDIR)\ftmanager.sbr"
 	-@erase "$(INTDIR)\genmenu.obj"
 	-@erase "$(INTDIR)\genmenu.sbr"
 	-@erase "$(INTDIR)\genmenuopt.obj"
@@ -1401,10 +1281,10 @@ CLEAN :
 	-@erase "$(INTDIR)\help.sbr"
 	-@erase "$(INTDIR)\history.obj"
 	-@erase "$(INTDIR)\history.sbr"
-	-@erase "$(INTDIR)\hotkeys.obj"
-	-@erase "$(INTDIR)\hotkeys.sbr"
 	-@erase "$(INTDIR)\hyperlink.obj"
 	-@erase "$(INTDIR)\hyperlink.sbr"
+	-@erase "$(INTDIR)\IcoLib.obj"
+	-@erase "$(INTDIR)\IcoLib.sbr"
 	-@erase "$(INTDIR)\idle.obj"
 	-@erase "$(INTDIR)\idle.sbr"
 	-@erase "$(INTDIR)\ignore.obj"
@@ -1460,18 +1340,14 @@ CLEAN :
 	-@erase "$(INTDIR)\path.sbr"
 	-@erase "$(INTDIR)\profilemanager.obj"
 	-@erase "$(INTDIR)\profilemanager.sbr"
-	-@erase "$(INTDIR)\protoaccs.obj"
-	-@erase "$(INTDIR)\protoaccs.sbr"
 	-@erase "$(INTDIR)\protochains.obj"
 	-@erase "$(INTDIR)\protochains.sbr"
 	-@erase "$(INTDIR)\protocolorder.obj"
 	-@erase "$(INTDIR)\protocolorder.sbr"
 	-@erase "$(INTDIR)\protocols.obj"
 	-@erase "$(INTDIR)\protocols.sbr"
-	-@erase "$(INTDIR)\protoint.obj"
-	-@erase "$(INTDIR)\protoint.sbr"
-	-@erase "$(INTDIR)\protoopts.obj"
-	-@erase "$(INTDIR)\protoopts.sbr"
+	-@erase "$(INTDIR)\protodir.obj"
+	-@erase "$(INTDIR)\protodir.sbr"
 	-@erase "$(INTDIR)\resizer.obj"
 	-@erase "$(INTDIR)\resizer.sbr"
 	-@erase "$(INTDIR)\searchresults.obj"
@@ -1482,6 +1358,8 @@ CLEAN :
 	-@erase "$(INTDIR)\services.sbr"
 	-@erase "$(INTDIR)\sha1.obj"
 	-@erase "$(INTDIR)\sha1.sbr"
+	-@erase "$(INTDIR)\skin.obj"
+	-@erase "$(INTDIR)\skin.sbr"
 	-@erase "$(INTDIR)\skin2icons.obj"
 	-@erase "$(INTDIR)\skin2icons.sbr"
 	-@erase "$(INTDIR)\skinicons.obj"
@@ -1520,45 +1398,11 @@ CLEAN :
 "$(OUTDIR)" :
     if not exist "$(OUTDIR)/$(NULL)" mkdir "$(OUTDIR)"
 
-CPP=cl.exe
-CPP_PROJ=/nologo /MDd /W3 /Gm /GX /ZI /Od /I "../include" /D "_DEBUG" /D "WIN32" /D "_WINDOWS" /D "_NOSDK" /D "UNICODE" /D "_STATIC" /Fr"$(INTDIR)\\" /Fp"$(INTDIR)\miranda32.pch" /Yu"commonheaders.h" /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /c 
-
-.c{$(INTDIR)}.obj::
-   $(CPP) @<<
-   $(CPP_PROJ) $< 
-<<
-
-.cpp{$(INTDIR)}.obj::
-   $(CPP) @<<
-   $(CPP_PROJ) $< 
-<<
-
-.cxx{$(INTDIR)}.obj::
-   $(CPP) @<<
-   $(CPP_PROJ) $< 
-<<
-
-.c{$(INTDIR)}.sbr::
-   $(CPP) @<<
-   $(CPP_PROJ) $< 
-<<
-
-.cpp{$(INTDIR)}.sbr::
-   $(CPP) @<<
-   $(CPP_PROJ) $< 
-<<
-
-.cxx{$(INTDIR)}.sbr::
-   $(CPP) @<<
-   $(CPP_PROJ) $< 
-<<
-
-MTL=midl.exe
-MTL_PROJ=/nologo /D "_DEBUG" /mktyplib203 /o "NUL" /win32 
-RSC=rc.exe
-RSC_PROJ=/l 0x409 /fo"$(INTDIR)\vc6.res" /d "_DEBUG" 
+CPP_PROJ=/nologo /MDd /W3 /Gm /GX /ZI /Od /I "../include" /D "_DEBUG" /D "WIN32" /D "_WINDOWS" /D "_NOSDK" /D "UNICODE" /D "_STATIC" /Fr"$(INTDIR)\\" /Fp"$(INTDIR)\miranda32.pch" /Yu"commonheaders.h" /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /c
+MTL_PROJ=/nologo /D "_DEBUG" /mktyplib203 /o "NUL" /win32
+RSC_PROJ=/l 0x409 /fo"$(INTDIR)\vc6.res" /d "_DEBUG"
 BSC32=bscmake.exe
-BSC32_FLAGS=/nologo /o"$(OUTDIR)\miranda32.bsc" 
+BSC32_FLAGS=/nologo /o"$(OUTDIR)\miranda32.bsc"
 BSC32_SBRS= \
 	"$(INTDIR)\commonheaders.sbr" \
 	"$(INTDIR)\memory.sbr" \
@@ -1596,12 +1440,10 @@ BSC32_SBRS= \
 	"$(INTDIR)\netlibupnp.sbr" \
 	"$(INTDIR)\options.sbr" \
 	"$(INTDIR)\newplugins.sbr" \
-	"$(INTDIR)\protoaccs.sbr" \
 	"$(INTDIR)\protochains.sbr" \
 	"$(INTDIR)\protocols.sbr" \
-	"$(INTDIR)\protoint.sbr" \
-	"$(INTDIR)\protoopts.sbr" \
-	"$(INTDIR)\hotkeys.sbr" \
+	"$(INTDIR)\protodir.sbr" \
+	"$(INTDIR)\skin.sbr" \
 	"$(INTDIR)\skinicons.sbr" \
 	"$(INTDIR)\sounds.sbr" \
 	"$(INTDIR)\auth.sbr" \
@@ -1615,7 +1457,6 @@ BSC32_SBRS= \
 	"$(INTDIR)\filerecvdlg.sbr" \
 	"$(INTDIR)\filesenddlg.sbr" \
 	"$(INTDIR)\filexferdlg.sbr" \
-	"$(INTDIR)\ftmanager.sbr" \
 	"$(INTDIR)\url.sbr" \
 	"$(INTDIR)\urldialogs.sbr" \
 	"$(INTDIR)\contactinfo.sbr" \
@@ -1661,6 +1502,7 @@ BSC32_SBRS= \
 	"$(INTDIR)\module_fonts.sbr" \
 	"$(INTDIR)\services.sbr" \
 	"$(INTDIR)\extracticon.sbr" \
+	"$(INTDIR)\IcoLib.sbr" \
 	"$(INTDIR)\skin2icons.sbr" \
 	"$(INTDIR)\updatenotify.sbr"
 
@@ -1670,7 +1512,7 @@ BSC32_SBRS= \
 <<
 
 LINK32=link.exe
-LINK32_FLAGS=wsock32.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib comctl32.lib winmm.lib version.lib /nologo /subsystem:windows /incremental:yes /pdb:"$(OUTDIR)\miranda32.pdb" /map:"$(INTDIR)\miranda32.map" /debug /machine:I386 /out:"../bin/Debug Unicode/miranda32.exe" 
+LINK32_FLAGS=wsock32.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib comctl32.lib winmm.lib version.lib /nologo /subsystem:windows /incremental:yes /pdb:"$(OUTDIR)\miranda32.pdb" /map:"$(INTDIR)\miranda32.map" /debug /machine:I386 /out:"../bin/Debug Unicode/miranda32.exe"
 LINK32_OBJS= \
 	"$(INTDIR)\commonheaders.obj" \
 	"$(INTDIR)\memory.obj" \
@@ -1708,12 +1550,10 @@ LINK32_OBJS= \
 	"$(INTDIR)\netlibupnp.obj" \
 	"$(INTDIR)\options.obj" \
 	"$(INTDIR)\newplugins.obj" \
-	"$(INTDIR)\protoaccs.obj" \
 	"$(INTDIR)\protochains.obj" \
 	"$(INTDIR)\protocols.obj" \
-	"$(INTDIR)\protoint.obj" \
-	"$(INTDIR)\protoopts.obj" \
-	"$(INTDIR)\hotkeys.obj" \
+	"$(INTDIR)\protodir.obj" \
+	"$(INTDIR)\skin.obj" \
 	"$(INTDIR)\skinicons.obj" \
 	"$(INTDIR)\sounds.obj" \
 	"$(INTDIR)\auth.obj" \
@@ -1727,7 +1567,6 @@ LINK32_OBJS= \
 	"$(INTDIR)\filerecvdlg.obj" \
 	"$(INTDIR)\filesenddlg.obj" \
 	"$(INTDIR)\filexferdlg.obj" \
-	"$(INTDIR)\ftmanager.obj" \
 	"$(INTDIR)\url.obj" \
 	"$(INTDIR)\urldialogs.obj" \
 	"$(INTDIR)\contactinfo.obj" \
@@ -1773,6 +1612,7 @@ LINK32_OBJS= \
 	"$(INTDIR)\module_fonts.obj" \
 	"$(INTDIR)\services.obj" \
 	"$(INTDIR)\extracticon.obj" \
+	"$(INTDIR)\IcoLib.obj" \
 	"$(INTDIR)\skin2icons.obj" \
 	"$(INTDIR)\updatenotify.obj" \
 	"$(INTDIR)\vc6.res"
@@ -1782,16 +1622,46 @@ LINK32_OBJS= \
   $(LINK32_FLAGS) $(LINK32_OBJS)
 <<
 
-!ENDIF 
+!ENDIF
+
+.c{$(INTDIR)}.obj::
+   $(CPP) @<<
+   $(CPP_PROJ) $<
+<<
+
+.cpp{$(INTDIR)}.obj::
+   $(CPP) @<<
+   $(CPP_PROJ) $<
+<<
+
+.cxx{$(INTDIR)}.obj::
+   $(CPP) @<<
+   $(CPP_PROJ) $<
+<<
+
+.c{$(INTDIR)}.sbr::
+   $(CPP) @<<
+   $(CPP_PROJ) $<
+<<
+
+.cpp{$(INTDIR)}.sbr::
+   $(CPP) @<<
+   $(CPP_PROJ) $<
+<<
+
+.cxx{$(INTDIR)}.sbr::
+   $(CPP) @<<
+   $(CPP_PROJ) $<
+<<
 
 
 !IF "$(NO_EXTERNAL_DEPS)" != "1"
 !IF EXISTS("miranda32.dep")
 !INCLUDE "miranda32.dep"
-!ELSE 
+!ELSE
 !MESSAGE Warning: cannot find "miranda32.dep"
-!ENDIF 
-!ENDIF 
+!ENDIF
+!ENDIF
 
 
 !IF "$(CFG)" == "miranda32 - Win32 Release" || "$(CFG)" == "miranda32 - Win32 Debug" || "$(CFG)" == "miranda32 - Win32 Release Unicode" || "$(CFG)" == "miranda32 - Win32 Debug Unicode"
@@ -1799,7 +1669,7 @@ SOURCE=.\core\commonheaders.c
 
 !IF  "$(CFG)" == "miranda32 - Win32 Release"
 
-CPP_SWITCHES=/nologo /MD /W3 /GX /Zi /O1 /I "../include" /D "NDEBUG" /D "WIN32" /D "_WINDOWS" /D "_NOSDK" /D "_STATIC" /Fr"$(INTDIR)\\" /Fp"$(INTDIR)\miranda32.pch" /Yc"commonheaders.h" /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /c 
+CPP_SWITCHES=/nologo /MD /W3 /GX /Zi /O1 /I "../include" /D "NDEBUG" /D "WIN32" /D "_WINDOWS" /D "_NOSDK" /D "_STATIC" /Fr"$(INTDIR)\\" /Fp"$(INTDIR)\miranda32.pch" /Yc"commonheaders.h" /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /c
 
 "$(INTDIR)\commonheaders.obj"	"$(INTDIR)\commonheaders.sbr"	"$(INTDIR)\miranda32.pch" : $(SOURCE) "$(INTDIR)"
 	$(CPP) @<<
@@ -1809,7 +1679,7 @@ CPP_SWITCHES=/nologo /MD /W3 /GX /Zi /O1 /I "../include" /D "NDEBUG" /D "WIN32" 
 
 !ELSEIF  "$(CFG)" == "miranda32 - Win32 Debug"
 
-CPP_SWITCHES=/nologo /MDd /W3 /Gm /GX /ZI /Od /I "../include" /D "_DEBUG" /D "WIN32" /D "_WINDOWS" /D "_NOSDK" /D "_STATIC" /Fr"$(INTDIR)\\" /Fp"$(INTDIR)\miranda32.pch" /Yc"commonheaders.h" /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /c 
+CPP_SWITCHES=/nologo /MDd /W3 /Gm /GX /ZI /Od /I "../include" /D "_DEBUG" /D "WIN32" /D "_WINDOWS" /D "_NOSDK" /D "_STATIC" /Fr"$(INTDIR)\\" /Fp"$(INTDIR)\miranda32.pch" /Yc"commonheaders.h" /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /c
 
 "$(INTDIR)\commonheaders.obj"	"$(INTDIR)\commonheaders.sbr"	"$(INTDIR)\miranda32.pch" : $(SOURCE) "$(INTDIR)"
 	$(CPP) @<<
@@ -1819,7 +1689,7 @@ CPP_SWITCHES=/nologo /MDd /W3 /Gm /GX /ZI /Od /I "../include" /D "_DEBUG" /D "WI
 
 !ELSEIF  "$(CFG)" == "miranda32 - Win32 Release Unicode"
 
-CPP_SWITCHES=/nologo /MD /W3 /GX /Zi /O1 /I "../include" /D "NDEBUG" /D "WIN32" /D "_WINDOWS" /D "_NOSDK" /D "UNICODE" /D "_STATIC" /Fp"$(INTDIR)\miranda32.pch" /Yc"commonheaders.h" /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /c 
+CPP_SWITCHES=/nologo /MD /W3 /GX /Zi /O1 /I "../include" /D "NDEBUG" /D "WIN32" /D "_WINDOWS" /D "_NOSDK" /D "UNICODE" /D "_STATIC" /Fp"$(INTDIR)\miranda32.pch" /Yc"commonheaders.h" /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /c
 
 "$(INTDIR)\commonheaders.obj"	"$(INTDIR)\miranda32.pch" : $(SOURCE) "$(INTDIR)"
 	$(CPP) @<<
@@ -1829,7 +1699,7 @@ CPP_SWITCHES=/nologo /MD /W3 /GX /Zi /O1 /I "../include" /D "NDEBUG" /D "WIN32" 
 
 !ELSEIF  "$(CFG)" == "miranda32 - Win32 Debug Unicode"
 
-CPP_SWITCHES=/nologo /MDd /W3 /Gm /GX /ZI /Od /I "../include" /D "_DEBUG" /D "WIN32" /D "_WINDOWS" /D "_NOSDK" /D "UNICODE" /D "_STATIC" /Fr"$(INTDIR)\\" /Fp"$(INTDIR)\miranda32.pch" /Yc"commonheaders.h" /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /c 
+CPP_SWITCHES=/nologo /MDd /W3 /Gm /GX /ZI /Od /I "../include" /D "_DEBUG" /D "WIN32" /D "_WINDOWS" /D "_NOSDK" /D "UNICODE" /D "_STATIC" /Fr"$(INTDIR)\\" /Fp"$(INTDIR)\miranda32.pch" /Yc"commonheaders.h" /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /c
 
 "$(INTDIR)\commonheaders.obj"	"$(INTDIR)\commonheaders.sbr"	"$(INTDIR)\miranda32.pch" : $(SOURCE) "$(INTDIR)"
 	$(CPP) @<<
@@ -1837,7 +1707,7 @@ CPP_SWITCHES=/nologo /MDd /W3 /Gm /GX /ZI /Od /I "../include" /D "_DEBUG" /D "WI
 <<
 
 
-!ENDIF 
+!ENDIF
 
 SOURCE=.\core\memory.c
 
@@ -1869,13 +1739,13 @@ SOURCE=.\core\memory.c
 	$(CPP) $(CPP_PROJ) $(SOURCE)
 
 
-!ENDIF 
+!ENDIF
 
 SOURCE=.\core\miranda.c
 
 !IF  "$(CFG)" == "miranda32 - Win32 Release"
 
-CPP_SWITCHES=/nologo /MD /W3 /GX /Zi /O1 /I "../include" /D "NDEBUG" /D "WIN32" /D "_WINDOWS" /D "_NOSDK" /D "_STATIC" /Fr"$(INTDIR)\\" /Fp"$(INTDIR)\miranda32.pch" /Yu"commonheaders.h" /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /c 
+CPP_SWITCHES=/nologo /MD /W3 /GX /Zi /O1 /I "../include" /D "NDEBUG" /D "WIN32" /D "_WINDOWS" /D "_NOSDK" /D "_STATIC" /Fr"$(INTDIR)\\" /Fp"$(INTDIR)\miranda32.pch" /Yu"commonheaders.h" /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /c
 
 "$(INTDIR)\miranda.obj"	"$(INTDIR)\miranda.sbr" : $(SOURCE) "$(INTDIR)" "$(INTDIR)\miranda32.pch"
 	$(CPP) @<<
@@ -1885,7 +1755,7 @@ CPP_SWITCHES=/nologo /MD /W3 /GX /Zi /O1 /I "../include" /D "NDEBUG" /D "WIN32" 
 
 !ELSEIF  "$(CFG)" == "miranda32 - Win32 Debug"
 
-CPP_SWITCHES=/nologo /MDd /W3 /Gm /GX /ZI /Od /I "../include" /D "_DEBUG" /D "WIN32" /D "_WINDOWS" /D "_NOSDK" /D "_STATIC" /Fr"$(INTDIR)\\" /Fp"$(INTDIR)\miranda32.pch" /Yu"commonheaders.h" /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /c 
+CPP_SWITCHES=/nologo /MDd /W3 /Gm /GX /ZI /Od /I "../include" /D "_DEBUG" /D "WIN32" /D "_WINDOWS" /D "_NOSDK" /D "_STATIC" /Fr"$(INTDIR)\\" /Fp"$(INTDIR)\miranda32.pch" /Yu"commonheaders.h" /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /c
 
 "$(INTDIR)\miranda.obj"	"$(INTDIR)\miranda.sbr" : $(SOURCE) "$(INTDIR)" "$(INTDIR)\miranda32.pch"
 	$(CPP) @<<
@@ -1895,7 +1765,7 @@ CPP_SWITCHES=/nologo /MDd /W3 /Gm /GX /ZI /Od /I "../include" /D "_DEBUG" /D "WI
 
 !ELSEIF  "$(CFG)" == "miranda32 - Win32 Release Unicode"
 
-CPP_SWITCHES=/nologo /MD /W3 /GX /Zi /O1 /I "../include" /D "NDEBUG" /D "WIN32" /D "_WINDOWS" /D "_NOSDK" /D "UNICODE" /D "_STATIC" /Fp"$(INTDIR)\miranda32.pch" /Yu"commonheaders.h" /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /c 
+CPP_SWITCHES=/nologo /MD /W3 /GX /Zi /O1 /I "../include" /D "NDEBUG" /D "WIN32" /D "_WINDOWS" /D "_NOSDK" /D "UNICODE" /D "_STATIC" /Fp"$(INTDIR)\miranda32.pch" /Yu"commonheaders.h" /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /c
 
 "$(INTDIR)\miranda.obj" : $(SOURCE) "$(INTDIR)" "$(INTDIR)\miranda32.pch"
 	$(CPP) @<<
@@ -1905,7 +1775,7 @@ CPP_SWITCHES=/nologo /MD /W3 /GX /Zi /O1 /I "../include" /D "NDEBUG" /D "WIN32" 
 
 !ELSEIF  "$(CFG)" == "miranda32 - Win32 Debug Unicode"
 
-CPP_SWITCHES=/nologo /MDd /W3 /Gm /GX /ZI /Od /I "../include" /D "_DEBUG" /D "WIN32" /D "_WINDOWS" /D "_NOSDK" /D "UNICODE" /D "_STATIC" /Fr"$(INTDIR)\\" /Fp"$(INTDIR)\miranda32.pch" /Yu"commonheaders.h" /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /c 
+CPP_SWITCHES=/nologo /MDd /W3 /Gm /GX /ZI /Od /I "../include" /D "_DEBUG" /D "WIN32" /D "_WINDOWS" /D "_NOSDK" /D "UNICODE" /D "_STATIC" /Fr"$(INTDIR)\\" /Fp"$(INTDIR)\miranda32.pch" /Yu"commonheaders.h" /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /c
 
 "$(INTDIR)\miranda.obj"	"$(INTDIR)\miranda.sbr" : $(SOURCE) "$(INTDIR)" "$(INTDIR)\miranda32.pch"
 	$(CPP) @<<
@@ -1913,13 +1783,13 @@ CPP_SWITCHES=/nologo /MDd /W3 /Gm /GX /ZI /Od /I "../include" /D "_DEBUG" /D "WI
 <<
 
 
-!ENDIF 
+!ENDIF
 
 SOURCE=.\core\modules.c
 
 !IF  "$(CFG)" == "miranda32 - Win32 Release"
 
-CPP_SWITCHES=/nologo /MD /W3 /GX /Zi /O1 /I "../include" /D "NDEBUG" /D "WIN32" /D "_WINDOWS" /D "_NOSDK" /D "_STATIC" /Fr"$(INTDIR)\\" /Fp"$(INTDIR)\miranda32.pch" /Yu"commonheaders.h" /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /c 
+CPP_SWITCHES=/nologo /MD /W3 /GX /Zi /O1 /I "../include" /D "NDEBUG" /D "WIN32" /D "_WINDOWS" /D "_NOSDK" /D "_STATIC" /Fr"$(INTDIR)\\" /Fp"$(INTDIR)\miranda32.pch" /Yu"commonheaders.h" /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /c
 
 "$(INTDIR)\modules.obj"	"$(INTDIR)\modules.sbr" : $(SOURCE) "$(INTDIR)" "$(INTDIR)\miranda32.pch"
 	$(CPP) @<<
@@ -1929,7 +1799,7 @@ CPP_SWITCHES=/nologo /MD /W3 /GX /Zi /O1 /I "../include" /D "NDEBUG" /D "WIN32" 
 
 !ELSEIF  "$(CFG)" == "miranda32 - Win32 Debug"
 
-CPP_SWITCHES=/nologo /MDd /W3 /Gm /GX /ZI /Od /I "../include" /D "_DEBUG" /D "WIN32" /D "_WINDOWS" /D "_NOSDK" /D "_STATIC" /Fr"$(INTDIR)\\" /Fp"$(INTDIR)\miranda32.pch" /Yu"commonheaders.h" /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /c 
+CPP_SWITCHES=/nologo /MDd /W3 /Gm /GX /ZI /Od /I "../include" /D "_DEBUG" /D "WIN32" /D "_WINDOWS" /D "_NOSDK" /D "_STATIC" /Fr"$(INTDIR)\\" /Fp"$(INTDIR)\miranda32.pch" /Yu"commonheaders.h" /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /c
 
 "$(INTDIR)\modules.obj"	"$(INTDIR)\modules.sbr" : $(SOURCE) "$(INTDIR)" "$(INTDIR)\miranda32.pch"
 	$(CPP) @<<
@@ -1939,7 +1809,7 @@ CPP_SWITCHES=/nologo /MDd /W3 /Gm /GX /ZI /Od /I "../include" /D "_DEBUG" /D "WI
 
 !ELSEIF  "$(CFG)" == "miranda32 - Win32 Release Unicode"
 
-CPP_SWITCHES=/nologo /MD /W3 /GX /Zi /O1 /I "../include" /D "NDEBUG" /D "WIN32" /D "_WINDOWS" /D "_NOSDK" /D "UNICODE" /D "_STATIC" /Fp"$(INTDIR)\miranda32.pch" /Yu"commonheaders.h" /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /c 
+CPP_SWITCHES=/nologo /MD /W3 /GX /Zi /O1 /I "../include" /D "NDEBUG" /D "WIN32" /D "_WINDOWS" /D "_NOSDK" /D "UNICODE" /D "_STATIC" /Fp"$(INTDIR)\miranda32.pch" /Yu"commonheaders.h" /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /c
 
 "$(INTDIR)\modules.obj" : $(SOURCE) "$(INTDIR)" "$(INTDIR)\miranda32.pch"
 	$(CPP) @<<
@@ -1949,7 +1819,7 @@ CPP_SWITCHES=/nologo /MD /W3 /GX /Zi /O1 /I "../include" /D "NDEBUG" /D "WIN32" 
 
 !ELSEIF  "$(CFG)" == "miranda32 - Win32 Debug Unicode"
 
-CPP_SWITCHES=/nologo /MDd /W3 /Gm /GX /ZI /Od /I "../include" /D "_DEBUG" /D "WIN32" /D "_WINDOWS" /D "_NOSDK" /D "UNICODE" /D "_STATIC" /Fr"$(INTDIR)\\" /Fp"$(INTDIR)\miranda32.pch" /Yu"commonheaders.h" /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /c 
+CPP_SWITCHES=/nologo /MDd /W3 /Gm /GX /ZI /Od /I "../include" /D "_DEBUG" /D "WIN32" /D "_WINDOWS" /D "_NOSDK" /D "UNICODE" /D "_STATIC" /Fr"$(INTDIR)\\" /Fp"$(INTDIR)\miranda32.pch" /Yu"commonheaders.h" /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /c
 
 "$(INTDIR)\modules.obj"	"$(INTDIR)\modules.sbr" : $(SOURCE) "$(INTDIR)" "$(INTDIR)\miranda32.pch"
 	$(CPP) @<<
@@ -1957,13 +1827,13 @@ CPP_SWITCHES=/nologo /MDd /W3 /Gm /GX /ZI /Od /I "../include" /D "_DEBUG" /D "WI
 <<
 
 
-!ENDIF 
+!ENDIF
 
 SOURCE=.\modules\addcontact\addcontact.c
 
 !IF  "$(CFG)" == "miranda32 - Win32 Release"
 
-CPP_SWITCHES=/nologo /MD /W3 /GX /Zi /O1 /I "../include" /D "NDEBUG" /D "WIN32" /D "_WINDOWS" /D "_NOSDK" /D "_STATIC" /Fr"$(INTDIR)\\" /Fp"$(INTDIR)\miranda32.pch" /Yu"commonheaders.h" /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /c 
+CPP_SWITCHES=/nologo /MD /W3 /GX /Zi /O1 /I "../include" /D "NDEBUG" /D "WIN32" /D "_WINDOWS" /D "_NOSDK" /D "_STATIC" /Fr"$(INTDIR)\\" /Fp"$(INTDIR)\miranda32.pch" /Yu"commonheaders.h" /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /c
 
 "$(INTDIR)\addcontact.obj"	"$(INTDIR)\addcontact.sbr" : $(SOURCE) "$(INTDIR)" "$(INTDIR)\miranda32.pch"
 	$(CPP) @<<
@@ -1973,7 +1843,7 @@ CPP_SWITCHES=/nologo /MD /W3 /GX /Zi /O1 /I "../include" /D "NDEBUG" /D "WIN32" 
 
 !ELSEIF  "$(CFG)" == "miranda32 - Win32 Debug"
 
-CPP_SWITCHES=/nologo /MDd /W3 /Gm /GX /ZI /Od /I "../include" /D "_DEBUG" /D "WIN32" /D "_WINDOWS" /D "_NOSDK" /D "_STATIC" /Fr"$(INTDIR)\\" /Fp"$(INTDIR)\miranda32.pch" /Yu"commonheaders.h" /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /c 
+CPP_SWITCHES=/nologo /MDd /W3 /Gm /GX /ZI /Od /I "../include" /D "_DEBUG" /D "WIN32" /D "_WINDOWS" /D "_NOSDK" /D "_STATIC" /Fr"$(INTDIR)\\" /Fp"$(INTDIR)\miranda32.pch" /Yu"commonheaders.h" /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /c
 
 "$(INTDIR)\addcontact.obj"	"$(INTDIR)\addcontact.sbr" : $(SOURCE) "$(INTDIR)" "$(INTDIR)\miranda32.pch"
 	$(CPP) @<<
@@ -1983,7 +1853,7 @@ CPP_SWITCHES=/nologo /MDd /W3 /Gm /GX /ZI /Od /I "../include" /D "_DEBUG" /D "WI
 
 !ELSEIF  "$(CFG)" == "miranda32 - Win32 Release Unicode"
 
-CPP_SWITCHES=/nologo /MD /W3 /GX /Zi /O1 /I "../include" /D "NDEBUG" /D "WIN32" /D "_WINDOWS" /D "_NOSDK" /D "UNICODE" /D "_STATIC" /Fp"$(INTDIR)\miranda32.pch" /Yu"commonheaders.h" /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /c 
+CPP_SWITCHES=/nologo /MD /W3 /GX /Zi /O1 /I "../include" /D "NDEBUG" /D "WIN32" /D "_WINDOWS" /D "_NOSDK" /D "UNICODE" /D "_STATIC" /Fp"$(INTDIR)\miranda32.pch" /Yu"commonheaders.h" /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /c
 
 "$(INTDIR)\addcontact.obj" : $(SOURCE) "$(INTDIR)" "$(INTDIR)\miranda32.pch"
 	$(CPP) @<<
@@ -1993,7 +1863,7 @@ CPP_SWITCHES=/nologo /MD /W3 /GX /Zi /O1 /I "../include" /D "NDEBUG" /D "WIN32" 
 
 !ELSEIF  "$(CFG)" == "miranda32 - Win32 Debug Unicode"
 
-CPP_SWITCHES=/nologo /MDd /W3 /Gm /GX /ZI /Od /I "../include" /D "_DEBUG" /D "WIN32" /D "_WINDOWS" /D "_NOSDK" /D "UNICODE" /D "_STATIC" /Fr"$(INTDIR)\\" /Fp"$(INTDIR)\miranda32.pch" /Yu"commonheaders.h" /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /c 
+CPP_SWITCHES=/nologo /MDd /W3 /Gm /GX /ZI /Od /I "../include" /D "_DEBUG" /D "WIN32" /D "_WINDOWS" /D "_NOSDK" /D "UNICODE" /D "_STATIC" /Fr"$(INTDIR)\\" /Fp"$(INTDIR)\miranda32.pch" /Yu"commonheaders.h" /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /c
 
 "$(INTDIR)\addcontact.obj"	"$(INTDIR)\addcontact.sbr" : $(SOURCE) "$(INTDIR)" "$(INTDIR)\miranda32.pch"
 	$(CPP) @<<
@@ -2001,7 +1871,7 @@ CPP_SWITCHES=/nologo /MDd /W3 /Gm /GX /ZI /Od /I "../include" /D "_DEBUG" /D "WI
 <<
 
 
-!ENDIF 
+!ENDIF
 
 SOURCE=.\modules\autoaway\autoaway.c
 
@@ -2033,7 +1903,7 @@ SOURCE=.\modules\autoaway\autoaway.c
 	$(CPP) $(CPP_PROJ) $(SOURCE)
 
 
-!ENDIF 
+!ENDIF
 
 SOURCE=.\modules\button\button.c
 
@@ -2065,7 +1935,7 @@ SOURCE=.\modules\button\button.c
 	$(CPP) $(CPP_PROJ) $(SOURCE)
 
 
-!ENDIF 
+!ENDIF
 
 SOURCE=.\modules\contacts\contacts.c
 
@@ -2097,7 +1967,7 @@ SOURCE=.\modules\contacts\contacts.c
 	$(CPP) $(CPP_PROJ) $(SOURCE)
 
 
-!ENDIF 
+!ENDIF
 
 SOURCE=.\modules\database\database.c
 
@@ -2129,13 +1999,13 @@ SOURCE=.\modules\database\database.c
 	$(CPP) $(CPP_PROJ) $(SOURCE)
 
 
-!ENDIF 
+!ENDIF
 
 SOURCE=.\modules\database\dbini.c
 
 !IF  "$(CFG)" == "miranda32 - Win32 Release"
 
-CPP_SWITCHES=/nologo /MD /W3 /GX /Zi /O1 /I "../include" /D "NDEBUG" /D "WIN32" /D "_WINDOWS" /D "_NOSDK" /D "_STATIC" /Fr"$(INTDIR)\\" /Fp"$(INTDIR)\miranda32.pch" /Yu"../../core/commonheaders.h" /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /c 
+CPP_SWITCHES=/nologo /MD /W3 /GX /Zi /O1 /I "../include" /D "NDEBUG" /D "WIN32" /D "_WINDOWS" /D "_NOSDK" /D "_STATIC" /Fr"$(INTDIR)\\" /Fp"$(INTDIR)\miranda32.pch" /Yu"../../core/commonheaders.h" /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /c
 
 "$(INTDIR)\dbini.obj"	"$(INTDIR)\dbini.sbr" : $(SOURCE) "$(INTDIR)" "$(INTDIR)\miranda32.pch"
 	$(CPP) @<<
@@ -2145,7 +2015,7 @@ CPP_SWITCHES=/nologo /MD /W3 /GX /Zi /O1 /I "../include" /D "NDEBUG" /D "WIN32" 
 
 !ELSEIF  "$(CFG)" == "miranda32 - Win32 Debug"
 
-CPP_SWITCHES=/nologo /MDd /W3 /Gm /GX /ZI /Od /I "../include" /D "_DEBUG" /D "WIN32" /D "_WINDOWS" /D "_NOSDK" /D "_STATIC" /Fr"$(INTDIR)\\" /Fp"$(INTDIR)\miranda32.pch" /Yu"../../core/commonheaders.h" /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /c 
+CPP_SWITCHES=/nologo /MDd /W3 /Gm /GX /ZI /Od /I "../include" /D "_DEBUG" /D "WIN32" /D "_WINDOWS" /D "_NOSDK" /D "_STATIC" /Fr"$(INTDIR)\\" /Fp"$(INTDIR)\miranda32.pch" /Yu"../../core/commonheaders.h" /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /c
 
 "$(INTDIR)\dbini.obj"	"$(INTDIR)\dbini.sbr" : $(SOURCE) "$(INTDIR)" "$(INTDIR)\miranda32.pch"
 	$(CPP) @<<
@@ -2155,7 +2025,7 @@ CPP_SWITCHES=/nologo /MDd /W3 /Gm /GX /ZI /Od /I "../include" /D "_DEBUG" /D "WI
 
 !ELSEIF  "$(CFG)" == "miranda32 - Win32 Release Unicode"
 
-CPP_SWITCHES=/nologo /MD /W3 /GX /Zi /O1 /I "../include" /D "NDEBUG" /D "WIN32" /D "_WINDOWS" /D "_NOSDK" /D "UNICODE" /D "_STATIC" /Fp"$(INTDIR)\miranda32.pch" /Yu"../../core/commonheaders.h" /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /c 
+CPP_SWITCHES=/nologo /MD /W3 /GX /Zi /O1 /I "../include" /D "NDEBUG" /D "WIN32" /D "_WINDOWS" /D "_NOSDK" /D "UNICODE" /D "_STATIC" /Fp"$(INTDIR)\miranda32.pch" /Yu"../../core/commonheaders.h" /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /c
 
 "$(INTDIR)\dbini.obj" : $(SOURCE) "$(INTDIR)" "$(INTDIR)\miranda32.pch"
 	$(CPP) @<<
@@ -2165,7 +2035,7 @@ CPP_SWITCHES=/nologo /MD /W3 /GX /Zi /O1 /I "../include" /D "NDEBUG" /D "WIN32" 
 
 !ELSEIF  "$(CFG)" == "miranda32 - Win32 Debug Unicode"
 
-CPP_SWITCHES=/nologo /MDd /W3 /Gm /GX /ZI /Od /I "../include" /D "_DEBUG" /D "WIN32" /D "_WINDOWS" /D "_NOSDK" /D "UNICODE" /D "_STATIC" /Fr"$(INTDIR)\\" /Fp"$(INTDIR)\miranda32.pch" /Yu"../../core/commonheaders.h" /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /c 
+CPP_SWITCHES=/nologo /MDd /W3 /Gm /GX /ZI /Od /I "../include" /D "_DEBUG" /D "WIN32" /D "_WINDOWS" /D "_NOSDK" /D "UNICODE" /D "_STATIC" /Fr"$(INTDIR)\\" /Fp"$(INTDIR)\miranda32.pch" /Yu"../../core/commonheaders.h" /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /c
 
 "$(INTDIR)\dbini.obj"	"$(INTDIR)\dbini.sbr" : $(SOURCE) "$(INTDIR)" "$(INTDIR)\miranda32.pch"
 	$(CPP) @<<
@@ -2173,7 +2043,7 @@ CPP_SWITCHES=/nologo /MDd /W3 /Gm /GX /ZI /Od /I "../include" /D "_DEBUG" /D "WI
 <<
 
 
-!ENDIF 
+!ENDIF
 
 SOURCE=.\modules\database\dblists.c
 
@@ -2205,7 +2075,7 @@ SOURCE=.\modules\database\dblists.c
 	$(CPP) $(CPP_PROJ) $(SOURCE)
 
 
-!ENDIF 
+!ENDIF
 
 SOURCE=.\modules\database\dbtime.c
 
@@ -2237,7 +2107,7 @@ SOURCE=.\modules\database\dbtime.c
 	$(CPP) $(CPP_PROJ) $(SOURCE)
 
 
-!ENDIF 
+!ENDIF
 
 SOURCE=.\modules\database\dbutils.c
 
@@ -2269,7 +2139,7 @@ SOURCE=.\modules\database\dbutils.c
 	$(CPP) $(CPP_PROJ) $(SOURCE)
 
 
-!ENDIF 
+!ENDIF
 
 SOURCE=.\modules\database\profilemanager.c
 
@@ -2301,7 +2171,7 @@ SOURCE=.\modules\database\profilemanager.c
 	$(CPP) $(CPP_PROJ) $(SOURCE)
 
 
-!ENDIF 
+!ENDIF
 
 SOURCE=.\modules\findadd\findadd.c
 
@@ -2333,7 +2203,7 @@ SOURCE=.\modules\findadd\findadd.c
 	$(CPP) $(CPP_PROJ) $(SOURCE)
 
 
-!ENDIF 
+!ENDIF
 
 SOURCE=.\modules\findadd\searchresults.c
 
@@ -2365,7 +2235,7 @@ SOURCE=.\modules\findadd\searchresults.c
 	$(CPP) $(CPP_PROJ) $(SOURCE)
 
 
-!ENDIF 
+!ENDIF
 
 SOURCE=.\modules\help\about.c
 
@@ -2397,7 +2267,7 @@ SOURCE=.\modules\help\about.c
 	$(CPP) $(CPP_PROJ) $(SOURCE)
 
 
-!ENDIF 
+!ENDIF
 
 SOURCE=.\modules\help\help.c
 
@@ -2429,7 +2299,7 @@ SOURCE=.\modules\help\help.c
 	$(CPP) $(CPP_PROJ) $(SOURCE)
 
 
-!ENDIF 
+!ENDIF
 
 SOURCE=.\modules\history\history.c
 
@@ -2461,7 +2331,7 @@ SOURCE=.\modules\history\history.c
 	$(CPP) $(CPP_PROJ) $(SOURCE)
 
 
-!ENDIF 
+!ENDIF
 
 SOURCE=.\modules\idle\idle.c
 
@@ -2493,7 +2363,7 @@ SOURCE=.\modules\idle\idle.c
 	$(CPP) $(CPP_PROJ) $(SOURCE)
 
 
-!ENDIF 
+!ENDIF
 
 SOURCE=.\modules\ignore\ignore.c
 
@@ -2525,7 +2395,7 @@ SOURCE=.\modules\ignore\ignore.c
 	$(CPP) $(CPP_PROJ) $(SOURCE)
 
 
-!ENDIF 
+!ENDIF
 
 SOURCE=.\modules\langpack\langpack.c
 
@@ -2557,7 +2427,7 @@ SOURCE=.\modules\langpack\langpack.c
 	$(CPP) $(CPP_PROJ) $(SOURCE)
 
 
-!ENDIF 
+!ENDIF
 
 SOURCE=.\modules\langpack\lpservices.c
 
@@ -2589,7 +2459,7 @@ SOURCE=.\modules\langpack\lpservices.c
 	$(CPP) $(CPP_PROJ) $(SOURCE)
 
 
-!ENDIF 
+!ENDIF
 
 SOURCE=.\modules\netlib\netlib.c
 
@@ -2621,7 +2491,7 @@ SOURCE=.\modules\netlib\netlib.c
 	$(CPP) $(CPP_PROJ) $(SOURCE)
 
 
-!ENDIF 
+!ENDIF
 
 SOURCE=.\modules\netlib\netlibbind.c
 
@@ -2653,7 +2523,7 @@ SOURCE=.\modules\netlib\netlibbind.c
 	$(CPP) $(CPP_PROJ) $(SOURCE)
 
 
-!ENDIF 
+!ENDIF
 
 SOURCE=.\modules\netlib\netlibhttp.c
 
@@ -2685,7 +2555,7 @@ SOURCE=.\modules\netlib\netlibhttp.c
 	$(CPP) $(CPP_PROJ) $(SOURCE)
 
 
-!ENDIF 
+!ENDIF
 
 SOURCE=.\modules\netlib\netlibhttpproxy.c
 
@@ -2717,7 +2587,7 @@ SOURCE=.\modules\netlib\netlibhttpproxy.c
 	$(CPP) $(CPP_PROJ) $(SOURCE)
 
 
-!ENDIF 
+!ENDIF
 
 SOURCE=.\modules\netlib\netliblog.c
 
@@ -2749,7 +2619,7 @@ SOURCE=.\modules\netlib\netliblog.c
 	$(CPP) $(CPP_PROJ) $(SOURCE)
 
 
-!ENDIF 
+!ENDIF
 
 SOURCE=.\modules\netlib\netlibopenconn.c
 
@@ -2781,7 +2651,7 @@ SOURCE=.\modules\netlib\netlibopenconn.c
 	$(CPP) $(CPP_PROJ) $(SOURCE)
 
 
-!ENDIF 
+!ENDIF
 
 SOURCE=.\modules\netlib\netlibopts.c
 
@@ -2813,7 +2683,7 @@ SOURCE=.\modules\netlib\netlibopts.c
 	$(CPP) $(CPP_PROJ) $(SOURCE)
 
 
-!ENDIF 
+!ENDIF
 
 SOURCE=.\modules\netlib\netlibpktrecver.c
 
@@ -2845,7 +2715,7 @@ SOURCE=.\modules\netlib\netlibpktrecver.c
 	$(CPP) $(CPP_PROJ) $(SOURCE)
 
 
-!ENDIF 
+!ENDIF
 
 SOURCE=.\modules\netlib\netlibsecurity.c
 
@@ -2877,7 +2747,7 @@ SOURCE=.\modules\netlib\netlibsecurity.c
 	$(CPP) $(CPP_PROJ) $(SOURCE)
 
 
-!ENDIF 
+!ENDIF
 
 SOURCE=.\modules\netlib\netlibsock.c
 
@@ -2909,7 +2779,7 @@ SOURCE=.\modules\netlib\netlibsock.c
 	$(CPP) $(CPP_PROJ) $(SOURCE)
 
 
-!ENDIF 
+!ENDIF
 
 SOURCE=.\modules\netlib\netlibupnp.c
 
@@ -2941,7 +2811,7 @@ SOURCE=.\modules\netlib\netlibupnp.c
 	$(CPP) $(CPP_PROJ) $(SOURCE)
 
 
-!ENDIF 
+!ENDIF
 
 SOURCE=.\modules\options\options.c
 
@@ -2973,7 +2843,7 @@ SOURCE=.\modules\options\options.c
 	$(CPP) $(CPP_PROJ) $(SOURCE)
 
 
-!ENDIF 
+!ENDIF
 
 SOURCE=.\modules\plugins\newplugins.c
 
@@ -3005,39 +2875,7 @@ SOURCE=.\modules\plugins\newplugins.c
 	$(CPP) $(CPP_PROJ) $(SOURCE)
 
 
-!ENDIF 
-
-SOURCE=.\modules\protocols\protoaccs.c
-
-!IF  "$(CFG)" == "miranda32 - Win32 Release"
-
-
-"$(INTDIR)\protoaccs.obj"	"$(INTDIR)\protoaccs.sbr" : $(SOURCE) "$(INTDIR)" "$(INTDIR)\miranda32.pch"
-	$(CPP) $(CPP_PROJ) $(SOURCE)
-
-
-!ELSEIF  "$(CFG)" == "miranda32 - Win32 Debug"
-
-
-"$(INTDIR)\protoaccs.obj"	"$(INTDIR)\protoaccs.sbr" : $(SOURCE) "$(INTDIR)" "$(INTDIR)\miranda32.pch"
-	$(CPP) $(CPP_PROJ) $(SOURCE)
-
-
-!ELSEIF  "$(CFG)" == "miranda32 - Win32 Release Unicode"
-
-
-"$(INTDIR)\protoaccs.obj" : $(SOURCE) "$(INTDIR)" "$(INTDIR)\miranda32.pch"
-	$(CPP) $(CPP_PROJ) $(SOURCE)
-
-
-!ELSEIF  "$(CFG)" == "miranda32 - Win32 Debug Unicode"
-
-
-"$(INTDIR)\protoaccs.obj"	"$(INTDIR)\protoaccs.sbr" : $(SOURCE) "$(INTDIR)" "$(INTDIR)\miranda32.pch"
-	$(CPP) $(CPP_PROJ) $(SOURCE)
-
-
-!ENDIF 
+!ENDIF
 
 SOURCE=.\modules\protocols\protochains.c
 
@@ -3069,7 +2907,7 @@ SOURCE=.\modules\protocols\protochains.c
 	$(CPP) $(CPP_PROJ) $(SOURCE)
 
 
-!ENDIF 
+!ENDIF
 
 SOURCE=.\modules\protocols\protocols.c
 
@@ -3101,103 +2939,71 @@ SOURCE=.\modules\protocols\protocols.c
 	$(CPP) $(CPP_PROJ) $(SOURCE)
 
 
-!ENDIF 
+!ENDIF
 
-SOURCE=.\modules\protocols\protoint.c
+SOURCE=.\modules\protocols\protodir.c
 
 !IF  "$(CFG)" == "miranda32 - Win32 Release"
 
 
-"$(INTDIR)\protoint.obj"	"$(INTDIR)\protoint.sbr" : $(SOURCE) "$(INTDIR)" "$(INTDIR)\miranda32.pch"
+"$(INTDIR)\protodir.obj"	"$(INTDIR)\protodir.sbr" : $(SOURCE) "$(INTDIR)" "$(INTDIR)\miranda32.pch"
 	$(CPP) $(CPP_PROJ) $(SOURCE)
 
 
 !ELSEIF  "$(CFG)" == "miranda32 - Win32 Debug"
 
 
-"$(INTDIR)\protoint.obj"	"$(INTDIR)\protoint.sbr" : $(SOURCE) "$(INTDIR)" "$(INTDIR)\miranda32.pch"
+"$(INTDIR)\protodir.obj"	"$(INTDIR)\protodir.sbr" : $(SOURCE) "$(INTDIR)" "$(INTDIR)\miranda32.pch"
 	$(CPP) $(CPP_PROJ) $(SOURCE)
 
 
 !ELSEIF  "$(CFG)" == "miranda32 - Win32 Release Unicode"
 
 
-"$(INTDIR)\protoint.obj" : $(SOURCE) "$(INTDIR)" "$(INTDIR)\miranda32.pch"
+"$(INTDIR)\protodir.obj" : $(SOURCE) "$(INTDIR)" "$(INTDIR)\miranda32.pch"
 	$(CPP) $(CPP_PROJ) $(SOURCE)
 
 
 !ELSEIF  "$(CFG)" == "miranda32 - Win32 Debug Unicode"
 
 
-"$(INTDIR)\protoint.obj"	"$(INTDIR)\protoint.sbr" : $(SOURCE) "$(INTDIR)" "$(INTDIR)\miranda32.pch"
+"$(INTDIR)\protodir.obj"	"$(INTDIR)\protodir.sbr" : $(SOURCE) "$(INTDIR)" "$(INTDIR)\miranda32.pch"
 	$(CPP) $(CPP_PROJ) $(SOURCE)
 
 
-!ENDIF 
+!ENDIF
 
-SOURCE=.\modules\protocols\protoopts.c
+SOURCE=.\modules\skin\skin.c
 
 !IF  "$(CFG)" == "miranda32 - Win32 Release"
 
 
-"$(INTDIR)\protoopts.obj"	"$(INTDIR)\protoopts.sbr" : $(SOURCE) "$(INTDIR)" "$(INTDIR)\miranda32.pch"
+"$(INTDIR)\skin.obj"	"$(INTDIR)\skin.sbr" : $(SOURCE) "$(INTDIR)" "$(INTDIR)\miranda32.pch"
 	$(CPP) $(CPP_PROJ) $(SOURCE)
 
 
 !ELSEIF  "$(CFG)" == "miranda32 - Win32 Debug"
 
 
-"$(INTDIR)\protoopts.obj"	"$(INTDIR)\protoopts.sbr" : $(SOURCE) "$(INTDIR)" "$(INTDIR)\miranda32.pch"
+"$(INTDIR)\skin.obj"	"$(INTDIR)\skin.sbr" : $(SOURCE) "$(INTDIR)" "$(INTDIR)\miranda32.pch"
 	$(CPP) $(CPP_PROJ) $(SOURCE)
 
 
 !ELSEIF  "$(CFG)" == "miranda32 - Win32 Release Unicode"
 
 
-"$(INTDIR)\protoopts.obj" : $(SOURCE) "$(INTDIR)" "$(INTDIR)\miranda32.pch"
+"$(INTDIR)\skin.obj" : $(SOURCE) "$(INTDIR)" "$(INTDIR)\miranda32.pch"
 	$(CPP) $(CPP_PROJ) $(SOURCE)
 
 
 !ELSEIF  "$(CFG)" == "miranda32 - Win32 Debug Unicode"
 
 
-"$(INTDIR)\protoopts.obj"	"$(INTDIR)\protoopts.sbr" : $(SOURCE) "$(INTDIR)" "$(INTDIR)\miranda32.pch"
+"$(INTDIR)\skin.obj"	"$(INTDIR)\skin.sbr" : $(SOURCE) "$(INTDIR)" "$(INTDIR)\miranda32.pch"
 	$(CPP) $(CPP_PROJ) $(SOURCE)
 
 
-!ENDIF 
-
-SOURCE=.\modules\skin\hotkeys.c
-
-!IF  "$(CFG)" == "miranda32 - Win32 Release"
-
-
-"$(INTDIR)\hotkeys.obj"	"$(INTDIR)\hotkeys.sbr" : $(SOURCE) "$(INTDIR)" "$(INTDIR)\miranda32.pch"
-	$(CPP) $(CPP_PROJ) $(SOURCE)
-
-
-!ELSEIF  "$(CFG)" == "miranda32 - Win32 Debug"
-
-
-"$(INTDIR)\hotkeys.obj"	"$(INTDIR)\hotkeys.sbr" : $(SOURCE) "$(INTDIR)" "$(INTDIR)\miranda32.pch"
-	$(CPP) $(CPP_PROJ) $(SOURCE)
-
-
-!ELSEIF  "$(CFG)" == "miranda32 - Win32 Release Unicode"
-
-
-"$(INTDIR)\hotkeys.obj" : $(SOURCE) "$(INTDIR)" "$(INTDIR)\miranda32.pch"
-	$(CPP) $(CPP_PROJ) $(SOURCE)
-
-
-!ELSEIF  "$(CFG)" == "miranda32 - Win32 Debug Unicode"
-
-
-"$(INTDIR)\hotkeys.obj"	"$(INTDIR)\hotkeys.sbr" : $(SOURCE) "$(INTDIR)" "$(INTDIR)\miranda32.pch"
-	$(CPP) $(CPP_PROJ) $(SOURCE)
-
-
-!ENDIF 
+!ENDIF
 
 SOURCE=.\modules\skin\skinicons.c
 
@@ -3229,7 +3035,7 @@ SOURCE=.\modules\skin\skinicons.c
 	$(CPP) $(CPP_PROJ) $(SOURCE)
 
 
-!ENDIF 
+!ENDIF
 
 SOURCE=.\modules\skin\sounds.c
 
@@ -3261,7 +3067,7 @@ SOURCE=.\modules\skin\sounds.c
 	$(CPP) $(CPP_PROJ) $(SOURCE)
 
 
-!ENDIF 
+!ENDIF
 
 SOURCE=.\modules\srauth\auth.c
 
@@ -3293,7 +3099,7 @@ SOURCE=.\modules\srauth\auth.c
 	$(CPP) $(CPP_PROJ) $(SOURCE)
 
 
-!ENDIF 
+!ENDIF
 
 SOURCE=.\modules\srauth\authdialogs.c
 
@@ -3325,7 +3131,7 @@ SOURCE=.\modules\srauth\authdialogs.c
 	$(CPP) $(CPP_PROJ) $(SOURCE)
 
 
-!ENDIF 
+!ENDIF
 
 SOURCE=.\modules\srawaymsg\awaymsg.c
 
@@ -3357,7 +3163,7 @@ SOURCE=.\modules\srawaymsg\awaymsg.c
 	$(CPP) $(CPP_PROJ) $(SOURCE)
 
 
-!ENDIF 
+!ENDIF
 
 SOURCE=.\modules\srawaymsg\sendmsg.c
 
@@ -3389,7 +3195,7 @@ SOURCE=.\modules\srawaymsg\sendmsg.c
 	$(CPP) $(CPP_PROJ) $(SOURCE)
 
 
-!ENDIF 
+!ENDIF
 
 SOURCE=.\modules\sremail\email.c
 
@@ -3421,7 +3227,7 @@ SOURCE=.\modules\sremail\email.c
 	$(CPP) $(CPP_PROJ) $(SOURCE)
 
 
-!ENDIF 
+!ENDIF
 
 SOURCE=.\modules\srfile\file.c
 
@@ -3453,7 +3259,7 @@ SOURCE=.\modules\srfile\file.c
 	$(CPP) $(CPP_PROJ) $(SOURCE)
 
 
-!ENDIF 
+!ENDIF
 
 SOURCE=.\modules\srfile\fileexistsdlg.c
 
@@ -3485,7 +3291,7 @@ SOURCE=.\modules\srfile\fileexistsdlg.c
 	$(CPP) $(CPP_PROJ) $(SOURCE)
 
 
-!ENDIF 
+!ENDIF
 
 SOURCE=.\modules\srfile\fileopts.c
 
@@ -3517,7 +3323,7 @@ SOURCE=.\modules\srfile\fileopts.c
 	$(CPP) $(CPP_PROJ) $(SOURCE)
 
 
-!ENDIF 
+!ENDIF
 
 SOURCE=.\modules\srfile\filerecvdlg.c
 
@@ -3549,7 +3355,7 @@ SOURCE=.\modules\srfile\filerecvdlg.c
 	$(CPP) $(CPP_PROJ) $(SOURCE)
 
 
-!ENDIF 
+!ENDIF
 
 SOURCE=.\modules\srfile\filesenddlg.c
 
@@ -3581,7 +3387,7 @@ SOURCE=.\modules\srfile\filesenddlg.c
 	$(CPP) $(CPP_PROJ) $(SOURCE)
 
 
-!ENDIF 
+!ENDIF
 
 SOURCE=.\modules\srfile\filexferdlg.c
 
@@ -3613,39 +3419,7 @@ SOURCE=.\modules\srfile\filexferdlg.c
 	$(CPP) $(CPP_PROJ) $(SOURCE)
 
 
-!ENDIF 
-
-SOURCE=.\modules\srfile\ftmanager.c
-
-!IF  "$(CFG)" == "miranda32 - Win32 Release"
-
-
-"$(INTDIR)\ftmanager.obj"	"$(INTDIR)\ftmanager.sbr" : $(SOURCE) "$(INTDIR)" "$(INTDIR)\miranda32.pch"
-	$(CPP) $(CPP_PROJ) $(SOURCE)
-
-
-!ELSEIF  "$(CFG)" == "miranda32 - Win32 Debug"
-
-
-"$(INTDIR)\ftmanager.obj"	"$(INTDIR)\ftmanager.sbr" : $(SOURCE) "$(INTDIR)" "$(INTDIR)\miranda32.pch"
-	$(CPP) $(CPP_PROJ) $(SOURCE)
-
-
-!ELSEIF  "$(CFG)" == "miranda32 - Win32 Release Unicode"
-
-
-"$(INTDIR)\ftmanager.obj" : $(SOURCE) "$(INTDIR)" "$(INTDIR)\miranda32.pch"
-	$(CPP) $(CPP_PROJ) $(SOURCE)
-
-
-!ELSEIF  "$(CFG)" == "miranda32 - Win32 Debug Unicode"
-
-
-"$(INTDIR)\ftmanager.obj"	"$(INTDIR)\ftmanager.sbr" : $(SOURCE) "$(INTDIR)" "$(INTDIR)\miranda32.pch"
-	$(CPP) $(CPP_PROJ) $(SOURCE)
-
-
-!ENDIF 
+!ENDIF
 
 SOURCE=.\modules\srurl\url.c
 
@@ -3677,7 +3451,7 @@ SOURCE=.\modules\srurl\url.c
 	$(CPP) $(CPP_PROJ) $(SOURCE)
 
 
-!ENDIF 
+!ENDIF
 
 SOURCE=.\modules\srurl\urldialogs.c
 
@@ -3709,7 +3483,7 @@ SOURCE=.\modules\srurl\urldialogs.c
 	$(CPP) $(CPP_PROJ) $(SOURCE)
 
 
-!ENDIF 
+!ENDIF
 
 SOURCE=.\modules\userinfo\contactinfo.c
 
@@ -3741,7 +3515,7 @@ SOURCE=.\modules\userinfo\contactinfo.c
 	$(CPP) $(CPP_PROJ) $(SOURCE)
 
 
-!ENDIF 
+!ENDIF
 
 SOURCE=.\modules\userinfo\stdinfo.c
 
@@ -3773,7 +3547,7 @@ SOURCE=.\modules\userinfo\stdinfo.c
 	$(CPP) $(CPP_PROJ) $(SOURCE)
 
 
-!ENDIF 
+!ENDIF
 
 SOURCE=.\modules\userinfo\userinfo.c
 
@@ -3805,7 +3579,7 @@ SOURCE=.\modules\userinfo\userinfo.c
 	$(CPP) $(CPP_PROJ) $(SOURCE)
 
 
-!ENDIF 
+!ENDIF
 
 SOURCE=.\modules\useronline\useronline.c
 
@@ -3837,7 +3611,7 @@ SOURCE=.\modules\useronline\useronline.c
 	$(CPP) $(CPP_PROJ) $(SOURCE)
 
 
-!ENDIF 
+!ENDIF
 
 SOURCE=.\modules\utils\bmpfilter.c
 
@@ -3869,7 +3643,7 @@ SOURCE=.\modules\utils\bmpfilter.c
 	$(CPP) $(CPP_PROJ) $(SOURCE)
 
 
-!ENDIF 
+!ENDIF
 
 SOURCE=.\modules\utils\colourpicker.c
 
@@ -3901,7 +3675,7 @@ SOURCE=.\modules\utils\colourpicker.c
 	$(CPP) $(CPP_PROJ) $(SOURCE)
 
 
-!ENDIF 
+!ENDIF
 
 SOURCE=.\modules\utils\hyperlink.c
 
@@ -3933,7 +3707,7 @@ SOURCE=.\modules\utils\hyperlink.c
 	$(CPP) $(CPP_PROJ) $(SOURCE)
 
 
-!ENDIF 
+!ENDIF
 
 SOURCE=.\modules\utils\md5.c
 
@@ -3965,7 +3739,7 @@ SOURCE=.\modules\utils\md5.c
 	$(CPP) $(CPP_PROJ) $(SOURCE)
 
 
-!ENDIF 
+!ENDIF
 
 SOURCE=.\modules\utils\openurl.c
 
@@ -3997,7 +3771,7 @@ SOURCE=.\modules\utils\openurl.c
 	$(CPP) $(CPP_PROJ) $(SOURCE)
 
 
-!ENDIF 
+!ENDIF
 
 SOURCE=.\modules\utils\path.c
 
@@ -4029,7 +3803,7 @@ SOURCE=.\modules\utils\path.c
 	$(CPP) $(CPP_PROJ) $(SOURCE)
 
 
-!ENDIF 
+!ENDIF
 
 SOURCE=.\modules\utils\resizer.c
 
@@ -4061,7 +3835,7 @@ SOURCE=.\modules\utils\resizer.c
 	$(CPP) $(CPP_PROJ) $(SOURCE)
 
 
-!ENDIF 
+!ENDIF
 
 SOURCE=.\modules\utils\sha1.c
 
@@ -4093,7 +3867,7 @@ SOURCE=.\modules\utils\sha1.c
 	$(CPP) $(CPP_PROJ) $(SOURCE)
 
 
-!ENDIF 
+!ENDIF
 
 SOURCE=.\modules\utils\utf.c
 
@@ -4125,7 +3899,7 @@ SOURCE=.\modules\utils\utf.c
 	$(CPP) $(CPP_PROJ) $(SOURCE)
 
 
-!ENDIF 
+!ENDIF
 
 SOURCE=.\modules\utils\utils.c
 
@@ -4157,7 +3931,7 @@ SOURCE=.\modules\utils\utils.c
 	$(CPP) $(CPP_PROJ) $(SOURCE)
 
 
-!ENDIF 
+!ENDIF
 
 SOURCE=.\modules\utils\windowlist.c
 
@@ -4189,7 +3963,7 @@ SOURCE=.\modules\utils\windowlist.c
 	$(CPP) $(CPP_PROJ) $(SOURCE)
 
 
-!ENDIF 
+!ENDIF
 
 SOURCE=.\modules\visibility\visibility.c
 
@@ -4221,7 +3995,7 @@ SOURCE=.\modules\visibility\visibility.c
 	$(CPP) $(CPP_PROJ) $(SOURCE)
 
 
-!ENDIF 
+!ENDIF
 
 SOURCE=.\modules\clist\clc.c
 
@@ -4253,7 +4027,7 @@ SOURCE=.\modules\clist\clc.c
 	$(CPP) $(CPP_PROJ) $(SOURCE)
 
 
-!ENDIF 
+!ENDIF
 
 SOURCE=.\modules\clist\clcfiledrop.c
 
@@ -4285,7 +4059,7 @@ SOURCE=.\modules\clist\clcfiledrop.c
 	$(CPP) $(CPP_PROJ) $(SOURCE)
 
 
-!ENDIF 
+!ENDIF
 
 SOURCE=.\modules\clist\clcidents.c
 
@@ -4317,7 +4091,7 @@ SOURCE=.\modules\clist\clcidents.c
 	$(CPP) $(CPP_PROJ) $(SOURCE)
 
 
-!ENDIF 
+!ENDIF
 
 SOURCE=.\modules\clist\clcitems.c
 
@@ -4349,7 +4123,7 @@ SOURCE=.\modules\clist\clcitems.c
 	$(CPP) $(CPP_PROJ) $(SOURCE)
 
 
-!ENDIF 
+!ENDIF
 
 SOURCE=.\modules\clist\clcmsgs.c
 
@@ -4381,7 +4155,7 @@ SOURCE=.\modules\clist\clcmsgs.c
 	$(CPP) $(CPP_PROJ) $(SOURCE)
 
 
-!ENDIF 
+!ENDIF
 
 SOURCE=.\modules\clist\clcutils.c
 
@@ -4413,7 +4187,7 @@ SOURCE=.\modules\clist\clcutils.c
 	$(CPP) $(CPP_PROJ) $(SOURCE)
 
 
-!ENDIF 
+!ENDIF
 
 SOURCE=.\modules\clist\clistcore.c
 
@@ -4445,7 +4219,7 @@ SOURCE=.\modules\clist\clistcore.c
 	$(CPP) $(CPP_PROJ) $(SOURCE)
 
 
-!ENDIF 
+!ENDIF
 
 SOURCE=.\modules\clist\clistevents.c
 
@@ -4477,7 +4251,7 @@ SOURCE=.\modules\clist\clistevents.c
 	$(CPP) $(CPP_PROJ) $(SOURCE)
 
 
-!ENDIF 
+!ENDIF
 
 SOURCE=.\modules\clist\clistmenus.c
 
@@ -4509,7 +4283,7 @@ SOURCE=.\modules\clist\clistmenus.c
 	$(CPP) $(CPP_PROJ) $(SOURCE)
 
 
-!ENDIF 
+!ENDIF
 
 SOURCE=.\modules\clist\clistmod.c
 
@@ -4541,7 +4315,7 @@ SOURCE=.\modules\clist\clistmod.c
 	$(CPP) $(CPP_PROJ) $(SOURCE)
 
 
-!ENDIF 
+!ENDIF
 
 SOURCE=.\modules\clist\clistsettings.c
 
@@ -4573,7 +4347,7 @@ SOURCE=.\modules\clist\clistsettings.c
 	$(CPP) $(CPP_PROJ) $(SOURCE)
 
 
-!ENDIF 
+!ENDIF
 
 SOURCE=.\modules\clist\clisttray.c
 
@@ -4605,7 +4379,7 @@ SOURCE=.\modules\clist\clisttray.c
 	$(CPP) $(CPP_PROJ) $(SOURCE)
 
 
-!ENDIF 
+!ENDIF
 
 SOURCE=.\modules\clist\clui.c
 
@@ -4637,7 +4411,7 @@ SOURCE=.\modules\clist\clui.c
 	$(CPP) $(CPP_PROJ) $(SOURCE)
 
 
-!ENDIF 
+!ENDIF
 
 SOURCE=.\modules\clist\cluiservices.c
 
@@ -4669,7 +4443,7 @@ SOURCE=.\modules\clist\cluiservices.c
 	$(CPP) $(CPP_PROJ) $(SOURCE)
 
 
-!ENDIF 
+!ENDIF
 
 SOURCE=.\modules\clist\contact.c
 
@@ -4701,7 +4475,7 @@ SOURCE=.\modules\clist\contact.c
 	$(CPP) $(CPP_PROJ) $(SOURCE)
 
 
-!ENDIF 
+!ENDIF
 
 SOURCE=.\modules\clist\Docking.c
 
@@ -4733,7 +4507,7 @@ SOURCE=.\modules\clist\Docking.c
 	$(CPP) $(CPP_PROJ) $(SOURCE)
 
 
-!ENDIF 
+!ENDIF
 
 SOURCE=.\modules\clist\genmenu.c
 
@@ -4765,7 +4539,7 @@ SOURCE=.\modules\clist\genmenu.c
 	$(CPP) $(CPP_PROJ) $(SOURCE)
 
 
-!ENDIF 
+!ENDIF
 
 SOURCE=.\modules\clist\genmenuopt.c
 
@@ -4797,7 +4571,7 @@ SOURCE=.\modules\clist\genmenuopt.c
 	$(CPP) $(CPP_PROJ) $(SOURCE)
 
 
-!ENDIF 
+!ENDIF
 
 SOURCE=.\modules\clist\groups.c
 
@@ -4829,7 +4603,7 @@ SOURCE=.\modules\clist\groups.c
 	$(CPP) $(CPP_PROJ) $(SOURCE)
 
 
-!ENDIF 
+!ENDIF
 
 SOURCE=.\modules\clist\keyboard.c
 
@@ -4861,7 +4635,7 @@ SOURCE=.\modules\clist\keyboard.c
 	$(CPP) $(CPP_PROJ) $(SOURCE)
 
 
-!ENDIF 
+!ENDIF
 
 SOURCE=.\modules\clist\movetogroup.c
 
@@ -4893,7 +4667,7 @@ SOURCE=.\modules\clist\movetogroup.c
 	$(CPP) $(CPP_PROJ) $(SOURCE)
 
 
-!ENDIF 
+!ENDIF
 
 SOURCE=.\modules\clist\protocolorder.c
 
@@ -4925,7 +4699,7 @@ SOURCE=.\modules\clist\protocolorder.c
 	$(CPP) $(CPP_PROJ) $(SOURCE)
 
 
-!ENDIF 
+!ENDIF
 
 SOURCE=.\modules\fonts\FontOptions.c
 
@@ -4957,7 +4731,7 @@ SOURCE=.\modules\fonts\FontOptions.c
 	$(CPP) $(CPP_PROJ) $(SOURCE)
 
 
-!ENDIF 
+!ENDIF
 
 SOURCE=.\modules\fonts\FontService.c
 
@@ -4989,7 +4763,7 @@ SOURCE=.\modules\fonts\FontService.c
 	$(CPP) $(CPP_PROJ) $(SOURCE)
 
 
-!ENDIF 
+!ENDIF
 
 SOURCE=.\modules\fonts\module_fonts.c
 
@@ -5021,7 +4795,7 @@ SOURCE=.\modules\fonts\module_fonts.c
 	$(CPP) $(CPP_PROJ) $(SOURCE)
 
 
-!ENDIF 
+!ENDIF
 
 SOURCE=.\modules\fonts\services.c
 
@@ -5053,13 +4827,13 @@ SOURCE=.\modules\fonts\services.c
 	$(CPP) $(CPP_PROJ) $(SOURCE)
 
 
-!ENDIF 
+!ENDIF
 
 SOURCE=.\modules\icolib\extracticon.c
 
 !IF  "$(CFG)" == "miranda32 - Win32 Release"
 
-CPP_SWITCHES=/nologo /MD /W3 /GX /Zi /O1 /I "../include" /D "NDEBUG" /D "WIN32" /D "_WINDOWS" /D "_NOSDK" /D "_STATIC" /Fr"$(INTDIR)\\" /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /c 
+CPP_SWITCHES=/nologo /MD /W3 /GX /Zi /O1 /I "../include" /D "NDEBUG" /D "WIN32" /D "_WINDOWS" /D "_NOSDK" /D "_STATIC" /Fr"$(INTDIR)\\" /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /c
 
 "$(INTDIR)\extracticon.obj"	"$(INTDIR)\extracticon.sbr" : $(SOURCE) "$(INTDIR)"
 	$(CPP) @<<
@@ -5069,7 +4843,7 @@ CPP_SWITCHES=/nologo /MD /W3 /GX /Zi /O1 /I "../include" /D "NDEBUG" /D "WIN32" 
 
 !ELSEIF  "$(CFG)" == "miranda32 - Win32 Debug"
 
-CPP_SWITCHES=/nologo /MDd /W3 /Gm /GX /ZI /Od /I "../include" /D "_DEBUG" /D "WIN32" /D "_WINDOWS" /D "_NOSDK" /D "_STATIC" /Fr"$(INTDIR)\\" /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /c 
+CPP_SWITCHES=/nologo /MDd /W3 /Gm /GX /ZI /Od /I "../include" /D "_DEBUG" /D "WIN32" /D "_WINDOWS" /D "_NOSDK" /D "_STATIC" /Fr"$(INTDIR)\\" /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /c
 
 "$(INTDIR)\extracticon.obj"	"$(INTDIR)\extracticon.sbr" : $(SOURCE) "$(INTDIR)"
 	$(CPP) @<<
@@ -5079,7 +4853,7 @@ CPP_SWITCHES=/nologo /MDd /W3 /Gm /GX /ZI /Od /I "../include" /D "_DEBUG" /D "WI
 
 !ELSEIF  "$(CFG)" == "miranda32 - Win32 Release Unicode"
 
-CPP_SWITCHES=/nologo /MD /W3 /GX /Zi /O1 /I "../include" /D "NDEBUG" /D "WIN32" /D "_WINDOWS" /D "_NOSDK" /D "UNICODE" /D "_STATIC" /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /c 
+CPP_SWITCHES=/nologo /MD /W3 /GX /Zi /O1 /I "../include" /D "NDEBUG" /D "WIN32" /D "_WINDOWS" /D "_NOSDK" /D "UNICODE" /D "_STATIC" /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /c
 
 "$(INTDIR)\extracticon.obj" : $(SOURCE) "$(INTDIR)"
 	$(CPP) @<<
@@ -5089,7 +4863,7 @@ CPP_SWITCHES=/nologo /MD /W3 /GX /Zi /O1 /I "../include" /D "NDEBUG" /D "WIN32" 
 
 !ELSEIF  "$(CFG)" == "miranda32 - Win32 Debug Unicode"
 
-CPP_SWITCHES=/nologo /MDd /W3 /Gm /GX /ZI /Od /I "../include" /D "_DEBUG" /D "WIN32" /D "_WINDOWS" /D "_NOSDK" /D "UNICODE" /D "_STATIC" /Fr"$(INTDIR)\\" /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /c 
+CPP_SWITCHES=/nologo /MDd /W3 /Gm /GX /ZI /Od /I "../include" /D "_DEBUG" /D "WIN32" /D "_WINDOWS" /D "_NOSDK" /D "UNICODE" /D "_STATIC" /Fr"$(INTDIR)\\" /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /c
 
 "$(INTDIR)\extracticon.obj"	"$(INTDIR)\extracticon.sbr" : $(SOURCE) "$(INTDIR)"
 	$(CPP) @<<
@@ -5097,7 +4871,39 @@ CPP_SWITCHES=/nologo /MDd /W3 /Gm /GX /ZI /Od /I "../include" /D "_DEBUG" /D "WI
 <<
 
 
-!ENDIF 
+!ENDIF
+
+SOURCE=.\modules\icolib\IcoLib.c
+
+!IF  "$(CFG)" == "miranda32 - Win32 Release"
+
+
+"$(INTDIR)\IcoLib.obj"	"$(INTDIR)\IcoLib.sbr" : $(SOURCE) "$(INTDIR)" "$(INTDIR)\miranda32.pch"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "miranda32 - Win32 Debug"
+
+
+"$(INTDIR)\IcoLib.obj"	"$(INTDIR)\IcoLib.sbr" : $(SOURCE) "$(INTDIR)" "$(INTDIR)\miranda32.pch"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "miranda32 - Win32 Release Unicode"
+
+
+"$(INTDIR)\IcoLib.obj" : $(SOURCE) "$(INTDIR)" "$(INTDIR)\miranda32.pch"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "miranda32 - Win32 Debug Unicode"
+
+
+"$(INTDIR)\IcoLib.obj"	"$(INTDIR)\IcoLib.sbr" : $(SOURCE) "$(INTDIR)" "$(INTDIR)\miranda32.pch"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ENDIF
 
 SOURCE=.\modules\icolib\skin2icons.c
 
@@ -5129,7 +4935,7 @@ SOURCE=.\modules\icolib\skin2icons.c
 	$(CPP) $(CPP_PROJ) $(SOURCE)
 
 
-!ENDIF 
+!ENDIF
 
 SOURCE=.\modules\updatenotify\updatenotify.c
 
@@ -5161,7 +4967,7 @@ SOURCE=.\modules\updatenotify\updatenotify.c
 	$(CPP) $(CPP_PROJ) $(SOURCE)
 
 
-!ENDIF 
+!ENDIF
 
 SOURCE=.\vc6.rc
 
@@ -5170,5 +4976,4 @@ SOURCE=.\vc6.rc
 
 
 
-!ENDIF 
-
+!ENDIF

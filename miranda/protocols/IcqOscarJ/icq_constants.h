@@ -147,7 +147,7 @@
 #define CAP_UTF                     0x09, 0x46, 0x13, 0x4e, 0x4c, 0x7f, 0x11, 0xd1, 0x82, 0x22, 0x44, 0x45, 0x53, 0x54, 0x00, 0x00
 #define CAP_RTF                     0x97, 0xb1, 0x27, 0x51, 0x24, 0x3c, 0x43, 0x34, 0xad, 0x22, 0xd6, 0xab, 0xf7, 0x3f, 0x14, 0x92
 #define CAP_HTML                    0x01, 0x38, 0xca, 0x7b, 0x76, 0x9a, 0x49, 0x15, 0x88, 0xf2, 0x13, 0xfc, 0x00, 0x97, 0x9e, 0xa8
-#define CAP_CONTACTS                0x09, 0x46, 0x13, 0x4b, 0x4c, 0x7f, 0x11, 0xd1, 0x82, 0x22, 0x44, 0x45, 0x53, 0x54, 0x00, 0x00
+#define CAP_CONTACTS                0x09, 0x46, 0x13, 0x4b, 0x4c, 0x7f, 0x11, 0xd1, 0x82, 0x22, 0x44, 0x45, 0x53, 0x54, 0x00, 0x00 
 #define CAP_TYPING                  0x56, 0x3f, 0xc8, 0x09, 0x0b, 0x6f, 0x41, 0xbd, 0x9f, 0x79, 0x42, 0x26, 0x09, 0xdf, 0xa2, 0xf3
 #define CAP_ICQDIRECT               0x09, 0x46, 0x13, 0x44, 0x4c, 0x7f, 0x11, 0xd1, 0x82, 0x22, 0x44, 0x45, 0x53, 0x54, 0x00, 0x00
 #define CAP_XTRAZ                   0x1A, 0x09, 0x3C, 0x6C, 0xD7, 0xFD, 0x4E, 0xC5, 0x9D, 0x51, 0xA6, 0x47, 0x4E, 0x34, 0xF5, 0xA0
@@ -220,7 +220,7 @@
 #define MGTYPE_STATUSMSGEXT_s       0x811a18bc, 0x0e6c1847, 0xa5916f18, 0xdcc76f1a
 #define MGTYPE_FILE_s               0xF02D12D9, 0x3091D311, 0x8DD70010, 0x4B06462E
 #define MGTYPE_WEBURL_s             0x371C5872, 0xE987D411, 0xA4C100D0, 0xB759B1D9
-#define MGTYPE_CONTACTS_s           0x2A0E7D46, 0x7676D411, 0xBCE60004, 0xAC961EA6
+#define MGTYPE_CONTACTS_s           0x2A0E7D46, 0x7676D411, 0xBCE60004, 0xAC961EA6 
 #define MGTYPE_GREETING_CARD_s      0x01E53B48, 0x2AE4D111, 0xB6790060, 0x97E1E294
 #define MGTYPE_CHAT_s               0xBFF720B2, 0x378ED411, 0xBD280004, 0xAC96D905
 #define MGTYPE_SMS_MESSAGE_s        0x0e28f600, 0x11e7d311, 0xbcf30004, 0xac969dc2
@@ -292,13 +292,11 @@
 /* Subtypes for Buddy Family 0x0003 */
 #define ICQ_USER_CLI_REQBUDDY       0x0002
 #define ICQ_USER_SRV_REPLYBUDDY     0x0003
-#define ICQ_USER_ADDTOLIST          0x0004  /* deprecated */
-#define ICQ_USER_REMOVEFROMLIST     0x0005  /* deprecated */
+#define ICQ_USER_ADDTOLIST          0x0004
+#define ICQ_USER_REMOVEFROMLIST     0x0005
 #define ICQ_USER_NOTIFY_REJECTED    0x000a
 #define ICQ_USER_ONLINE             0x000b
 #define ICQ_USER_OFFLINE            0x000c
-#define ICQ_USER_ADDTOLIST2         0x000f
-#define ICQ_USER_REMOVEFROMLIST2    0x0010
 
 /* Subtypes for Message Family 0x0004 */
 #define ICQ_MSG_SRV_ERROR           0x0001
@@ -389,8 +387,6 @@
 #define CLASS_AWAY                  0x0020
 #define CLASS_ICQ                   0x0040
 #define CLASS_WIRELESS              0x0080
-#define CLASS_FORWARDING            0x0200
-#define CLASS_BOT                   0x0400
 
 // Reply types for SNAC 15/02 & 15/03
 #define CLI_META_INFO_REQ           0x07D0
@@ -523,13 +519,13 @@
 #define SSI_ITEM_DENY               0x0003  // Deny record ("Block" list in AIM, and "Invisible" list in ICQ)
 #define SSI_ITEM_VISIBILITY         0x0004  // Permit/deny settings or/and bitmask of the AIM classes
 #define SSI_ITEM_PRESENCE           0x0005  // Presence info (if others can see your idle status, etc)
-#define SSI_ITEM_CLIENTDATA         0x0009  // Client specific, e.g. ICQ2k shortcut bar items
+#define SSI_ITEM_UNKNOWN1           0x0009  // Unknown. ICQ2k shortcut bar items ?
 #define SSI_ITEM_IGNORE             0x000e  // Ignore list record.
 #define SSI_ITEM_LASTUPDATE         0x000f  // Item that contain roster update time (name: "LastUpdateDate")
 #define SSI_ITEM_NONICQ             0x0010  // Non-ICQ contact (to send SMS). Name: 1#EXT, 2#EXT, etc
 #define SSI_ITEM_UNKNOWN2           0x0011  // Unknown.
 #define SSI_ITEM_IMPORTTIME         0x0013  // Item that contain roster import time (name: "Import time")
-#define SSI_ITEM_BUDDYICON          0x0014  // Buddy icon info. (names: "1", "8", etc. according ot the icon type)
+#define SSI_ITEM_BUDDYICON          0x0014  // Buddy icon info. (names: from "0" and incrementing by one)
 
 #define SSI_TLV_AWAITING_AUTH       0x0066  // Contact not authorized in list
 #define SSI_TLV_UNKNOWN             0x006D  // WTF ?
@@ -554,7 +550,7 @@
 
 
 // Internal Constants
-#define ICQ_PLUG_VERSION            0x80050001
+#define ICQ_PLUG_VERSION            0x00030A0A
 #define ICQ_VERSION                 8         // Protocol version
 #define DC_TYPE                     DC_NORMAL // Used for DC settings
 #define MAX_CONTACTSSEND            15

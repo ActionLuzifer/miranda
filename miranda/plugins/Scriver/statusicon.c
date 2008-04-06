@@ -106,7 +106,7 @@ static void RemoveAllStatusIcons(void) {
 	WindowList_Broadcast(g_dat->hParentWindowList, DM_STATUSICONCHANGE, 0, 0);
 }
 
-int ModifyStatusIcon(WPARAM wParam, LPARAM lParam) {
+static int ModifyStatusIcon(WPARAM wParam, LPARAM lParam) {
 	HANDLE hContact = (HANDLE)wParam;
 
 	StatusIconData *sid = (StatusIconData *)lParam;

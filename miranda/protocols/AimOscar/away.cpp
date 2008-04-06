@@ -1,55 +1,37 @@
-#include "aim.h"
 #include "away.h"
-
-struct awaymsg_request_thread_param
+void awaymsg_request_handler(char* sn)
 {
-	awaymsg_request_thread_param( CAimProto* _ppro, const char* _sn ) :
-		ppro( _ppro ),
-		sn( strldup( sn, lstrlen(sn)))
-	{}
-
-	~awaymsg_request_thread_param()
-	{	delete[] sn;
-	}
-
-	CAimProto* ppro;
-	char* sn;
-};
-
-static void awaymsg_request_thread( awaymsg_request_thread_param* param)
+	char* blob=strldup(sn,lstrlen(sn));
+	ForkThread((pThreadFunc)awaymsg_request_thread,blob);
+}
+void awaymsg_request_thread(char* sn)
 {
-	if ( WaitForSingleObject( param->ppro->hAwayMsgEvent, INFINITE ) == WAIT_OBJECT_0 ) {
-		if ( Miranda_Terminated()) {
-			delete param;
+	if(WaitForSingleObject(conn.hAwayMsgEvent ,  INFINITE )==WAIT_OBJECT_0)
+	{
+		if (Miranda_Terminated())
+		{
+			delete[] sn;
 			return;
 		}
-
-		if ( param->ppro->hServerConn )
-			param->ppro->aim_query_away_message( param->ppro->hServerConn, param->ppro->seqno, param->sn );
+		if(conn.hServerConn)
+			aim_query_away_message(conn.hServerConn,conn.seqno,sn);
 	}
-	delete param;
+	delete[] sn;
 }
-
-void CAimProto::awaymsg_request_handler(char* sn)
+void awaymsg_request_limit_thread()
 {
-	mir_forkthread(( pThreadFunc )awaymsg_request_thread, new awaymsg_request_thread_param( this, sn ));
-}
-
-void awaymsg_request_limit_thread( CAimProto* ppro )
-{
-	ppro->LOG("Awaymsg Request Limit thread begin");
-	while(!Miranda_Terminated() && ppro->hServerConn)
+	LOG("Awaymsg Request Limit thread begin");
+	while(conn.hServerConn)
 	{
-		SleepEx(500, TRUE);
+		Sleep(500);
 		//LOG("Setting Awaymsg Request Event...");
-		SetEvent( ppro->hAwayMsgEvent );
+		SetEvent(conn.hAwayMsgEvent);
 	}
-	ppro->LOG("Awaymsg Request Limit Thread has ended");
+	LOG("Awaymsg Request Limit Thread has ended");
 }
-
-void CAimProto::awaymsg_retrieval_handler(char* sn,char* msg)
+void awaymsg_retrieval_handler(char* sn,char* msg)
 {
-	HANDLE hContact = find_contact( sn );
-	if ( hContact )
-		write_away_message( hContact, sn, msg );
+	HANDLE hContact=find_contact(sn);
+	if(hContact)
+		write_away_message(hContact,sn,msg);
 }

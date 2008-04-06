@@ -1,6 +1,6 @@
 # Microsoft Developer Studio Generated NMAKE File, Based on aimoscar.dsp
 !IF "$(CFG)" == ""
-CFG=aim - Win32 Release
+CFG=aim - Win32 Debug
 !MESSAGE No configuration specified. Defaulting to aim - Win32 Debug.
 !ENDIF 
 
@@ -52,7 +52,6 @@ CLEAN :
 	-@erase "$(INTDIR)\links.obj"
 	-@erase "$(INTDIR)\packets.obj"
 	-@erase "$(INTDIR)\popup.obj"
-	-@erase "$(INTDIR)\proto.obj"
 	-@erase "$(INTDIR)\proxy.obj"
 	-@erase "$(INTDIR)\server.obj"
 	-@erase "$(INTDIR)\services.obj"
@@ -85,8 +84,6 @@ LINK32=link.exe
 LINK32_FLAGS=wsock32.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /dll /incremental:no /pdb:"$(OUTDIR)\Aim.pdb" /map:"$(INTDIR)\Aim.map" /debug /machine:I386 /out:"../../bin/release/plugins/Aim.dll" /implib:"$(OUTDIR)\Aim.lib" /ALIGN:4096 /ignore:4108 
 LINK32_OBJS= \
 	"$(INTDIR)\aim.obj" \
-	"$(INTDIR)\avatars.obj" \
-	"$(INTDIR)\away.obj" \
 	"$(INTDIR)\client.obj" \
 	"$(INTDIR)\connection.obj" \
 	"$(INTDIR)\conv.obj" \
@@ -108,7 +105,8 @@ LINK32_OBJS= \
 	"$(INTDIR)\utility.obj" \
 	"$(INTDIR)\windows.obj" \
 	"$(INTDIR)\aim.res" \
-	"$(INTDIR)\proto.obj"
+	"$(INTDIR)\avatars.obj" \
+	"$(INTDIR)\away.obj"
 
 "..\..\bin\release\plugins\Aim.dll" : "$(OUTDIR)" $(DEF_FILE) $(LINK32_OBJS)
     $(LINK32) @<<
@@ -154,8 +152,6 @@ CLEAN :
 	-@erase "$(INTDIR)\packets.sbr"
 	-@erase "$(INTDIR)\popup.obj"
 	-@erase "$(INTDIR)\popup.sbr"
-	-@erase "$(INTDIR)\proto.obj"
-	-@erase "$(INTDIR)\proto.sbr"
 	-@erase "$(INTDIR)\proxy.obj"
 	-@erase "$(INTDIR)\proxy.sbr"
 	-@erase "$(INTDIR)\server.obj"
@@ -195,8 +191,6 @@ BSC32=bscmake.exe
 BSC32_FLAGS=/nologo /o"$(OUTDIR)\aimoscar.bsc" 
 BSC32_SBRS= \
 	"$(INTDIR)\aim.sbr" \
-	"$(INTDIR)\avatars.sbr" \
-	"$(INTDIR)\away.sbr" \
 	"$(INTDIR)\client.sbr" \
 	"$(INTDIR)\connection.sbr" \
 	"$(INTDIR)\conv.sbr" \
@@ -217,7 +211,8 @@ BSC32_SBRS= \
 	"$(INTDIR)\tlv.sbr" \
 	"$(INTDIR)\utility.sbr" \
 	"$(INTDIR)\windows.sbr" \
-	"$(INTDIR)\proto.sbr"
+	"$(INTDIR)\avatars.sbr" \
+	"$(INTDIR)\away.sbr"
 
 "$(OUTDIR)\aimoscar.bsc" : "$(OUTDIR)" $(BSC32_SBRS)
     $(BSC32) @<<
@@ -228,8 +223,6 @@ LINK32=link.exe
 LINK32_FLAGS=wsock32.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /dll /incremental:yes /pdb:"$(OUTDIR)\Aim.pdb" /debug /machine:I386 /out:"../../bin/debug/plugins/Aim.dll" /implib:"$(OUTDIR)\Aim.lib" /pdbtype:sept 
 LINK32_OBJS= \
 	"$(INTDIR)\aim.obj" \
-	"$(INTDIR)\avatars.obj" \
-	"$(INTDIR)\away.obj" \
 	"$(INTDIR)\client.obj" \
 	"$(INTDIR)\connection.obj" \
 	"$(INTDIR)\conv.obj" \
@@ -251,7 +244,8 @@ LINK32_OBJS= \
 	"$(INTDIR)\utility.obj" \
 	"$(INTDIR)\windows.obj" \
 	"$(INTDIR)\aim.res" \
-	"$(INTDIR)\proto.obj"
+	"$(INTDIR)\avatars.obj" \
+	"$(INTDIR)\away.obj"
 
 "..\..\bin\debug\plugins\Aim.dll" : "$(OUTDIR)" $(DEF_FILE) $(LINK32_OBJS)
     $(LINK32) @<<
@@ -505,22 +499,6 @@ SOURCE=.\popup.cpp
 
 
 "$(INTDIR)\popup.obj"	"$(INTDIR)\popup.sbr" : $(SOURCE) "$(INTDIR)"
-
-
-!ENDIF 
-
-SOURCE=.\proto.cpp
-
-!IF  "$(CFG)" == "aim - Win32 Release"
-
-
-"$(INTDIR)\proto.obj" : $(SOURCE) "$(INTDIR)"
-
-
-!ELSEIF  "$(CFG)" == "aim - Win32 Debug"
-
-
-"$(INTDIR)\proto.obj"	"$(INTDIR)\proto.sbr" : $(SOURCE) "$(INTDIR)"
 
 
 !ENDIF 

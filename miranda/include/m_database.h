@@ -2,7 +2,7 @@
 
 Miranda IM: the free IM client for Microsoft* Windows*
 
-Copyright 2000-2008 Miranda ICQ/IM project,
+Copyright 2000-2007 Miranda ICQ/IM project,
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
 
@@ -928,7 +928,7 @@ __inline static int DBGetContactSettingString_Helper(HANDLE hContact,const char 
 	cgs.szModule=szModule;
 	cgs.szSetting=szSetting;
 	cgs.pValue=dbv;
-	dbv->type=(BYTE)nType;
+	dbv->type=nType;
 
 	rc=CallService(MS_DB_CONTACT_GETSETTING_STR,(WPARAM)hContact,(LPARAM)&cgs);
 #if defined(_DEBUG) && defined(DBCHECKSETTINGS)
@@ -1061,7 +1061,7 @@ __inline static int DBWriteContactSettingUTF8String(HANDLE hContact,const char *
 /* inlined range tolerate versions */
 
 __inline static BYTE DBGetContactSettingRangedByte(HANDLE hContact, const char *szModule, const char *szSetting, BYTE errorValue, BYTE minValue, BYTE maxValue) {
-	BYTE bVal = (BYTE)DBGetContactSettingByte(hContact, szModule, szSetting, errorValue);
+	BYTE bVal = DBGetContactSettingByte(hContact, szModule, szSetting, errorValue);
 
 	if (bVal < minValue || bVal > maxValue) {
 #ifdef _DEBUG
@@ -1076,7 +1076,7 @@ __inline static BYTE DBGetContactSettingRangedByte(HANDLE hContact, const char *
 }
 
 __inline static WORD DBGetContactSettingRangedWord(HANDLE hContact, const char *szModule, const char *szSetting, WORD errorValue, WORD minValue, WORD maxValue) {
-	WORD wVal = (WORD)DBGetContactSettingWord(hContact, szModule, szSetting, errorValue);
+	WORD wVal = DBGetContactSettingWord(hContact, szModule, szSetting, errorValue);
 
 	if (wVal < minValue || wVal > maxValue) {
 #ifdef _DEBUG

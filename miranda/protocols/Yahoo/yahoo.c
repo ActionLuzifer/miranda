@@ -378,7 +378,6 @@ void ext_yahoo_status_changed(int id, const char *who, int stat, const char *msg
 	}
 
 	if ( (away == 2) || (stat == YAHOO_STATUS_IDLE) || (idle > 0)) {
-		/* TODO: set Idle=-1, because of key 138=1 and don't set idlets then */
 		if (stat > 0) {
 			YAHOO_DebugLog("[ext_yahoo_status_changed] %s idle for %d:%02d:%02d", who, idle/3600, (idle/60)%60, idle%60);
 			
@@ -407,9 +406,6 @@ void ext_yahoo_status_logon(int id, const char *who, int stat, const char *msg, 
 	} 
 	
 	switch (client_version) {
-		case 2:
-				s = "Yahoo Mobile";
-				break;
 		case 3075:
 				s = "Yahoo Web Messenger";
 				break;
@@ -440,10 +436,7 @@ void ext_yahoo_status_logon(int id, const char *who, int stat, const char *msg, 
 	
 	if (s != NULL) 
 		DBWriteContactSettingString( hContact, yahooProtocolName, "MirVer", s);
-	
-	/* Add the client_Version # to the contact DB entry */
-	DBWriteContactSettingDword( hContact, yahooProtocolName, "ClientVersion", client_version);
-	
+		
 	/* Last thing check the checksum and request new one if we need to */
 	if (buddy_icon == -1) {
 		YAHOO_DebugLog("[ext_yahoo_status_logon] No avatar information in this packet? Not touching stuff!");
@@ -1489,7 +1482,7 @@ void ext_yahoo_login(int login_mode)
     }
 
 	lstrcpyn(fthost,YAHOO_GetByte("YahooJapan",0)?"filetransfer.msg.yahoo.co.jp":"filetransfer.msg.yahoo.com" , sizeof(fthost));
-	port = DBGetContactSettingWord(NULL, yahooProtocolName, YAHOO_LOGINPORT, YAHOO_DEFAULT_PORT);
+	port = DBGetContactSettingWord(NULL, yahooProtocolName, YAHOO_LOGINPORT, 5050);
 	
 #ifdef HTTP_GATEWAY			
 	nlus.cbSize = sizeof( nlus );

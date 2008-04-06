@@ -1,8 +1,13 @@
 
+#include <malloc.h>
+
+#ifdef _DEBUG
+#	define _CRTDBG_MAP_ALLOC
+#	include <stdlib.h>
+#	include <crtdbg.h>
+#endif
+
 #define _WIN32_WINNT 0x0501
-
-#include "m_stdhdr.h"
-
 #include <windows.h>
 #include <commctrl.h>
 #include <stdio.h>
@@ -48,7 +53,7 @@ extern "C" void ShutdownGdiPlus(void)
 
 using namespace Gdiplus;
 
-static ColorMatrix ClrMatrix =         {
+static ColorMatrix ClrMatrix =         { 
             1.0f, 0.0f, 0.0f, 0.0f, 0.0f,
             0.0f, 1.0f, 0.0f, 0.0f, 0.0f,
             0.0f, 0.0f, 1.0f, 0.0f, 0.0f,
@@ -63,12 +68,12 @@ extern "C" void DrawWithGDIp(HDC hDC, DWORD x, DWORD y, DWORD width, DWORD heigh
     Image *im = NULL;
     Bitmap *bm = NULL;
     ImageAttributes attr;
-
+    
     WCHAR szwFilename[MAX_PATH];
 
     Rect rect(x, y, width, height);
     Graphics *g = new Graphics(hDC);
-
+    
     g->SetInterpolationMode(InterpolationModeHighQualityBicubic);
     if(ace == NULL)
         goto plain;
@@ -89,3 +94,4 @@ plain:
     }
     delete g;
 }
+

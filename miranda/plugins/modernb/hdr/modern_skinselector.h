@@ -2,7 +2,7 @@
 
 Miranda IM: the free IM client for Microsoft* Windows*
 
-Copyright 2000-2008 Miranda ICQ/IM project,
+Copyright 2000-2007 Miranda ICQ/IM project,
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
 
@@ -20,13 +20,12 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
-#pragma once
 
 #ifndef M_MOD_SKIN_SELECTOR_H_INC
 #define M_MOD_SKIN_SELECTOR_H_INC
 
 #include "newpluginapi.h"
-#include "hdr/modern_commonheaders.h"
+#include "commonheaders.h"
 
 #define MAXVALUE 20
 

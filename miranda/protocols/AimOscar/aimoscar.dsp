@@ -23,8 +23,8 @@ CFG=aim - Win32 Debug
 
 # Begin Project
 # PROP AllowPerConfigDependencies 0
-# PROP Scc_ProjName ""
-# PROP Scc_LocalPath ""
+# PROP Scc_ProjName ""$/Miranda/miranda/protocols/AimOscar", WJRAAAAA"
+# PROP Scc_LocalPath "..\AimOscar"
 CPP=cl.exe
 MTL=midl.exe
 RSC=rc.exe
@@ -145,10 +145,6 @@ SOURCE=.\popup.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\proto.cpp
-# End Source File
-# Begin Source File
-
 SOURCE=.\proxy.cpp
 # End Source File
 # Begin Source File
@@ -246,10 +242,6 @@ SOURCE=.\packets.h
 # Begin Source File
 
 SOURCE=.\popup.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\proto.h
 # End Source File
 # Begin Source File
 

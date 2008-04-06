@@ -568,7 +568,6 @@ BOOL LogToFile(SESSION_INFO* si, GCEVENT * gce)
 			mir_sntprintf(szBuffer, SIZEOF(szBuffer), _T("%s * %s"), gce->ptszNick, RemoveFormatting(gce->ptszText));
 			break;
 		case GC_EVENT_ACTION:
-		case GC_EVENT_ACTION|GC_EVENT_HIGHLIGHT:
 			p = '*';
 			mir_sntprintf(szBuffer, SIZEOF(szBuffer), _T("%s %s"), gce->ptszNick, RemoveFormatting(gce->ptszText));
 			break;
@@ -736,28 +735,19 @@ UINT CreateGCMenu(HWND hwndDlg, HMENU *hMenu, int iIndex, POINT pt, SESSION_INFO
 
 	for (i = 0; i < gcmi.nItems; i++) {
 		TCHAR* ptszDescr = a2tf( gcmi.Item[i].pszDesc, si->dwFlags );
-		DWORD dwState = gcmi.Item[i].bDisabled ? MF_GRAYED : 0;
 
 		if ( gcmi.Item[i].uType == MENU_NEWPOPUP ) {
 			hSubMenu = CreateMenu();
-			AppendMenu( *hMenu, dwState|MF_POPUP, (UINT)hSubMenu, ptszDescr );
+			AppendMenu( *hMenu, gcmi.Item[i].bDisabled?MF_POPUP|MF_GRAYED:MF_POPUP, (UINT)hSubMenu, ptszDescr );
 		}
-		else if (gcmi.Item[i].uType == MENU_POPUPHMENU)
-			AppendMenu( hSubMenu==0?*hMenu:hSubMenu, dwState|MF_POPUP, gcmi.Item[i].dwID, ptszDescr);
 		else if (gcmi.Item[i].uType == MENU_POPUPITEM)
-			AppendMenu( hSubMenu==0?*hMenu:hSubMenu, dwState|MF_STRING, gcmi.Item[i].dwID, ptszDescr);
-		else if (gcmi.Item[i].uType == MENU_POPUPCHECK)
-			AppendMenu( hSubMenu==0?*hMenu:hSubMenu, dwState|MF_CHECKED|MF_STRING, gcmi.Item[i].dwID, ptszDescr);
+			AppendMenu( hSubMenu==0?*hMenu:hSubMenu, gcmi.Item[i].bDisabled?MF_STRING|MF_GRAYED:MF_STRING, gcmi.Item[i].dwID, ptszDescr);
 		else if (gcmi.Item[i].uType == MENU_POPUPSEPARATOR)
 			AppendMenu( hSubMenu==0?*hMenu:hSubMenu, MF_SEPARATOR, 0, ptszDescr );
 		else if (gcmi.Item[i].uType == MENU_SEPARATOR)
 			AppendMenu( *hMenu, MF_SEPARATOR, 0, ptszDescr );
-		else if (gcmi.Item[i].uType == MENU_HMENU)
-			AppendMenu( *hMenu, dwState|MF_POPUP, gcmi.Item[i].dwID, ptszDescr);
 		else if (gcmi.Item[i].uType == MENU_ITEM)
-			AppendMenu( *hMenu, dwState|MF_STRING, gcmi.Item[i].dwID, ptszDescr );
-		else if (gcmi.Item[i].uType == MENU_CHECK)
-			AppendMenu( *hMenu, dwState|MF_CHECKED|MF_STRING, gcmi.Item[i].dwID, ptszDescr );
+			AppendMenu( *hMenu, gcmi.Item[i].bDisabled?MF_STRING|MF_GRAYED:MF_STRING, gcmi.Item[i].dwID, ptszDescr );
 
 		mir_free( ptszDescr );
 	}
@@ -837,7 +827,7 @@ BOOL DoEventHook(const TCHAR* pszID, const char* pszModule, int iType, const TCH
 	gch.dwData = dwItem;
 	gch.pDest = &gcd;
 	NotifyEventHooks(hSendEvent,0,(WPARAM)&gch);
-
+	
 	mir_free( gcd.pszID );
 	mir_free( gch.ptszUID );
 	mir_free( gch.ptszText );

@@ -2,8 +2,8 @@
 /*
 IRC plugin for Miranda IM
 
-Copyright (C) 2003-05 Jurgen Persson
-Copyright (C) 2007-08 George Hazan
+Copyright (C) 2003-2005 Jurgen Persson
+Copyright (C) 2007 George Hazan
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -22,7 +22,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "irc.h"
 
-BOOL CIrcProto::CList_AddDCCChat(const CMString& name, const CMString& hostmask, unsigned long adr, int port) 
+BOOL CList_AddDCCChat(TString name, TString hostmask, unsigned long adr, int port) 
 {
 	HANDLE hContact;
 	HANDLE hc;
@@ -38,11 +38,11 @@ BOOL CIrcProto::CList_AddDCCChat(const CMString& name, const CMString& hostmask,
 		bFlag = true;
 	}
 
-	CMString contactname = name; contactname += _T(DCCSTRING);
+	TString contactname = name + _T(DCCSTRING);
 
 	CONTACT user = { (TCHAR*)contactname.c_str(), NULL, NULL, false, false, true};
 	hContact = CList_AddContact(&user, false, false);
-	setByte(hContact, "DCC", 1);
+	DBWriteContactSettingByte(hContact, IRCPROTONAME, "DCC", 1);
 
 	DCCINFO* pdci = new DCCINFO;
 	ZeroMemory(pdci, sizeof(DCCINFO));
@@ -54,17 +54,15 @@ BOOL CIrcProto::CList_AddDCCChat(const CMString& name, const CMString& hostmask,
 	pdci->bSender = false;
 	pdci->sContactName = name;
 
-	if ( m_DCCChatAccept == 3 || m_DCCChatAccept == 2 && bFlag ) {
-		CDccSession* dcc = new CDccSession( this, pdci );
+	if ( prefs->DCCChatAccept == 3 || prefs->DCCChatAccept == 2 && bFlag ) {
+		CDccSession* dcc = new CDccSession(pdci);
 
-		CDccSession* olddcc = FindDCCSession(hContact);
+		CDccSession* olddcc = g_ircSession.FindDCCSession(hContact);
 		if ( olddcc )
 			olddcc->Disconnect();
 
-		AddDCCSession(hContact, dcc);
+		g_ircSession.AddDCCSession(hContact, dcc);
 		dcc->Connect();
-		if (getByte( "MirVerAutoRequest", 1))
-		  PostIrcMessage( _T("/PRIVMSG %s \001VERSION\001"), name.c_str());
 	}
 	else {
 		CLISTEVENT cle = {0};
@@ -73,7 +71,7 @@ BOOL CIrcProto::CList_AddDCCChat(const CMString& name, const CMString& hostmask,
 		cle.hDbEvent = (HANDLE)"dccchat";	
 		cle.flags = CLEF_TCHAR;
 		cle.hIcon = LoadIconEx(IDI_DCC);
-		mir_snprintf( szService, sizeof(szService),"%s/DblClickEvent", m_szModuleName);
+		mir_snprintf( szService, sizeof(szService),"%s/DblClickEvent", IRCPROTONAME);
 		cle.pszService = szService ;
 		mir_sntprintf( szNick, SIZEOF(szNick), TranslateT("CTCP chat request from %s"), name.c_str());
 		cle.ptszTooltip = szNick;
@@ -86,7 +84,7 @@ BOOL CIrcProto::CList_AddDCCChat(const CMString& name, const CMString& hostmask,
 	return TRUE;
 }
 
-HANDLE CIrcProto::CList_AddContact(CONTACT * user, bool InList, bool SetOnline)
+HANDLE CList_AddContact(CONTACT * user, bool InList, bool SetOnline)
 {
 	if (user->name == NULL)
 		return 0;
@@ -95,41 +93,41 @@ HANDLE CIrcProto::CList_AddContact(CONTACT * user, bool InList, bool SetOnline)
 	if ( hContact ) {
 		if ( InList )
 			DBDeleteContactSetting( hContact, "CList", "NotOnList" );
-		setTString(hContact, "Nick", user->name);
+		DBWriteContactSettingTString(hContact, IRCPROTONAME, "Nick", user->name);
 		DBDeleteContactSetting(hContact, "CList", "Hidden");
-		if (SetOnline && getWord(hContact, "Status", ID_STATUS_OFFLINE)== ID_STATUS_OFFLINE)
-			setWord(hContact, "Status", ID_STATUS_ONLINE);
+		if (SetOnline && DBGetContactSettingWord(hContact, IRCPROTONAME, "Status", ID_STATUS_OFFLINE)== ID_STATUS_OFFLINE)
+			DBWriteContactSettingWord(hContact, IRCPROTONAME, "Status", ID_STATUS_ONLINE);
 		return hContact;
 	}
 	
 	// here we create a new one since no one is to be found
 	hContact = (HANDLE) CallService( MS_DB_CONTACT_ADD, 0, 0);
 	if ( hContact ) {
-		CallService( MS_PROTO_ADDTOCONTACT, (WPARAM) hContact, (LPARAM)m_szModuleName );
+		CallService( MS_PROTO_ADDTOCONTACT, (WPARAM) hContact, (LPARAM)IRCPROTONAME );
 
 		if ( InList )
 			DBDeleteContactSetting(hContact, "CList", "NotOnList");
 		else
 			DBWriteContactSettingByte(hContact, "CList", "NotOnList", 1);
 		DBDeleteContactSetting(hContact, "CList", "Hidden");
-		setTString(hContact, "Nick", user->name);
-		setTString(hContact, "Default", user->name);
-		setWord(hContact, "Status", SetOnline ? ID_STATUS_ONLINE:ID_STATUS_OFFLINE);
+		DBWriteContactSettingTString(hContact, IRCPROTONAME, "Nick", user->name);
+		DBWriteContactSettingTString(hContact, IRCPROTONAME, "Default", user->name);
+		DBWriteContactSettingWord(hContact, IRCPROTONAME, "Status", SetOnline ? ID_STATUS_ONLINE:ID_STATUS_OFFLINE);
 		return hContact;
 	}
 	return false;
 }
 
-HANDLE CIrcProto::CList_SetOffline(struct CONTACT * user)
+HANDLE CList_SetOffline(struct CONTACT * user)
 {
 	DBVARIANT dbv;
 	HANDLE hContact = CList_FindContact(user);
 	if ( hContact ) {
-		if ( !getTString( hContact, "Default", &dbv )) {
-			setString(hContact, "User", "");
-			setString(hContact, "Host", "");
-			setTString(hContact, "Nick", dbv.ptszVal);
-			setWord(hContact, "Status", ID_STATUS_OFFLINE);
+		if ( !DBGetContactSettingTString( hContact, IRCPROTONAME, "Default", &dbv )) {
+			DBWriteContactSettingString(hContact, IRCPROTONAME, "User", "");
+			DBWriteContactSettingString(hContact, IRCPROTONAME, "Host", "");
+			DBWriteContactSettingTString(hContact, IRCPROTONAME, "Nick", dbv.ptszVal);
+			DBWriteContactSettingWord(hContact, IRCPROTONAME, "Status", ID_STATUS_OFFLINE);
 			DBFreeVariant(&dbv);
 			return hContact;
 	}	}
@@ -137,29 +135,29 @@ HANDLE CIrcProto::CList_SetOffline(struct CONTACT * user)
 	return 0;
 }
 
-bool CIrcProto::CList_SetAllOffline(BYTE ChatsToo)
+bool CList_SetAllOffline(BYTE ChatsToo)
 {
 	DBVARIANT dbv;
 
-	DisconnectAllDCCSessions(false);
+	g_ircSession.DisconnectAllDCCSessions(false);
 
 	HANDLE hContact = (HANDLE) CallService( MS_DB_CONTACT_FINDFIRST, 0, 0 );
 	while ( hContact ) {
 		char* szProto = ( char* ) CallService( MS_PROTO_GETCONTACTBASEPROTO, (WPARAM) hContact, 0 );
-		if ( szProto != NULL && !lstrcmpiA( szProto, m_szModuleName )) {
-			if ( getByte( hContact, "ChatRoom", 0 ) == 0 ) {
-				if ( getByte(hContact, "DCC", 0 ) != 0 ) {
+		if ( szProto != NULL && !lstrcmpiA( szProto, IRCPROTONAME )) {
+			if ( DBGetContactSettingByte( hContact, IRCPROTONAME, "ChatRoom", 0 ) == 0 ) {
+				if ( DBGetContactSettingByte(hContact, IRCPROTONAME, "DCC", 0 ) != 0 ) {
 					if ( ChatsToo )
-						setWord(hContact, "Status", ID_STATUS_OFFLINE);
+						DBWriteContactSettingWord(hContact, IRCPROTONAME, "Status", ID_STATUS_OFFLINE);
 				}
-				else if ( !getTString( hContact, "Default", &dbv )) {
-					setTString( hContact, "Nick", dbv.ptszVal);
-					setWord( hContact, "Status", ID_STATUS_OFFLINE );
+				else if ( !DBGetContactSettingTString( hContact, IRCPROTONAME, "Default", &dbv )) {
+					DBWriteContactSettingTString( hContact, IRCPROTONAME, "Nick", dbv.ptszVal);
+					DBWriteContactSettingWord( hContact, IRCPROTONAME, "Status", ID_STATUS_OFFLINE );
 					DBFreeVariant( &dbv );
 				}
-				DBDeleteContactSetting( hContact, m_szModuleName, "IP" );
-				setString( hContact, "User", "" );
-				setString( hContact, "Host", "" );
+				DBDeleteContactSetting( hContact, IRCPROTONAME, "IP" );
+				DBWriteContactSettingString( hContact, IRCPROTONAME, "User", "" );
+				DBWriteContactSettingString( hContact, IRCPROTONAME, "Host", "" );
 		}	}
 
 		hContact = (HANDLE) CallService( MS_DB_CONTACT_FINDNEXT, (WPARAM) hContact, 0);
@@ -167,7 +165,7 @@ bool CIrcProto::CList_SetAllOffline(BYTE ChatsToo)
 	return true;
 }
 
-HANDLE CIrcProto::CList_FindContact (CONTACT* user) 
+HANDLE CList_FindContact (CONTACT* user) 
 {
 	if ( !user || !user->name )
 		return 0;
@@ -184,19 +182,19 @@ HANDLE CIrcProto::CList_FindContact (CONTACT* user)
 	HANDLE hContact = (HANDLE) CallService( MS_DB_CONTACT_FINDFIRST, 0, 0);
 	while (hContact) {
 		szProto = ( char* ) CallService( MS_PROTO_GETCONTACTBASEPROTO, (WPARAM) hContact, 0);
-		if ( szProto != NULL && !lstrcmpiA( szProto, m_szModuleName )) {
-			if ( getByte( hContact, "ChatRoom", 0) == 0) {
+		if ( szProto != NULL && !lstrcmpiA( szProto, IRCPROTONAME )) {
+			if ( DBGetContactSettingByte( hContact, IRCPROTONAME, "ChatRoom", 0) == 0) {
 				HANDLE hContact_temp = NULL;
 				TCHAR* DBDefault = NULL;
 				TCHAR* DBNick = NULL;
 				TCHAR* DBWildcard = NULL;
 				TCHAR* DBUser = NULL;
 				TCHAR* DBHost = NULL;
-				if ( !getTString(hContact, "Default",   &dbv1)) DBDefault = dbv1.ptszVal;
-				if ( !getTString(hContact, "Nick",      &dbv2)) DBNick = dbv2.ptszVal;
-				if ( !getTString(hContact, "UWildcard", &dbv3)) DBWildcard = dbv3.ptszVal;
-				if ( !getTString(hContact, "UUser",     &dbv4)) DBUser = dbv4.ptszVal;
-				if ( !getTString(hContact, "UHost",     &dbv5)) DBHost = dbv5.ptszVal;
+				if ( !DBGetContactSettingTString(hContact, IRCPROTONAME, "Default",   &dbv1)) DBDefault = dbv1.ptszVal;
+				if ( !DBGetContactSettingTString(hContact, IRCPROTONAME, "Nick",      &dbv2)) DBNick = dbv2.ptszVal;
+				if ( !DBGetContactSettingTString(hContact, IRCPROTONAME, "UWildcard", &dbv3)) DBWildcard = dbv3.ptszVal;
+				if ( !DBGetContactSettingTString(hContact, IRCPROTONAME, "UUser",     &dbv4)) DBUser = dbv4.ptszVal;
+				if ( !DBGetContactSettingTString(hContact, IRCPROTONAME, "UHost",     &dbv5)) DBHost = dbv5.ptszVal;
 				
 				if ( DBWildcard )
 					CharLower( DBWildcard );

@@ -70,11 +70,11 @@ void ext_yahoo_got_im(int id, const char *me, const char *who, const char *msg, 
 	
 	while ( *c != '\0') {
 			// Strip the font tag
-        if (!_strnicmp(c,"<font ",6) || !_strnicmp(c,"</font>",6) ||
+        if (!strnicmp(c,"<font ",6) || !strnicmp(c,"</font>",6) ||
 			// strip the fade tag
-			!_strnicmp(c, "<FADE ",6) || !_strnicmp(c,"</FADE>",7) ||
+			!strnicmp(c, "<FADE ",6) || !strnicmp(c,"</FADE>",7) ||
 			// strip the alternate colors tag
-			!_strnicmp(c, "<ALT ",5) || !_strnicmp(c, "</ALT>",6)){ 
+			!strnicmp(c, "<ALT ",5) || !strnicmp(c, "</ALT>",6)){ 
                 while ((*c++ != '>') && (*c != '\0')); 
 		} else
         // strip ANSI color combination

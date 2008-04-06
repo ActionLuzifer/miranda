@@ -2,7 +2,7 @@
 
 Miranda IM: the free IM client for Microsoft* Windows*
 
-Copyright 2000-2008 Miranda ICQ/IM project, 
+Copyright 2000-2007 Miranda ICQ/IM project, 
 all portions of this codebase are copyrighted to the people 
 listed in contributors.txt.
 
@@ -20,8 +20,6 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
-
-#include "m_protoint.h"
 
 #define NEWSTR_ALLOCA(A) (A==NULL)?NULL:strcpy((char*)alloca(strlen(A)+1),A)
 
@@ -43,14 +41,6 @@ WCHAR* mir_a2u_cp(const char* src, int codepage);
 WCHAR* mir_a2u(const char* src);
 char*  mir_u2a_cp(const wchar_t* src, int codepage);
 char*  mir_u2a( const wchar_t* src);
-
-/**** modules.c ************************************************************************/
-
-void KillModuleEventHooks( HINSTANCE );
-void KillModuleServices( HINSTANCE );
-
-void KillObjectEventHooks( void* pObject );
-void KillObjectServices( void* pObject );
 
 /**** utf.c ****************************************************************************/
 
@@ -113,43 +103,3 @@ void Window_FreeIcon_IcoLib(HWND hWnd);
 extern int statusModeList[ MAX_STATUS_COUNT ];
 extern int skinIconStatusList[ MAX_STATUS_COUNT ];
 extern int skinIconStatusFlags[ MAX_STATUS_COUNT ];
-
-/**** protocols.c ***********************************************************************/
-
-#define OFFSET_PROTOPOS 200
-#define OFFSET_VISIBLE  400
-#define OFFSET_ENABLED  600
-#define OFFSET_NAME     800
-
-typedef struct
-{
-	PROTOACCOUNT** items;
-	int count, limit, increment;
-	FSortFunc sortFunc;
-}
-	TAccounts;
-
-extern TAccounts accounts;
-
-PROTOACCOUNT* Proto_GetAccount( const char* accName );
-PROTOCOLDESCRIPTOR* Proto_IsProtocolLoaded( const char* szProtoName );
-
-PROTO_INTERFACE* AddDefaultAccount( const char* szProtoName );
-int  FreeDefaultAccount( PROTO_INTERFACE* ppi );
-
-BOOL ActivateAccount( PROTOACCOUNT* pa );
-void EraseAccount( PROTOACCOUNT* pa );
-void DeactivateAccount( PROTOACCOUNT* pa, BOOL bIsDynamic );
-void UnloadAccount( PROTOACCOUNT* pa, BOOL bIsDynamic );
-void OpenAccountOptions( PROTOACCOUNT* pa );
-
-void LoadDbAccounts( void );
-void WriteDbAccounts( void );
-
-int CallProtoServiceInt( HANDLE hContact, const char* szModule, const char* szService, WPARAM, LPARAM );
-int CallContactService( HANDLE hContact, const char *szProtoService, WPARAM, LPARAM );
-
-__inline int CallProtoService( const char* szModule, const char* szService, WPARAM wParam, LPARAM lParam )
-{
-	return CallProtoServiceInt( NULL, szModule, szService, wParam, lParam );
-}

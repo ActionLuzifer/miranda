@@ -2,7 +2,7 @@
 
 Jabber Protocol Plugin for Miranda IM
 Copyright ( C ) 2002-04  Santithorn Bunchua
-Copyright ( C ) 2005-08  George Hazan
+Copyright ( C ) 2005-07  George Hazan
 Copyright ( C ) 2007     Maxim Mluhov
 
 This program is free software; you can redistribute it and/or
@@ -19,10 +19,10 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-File name      : $URL$
-Revision       : $Revision$
-Last change on : $Date$
-Last change by : $Author$
+File name      : $Source: /cvsroot/miranda/miranda/protocols/JabberG/jabber_xstatus.cpp,v $
+Revision       : $Revision: 5370 $
+Last change on : $Date: 2007-05-06 02:13:31 +0400 (В�?, 06 май 2007) $
+Last change by : $Author: ghazan $
 
 */
 
@@ -32,13 +32,31 @@ Last change by : $Author$
 #include "m_genmenu.h"
 #include "m_icolib.h"
 #include "sdk/m_cluiframes.h"
+#include "resource.h"
 
 #include "sdk/m_proto_listeningto.h"
+
+extern LIST<void> arServices;
+
+#define NUM_XMODES 61
+
+static BOOL CALLBACK SetMoodMsgDlgProc( HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam );
+
+static HANDLE hHookExtraIconsRebuild = NULL;
+static HANDLE hHookStatusBuild = NULL;
+static HANDLE hHookExtraIconsApply = NULL;
+
+static int jabberXStatus = 0;
+
+static BOOL   bXStatusMenuBuilt = FALSE;
+static HANDLE hCListXStatusIcons[ NUM_XMODES ] = {0};
 
 struct
 {
 	char	*szName;
 	char	*szTag;
+	HANDLE	hItem;
+	HANDLE	hIcon;
 } static g_arrMoods[] = 
 {
 #define _T_STUB_
@@ -107,57 +125,76 @@ struct
 #undef _T_STUB_
 };
 
-HICON CJabberProto::GetXStatusIcon(int bStatus, UINT flags)
+HICON GetXStatusIcon(int bStatus, UINT flags)
 {
-	HICON icon = ( HICON )CallService( MS_SKIN2_GETICONBYHANDLE, 0, (LPARAM)m_xstatusIcons[ bStatus ].hIcon);
-	return ( flags & LR_SHARED ) ? icon : CopyIcon( icon );
+	HICON icon;
+
+	icon = (HICON)CallService( MS_SKIN2_GETICONBYHANDLE, 0, (LPARAM)g_arrMoods[ bStatus ].hIcon);
+
+	if (flags & LR_SHARED)
+		return icon;
+	else
+		return CopyIcon(icon);
 }
 
-void CJabberProto::JabberUpdateContactExtraIcon( HANDLE hContact )
+static void setContactExtraIcon( HANDLE hContact, HANDLE hIcon )
+{
+  IconExtraColumn iec;
+
+  iec.cbSize = sizeof(iec);
+  iec.hImage = hIcon;
+  iec.ColumnType = EXTRA_ICON_ADV1;
+  CallService(MS_CLIST_EXTRA_SET_ICON, (WPARAM)hContact, (LPARAM)&iec);
+
+  NotifyEventHooks(heventXStatusIconChanged, (WPARAM)hContact, (LPARAM)hIcon);
+}
+
+void JabberUpdateContactExtraIcon( HANDLE hContact )
 {
 	DWORD bXStatus = JGetByte(hContact, DBSETTING_XSTATUSID, 0);
-	HICON hIcon;
 
-	if (bXStatus > 0 && bXStatus <= NUM_XMODES && m_xstatusIcons[ bXStatus-1 ].hCListXStatusIcon ) 
-		hIcon = (HICON)m_xstatusIcons[ bXStatus-1 ].hCListXStatusIcon;
-	else 
-		hIcon = (HICON)-1;
-
-	IconExtraColumn iec;
-	iec.cbSize = sizeof(iec);
-	iec.hImage = hIcon;
-	iec.ColumnType = EXTRA_ICON_ADV1;
-	CallService( MS_CLIST_EXTRA_SET_ICON, (WPARAM)hContact, (LPARAM)&iec );
-
-	NotifyEventHooks(m_hEventXStatusIconChanged, (WPARAM)hContact, (LPARAM)hIcon);
+  if (bXStatus > 0 && bXStatus <= NUM_XMODES && hCListXStatusIcons[ bXStatus - 1 ]) 
+  {
+    setContactExtraIcon(hContact, hCListXStatusIcons[ bXStatus - 1 ]);
+  } 
+  else 
+  {
+    setContactExtraIcon(hContact, (HANDLE)-1);
+  }
 }
 
-int CJabberProto::CListMW_ExtraIconsRebuild( WPARAM wParam, LPARAM lParam ) 
+static int CListMW_ExtraIconsRebuild( WPARAM wParam, LPARAM lParam ) 
 {
-	if ( ServiceExists( MS_CLIST_EXTRA_ADD_ICON ))
-		for ( int i = 0; i < NUM_XMODES; i++ ) 
-			m_xstatusIcons[i].hCListXStatusIcon = (HANDLE)CallService(MS_CLIST_EXTRA_ADD_ICON, (WPARAM)GetXStatusIcon(i + 1, LR_SHARED), 0);
+  int i;
 
-	return 0;
+  if (ServiceExists(MS_CLIST_EXTRA_ADD_ICON))
+  {
+    for (i = 0; i < NUM_XMODES; i++) 
+    {
+      hCListXStatusIcons[i] = (HANDLE)CallService(MS_CLIST_EXTRA_ADD_ICON, (WPARAM)GetXStatusIcon(i + 1, LR_SHARED), 0);
+    }
+  }
+
+  return 0;
 }
 
-int CJabberProto::CListMW_ExtraIconsApply( WPARAM wParam, LPARAM lParam ) 
+static int CListMW_ExtraIconsApply( WPARAM wParam, LPARAM lParam ) 
 {
-	if (m_bJabberOnline && m_bPepSupported && ServiceExists(MS_CLIST_EXTRA_SET_ICON)) 
-	{
+  if (jabberOnline && jabberPepSupported && ServiceExists(MS_CLIST_EXTRA_SET_ICON)) 
+  {
 		char* szProto = ( char* )JCallService( MS_PROTO_GETCONTACTBASEPROTO, wParam, 0 );
-		if ( szProto==NULL || strcmp( szProto, m_szModuleName ))
+		if ( szProto==NULL || strcmp( szProto, jabberProtoName ))
 			return 0; // only apply icons to our contacts, do not mess others
 
 		JabberUpdateContactExtraIcon((HANDLE)wParam);
-	}
-	return 0;
+  }
+  return 0;
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////
 // JabberSetContactMood - sets the contact's mood
 
-void CJabberProto::SetContactMood( HANDLE hContact, const char* moodType, const TCHAR* moodText )
+void JabberSetContactMood( HANDLE hContact, const char* moodType, const TCHAR* moodText )
 {
 	int bXStatus = 0;
 	if ( moodType ) {
@@ -170,7 +207,7 @@ void CJabberProto::SetContactMood( HANDLE hContact, const char* moodType, const 
 
 		if ( bXStatus > NUM_XMODES ) {
 			JDeleteSetting( hContact, DBSETTING_XSTATUSID );
-			JSetString( hContact, DBSETTING_XSTATUSNAME, moodType );
+ 			JSetString( hContact, DBSETTING_XSTATUSNAME, moodType );
 		}
 	}
 	else {
@@ -179,28 +216,28 @@ void CJabberProto::SetContactMood( HANDLE hContact, const char* moodType, const 
 	}
 
 	if ( moodText )
-		JSetStringT( hContact, DBSETTING_XSTATUSMSG, moodText );
+ 		JSetStringT( hContact, DBSETTING_XSTATUSMSG, moodText );
 	else
 		JDeleteSetting( hContact, DBSETTING_XSTATUSMSG );
 
-	JabberUpdateContactExtraIcon( hContact );
-	NotifyEventHooks( m_hEventXStatusChanged, (WPARAM)hContact, 0 );
+  JabberUpdateContactExtraIcon( hContact );
+  NotifyEventHooks( heventXStatusChanged, (WPARAM)hContact, 0 );
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////
 // JabberGetXStatus - gets the extended status info (mood)
 
-int __cdecl CJabberProto::OnGetXStatus( WPARAM wParam, LPARAM lParam )
+int JabberGetXStatus( WPARAM wParam, LPARAM lParam )
 {
-	if ( !m_bJabberOnline || !m_bPepSupported )
+	if ( !jabberOnline || !jabberPepSupported )
 		return 0;
 
-	if ( m_nJabberXStatus < 1 || m_nJabberXStatus > NUM_XMODES )
-		m_nJabberXStatus = 0;
+	if ( jabberXStatus < 1 || jabberXStatus > NUM_XMODES )
+		jabberXStatus = 0;
 
 	if ( wParam ) *(( char** )wParam ) = DBSETTING_XSTATUSNAME;
 	if ( lParam ) *(( char** )lParam ) = DBSETTING_XSTATUSMSG;
-	return m_nJabberXStatus;
+	return jabberXStatus;
 }
 
 
@@ -209,33 +246,35 @@ int __cdecl CJabberProto::OnGetXStatus( WPARAM wParam, LPARAM lParam )
 //wParam = (int)N  // custom status id, 0 = my current custom status
 //lParam = flags   // use LR_SHARED for shared HICON
 //return = HICON   // custom status icon (use DestroyIcon to release resources if not LR_SHARED)
-
-int __cdecl CJabberProto::OnGetXStatusIcon( WPARAM wParam, LPARAM lParam )
+int JabberGetXStatusIcon( WPARAM wParam, LPARAM lParam )
 {
-	if ( !m_bJabberOnline )
+	if ( !jabberOnline )
 		return 0;
 
-	if ( !wParam )
-		wParam = JGetByte( DBSETTING_XSTATUSID, 0 );
+	if (!wParam)
+		wParam = JGetByte(DBSETTING_XSTATUSID, 0);
 
 	if ( wParam < 1 || wParam > NUM_XMODES || !ServiceExists( MS_SKIN2_GETICONBYHANDLE ))
 		return 0;
 
-	if ( lParam & LR_SHARED )
+	if (lParam & LR_SHARED)
+	{
 		return (int)GetXStatusIcon( wParam, LR_SHARED );
-
-	return (int)GetXStatusIcon( wParam, 0 );
+	}
+	else {
+		return (int)GetXStatusIcon( wParam, 0 );
+	}
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////
 // JabberSendPepMood - sends mood
 
-BOOL CJabberProto::SendPepMood( int nMoodNumber, TCHAR* szMoodText )
+BOOL JabberSendPepMood( int nMoodNumber, TCHAR* szMoodText )
 {
-	if ( !m_bJabberOnline || !m_bPepSupported || ( nMoodNumber > NUM_XMODES ))
+	if ( !jabberOnline || !jabberPepSupported || ( nMoodNumber > NUM_XMODES ))
 		return FALSE;
 
-	XmlNodeIq iq( "set", SerialNext() );
+	XmlNodeIq iq( "set", JabberSerialNext() );
 	XmlNode* pubsubNode = iq.addChild( "pubsub" );
 	pubsubNode->addAttr( "xmlns", JABBER_FEAT_PUBSUB );
 
@@ -257,17 +296,17 @@ BOOL CJabberProto::SendPepMood( int nMoodNumber, TCHAR* szMoodText )
 		XmlNode* itemNode = retractNode->addChild( "item" );
 		itemNode->addAttr( "id", "current" );
 	}
-	m_ThreadInfo->send( iq );
+	jabberThreadInfo->send( iq );
 	
 	return TRUE;
 }
 
-BOOL CJabberProto::SendPepTune( TCHAR* szArtist, TCHAR* szLength, TCHAR* szSource, TCHAR* szTitle, TCHAR* szTrack, TCHAR* szUri )
+BOOL JabberSendPepTune( TCHAR* szArtist, TCHAR* szLength, TCHAR* szSource, TCHAR* szTitle, TCHAR* szTrack, TCHAR* szUri )
 {
-	if ( !m_bJabberOnline || !m_bPepSupported )
+	if ( !jabberOnline || !jabberPepSupported )
 		return FALSE;
 
-	XmlNodeIq iq( "set", SerialNext() );
+	XmlNodeIq iq( "set", JabberSerialNext() );
 	XmlNode* pubsubNode = iq.addChild( "pubsub" );
 	pubsubNode->addAttr( "xmlns", JABBER_FEAT_PUBSUB );
 
@@ -292,12 +331,12 @@ BOOL CJabberProto::SendPepTune( TCHAR* szArtist, TCHAR* szLength, TCHAR* szSourc
 		if ( szTrack ) tuneNode->addChild( "track", szTrack );
 		if ( szUri ) tuneNode->addChild( "uri", szUri );
 	}
-	m_ThreadInfo->send( iq );
+	jabberThreadInfo->send( iq );
 
 	return TRUE;
 }
 
-void CJabberProto::SetContactTune( HANDLE hContact,  TCHAR* szArtist, TCHAR* szLength, TCHAR* szSource, TCHAR* szTitle, TCHAR* szTrack, TCHAR* szUri )
+void JabberSetContactTune( HANDLE hContact,  TCHAR* szArtist, TCHAR* szLength, TCHAR* szSource, TCHAR* szTitle, TCHAR* szTrack, TCHAR* szUri )
 {
 	if ( !szArtist && !szTitle ) {
 		JDeleteSetting( hContact, "ListeningTo" );
@@ -351,11 +390,11 @@ void overrideStr( TCHAR*& dest, const TCHAR* src, BOOL unicode, const TCHAR* def
 		dest = mir_tstrdup( def );
 }
 
-int __cdecl CJabberProto::OnSetListeningTo( WPARAM wParam, LPARAM lParam )
+int JabberSetListeningTo( WPARAM wParam, LPARAM lParam )
 {
 	LISTENINGTOINFO *cm = (LISTENINGTOINFO *)lParam;
 	if ( !cm || cm->cbSize != sizeof(LISTENINGTOINFO) ) {
-		SendPepTune( NULL, NULL, NULL, NULL, NULL, NULL );
+		JabberSendPepTune( NULL, NULL, NULL, NULL, NULL, NULL );
 		JDeleteSetting( NULL, "ListeningTo" );
 	}
 	else {
@@ -391,8 +430,8 @@ int __cdecl CJabberProto::OnSetListeningTo( WPARAM wParam, LPARAM lParam )
 			mir_sntprintf( szLengthInSec, SIZEOF( szLengthInSec ), _T("%d"), result );
 		}
 
-		SendPepTune( szArtist, szLength ? szLengthInSec : NULL, szSource, szTitle, szTrack, NULL );
-		SetContactTune( NULL, szArtist, szLength, szSource, szTitle, szTrack, NULL );
+		JabberSendPepTune( szArtist, szLength ? szLengthInSec : NULL, szSource, szTitle, szTrack, NULL );
+		JabberSetContactTune( NULL, szArtist, szLength, szSource, szTitle, szTrack, NULL );
 		
 		mir_free( szArtist );
 		mir_free( szLength );
@@ -403,46 +442,71 @@ int __cdecl CJabberProto::OnSetListeningTo( WPARAM wParam, LPARAM lParam )
 	return 0;
 }
 
+
+/////////////////////////////////////////////////////////////////////////////////////////
+// JabberSetXStatus - sets the extended status info (mood)
+
+int JabberSetXStatus( WPARAM wParam, LPARAM lParam )
+{
+	if ( !jabberPepSupported || !jabberOnline || ( wParam > NUM_XMODES ))
+		return 0;
+
+	if ( !wParam ) {
+		JabberSendPepMood( 0, NULL );
+		JDeleteSetting( NULL, DBSETTING_XSTATUSMSG );
+		JDeleteSetting( NULL, DBSETTING_XSTATUSNAME );
+		JDeleteSetting( NULL, DBSETTING_XSTATUSID );
+	}
+	else {
+		CreateDialogParam( hInst, MAKEINTRESOURCE(IDD_SETMOODMSG), NULL, SetMoodMsgDlgProc, wParam );
+	}
+
+	jabberXStatus = wParam;
+
+	return wParam;
+}
+
 /////////////////////////////////////////////////////////////////////////////////////////
 // menuSetXStatus - a stub for status menus
 
-int __cdecl CJabberProto::OnMenuSetXStatus( WPARAM wParam, LPARAM lParam, LPARAM param )
+static int menuSetXStatus( WPARAM wParam, LPARAM lParam, LPARAM param )
 {
-	OnSetXStatus( param, 0 );
+	JabberSetXStatus( param, 0 );
+
 	return 0;
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////
 // builds xstatus menu
 
-void CJabberProto::BuildXStatusItems( WPARAM wParam, LPARAM lParam )
+int CListMW_BuildStatusItems( WPARAM wParam, LPARAM lParam )
 {
-	if ( !m_bJabberOnline || !m_bPepSupported )
-		return;
+	if ( !jabberOnline || !jabberPepSupported )
+		return 0;
 
 	CLISTMENUITEM mi = { 0 };
 	int i;
-	char srvFce[MAX_PATH + 64], *svcName = srvFce+strlen( m_szModuleName );
+	char srvFce[MAX_PATH + 64];
 	char szItem[MAX_PATH + 64];
 	HANDLE hXStatusRoot;
 	HANDLE hRoot = ( HANDLE )szItem;
 
-	mir_snprintf( szItem, sizeof(szItem), LPGEN("%s Custom Status"), m_szModuleName );
+	mir_snprintf( szItem, sizeof(szItem), LPGEN("%s Custom Status"), jabberProtoName );
 	mi.cbSize = sizeof(mi);
 	mi.popupPosition= 500084000;
 	mi.position = 2000040000;
-	mi.pszContactOwner = m_szModuleName;
+	mi.pszContactOwner = jabberProtoName;
 
 	for( i = 0; i <= NUM_XMODES; i++ ) {
-		mir_snprintf( srvFce, sizeof(srvFce), "%s/menuXStatus%d", m_szModuleName, i );
+		mir_snprintf( srvFce, sizeof(srvFce), "%s/menuXStatus%d", jabberProtoName, i );
 
-		if ( !m_bXStatusMenuBuilt )
-			JCreateServiceParam( svcName, &CJabberProto::OnMenuSetXStatus, i );
+		if ( !bXStatusMenuBuilt )
+			CreateServiceFunctionParam( srvFce, menuSetXStatus, i );
 
 		if ( i ) {
 			char szIcon[ MAX_PATH ];
 			mir_snprintf( szIcon, sizeof( szIcon ), "xicon%d", i );
-			mi.icolibItem = m_xstatusIcons[ i ].hIcon;
+			mi.icolibItem = g_arrMoods[ i ].hIcon;
 			mi.pszName = ( char* )g_arrMoods[ i ].szName;
 		}
 		else {
@@ -452,16 +516,16 @@ void CJabberProto::BuildXStatusItems( WPARAM wParam, LPARAM lParam )
 
 		mi.position++;
 		mi.pszPopupName = ( char* )hRoot;
-		mi.flags = CMIF_ICONFROMICOLIB + (( m_nJabberXStatus == i ) ? CMIF_CHECKED : 0 );
+		mi.flags = CMIF_ICONFROMICOLIB + (( jabberXStatus == i ) ? CMIF_CHECKED : 0 );
 		mi.pszService = srvFce;
-		m_xstatusIcons[ i ].hItem = ( HANDLE )CallService( MS_CLIST_ADDSTATUSMENUITEM, ( WPARAM )&hXStatusRoot, ( LPARAM )&mi );
+		g_arrMoods[ i ].hItem = ( HANDLE )CallService( MS_CLIST_ADDSTATUSMENUITEM, ( WPARAM )&hXStatusRoot, ( LPARAM )&mi );
 	}
 
-	m_bXStatusMenuBuilt = 1;
-	return;
+	bXStatusMenuBuilt = 1;
+	return 0;
 }
 
-void CJabberProto::InitXStatusIcons()
+void InitXStatusIcons()
 {
 	char szFile[MAX_PATH];
 	GetModuleFileNameA( hInst, szFile, MAX_PATH );
@@ -469,50 +533,46 @@ void CJabberProto::InitXStatusIcons()
 	if ( p != NULL )
 		strcpy( p+1, "..\\Icons\\jabber_xstatus.dll" );
 
-	TCHAR szSection[ 100 ];
-	TCHAR szDescription[ 100 ];
-
-	mir_sntprintf( szSection, SIZEOF( szSection ), _T("Status Icons/") _T(TCHAR_STR_PARAM) _T("/Moods"), m_szModuleName);
-//	mir_sntprintf( szSection, SIZEOF( szSection ), _T("Status Icons/%s/Moods"), m_tszUserName);
+	char szSection[ 100 ];
+	mir_snprintf( szSection, sizeof( szSection ), "%s/Custom Status", JTranslate( jabberProtoName ));
 
 	SKINICONDESC sid = {0};
 	sid.cbSize = sizeof(SKINICONDESC);
 	sid.pszDefaultFile = szFile;
 	sid.cx = sid.cy = 16;
-	sid.ptszSection = szSection;
-	sid.ptszDescription = szDescription;
-	sid.flags = SIDF_TCHAR;
+	sid.pszSection = szSection;
 
 	for ( int i = 1; i < SIZEOF(g_arrMoods); i++ ) {
-		char szSettingName[100];
-		mir_snprintf( szSettingName, SIZEOF( szSettingName ), "%s_%s", m_szModuleName, g_arrMoods[i].szName );
-		sid.pszName = szSettingName;
-		mir_sntprintf(szDescription, SIZEOF(szDescription), _T(TCHAR_STR_PARAM), g_arrMoods[i].szName);
-		sid.iDefaultIndex = -( i+200 );
-		m_xstatusIcons[ i ].hIcon = ( HANDLE )CallService( MS_SKIN2_ADDICON, 0, ( LPARAM )&sid );
+			char szSettingName[100];
+			mir_snprintf( szSettingName, sizeof( szSettingName ), "%s_%s", jabberProtoName, g_arrMoods[i].szName );
+			sid.pszName = szSettingName;
+			sid.pszDescription = Translate( g_arrMoods[i].szName );
+			sid.iDefaultIndex = -( i+200 );
+			g_arrMoods[ i ].hIcon = ( HANDLE )CallService( MS_SKIN2_ADDICON, 0, ( LPARAM )&sid );
 	}
 }
 
-void CJabberProto::XStatusInit()
+void JabberXStatusInit()
 {
-	m_nJabberXStatus = JGetByte( NULL, DBSETTING_XSTATUSID, 0 );
+	jabberXStatus = JGetByte( NULL, DBSETTING_XSTATUSID, 0 );
 
 	InitXStatusIcons();
 
-	JHookEvent( ME_CLIST_EXTRA_LIST_REBUILD, &CJabberProto::CListMW_ExtraIconsRebuild );
-	JHookEvent( ME_CLIST_EXTRA_IMAGE_APPLY,  &CJabberProto::CListMW_ExtraIconsApply );
+	hHookStatusBuild = HookEvent(ME_CLIST_PREBUILDSTATUSMENU, CListMW_BuildStatusItems);
+	hHookExtraIconsRebuild = HookEvent(ME_CLIST_EXTRA_LIST_REBUILD, CListMW_ExtraIconsRebuild);
+	hHookExtraIconsApply = HookEvent(ME_CLIST_EXTRA_IMAGE_APPLY, CListMW_ExtraIconsApply);
 }
 
-void CJabberProto::XStatusUninit()
+void JabberXStatusUninit()
 {
-	if ( m_hHookStatusBuild )
-		UnhookEvent( m_hHookStatusBuild );
+	if ( hHookStatusBuild )
+		UnhookEvent( hHookStatusBuild );
 
-	if ( m_hHookExtraIconsRebuild )
-		UnhookEvent( m_hHookExtraIconsRebuild );
+	if ( hHookExtraIconsRebuild )
+		UnhookEvent( hHookExtraIconsRebuild );
 
-	if ( m_hHookExtraIconsApply )
-		UnhookEvent( m_hHookExtraIconsApply );
+	if ( hHookExtraIconsApply )
+		UnhookEvent( hHookExtraIconsApply );
 }
 
 
@@ -561,23 +621,15 @@ int gnCountdown = 5;
 HANDLE ghPreshutdown = NULL;
 #define DM_MOOD_SHUTDOWN WM_USER+10
 
-struct SetMoodMsgDlgProcParam
-{
-	int mood;
-	CJabberProto* ppro;
-};
-
 static BOOL CALLBACK SetMoodMsgDlgProc( HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam )
 {
 	switch ( message ) {
 	case WM_INITDIALOG:
 		{
-			SetMoodMsgDlgProcParam* param = ( SetMoodMsgDlgProcParam* )lParam;
-			if ( param->mood == 0 || param->mood > NUM_XMODES )
-				param->mood = 1;
+			if ( lParam == 0 || lParam > NUM_XMODES )
+				lParam = 1;
 
 			SetWindowLong( hwndDlg, GWL_USERDATA, lParam );
-			
 			TranslateDialogDefault(hwndDlg);
 
 			SendDlgItemMessage( hwndDlg, IDC_MSG_MOOD, EM_LIMITTEXT, 1024, 0 );
@@ -586,7 +638,7 @@ static BOOL CALLBACK SetMoodMsgDlgProc( HWND hwndDlg, UINT message, WPARAM wPara
 
 			TCHAR str[256], format[128];
 			GetWindowText( hwndDlg, format, SIZEOF( format ));
-			TCHAR* szMood = mir_a2t( Translate(g_arrMoods[ param->mood ].szName));
+			TCHAR* szMood = mir_a2t( Translate(g_arrMoods[ lParam ].szName));
 			mir_sntprintf( str, SIZEOF(str), format, szMood );
 			mir_free( szMood );
 			SetWindowText( hwndDlg, str );
@@ -594,13 +646,14 @@ static BOOL CALLBACK SetMoodMsgDlgProc( HWND hwndDlg, UINT message, WPARAM wPara
 			GetDlgItemText( hwndDlg, IDOK, gszOkBuffonFormat, SIZEOF(gszOkBuffonFormat));
 
 			char szSetting[64];
-			sprintf(szSetting, "XStatus%dMsg", param->mood);
+			sprintf(szSetting, "XStatus%dMsg", lParam);
 			DBVARIANT dbv;
-			if ( !param->ppro->JGetStringT( NULL, szSetting, &dbv )) {
+			if ( !JGetStringT( NULL, szSetting, &dbv )) {
 				SetDlgItemText( hwndDlg, IDC_MSG_MOOD, dbv.ptszVal );
 				JFreeVariant( &dbv );
 			}
-			else SetDlgItemTextA( hwndDlg, IDC_MSG_MOOD, g_arrMoods[ param->mood ].szName );
+			else
+				SetDlgItemTextA( hwndDlg, IDC_MSG_MOOD, g_arrMoods[ lParam ].szName );
 
 			gnCountdown = 5;
 			SendMessage( hwndDlg, WM_TIMER, 0, 0 );
@@ -644,49 +697,21 @@ static BOOL CALLBACK SetMoodMsgDlgProc( HWND hwndDlg, UINT message, WPARAM wPara
 			GetDlgItemText( hwndDlg, IDC_MSG_MOOD, szMoodText, SIZEOF( szMoodText ));
 			SetWindowLong( GetDlgItem( hwndDlg, IDC_MSG_MOOD ), GWL_WNDPROC, (LONG)OldMessageEditProc );
 
-			SetMoodMsgDlgProcParam* param = ( SetMoodMsgDlgProcParam* )GetWindowLong( hwndDlg, GWL_USERDATA );
-
-			int nStatus = param->mood;
+			int nStatus = GetWindowLong( hwndDlg, GWL_USERDATA );
 			if ( !nStatus || nStatus > NUM_XMODES )
 				nStatus = 1;
 			
-			param->ppro->SendPepMood( nStatus, szMoodText );
+			JabberSendPepMood( nStatus, szMoodText );
 
-			param->ppro->JSetByte( NULL, DBSETTING_XSTATUSID, nStatus );
-			param->ppro->JSetStringT( NULL, DBSETTING_XSTATUSMSG, szMoodText );
-			param->ppro->JSetString( NULL, DBSETTING_XSTATUSNAME, g_arrMoods[ nStatus ].szName );
+			JSetByte( NULL, DBSETTING_XSTATUSID, nStatus );
+			JSetStringT( NULL, DBSETTING_XSTATUSMSG, szMoodText );
+			JSetString( NULL, DBSETTING_XSTATUSNAME, g_arrMoods[ nStatus ].szName );
 
 			char szSetting[64];
 			sprintf(szSetting, "XStatus%dMsg", nStatus);
-			param->ppro->JSetStringT(NULL, szSetting, szMoodText);
-			delete param;
+			JSetStringT(NULL, szSetting, szMoodText);
 		}
 		break;
 	}
 	return FALSE;
-}
-
-/////////////////////////////////////////////////////////////////////////////////////////
-// JabberSetXStatus - sets the extended status info (mood)
-
-int __cdecl CJabberProto::OnSetXStatus( WPARAM wParam, LPARAM lParam )
-{
-	if ( !m_bPepSupported || !m_bJabberOnline || ( wParam > NUM_XMODES ))
-		return 0;
-
-	if ( !wParam ) {
-		SendPepMood( 0, NULL );
-		JDeleteSetting( NULL, DBSETTING_XSTATUSMSG );
-		JDeleteSetting( NULL, DBSETTING_XSTATUSNAME );
-		JDeleteSetting( NULL, DBSETTING_XSTATUSID );
-	}
-	else {
-		SetMoodMsgDlgProcParam* param = new SetMoodMsgDlgProcParam;
-		param->mood = wParam;
-		param->ppro = this;
-		CreateDialogParam( hInst, MAKEINTRESOURCE(IDD_SETMOODMSG), NULL, SetMoodMsgDlgProc, ( LPARAM )param );
-	}
-
-	m_nJabberXStatus = wParam;
-	return wParam;
 }

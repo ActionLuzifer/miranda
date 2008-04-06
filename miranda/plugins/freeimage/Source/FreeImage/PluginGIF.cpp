@@ -43,14 +43,6 @@
 
 
 struct GIFinfo {
-	GIFinfo()
-	{
-		read = 0;
-		global_color_table_offset = 0;
-		global_color_table_size = 0;
-		background_color = 0;
-	}
-
 	BOOL read;
 	//only really used when reading
 	size_t global_color_table_offset;
@@ -529,7 +521,7 @@ Open(FreeImageIO *io, fi_handle handle, BOOL read) {
 	if( info == NULL ) {
 		return NULL;
 	}
-	//memset(info, 0, sizeof(GIFinfo));
+	memset(info, 0, sizeof(GIFinfo));
 
 	info->read = read;
 	if( read ) {

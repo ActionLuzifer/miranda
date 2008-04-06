@@ -2,7 +2,7 @@
 
 Miranda IM: the free IM client for Microsoft* Windows*
 
-Copyright 2000-2008 Miranda ICQ/IM project, 
+Copyright 2000-2007 Miranda ICQ/IM project, 
 all portions of this codebase are copyrighted to the people 
 listed in contributors.txt.
 
@@ -53,13 +53,6 @@ typedef struct
 	BOOL         temp_reset;
 }
 	IconItem;
-
-typedef struct
-{
-	char *paramName;
-	DWORD value;
-}
-	TreeItem;
 
 // extracticon.c
 UINT _ExtractIconEx(LPCTSTR lpszFile, int iconIndex, int cxIcon, int cyIcon, HICON *phicon, UINT flags);

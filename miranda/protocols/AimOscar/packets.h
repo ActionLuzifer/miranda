@@ -1,5 +1,6 @@
 #ifndef PACKETS_H
 #define PACKETS_H
+#include "defines.h"
 struct flap_header
 {
     unsigned char ast;

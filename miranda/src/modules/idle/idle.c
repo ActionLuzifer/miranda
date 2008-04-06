@@ -106,8 +106,6 @@ BOOL (WINAPI *_WTSQuerySessionInformation)(HANDLE, DWORD, WTS_INFO_CLASS, PVOID,
 
 BOOL bIsWTSApiPresent = FALSE;
 
-static BOOL bModuleInitialized = FALSE;
-
 BOOL InitWTSAPI()
 {
 	HMODULE hDll = LoadLibraryA("wtsapi32.dll");
@@ -296,7 +294,8 @@ static BOOL CALLBACK IdleOptsDlgProc(HWND hwndDlg, UINT msg, WPARAM wParam, LPAR
 
       CheckDlgButton(hwndDlg, IDC_AASHORTIDLE, DBGetContactSettingByte(NULL, IDLEMOD, IDL_AAENABLE, 0) ? BST_CHECKED:BST_UNCHECKED);
 		for ( j = 0; j < SIZEOF(aa_Status); j++ )
-			SendDlgItemMessage(hwndDlg, IDC_AASTATUS, CB_ADDSTRING, 0, ( LPARAM )cli.pfnGetStatusModeDescription( aa_Status[j], 0 ));
+			SendDlgItemMessage(hwndDlg, IDC_AASTATUS, CB_ADDSTRING, 0, 
+				CallService( MS_CLIST_GETSTATUSMODEDESCRIPTION, (WPARAM)aa_Status[j], GCMDF_TCHAR ));
 
 		j = IdleGetStatusIndex((WORD)(DBGetContactSettingWord(NULL, IDLEMOD, IDL_AASTATUS, 0)));
 		SendDlgItemMessage(hwndDlg, IDC_AASTATUS, CB_SETCURSEL, j, 0);
@@ -395,8 +394,6 @@ static int IdleGetInfo(WPARAM wParam, LPARAM lParam)
 
 int LoadIdleModule(void)
 {
-	bModuleInitialized = TRUE;
-
 	bIsWTSApiPresent = InitWTSAPI();
 	MyGetLastInputInfo=(BOOL (WINAPI *)(LASTINPUTINFO*))GetProcAddress(GetModuleHandleA("user32"), "GetLastInputInfo");
 	hIdleEvent=CreateHookableEvent(ME_IDLE_CHANGED);
@@ -408,8 +405,6 @@ int LoadIdleModule(void)
 
 void UnloadIdleModule()
 {
-	if ( !bModuleInitialized ) return;
-
 	IdleObject_Destroy(&gIdleObject);
 	DestroyHookableEvent(hIdleEvent);
 	hIdleEvent=NULL;

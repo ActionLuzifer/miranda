@@ -36,7 +36,6 @@
 				Name="VCCustomBuildTool"/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="wsock32.lib"
 				LinkIncremental="1"
 				SuppressStartupBanner="TRUE"
 				TargetMachine="1"/>
@@ -95,7 +94,7 @@
 				Name="VCCustomBuildTool"/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="wsock32.lib"
+				AdditionalOptions="Ws2_32.lib"
 				LinkIncremental="1"
 				SuppressStartupBanner="TRUE"
 				GenerateDebugInformation="TRUE"
@@ -158,7 +157,7 @@
 				Name="VCCustomBuildTool"/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="wsock32.lib"
+				AdditionalOptions="Ws2_32.lib"
 				LinkIncremental="1"
 				SuppressStartupBanner="TRUE"
 				GenerateDebugInformation="TRUE"
@@ -220,11 +219,8 @@
 				Name="VCCustomBuildTool"/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="vc7to6.lib wsock32.lib"
 				LinkIncremental="1"
 				SuppressStartupBanner="TRUE"
-				AdditionalLibraryDirectories="../../lib"
-				IgnoreAllDefaultLibraries="TRUE"
 				TargetMachine="1"/>
 			<Tool
 				Name="VCMIDLTool"
@@ -315,9 +311,6 @@
 			</File>
 			<File
 				RelativePath=".\popup.cpp">
-			</File>
-			<File
-				RelativePath=".\proto.cpp">
 			</File>
 			<File
 				RelativePath=".\proxy.cpp">
@@ -425,9 +418,6 @@
 			</File>
 			<File
 				RelativePath=".\popup.h">
-			</File>
-			<File
-				RelativePath=".\proto.h">
 			</File>
 			<File
 				RelativePath=".\proxy.h">

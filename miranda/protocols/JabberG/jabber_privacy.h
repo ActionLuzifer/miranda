@@ -2,7 +2,7 @@
 
 Jabber Protocol Plugin for Miranda IM
 Copyright ( C ) 2002-04  Santithorn Bunchua
-Copyright ( C ) 2005-08  George Hazan
+Copyright ( C ) 2005-07  George Hazan
 Copyright ( C ) 2007     Maxim Mluhov
 
 This program is free software; you can redistribute it and/or
@@ -19,15 +19,19 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-File name      : $URL$
-Revision       : $Revision$
-Last change on : $Date$
-Last change by : $Author$
+File name      : $Source: /cvsroot/miranda/miranda/protocols/JabberG/jabber_privacy.h,v $
+Revision       : $Revision: 5568 $
+Last change on : $Date: 2007-06-02 00:01:00 +0300 (бс, 02 шўэ 2007) $
+Last change by : $Author: ghazan $
 
 */
 
 #ifndef _JABBER_PRIVACY_H_
 #define _JABBER_PRIVACY_H_
+
+void JabberProcessIqPrivacyLists( XmlNode* iqNode, void* userdata, CJabberIqInfo* pInfo );
+void JabberIqResultPrivacyLists( XmlNode* iqNode, void* userdata, CJabberIqInfo *pInfo );
+int JabberMenuHandlePrivacyLists( WPARAM wParam, LPARAM lParam );
 
 #define JABBER_PL_RULE_TYPE_MESSAGE			1
 #define JABBER_PL_RULE_TYPE_PRESENCE_IN		2
@@ -53,15 +57,14 @@ struct CPrivacyListModifyUserParam
 };
 
 class CPrivacyList;
-
+class CPrivacyListRule;
 class CPrivacyListRule
 {
 protected:
 	friend class CPrivacyList;
 public:
-	CPrivacyListRule( CJabberProto* ppro, PrivacyListRuleType type = Else, TCHAR *szValue = _T(""), BOOL bAction = TRUE, DWORD dwOrder = 90, DWORD dwPackets = 0)
+	CPrivacyListRule(PrivacyListRuleType type = Else, TCHAR *szValue = _T(""), BOOL bAction = TRUE, DWORD dwOrder = 90, DWORD dwPackets = 0)
 	{
-		m_proto = ppro;
 		m_szValue = mir_tstrdup(szValue);
 		m_nType = type;
 		m_bAction = bAction;
@@ -77,7 +80,7 @@ public:
 		if (m_pNext)
 			delete m_pNext;
 	};
-	__inline CPrivacyListRule* GetNext()
+	CPrivacyListRule* GetNext()
 	{
 		return m_pNext;
 	}
@@ -87,7 +90,7 @@ public:
 		m_pNext = pNext;
 		return pRetVal;
 	}
-	__inline DWORD GetOrder()
+	DWORD GetOrder()
 	{
 		return m_dwOrder;
 	}
@@ -97,43 +100,42 @@ public:
 		m_dwOrder = dwOrder;
 		return dwRetVal;
 	}
-	__inline PrivacyListRuleType GetType()
+	PrivacyListRuleType GetType()
 	{
 		return m_nType;
 	}
-	__inline BOOL SetType( PrivacyListRuleType type )
+	BOOL SetType( PrivacyListRuleType type )
 	{
 		m_nType = type;
 		return TRUE;
 	}
-	__inline TCHAR* GetValue()
+	TCHAR* GetValue()
 	{
 		return m_szValue;
 	}
-	__inline BOOL SetValue( TCHAR *szValue )
+	BOOL SetValue( TCHAR *szValue )
 	{
 		replaceStr( m_szValue, szValue );
 		return TRUE;
 	}
-	__inline DWORD GetPackets()
+	DWORD GetPackets()
 	{
 		return m_dwPackets;
 	}
-	__inline BOOL SetPackets( DWORD dwPackets )
+	BOOL SetPackets( DWORD dwPackets )
 	{
 		m_dwPackets = dwPackets;
 		return TRUE;
 	}
-	__inline BOOL GetAction()
+	BOOL GetAction()
 	{
 		return m_bAction;
 	}
-	__inline BOOL SetAction( BOOL bAction )
+	BOOL SetAction( BOOL bAction )
 	{
 		m_bAction = bAction;
 		return TRUE;
 	}
-	CJabberProto* m_proto;
 protected:
 	PrivacyListRuleType m_nType;
 	TCHAR *m_szValue;
@@ -154,11 +156,8 @@ protected:
 	BOOL m_bModified;
 	BOOL m_bDeleted;
 public:
-	CJabberProto* m_proto;
-
-	CPrivacyList(CJabberProto* ppro, TCHAR *szListName)
+	CPrivacyList(TCHAR *szListName)
 	{
-		m_proto = ppro;
 		m_szListName = mir_tstrdup(szListName);
 		m_pRules = NULL;
 		m_pNext = NULL;
@@ -181,15 +180,15 @@ public:
 		m_pRules = NULL;
 		return TRUE;
 	}
-	__inline TCHAR* GetListName()
+	TCHAR* GetListName()
 	{
 		return m_szListName;
 	}
-	__inline CPrivacyListRule* GetFirstRule()
+	CPrivacyListRule* GetFirstRule()
 	{
 		return m_pRules;
 	}
-	__inline CPrivacyList* GetNext()
+	CPrivacyList* GetNext()
 	{
 		return m_pNext;
 	}
@@ -201,7 +200,7 @@ public:
 	}
 	BOOL AddRule(PrivacyListRuleType type, TCHAR *szValue, BOOL bAction, DWORD dwOrder, DWORD dwPackets)
 	{
-		CPrivacyListRule *pRule = new CPrivacyListRule( m_proto, type, szValue, bAction, dwOrder, dwPackets );
+		CPrivacyListRule *pRule = new CPrivacyListRule( type, szValue, bAction, dwOrder, dwPackets );
 		if ( !pRule )
 			return FALSE;
 		pRule->SetNext( m_pRules );
@@ -294,27 +293,27 @@ public:
 
 		return TRUE;
 	}
-	__inline void SetLoaded(BOOL bLoaded = TRUE)
+	void SetLoaded(BOOL bLoaded = TRUE)
 	{
 		m_bLoaded = bLoaded;
 	}
-	__inline BOOL IsLoaded()
+	BOOL IsLoaded()
 	{
 		return m_bLoaded;
 	}
-	__inline void SetModified(BOOL bModified = TRUE)
+	void SetModified(BOOL bModified = TRUE)
 	{
 		m_bModified = bModified;
 	}
-	__inline BOOL IsModified()
+	BOOL IsModified()
 	{
 		return m_bModified;
 	}
-	__inline void SetDeleted(BOOL bDeleted = TRUE)
+	void SetDeleted(BOOL bDeleted = TRUE)
 	{
 		m_bDeleted = bDeleted;
 	}
-	__inline BOOL IsDeleted()
+	BOOL IsDeleted()
 	{
 		return m_bDeleted;
 	}
@@ -330,15 +329,11 @@ protected:
 	BOOL m_bModified;
 
 public:
-	CJabberProto* m_proto;
-
-	CPrivacyListManager( CJabberProto* ppro )
+	CPrivacyListManager()
 	{
-		m_proto = ppro;
+		InitializeCriticalSection(&m_cs);
 		m_szActiveListName = NULL;
 		m_szDefaultListName = NULL;
-		m_pLists = NULL;
-		InitializeCriticalSection(&m_cs);
 		m_bModified = FALSE;
 	};
 	~CPrivacyListManager()
@@ -401,7 +396,7 @@ public:
 	{
 		if (FindList(szListName))
 			return FALSE;
-		CPrivacyList *pList = new CPrivacyList( m_proto, szListName );
+		CPrivacyList *pList = new CPrivacyList( szListName );
 		pList->SetNext( m_pLists );
 		m_pLists = pList;
 		return TRUE;
@@ -433,6 +428,15 @@ public:
 		}
 		return TRUE;
 	}
+
+	void QueryLists()
+	{
+		XmlNodeIq iq( g_JabberIqManager.AddHandler( JabberIqResultPrivacyLists ) );
+		XmlNode* query = iq.addQuery( JABBER_FEAT_PRIVACY_LISTS );
+		jabberThreadInfo->send( iq );
+	}
 };
+
+extern CPrivacyListManager g_PrivacyListManager;
 
 #endif //_JABBER_PRIVACY_H_

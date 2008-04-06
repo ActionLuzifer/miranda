@@ -36,7 +36,6 @@ HBRUSH      hListBkgBrush = NULL;
 BOOL        SmileyAddInstalled = FALSE;
 BOOL        PopUpInstalled = FALSE;
 HBRUSH      hEditBkgBrush = NULL;
-HBRUSH      hListSelectedBkgBrush = NULL;
 
 HIMAGELIST  hImageList = NULL;
 
@@ -52,7 +51,7 @@ static void InitREOleCallback(void);
 PLUGININFOEX pluginInfo = {
 	sizeof(PLUGININFOEX),
 	"Chat",
-	PLUGIN_MAKE_VERSION(0,8,0,0),
+	PLUGIN_MAKE_VERSION(0,7,1,0),
 	"Provides chat rooms for protocols supporting it",
 	"Miranda team",
 	"project-info@miranda-im.org",
@@ -156,7 +155,6 @@ int __declspec(dllexport) Unload(void)
 
 	DestroyMenu(g_hMenu);
 	DestroyServiceFunctions();
-	DestroyHookableEvents();
 	FreeIcons();
 	OptionsUnInit();
 	FreeLibrary(GetModuleHandleA("riched20.dll"));

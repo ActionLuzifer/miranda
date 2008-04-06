@@ -840,9 +840,3 @@ void CreateHookableEvents(void)
 	hSendEvent = CreateHookableEvent(ME_GC_EVENT);
 	hBuildMenuEvent = CreateHookableEvent(ME_GC_BUILDMENU);
 }
-
-void DestroyHookableEvents(void)
-{
-	DestroyHookableEvent(hSendEvent);
-	DestroyHookableEvent(hBuildMenuEvent);
-}

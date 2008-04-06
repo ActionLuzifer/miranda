@@ -2,7 +2,7 @@
 
 Miranda IM: the free IM client for Microsoft* Windows*
 
-Copyright 2000-2008 Miranda ICQ/IM project,
+Copyright 2000-2007 Miranda ICQ/IM project,
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
 
@@ -31,8 +31,6 @@ struct
 	FSortFunc sortFunc;
 }
 static eventTypes;
-
-static BOOL bModuleInitialized = FALSE;
 
 static int DbEventTypeRegister(WPARAM wParam, LPARAM lParam)
 {
@@ -178,8 +176,6 @@ static int CompareEventTypes( const DBEVENTTYPEDESCR* p1, const DBEVENTTYPEDESCR
 
 int InitUtils()
 {
-	bModuleInitialized = TRUE;
-	
 	eventTypes.increment = 10;
 	eventTypes.sortFunc = CompareEventTypes;
 
@@ -193,9 +189,6 @@ int InitUtils()
 void UnloadEventsModule()
 {
 	int i;
-
-	if ( !bModuleInitialized ) return;
-
 	for ( i=0; i < eventTypes.count; i++ ) {
 		DBEVENTTYPEDESCR* p = eventTypes.items[i];
 		mir_free( p->module );

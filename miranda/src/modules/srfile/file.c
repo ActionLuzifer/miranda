@@ -2,7 +2,7 @@
 
 Miranda IM: the free IM client for Microsoft* Windows*
 
-Copyright 2000-2008 Miranda ICQ/IM project,
+Copyright 2000-2007 Miranda ICQ/IM project,
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
 
@@ -223,22 +223,25 @@ static void RemoveUnreadFileEvents(void)
 
 static int SRFileModulesLoaded(WPARAM wParam,LPARAM lParam)
 {
-	int i;
-
 	CLISTMENUITEM mi = { 0 };
+	PROTOCOLDESCRIPTOR **protocol;
+	int protoCount,i;
+
 	mi.cbSize = sizeof(mi);
 	mi.position = -2000020000;
 	mi.icolibItem = GetSkinIconHandle( SKINICON_EVENT_FILE );
 	mi.pszName = LPGEN("&File");
 	mi.pszService = MS_FILE_SENDFILE;
+	CallService(MS_PROTO_ENUMPROTOCOLS,(WPARAM)&protoCount,(LPARAM)&protocol);
+	for ( i=0; i <protoCount; i++ ) {
+		if ( protocol[i]->type != PROTOTYPE_PROTOCOL )
+			continue;
 
-	for ( i=0; i < accounts.count; i++ ) {
-		PROTOACCOUNT* pa = accounts.items[i];
-		if ( CallProtoService( pa->szModuleName, PS_GETCAPS,PFLAGNUM_1, 0 ) & PF1_FILESEND ) {
+		if ( CallProtoService( protocol[i]->szName, PS_GETCAPS,PFLAGNUM_1, 0 ) & PF1_FILESEND ) {
 			mi.flags = CMIF_ICONFROMICOLIB;
-			if ( !( CallProtoService( pa->szModuleName, PS_GETCAPS,PFLAGNUM_4, 0 ) & PF4_OFFLINEFILES ))
+			if ( !( CallProtoService( protocol[i]->szName, PS_GETCAPS,PFLAGNUM_4, 0 ) & PF4_OFFLINEFILES ))
 				mi.flags |= CMIF_NOTOFFLINE;
-			mi.pszContactOwner = pa->szModuleName;
+			mi.pszContactOwner = protocol[i]->szName;
 			CallService(MS_CLIST_ADDCONTACTMENUITEM,0,(LPARAM)&mi);
 	}	}
 
@@ -246,25 +249,8 @@ static int SRFileModulesLoaded(WPARAM wParam,LPARAM lParam)
 	return 0;
 }
 
-int FtMgrShowCommand(WPARAM wParam, LPARAM lParam)
-{
-	FtMgr_Show();
-	return 0;
-}
-
 int LoadSendRecvFileModule(void)
 {
-	CLISTMENUITEM mi = { 0 };
-	mi.cbSize = sizeof(mi);
-	mi.flags = CMIF_ICONFROMICOLIB;
-	mi.icolibItem = GetSkinIconHandle( SKINICON_EVENT_FILE );
-	mi.position = 1900000000;
-	mi.pszName = LPGEN("&File Transfers...");
-	mi.pszService = "FtMgr/Show"; //MS_PROTO_SHOWFTMGR;
-	CallService( MS_CLIST_ADDMAINMENUITEM, 0, ( LPARAM )&mi );
-
-	CreateServiceFunction("FtMgr/Show", FtMgrShowCommand);
-
 	HookEvent(ME_SYSTEM_MODULESLOADED,SRFileModulesLoaded);
 	HookEvent(ME_DB_EVENT_ADDED,FileEventAdded);
 	HookEvent(ME_OPT_INITIALISE,FileOptInitialise);

@@ -19,6 +19,7 @@
 			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
 			IntermediateDirectory="$(SolutionDir)$(ConfigurationName)/Obj/$(ProjectName)"
 			ConfigurationType="1"
+			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops"
 			UseOfMFC="0"
 			ATLMinimizesCRunTimeLibraryUsage="false"
 			WholeProgramOptimization="1"
@@ -52,7 +53,7 @@
 				OmitFramePointers="true"
 				WholeProgramOptimization="true"
 				AdditionalIncludeDirectories="../include"
-				PreprocessorDefinitions="NDEBUG;WIN32;_WINDOWS;_NOSDK;_STATIC"
+				PreprocessorDefinitions="NDEBUG;WIN32;_WINDOWS;_NOSDK;_USE_32BIT_TIME_T;_STATIC"
 				StringPooling="true"
 				ExceptionHandling="0"
 				RuntimeLibrary="2"
@@ -125,6 +126,7 @@
 			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
 			IntermediateDirectory="$(SolutionDir)$(ConfigurationName)/Obj/$(ProjectName)"
 			ConfigurationType="1"
+			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops"
 			UseOfMFC="0"
 			ATLMinimizesCRunTimeLibraryUsage="false"
 			>
@@ -153,7 +155,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="0"
 				AdditionalIncludeDirectories="../include"
-				PreprocessorDefinitions="_DEBUG;WIN32;_WINDOWS;_NOSDK;_STATIC"
+				PreprocessorDefinitions="_DEBUG;WIN32;_WINDOWS;_NOSDK;_USE_32BIT_TIME_T;_STATIC"
 				ExceptionHandling="0"
 				RuntimeLibrary="3"
 				EnableFunctionLevelLinking="true"
@@ -182,7 +184,6 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="wsock32.lib odbc32.lib odbccp32.lib comctl32.lib winmm.lib version.lib"
-				LinkIncremental="2"
 				SuppressStartupBanner="true"
 				AdditionalManifestDependencies="type=&apos;win32&apos; name=&apos;Microsoft.Windows.Common-Controls&apos; version=&apos;6.0.0.0&apos; processorArchitecture=&apos;*&apos; publicKeyToken=&apos;6595b64144ccf1df&apos; language=&apos;*&apos;"
 				GenerateDebugInformation="true"
@@ -222,6 +223,7 @@
 			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
 			IntermediateDirectory="$(SolutionDir)$(ConfigurationName)/Obj/$(ProjectName)"
 			ConfigurationType="1"
+			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops"
 			UseOfMFC="0"
 			ATLMinimizesCRunTimeLibraryUsage="false"
 			CharacterSet="1"
@@ -251,11 +253,12 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="3"
-				InlineFunctionExpansion="1"
+				InlineFunctionExpansion="2"
 				FavorSizeOrSpeed="2"
+				OmitFramePointers="true"
 				WholeProgramOptimization="true"
 				AdditionalIncludeDirectories="../include"
-				PreprocessorDefinitions="NDEBUG;WIN32;_WINDOWS;_NOSDK;_STATIC"
+				PreprocessorDefinitions="NDEBUG;WIN32;_WINDOWS;_NOSDK;_USE_32BIT_TIME_T;_STATIC"
 				StringPooling="true"
 				ExceptionHandling="0"
 				RuntimeLibrary="2"
@@ -329,6 +332,7 @@
 			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
 			IntermediateDirectory="$(SolutionDir)$(ConfigurationName)/Obj/$(ProjectName)"
 			ConfigurationType="1"
+			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops"
 			UseOfMFC="0"
 			ATLMinimizesCRunTimeLibraryUsage="false"
 			CharacterSet="1"
@@ -358,7 +362,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="0"
 				AdditionalIncludeDirectories="../include"
-				PreprocessorDefinitions="_DEBUG;WIN32;_WINDOWS;_NOSDK;_STATIC"
+				PreprocessorDefinitions="_DEBUG;WIN32;_WINDOWS;_NOSDK;_USE_32BIT_TIME_T;_STATIC"
 				StringPooling="false"
 				ExceptionHandling="0"
 				RuntimeLibrary="3"
@@ -389,7 +393,6 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="wsock32.lib odbc32.lib odbccp32.lib comctl32.lib winmm.lib version.lib"
-				LinkIncremental="1"
 				SuppressStartupBanner="true"
 				AdditionalManifestDependencies="type=&apos;win32&apos; name=&apos;Microsoft.Windows.Common-Controls&apos; version=&apos;6.0.0.0&apos; processorArchitecture=&apos;*&apos; publicKeyToken=&apos;6595b64144ccf1df&apos; language=&apos;*&apos;"
 				GenerateDebugInformation="true"
@@ -489,10 +492,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\include\m_hotkeys.h"
-				>
-			</File>
-			<File
 				RelativePath="..\include\m_icq.h"
 				>
 			</File>
@@ -550,10 +549,6 @@
 			</File>
 			<File
 				RelativePath="..\include\m_system.h"
-				>
-			</File>
-			<File
-				RelativePath="..\include\m_system_cpp.h"
 				>
 			</File>
 			<File
@@ -2032,14 +2027,6 @@
 				Name="protocols"
 				>
 				<File
-					RelativePath="..\include\m_protoint.h"
-					>
-				</File>
-				<File
-					RelativePath=".\modules\protocols\protoaccs.c"
-					>
-				</File>
-				<File
 					RelativePath="modules\protocols\protochains.c"
 					>
 					<FileConfiguration
@@ -2128,20 +2115,96 @@
 					</FileConfiguration>
 				</File>
 				<File
-					RelativePath=".\modules\protocols\protoint.c"
+					RelativePath="modules\protocols\protodir.c"
 					>
-				</File>
-				<File
-					RelativePath=".\modules\protocols\protoopts.c"
-					>
+					<FileConfiguration
+						Name="Release|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							Optimization="1"
+							AdditionalIncludeDirectories=""
+							PreprocessorDefinitions=""
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Debug|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							Optimization="0"
+							AdditionalIncludeDirectories=""
+							PreprocessorDefinitions=""
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release Unicode|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							Optimization="1"
+							AdditionalIncludeDirectories=""
+							PreprocessorDefinitions=""
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Debug Unicode|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							Optimization="0"
+							AdditionalIncludeDirectories=""
+							PreprocessorDefinitions=""
+						/>
+					</FileConfiguration>
 				</File>
 			</Filter>
 			<Filter
 				Name="skin"
 				>
 				<File
-					RelativePath=".\modules\skin\hotkeys.c"
+					RelativePath="modules\skin\skin.c"
 					>
+					<FileConfiguration
+						Name="Release|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							Optimization="1"
+							AdditionalIncludeDirectories=""
+							PreprocessorDefinitions=""
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Debug|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							Optimization="0"
+							AdditionalIncludeDirectories=""
+							PreprocessorDefinitions=""
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release Unicode|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							Optimization="1"
+							AdditionalIncludeDirectories=""
+							PreprocessorDefinitions=""
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Debug Unicode|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							Optimization="0"
+							AdditionalIncludeDirectories=""
+							PreprocessorDefinitions=""
+						/>
+					</FileConfiguration>
 				</File>
 				<File
 					RelativePath="modules\skin\skinicons.c"
@@ -2734,10 +2797,6 @@
 							PreprocessorDefinitions=""
 						/>
 					</FileConfiguration>
-				</File>
-				<File
-					RelativePath=".\modules\srfile\ftmanager.c"
-					>
 				</File>
 			</Filter>
 			<Filter
@@ -3612,6 +3671,10 @@
 					</FileConfiguration>
 				</File>
 				<File
+					RelativePath=".\modules\icolib\IcoLib.c"
+					>
+				</File>
+				<File
 					RelativePath=".\modules\icolib\IcoLib.h"
 					>
 				</File>
@@ -3625,176 +3688,44 @@
 			Name="Resources"
 			>
 			<File
-				RelativePath=".\res\_blank.ico"
-				>
-			</File>
-			<File
-				RelativePath=".\res\arrow_sort_column_down.bmp"
-				>
-			</File>
-			<File
-				RelativePath=".\res\arrow_sort_column_up.bmp"
-				>
-			</File>
-			<File
-				RelativePath=".\res\check_off.ico"
-				>
-			</File>
-			<File
-				RelativePath=".\res\check_on.ico"
-				>
-			</File>
-			<File
-				RelativePath=".\res\contact_add.ico"
-				>
-			</File>
-			<File
-				RelativePath=".\res\contact_delete.ico"
-				>
-			</File>
-			<File
-				RelativePath=".\res\contact_rename.ico"
-				>
-			</File>
-			<File
-				RelativePath=".\res\contact_view_details.ico"
-				>
-			</File>
-			<File
-				RelativePath="..\docs\contributors.txt"
-				>
-			</File>
-			<File
 				RelativePath="..\docs\credits.txt"
 				>
 			</File>
 			<File
-				RelativePath=".\res\cursor_drag_copy.cur"
+				RelativePath="miranda32.exe.manifest"
 				>
-			</File>
-			<File
-				RelativePath=".\res\cursor_drop_user.cur"
-				>
-			</File>
-			<File
-				RelativePath=".\res\cursor_hyperlink.cur"
-				>
-			</File>
-			<File
-				RelativePath=".\res\group_closed.ico"
-				>
-			</File>
-			<File
-				RelativePath=".\res\group_opened.ico"
-				>
-			</File>
-			<File
-				RelativePath=".\res\icon_accmgr.ico"
-				>
-			</File>
-			<File
-				RelativePath=".\res\icon_all.ico"
-				>
-			</File>
-			<File
-				RelativePath=".\res\icon_ansi.ico"
-				>
-			</File>
-			<File
-				RelativePath=".\res\icon_auth_request.ico"
-				>
-			</File>
-			<File
-				RelativePath=".\res\icon_connecting.ico"
-				>
-			</File>
-			<File
-				RelativePath=".\res\icon_down_arrow.ico"
-				>
-			</File>
-			<File
-				RelativePath=".\res\icon_file.ico"
-				>
-			</File>
-			<File
-				RelativePath=".\res\icon_find_user.ico"
-				>
-			</File>
-			<File
-				RelativePath=".\res\icon_help.ico"
-				>
-			</File>
-			<File
-				RelativePath=".\res\icon_history.ico"
-				>
-			</File>
-			<File
-				RelativePath=".\res\icon_loaded.ico"
-				>
-			</File>
-			<File
-				RelativePath=".\res\icon_mail.ico"
-				>
-			</File>
-			<File
-				RelativePath=".\res\icon_message.ico"
-				>
-			</File>
-			<File
-				RelativePath=".\res\icon_notloaded.ico"
-				>
-			</File>
-			<File
-				RelativePath=".\res\icon_options.ico"
-				>
-			</File>
-			<File
-				RelativePath=".\res\icon_search_all.ico"
-				>
-			</File>
-			<File
-				RelativePath=".\res\icon_small_dot.ico"
-				>
-			</File>
-			<File
-				RelativePath=".\res\icon_sms.ico"
-				>
-			</File>
-			<File
-				RelativePath=".\res\icon_typing.ico"
-				>
-			</File>
-			<File
-				RelativePath=".\res\icon_undo.ico"
-				>
-			</File>
-			<File
-				RelativePath=".\res\icon_unicode.ico"
-				>
-			</File>
-			<File
-				RelativePath=".\res\icon_url.ico"
-				>
-			</File>
-			<File
-				RelativePath=".\res\icon_window.ico"
-				>
-			</File>
-			<File
-				RelativePath=".\res\icon_windows.ico"
-				>
-			</File>
-			<File
-				RelativePath=".\res\miranda_home.ico"
-				>
-			</File>
-			<File
-				RelativePath=".\res\miranda_logo.ico"
-				>
-			</File>
-			<File
-				RelativePath=".\res\miranda_manager.ico"
-				>
+				<FileConfiguration
+					Name="Release|Win32"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="VCCustomBuildTool"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug|Win32"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="VCCustomBuildTool"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release Unicode|Win32"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="VCCustomBuildTool"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug Unicode|Win32"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="VCCustomBuildTool"
+					/>
+				</FileConfiguration>
 			</File>
 			<File
 				RelativePath="resource.h"
@@ -3802,50 +3733,6 @@
 			</File>
 			<File
 				RelativePath="resource.rc"
-				>
-			</File>
-			<File
-				RelativePath=".\res\status_away.ico"
-				>
-			</File>
-			<File
-				RelativePath=".\res\status_DND.ico"
-				>
-			</File>
-			<File
-				RelativePath=".\res\status_free4chat.ico"
-				>
-			</File>
-			<File
-				RelativePath=".\res\status_invisible.ico"
-				>
-			</File>
-			<File
-				RelativePath=".\res\status_NA.ico"
-				>
-			</File>
-			<File
-				RelativePath=".\res\status_occupied.ico"
-				>
-			</File>
-			<File
-				RelativePath=".\res\status_offline.ico"
-				>
-			</File>
-			<File
-				RelativePath=".\res\status_on_the_phone.ico"
-				>
-			</File>
-			<File
-				RelativePath=".\res\status_online.ico"
-				>
-			</File>
-			<File
-				RelativePath=".\res\status_out2lunch.ico"
-				>
-			</File>
-			<File
-				RelativePath=".\res\status_user_online.ico"
 				>
 			</File>
 			<File

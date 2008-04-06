@@ -2,7 +2,7 @@
 
 Miranda IM: the free IM client for Microsoft* Windows*
 
-Copyright 2000-2008 Miranda ICQ/IM project, 
+Copyright 2000-2007 Miranda ICQ/IM project, 
 all portions of this codebase are copyrighted to the people 
 listed in contributors.txt.
 
@@ -207,14 +207,12 @@ BOOL CALLBACK DlgProcFileExists(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lP
 			struct _stat statbuf;
 			struct loadiconsstartinfo *lisi;
 			HWND hwndFocus;
-			struct TDlgProcFileExistsParam *dat = (struct TDlgProcFileExistsParam *)lParam;
 
 			SetPropA(hwndDlg,"Miranda.Preshutdown",HookEventMessage(ME_SYSTEM_PRESHUTDOWN,hwndDlg,M_PRESHUTDOWN));
-			SetPropA(hwndDlg,"Miranda.ParentWnd",dat->hwndParent);
 
 			TranslateDialogDefault(hwndDlg);
 			fts=(PROTOFILETRANSFERSTATUS*)mir_alloc(sizeof(PROTOFILETRANSFERSTATUS));
-			CopyProtoFileTransferStatus(fts,dat->fts);
+			CopyProtoFileTransferStatus(fts,(PROTOFILETRANSFERSTATUS*)lParam);
 			SetWindowLong(hwndDlg,GWL_USERDATA,(LONG)fts);
 			SetDlgItemTextA(hwndDlg,IDC_FILENAME,fts->currentFile);
 			SetControlToUnixTime(hwndDlg,IDC_NEWDATE,fts->currentFileTime);
@@ -308,7 +306,7 @@ BOOL CALLBACK DlgProcFileExists(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lP
 			{	PROTOFILERESUME *pfrCopy;
 				pfrCopy=(PROTOFILERESUME*)mir_alloc(sizeof(pfr));
 				CopyMemory(pfrCopy,&pfr,sizeof(pfr));
-				PostMessage(GetPropA(hwndDlg,"Miranda.ParentWnd"),M_FILEEXISTSDLGREPLY,(WPARAM)mir_strdup(fts->currentFile),(LPARAM)pfrCopy);
+				PostMessage(GetParent(hwndDlg),M_FILEEXISTSDLGREPLY,(WPARAM)mir_strdup(fts->currentFile),(LPARAM)pfrCopy);
 				DestroyWindow(hwndDlg);
 			}
 			break;

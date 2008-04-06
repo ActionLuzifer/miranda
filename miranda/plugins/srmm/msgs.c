@@ -328,8 +328,8 @@ static int FontsChanged(WPARAM wParam,LPARAM lParam)
 static int SplitmsgModulesLoaded(WPARAM wParam, LPARAM lParam)
 {
 	CLISTMENUITEM mi;
-	PROTOACCOUNT** accs;
-	int accCount, i;
+	PROTOCOLDESCRIPTOR **protocol;
+	int protoCount, i;
 
 	RegisterSRMMFonts();
 	LoadMsgLogIcons();
@@ -341,12 +341,12 @@ static int SplitmsgModulesLoaded(WPARAM wParam, LPARAM lParam)
 	mi.icolibItem = LoadSkinnedIconHandle( SKINICON_EVENT_MESSAGE );
 	mi.pszName = LPGEN("&Message");
 	mi.pszService = MS_MSG_SENDMESSAGE;
-	
-	ProtoEnumAccounts( &accCount, &accs );
-	for (i = 0; i < accCount; i++) {
-		PROTOACCOUNT* pa = accs[i];
-		if ( CallProtoService( pa->szModuleName, PS_GETCAPS, PFLAGNUM_1, 0) & PF1_IMSEND ) {
-			mi.pszContactOwner = pa->szModuleName;
+	CallService(MS_PROTO_ENUMPROTOCOLS, (WPARAM) & protoCount, (LPARAM) & protocol);
+	for (i = 0; i < protoCount; i++) {
+		if (protocol[i]->type != PROTOTYPE_PROTOCOL)
+			continue;
+		if (CallProtoService(protocol[i]->szName, PS_GETCAPS, PFLAGNUM_1, 0) & PF1_IMSEND) {
+			mi.pszContactOwner = protocol[i]->szName;
 			CallService(MS_CLIST_ADDCONTACTMENUITEM, 0, (LPARAM) & mi);
 	}	}
 

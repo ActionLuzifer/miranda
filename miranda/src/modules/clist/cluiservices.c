@@ -2,7 +2,7 @@
 
 Miranda IM: the free IM client for Microsoft* Windows*
 
-Copyright 2000-2008 Miranda ICQ/IM project,
+Copyright 2000-2007 Miranda ICQ/IM project,
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
 
@@ -176,6 +176,7 @@ int fnCluiProtocolStatusChanged(int parStatus, const char* szProto)
 		HDC hdc;
 		SIZE textSize;
 		BYTE showOpts = DBGetContactSettingByte(NULL, "CLUI", "SBarShow", 1);
+		char szName[32];
 
 		hdc = GetDC(NULL);
 		SelectObject(hdc, (HFONT) SendMessage(cli.hwndStatus, WM_GETFONT, 0, 0));
@@ -184,21 +185,15 @@ int fnCluiProtocolStatusChanged(int parStatus, const char* szProto)
 			if ( showOpts & 1 )
 				x += g_IconWidth;
 			if ( showOpts & 2 ) {
-				TCHAR tszName[64];
-				PROTOACCOUNT* pa = Proto_GetAccount( cli.menuProtos[i].szProto );
-				if ( pa )
-					mir_sntprintf( tszName, SIZEOF(tszName), _T("%s "), pa->tszAccountName );
-				else
-					tszName[0] = 0;
-
-				if ( showOpts & 4 && lstrlen(tszName) < SIZEOF(tszName)-1 )
-					lstrcat( tszName, _T(" "));
-				GetTextExtentPoint32(hdc, tszName, lstrlen(tszName), &textSize);
+				CallProtoService( cli.menuProtos[i].szProto, PS_GETNAME, SIZEOF(szName), (LPARAM) szName);
+				if ( showOpts & 4 && lstrlenA(szName) < SIZEOF(szName)-1 )
+					lstrcatA( szName, " " );
+				GetTextExtentPoint32A(hdc, szName, lstrlenA(szName), &textSize);
 				x += textSize.cx;
 				x += GetSystemMetrics(SM_CXBORDER) * 4; // The SB panel doesnt allocate enough room
 			}
 			if ( showOpts & 4 ) {
-				TCHAR* modeDescr = cli.pfnGetStatusModeDescription( CallProtoService( cli.menuProtos[i].szProto, PS_GETSTATUS, 0, 0), 0 );
+				TCHAR* modeDescr = ( TCHAR* )CallService(MS_CLIST_GETSTATUSMODEDESCRIPTION, CallProtoService( cli.menuProtos[i].szProto, PS_GETSTATUS, 0, 0), GCMDF_TCHAR );
 				GetTextExtentPoint32(hdc, modeDescr, lstrlen(modeDescr), &textSize);
 				x += textSize.cx;
 				x += GetSystemMetrics(SM_CXBORDER) * 4; // The SB panel doesnt allocate enough room
