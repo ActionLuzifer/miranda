@@ -368,7 +368,7 @@ static int httpTransact(char* szUrl, char* szResult, int resSize, char* szAction
 							}
 							// Get encoding type if provided
 							if (txtParseParam(szResult, NULL, "Transfer-Encoding:", "\r", szRes, sizeof(szRes)) &&
-								_stricmp(szRes, "Chunked") == 0)
+								stricmp(szRes, "Chunked") == 0)
 							{
 								acksz = hdrend - szResult;
 							}

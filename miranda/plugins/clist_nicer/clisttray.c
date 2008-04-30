@@ -40,23 +40,23 @@ extern struct CluiData g_CluiData;
 void TrayIconUpdateBase(const char *szChangedProto)
 {
 	int i,count,netProtoCount,changed = -1;
-	PROTOACCOUNT **accs;
+	PROTOCOLDESCRIPTOR **protos;
 	int averageMode = 0;
 	HWND hwnd = pcli->hwndContactList;
 
-	if (pcli->cycleTimerId)
+	if (pcli->cycleTimerId) {
 		KillTimer(NULL, pcli->cycleTimerId); pcli->cycleTimerId = 0;
-
-	ProtoEnumAccounts( &count, &accs );
+	}
+	CallService(MS_PROTO_ENUMPROTOCOLS, (WPARAM) &count, (LPARAM) &protos);
 	for (i = 0,netProtoCount = 0; i < count; i++) {
-		if ( !pcli->pfnGetProtocolVisibility( accs[i]->szModuleName ))
+		if (protos[i]->type != PROTOTYPE_PROTOCOL || !pcli->pfnGetProtocolVisibility(protos[i]->szName))
 			continue;
 		netProtoCount++;
-		if (!lstrcmpA(szChangedProto, accs[i]->szModuleName ))
+		if (!lstrcmpA(szChangedProto, protos[i]->szName))
 			pcli->cycleStep = i;
 		if (averageMode == 0)
-			averageMode = CallProtoService( accs[i]->szModuleName, PS_GETSTATUS, 0, 0);
-		else if (averageMode != CallProtoService( accs[i]->szModuleName, PS_GETSTATUS, 0, 0)) {
+			averageMode = CallProtoService(protos[i]->szName, PS_GETSTATUS, 0, 0);
+		else if (averageMode != CallProtoService(protos[i]->szName, PS_GETSTATUS, 0, 0)) {
 			averageMode = -1; break;
 		}
 	}

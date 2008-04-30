@@ -33,3 +33,7 @@
 //  Describe me here please...
 //
 // -----------------------------------------------------------------------------
+
+
+
+void ShowUploadContactsDialog(void);

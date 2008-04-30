@@ -605,7 +605,6 @@ char* GetNextSetting(char* pDbSetting)
 		break;
 
 	case DBVT_ASCIIZ:
-	case DBVT_UTF8:
 	case DBVT_BLOB:
 	case DBVTF_VARIABLELENGTH:
 		pDbSetting = pDbSetting + 3 + *(WORD*)(pDbSetting+1);
@@ -1023,7 +1022,7 @@ HANDLE ImportContact(HANDLE hDbFile, struct DBContact Contact)
 
 	// Does the contact already exist?
 	if ( dbv.type == DBVT_DWORD ) {
-		pszUserName = _ltoa( dbv.dVal, id, 10 );
+		pszUserName = ltoa( dbv.dVal, id, 10 );
 		hContact = HContactFromNumericID( pszProtoName, pszUniqueSetting, dbv.dVal );
 	}
 	else {

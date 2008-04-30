@@ -44,7 +44,6 @@
 #include <vector>
 #include <stack>
 #include <sstream>
-#include <algorithm>
 
 // ==========================================================
 //   Bitmap palette and pixels alignment
@@ -177,7 +176,7 @@ CalculateScanLine(unsigned char *bits, unsigned pitch, int scanline) {
 
 inline void
 ReplaceExtension(char *result, const char *filename, const char *extension) {
-	for (size_t i = strlen(filename) - 1; i > 0; --i) {
+	for (int i = strlen(filename) - 1; i > 0; --i) {
 		if (filename[i] == '.') {
 			memcpy(result, filename, i);
 			result[i] = '.';
@@ -264,12 +263,5 @@ MAXMIN(const T* L, long n, T& max, T& min) {
 		}
 	}
 }
-
-// ==========================================================
-//   Generic error messages
-// ==========================================================
-
-static const char *FI_MSG_ERROR_MEMORY = "Not enough memory";
-
 
 #endif // UTILITIES_H

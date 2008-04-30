@@ -25,8 +25,8 @@ CFG=miranda32 - Win32 Debug Unicode
 
 # Begin Project
 # PROP AllowPerConfigDependencies 0
-# PROP Scc_ProjName ""
-# PROP Scc_LocalPath ""
+# PROP Scc_ProjName ""$/miranda32", UBAAAAAA"
+# PROP Scc_LocalPath "."
 CPP=cl.exe
 MTL=midl.exe
 RSC=rc.exe
@@ -587,10 +587,6 @@ SOURCE=.\modules\plugins\newplugins.c
 # PROP Default_Filter ""
 # Begin Source File
 
-SOURCE=.\modules\protocols\protoaccs.c
-# End Source File
-# Begin Source File
-
 SOURCE=.\modules\protocols\protochains.c
 # End Source File
 # Begin Source File
@@ -599,11 +595,7 @@ SOURCE=.\modules\protocols\protocols.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\modules\protocols\protoint.c
-# End Source File
-# Begin Source File
-
-SOURCE=.\modules\protocols\protoopts.c
+SOURCE=.\modules\protocols\protodir.c
 # End Source File
 # End Group
 # Begin Group "skin"
@@ -611,7 +603,7 @@ SOURCE=.\modules\protocols\protoopts.c
 # PROP Default_Filter ""
 # Begin Source File
 
-SOURCE=.\modules\skin\hotkeys.c
+SOURCE=.\modules\skin\skin.c
 # End Source File
 # Begin Source File
 
@@ -684,10 +676,6 @@ SOURCE=.\modules\srfile\filesenddlg.c
 # Begin Source File
 
 SOURCE=.\modules\srfile\filexferdlg.c
-# End Source File
-# Begin Source File
-
-SOURCE=.\modules\srfile\ftmanager.c
 # End Source File
 # End Group
 # Begin Group "srurl"
@@ -921,6 +909,10 @@ SOURCE=.\modules\fonts\services.c
 
 SOURCE=.\modules\icolib\extracticon.c
 # SUBTRACT CPP /YX /Yc /Yu
+# End Source File
+# Begin Source File
+
+SOURCE=.\modules\icolib\IcoLib.c
 # End Source File
 # Begin Source File
 

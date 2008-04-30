@@ -2,7 +2,7 @@
 
 Jabber Protocol Plugin for Miranda IM
 Copyright ( C ) 2002-04  Santithorn Bunchua
-Copyright ( C ) 2005-08  George Hazan
+Copyright ( C ) 2005-07  George Hazan
 Copyright ( C ) 2007     Maxim Mluhov
 
 This program is free software; you can redistribute it and/or
@@ -19,7 +19,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-File name      : $URL$
+File name      : $Source: /cvsroot/miranda/miranda/protocols/JabberG/jabber_thread.cpp,v $
 Revision       : $Revision$
 Last change on : $Date$
 Last change by : $Author$
@@ -34,6 +34,7 @@ Last change by : $Author$
 #include "jabber_list.h"
 #include "jabber_iq.h"
 #include "jabber_secur.h"
+#include "resource.h"
 #include "jabber_caps.h"
 #include "jabber_privacy.h"
 #include "jabber_rc.h"
@@ -46,12 +47,22 @@ int iqIdRegSetReg;
 static void JabberProcessStreamOpening( XmlNode *node, void *userdata );
 static void JabberProcessStreamClosing( XmlNode *node, void *userdata );
 static void JabberProcessProtocol( XmlNode *node, void *userdata );
+static void JabberProcessMessage( XmlNode *node, void *userdata );
+static void JabberProcessPresence( XmlNode *node, void *userdata );
+static void JabberProcessIq( XmlNode *node, void *userdata );
+static void JabberProcessProceed( XmlNode *node, void *userdata );
+static void JabberProcessCompressed( XmlNode *node, void *userdata );
+static void JabberProcessRegIq( XmlNode *node, void *userdata );
+
+void JabberMenuHideSrmmIcon(HANDLE hContact);
+void JabberMenuUpdateSrmmIcon(JABBER_LIST_ITEM *item);
 
 // XML Console
-#define JCPF_IN      0x01UL
-#define JCPF_OUT     0x02UL
-#define JCPF_ERROR   0x04UL
-#define JCPF_UTF8    0x08UL
+#define JCPF_IN			0x01UL
+#define JCPF_OUT		0x02UL
+#define JCPF_ERROR		0x04UL
+#define JCPF_UTF8		0x08UL
+void JabberConsoleProcessXml(XmlNode *node, DWORD flags);
 
 //extern int bSecureIM;
 static VOID CALLBACK JabberDummyApcFunc( DWORD param )
@@ -96,9 +107,9 @@ static VOID CALLBACK JabberPasswordCreateDialogApcProc( DWORD param )
 	CreateDialogParam( hInst, MAKEINTRESOURCE( IDD_PASSWORD ), NULL, JabberPasswordDlgProc, ( LPARAM )param );
 }
 
-static VOID CALLBACK JabberOfflineChatWindows( CJabberProto* ppro )
+static VOID CALLBACK JabberOfflineChatWindows( DWORD )
 {
-	GCDEST gcd = { ppro->m_szModuleName, NULL, GC_EVENT_CONTROL };
+	GCDEST gcd = { jabberProtoName, NULL, GC_EVENT_CONTROL };
 	GCEVENT gce = { 0 };
 	gce.cbSize = sizeof(GCEVENT);
 	gce.pDest = &gcd;
@@ -108,44 +119,19 @@ static VOID CALLBACK JabberOfflineChatWindows( CJabberProto* ppro )
 /////////////////////////////////////////////////////////////////////////////////////////
 // Jabber keep-alive thread
 
-void CJabberProto::OnPingReply( XmlNode* node, void* userdata, CJabberIqInfo* pInfo )
-{
-	if ( !pInfo )
-		return;
-	if ( pInfo->GetIqType() == JABBER_IQ_TYPE_FAIL ) {
-		// disconnect because of timeout
-		CJabberProto *pProto = (CJabberProto *)pInfo->GetUserData();
-		if ( pProto ) {
-			if ( pProto->m_ThreadInfo ) {
-				pProto->m_ThreadInfo->send( "%s", "</stream:stream>" );
-				HANDLE hSocket = pProto->m_ThreadInfo->s;
-				Sleep( 1000 );
-				Netlib_CloseHandle( hSocket );
-			}
-		}
-	}
-}
-
-static void __cdecl JabberKeepAliveThread( CJabberProto* ppro )
+static void __cdecl JabberKeepAliveThread( void* )
 {
 	NETLIBSELECT nls = {0};
 	nls.cbSize = sizeof( NETLIBSELECT );
 	nls.dwTimeout = 60000;	// 60000 millisecond ( 1 minute )
-	nls.hExceptConns[0] = ppro->m_ThreadInfo->s;
+	nls.hExceptConns[0] = jabberThreadInfo->s;
 	for ( ;; ) {
 		if ( JCallService( MS_NETLIB_SELECT, 0, ( LPARAM )&nls ) != 0 )
 			break;
-
-		if ( ppro->m_ThreadInfo && ppro->JGetByte( "EnableServerXMPPPing", FALSE )) {
-			XmlNodeIq iq( ppro->m_iqManager.AddHandler( &CJabberProto::OnPingReply, JABBER_IQ_TYPE_GET, NULL, 0, -1, ppro, 0, 45000 ));
-			XmlNode* query = iq.addChild( "query" ); query->addAttr( "xmlns", JABBER_FEAT_PING );
-			ppro->m_ThreadInfo->send( iq );
-		}
-
-		if ( ppro->m_bSendKeepAlive )
-			ppro->m_ThreadInfo->send( " \t " );
+		if ( jabberSendKeepAlive )
+			jabberThreadInfo->send( " \t " );
 	}
-	ppro->Log( "Exiting KeepAliveThread" );
+	JabberLog( "Exiting KeepAliveThread" );
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////
@@ -184,15 +170,18 @@ static int xmpp_client_query( char* domain )
 	return port;
 }
 
-void CJabberProto::xmlStreamInitialize(char *which)
+static XmlState xmlState;
+static char *xmlStreamToBeInitialized = 0;
+
+static void xmlStreamInitialize(char *which)
 {
-	Log("Stream will be initialized %s",which);
-	xmlStreamToBeInitialized = _strdup(which);
+	JabberLog("Stream will be initialized %s",which);
+	xmlStreamToBeInitialized = strdup(which);
 }
 
-void CJabberProto::xmlStreamInitializeNow(ThreadData* info)
+static void xmlStreamInitializeNow(ThreadData* info)
 {
-	Log("Stream is initializing %s",xmlStreamToBeInitialized?xmlStreamToBeInitialized:"after connect");
+	JabberLog("Stream is initializing %s",xmlStreamToBeInitialized?xmlStreamToBeInitialized:"after connect");
 	if (xmlStreamToBeInitialized) {
 		free(xmlStreamToBeInitialized);
 		xmlStreamToBeInitialized = NULL;
@@ -208,7 +197,7 @@ void CJabberProto::xmlStreamInitializeNow(ThreadData* info)
 		stream.addAttr( "to", info->server );
 		stream.addAttr( "xmlns", "jabber:client" );
 		stream.addAttr( "xmlns:stream", "http://etherx.jabber.org/streams" );
-		TCHAR *szXmlLang = GetXmlLang();
+		TCHAR *szXmlLang = JabberGetXmlLang();
 		if ( szXmlLang ) {
 			stream.addAttr( "xml:lang", szXmlLang );
 			mir_free( szXmlLang );
@@ -221,18 +210,13 @@ void CJabberProto::xmlStreamInitializeNow(ThreadData* info)
 
 void __cdecl JabberServerThread( ThreadData* info )
 {
-	info->proto->ServerThread( info );
-}
-
-void CJabberProto::ServerThread( ThreadData* info )
-{
 	DBVARIANT dbv;
 	char* buffer;
 	int datalen;
 	int oldStatus;
 	PVOID ssl;
 
-	Log( "Thread started: type=%d", info->type );
+	JabberLog( "Thread started: type=%d", info->type );
 
 	info->resolveID = -1;
 	info->auth = NULL;
@@ -241,21 +225,21 @@ void CJabberProto::ServerThread( ThreadData* info )
 		// Normal server connection, we will fetch all connection parameters
 		// e.g. username, password, etc. from the database.
 
-		if ( m_ThreadInfo != NULL ) {
+		if ( jabberThreadInfo != NULL ) {
 			// Will not start another connection thread if a thread is already running.
 			// Make APC call to the main thread. This will immediately wake the thread up
 			// in case it is asleep in the reconnect loop so that it will immediately
 			// reconnect.
-			QueueUserAPC( JabberDummyApcFunc, m_ThreadInfo->hThread, 0 );
-			Log( "Thread ended, another normal thread is running" );
+			QueueUserAPC( JabberDummyApcFunc, jabberThreadInfo->hThread, 0 );
+			JabberLog( "Thread ended, another normal thread is running" );
 LBL_Exit:
 			delete info;
 			return;
 		}
 
-		m_ThreadInfo = info;
-		if ( m_szStreamId ) mir_free( m_szStreamId );
-		m_szStreamId = NULL;
+		jabberThreadInfo = info;
+		if ( streamId ) mir_free( streamId );
+		streamId = NULL;
 
 		if ( !JGetStringT( NULL, "LoginName", &dbv )) {
 			_tcsncpy( info->username, dbv.ptszVal, SIZEOF( info->username )-1 );
@@ -271,23 +255,23 @@ LBL_Exit:
 		}
 
 		if ( *rtrim(info->username) == '\0' ) {
-			Log( "Thread ended, login name is not configured" );
+			JabberLog( "Thread ended, login name is not configured" );
 			JSendBroadcast( NULL, ACKTYPE_LOGIN, ACKRESULT_FAILED, NULL, LOGINERR_BADUSERID );
 LBL_FatalError:
-			m_ThreadInfo = NULL;
-			oldStatus = m_iStatus;
-			m_iStatus = ID_STATUS_OFFLINE;
-			JSendBroadcast( NULL, ACKTYPE_STATUS, ACKRESULT_SUCCESS, ( HANDLE ) oldStatus, m_iStatus );
+			jabberThreadInfo = NULL;
+			oldStatus = jabberStatus;
+			jabberStatus = ID_STATUS_OFFLINE;
+			JSendBroadcast( NULL, ACKTYPE_STATUS, ACKRESULT_SUCCESS, ( HANDLE ) oldStatus, jabberStatus );
          goto LBL_Exit;
 		}
 
-		if ( !DBGetContactSettingString( NULL, m_szModuleName, "LoginServer", &dbv )) {
+		if ( !DBGetContactSettingString( NULL, jabberProtoName, "LoginServer", &dbv )) {
 			strncpy( info->server, dbv.pszVal, SIZEOF( info->server )-1 );
 			JFreeVariant( &dbv );
 		}
 		else {
 			JSendBroadcast( NULL, ACKTYPE_LOGIN, ACKRESULT_FAILED, NULL, LOGINERR_NONETWORK );
-			Log( "Thread ended, login server is not configured" );
+			JabberLog( "Thread ended, login server is not configured" );
 			goto LBL_FatalError;
 		}
 
@@ -322,16 +306,16 @@ LBL_FatalError:
 
 			if ( onlinePassword[0] == ( TCHAR ) -1 ) {
 				JSendBroadcast( NULL, ACKTYPE_LOGIN, ACKRESULT_FAILED, NULL, LOGINERR_BADUSERID );
-				Log( "Thread ended, password request dialog was canceled" );
+				JabberLog( "Thread ended, password request dialog was canceled" );
 				goto LBL_FatalError;
 			}
 			strncpy( info->password, onlinePassword, SIZEOF( info->password ));
 			info->password[ SIZEOF( info->password )-1] = '\0';
 		}
 		else {
-			if ( DBGetContactSettingString( NULL, m_szModuleName, "Password", &dbv )) {
+			if ( DBGetContactSettingString( NULL, jabberProtoName, "Password", &dbv )) {
 				JSendBroadcast( NULL, ACKTYPE_LOGIN, ACKRESULT_FAILED, NULL, LOGINERR_BADUSERID );
-				Log( "Thread ended, password is not configured" );
+				JabberLog( "Thread ended, password is not configured" );
 				goto LBL_FatalError;
 			}
 			JCallService( MS_DB_CRYPT_DECODESTRING, strlen( dbv.pszVal )+1, ( LPARAM )dbv.pszVal );
@@ -341,7 +325,7 @@ LBL_FatalError:
 		}
 
 		if ( JGetByte( "ManualConnect", FALSE ) == TRUE ) {
-			if ( !DBGetContactSettingString( NULL, m_szModuleName, "ManualHost", &dbv )) {
+			if ( !DBGetContactSettingString( NULL, jabberProtoName, "ManualHost", &dbv )) {
 				strncpy( info->manualHost, dbv.pszVal, SIZEOF( info->manualHost ));
 				info->manualHost[sizeof( info->manualHost )-1] = '\0';
 				JFreeVariant( &dbv );
@@ -363,7 +347,7 @@ LBL_FatalError:
 		iqIdRegSetReg = -1;
 	}
 	else {
-		Log( "Thread ended, invalid session type" );
+		JabberLog( "Thread ended, invalid session type" );
 		goto LBL_FatalError;
 	}
 
@@ -372,48 +356,48 @@ LBL_FatalError:
 		int port_temp;
 		strncpy( connectHost, info->server, SIZEOF(info->server));
 		if ( port_temp = xmpp_client_query( connectHost )) { // port_temp will be > 0 if resolution is successful
-			Log("%s%s resolved to %s:%d","_xmpp-client._tcp.",info->server,connectHost,port_temp);
+			JabberLog("%s%s resolved to %s:%d","_xmpp-client._tcp.",info->server,connectHost,port_temp);
 			if (info->port==0 || info->port==5222)
 				info->port = port_temp;
 		}
-		else Log("%s%s not resolved", "_xmpp-client._tcp.", connectHost);
+		else JabberLog("%s%s not resolved", "_xmpp-client._tcp.", connectHost);
 	}
 	else strncpy( connectHost, info->manualHost, SIZEOF(connectHost)); // do not resolve if manual host is selected
 
-	Log( "Thread type=%d server='%s' port='%d'", info->type, connectHost, info->port );
+	JabberLog( "Thread type=%d server='%s' port='%d'", info->type, connectHost, info->port );
 
 	int jabberNetworkBufferSize = 2048;
 	if (( buffer=( char* )mir_alloc( jabberNetworkBufferSize+1 )) == NULL ) {	// +1 is for '\0' when debug logging this buffer
-		Log( "Cannot allocate network buffer, thread ended" );
+		JabberLog( "Cannot allocate network buffer, thread ended" );
 		if ( info->type == JABBER_SESSION_NORMAL ) {
-			oldStatus = m_iStatus;
-			m_iStatus = ID_STATUS_OFFLINE;
+			oldStatus = jabberStatus;
+			jabberStatus = ID_STATUS_OFFLINE;
 			JSendBroadcast( NULL, ACKTYPE_LOGIN, ACKRESULT_FAILED, NULL, LOGINERR_NONETWORK );
-			JSendBroadcast( NULL, ACKTYPE_STATUS, ACKRESULT_SUCCESS, ( HANDLE ) oldStatus, m_iStatus );
-			m_ThreadInfo = NULL;
+			JSendBroadcast( NULL, ACKTYPE_STATUS, ACKRESULT_SUCCESS, ( HANDLE ) oldStatus, jabberStatus );
+			jabberThreadInfo = NULL;
 		}
 		else if ( info->type == JABBER_SESSION_REGISTER ) {
 			SendMessage( info->reg_hwndDlg, WM_JABBER_REGDLG_UPDATE, 100, ( LPARAM )TranslateT( "Error: Not enough memory" ));
 		}
-		Log( "Thread ended, network buffer cannot be allocated" );
+		JabberLog( "Thread ended, network buffer cannot be allocated" );
 		goto LBL_FatalError;
 	}
 
-	info->s = WsConnect( connectHost, info->port );
+	info->s = JabberWsConnect( connectHost, info->port );
 	if ( info->s == NULL ) {
-		Log( "Connection failed ( %d )", WSAGetLastError());
+		JabberLog( "Connection failed ( %d )", WSAGetLastError());
 		if ( info->type == JABBER_SESSION_NORMAL ) {
-			if ( m_ThreadInfo == info ) {
-				oldStatus = m_iStatus;
-				m_iStatus = ID_STATUS_OFFLINE;
+			if ( jabberThreadInfo == info ) {
+				oldStatus = jabberStatus;
+				jabberStatus = ID_STATUS_OFFLINE;
 				JSendBroadcast( NULL, ACKTYPE_LOGIN, ACKRESULT_FAILED, NULL, LOGINERR_NONETWORK );
-				JSendBroadcast( NULL, ACKTYPE_STATUS, ACKRESULT_SUCCESS, ( HANDLE ) oldStatus, m_iStatus );
-				m_ThreadInfo = NULL;
+				JSendBroadcast( NULL, ACKTYPE_STATUS, ACKRESULT_SUCCESS, ( HANDLE ) oldStatus, jabberStatus );
+				jabberThreadInfo = NULL;
 		}	}
 		else if ( info->type == JABBER_SESSION_REGISTER )
 			SendMessage( info->reg_hwndDlg, WM_JABBER_REGDLG_UPDATE, 100, ( LPARAM )TranslateT( "Error: Cannot connect to the server" ));
 
-		Log( "Thread ended, connection failed" );
+		JabberLog( "Thread ended, connection failed" );
 		mir_free( buffer );
 		goto LBL_FatalError;
 	}
@@ -426,40 +410,40 @@ LBL_FatalError:
 
 		len = sizeof( saddr );
 		getsockname( socket, ( struct sockaddr * ) &saddr, &len );
-		m_dwJabberLocalIP = saddr.sin_addr.S_un.S_addr;
-		Log( "Local IP = %s", inet_ntoa( saddr.sin_addr ));
+		jabberLocalIP = saddr.sin_addr.S_un.S_addr;
+		JabberLog( "Local IP = %s", inet_ntoa( saddr.sin_addr ));
 	}
 
 	if ( info->useSSL ) {
-		Log( "Intializing SSL connection" );
-		if ( SslInit() && socket != INVALID_SOCKET ) {
-			Log( "SSL using socket = %d", socket );
-			if (( ssl=pfn_SSL_new( m_sslCtx )) != NULL ) {
-				Log( "SSL create context ok" );
+		JabberLog( "Intializing SSL connection" );
+		if ( JabberSslInit() && socket != INVALID_SOCKET ) {
+			JabberLog( "SSL using socket = %d", socket );
+			if (( ssl=pfn_SSL_new( jabberSslCtx )) != NULL ) {
+				JabberLog( "SSL create context ok" );
 				if ( pfn_SSL_set_fd( ssl, socket ) > 0 ) {
-					Log( "SSL set fd ok" );
+					JabberLog( "SSL set fd ok" );
 					if ( pfn_SSL_connect( ssl ) > 0 ) {
-						Log( "SSL negotiation ok" );
+						JabberLog( "SSL negotiation ok" );
 						info->ssl = ssl;	// This make all communication on this handle use SSL
-						Log( "SSL enabled for handle = %d", info->s );
+						JabberLog( "SSL enabled for handle = %d", info->s );
 					}
 					else {
-						Log( "SSL negotiation failed" );
+						JabberLog( "SSL negotiation failed" );
 						pfn_SSL_free( ssl );
 				}	}
 				else {
-					Log( "SSL set fd failed" );
+					JabberLog( "SSL set fd failed" );
 					pfn_SSL_free( ssl );
 		}	}	}
 
 		if ( !info->ssl ) {
 			if ( info->type == JABBER_SESSION_NORMAL ) {
-				oldStatus = m_iStatus;
-				m_iStatus = ID_STATUS_OFFLINE;
-				JSendBroadcast( NULL, ACKTYPE_STATUS, ACKRESULT_SUCCESS, ( HANDLE ) oldStatus, m_iStatus );
+				oldStatus = jabberStatus;
+				jabberStatus = ID_STATUS_OFFLINE;
+				JSendBroadcast( NULL, ACKTYPE_STATUS, ACKRESULT_SUCCESS, ( HANDLE ) oldStatus, jabberStatus );
 				JSendBroadcast( NULL, ACKTYPE_LOGIN, ACKRESULT_FAILED, NULL, LOGINERR_NONETWORK );
-				if ( m_ThreadInfo == info )
-					m_ThreadInfo = NULL;
+				if ( jabberThreadInfo == info )
+					jabberThreadInfo = NULL;
 			}
 			else if ( info->type == JABBER_SESSION_REGISTER ) {
 				SendMessage( info->reg_hwndDlg, WM_JABBER_REGDLG_UPDATE, 100, ( LPARAM )TranslateT( "Error: Cannot connect to the server" ));
@@ -467,35 +451,33 @@ LBL_FatalError:
 			mir_free( buffer );
 			if ( !hLibSSL )
 				MessageBox( NULL, TranslateT( "The connection requires an OpenSSL library, which is not installed." ), TranslateT( "Jabber Connection Error" ), MB_OK|MB_ICONSTOP|MB_SETFOREGROUND );
-			Log( "Thread ended, SSL connection failed" );
+			JabberLog( "Thread ended, SSL connection failed" );
 			goto LBL_FatalError;
 	}	}
 
 	// User may change status to OFFLINE while we are connecting above
-	if ( m_iDesiredStatus != ID_STATUS_OFFLINE || info->type == JABBER_SESSION_REGISTER ) {
+	if ( jabberDesiredStatus != ID_STATUS_OFFLINE || info->type == JABBER_SESSION_REGISTER ) {
 
 		if ( info->type == JABBER_SESSION_NORMAL ) {
-			m_bJabberConnected = TRUE;
+			jabberConnected = TRUE;
 			int len = _tcslen( info->username ) + strlen( info->server )+1;
-			m_szJabberJID = ( TCHAR* )mir_alloc( sizeof( TCHAR)*( len+1 ));
-			mir_sntprintf( m_szJabberJID, len+1, _T("%s@") _T(TCHAR_STR_PARAM), info->username, info->server );
+			jabberJID = ( TCHAR* )mir_alloc( sizeof( TCHAR)*( len+1 ));
+			mir_sntprintf( jabberJID, len+1, _T("%s@") _T(TCHAR_STR_PARAM), info->username, info->server );
 			if ( JGetByte( "KeepAlive", 1 ))
-				m_bSendKeepAlive = TRUE;
+				jabberSendKeepAlive = TRUE;
 			else
-				m_bSendKeepAlive = FALSE;
-			mir_forkthread(( pThreadFunc )JabberKeepAliveThread, this );
-
-			JSetStringT(NULL, "jid", m_szJabberJID); // store jid in database
+				jabberSendKeepAlive = FALSE;
+			mir_forkthread(( pThreadFunc )JabberKeepAliveThread, info->s );
 		}
 
 		xmlStreamInitializeNow( info );
 
-		Log( "Entering main recv loop" );
+		JabberLog( "Entering main recv loop" );
 		datalen = 0;
 
 		for ( ;; ) {
 			int recvResult = info->recv( buffer+datalen, jabberNetworkBufferSize-datalen), bytesParsed;
-			Log( "recvResult = %d", recvResult );
+			JabberLog( "recvResult = %d", recvResult );
 			if ( recvResult <= 0 )
 				break;
 			datalen += recvResult;
@@ -507,12 +489,12 @@ LBL_FatalError:
 				if ( szLogBuffer != NULL ) {
 					strcpy( szLogBuffer, "( SSL ) Data received\n" );
 					memcpy( szLogBuffer+strlen( szLogBuffer ), buffer+datalen-recvResult, recvResult+1 /* also copy \0 */ );
-					Netlib_Logf( m_hNetlibUser, "%s", szLogBuffer );	// %s to protect against when fmt tokens are in szLogBuffer causing crash
+					Netlib_Logf( hNetlibUser, "%s", szLogBuffer );	// %s to protect against when fmt tokens are in szLogBuffer causing crash
 					mir_free( szLogBuffer );
 			}	}
 
-			bytesParsed = OnXmlParse( &xmlState, buffer );
-			Log( "bytesParsed = %d", bytesParsed );
+			bytesParsed = JabberXmlParse( &xmlState, buffer );
+			JabberLog( "bytesParsed = %d", bytesParsed );
 			if ( bytesParsed > 0 ) {
 				if ( bytesParsed < datalen )
 					memmove( buffer, buffer+bytesParsed, datalen-bytesParsed );
@@ -521,12 +503,12 @@ LBL_FatalError:
 			else if ( datalen == jabberNetworkBufferSize ) {
 				//jabberNetworkBufferSize += 65536;
 				jabberNetworkBufferSize *= 2;
-				Log( "Increasing network buffer size to %d", jabberNetworkBufferSize );
+				JabberLog( "Increasing network buffer size to %d", jabberNetworkBufferSize );
 				if (( buffer=( char* )mir_realloc( buffer, jabberNetworkBufferSize+1 )) == NULL ) {
-					Log( "Cannot reallocate more network buffer, go offline now" );
+					JabberLog( "Cannot reallocate more network buffer, go offline now" );
 					break;
 			}	}
-			else Log( "Unknown state: bytesParsed=%d, datalen=%d, jabberNetworkBufferSize=%d", bytesParsed, datalen, jabberNetworkBufferSize );
+			else JabberLog( "Unknown state: bytesParsed=%d, datalen=%d, jabberNetworkBufferSize=%d", bytesParsed, datalen, jabberNetworkBufferSize );
 
 			if (xmlStreamToBeInitialized) xmlStreamInitializeNow(info);
 		}
@@ -534,95 +516,105 @@ LBL_FatalError:
 		JabberXmlDestroyState(&xmlState);
 
 		if ( info->type == JABBER_SESSION_NORMAL ) {
-			m_iqManager.ExpireAll( info );
-			m_bJabberOnline = FALSE;
-			m_bJabberConnected = FALSE;
+			g_JabberIqManager.ExpireAll( info );
+			jabberOnline = FALSE;
+			jabberConnected = FALSE;
 			info->zlibUninit();
-			EnableMenuItems( FALSE );
-			RebuildStatusMenu();
-			if ( m_hwndJabberChangePassword ) {
+			JabberEnableMenuItems( FALSE );
+			JabberUtilsRebuildStatusMenu();
+			if ( hwndJabberChangePassword ) {
 				//DestroyWindow( hwndJabberChangePassword );
 				// Since this is a different thread, simulate the click on the cancel button instead
-				SendMessage( m_hwndJabberChangePassword, WM_COMMAND, MAKEWORD( IDCANCEL, 0 ), 0 );
+				SendMessage( hwndJabberChangePassword, WM_COMMAND, MAKEWORD( IDCANCEL, 0 ), 0 );
 			}
 
 			if ( jabberChatDllPresent )
-				QueueUserAPC(( PAPCFUNC )JabberOfflineChatWindows, hMainThread, ( LPARAM )this );
+				QueueUserAPC( JabberOfflineChatWindows, hMainThread, 0 );
 
-			ListRemoveList( LIST_CHATROOM );
-			ListRemoveList( LIST_BOOKMARK );
-			//UI_SAFE_NOTIFY(m_pDlgJabberJoinGroupchat, WM_JABBER_CHECK_ONLINE);
-			UI_SAFE_NOTIFY_HWND(m_hwndJabberAddBookmark, WM_JABBER_CHECK_ONLINE);
-			//UI_SAFE_NOTIFY(m_pDlgBookmarks, WM_JABBER_CHECK_ONLINE);
-			WindowNotify(WM_JABBER_CHECK_ONLINE);
+			JabberListRemoveList( LIST_CHATROOM );
+			JabberListRemoveList( LIST_BOOKMARK );
+			if ( hwndJabberAgents )
+				SendMessage( hwndJabberAgents, WM_JABBER_CHECK_ONLINE, 0, 0 );
+			if ( hwndJabberGroupchat )
+				SendMessage( hwndJabberGroupchat, WM_JABBER_CHECK_ONLINE, 0, 0 );
+			if ( hwndJabberJoinGroupchat )
+				SendMessage( hwndJabberJoinGroupchat, WM_JABBER_CHECK_ONLINE, 0, 0 );
+			if ( hwndJabberBookmarks )
+				SendMessage( hwndJabberBookmarks, WM_JABBER_CHECK_ONLINE, 0, 0 );
+			if ( hwndJabberAddBookmark)
+				SendMessage( hwndJabberAddBookmark, WM_JABBER_CHECK_ONLINE, 0, 0 );
 
 			// Set status to offline
-			oldStatus = m_iStatus;
-			m_iStatus = ID_STATUS_OFFLINE;
-			JSendBroadcast( NULL, ACKTYPE_STATUS, ACKRESULT_SUCCESS, ( HANDLE ) oldStatus, m_iStatus );
+			oldStatus = jabberStatus;
+			jabberStatus = ID_STATUS_OFFLINE;
+			JSendBroadcast( NULL, ACKTYPE_STATUS, ACKRESULT_SUCCESS, ( HANDLE ) oldStatus, jabberStatus );
 
 			// Set all contacts to offline
 			HANDLE hContact = ( HANDLE ) JCallService( MS_DB_CONTACT_FINDFIRST, 0, 0 );
 			while ( hContact != NULL ) {
-				if ( !lstrcmpA(( char* )JCallService( MS_PROTO_GETCONTACTBASEPROTO, ( WPARAM ) hContact, 0 ), m_szModuleName ))
+				if ( !lstrcmpA(( char* )JCallService( MS_PROTO_GETCONTACTBASEPROTO, ( WPARAM ) hContact, 0 ), jabberProtoName ))
 				{
-					SetContactOfflineStatus( hContact );
-					MenuHideSrmmIcon( hContact );
+					JabberSetContactOfflineStatus( hContact );
+					JabberMenuHideSrmmIcon( hContact );
 				}
 
 				hContact = ( HANDLE ) JCallService( MS_DB_CONTACT_FINDNEXT, ( WPARAM ) hContact, 0 );
 			}
 
-			mir_free( m_szJabberJID );
-			m_szJabberJID = NULL;
-			m_tmJabberLoggedInTime = 0;
-			ListWipe();
-
-			WindowNotify(WM_JABBER_REFRESH_VCARD);
+			mir_free( jabberJID );
+			jabberJID = NULL;
+			jabberLoggedInTime = 0;
+			JabberListWipe();
+			if ( hwndJabberAgents ) {
+				SendMessage( hwndJabberAgents, WM_JABBER_AGENT_REFRESH, 0, ( LPARAM )"" );
+				SendMessage( hwndJabberAgents, WM_JABBER_TRANSPORT_REFRESH, 0, 0 );
+			}
+			if ( hwndJabberVcard )
+				SendMessage( hwndJabberVcard, WM_JABBER_CHECK_ONLINE, 0, 0 );
 		}
 		else if ( info->type==JABBER_SESSION_REGISTER && !info->reg_done )
 			SendMessage( info->reg_hwndDlg, WM_JABBER_REGDLG_UPDATE, 100, ( LPARAM )TranslateT( "Error: Connection lost" ));
 	}
 	else if ( info->type == JABBER_SESSION_NORMAL ) {
-		oldStatus = m_iStatus;
-		m_iStatus = ID_STATUS_OFFLINE;
-		JSendBroadcast( NULL, ACKTYPE_STATUS, ACKRESULT_SUCCESS, ( HANDLE ) oldStatus, m_iStatus );
+		oldStatus = jabberStatus;
+		jabberStatus = ID_STATUS_OFFLINE;
+		JSendBroadcast( NULL, ACKTYPE_STATUS, ACKRESULT_SUCCESS, ( HANDLE ) oldStatus, jabberStatus );
 	}
 
-	Log( "Thread ended: type=%d server='%s'", info->type, info->server );
+	JabberLog( "Thread ended: type=%d server='%s'", info->type, info->server );
 
-	if ( info->type==JABBER_SESSION_NORMAL && m_ThreadInfo==info ) {
-		if ( m_szStreamId ) mir_free( m_szStreamId );
-		m_szStreamId = NULL;
-		m_ThreadInfo = NULL;
+	if ( info->type==JABBER_SESSION_NORMAL && jabberThreadInfo==info ) {
+		if ( streamId ) mir_free( streamId );
+		streamId = NULL;
+		jabberThreadInfo = NULL;
 	}
 
 	mir_free( buffer );
-	Log( "Exiting ServerThread" );
+	JabberLog( "Exiting ServerThread" );
 	goto LBL_Exit;
 }
 
-void CJabberProto::PerformRegistration( ThreadData* info )
+static void JabberPerformRegistration( ThreadData* info )
 {
-	iqIdRegGetReg = SerialNext();
+	iqIdRegGetReg = JabberSerialNext();
 	XmlNodeIq iq("get",iqIdRegGetReg,(char*)NULL);
 	XmlNode* query = iq.addQuery(JABBER_FEAT_REGISTER);
 	info->send( iq );
 	SendMessage( info->reg_hwndDlg, WM_JABBER_REGDLG_UPDATE, 50, ( LPARAM )TranslateT( "Requesting registration instruction..." ));
 }
 
-void CJabberProto::PerformIqAuth( ThreadData* info )
+static void JabberPerformIqAuth( ThreadData* info )
 {
 	if ( info->type == JABBER_SESSION_NORMAL ) {
-		int iqId = SerialNext();
-		IqAdd( iqId, IQ_PROC_NONE, &CJabberProto::OnIqResultGetAuth );
+		int iqId = JabberSerialNext();
+		JabberIqAdd( iqId, IQ_PROC_NONE, JabberIqResultGetAuth );
 		XmlNodeIq iq( "get", iqId );
 		XmlNode* query = iq.addQuery( "jabber:iq:auth" );
 		query->addChild( "username", info->username );
 		info->send( iq );
 	}
 	else if ( info->type == JABBER_SESSION_REGISTER )
-		PerformRegistration( info );
+		JabberPerformRegistration( info );
 }
 
 static void JabberProcessStreamOpening( XmlNode *node, void *userdata )
@@ -635,16 +627,16 @@ static void JabberProcessStreamOpening( XmlNode *node, void *userdata )
 		TCHAR* sid = JabberXmlGetAttrValue( node, "id" );
 		if ( sid != NULL ) {
 			char* pszSid = mir_t2a( sid );
-			replaceStr( info->proto->m_szStreamId, pszSid );
+			replaceStr( streamId, pszSid );
 			mir_free( pszSid );
 	}	}
 
 	// old server - disable SASL then
 	if ( JabberXmlGetAttrValue( node, "version" ) == NULL )
-		info->proto->JSetByte( "Disable3920auth", TRUE );
+		JSetByte( "Disable3920auth", TRUE );
 
-	if ( info->proto->JGetByte( "Disable3920auth", 0 ))
-		info->proto->PerformIqAuth( info );
+	if ( JGetByte( "Disable3920auth", 0 ))
+		JabberPerformIqAuth( info );
 }
 
 static void JabberProcessStreamClosing( XmlNode *node, void *userdata )
@@ -656,9 +648,7 @@ static void JabberProcessStreamClosing( XmlNode *node, void *userdata )
 		MessageBox( NULL, TranslateTS( node->text ), TranslateT( "Jabber Connection Error" ), MB_OK|MB_ICONERROR|MB_SETFOREGROUND );
 }
 
-/////////////////////////////////////////////////////////////////////////////////////////
-
-void CJabberProto::OnProcessFeatures( XmlNode *node, void *userdata )
+static void JabberProcessFeatures( XmlNode *node, void *userdata )
 {
 	ThreadData* info = ( ThreadData* ) userdata;
 	bool isPlainAvailable = false;
@@ -674,19 +664,19 @@ void CJabberProto::OnProcessFeatures( XmlNode *node, void *userdata )
 		XmlNode* n = node->child[i];
 		if ( !strcmp( n->name, "starttls" )) {
 			if ( !info->useSSL && JGetByte( "UseTLS", FALSE )) {
-				Log( "Requesting TLS" );
+				JabberLog( "Requesting TLS" );
 				XmlNode stls( n->name ); stls.addAttr( "xmlns", "urn:ietf:params:xml:ns:xmpp-tls" );
 				info->send( stls );
 				return;
 		}	}
 
 		if ( !strcmp( n->name, "compression" ) && ( JGetByte( "EnableZlib", FALSE ) == TRUE)) {
-			Log("Server compression available");
+			JabberLog("Server compression available");
 			for ( int k=0; k < n->numChild; k++ ) {
 				XmlNode* c = n->child[k];
 				if ( !strcmp( c->name, "method" )) {
 					if ( !_tcscmp( c->text, _T("zlib")) && info->zlibInit() == TRUE ) {
-						Log("Requesting Zlib compression");
+						JabberLog("Requesting Zlib compression");
 						XmlNode szlib( "compress" ); szlib.addAttr( "xmlns", "http://jabber.org/protocol/compress" );
 						szlib.addChild( "method", "zlib" );
 						info->send( szlib );
@@ -729,7 +719,7 @@ void CJabberProto::OnProcessFeatures( XmlNode *node, void *userdata )
 
 		if ( auth == NULL ) {
 			if ( isAuthAvailable ) { // no known mechanisms but iq_auth is available
-				PerformIqAuth( info );
+				JabberPerformIqAuth( info );
 				return;
 			}
 
@@ -750,7 +740,7 @@ void CJabberProto::OnProcessFeatures( XmlNode *node, void *userdata )
 			mir_free( request );
 		}
 		else if ( info->type == JABBER_SESSION_REGISTER )
-			PerformRegistration( info );
+			JabberPerformRegistration( info );
 		else
 			info->send( "</stream:stream>" );
 		return;
@@ -758,8 +748,8 @@ void CJabberProto::OnProcessFeatures( XmlNode *node, void *userdata )
 
 	// mechanisms are not defined.
 	if ( info->auth ) { //We are already logged-in
-		int iqId = SerialNext();
-		IqAdd( iqId, IQ_PROC_NONE, &CJabberProto::OnIqResultBind );
+		int iqId = JabberSerialNext();
+		JabberIqAdd( iqId, IQ_PROC_NONE, JabberIqResultBind );
 		XmlNodeIq iq("set",iqId);
 		XmlNode* bind = iq.addChild( "bind" ); bind->addAttr( "xmlns", "urn:ietf:params:xml:ns:xmpp-bind" );
 		bind->addChild( "resource", info->resource );
@@ -772,11 +762,19 @@ void CJabberProto::OnProcessFeatures( XmlNode *node, void *userdata )
 	}
 
 	//mechanisms not available and we are not logged in
-	PerformIqAuth( info );
+	JabberPerformIqAuth( info );
 }
 
-void CJabberProto::OnProcessFailure( XmlNode *node, void *userdata )
+static void __cdecl JabberWaitAndReconnectThread( int unused )
 {
+	JabberLog("Reconnecting after with new X-GOOGLE-TOKEN");
+	Sleep(1000);
+
+	ThreadData* thread = new ThreadData( JABBER_SESSION_NORMAL );
+	thread->hThread = ( HANDLE ) mir_forkthread(( pThreadFunc )JabberServerThread, thread );
+}
+
+static void JabberProcessFailure( XmlNode *node, void *userdata ) {
 //	JabberXmlDumpNode( node );
 	ThreadData* info = ( ThreadData* ) userdata;
 	TCHAR* type;
@@ -789,10 +787,10 @@ void CJabberProto::OnProcessFailure( XmlNode *node, void *userdata )
 		mir_sntprintf( text, SIZEOF( text ), _T("%s %s@")_T(TCHAR_STR_PARAM)_T("."), TranslateT( "Authentication failed for" ), info->username, info->server );
 		MessageBox( NULL, text, TranslateT( "Jabber Authentication" ), MB_OK|MB_ICONSTOP|MB_SETFOREGROUND );
 		JSendBroadcast( NULL, ACKTYPE_LOGIN, ACKRESULT_FAILED, NULL, LOGINERR_WRONGPASSWORD );
-		m_ThreadInfo = NULL;	// To disallow auto reconnect
+		jabberThreadInfo = NULL;	// To disallow auto reconnect
 }	}
 
-void CJabberProto::OnProcessError( XmlNode *node, void *userdata )
+static void JabberProcessError( XmlNode *node, void *userdata )
 {
 	ThreadData* info = ( ThreadData* ) userdata;
 	TCHAR *buff;
@@ -800,21 +798,20 @@ void CJabberProto::OnProcessError( XmlNode *node, void *userdata )
 	int pos;
 //failure xmlns=\"urn:ietf:params:xml:ns:xmpp-sasl\"
 	if ( !node->numChild ) return;
-	buff = (TCHAR *)mir_alloc(1024*sizeof(TCHAR));
+	buff = (TCHAR *)mir_alloc(1024*SIZEOF(buff));
 	pos=0;
 	for (i=0;i<node->numChild;i++) {
 		pos += mir_sntprintf(buff+pos,1024-pos,
 			_T(TCHAR_STR_PARAM)_T(": %s\n"),
 			node->child[i]->name,node->child[i]->text);
-		if (!strcmp(node->child[i]->name,"conflict"))
-			JSendBroadcast( NULL, ACKTYPE_LOGIN, ACKRESULT_FAILED, NULL, LOGINERR_OTHERLOCATION);
+		if (!strcmp(node->child[i]->name,"conflict")) JSendBroadcast( NULL, ACKTYPE_LOGIN, ACKRESULT_FAILED, NULL, LOGINERR_OTHERLOCATION);
 	}
 	MessageBox( NULL, buff, TranslateT( "Jabber Error" ), MB_OK|MB_ICONSTOP|MB_SETFOREGROUND );
 	mir_free(buff);
 	info->send( "</stream:stream>" );
 }
 
-void CJabberProto::OnProcessSuccess( XmlNode *node, void *userdata )
+static void JabberProcessSuccess( XmlNode *node, void *userdata )
 {
 	ThreadData* info = ( ThreadData* )userdata;
 	TCHAR* type;
@@ -826,21 +823,21 @@ void CJabberProto::OnProcessSuccess( XmlNode *node, void *userdata )
 	if ( !_tcscmp( type, _T("urn:ietf:params:xml:ns:xmpp-sasl") )) {
 		DBVARIANT dbv;
 
-		Log( "Success: Logged-in." );
-		if ( DBGetContactSettingString( NULL, m_szModuleName, "Nick", &dbv ))
+		JabberLog( "Success: Logged-in." );
+		if ( DBGetContactSettingString( NULL, jabberProtoName, "Nick", &dbv ))
 			JSetStringT( NULL, "Nick", info->username );
 		else
 			JFreeVariant( &dbv );
 		xmlStreamInitialize( "after successful sasl" );
 	}
-	else Log( "Success: unknown action "TCHAR_STR_PARAM".",type);
+	else JabberLog( "Success: unknown action "TCHAR_STR_PARAM".",type);
 }
 
-void CJabberProto::OnProcessChallenge( XmlNode *node, void *userdata )
+static void JabberProcessChallenge( XmlNode *node, void *userdata )
 {
 	ThreadData* info = ( ThreadData* )userdata;
 	if ( info->auth == NULL ) {
-		Log( "No previous auth have been made, exiting..." );
+		JabberLog( "No previous auth have been made, exiting..." );
 		return;
 	}
 
@@ -856,50 +853,49 @@ void CJabberProto::OnProcessChallenge( XmlNode *node, void *userdata )
 	mir_free( response );
 }
 
-void JabberProcessProtocol( XmlNode *node, void *userdata )
+static void JabberProcessProtocol( XmlNode *node, void *userdata )
 {
+	JabberConsoleProcessXml(node, JCPF_IN);
+
 	ThreadData* info = ( ThreadData* ) userdata;
-
-	info->proto->OnConsoleProcessXml(node, JCPF_IN);
-
 	if ( !strcmp( node->name, "proceed" )) {
-		info->proto->OnProcessProceed( node, userdata );
+		JabberProcessProceed( node, userdata );
 		return;
 	}
 
 	if ( !strcmp( node->name, "compressed" )) {
-		info->proto->OnProcessCompressed( node, userdata );
+		JabberProcessCompressed( node, userdata );
 		return;
 	}
 
 	if ( !strcmp( node->name, "stream:features" ))
-		info->proto->OnProcessFeatures( node, userdata );
+		JabberProcessFeatures( node, userdata );
 	else if ( !strcmp( node->name, "success"))
-		info->proto->OnProcessSuccess( node, userdata );
+		JabberProcessSuccess( node, userdata );
 	else if ( !strcmp( node->name, "failure"))
-		info->proto->OnProcessFailure( node, userdata );
+		JabberProcessFailure( node, userdata );
 	else if ( !strcmp( node->name, "stream:error"))
-		info->proto->OnProcessError( node, userdata );
+		JabberProcessError( node, userdata );
 	else if ( !strcmp( node->name, "challenge" ))
-		info->proto->OnProcessChallenge( node, userdata );
+		JabberProcessChallenge( node, userdata );
 	else if ( info->type == JABBER_SESSION_NORMAL ) {
 		if ( !strcmp( node->name, "message" ))
-			info->proto->OnProcessMessage( node, userdata );
+			JabberProcessMessage( node, userdata );
 		else if ( !strcmp( node->name, "presence" ))
-			info->proto->OnProcessPresence( node, userdata );
+			JabberProcessPresence( node, userdata );
 		else if ( !strcmp( node->name, "iq" ))
-			info->proto->OnProcessIq( node, userdata );
+			JabberProcessIq( node, userdata );
 		else
-			info->proto->Log( "Invalid top-level tag ( only <message/> <presence/> and <iq/> allowed )" );
+			JabberLog( "Invalid top-level tag ( only <message/> <presence/> and <iq/> allowed )" );
 	}
 	else if ( info->type == JABBER_SESSION_REGISTER ) {
 		if ( !strcmp( node->name, "iq" ))
-			info->proto->OnProcessRegIq( node, userdata );
+			JabberProcessRegIq( node, userdata );
 		else
-			info->proto->Log( "Invalid top-level tag ( only <iq/> allowed )" );
+			JabberLog( "Invalid top-level tag ( only <iq/> allowed )" );
 }	}
 
-void CJabberProto::OnProcessProceed( XmlNode *node, void *userdata )
+static void JabberProcessProceed( XmlNode *node, void *userdata )
 {
 	ThreadData* info;
 	TCHAR* type;
@@ -909,40 +905,40 @@ void CJabberProto::OnProcessProceed( XmlNode *node, void *userdata )
 		return;
 
 	if ( !lstrcmp( type, _T("urn:ietf:params:xml:ns:xmpp-tls" ))) {
-		Log("Starting TLS...");
-		if ( !SslInit() ) {
-			Log( "SSL initialization failed" );
+		JabberLog("Starting TLS...");
+		if ( !JabberSslInit() ) {
+			JabberLog( "SSL initialization failed" );
 			return;
 		}
 
 		int socket = JCallService( MS_NETLIB_GETSOCKET, ( WPARAM ) info->s, 0 );
 		PVOID ssl;
-		if (( ssl=pfn_SSL_new( m_sslCtx )) != NULL ) {
-			Log( "SSL create context ok" );
+		if (( ssl=pfn_SSL_new( jabberSslCtx )) != NULL ) {
+			JabberLog( "SSL create context ok" );
 			if ( pfn_SSL_set_fd( ssl, socket ) > 0 ) {
-				Log( "SSL set fd ok" );
+				JabberLog( "SSL set fd ok" );
 				if ( pfn_SSL_connect( ssl ) > 0 ) {
-					Log( "SSL negotiation ok" );
+					JabberLog( "SSL negotiation ok" );
 					info->ssl = ssl;
 					info->useSSL = true;
-					Log( "SSL enabled for handle = %d", info->s );
+					JabberLog( "SSL enabled for handle = %d", info->s );
 					xmlStreamInitialize( "after successful StartTLS" );
 				}
 				else {
-					Log( "SSL negotiation failed" );
+					JabberLog( "SSL negotiation failed" );
 					pfn_SSL_free( ssl );
 			}	}
 			else {
-				Log( "SSL set fd failed" );
+				JabberLog( "SSL set fd failed" );
 				pfn_SSL_free( ssl );
 }	}	}	}
 
-void CJabberProto::OnProcessCompressed( XmlNode *node, void *userdata )
+static void JabberProcessCompressed( XmlNode *node, void *userdata )
 {
 	ThreadData* info;
 	TCHAR* type;
 
-	Log( "Compression confirmed" );
+	JabberLog( "Compression confirmed" );
 
 	if (( info=( ThreadData* ) userdata ) == NULL ) return;
 	if (( type = JabberXmlGetAttrValue( node, "xmlns" )) != NULL && !lstrcmp( type, _T( "error" )))
@@ -950,7 +946,7 @@ void CJabberProto::OnProcessCompressed( XmlNode *node, void *userdata )
 	if ( lstrcmp( type, _T( "http://jabber.org/protocol/compress" )))
 		return;
 
-	Log( "Starting Zlib stream compression..." );
+	JabberLog( "Starting Zlib stream compression..." );
 
 	info->useZlib = TRUE;
 	info->zRecvData = ( char* )mir_alloc( ZLIB_CHUNK_SIZE );
@@ -958,13 +954,13 @@ void CJabberProto::OnProcessCompressed( XmlNode *node, void *userdata )
 	xmlStreamInitialize( "after successful Zlib init" );
 }
 
-void CJabberProto::OnProcessPubsubEvent( XmlNode *node )
+static void JabberProcessPubsubEvent( XmlNode *node )
 {
 	TCHAR* from = JabberXmlGetAttrValue( node, "from" );
 	if ( !from )
 		return;
 
-	HANDLE hContact = HContactFromJID( from );
+	HANDLE hContact = JabberHContactFromJID( from );
 	if ( !hContact )
 		return;
 
@@ -976,7 +972,7 @@ void CJabberProto::OnProcessPubsubEvent( XmlNode *node )
 	if ( itemsNode && JGetByte( "EnableUserMood", TRUE )) {
 		// node retract?
 		if ( JabberXmlGetChild( itemsNode, "retract" )) {
-			SetContactMood( hContact, NULL, NULL );
+			JabberSetContactMood( hContact, NULL, NULL );
 			return;
 		}
 
@@ -996,12 +992,12 @@ void CJabberProto::OnProcessPubsubEvent( XmlNode *node )
 			else
 				moodType = moodNode->child[i]->name;
 		}
-		SetContactMood( hContact, moodType, moodText );
+		JabberSetContactMood( hContact, moodType, moodText );
 	}
 	else if ( JGetByte( "EnableUserTune", FALSE ) && (itemsNode = JabberXmlGetChildWithGivenAttrValue( eventNode, "items", "node", _T(JABBER_FEAT_USER_TUNE)))) {
 		// node retract?
 		if ( JabberXmlGetChild( itemsNode, "retract" )) {
-			SetContactTune( hContact, NULL, NULL, NULL, NULL, NULL, NULL );
+			JabberSetContactTune( hContact, NULL, NULL, NULL, NULL, NULL, NULL );
 			return;
 		}
 
@@ -1044,7 +1040,7 @@ void CJabberProto::OnProcessPubsubEvent( XmlNode *node )
 				nLength / 3600, (nLength / 60) % 60, nLength % 60 );
 		}
 
-		SetContactTune( hContact, szArtist, szLength ? szLengthInTime : NULL, szSource, szTitle, szTrack, szUri );
+		JabberSetContactTune( hContact, szArtist, szLength ? szLengthInTime : NULL, szSource, szTitle, szTrack, szUri );
 	}
 }
 
@@ -1071,37 +1067,11 @@ DWORD JabberGetLastContactMessageTime( HANDLE hContact )
 	return dwTime;
 }
 
-HANDLE CJabberProto::CreateTemporaryContact( TCHAR *szJid, JABBER_LIST_ITEM* chatItem )
-{
-	HANDLE hContact = NULL;
-	if ( chatItem ) {
-		TCHAR* p = _tcschr( szJid, '/' );
-		if ( p != NULL && p[1] != '\0' )
-			p++;
-		else
-			p = szJid;
-		hContact = DBCreateContact( szJid, p, TRUE, FALSE );
-
-		for ( int i=0; i < chatItem->resourceCount; i++ ) {
-			if ( !lstrcmp( chatItem->resource[i].resourceName, p )) {
-				JSetWord( hContact, "Status", chatItem->resource[i].status );
-				break;
-			}
-		}
-	}
-	else {
-		TCHAR *nick = JabberNickFromJID( szJid );
-		hContact = DBCreateContact( szJid, nick, TRUE, TRUE );
-		mir_free( nick );
-	}
-	return hContact;
-}
-
-void CJabberProto::OnProcessMessage( XmlNode *node, void *userdata )
+static void JabberProcessMessage( XmlNode *node, void *userdata )
 {
 	ThreadData* info;
 	XmlNode *subjectNode, *xNode, *inviteNode, *idNode, *n;
-	TCHAR* from, *type, *idStr, *fromResource;
+	TCHAR* from, *type, *nick, *idStr, *fromResource;
 	HANDLE hContact;
 
 	if ( !node->name || strcmp( node->name, "message" )) return;
@@ -1111,13 +1081,13 @@ void CJabberProto::OnProcessMessage( XmlNode *node, void *userdata )
 	if (( from = JabberXmlGetAttrValue( node, "from" )) == NULL )
 		return;
 
-	hContact = HContactFromJID( from );
+	hContact = JabberHContactFromJID( from );
 
 	XmlNode* errorNode = JabberXmlGetChild( node, "error" );
 	if ( errorNode != NULL || !lstrcmp( type, _T("error"))) {
 		// we check if is message delivery failure
 		int id = JabberGetPacketID( node );
-		JABBER_LIST_ITEM* item = ListGetItemPtr( LIST_ROSTER, from );
+		JABBER_LIST_ITEM* item = JabberListGetItemPtr( LIST_ROSTER, from );
 		if ( item != NULL ) { // yes, it is
 			TCHAR *szErrText = JabberErrorMsg(errorNode);
 			char *errText = mir_t2a(szErrText);
@@ -1133,29 +1103,20 @@ void CJabberProto::OnProcessMessage( XmlNode *node, void *userdata )
 		TCHAR *sid = JabberXmlGetAttrValue( n, "sid" );
 		TCHAR *seq = JabberXmlGetAttrValue( n, "seq" );
 		if ( sid && seq && n->text ) {
-			bOk = OnIbbRecvdData( n->text, sid, seq );
+			bOk = JabberIbbProcessRecvdData( n->text, sid, seq );
 		}
 		return;
 	}
 
 	if ( n = JabberXmlGetChildWithGivenAttrValue( node, "event", "xmlns", _T( "http://jabber.org/protocol/pubsub#event" ))) {
-		OnProcessPubsubEvent( node );
+		JabberProcessPubsubEvent( node );
 		return;
 	}
 
-	JABBER_LIST_ITEM *chatItem = ListGetItemPtr( LIST_CHATROOM, from );
-	if (!lstrcmp( type, _T("groupchat")))
-	{
-		if ( chatItem )
-		{	// process GC message
-			GroupchatProcessMessage( node, userdata );
-		} else
-		{	// got message from onknown conference... let's leave it :)
-//			TCHAR *conference = NEWTSTR_ALLOCA(from);
-//			if (TCHAR *s = _tcschr(conference, _T('/'))) *s = 0;
-//			XmlNode p( "presence" ); p.addAttr( "to", conference ); p.addAttr( "type", "unavailable" );
-//			info->send( p );
-		}
+	JABBER_LIST_ITEM* chatItem = JabberListGetItemPtr( LIST_CHATROOM, from );
+	BOOL isChatRoomJid = ( chatItem != NULL );
+	if ( isChatRoomJid && !lstrcmp( type, _T("groupchat"))) {
+		JabberGroupchatProcessMessage( node, userdata );
 		return;
 	}
 
@@ -1188,17 +1149,17 @@ void CJabberProto::OnProcessMessage( XmlNode *node, void *userdata )
 				szMessage = p;
 				from = szJid;
 				// rewrite hContact
-				hContact = HContactFromJID( from );
+				hContact = JabberHContactFromJID( from );
 			}
 		}
 	}
 
 	// If message is from a stranger ( not in roster ), item is NULL
-	JABBER_LIST_ITEM* item = ListGetItemPtr( LIST_ROSTER, from );
+	JABBER_LIST_ITEM* item = JabberListGetItemPtr( LIST_ROSTER, from );
 	if ( !item )
-		item = ListGetItemPtr( LIST_VCARD_TEMP, from );
+		item = JabberListGetItemPtr( LIST_VCARD_TEMP, from );
 
-	JABBER_RESOURCE_STATUS *resourceStatus = ResourceInfoFromJID( from );
+	JABBER_RESOURCE_STATUS *resourceStatus = JabberResourceInfoFromJID( from );
 
 	time_t msgTime = 0;
 	BOOL  isChatRoomInvitation = FALSE;
@@ -1236,7 +1197,7 @@ void CJabberProto::OnProcessMessage( XmlNode *node, void *userdata )
 	}
 
 	// message receipts delivery notification
-	if ( JabberXmlGetChildWithGivenAttrValue( node, "received", "xmlns", _T( JABBER_FEAT_MESSAGE_RECEIPTS ))) {
+	if ( JabberXmlGetChildWithGivenAttrValue( node, "received", "xmlns",_T( JABBER_FEAT_MESSAGE_RECEIPTS ))) {
 		int nPacketId = JabberGetPacketID( node );
 		if ( nPacketId != -1)
 			JSendBroadcast( hContact, ACKTYPE_MESSAGE, ACKRESULT_SUCCESS, ( HANDLE ) nPacketId, 0 );
@@ -1261,14 +1222,6 @@ void CJabberProto::OnProcessMessage( XmlNode *node, void *userdata )
 		}
 	}
 
-	// XEP-0224 support (Attention/Nudge)
-	if ( JabberXmlGetChildWithGivenAttrValue( node, "attention", "xmlns", _T( JABBER_FEAT_ATTENTION ))) {
-		if ( !hContact )
-			hContact = CreateTemporaryContact( from, chatItem );
-		if ( hContact )
-			NotifyEventHooks( m_hEventNudge, (WPARAM)hContact, 0 );
-	}
-
 	// chatstates gone event
 	if ( hContact && JabberXmlGetChildWithGivenAttrValue( node, "gone", "xmlns", _T( JABBER_FEAT_CHATSTATES )) && JGetByte( "LogChatstates", FALSE )) {
 		DBEVENTINFO dbei;
@@ -1279,33 +1232,8 @@ void CJabberProto::OnProcessMessage( XmlNode *node, void *userdata )
 		dbei.eventType = JABBER_DB_EVENT_TYPE_CHATSTATES;
 		dbei.flags = 0;
 		dbei.timestamp = time(NULL);
-		dbei.szModule = m_szModuleName;
+		dbei.szModule = jabberProtoName;
 		CallService(MS_DB_EVENT_ADD, (WPARAM)hContact, (LPARAM)&dbei);
-	}
-
-	if (( n = JabberXmlGetChildWithGivenAttrValue( node, "confirm", "xmlns", _T( JABBER_FEAT_HTTP_AUTH ))) && JGetByte( "AcceptHttpAuth", TRUE )) {
-		TCHAR *szId = JabberXmlGetAttrValue( n, "id" );
-		TCHAR *szMethod = JabberXmlGetAttrValue( n, "method" );
-		TCHAR *szUrl = JabberXmlGetAttrValue( n, "url" );
-		if ( !szId || !szMethod || !szUrl )
-			return;
-
-		CJabberHttpAuthParams *pParams = (CJabberHttpAuthParams *)mir_alloc( sizeof( CJabberHttpAuthParams ));
-		if ( !pParams )
-			return;
-		ZeroMemory( pParams, sizeof( CJabberHttpAuthParams ));
-		pParams->m_nType = CJabberHttpAuthParams::MSG;
-		pParams->m_szFrom = mir_tstrdup( from );
-		XmlNode *pThreadNode = JabberXmlGetChild( node, "thread" );
-		if ( pThreadNode && pThreadNode->text && pThreadNode->text[0] )
-			pParams->m_szThreadId = mir_tstrdup( pThreadNode->text );
-		pParams->m_szId = mir_tstrdup( szId );
-		pParams->m_szMethod = mir_tstrdup( szMethod );
-		pParams->m_szUrl = mir_tstrdup( szUrl );
-
-		AddClistHttpAuthEvent( pParams );
-
-		return;
 	}
 
 	for ( int i = 1; ( xNode = JabberXmlGetNthChild( node, "x", i )) != NULL; i++ ) {
@@ -1319,10 +1247,10 @@ void CJabberProto::OnProcessMessage( XmlNode *node, void *userdata )
 
 			TCHAR* prolog = _T("-----BEGIN PGP MESSAGE-----\r\n\r\n");
 			TCHAR* epilog = _T("\r\n-----END PGP MESSAGE-----\r\n");
-			TCHAR* tempstring = ( TCHAR* )alloca( sizeof( TCHAR ) * ( _tcslen( prolog ) + _tcslen( xNode->text ) + _tcslen( epilog ) + 3 ));
-			_tcsncpy( tempstring, prolog, _tcslen( prolog ) + 1 );
-			_tcsncpy( tempstring + _tcslen( prolog ), xNode->text, _tcslen( xNode->text ) + 1);
-			_tcsncpy( tempstring + _tcslen( prolog ) + _tcslen(xNode->text ), epilog, _tcslen( epilog ) + 1);
+			TCHAR* tempstring = ( TCHAR* )alloca( sizeof( TCHAR )*( _tcslen( prolog ) + _tcslen( xNode->text ) + _tcslen( epilog )));
+			_tcsncpy( tempstring, prolog, _tcslen( prolog )+1 );
+			_tcsncpy(tempstring + _tcslen( prolog ), xNode->text, _tcslen( xNode->text )+1);
+			_tcsncpy(tempstring + _tcslen( prolog )+_tcslen(xNode->text ), epilog, _tcslen( epilog )+1);
 			szMessage = tempstring;
       }
 		else if ( !_tcscmp( ptszXmlns, _T("jabber:x:delay")) && msgTime == 0 ) {
@@ -1333,12 +1261,11 @@ void CJabberProto::OnProcessMessage( XmlNode *node, void *userdata )
 		else if ( !_tcscmp( ptszXmlns, _T(JABBER_FEAT_MESSAGE_EVENTS))) {
 			
 			// set events support only if we discovered caps and if events not already set
-			JabberCapsBits jcbCaps = GetResourceCapabilites( from, TRUE );
+			JabberCapsBits jcbCaps = JabberGetResourceCapabilites( from );
 			if ( jcbCaps & JABBER_RESOURCE_CAPS_ERROR )
 				jcbCaps = JABBER_RESOURCE_CAPS_NONE;
-			// FIXME: disabled due to expired XEP-0022 and problems with bombus delivery checks
-//			if ( jcbCaps && resourceStatus && (!(jcbCaps & JABBER_CAPS_MESSAGE_EVENTS)) )
-//				resourceStatus->jcbManualDiscoveredCaps |= (JABBER_CAPS_MESSAGE_EVENTS | JABBER_CAPS_MESSAGE_EVENTS_NO_DELIVERY);
+			if ( jcbCaps && resourceStatus && (!(jcbCaps & JABBER_CAPS_MESSAGE_EVENTS)) )
+				resourceStatus->jcbManualDiscoveredCaps |= (JABBER_CAPS_MESSAGE_EVENTS | JABBER_CAPS_MESSAGE_EVENTS_NO_DELIVERY);
 
 			if ( bodyNode == NULL ) {
 				idNode = JabberXmlGetChild( xNode, "id" );
@@ -1420,7 +1347,7 @@ void CJabberProto::OnProcessMessage( XmlNode *node, void *userdata )
 				*/
 			}
 			else
-				GroupchatProcessInvite( inviteRoomJid, inviteFromJid, inviteReason, invitePassword );
+				JabberGroupchatProcessInvite( inviteRoomJid, inviteFromJid, inviteReason, invitePassword );
 		}
 		return;
 	}
@@ -1447,20 +1374,35 @@ void CJabberProto::OnProcessMessage( XmlNode *node, void *userdata )
 					for ( int i=0; i<item->resourceCount; i++ ) {
 						if ( !lstrcmp( item->resource[i].resourceName, fromResource )) {
 							if ((item->resourceMode==RSMODE_LASTSEEN) && (i != item->lastSeenResource))
-								UpdateMirVer(item);
+								JabberUpdateMirVer(item);
 							item->lastSeenResource = i;
 							break;
 		}	}	}	}	}
 
-		// Create a temporary contact
-		if ( hContact == NULL )
-			hContact = CreateTemporaryContact( from, chatItem );
+		if ( hContact == NULL ) {
+			// Create a temporary contact
+			if ( isChatRoomJid ) {
+				TCHAR* p = _tcschr( from, '/' );
+				if ( p != NULL && p[1] != '\0' )
+					p++;
+				else
+					p = from;
+				hContact = JabberDBCreateContact( from, p, TRUE, FALSE );
+
+				for ( int i=0; i < chatItem->resourceCount; i++ ) {
+					if ( !lstrcmp( chatItem->resource[i].resourceName, p )) {
+						JSetWord( hContact, "Status", chatItem->resource[i].status );
+						break;
+				}	}
+			}
+			else {
+				nick = JabberNickFromJID( from );
+				hContact = JabberDBCreateContact( from, nick, TRUE, TRUE );
+				mir_free( nick );
+		}	}
 
 		time_t now = time( NULL );
-		if ( !msgTime )
-			msgTime = now;
-
-		if ( JGetByte( "FixIncorrectTimestamps", TRUE ) && ( msgTime > now || ( msgTime < ( time_t )JabberGetLastContactMessageTime( hContact ))))
+		if ( msgTime == 0 || msgTime > now || ( msgTime < ( time_t )JabberGetLastContactMessageTime( hContact )))
 			msgTime = now;
 
 		PROTORECVEVENT recv;
@@ -1481,14 +1423,14 @@ void CJabberProto::OnProcessMessage( XmlNode *node, void *userdata )
 }	}
 
 // XEP-0115: Entity Capabilities
-void CJabberProto::OnProcessPresenceCapabilites( XmlNode *node )
+void JabberProcessPresenceCapabilites( XmlNode *node )
 {
 	TCHAR* from;
 	if (( from = JabberXmlGetAttrValue( node, "from" )) == NULL ) return;
 
-	Log("presence: for jid " TCHAR_STR_PARAM, from);
+	JabberLog("presence: for jid " TCHAR_STR_PARAM, from);
 
-	JABBER_RESOURCE_STATUS *r = ResourceInfoFromJID( from );
+	JABBER_RESOURCE_STATUS *r = JabberResourceInfoFromJID( from );
 	if ( r == NULL ) return;
 
 	XmlNode *n;
@@ -1502,21 +1444,21 @@ void CJabberProto::OnProcessPresenceCapabilites( XmlNode *node )
 			replaceStr( r->szCapsNode, szNode );
 			replaceStr( r->szCapsVer, szVer );
 			replaceStr( r->szCapsExt, szExt );
-			HANDLE hContact = HContactFromJID( from );
+			HANDLE hContact = JabberHContactFromJID( from );
 			if ( hContact )
-				UpdateMirVer( hContact, r );
+				JabberUpdateMirVer( hContact, r );
 		}
 	}
 
 	// update user's caps
-	JabberCapsBits jcbCaps = GetResourceCapabilites( from, TRUE );
+	JabberCapsBits jcbCaps = JabberGetResourceCapabilites( from );
 }
 
-void CJabberProto::UpdateJidDbSettings( TCHAR *jid )
+void JabberUpdateJidDbSettings( TCHAR *jid )
 {
-	JABBER_LIST_ITEM *item = ListGetItemPtr( LIST_ROSTER, jid );
+	JABBER_LIST_ITEM *item = JabberListGetItemPtr( LIST_ROSTER, jid );
 	if ( !item ) return;
-	HANDLE hContact = HContactFromJID( jid );
+	HANDLE hContact = JabberHContactFromJID( jid );
 	if ( !hContact ) return;
 
 	int status = ID_STATUS_OFFLINE;
@@ -1537,12 +1479,12 @@ void CJabberProto::UpdateJidDbSettings( TCHAR *jid )
 			r = i;
 	item->itemResource.status = status;
 	if ( r != -1 ) {
-		Log("JabberUpdateJidDbSettings: updating jid " TCHAR_STR_PARAM " to rc " TCHAR_STR_PARAM, item->jid, item->resource[r].resourceName );
+		JabberLog("JabberUpdateJidDbSettings: updating jid " TCHAR_STR_PARAM " to rc " TCHAR_STR_PARAM, item->jid, item->resource[r].resourceName );
 		if ( item->resource[r].statusMessage )
 			DBWriteContactSettingTString( hContact, "CList", "StatusMsg", item->resource[r].statusMessage );
 		else
 			DBDeleteContactSetting( hContact, "CList", "StatusMsg" );
-		UpdateMirVer( hContact, &item->resource[r] );
+		JabberUpdateMirVer( hContact, &item->resource[r] );
 	}
 
 	if ( _tcschr( jid, '@' )!=NULL || JGetByte( "ShowTransport", TRUE )==TRUE )
@@ -1557,10 +1499,10 @@ void CJabberProto::UpdateJidDbSettings( TCHAR *jid )
 		JabberUpdateContactExtraIcon(hContact);
 	}
 
-	MenuUpdateSrmmIcon( item );
+	JabberMenuUpdateSrmmIcon( item );
 }
 
-void CJabberProto::OnProcessPresence( XmlNode *node, void *userdata )
+static void JabberProcessPresence( XmlNode *node, void *userdata )
 {
 	ThreadData* info;
 	HANDLE hContact;
@@ -1573,10 +1515,11 @@ void CJabberProto::OnProcessPresence( XmlNode *node, void *userdata )
 	if (( info=( ThreadData* ) userdata ) == NULL ) return;
 	if (( from = JabberXmlGetAttrValue( node, "from" )) == NULL ) return;
 
-	if ( ListExist( LIST_CHATROOM, from )) {
-		GroupchatProcessPresence( node, userdata );
+	if ( JabberListExist( LIST_CHATROOM, from )) {
+		JabberGroupchatProcessPresence( node, userdata );
 		return;
 	}
+
 
 	BOOL bSelfPresence = FALSE;
 	TCHAR szBareFrom[ 512 ];
@@ -1592,19 +1535,19 @@ void CJabberProto::OnProcessPresence( XmlNode *node, void *userdata )
 		if (( nick = JabberNickFromJID( from )) == NULL )
 			return;
 
-		if (( hContact = HContactFromJID( from )) == NULL ) {
-			if ( !_tcsicmp( info->fullJID, from ) || ( !bSelfPresence && !ListExist( LIST_ROSTER, from ))) {
-				Log("SKIP Receive presence online from "TCHAR_STR_PARAM" ( who is not in my roster and not in list - skiping)", from );
+		if (( hContact = JabberHContactFromJID( from )) == NULL ) {
+			if ( !_tcsicmp( info->fullJID, from ) || ( !bSelfPresence && !JabberListExist( LIST_ROSTER, from ))) {
+				JabberLog("SKIP Receive presence online from "TCHAR_STR_PARAM" ( who is not in my roster and not in list - skiping)", from );
 				mir_free( nick );
 				return;
 			}
-			hContact = DBCreateContact( from, nick, TRUE, TRUE );
+			hContact = JabberDBCreateContact( from, nick, TRUE, TRUE );
 		}
-		if ( !ListExist( LIST_ROSTER, from )) {
-			Log("Receive presence online from "TCHAR_STR_PARAM" ( who is not in my roster )", from );
-			ListAdd( LIST_ROSTER, from );
+		if ( !JabberListExist( LIST_ROSTER, from )) {
+			JabberLog("Receive presence online from "TCHAR_STR_PARAM" ( who is not in my roster )", from );
+			JabberListAdd( LIST_ROSTER, from );
 		}
-		DBCheckIsTransportedContact( from, hContact );
+		JabberDBCheckIsTransportedContact(from,hContact);
 		int status = ID_STATUS_ONLINE;
 		if (( showNode = JabberXmlGetChild( node, "show" )) != NULL ) {
 			if (( show = showNode->text ) != NULL ) {
@@ -1622,53 +1565,56 @@ void CJabberProto::OnProcessPresence( XmlNode *node, void *userdata )
 			p = statusNode->text;
 		else
 			p = NULL;
-		ListAddResource( LIST_ROSTER, from, status, p, priority );
+		JabberListAddResource( LIST_ROSTER, from, status, p, priority );
 		
 		// XEP-0115: Entity Capabilities
-		OnProcessPresenceCapabilites( node );
+		JabberProcessPresenceCapabilites( node );
 
-		UpdateJidDbSettings( from );
+		JabberUpdateJidDbSettings( from );
 
 		if ( _tcschr( from, '@' )==NULL ) {
-			UI_SAFE_NOTIFY(m_pDlgServiceDiscovery, WM_JABBER_TRANSPORT_REFRESH);
+			if ( hwndJabberAgents )
+				SendMessage( hwndJabberAgents, WM_JABBER_TRANSPORT_REFRESH, 0, 0 );
+			if ( hwndServiceDiscovery )
+				SendMessage( hwndServiceDiscovery, WM_JABBER_TRANSPORT_REFRESH, 0, 0 );
 		}
-		Log( TCHAR_STR_PARAM " ( " TCHAR_STR_PARAM " ) online, set contact status to %s", nick, from, JCallService(MS_CLIST_GETSTATUSMODEDESCRIPTION,(WPARAM)status,0 ));
+		JabberLog( TCHAR_STR_PARAM " ( " TCHAR_STR_PARAM " ) online, set contact status to %s", nick, from, JCallService(MS_CLIST_GETSTATUSMODEDESCRIPTION,(WPARAM)status,0 ));
 		mir_free( nick );
 
 		XmlNode* xNode;
 		BOOL hasXAvatar = false;
 		if ( JGetByte( "EnableAvatars", TRUE )) {
-			Log( "Avatar enabled" );
+			JabberLog( "Avatar enabled" );
 			for ( int i = 1; ( xNode=JabberXmlGetNthChild( node, "x", i )) != NULL; i++ ) {
 				if ( !lstrcmp( JabberXmlGetAttrValue( xNode, "xmlns" ), _T("jabber:x:avatar"))) {
 					if (( xNode = JabberXmlGetChild( xNode, "hash" )) != NULL && xNode->text != NULL ) {
 						JDeleteSetting(hContact,"AvatarXVcard");
-						Log( "AvatarXVcard deleted" );
+						JabberLog( "AvatarXVcard deleted" );
 						JSetStringT( hContact, "AvatarHash", xNode->text );
 						hasXAvatar = true;
 						DBVARIANT dbv = {0};
 						int result = JGetStringT( hContact, "AvatarSaved", &dbv );
 						if ( !result || lstrcmp( dbv.ptszVal, xNode->text )) {
-							Log( "Avatar was changed" );
+							JabberLog( "Avatar was changed" );
 							JSendBroadcast( hContact, ACKTYPE_AVATAR, ACKRESULT_STATUS, NULL, NULL );
-						} else Log( "Not broadcasting avatar changed" );
+						} else JabberLog( "Not broadcasting avatar changed" );
 						if ( !result ) JFreeVariant( &dbv );
 			}	}	}
 			if ( !hasXAvatar ) { //no jabber:x:avatar. try vcard-temp:x:update
-				Log( "Not hasXAvatar" );
+				JabberLog( "Not hasXAvatar" );
 				for ( int i = 1; ( xNode=JabberXmlGetNthChild( node, "x", i )) != NULL; i++ ) {
 					if ( !lstrcmp( JabberXmlGetAttrValue( xNode, "xmlns" ), _T("vcard-temp:x:update"))) {
 						if (( xNode = JabberXmlGetChild( xNode, "photo" )) != NULL && xNode->text != NULL ) {
 							JSetByte( hContact, "AvatarXVcard", 1 );
-							Log( "AvatarXVcard set" );
+							JabberLog( "AvatarXVcard set" );
 							JSetStringT( hContact, "AvatarHash", xNode->text );
 							DBVARIANT dbv = {0};
 							int result = JGetStringT( hContact, "AvatarSaved", &dbv );
 							if ( !result || lstrcmp( dbv.ptszVal, xNode->text )) {
-								Log( "Avatar was changed. Using vcard-temp:x:update" );
+								JabberLog( "Avatar was changed. Using vcard-temp:x:update" );
 								JSendBroadcast( hContact, ACKTYPE_AVATAR, ACKRESULT_STATUS, NULL, NULL );
 							}
-							else Log( "Not broadcasting avatar changed" );
+							else JabberLog( "Not broadcasting avatar changed" );
 							if ( !result ) JFreeVariant( &dbv );
 		}	}	}	}	}
 		return;
@@ -1676,13 +1622,13 @@ void CJabberProto::OnProcessPresence( XmlNode *node, void *userdata )
 
 	if ( !_tcscmp( type, _T("unavailable"))) {
 		int status = ID_STATUS_OFFLINE;
-		hContact = HContactFromJID( from );
-		if (( item = ListGetItemPtr( LIST_ROSTER, from )) != NULL ) {
-			ListRemoveResource( LIST_ROSTER, from );
+		hContact = JabberHContactFromJID( from );
+		if (( item = JabberListGetItemPtr( LIST_ROSTER, from )) != NULL ) {
+			JabberListRemoveResource( LIST_ROSTER, from );
 
 			// remove selfcontact, if where is no more another resources
-			if ( item->resourceCount == 1 && ResourceInfoFromJID( info->fullJID ))
-				ListRemoveResource( LIST_ROSTER, info->fullJID );
+			if ( item->resourceCount == 1 && JabberResourceInfoFromJID( info->fullJID ))
+				JabberListRemoveResource( LIST_ROSTER, info->fullJID );
 
 			// set status only if no more available resources
 			if ( !item->resourceCount )
@@ -1694,29 +1640,32 @@ void CJabberProto::OnProcessPresence( XmlNode *node, void *userdata )
 					replaceStr( item->itemResource.statusMessage, NULL );
 			}
 		}
-		else Log( "SKIP Receive presence offline from " TCHAR_STR_PARAM " ( who is not in my roster )", from );
+		else JabberLog( "SKIP Receive presence offline from " TCHAR_STR_PARAM " ( who is not in my roster )", from );
 
-		UpdateJidDbSettings( from );
+		JabberUpdateJidDbSettings( from );
 
 		if ( _tcschr( from, '@' )==NULL ) {
-			UI_SAFE_NOTIFY(m_pDlgServiceDiscovery, WM_JABBER_TRANSPORT_REFRESH);
+			if ( hwndJabberAgents )
+				SendMessage( hwndJabberAgents, WM_JABBER_TRANSPORT_REFRESH, 0, 0 );
+			if ( hwndServiceDiscovery )
+				SendMessage( hwndServiceDiscovery, WM_JABBER_TRANSPORT_REFRESH, 0, 0 );
 		}
-		DBCheckIsTransportedContact(from, hContact);
+		JabberDBCheckIsTransportedContact(from, hContact);
 		return;
 	}
 
 	if ( !_tcscmp( type, _T("subscribe"))) {
-		if (hContact = HContactFromJID( from ))
-			AddDbPresenceEvent( hContact, JABBER_DB_EVENT_PRESENCE_SUBSCRIBE );
-
 		// automatically send authorization allowed to agent/transport
 		if ( _tcschr( from, '@' ) == NULL || JGetByte("AutoAcceptAuthorization", FALSE )) {
-			ListAdd( LIST_ROSTER, from );
+			JabberListAdd( LIST_ROSTER, from );
 			XmlNode p( "presence" ); p.addAttr( "to", from ); p.addAttr( "type", "subscribed" );
 			info->send( p );
 			if ( JGetByte( "AutoAdd", TRUE ) == TRUE ) {
-				if (( item = ListGetItemPtr( LIST_ROSTER, from )) == NULL || ( item->subscription != SUB_BOTH && item->subscription != SUB_TO )) {
-					Log( "Try adding contact automatically jid = " TCHAR_STR_PARAM, from );
+				HANDLE hContact;
+				JABBER_LIST_ITEM *item;
+
+				if (( item = JabberListGetItemPtr( LIST_ROSTER, from )) == NULL || ( item->subscription != SUB_BOTH && item->subscription != SUB_TO )) {
+					JabberLog( "Try adding contact automatically jid = " TCHAR_STR_PARAM, from );
 					if (( hContact=AddToListByJID( from, 0 )) != NULL ) {
 						// Trigger actual add by removing the "NotOnList" added by AddToListByJID()
 						// See AddToListByJID() and JabberDbSettingChanged().
@@ -1727,49 +1676,28 @@ void CJabberProto::OnProcessPresence( XmlNode *node, void *userdata )
 			XmlNode* n = JabberXmlGetChild( node, "nick" );
 			nick = ( n == NULL ) ? JabberNickFromJID( from ) : mir_tstrdup( n->text );
 			if ( nick != NULL ) {
-				Log( TCHAR_STR_PARAM " ( " TCHAR_STR_PARAM " ) requests authorization", nick, from );
-				DBAddAuthRequest( from, nick );
+				JabberLog( TCHAR_STR_PARAM " ( " TCHAR_STR_PARAM " ) requests authorization", nick, from );
+				JabberDBAddAuthRequest( from, nick );
 				mir_free( nick );
 		}	}
 		return;
 	}
 
-	if ( !_tcscmp( type, _T("unsubscribe"))) {
-		if (hContact = HContactFromJID( from ))
-			AddDbPresenceEvent( hContact, JABBER_DB_EVENT_PRESENCE_UNSUBSCRIBE );
-	}
-
-	if ( !_tcscmp( type, _T("unsubscribed"))) {
-		if (hContact = HContactFromJID( from ))
-			AddDbPresenceEvent( hContact, JABBER_DB_EVENT_PRESENCE_UNSUBSCRIBED );
-	}
-
-	if ( !_tcscmp( type, _T("error"))) {
-		if (hContact = HContactFromJID( from )) {
-			AddDbPresenceEvent( hContact, JABBER_DB_EVENT_PRESENCE_ERROR );
-		}
-	}
-
 	if ( !_tcscmp( type, _T("subscribed"))) {
-
-		if (hContact = HContactFromJID( from ))
-			AddDbPresenceEvent( hContact, JABBER_DB_EVENT_PRESENCE_SUBSCRIBED );
-
-		if (( item=ListGetItemPtr( LIST_ROSTER, from )) != NULL ) {
+		if (( item=JabberListGetItemPtr( LIST_ROSTER, from )) != NULL ) {
 			if ( item->subscription == SUB_FROM ) item->subscription = SUB_BOTH;
 			else if ( item->subscription == SUB_NONE ) {
 				item->subscription = SUB_TO;
 				if ( _tcschr( from, '@' )==NULL ) {
-					UI_SAFE_NOTIFY(m_pDlgServiceDiscovery, WM_JABBER_TRANSPORT_REFRESH);
-				}
-			}
-		}
-	}	
-}
+					if ( hwndJabberAgents )
+						SendMessage( hwndJabberAgents, WM_JABBER_TRANSPORT_REFRESH, 0, 0 );
+					if ( hwndServiceDiscovery )
+						SendMessage( hwndServiceDiscovery, WM_JABBER_TRANSPORT_REFRESH, 0, 0 );
+}	}	}	}	}
 
-void CJabberProto::OnIqResultVersion( XmlNode* node, void* userdata, CJabberIqInfo *pInfo )
+void JabberProcessIqResultVersion( XmlNode* node, void* userdata, CJabberIqInfo *pInfo )
 {
-	JABBER_RESOURCE_STATUS *r = ResourceInfoFromJID( pInfo->GetFrom() );
+	JABBER_RESOURCE_STATUS *r = JabberResourceInfoFromJID( pInfo->GetFrom() );
 	if ( r == NULL ) return;
 
 	r->dwVersionRequestTime = -1;
@@ -1790,14 +1718,14 @@ void CJabberProto::OnIqResultVersion( XmlNode* node, void* userdata, CJabberIqIn
 			r->system = mir_tstrdup( n->text );
 	}
 
-	GetResourceCapabilites( pInfo->GetFrom(), TRUE );
+	JabberGetResourceCapabilites( pInfo->GetFrom() );
 	if ( pInfo->GetHContact() )
-		UpdateMirVer( pInfo->GetHContact(), r );
+		JabberUpdateMirVer( pInfo->GetHContact(), r );
 
 	JabberUserInfoUpdate(pInfo->GetHContact());
 }
 
-void CJabberProto::OnProcessIq( XmlNode *node, void *userdata )
+static void JabberProcessIq( XmlNode *node, void *userdata )
 {
 	ThreadData* info;
 	XmlNode *queryNode;
@@ -1816,31 +1744,33 @@ void CJabberProto::OnProcessIq( XmlNode *node, void *userdata )
 	queryNode = JabberXmlGetChild( node, "query" );
 	xmlns = JabberXmlGetAttrValue( queryNode, "xmlns" );
 
+
 	// new match by id
-	if ( m_iqManager.HandleIq( id, node, userdata ))
+	if ( g_JabberIqManager.HandleIq( id, node, userdata ))
 		return;
 
 	// new iq handler engine
-	if ( m_iqManager.HandleIqPermanent( node, userdata ))
+	if ( g_JabberIqManager.HandleIqPermanent( node, userdata ))
 		return;
+
 
 	/////////////////////////////////////////////////////////////////////////
 	// OLD MATCH BY ID
 	/////////////////////////////////////////////////////////////////////////
 	if ( ( !_tcscmp( type, _T("result")) || !_tcscmp( type, _T("error")) ) && (( pfunc=JabberIqFetchFunc( id )) != NULL )) {
-		Log( "Handling iq request for id=%d", id );
-		(this->*pfunc)( node, userdata );
+		JabberLog( "Handling iq request for id=%d", id );
+		pfunc( node, userdata );
 		return;
 	}
 	// RECVED: <iq type='error'> ...
 	else if ( !_tcscmp( type, _T("error"))) {
-		Log( "XXX on entry" );
+		JabberLog( "XXX on entry" );
 		// Check for file transfer deny by comparing idStr with ft->iqId
 		i = 0;
-		while (( i=ListFindNext( LIST_FILE, i )) >= 0 ) {
-			JABBER_LIST_ITEM *item = ListGetItemPtrFromIndex( i );
+		while (( i=JabberListFindNext( LIST_FILE, i )) >= 0 ) {
+			JABBER_LIST_ITEM *item = JabberListGetItemPtrFromIndex( i );
 			if ( item->ft != NULL && item->ft->state == FT_CONNECTING && !_tcscmp( idStr, item->ft->iqId )) {
-				Log( "Denying file sending request" );
+				JabberLog( "Denying file sending request" );
 				item->ft->state = FT_DENIED;
 				if ( item->ft->hFileEvent != NULL )
 					SetEvent( item->ft->hFileEvent );	// Simulate the termination of file server connection
@@ -1863,7 +1793,7 @@ void CJabberProto::OnProcessIq( XmlNode *node, void *userdata )
 	}
 }
 
-void CJabberProto::OnProcessRegIq( XmlNode *node, void *userdata )
+static void JabberProcessRegIq( XmlNode *node, void *userdata )
 {
 	ThreadData* info;
 	XmlNode *errorNode;
@@ -1880,7 +1810,7 @@ void CJabberProto::OnProcessRegIq( XmlNode *node, void *userdata )
 		// RECVED: result of the request for registration mechanism
 		// ACTION: send account registration information
 		if ( id == iqIdRegGetReg ) {
-			iqIdRegSetReg = SerialNext();
+			iqIdRegSetReg = JabberSerialNext();
 
 			XmlNodeIq iq( "set", iqIdRegSetReg );
 			XmlNode* query = iq.addQuery( JABBER_FEAT_REGISTER );
@@ -1910,11 +1840,10 @@ void CJabberProto::OnProcessRegIq( XmlNode *node, void *userdata )
 /////////////////////////////////////////////////////////////////////////////////////////
 // ThreadData constructor & destructor
 
-ThreadData::ThreadData( CJabberProto* aproto, JABBER_SESSION_TYPE parType )
+ThreadData::ThreadData( JABBER_SESSION_TYPE parType )
 {
 	memset( this, 0, sizeof( *this ));
 	type = parType;
-	proto = aproto;
 	InitializeCriticalSection( &iomutex );
 }
 
@@ -1942,7 +1871,7 @@ int ThreadData::recvws( char* buf, size_t len, int flags )
 	if ( ssl != NULL )
 		result = pfn_SSL_read( ssl, buf, len );
 	else
-		result = proto->WsRecv( s, buf, len, flags );
+		result = JabberWsRecv( s, buf, len, flags );
 
 	return result;
 }
@@ -1958,13 +1887,13 @@ int ThreadData::recv( char* buf, size_t len )
 int ThreadData::sendws( char* buffer, size_t bufsize, int flags )
 {
 	if ( !ssl )
-		return proto->WsSend( s, buffer, bufsize, flags );
+		return JabberWsSend( s, buffer, bufsize, flags );
 
 	if ( flags != MSG_NODUMP && DBGetContactSettingByte( NULL, "Netlib", "DumpSent", TRUE ) == TRUE ) {
 		char* szLogBuffer = ( char* )alloca( bufsize+32 );
 		strcpy( szLogBuffer, "( SSL ) Data sent\n" );
 		memcpy( szLogBuffer+strlen( szLogBuffer ), buffer, bufsize+1  ); // also copy \0
-		Netlib_Logf( proto->m_hNetlibUser, "%s", szLogBuffer );	// %s to protect against when fmt tokens are in szLogBuffer causing crash
+		Netlib_Logf( hNetlibUser, "%s", szLogBuffer );	// %s to protect against when fmt tokens are in szLogBuffer causing crash
 	}
 	return pfn_SSL_write( ssl, buffer, bufsize );
 }
@@ -1993,7 +1922,7 @@ int ThreadData::send( XmlNode& node )
 	if ( this == NULL )
 		return 0;
 
-	proto->OnConsoleProcessXml(&node, JCPF_OUT|JCPF_UTF8);
+	JabberConsoleProcessXml(&node, JCPF_OUT|JCPF_UTF8);
 
 	char* str = node.getText();
 	int result = send( str, strlen( str ));

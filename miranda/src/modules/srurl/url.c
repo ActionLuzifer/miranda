@@ -2,7 +2,7 @@
 
 Miranda IM: the free IM client for Microsoft* Windows*
 
-Copyright 2000-2008 Miranda ICQ/IM project, 
+Copyright 2000-2007 Miranda ICQ/IM project, 
 all portions of this codebase are copyrighted to the people 
 listed in contributors.txt.
 
@@ -114,21 +114,23 @@ static int ContactSettingChanged(WPARAM wParam, LPARAM lParam)
 
 static int SRUrlModulesLoaded(WPARAM wParam,LPARAM lParam)
 {
-	int i;
-
 	CLISTMENUITEM mi = { 0 };
+	PROTOCOLDESCRIPTOR **protocol;
+	int protoCount,i;
+
 	mi.cbSize = sizeof(mi);
 	mi.position = -2000040000;
 	mi.flags = CMIF_ICONFROMICOLIB;
 	mi.icolibItem = GetSkinIconHandle( SKINICON_EVENT_URL );
 	mi.pszName = LPGEN("Web Page Address (&URL)");
 	mi.pszService = MS_URL_SENDURL;
-
-	for ( i=0; i < accounts.count; i++ ) {
-		PROTOACCOUNT* pa = accounts.items[i];
-		if ( CallProtoService( pa->szModuleName, PS_GETCAPS, PFLAGNUM_1, 0 ) & PF1_URLSEND ) {
-			mi.pszContactOwner = pa->szModuleName;
-			CallService( MS_CLIST_ADDCONTACTMENUITEM, 0, ( LPARAM )&mi );
+	CallService(MS_PROTO_ENUMPROTOCOLS,(WPARAM)&protoCount,(LPARAM)&protocol);
+	for ( i=0; i < protoCount; i++ ) {
+		if ( protocol[i]->type != PROTOTYPE_PROTOCOL )
+			continue;
+		if ( CallProtoService( protocol[i]->szName,PS_GETCAPS,PFLAGNUM_1,0) & PF1_URLSEND ) {
+			mi.pszContactOwner = protocol[i]->szName;
+			CallService(MS_CLIST_ADDCONTACTMENUITEM,0,(LPARAM)&mi);
 	}	}
 
 	RestoreUnreadUrlAlerts();

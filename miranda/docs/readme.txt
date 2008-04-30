@@ -1,7 +1,7 @@
                    Miranda Instant Messenger Release Notes
                    ---------------------------------------
 
-                                    v0.7
+                                   v0.7.5
 
                           http://www.miranda-im.org
 
@@ -20,8 +20,136 @@ Contents
 
 
 
-1. New in this version
-----------------------
+1. Changes in this version
+--------------------------
+* New in 0.7.5
+Enhancements:
+ - Added a "Check for Updates" menu item
+ - AIM: Added skinnable icons
+
+Bugfixes:
+ - Group chat options didn't use tabbed interface under "Group chats"
+ - AIM: Fixed possible crashes
+ - AIM: Fixed possible memory leaks
+ - AIM: Profile editor shown incorrectly
+ - ICQ: Fix problem with transfers through LAN
+ - Jabber: Problem receiving '&' character
+ - Yahoo: Global status change ignored status lock
+ - Yahoo: Avatars were not enabled by default
+
+* New in 0.7.4
+Enhancements:
+ - Ability to show unicode tooltips
+ - Improved uPnP handling for various routers
+ - Status menu width fix
+ - ICQ: Use new offline messaging protocol (supports unicode)
+ - ICQ: Ability to send/receive contacts to/from ICQ6 and AIM
+ - ICQ: Ability to view/set ICQ6 compatible custom statuses (icons only)
+ - ICQ: Reinvented known spam bot blocking
+ - Jabber: Group chat jid list filters implemented
+ - MSN: Added WLM 9 detection
+ - MSN: Added ability to receive GIF avatars
+ - MSN: Added custom smiley reception
+ - MSN: Added avatar display for the contact that is yourself
+ - MSN: Added error messages on failure to find / store avatar
+ 
+Bugfixes:
+ - Fixed HTTP processing
+ - Fixed crashes in multiple conditions
+ - ICQ: Fixed receiving of multi-part messages (only first part was received)
+ - ICQ: Fixed connection problems with many contacts in the server-list
+ - ICQ: Do not lose server-list contacts due to too long nicknames/comments
+ - ICQ: Fixed possible crash during file transfer
+ - Jabber: Crash on group chat join from service discovery
+ - Jabber: Memory leak fixes in dialogs
+ - Jabber: Client version was wrongly updated when sending message to an offline contact
+ - MSN: Offline messaging for people with long nicknames
+ - MSN: Disconnect when receive Hotmail notification
+ - MSN: Inability to login with error 923 
+ - MSN: Fixed disconnect / inability to login due to sending corrupted messages
+ - MSN: Fixed for nudge sending / receiving
+ - MSN: Fixed moving contact to root
+ 
+
+* New in 0.7.3
+ - MSN: URL encoding of utf8 was broken
+ - Jabber: Contact list vulnerability fixed
+
+* New in 0.7.2
+Enhancements:
+ - Jabber: Added "Toggle Member" item
+ - Jabber: Added items count in jid lists
+ - Jabber: Added display of quit messages
+ - Jabber: implemented XEP-0184 message delivery check
+ - Jabber: Cleanup for the menu entries
+ - Jabber: "Use hostname as resource" option
+ - Jabber: redesigned groupchat join dialog
+ - Jabber: redesigned privacy lists dialog, usability changes
+ - Jabber: redesigned jabber user info dialog
+ - Jabber: privacy lists menu
+ - Jabber: Auto reject invites to conferences
+ - Jabber: Auto accept authorization requests
+ - Jabber: resource selection from contact context menu
+ - Jabber: 'File Association Manager' Plugin support, URI handler
+ - Jabber: xml:lang support, localized forms and other resources
+ - Jabber: simple privacy list editor
+ - Jabber: XEP-0083: Nested Roster Groups
+ - Jabber: an admin can now view admin and owner lists
+
+Bugfixes:
+ - IRC: Handle on the phone and out to lunch events
+ - MSN: Potential buffer overflow issue
+ - MSN: Block MSN system alerts
+ - Yahoo: Potential buffer overflow issue
+ - Jabber: Wrong timestamp for message forwarded from another client
+ - Jabber: Roster import/export create groups
+ - Jabber: On-trasport context menu issues
+ - Jabber: Custom status messages not propagated to Jabber 
+ - Jabber: Auto-join jabber conference don't work
+ - Jabber: scrolling doesn't work well in jabber forms (MUC configuration, ad-hoc, etc)
+ - Jabber: fixed closing internal form dialog by pressing ESC
+ - Jabber: Broken avatar transparency
+ - Jabber: fixed transport registration (transport was offline just after registration)
+ - Jabber: check default typing setting, if contact setting is not available
+ - Jabber: fixed jabber bookmarks error handling
+ - Jabber: fixed message send timeout problem with 0.7.0.13 module versions
+ - Jabber: remove user moods and privacy lists menus before going to offline
+ - Jabber: cannot close privacy lists editor, if miranda is offline
+ - Jabber: Data Forms eat some words
+ - Jabber: proper jabber advanced options tree checkbox checking by space key
+ - Jabber: removed 'from' attribute from muc invitations
+ - Jabber: skip xml console tag text indentation, if tag has no children => proper copy/paste
+
+ 
+* New in 0.7.1
+Enhancements:
+ - Improved icon skinning engine performance
+ - ICQ: Enable ICQ 6 photo handling
+ - Jabber: Improved avatar processing
+ - MSN: Added per message nickname display
+ - MSN: Improved status message processing
+ 
+Bugfixes:
+ - Image services plugin wasn't loaded correctly sometimes
+ - Standard message dialog didn't draw user id button correctly
+ - Network log issue creating log file name correctly
+ - ICQ: Handle non-standard offline messages
+ - ICQ: Buffer overflow vulnerability
+ - IRC: Warning message was cut off
+ - IRC: Buffer overflow vulnerability in IRC options
+ - IRC: Russian nicks parsed incorrectly
+ - IRC: Fixed clickable timestamps in group chats
+ - Jabber: urn:xmpp:time returns month number off by 1
+ - Jabber: Jabber displayed self in contact list
+ - Jabber: Wrong timestamp for offline messages
+ - Jabber: Crash in Jabber multi-user conference
+ - Jabber: Buffer overflow vulnerability in Jabber forms
+ - Jabber: Can't change icons to gadu gadu transport contacts
+ - MSN: Changed gateway polling frequency
+ - MSN: Fixed MSN alert url creation
+ - MSN: Remove Yahoo alert 
+ - Yahoo: Buffer overflow vulnerability
+ 
 * New in 0.7
 Enhancements:
  - Added Gadu-Gadu protocol support

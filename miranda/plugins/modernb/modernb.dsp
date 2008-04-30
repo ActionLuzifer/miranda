@@ -25,8 +25,8 @@ CFG=modernb - Win32 Debug Unicode
 
 # Begin Project
 # PROP AllowPerConfigDependencies 0
-# PROP Scc_ProjName ""
-# PROP Scc_LocalPath ""
+# PROP Scc_ProjName ""$/Miranda32/Plugins/modernb", DSEAAAAA"
+# PROP Scc_LocalPath "."
 CPP=cl.exe
 MTL=midl.exe
 RSC=rc.exe
@@ -45,7 +45,7 @@ RSC=rc.exe
 # PROP Ignore_Export_Lib 1
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /MT /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "modernb_EXPORTS" /YX /FD /c
-# ADD CPP /nologo /MD /W3 /Zi /O1 /I "../../include" /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "modernb_EXPORTS" /Yu"hdr/modern_commonheaders.h" /FD /c
+# ADD CPP /nologo /MD /W3 /Zi /O1 /I "../../include" /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "modernb_EXPORTS" /Yu"commonheaders.h" /FD /c
 # ADD BASE MTL /nologo /D "NDEBUG" /mktyplib203 /win32
 # ADD MTL /nologo /D "NDEBUG" /mktyplib203 /win32
 # ADD BASE RSC /l 0x809 /d "NDEBUG"
@@ -72,7 +72,7 @@ LINK32=link.exe
 # PROP Ignore_Export_Lib 1
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /MTd /W3 /Gm /GX /ZI /Od /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "modernb_EXPORTS" /YX /FD /GZ /c
-# ADD CPP /nologo /MDd /W3 /Gm /GX /ZI /Od /I "../../include" /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "modernb_EXPORTS" /Yu"hdr/modern_commonheaders.h" /FD /GZ /c
+# ADD CPP /nologo /MDd /W3 /Gm /GX /ZI /Od /I "../../include" /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "modernb_EXPORTS" /Yu"commonheaders.h" /FD /GZ /c
 # ADD BASE MTL /nologo /D "_DEBUG" /mktyplib203 /win32
 # ADD MTL /nologo /D "_DEBUG" /mktyplib203 /win32
 # ADD BASE RSC /l 0x809 /d "_DEBUG"
@@ -100,7 +100,7 @@ LINK32=link.exe
 # PROP Ignore_Export_Lib 1
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /MD /W3 /O2 /I "../../include" /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "modernb_EXPORTS" /Yu"commonheaders.h" /FD /c
-# ADD CPP /nologo /MD /W3 /Zi /O1 /I "../../include" /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "UNICODE" /D "_USRDLL" /D "modernb_EXPORTS" /Yu"hdr/modern_commonheaders.h" /FD /c
+# ADD CPP /nologo /MD /W3 /Zi /O1 /I "../../include" /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "UNICODE" /D "_USRDLL" /D "modernb_EXPORTS" /Yu"commonheaders.h" /FD /c
 # SUBTRACT CPP /Fr
 # ADD BASE MTL /nologo /D "NDEBUG" /mktyplib203 /win32
 # ADD MTL /nologo /D "NDEBUG" /mktyplib203 /win32
@@ -129,7 +129,7 @@ LINK32=link.exe
 # PROP Ignore_Export_Lib 1
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /MDd /W3 /Gm /GX /ZI /Od /I "../../include" /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "modernb_EXPORTS" /Yu"commonheaders.h" /FD /GZ /c
-# ADD CPP /nologo /MDd /W3 /Gm /GX /ZI /Od /I "../../include" /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "UNICODE" /D "_USRDLL" /D "modernb_EXPORTS" /Yu"hdr/modern_commonheaders.h" /FD /GZ /c
+# ADD CPP /nologo /MDd /W3 /Gm /GX /ZI /Od /I "../../include" /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "UNICODE" /D "_USRDLL" /D "modernb_EXPORTS" /Yu"commonheaders.h" /FD /GZ /c
 # ADD BASE MTL /nologo /D "_DEBUG" /mktyplib203 /win32
 # ADD MTL /nologo /D "_DEBUG" /mktyplib203 /win32
 # ADD BASE RSC /l 0x809 /d "_DEBUG"
@@ -153,150 +153,404 @@ LINK32=link.exe
 # Begin Group "Source Files"
 
 # PROP Default_Filter "cpp;c;cxx;rc;def;r;odl;idl;hpj;bat"
+# Begin Group "CLUIFrames"
+
+# PROP Default_Filter ""
 # Begin Source File
 
-SOURCE=.\init.cpp
+SOURCE=.\cluiframes.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\modern_aniavatars.cpp
+SOURCE=.\extraimage.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\framesmenu.c
+# End Source File
+# End Group
+# Begin Group "ExtFrames"
+
+# PROP Default_Filter ""
+# Begin Source File
+
+SOURCE=.\ExtFrames\modern_ext_frames.c
+# ADD CPP /Yu"..\commonheaders.h"
+# End Source File
+# End Group
+# Begin Source File
+
+SOURCE=.\button.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\cache_funcs.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\clc.c
+
+!IF  "$(CFG)" == "modernb - Win32 Release"
+
+# ADD CPP /Yu"commonheaders.h"
+
+!ELSEIF  "$(CFG)" == "modernb - Win32 Debug"
+
+!ELSEIF  "$(CFG)" == "modernb - Win32 Release Unicode"
+
+# ADD BASE CPP /Yu"commonheaders.h"
+# ADD CPP /Yu"commonheaders.h"
+
+!ELSEIF  "$(CFG)" == "modernb - Win32 Debug Unicode"
+
+!ENDIF 
+
+# End Source File
+# Begin Source File
+
+SOURCE=.\clcidents.c
+
+!IF  "$(CFG)" == "modernb - Win32 Release"
+
+# ADD CPP /Yu"commonheaders.h"
+
+!ELSEIF  "$(CFG)" == "modernb - Win32 Debug"
+
+!ELSEIF  "$(CFG)" == "modernb - Win32 Release Unicode"
+
+# ADD BASE CPP /Yu"commonheaders.h"
+# ADD CPP /Yu"commonheaders.h"
+
+!ELSEIF  "$(CFG)" == "modernb - Win32 Debug Unicode"
+
+!ENDIF 
+
+# End Source File
+# Begin Source File
+
+SOURCE=.\clcitems.c
+
+!IF  "$(CFG)" == "modernb - Win32 Release"
+
+# ADD CPP /Yu"commonheaders.h"
+
+!ELSEIF  "$(CFG)" == "modernb - Win32 Debug"
+
+!ELSEIF  "$(CFG)" == "modernb - Win32 Release Unicode"
+
+# ADD BASE CPP /Yu"commonheaders.h"
+# ADD CPP /Yu"commonheaders.h"
+
+!ELSEIF  "$(CFG)" == "modernb - Win32 Debug Unicode"
+
+!ENDIF 
+
+# End Source File
+# Begin Source File
+
+SOURCE=.\clcmsgs.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\clcopts.c
+
+!IF  "$(CFG)" == "modernb - Win32 Release"
+
+# ADD CPP /Yu"commonheaders.h"
+
+!ELSEIF  "$(CFG)" == "modernb - Win32 Debug"
+
+!ELSEIF  "$(CFG)" == "modernb - Win32 Release Unicode"
+
+# ADD BASE CPP /Yu"commonheaders.h"
+# ADD CPP /Yu"commonheaders.h"
+
+!ELSEIF  "$(CFG)" == "modernb - Win32 Debug Unicode"
+
+!ENDIF 
+
+# End Source File
+# Begin Source File
+
+SOURCE=.\clcpaint.c
+
+!IF  "$(CFG)" == "modernb - Win32 Release"
+
+# ADD CPP /Yu"commonheaders.h"
+
+!ELSEIF  "$(CFG)" == "modernb - Win32 Debug"
+
+!ELSEIF  "$(CFG)" == "modernb - Win32 Release Unicode"
+
+# ADD BASE CPP /Yu"commonheaders.h"
+# ADD CPP /Yu"commonheaders.h"
+
+!ELSEIF  "$(CFG)" == "modernb - Win32 Debug Unicode"
+
+!ENDIF 
+
+# End Source File
+# Begin Source File
+
+SOURCE=.\clcutils.c
+
+!IF  "$(CFG)" == "modernb - Win32 Release"
+
+# ADD CPP /Yu"commonheaders.h"
+
+!ELSEIF  "$(CFG)" == "modernb - Win32 Debug"
+
+!ELSEIF  "$(CFG)" == "modernb - Win32 Release Unicode"
+
+# ADD BASE CPP /Yu"commonheaders.h"
+# ADD CPP /Yu"commonheaders.h"
+
+!ELSEIF  "$(CFG)" == "modernb - Win32 Debug Unicode"
+
+!ENDIF 
+
+# End Source File
+# Begin Source File
+
+SOURCE=.\clistevents.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\clistmenus.c
+
+!IF  "$(CFG)" == "modernb - Win32 Release"
+
+# ADD CPP /Yu"commonheaders.h"
+
+!ELSEIF  "$(CFG)" == "modernb - Win32 Debug"
+
+!ELSEIF  "$(CFG)" == "modernb - Win32 Release Unicode"
+
+# ADD BASE CPP /Yu"commonheaders.h"
+# ADD CPP /Yu"commonheaders.h"
+
+!ELSEIF  "$(CFG)" == "modernb - Win32 Debug Unicode"
+
+!ENDIF 
+
+# End Source File
+# Begin Source File
+
+SOURCE=.\clistmod.c
+
+!IF  "$(CFG)" == "modernb - Win32 Release"
+
+# ADD CPP /Yu"commonheaders.h"
+
+!ELSEIF  "$(CFG)" == "modernb - Win32 Debug"
+
+!ELSEIF  "$(CFG)" == "modernb - Win32 Release Unicode"
+
+# ADD BASE CPP /Yu"commonheaders.h"
+# ADD CPP /Yu"commonheaders.h"
+
+!ELSEIF  "$(CFG)" == "modernb - Win32 Debug Unicode"
+
+!ENDIF 
+
+# End Source File
+# Begin Source File
+
+SOURCE=.\clistopts.c
+
+!IF  "$(CFG)" == "modernb - Win32 Release"
+
+# ADD CPP /Yu"commonheaders.h"
+
+!ELSEIF  "$(CFG)" == "modernb - Win32 Debug"
+
+!ELSEIF  "$(CFG)" == "modernb - Win32 Release Unicode"
+
+# ADD BASE CPP /Yu"commonheaders.h"
+# ADD CPP /Yu"commonheaders.h"
+
+!ELSEIF  "$(CFG)" == "modernb - Win32 Debug Unicode"
+
+!ENDIF 
+
+# End Source File
+# Begin Source File
+
+SOURCE=.\clistsettings.c
+
+!IF  "$(CFG)" == "modernb - Win32 Release"
+
+# ADD CPP /Yu"commonheaders.h"
+
+!ELSEIF  "$(CFG)" == "modernb - Win32 Debug"
+
+!ELSEIF  "$(CFG)" == "modernb - Win32 Release Unicode"
+
+# ADD BASE CPP /Yu"commonheaders.h"
+# ADD CPP /Yu"commonheaders.h"
+
+!ELSEIF  "$(CFG)" == "modernb - Win32 Debug Unicode"
+
+!ENDIF 
+
+# End Source File
+# Begin Source File
+
+SOURCE=.\clisttray.c
+
+!IF  "$(CFG)" == "modernb - Win32 Release"
+
+# ADD CPP /Yu"commonheaders.h"
+
+!ELSEIF  "$(CFG)" == "modernb - Win32 Debug"
+
+!ELSEIF  "$(CFG)" == "modernb - Win32 Release Unicode"
+
+# ADD BASE CPP /Yu"commonheaders.h"
+# ADD CPP /Yu"commonheaders.h"
+
+!ELSEIF  "$(CFG)" == "modernb - Win32 Debug Unicode"
+
+!ENDIF 
+
+# End Source File
+# Begin Source File
+
+SOURCE=.\clui.c
+
+!IF  "$(CFG)" == "modernb - Win32 Release"
+
+# ADD CPP /Yu"commonheaders.h"
+
+!ELSEIF  "$(CFG)" == "modernb - Win32 Debug"
+
+!ELSEIF  "$(CFG)" == "modernb - Win32 Release Unicode"
+
+# ADD BASE CPP /Yu"commonheaders.h"
+# ADD CPP /Yu"commonheaders.h"
+
+!ELSEIF  "$(CFG)" == "modernb - Win32 Debug Unicode"
+
+!ENDIF 
+
+# End Source File
+# Begin Source File
+
+SOURCE=.\cluiservices.c
+
+!IF  "$(CFG)" == "modernb - Win32 Release"
+
+# ADD CPP /Yu"commonheaders.h"
+
+!ELSEIF  "$(CFG)" == "modernb - Win32 Debug"
+
+!ELSEIF  "$(CFG)" == "modernb - Win32 Release Unicode"
+
+# ADD BASE CPP /Yu"commonheaders.h"
+# ADD CPP /Yu"commonheaders.h"
+
+!ELSEIF  "$(CFG)" == "modernb - Win32 Debug Unicode"
+
+!ENDIF 
+
+# End Source File
+# Begin Source File
+
+SOURCE=.\commonheaders.c
+# ADD CPP /Yc"commonheaders.h"
+# End Source File
+# Begin Source File
+
+SOURCE=.\contact.c
+
+!IF  "$(CFG)" == "modernb - Win32 Release"
+
+# ADD CPP /Yu"commonheaders.h"
+
+!ELSEIF  "$(CFG)" == "modernb - Win32 Debug"
+
+!ELSEIF  "$(CFG)" == "modernb - Win32 Release Unicode"
+
+# ADD BASE CPP /Yu"commonheaders.h"
+# ADD CPP /Yu"commonheaders.h"
+
+!ELSEIF  "$(CFG)" == "modernb - Win32 Debug Unicode"
+
+!ENDIF 
+
+# End Source File
+# Begin Source File
+
+SOURCE=.\Docking.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\gdiplus.cpp
 # SUBTRACT CPP /YX /Yc /Yu
 # End Source File
 # Begin Source File
 
-SOURCE=.\modern_awaymsg.cpp
-# SUBTRACT CPP /YX /Yc /Yu
+SOURCE=.\groupmenu.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\modern_cachefuncs.cpp
+SOURCE=.\image_array.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\modern_clc.cpp
-# SUBTRACT CPP /YX /Yc /Yu
+SOURCE=.\init.c
+
+!IF  "$(CFG)" == "modernb - Win32 Release"
+
+# ADD CPP /Yu"commonheaders.h"
+
+!ELSEIF  "$(CFG)" == "modernb - Win32 Debug"
+
+!ELSEIF  "$(CFG)" == "modernb - Win32 Release Unicode"
+
+# ADD BASE CPP /Yu"commonheaders.h"
+# ADD CPP /Yu"commonheaders.h"
+
+!ELSEIF  "$(CFG)" == "modernb - Win32 Debug Unicode"
+
+!ENDIF 
+
 # End Source File
 # Begin Source File
 
-SOURCE=.\modern_clcidents.cpp
+SOURCE=.\keyboard.c
+
+!IF  "$(CFG)" == "modernb - Win32 Release"
+
+# ADD CPP /Yu"commonheaders.h"
+
+!ELSEIF  "$(CFG)" == "modernb - Win32 Debug"
+
+!ELSEIF  "$(CFG)" == "modernb - Win32 Release Unicode"
+
+# ADD BASE CPP /Yu"commonheaders.h"
+# ADD CPP /Yu"commonheaders.h"
+
+!ELSEIF  "$(CFG)" == "modernb - Win32 Debug Unicode"
+
+!ENDIF 
+
 # End Source File
 # Begin Source File
 
-SOURCE=.\modern_clcitems.cpp
+SOURCE=.\modern_animated_avatars.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\modern_clcmsgs.cpp
+SOURCE=.\modern_awaymsg.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\modern_clcopts.cpp
+SOURCE=.\modern_button.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\modern_clcpaint.cpp
-# SUBTRACT CPP /YX /Yc /Yu
-# End Source File
-# Begin Source File
-
-SOURCE=.\modern_clcutils.cpp
-# End Source File
-# Begin Source File
-
-SOURCE=.\modern_clistevents.cpp
-# End Source File
-# Begin Source File
-
-SOURCE=.\modern_clistmenus.cpp
-# End Source File
-# Begin Source File
-
-SOURCE=.\modern_clistmod.cpp
-# End Source File
-# Begin Source File
-
-SOURCE=.\modern_clistopts.cpp
-# End Source File
-# Begin Source File
-
-SOURCE=.\modern_clistsettings.cpp
-# End Source File
-# Begin Source File
-
-SOURCE=.\modern_clisttray.cpp
-# End Source File
-# Begin Source File
-
-SOURCE=.\modern_clui.cpp
-# SUBTRACT CPP /YX /Yc /Yu
-# End Source File
-# Begin Source File
-
-SOURCE=.\modern_cluiframes.cpp
-# End Source File
-# Begin Source File
-
-SOURCE=.\modern_cluiservices.cpp
-# End Source File
-# Begin Source File
-
-SOURCE=.\modern_commonheaders.cpp
-# ADD CPP /Yc"hdr/modern_commonheaders.h"
-# End Source File
-# Begin Source File
-
-SOURCE=.\modern_contact.cpp
-# End Source File
-# Begin Source File
-
-SOURCE=.\modern_docking.cpp
-# End Source File
-# Begin Source File
-
-SOURCE=.\modern_extraimage.cpp
-# End Source File
-# Begin Source File
-
-SOURCE=.\modern_framesmenu.cpp
-# End Source File
-# Begin Source File
-
-SOURCE=.\modern_gdiplus.cpp
-# SUBTRACT CPP /YX /Yc /Yu
-# End Source File
-# Begin Source File
-
-SOURCE=.\modern_gettextasync.cpp
-# SUBTRACT CPP /YX /Yc /Yu
-# End Source File
-# Begin Source File
-
-SOURCE=.\modern_global.cpp
-# SUBTRACT CPP /YX /Yc /Yu
-# End Source File
-# Begin Source File
-
-SOURCE=.\modern_groupmenu.cpp
-# End Source File
-# Begin Source File
-
-SOURCE=.\modern_image_array.cpp
-# End Source File
-# Begin Source File
-
-SOURCE=.\modern_keyboard.cpp
-# End Source File
-# Begin Source File
-
-SOURCE=.\modern_log.cpp
-# End Source File
-# Begin Source File
-
-SOURCE=.\modern_newrowopts.cpp
-# End Source File
-# Begin Source File
-
-SOURCE=.\modern_popup.cpp
+SOURCE=.\modern_gettextasync.c
 # End Source File
 # Begin Source File
 
@@ -305,60 +559,43 @@ SOURCE=.\modern_row.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\modern_rowheight_funcs.cpp
+SOURCE=.\modern_skinselector.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\modern_rowtemplateopt.cpp
+SOURCE=.\modern_statusbar.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\modern_skinbutton.cpp
-# SUBTRACT CPP /YX /Yc /Yu
+SOURCE=.\modern_toolbar.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\modern_skineditor.cpp
+SOURCE=.\rowheight_funcs.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\modern_skinengine.cpp
-# SUBTRACT CPP /YX /Yc /Yu
+SOURCE=.\rowtemplateopt.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\modern_skinopt.cpp
-# SUBTRACT CPP /YX /Yc /Yu
+SOURCE=.\SkinEditor.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\modern_skinselector.cpp
-# SUBTRACT CPP /YX /Yc /Yu
+SOURCE=.\SkinEngine.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\modern_statusbar.cpp
-# SUBTRACT CPP /YX /Yc /Yu
+SOURCE=.\SkinOpt.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\modern_tbbutton.cpp
-# SUBTRACT CPP /YX /Yc /Yu
+SOURCE=.\viewmodes.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\modern_toolbar.cpp
-# SUBTRACT CPP /YX /Yc /Yu
-# End Source File
-# Begin Source File
-
-SOURCE=.\modern_viewmodebar.cpp
-# SUBTRACT CPP /YX /Yc /Yu
-# End Source File
-# Begin Source File
-
-SOURCE=.\modern_xptheme.cpp
-# SUBTRACT CPP /YX /Yc /Yu
+SOURCE=.\xpTheme.c
 # End Source File
 # End Group
 # Begin Group "Header Files"
@@ -366,91 +603,35 @@ SOURCE=.\modern_xptheme.cpp
 # PROP Default_Filter "h;hpp;hxx;hm;inl"
 # Begin Source File
 
-SOURCE=.\hdr\modern_awaymsg.h
+SOURCE=.\BkgrCfg.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\hdr\modern_cache_funcs.h
+SOURCE=.\clc.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\hdr\modern_clc.h
+SOURCE=.\clist.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\hdr\modern_clist.h
+SOURCE=.\commonheaders.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\hdr\modern_clui.h
+SOURCE=.\forkthread.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\hdr\modern_cluiframes.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\hdr\modern_commonheaders.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\hdr\modern_commonprototypes.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\hdr\modern_defsettings.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\hdr\modern_effectenum.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\hdr\modern_gettextasync.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\hdr\modern_global_structure.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\hdr\modern_image_array.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\hdr\modern_log.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\hdr\modern_popup.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\hdr\modern_row.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\hdr\modern_rowheight_funcs.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\hdr\modern_skinengine.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\hdr\modern_skinselector.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\hdr\modern_statusbar.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\hdr\modern_statusmodes.h
+SOURCE=.\IcoLib.h
 # End Source File
 # Begin Source File
 
 SOURCE=.\resource.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\statusmodes.h
 # End Source File
 # End Group
 # Begin Group "Resource Files"

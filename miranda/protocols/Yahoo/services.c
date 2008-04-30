@@ -10,7 +10,6 @@
  * I want to thank Robert Rainwater and George Hazan for their code and support
  * and for answering some of my questions during development of this plugin.
  */
-
 #include <malloc.h>
 #include <time.h>
 
@@ -205,10 +204,7 @@ int SetStatus(WPARAM wParam,LPARAM lParam)
 		
 		//DBWriteContactSettingWord(NULL, yahooProtocolName, "StartupStatus", status);
 		gStartStatus = status;
-
-		//reset the unread email count. We'll get a new packet since we are connecting.
-		mUnreadMessages = 0;
-
+		
 		yahoo_util_broadcaststatus(ID_STATUS_CONNECTING);
 		
 		status = (status == ID_STATUS_INVISIBLE) ? YAHOO_STATUS_INVISIBLE: YAHOO_STATUS_AVAILABLE;
@@ -532,19 +528,19 @@ static void __cdecl yahoo_get_statusthread(HANDLE hContact)
 	
 	/* Check Yahoo Games Message */
 	if (! DBGetContactSettingString(( HANDLE )hContact, yahooProtocolName, "YGMsg", &dbv )) {
-		gm = _strdup(dbv.pszVal);
+		gm = strdup(dbv.pszVal);
 		
 		DBFreeVariant( &dbv );
 	}
 	
 	if (! DBGetContactSettingString(hContact, "CList", "StatusMsg", &dbv )) {
 		if (lstrlen(dbv.pszVal) >= 1)
-			sm = _strdup(dbv.pszVal);
+			sm = strdup(dbv.pszVal);
 		
 		DBFreeVariant( &dbv );
 	} else {
 		sm = yahoo_status_code(DBGetContactSettingWord(hContact, yahooProtocolName, "YStatus", YAHOO_STATUS_OFFLINE));
-		if (sm) sm = _strdup(sm); /* we need this to go global FREE later */
+		if (sm) sm = strdup(sm); /* we need this to go global FREE later */
 	}
 
 	l = 0;

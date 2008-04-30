@@ -2,7 +2,7 @@
 
 Miranda IM: the free IM client for Microsoft* Windows*
 
-Copyright 2000-2008 Miranda ICQ/IM project,
+Copyright 2000-2007 Miranda ICQ/IM project,
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
 
@@ -140,15 +140,17 @@ static LRESULT CALLBACK MessageEditSubclassProc(HWND hwnd,UINT msg,WPARAM wParam
 
 void ChangeAllProtoMessages(char *szProto, int statusMode,char *msg)
 {
-	if ( szProto == NULL ) {
-		int i;
-		for( i=0; i < accounts.count; i++ ) {
-			PROTOACCOUNT* pa = accounts.items[i];
-			if ( (CallProtoService( pa->szModuleName, PS_GETCAPS, PFLAGNUM_1, 0 ) & PF1_MODEMSGSEND) && !DBGetContactSettingByte(NULL, pa->szProtoName, "LockMainStatus", 0))
-				CallProtoService( pa->szModuleName, PS_SETAWAYMSG, statusMode, ( LPARAM )msg );
+	int protoCount,i;
+	PROTOCOLDESCRIPTOR **proto;
+
+	CallService(MS_PROTO_ENUMPROTOCOLS,(WPARAM)&protoCount,(LPARAM)&proto);
+	if (szProto) CallProtoService(szProto,PS_SETAWAYMSG,statusMode,(LPARAM)msg);
+	else {
+		for(i=0;i<protoCount;i++) {
+			if ((CallProtoService(proto[i]->szName,PS_GETCAPS,PFLAGNUM_1,0)&PF1_MODEMSGSEND)&&!DBGetContactSettingByte(NULL,proto[i]->szName,"LockMainStatus",0))
+				CallProtoService(proto[i]->szName,PS_SETAWAYMSG,statusMode,(LPARAM)msg);
 		}
 	}
-	else CallProtoService(szProto,PS_SETAWAYMSG,statusMode,(LPARAM)msg);
 }
 
 struct SetAwayMsgData {
@@ -182,7 +184,7 @@ static BOOL CALLBACK SetAwayMsgDlgProc(HWND hwndDlg,UINT message,WPARAM wParam,L
 			OldMessageEditProc=(WNDPROC)SetWindowLong(GetDlgItem(hwndDlg,IDC_MSG),GWL_WNDPROC,(LONG)MessageEditSubclassProc);
 			{	TCHAR str[256],format[128];
 				GetWindowText( hwndDlg, format, SIZEOF( format ));
-				mir_sntprintf( str, SIZEOF(str), format, cli.pfnGetStatusModeDescription( dat->statusMode, 0 ));
+				mir_sntprintf( str, SIZEOF(str), format, CallService( MS_CLIST_GETSTATUSMODEDESCRIPTION, dat->statusMode, GCMDF_TCHAR ));
 				SetWindowText( hwndDlg, str );
 			}
 			GetDlgItemTextA(hwndDlg,IDOK,dat->okButtonFormat,SIZEOF(dat->okButtonFormat));
@@ -298,9 +300,10 @@ static BOOL CALLBACK DlgProcAwayMsgOpts(HWND hwndDlg, UINT msg, WPARAM wParam, L
 				if ( !(protoModeMsgFlags & Proto_Status2Flag( statusModes[i] )))
 					continue;
 
-				j = SendDlgItemMessage( hwndDlg, IDC_STATUS, CB_ADDSTRING, 0, (LPARAM)cli.pfnGetStatusModeDescription( statusModes[i], 0 ));
-				SendDlgItemMessage(hwndDlg,IDC_STATUS,CB_SETITEMDATA,j,statusModes[i]);
+				j = SendDlgItemMessage( hwndDlg, IDC_STATUS, CB_ADDSTRING, 0,
+					CallService( MS_CLIST_GETSTATUSMODEDESCRIPTION, statusModes[i], GCMDF_TCHAR ));
 
+				SendDlgItemMessage(hwndDlg,IDC_STATUS,CB_SETITEMDATA,j,statusModes[i]);
 				dat->info[j].ignore=DBGetContactSettingByte(NULL,"SRAway",StatusModeToDbSetting(statusModes[i],"Ignore"),0);
 				dat->info[j].noDialog=DBGetContactSettingByte(NULL,"SRAway",StatusModeToDbSetting(statusModes[i],"NoDlg"),0);
 				dat->info[j].usePrevious=DBGetContactSettingByte(NULL,"SRAway",StatusModeToDbSetting(statusModes[i],"UsePrev"),0);
@@ -392,15 +395,16 @@ static int AwayMsgOptInitialise(WPARAM wParam,LPARAM lParam)
 
 static int AwayMsgSendModulesLoaded(WPARAM wParam,LPARAM lParam)
 {
-	int i;
+	int i,protoCount;
+	PROTOCOLDESCRIPTOR **proto;
 
-	protoModeMsgFlags = 0;
-	for( i=0; i < accounts.count; i++ )
-		protoModeMsgFlags |= CallProtoService( accounts.items[i]->szModuleName, PS_GETCAPS, PFLAGNUM_3, 0 );
-
-	if ( protoModeMsgFlags ) {
-		HookEvent( ME_CLIST_STATUSMODECHANGE, StatusModeChange );
-		HookEvent( ME_OPT_INITIALISE, AwayMsgOptInitialise );
+	protoModeMsgFlags=0;
+	CallService(MS_PROTO_ENUMPROTOCOLS,(WPARAM)&protoCount,(LPARAM)&proto);
+	for(i=0;i<protoCount;i++)
+		protoModeMsgFlags|=CallProtoService(proto[i]->szName,PS_GETCAPS,PFLAGNUM_3,0);
+	if(protoModeMsgFlags) {
+		HookEvent(ME_CLIST_STATUSMODECHANGE,StatusModeChange);
+		HookEvent(ME_OPT_INITIALISE,AwayMsgOptInitialise);
 	}
 	return 0;
 }

@@ -2,7 +2,7 @@
 
 Miranda IM: the free IM client for Microsoft* Windows*
 
-Copyright 2000-2008 Miranda ICQ/IM project,
+Copyright 2000-2007 Miranda ICQ/IM project,
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
 
@@ -218,7 +218,7 @@ int NetlibBindPort(WPARAM wParam,LPARAM lParam)
 
 			gethostname(hostname,SIZEOF(hostname));
 			he=gethostbyname(hostname);
-			if(he && he->h_addr_list[0])
+			if(he->h_addr_list[0])
 				nlb->dwInternalIP=ntohl(*(PDWORD)he->h_addr_list[0]);
 		}
 		if (nlu->settings.enableUPnP && 

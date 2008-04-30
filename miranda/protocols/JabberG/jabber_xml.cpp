@@ -2,7 +2,7 @@
 
 Jabber Protocol Plugin for Miranda IM
 Copyright ( C ) 2002-04  Santithorn Bunchua
-Copyright ( C ) 2005-08  George Hazan
+Copyright ( C ) 2005-07  George Hazan
 Copyright ( C ) 2007     Maxim Mluhov
 
 This program is free software; you can redistribute it and/or
@@ -19,7 +19,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-File name      : $URL$
+File name      : $Source: /cvsroot/miranda/miranda/protocols/JabberG/jabber_xml.cpp,v $
 Revision       : $Revision$
 Last change on : $Date$
 Last change by : $Author$
@@ -105,8 +105,8 @@ BOOL JabberXmlSetCallback( XmlState *xmlState, int depth, XmlElemType type, JABB
 	return TRUE;
 }
 
-#define TAG_MAX_LEN 128
-#define ATTR_MAX_LEN 8192
+#define TAG_MAX_LEN 50
+#define ATTR_MAX_LEN 1024
 
 char* skipSpaces( char* p, int* num )
 {
@@ -160,7 +160,7 @@ static char *findNextTag( char *p )
 	return p;
 }
 
-int CJabberProto::OnXmlParse( XmlState *xmlState, char* buffer )
+int JabberXmlParse( XmlState *xmlState, char* buffer )
 {
 	char* r;
 	int num = 0;
@@ -189,7 +189,7 @@ int CJabberProto::OnXmlParse( XmlState *xmlState, char* buffer )
 			// found closing bracket
 			for ( r=p+1; *r!='>' && *r!=' ' && *r!='\t'; r++ );
 			if ( r-( p+1 ) > TAG_MAX_LEN ) {
-				Log( "TAG_MAX_LEN too small, ignore current tag" );
+				JabberLog( "TAG_MAX_LEN too small, ignore current tag" );
 			}
 			else {
 				if ( *( p+1 ) == '/' ) {	// closing tag
@@ -211,7 +211,7 @@ int CJabberProto::OnXmlParse( XmlState *xmlState, char* buffer )
 				}
 				for ( ;r<q && ( *r==' ' || *r=='\t' ); r++ );
 				if ( q-r > ATTR_MAX_LEN ) {
-					Log( "ATTR_MAX_LEN too small, ignore current tag" );
+					JabberLog( "ATTR_MAX_LEN too small, ignore current tag" );
 				}
 				else {
 					strncpy( attr, r, q-r );
@@ -339,8 +339,10 @@ static BOOL JabberXmlProcessElem( XmlState *xmlState, XmlElemType elemType, char
 
 	if ( elemText == NULL ) return FALSE;
 
-	if ( elemType==ELEM_OPEN && !strcmp( elemText, "?xml" ))
+	if ( elemType==ELEM_OPEN && !strcmp( elemText, "?xml" )) {
+		JabberLog( "XML: skip <?xml> tag" );
 		return TRUE;
+	}
 
 	// Find active node
 	node = &( xmlState->root );
@@ -403,17 +405,19 @@ static BOOL JabberXmlProcessElem( XmlState *xmlState, XmlElemType elemType, char
 		}
 		break;
 	case ELEM_CLOSE:
-		if ( node->name == NULL || strcmp( node->name, elemText ))
+		if ( node->name!=NULL && !strcmp( node->name, elemText )) {
+			node->state = NODE_CLOSE;
+			if ( node->depth==1 && xmlState->callback1_close!=NULL ) {
+				( *( xmlState->callback1_close ))( node, xmlState->userdata1_close );
+				JabberXmlRemoveChild( parentNode, node );
+			}
+			else if ( node->depth==2 && xmlState->callback2_close!=NULL ) {
+				( *xmlState->callback2_close )( node, xmlState->userdata2_close );
+				JabberXmlRemoveChild( parentNode, node );
+		}	}
+		else {
+			JabberLog( "XML: Closing </%s> without opening tag", elemText );
 			return FALSE;
-
-		node->state = NODE_CLOSE;
-		if ( node->depth==1 && xmlState->callback1_close!=NULL ) {
-			( *( xmlState->callback1_close ))( node, xmlState->userdata1_close );
-			JabberXmlRemoveChild( parentNode, node );
-		}
-		else if ( node->depth==2 && xmlState->callback2_close!=NULL ) {
-			( *xmlState->callback2_close )( node, xmlState->userdata2_close );
-			JabberXmlRemoveChild( parentNode, node );
 		}
 		break;
 

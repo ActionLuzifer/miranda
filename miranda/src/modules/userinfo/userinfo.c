@@ -2,7 +2,7 @@
 
 Miranda IM: the free IM client for Microsoft* Windows*
 
-Copyright 2000-2008 Miranda ICQ/IM project,
+Copyright 2000-2007 Miranda ICQ/IM project,
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
 
@@ -37,11 +37,9 @@ struct DetailsPageData {
 	DLGTEMPLATE *pTemplate;
 	HINSTANCE hInst;
 	DLGPROC dlgProc;
-	LPARAM  dlgParam;
 	HWND hwnd;
 	HTREEITEM hItem;
 	int changed;
-	TCHAR *ptszTitle, *ptszTab;
 };
 
 struct DetailsData {
@@ -52,7 +50,7 @@ struct DetailsData {
 	int pageCount;
 	int currentPage;
 	struct DetailsPageData *opd;
-	RECT rcDisplay,  rcDisplayTab;
+	RECT rcDisplay;
 	int updateAnimFrame;
 	TCHAR szUpdating[64];
 	int *infosUpdated;
@@ -60,16 +58,9 @@ struct DetailsData {
 
 static int PageSortProc(OPTIONSDIALOGPAGE *item1,OPTIONSDIALOGPAGE *item2)
 {
-	int res;
     if (!lstrcmp(item1->ptszTitle, TranslateT("Summary"))) return -1;
     if (!lstrcmp(item2->ptszTitle, TranslateT("Summary"))) return 1;
-    if (res = lstrcmp(item1->ptszTitle, item2->ptszTitle)) return res;
-	if (item1->ptszTab && !item2->ptszTab) return -1;
-	if (!item1->ptszTab && item2->ptszTab) return 1;
-	if (!item1->ptszTab && !item2->ptszTab) return 0;
-    if (item1->ptszTab && !lstrcmp(item1->ptszTab, TranslateT("General"))) return -1;
-    if (item2->ptszTab && !lstrcmp(item2->ptszTab, TranslateT("General"))) return 1;
-	return lstrcmp(item1->ptszTab, item2->ptszTab);
+    return lstrcmp(item1->ptszTitle, item2->ptszTitle);
 }
 
 static int ShowDetailsDialogCommand(WPARAM wParam,LPARAM lParam)
@@ -101,9 +92,7 @@ static int ShowDetailsDialogCommand(WPARAM wParam,LPARAM lParam)
 	psh.ppsp = (PROPSHEETPAGE*)opi.odp;		  //blatent misuse of the structure, but what the hell
 	CreateDialogParam(GetModuleHandle(NULL),MAKEINTRESOURCE(IDD_DETAILS),NULL,DlgProcDetails,(LPARAM)&psh);
 	for(i=0;i<opi.pageCount;i++) {
-		//cleanup moved to WM_DESTROY
-		//mir_free((char*)opi.odp[i].pszTitle);
-		//mir_free((char*)opi.odp[i].pszTab);
+		mir_free((char*)opi.odp[i].pszTitle);
 		if(opi.odp[i].pszGroup!=NULL) mir_free(opi.odp[i].pszGroup);
 		if((DWORD)opi.odp[i].pszTemplate&0xFFFF0000) mir_free((char*)opi.odp[i].pszTemplate);
 	}
@@ -117,11 +106,7 @@ static int AddDetailsPage(WPARAM wParam,LPARAM lParam)
 	struct DetailsPageInit *opi=(struct DetailsPageInit*)wParam;
 
 	if(odp==NULL||opi==NULL) return 1;
-	if(odp->cbSize!=sizeof(OPTIONSDIALOGPAGE)
-			&& odp->cbSize != OPTIONPAGE_OLD_SIZE2
-			&& odp->cbSize != OPTIONPAGE_OLD_SIZE3)
-		return 1;
-
+	if(odp->cbSize != sizeof(OPTIONSDIALOGPAGE) && odp->cbSize != OPTIONPAGE_OLD_SIZE2) return 1;
 	opi->odp=(OPTIONSDIALOGPAGE*)mir_realloc(opi->odp,sizeof(OPTIONSDIALOGPAGE)*(opi->pageCount+1));
 	dst = opi->odp + opi->pageCount;
 	dst->cbSize = sizeof(OPTIONSDIALOGPAGE);
@@ -132,30 +117,29 @@ static int AddDetailsPage(WPARAM wParam,LPARAM lParam)
 	else dst->pszTemplate = odp->pszTemplate;
 
 	#if defined(_UNICODE)
-	if ( odp->flags & ODPF_UNICODE )
-	{
+	if ( odp->flags == ODPF_UNICODE )
 		dst->ptszTitle = (odp->ptszTitle==0) ? NULL : mir_wstrdup(odp->ptszTitle);
-		dst->ptszTab = (!(odp->flags & ODPF_USERINFOTAB) || !odp->ptszTab) ? NULL : mir_wstrdup(odp->ptszTab);
-	}
 	else
 	#endif
-	{
 		dst->ptszTitle = (odp->pszTitle==0) ? NULL : LangPackPcharToTchar(odp->pszTitle);
-		dst->ptszTab = (!(odp->flags & ODPF_USERINFOTAB) || !odp->pszTab) ? NULL : LangPackPcharToTchar(odp->pszTab);
-	}
 
 	dst->pszGroup = NULL;
 	dst->groupPosition = odp->groupPosition;
 	dst->hGroupIcon = odp->hGroupIcon;
 	dst->hIcon = odp->hIcon;
-	if ( odp->cbSize == sizeof(OPTIONSDIALOGPAGE))
-		dst->dwInitParam = odp->dwInitParam;
 	opi->pageCount++;
 	return 0;
 }
 
-static void ThemeDialogBackground(HWND hwnd)
+static int UserInfoContactDelete(WPARAM wParam,LPARAM lParam)
 {
+	HWND hwnd;
+	hwnd=WindowList_Find(hWindowList,(HANDLE)wParam);
+	if(hwnd!=NULL) DestroyWindow(hwnd);
+	return 0;
+}
+
+static void ThemeDialogBackground(HWND hwnd) {
 	if (IsWinVerXPPlus()) {
 		static HMODULE hThemeAPI = NULL;
 		if (!hThemeAPI) hThemeAPI = GetModuleHandleA("uxtheme");
@@ -165,58 +149,6 @@ static void ThemeDialogBackground(HWND hwnd)
 				MyEnableThemeDialogTexture(hwnd,0x00000002|0x00000004); //0x00000002|0x00000004=ETDT_ENABLETAB
 		}
 	}
-}
-
-static void CreateDetailsTabs( HWND hwndDlg, struct DetailsData* dat, struct DetailsPageData* ppg )
-{
-	HWND hwndTab = GetDlgItem(hwndDlg, IDC_TABS);
-	int i, sel=0, pages=0;
-	TCITEM tie;
-	tie.mask = TCIF_TEXT | TCIF_IMAGE | TCIF_PARAM;
-	tie.iImage = -1;
-	TabCtrl_DeleteAllItems(hwndTab);
-	for ( i=0; i < dat->pageCount; i++ ) {
-		if (!dat->opd[i].ptszTab || lstrcmp(dat->opd[i].ptszTitle, ppg->ptszTitle)) continue;
-
-		tie.pszText = TranslateTS(dat->opd[i].ptszTab);
-		tie.lParam = i;
-		TabCtrl_InsertItem(hwndTab, pages, &tie);
-		if (!lstrcmp(dat->opd[i].ptszTab,ppg->ptszTab))
-			sel = pages;
-		pages++;
-	}
-	TabCtrl_SetCurSel(hwndTab,sel);
-}
-
-static void CreateDetailsPageWindow( HWND hwndDlg, struct DetailsData* dat, struct DetailsPageData* ppg )
-{
-	RECT *rc = ppg->ptszTab ? &dat->rcDisplayTab : &dat->rcDisplay;
-	ppg->hwnd=CreateDialogIndirectParam(ppg->hInst,ppg->pTemplate,hwndDlg,ppg->dlgProc,(LPARAM)dat->hContact);
-	ThemeDialogBackground(ppg->hwnd);
-	SetWindowPos(ppg->hwnd, HWND_TOP, rc->left, rc->top, rc->right - rc->left, rc->bottom - rc->top, 0);
-	SetWindowPos(ppg->hwnd, HWND_TOP, rc->left, rc->top, rc->right - rc->left, rc->bottom - rc->top, 0);
-	{	
-		PSHNOTIFY pshn;
-		pshn.hdr.code = PSN_PARAMCHANGED;
-		pshn.hdr.hwndFrom = ppg->hwnd;
-		pshn.hdr.idFrom = 0;
-		pshn.lParam = (LPARAM)ppg->dlgParam;
-		SendMessage(ppg->hwnd,WM_NOTIFY,0,(LPARAM)&pshn);
-
-		pshn.hdr.code=PSN_INFOCHANGED;
-		pshn.hdr.hwndFrom=ppg->hwnd;
-		pshn.hdr.idFrom=0;
-		pshn.lParam=(LPARAM)dat->hContact;
-		SendMessage(ppg->hwnd,WM_NOTIFY,0,(LPARAM)&pshn);
-	}
-}
-
-static int UserInfoContactDelete(WPARAM wParam,LPARAM lParam)
-{
-	HWND hwnd;
-	hwnd=WindowList_Find(hWindowList,(HANDLE)wParam);
-	if(hwnd!=NULL) DestroyWindow(hwnd);
-	return 0;
 }
 
 #define HM_PROTOACK   (WM_USER+10)
@@ -261,66 +193,50 @@ static BOOL CALLBACK DlgProcDetails(HWND hwndDlg, UINT msg, WPARAM wParam, LPARA
 				TVINSERTSTRUCT tvis;
 				DBVARIANT dbv;
 
-				dat->currentPage = 0;
-				if ( DBGetContactSettingTString( NULL, "UserInfo", "LastTab", &dbv ))
-					dbv.type = DBVT_DELETED;
-				dat->pageCount = psh->nPages;
-				dat->opd = (struct DetailsPageData*)mir_calloc(sizeof(struct DetailsPageData)*dat->pageCount);
-				odp = (OPTIONSDIALOGPAGE*)psh->ppsp;
+				dat->currentPage=0;
+				if(DBGetContactSettingTString(NULL,"UserInfo","LastTab",&dbv))
+					dbv.type=DBVT_DELETED;
+				dat->pageCount=psh->nPages;
+				dat->opd=(struct DetailsPageData*)mir_alloc(sizeof(struct DetailsPageData)*dat->pageCount);
+				odp=(OPTIONSDIALOGPAGE*)psh->ppsp;
 
-				for ( i=0; i < dat->pageCount; i++ ) {
-					dat->opd[i].pTemplate = (DLGTEMPLATE *)LockResource(LoadResource(odp[i].hInstance,FindResourceA(odp[i].hInstance,odp[i].pszTemplate,MAKEINTRESOURCEA(5))));
-					dat->opd[i].dlgProc = odp[i].pfnDlgProc;
-					dat->opd[i].dlgParam = odp[i].dwInitParam;
-					dat->opd[i].hInst = odp[i].hInstance;
-
-					dat->opd[i].ptszTitle = odp[i].ptszTitle;
-					dat->opd[i].ptszTab = odp[i].ptszTab;
-
-					if (i && dat->opd[i].ptszTab && !lstrcmp(dat->opd[i-1].ptszTitle, dat->opd[i].ptszTitle)) {
-						dat->opd[i].hItem = dat->opd[i-1].hItem;
-						continue;
-					}
-
+				for(i=0;i<dat->pageCount;i++) {
+					dat->opd[i].pTemplate=(DLGTEMPLATE *)LockResource(LoadResource(odp[i].hInstance,FindResourceA(odp[i].hInstance,odp[i].pszTemplate,MAKEINTRESOURCEA(5))));
+					dat->opd[i].dlgProc=odp[i].pfnDlgProc;
+					dat->opd[i].hInst=odp[i].hInstance;
+					dat->opd[i].hwnd=NULL;
+					dat->opd[i].changed=0;
 					tvis.hParent = NULL;
 					tvis.hInsertAfter = TVI_LAST;
 					tvis.item.mask = TVIF_TEXT | TVIF_PARAM;
 					tvis.item.lParam = (LPARAM) i;
-					tvis.item.pszText = TranslateTS(odp[i].ptszTitle);
-					if ( dbv.type != DBVT_DELETED && !lstrcmp( tvis.item.pszText, dbv.ptszVal ))
-						dat->currentPage = i;
+					tvis.item.pszText = odp[i].ptszTitle;
+					if(dbv.type!=DBVT_DELETED && !lstrcmp(tvis.item.pszText,dbv.ptszVal))
+						dat->currentPage=i;
 					dat->opd[i].hItem = TreeView_InsertItem(GetDlgItem(hwndDlg, IDC_PAGETREE), &tvis);
 				}
 				DBFreeVariant(&dbv);
 			}
 
-			{	TCITEM tci;
-				tci.mask = TCIF_TEXT | TCIF_IMAGE;
-				tci.iImage = -1;
-				tci.pszText = _T("X");
-				TabCtrl_InsertItem(GetDlgItem(hwndDlg,IDC_TABS),0,&tci);
-
-				GetWindowRect(GetDlgItem(hwndDlg,IDC_TABS),&dat->rcDisplayTab);
-				TabCtrl_AdjustRect(GetDlgItem(hwndDlg,IDC_TABS),FALSE,&dat->rcDisplayTab);
-				{	POINT pt={0,0};
-					ClientToScreen(hwndDlg,&pt);
-					OffsetRect(&dat->rcDisplayTab,-pt.x,-pt.y);
-				}
-
-				TabCtrl_DeleteAllItems(GetDlgItem(hwndDlg,IDC_TABS));
-
-				GetWindowRect(GetDlgItem(hwndDlg,IDC_TABS),&dat->rcDisplay);
-				TabCtrl_AdjustRect(GetDlgItem(hwndDlg,IDC_TABS),FALSE,&dat->rcDisplay);
-				{	POINT pt={0,0};
-					ClientToScreen(hwndDlg,&pt);
-					OffsetRect(&dat->rcDisplay,-pt.x,-pt.y);
-			}	}
-
+			GetWindowRect(GetDlgItem(hwndDlg,IDC_TABS),&dat->rcDisplay);
+			TabCtrl_AdjustRect(GetDlgItem(hwndDlg,IDC_TABS),FALSE,&dat->rcDisplay);
+			{	POINT pt={0,0};
+				ClientToScreen(hwndDlg,&pt);
+				OffsetRect(&dat->rcDisplay,-pt.x,-pt.y);
+			}
 			TreeView_Select(GetDlgItem(hwndDlg,IDC_PAGETREE), dat->opd[dat->currentPage].hItem, TVGN_CARET);
-			CreateDetailsTabs( hwndDlg, dat, &dat->opd[dat->currentPage] );
-			CreateDetailsPageWindow( hwndDlg, dat, &dat->opd[dat->currentPage] );
-			ShowWindow( dat->opd[dat->currentPage].hwnd, SW_SHOW );
-			dat->updateAnimFrame = 0;
+			dat->opd[dat->currentPage].hwnd=CreateDialogIndirectParam(dat->opd[dat->currentPage].hInst,dat->opd[dat->currentPage].pTemplate,hwndDlg,dat->opd[dat->currentPage].dlgProc,(LPARAM)dat->hContact);
+			ThemeDialogBackground(dat->opd[dat->currentPage].hwnd);
+			SetWindowPos(dat->opd[dat->currentPage].hwnd, HWND_TOP, dat->rcDisplay.left, dat->rcDisplay.top, dat->rcDisplay.right - dat->rcDisplay.left, dat->rcDisplay.bottom - dat->rcDisplay.top, 0);
+			{	PSHNOTIFY pshn;
+				pshn.hdr.code=PSN_INFOCHANGED;
+				pshn.hdr.hwndFrom=dat->opd[dat->currentPage].hwnd;
+				pshn.hdr.idFrom=0;
+				pshn.lParam=(LPARAM)dat->hContact;
+				SendMessage(dat->opd[dat->currentPage].hwnd,WM_NOTIFY,0,(LPARAM)&pshn);
+			}
+			ShowWindow(dat->opd[dat->currentPage].hwnd,SW_SHOW);
+			dat->updateAnimFrame=0;
 			GetDlgItemText(hwndDlg,IDC_UPDATING,dat->szUpdating,SIZEOF(dat->szUpdating));
 			SendMessage(hwndDlg,M_CHECKONLINE,0,0);
 			if (!CallContactService(dat->hContact,PSS_GETINFO,SGIF_ONOPEN,0)) {
@@ -425,10 +341,8 @@ static BOOL CALLBACK DlgProcDetails(HWND hwndDlg, UINT msg, WPARAM wParam, LPARA
 
 	case WM_NOTIFY:
 		switch(wParam) {
-		case IDC_TABS:
 		case IDC_PAGETREE:
 			switch(((LPNMHDR)lParam)->code) {
-			case TCN_SELCHANGING:
 			case TVN_SELCHANGING:
 				{	PSHNOTIFY pshn;
 					if(dat->currentPage==-1 || dat->opd[dat->currentPage].hwnd==NULL) break;
@@ -442,43 +356,30 @@ static BOOL CALLBACK DlgProcDetails(HWND hwndDlg, UINT msg, WPARAM wParam, LPARA
 				}	}
 				break;
 
-			case TCN_SELCHANGE:
 			case TVN_SELCHANGED:
-			{
 				if ( dat->currentPage!=-1 && dat->opd[dat->currentPage].hwnd != NULL ) {
-					BOOL tabChange = (wParam == IDC_TABS);
-					HWND hwndTab = GetDlgItem(hwndDlg,IDC_TABS);
 					ShowWindow(dat->opd[dat->currentPage].hwnd,SW_HIDE);
-					if (tabChange)
-					{
-						TCITEM tie;
-						TVITEM tvi;
-
-						tie.mask = TCIF_PARAM;
-						TabCtrl_GetItem(hwndTab,TabCtrl_GetCurSel(hwndTab),&tie);
-						dat->currentPage=tie.lParam;
-
-						tvi.hItem=TreeView_GetNextItem(GetDlgItem(hwndDlg,IDC_PAGETREE),NULL,TVGN_CARET);
-						tvi.mask=TVIF_PARAM;
-						tvi.lParam=dat->currentPage;
-						TreeView_SetItem(GetDlgItem(hwndDlg,IDC_PAGETREE),&tvi);
-					} else
 					{
 						LPNMTREEVIEW pnmtv = (LPNMTREEVIEW) lParam;
 						TVITEM tvi = pnmtv->itemNew;
 						dat->currentPage=tvi.lParam;
 					}
-
 					if(dat->currentPage!=-1) {
-						if(!tabChange)
-							CreateDetailsTabs( hwndDlg, dat, &dat->opd[dat->currentPage] );
-						if(dat->opd[dat->currentPage].hwnd==NULL)
-							CreateDetailsPageWindow( hwndDlg, dat, &dat->opd[dat->currentPage] );
+						if(dat->opd[dat->currentPage].hwnd==NULL) {
+							PSHNOTIFY pshn;
+							dat->opd[dat->currentPage].hwnd=CreateDialogIndirectParam(dat->opd[dat->currentPage].hInst,dat->opd[dat->currentPage].pTemplate,hwndDlg,dat->opd[dat->currentPage].dlgProc,(LPARAM)dat->hContact);
+							ThemeDialogBackground(dat->opd[dat->currentPage].hwnd);
+							SetWindowPos(dat->opd[dat->currentPage].hwnd, HWND_TOP, dat->rcDisplay.left, dat->rcDisplay.top, dat->rcDisplay.right - dat->rcDisplay.left, dat->rcDisplay.bottom - dat->rcDisplay.top, 0);
+							pshn.hdr.code=PSN_INFOCHANGED;
+							pshn.hdr.hwndFrom=dat->opd[dat->currentPage].hwnd;
+							pshn.hdr.idFrom=0;
+							pshn.lParam=(LPARAM)dat->hContact;
+							SendMessage(dat->opd[dat->currentPage].hwnd,WM_NOTIFY,0,(LPARAM)&pshn);
+						}
 						ShowWindow(dat->opd[dat->currentPage].hwnd,SW_SHOW);
-						SetFocus(dat->opd[dat->currentPage].hwnd);
+						SetFocus(GetDlgItem(hwndDlg,IDC_PAGETREE));
 				}	}
 				break;
-			}
 			}
 			break;
 		}
@@ -564,11 +465,7 @@ static BOOL CALLBACK DlgProcDetails(HWND hwndDlg, UINT msg, WPARAM wParam, LPARA
 		UnhookEvent(dat->hProtoAckEvent);
 		{	int i;
 			for(i=0;i<dat->pageCount;i++)
-			{
 				if(dat->opd[i].hwnd!=NULL) DestroyWindow(dat->opd[i].hwnd);
-				mir_free(dat->opd[i].ptszTitle);
-				mir_free(dat->opd[i].ptszTab);
-			}
 		}
 		if(dat->infosUpdated!=NULL) mir_free(dat->infosUpdated);
 		mir_free(dat->opd);

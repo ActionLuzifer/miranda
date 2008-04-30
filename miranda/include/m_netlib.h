@@ -2,7 +2,7 @@
 
 Miranda IM: the free IM client for Microsoft* Windows*
 
-Copyright 2000-2008 Miranda ICQ/IM project, 
+Copyright 2000-2007 Miranda ICQ/IM project, 
 all portions of this codebase are copyrighted to the people 
 listed in contributors.txt.
 
@@ -710,25 +710,5 @@ static __inline char* Netlib_NtlmCreateResponse( HANDLE hProvider, char* szChall
 	return (char*)CallService( MS_NETLIB_NTLMCREATERESPONSE, (WPARAM)hProvider, (LPARAM)&temp );
 }
 
-/////////////////////////////////////////////////////////////////////////////////////////
-// Netlib hooks (0.8+)
-
-// WARNING: these hooks are being called in the context of the calling thread, without switching
-// to the first thread, like all another events do. The hook procedure should be ready for the
-// multithreaded mode
-//
-// Parameters:
-//    wParam: NETLIBNOTIFY* - points to the data being sent/received
-//    lParam: NETLIBUSER*   - points to the protocol definition
-
-typedef struct {
-   NETLIBBUFFER* nlb;      // pointer to the request buffer
-	int           result;   // amount of bytes really sent/received
-}
-	NETLIBNOTIFY;
-
-#define ME_NETLIB_FASTRECV "Netlib/OnRecv"  // being called on every receive
-#define ME_NETLIB_FASTSEND "Netlib/OnSend"  // being called on every send
-#define ME_NETLIB_FASTDUMP "Netlib/OnDump"  // being called on every dump
-
 #endif // M_NETLIB_H__
+

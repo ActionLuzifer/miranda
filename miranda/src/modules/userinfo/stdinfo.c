@@ -2,7 +2,7 @@
 
 Miranda IM: the free IM client for Microsoft* Windows*
 
-Copyright 2000-2008 Miranda ICQ/IM project,
+Copyright 2000-2007 Miranda ICQ/IM project,
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
 
@@ -428,28 +428,6 @@ static BOOL CALLBACK NotesDlgProc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM 
 	case WM_INITDIALOG:
 		TranslateDialogDefault(hwndDlg);
 		{	DBVARIANT dbv;
-			HFONT hFont;
-			LOGFONT lf;
-			HDC hDC = GetDC(hwndDlg);
-			lf.lfHeight = -MulDiv(10, GetDeviceCaps(hDC, LOGPIXELSY), 72);
-			ReleaseDC(hwndDlg, hDC);
-			lf.lfWidth = 0;
-			lf.lfEscapement = 0;
-			lf.lfOrientation = 0;
-			lf.lfWeight = FW_NORMAL;
-			lf.lfItalic = 0;
-			lf.lfUnderline = 0;
-			lf.lfStrikeOut = 0;
-			lf.lfOutPrecision = OUT_DEFAULT_PRECIS;
-			lf.lfClipPrecision = CLIP_DEFAULT_PRECIS;
-			lf.lfQuality = DEFAULT_QUALITY;
-			lf.lfPitchAndFamily = DEFAULT_PITCH | FF_DONTCARE;
-			lstrcpy(lf.lfFaceName, _T("Courier New"));
-			lf.lfCharSet = DEFAULT_CHARSET;
-//			hFont = (HFONT) GetStockObject(ANSI_FIXED_FONT); 
-			hFont = CreateFontIndirect(&lf);
-			SendDlgItemMessage(hwndDlg, IDC_ABOUT, WM_SETFONT, (WPARAM) hFont, MAKELPARAM(TRUE, 0));
-
 			if(!DBGetContactSettingString((HANDLE)lParam,"UserInfo","MyNotes",&dbv)) {
 				SetDlgItemTextA(hwndDlg,IDC_MYNOTES,dbv.pszVal);
 				DBFreeVariant(&dbv);
@@ -490,12 +468,6 @@ static BOOL CALLBACK NotesDlgProc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM 
 			SendMessage(GetParent(hwndDlg),PSM_CHANGED,0,0);
 		else if(LOWORD(wParam)==IDCANCEL)
 			SendMessage(GetParent(hwndDlg),msg,wParam,lParam);
-		break;
-	case WM_DESTROY:
-		{
-			HFONT hFont = (HFONT)SendDlgItemMessage(hwndDlg, IDC_ABOUT, WM_GETFONT, 0, 0);
-			DeleteObject(hFont);
-		}
 		break;
 	}
 	return FALSE;

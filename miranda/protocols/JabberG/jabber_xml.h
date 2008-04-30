@@ -2,7 +2,7 @@
 
 Jabber Protocol Plugin for Miranda IM
 Copyright ( C ) 2002-04  Santithorn Bunchua
-Copyright ( C ) 2005-08  George Hazan
+Copyright ( C ) 2005-07  George Hazan
 Copyright ( C ) 2007     Maxim Mluhov
 
 This program is free software; you can redistribute it and/or
@@ -19,7 +19,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-File name      : $URL$
+File name      : $Source: /cvsroot/miranda/miranda/protocols/JabberG/jabber_xml.h,v $
 Revision       : $Revision$
 Last change on : $Date$
 Last change by : $Author$
@@ -100,8 +100,6 @@ class CJabberIqInfo;
 
 struct XmlNodeIq : public XmlNode
 {
-	typedef XmlNode CSuper;
-
 	XmlNodeIq( const char* type, int id = NOID, const TCHAR* to = NULL );
 	XmlNodeIq( const char* type, const TCHAR* idStr, const TCHAR* to );
 	XmlNodeIq( const char* type, XmlNode *node, const TCHAR* to );
@@ -135,6 +133,7 @@ struct XmlState
 void JabberXmlInitState( XmlState *xmlState );
 void JabberXmlDestroyState( XmlState *xmlState );
 BOOL JabberXmlSetCallback( XmlState *xmlState, int depth, XmlElemType type, void ( *callback )(), void *userdata );
+int JabberXmlParse( XmlState *xmlState, char* buffer );
 TCHAR* JabberXmlGetAttrValue( XmlNode *node, char* key );
 XmlNode *JabberXmlGetFirstChild( XmlNode *node );
 XmlNode *JabberXmlGetChild( XmlNode *node, char* tag );

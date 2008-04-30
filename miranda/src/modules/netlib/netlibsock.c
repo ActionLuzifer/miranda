@@ -2,7 +2,7 @@
 
 Miranda IM: the free IM client for Microsoft* Windows*
 
-Copyright 2000-2008 Miranda ICQ/IM project,
+Copyright 2000-2007 Miranda ICQ/IM project,
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
 
@@ -24,7 +24,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "netlib.h"
 
 extern CRITICAL_SECTION csNetlibCloseHandle;
-extern HANDLE hConnectionHeaderMutex,hSendEvent,hRecvEvent;
+extern HANDLE hConnectionHeaderMutex;
 
 int NetlibSend(WPARAM wParam,LPARAM lParam)
 {
@@ -32,62 +32,45 @@ int NetlibSend(WPARAM wParam,LPARAM lParam)
 	NETLIBBUFFER *nlb=(NETLIBBUFFER*)lParam;
 	int result;
 
-	if ( nlb == NULL ) {
+	if(nlb==NULL) {
 		SetLastError(ERROR_INVALID_PARAMETER);
 		return SOCKET_ERROR;
 	}
 
-	if ( !NetlibEnterNestedCS( nlc, NLNCS_SEND ))
-		return SOCKET_ERROR;
-
-	if ( nlc->usingHttpGateway && !( nlb->flags & MSG_RAW )) {
-		if ( !( nlb->flags & MSG_NOHTTPGATEWAYWRAP ) && nlc->nlu->user.pfnHttpGatewayWrapSend ) {
-			NetlibDumpData( nlc, nlb->buf, nlb->len, 1, nlb->flags );
-			result = nlc->nlu->user.pfnHttpGatewayWrapSend(( HANDLE )nlc, nlb->buf, nlb->len, nlb->flags | MSG_NOHTTPGATEWAYWRAP, NetlibSend );
+	if(!NetlibEnterNestedCS(nlc,NLNCS_SEND)) return SOCKET_ERROR;
+	if(nlc->usingHttpGateway && !(nlb->flags&MSG_RAW)) {
+		if(!(nlb->flags&MSG_NOHTTPGATEWAYWRAP) && nlc->nlu->user.pfnHttpGatewayWrapSend) {
+			NetlibDumpData(nlc,nlb->buf,nlb->len,1,nlb->flags);
+			result=nlc->nlu->user.pfnHttpGatewayWrapSend((HANDLE)nlc,nlb->buf,nlb->len,nlb->flags|MSG_NOHTTPGATEWAYWRAP,NetlibSend);
 		}
-		else result = NetlibHttpGatewayPost( nlc, nlb->buf, nlb->len, nlb->flags );
+		else result=NetlibHttpGatewayPost(nlc,nlb->buf,nlb->len,nlb->flags);
 	}
 	else {
-		NetlibDumpData( nlc, nlb->buf, nlb->len, 1, nlb->flags );
-		result = send( nlc->s, nlb->buf, nlb->len, nlb->flags & 0xFFFF );
+		NetlibDumpData(nlc,nlb->buf,nlb->len,1,nlb->flags);
+		result=send(nlc->s,nlb->buf,nlb->len,nlb->flags&0xFFFF);
 	}
-	NetlibLeaveNestedCS( &nlc->ncsSend );
-
-	if ((( THook* )hSendEvent)->subscriberCount ) {
-		NETLIBNOTIFY nln = { nlb, result };
-		CallHookSubscribers( hSendEvent, (WPARAM)&nln, (LPARAM)&nlc->nlu->user );
-	}
+	NetlibLeaveNestedCS(&nlc->ncsSend);
 	return result;
 }
 
 int NetlibRecv(WPARAM wParam,LPARAM lParam)
 {
-	struct NetlibConnection *nlc = (struct NetlibConnection*)wParam;
-	NETLIBBUFFER* nlb = ( NETLIBBUFFER* )lParam;
+	struct NetlibConnection *nlc=(struct NetlibConnection*)wParam;
+	NETLIBBUFFER *nlb=(NETLIBBUFFER*)lParam;
 	int recvResult;
 
-	if ( nlb == NULL ) {
-		SetLastError( ERROR_INVALID_PARAMETER );
+	if(nlb==NULL) {
+		SetLastError(ERROR_INVALID_PARAMETER);
 		return SOCKET_ERROR;
 	}
-
-	if ( !NetlibEnterNestedCS( nlc, NLNCS_RECV ))
-		return SOCKET_ERROR;
-
-	if ( nlc->usingHttpGateway && !( nlb->flags & MSG_RAW ))
-		recvResult = NetlibHttpGatewayRecv( nlc, nlb->buf, nlb->len, nlb->flags );
+	if(!NetlibEnterNestedCS(nlc,NLNCS_RECV)) return SOCKET_ERROR;
+	if(nlc->usingHttpGateway && !(nlb->flags&MSG_RAW))
+		recvResult=NetlibHttpGatewayRecv(nlc,nlb->buf,nlb->len,nlb->flags);
 	else
-		recvResult = recv( nlc->s, nlb->buf, nlb->len, nlb->flags & 0xFFFF );
-	NetlibLeaveNestedCS( &nlc->ncsRecv );
-	if ( recvResult <= 0 )
-		return recvResult;
-
-	NetlibDumpData( nlc, nlb->buf, recvResult, 0, nlb->flags );
-
-	if ((( THook* )hRecvEvent)->subscriberCount ) {
-		NETLIBNOTIFY nln = { nlb, recvResult };
-		CallHookSubscribers( hRecvEvent, (WPARAM)&nln, (LPARAM)&nlc->nlu->user );
-	}
+		recvResult=recv(nlc->s,nlb->buf,nlb->len,nlb->flags&0xFFFF);
+	NetlibLeaveNestedCS(&nlc->ncsRecv);
+	if(recvResult<=0) return recvResult;
+	NetlibDumpData(nlc,nlb->buf,recvResult,0,nlb->flags);
 	return recvResult;
 }
 
@@ -162,7 +145,7 @@ int NetlibSelectEx(WPARAM wParam,LPARAM lParam)
 	for (j=0; j<FD_SETSIZE; j++) {
 		conn=(struct NetlibConnection*)nls->hReadConns[j];
 		if (conn==NULL || conn==INVALID_HANDLE_VALUE) break;
-
+		
 		if (conn->usingHttpGateway && conn->nlhpi.szHttpGetUrl == NULL && conn->dataBuffer == NULL)
 			nls->hReadStatus[j] = (conn->pHttpProxyPacketQueue != NULL);
 		else

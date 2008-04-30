@@ -1,8 +1,11 @@
 /*
 Plugin of Miranda IM for communicating with users of the MSN Messenger protocol.
-Copyright (c) 2006-2008 Boris Krasnovskiy.
-Copyright (c) 2003-2005 George Hazan.
-Copyright (c) 2002-2003 Richard Hughes (original version).
+Copyright (c) 2006-7 Boris Krasnovskiy.
+Copyright (c) 2003-5 George Hazan.
+Copyright (c) 2002-3 Richard Hughes (original version).
+
+Miranda IM: the free icq client for MS Windows
+Copyright (C) 2000-2002 Richard Hughes, Roland Rabien & Tristan Van de Vreede
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -15,7 +18,8 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with this program.  If not, see <http://www.gnu.org/licenses/>.
+along with this program; if not, write to the Free Software
+Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
 #include "msn_global.h"
@@ -32,10 +36,7 @@ HANDLE menuItemsAll[ 6 ] = { 0 };
 static int MsnBlockCommand( WPARAM wParam, LPARAM lParam )
 {
 	if ( msnLoggedIn ) {
-		char tEmail[ MSN_MAX_EMAIL_LEN ];
-		MSN_GetStaticString( "e-mail", (HANDLE)wParam, tEmail, sizeof( tEmail ));
-
-		MSN_SetWord(( HANDLE )wParam, "ApparentMode", Lists_IsInList( LIST_BL, tEmail ) ? 0 : ID_STATUS_OFFLINE );
+		MSN_SetWord(( HANDLE )wParam, "ApparentMode", ( Lists_IsInList( LIST_BL, ( HANDLE )wParam )) ? 0 : ID_STATUS_OFFLINE );
 	}
 	return 0;
 }
@@ -78,10 +79,8 @@ static int MsnInviteCommand( WPARAM wParam, LPARAM lParam )
 	default:
 		HMENU tMenu = ::CreatePopupMenu();
 
-		for ( int i=0; i < tThreads; i++ ) 
-		{
-			if (IsChatHandle(tActiveThreads[i]->mJoinedContacts[0])) 
-			{
+		for ( int i=0; i < tThreads; i++ ) {
+			if (( long )tActiveThreads[i]->mJoinedContacts[0] < 0 ) {
 				char sessionName[ 255 ];
 				mir_snprintf( sessionName, sizeof( sessionName ), "%s %s%s",
 					msnProtocolName, MSN_Translate( "Chat #" ), tActiveThreads[i]->mChatID );
@@ -127,14 +126,11 @@ static int MsnInviteCommand( WPARAM wParam, LPARAM lParam )
 
 int MsnRebuildContactMenu( WPARAM wParam, LPARAM lParam )
 {
-	char szEmail[ MSN_MAX_EMAIL_LEN ];
-	if ( !MSN_GetStaticString( "e-mail", ( HANDLE )wParam, szEmail, sizeof( szEmail ))) {
-		CLISTMENUITEM clmi = { 0 };
-		clmi.cbSize = sizeof( clmi );
-		clmi.pszName = (char*)(Lists_IsInList( LIST_BL, szEmail ) ? "&Unblock" : "&Block");
-		clmi.flags = CMIM_NAME;
-		MSN_CallService( MS_CLIST_MODIFYMENUITEM, ( WPARAM )msnBlockMenuItem, ( LPARAM )&clmi );
-	}
+	CLISTMENUITEM clmi = { 0 };
+	clmi.cbSize = sizeof( clmi );
+	clmi.pszName = (char*)(Lists_IsInList( LIST_BL, ( HANDLE )wParam ) ? "&Unblock" : "&Block");
+	clmi.flags = CMIM_NAME;
+	MSN_CallService( MS_CLIST_MODIFYMENUITEM, ( WPARAM )msnBlockMenuItem, ( LPARAM )&clmi );
 	return 0;
 }
 
@@ -168,7 +164,7 @@ static int MsnSendNetMeeting( WPARAM wParam, LPARAM lParam )
 		"Session-ID: {1A879604-D1B8-11D7-9066-0003FF431510}\r\n\r\n",
 		rand() << 16 | rand());
 
-	thread->sendMessage( 'N', NULL, 1, msg, MSG_DISABLE_HDR );
+	thread->sendMessage( 'N', msg, MSG_DISABLE_HDR );
 	return 0;
 }
 
@@ -232,14 +228,14 @@ static int SetNicknameUI( WPARAM wParam, LPARAM lParam )
 /////////////////////////////////////////////////////////////////////////////////////////
 // MsnViewProfile - view a contact's profile at http://members.msn.com
 
-static const char sttUrlPrefix[] = "http://members.msn.com/";
+static char sttUrlPrefix[] = "http://members.msn.com/";
 
 static int MsnViewProfile( WPARAM wParam, LPARAM lParam )
 {
-	char tUrl[ MSN_MAX_EMAIL_LEN + sizeof(sttUrlPrefix) ];
+	char tUrl[ MSN_MAX_EMAIL_LEN + sizeof sttUrlPrefix ];
 	strcpy( tUrl, sttUrlPrefix );
 
-	if ( !MSN_GetStaticString( "e-mail", ( HANDLE )wParam, tUrl + sizeof(sttUrlPrefix) - 1, MSN_MAX_EMAIL_LEN ))
+	if ( !MSN_GetStaticString( "e-mail", ( HANDLE )wParam, tUrl + sizeof sttUrlPrefix - 1, MSN_MAX_EMAIL_LEN ))
 		MSN_CallService( MS_UTILS_OPENURL, 1, ( LPARAM )tUrl );
 	return 0;
 }

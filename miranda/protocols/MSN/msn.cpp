@@ -1,8 +1,11 @@
 /*
 Plugin of Miranda IM for communicating with users of the MSN Messenger protocol.
-Copyright (c) 2006-2008 Boris Krasnovskiy.
-Copyright (c) 2003-2005 George Hazan.
-Copyright (c) 2002-2003 Richard Hughes (original version).
+Copyright (c) 2006-7 Boris Krasnovskiy.
+Copyright (c) 2003-5 George Hazan.
+Copyright (c) 2002-3 Richard Hughes (original version).
+
+Miranda IM: the free icq client for MS Windows
+Copyright (C) 2000-2002 Richard Hughes, Roland Rabien & Tristan Van de Vreede
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -15,11 +18,13 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with this program.  If not, see <http://www.gnu.org/licenses/>.
+along with this program; if not, write to the Free Software
+Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
 #include "msn_global.h"
 #include "version.h"
+#include "sdk/m_smileyadd.h"
 
 HINSTANCE hInst;
 PLUGINLINK *pluginLink;
@@ -39,20 +44,16 @@ int		LoadMsnServices( void );
 void    UnloadMsnServices( void );
 void	MsgQueue_Init( void );
 void	MsgQueue_Uninit( void );
-void	Lists_Init( void );
-void	Lists_Uninit( void );
 void	P2pSessions_Uninit( void );
 void	P2pSessions_Init( void );
 void	Threads_Uninit( void );
 int		MsnOptInit( WPARAM wParam, LPARAM lParam );
 void	UninitSsl( void );
-void    MsnLinks_Init( void );
-
 
 /////////////////////////////////////////////////////////////////////////////////////////
 // Global variables
 
-char*    abchMigrated = NULL;
+int      msnSearchID = -1;
 char*    msnExternalIP = NULL;
 char*    msnPreviousUUX = NULL;
 unsigned msnOtherContactsBlocked = 0;
@@ -73,6 +74,8 @@ MSN_StatusMessage msnModeMsgs[ MSN_NUM_MODES ] = {
 LISTENINGTOINFO msnCurrentMedia;
 
 char* msnProtocolName = NULL;
+char* msnProtChallenge = NULL;
+char* msnProductID  = NULL;
 
 char* mailsoundname;
 char* alertsoundname;
@@ -88,7 +91,7 @@ PLUGININFOEX pluginInfo =
 	"Adds support for communicating with users of the MSN Messenger network",
 	"Boris Krasnovskiy, George Hazan, Richard Hughes",
 	"borkra@miranda-im.org",
-	"© 2001-2008 Richard Hughes, George Hazan, Boris Krasnovskiy",
+	"© 2001-2007 Richard Hughes, George Hazan, Boris Krasnovskiy",
 	"http://miranda-im.org",
 	UNICODE_AWARE,	
 	0,
@@ -232,7 +235,6 @@ static int OnModulesLoaded( WPARAM wParam, LPARAM lParam )
 	}
 
 	MsnInitMenus();
-	MsnLinks_Init();
 
 //	arHooks.insert( HookEvent( ME_USERINFO_INITIALISE, MsnOnDetailsInit ));
 	arHooks.insert( HookEvent( ME_MSG_WINDOWEVENT, MsnWindowEvent ));
@@ -259,7 +261,7 @@ static int OnPreShutdown( WPARAM wParam, LPARAM lParam )
 /////////////////////////////////////////////////////////////////////////////////////////
 // Performs a primary set of actions upon plugin loading
 
-extern "C" int __declspec(dllexport) Load( PLUGINLINK* link )
+extern "C" int __declspec(dllexport) Load( PLUGINLINK* link )  
 {
 	pluginLink = link;
 
@@ -297,6 +299,9 @@ extern "C" int __declspec(dllexport) Load( PLUGINLINK* link )
 	mir_snprintf( path, sizeof( path ), "%s/p2pMsgId", protocolname );
 	MSN_CallService( MS_DB_SETSETTINGRESIDENT, TRUE, ( LPARAM )path );
 
+	mir_snprintf( path, sizeof( path ), "%s/AccList", protocolname );
+	MSN_CallService( MS_DB_SETSETTINGRESIDENT, TRUE, ( LPARAM )path );
+
 	mir_snprintf( path, sizeof( path ), "%s/MobileEnabled", protocolname );
 	MSN_CallService( MS_DB_SETSETTINGRESIDENT, TRUE, ( LPARAM )path );
 
@@ -332,6 +337,20 @@ extern "C" int __declspec(dllexport) Load( PLUGINLINK* link )
 			MSN_DeleteSetting( hContact, "p2pMsgId" );
 			MSN_DeleteSetting( hContact, "AccList" );
 //			DBDeleteContactSetting( hContact, "CList", "StatusMsg" );
+
+			char path[MAX_PATH];
+			MSN_GetCustomSmileyFileName(hContact, path, sizeof(path), "", 0);
+			if (path[0])
+			{
+				SMADD_CONT cont;
+				cont.cbSize = sizeof(SMADD_CONT);
+				cont.hContact = hContact;
+				cont.type = 0;
+				cont.path = mir_a2t(path);
+
+				MSN_CallService(MS_SMILEYADD_LOADCONTACTSMILEYS, 0, (LPARAM)&cont);
+				mir_free(cont.path);
+			}
 		}
 		hContact = ( HANDLE )MSN_CallService( MS_DB_CONTACT_FINDNEXT,( WPARAM )hContact, 0 );
 	}
@@ -364,7 +383,6 @@ extern "C" int __declspec(dllexport) Load( PLUGINLINK* link )
 	msnLoggedIn = false;
 	LoadMsnServices();
 	MsnInitIcons();
-	Lists_Init();
 	MsgQueue_Init();
 	P2pSessions_Init();
 	return 0;
@@ -393,7 +411,6 @@ extern "C" int __declspec( dllexport ) Unload( void )
 	MSN_FreeGroups();
 	Threads_Uninit();
 	MsgQueue_Uninit();
-	Lists_Uninit();
 	P2pSessions_Uninit();
 	CachedMsg_Uninit();
 	Netlib_CloseHandle( hNetlibUser );
@@ -407,16 +424,16 @@ extern "C" int __declspec( dllexport ) Unload( void )
 		if ( msnModeMsgs[ i ].m_msg )
 			mir_free( msnModeMsgs[ i ].m_msg );
 
+	mir_free( sid );
 	mir_free( passport );
+	mir_free( MSPAuth );
 	mir_free( rru );
+	mir_free( profileURL );
+	mir_free( profileURLId );
 	mir_free( urlId );
 
 	mir_free( msnPreviousUUX );
 	mir_free( msnExternalIP );
-	mir_free( abchMigrated );
-
-	FreeAuthTokens();
-
 	return 0;
 }
 

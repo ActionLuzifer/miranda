@@ -2,7 +2,7 @@
 
 Miranda IM: the free IM client for Microsoft* Windows*
 
-Copyright 2000-2008 Miranda ICQ/IM project,
+Copyright 2000-2007 Miranda ICQ/IM project,
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
 
@@ -166,7 +166,7 @@ void GetContactReceivedFilesDir(HANDLE hContact,char *szDir,int cchDir)
 			switch (ci.type) {
 			case CNFT_ASCIIZ:
 				mir_snprintf(szUsername, SIZEOF(szUsername), "%s", ci.pszVal);
-				mir_free(ci.pszVal);
+				miranda_sys_free(ci.pszVal);
 				break;
 			case CNFT_DWORD:
 				mir_snprintf(szUsername, SIZEOF(szUsername), "%u", ci.dVal);
@@ -303,6 +303,8 @@ BOOL CALLBACK DlgProcRecvFile(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lPar
 			ShowWindow(GetDlgItem(hwndDlg, IDC_ADD),SW_HIDE);
 		return TRUE;
 	}
+	case M_FILEEXISTSDLGREPLY:
+		return SendMessage(dat->hwndTransfer,msg,wParam,lParam);
 
 	case WM_MEASUREITEM:
 		return CallService(MS_CLIST_MENUMEASUREITEM,wParam,lParam);
@@ -339,6 +341,7 @@ BOOL CALLBACK DlgProcRecvFile(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lPar
 				return TRUE;
 			}
 		case IDOK:
+			if ( dat->hwndTransfer ) return SendMessage(dat->hwndTransfer,msg,wParam,lParam);
 			{	//most recently used directories
 				char szRecvDir[MAX_PATH],szDefaultRecvDir[MAX_PATH];
 				GetDlgItemTextA(hwndDlg,IDC_FILEDIR,szRecvDir,SIZEOF(szRecvDir));
@@ -361,21 +364,17 @@ BOOL CALLBACK DlgProcRecvFile(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lPar
 			EnableWindow(GetDlgItem(hwndDlg,IDC_MSG),FALSE);
 			EnableWindow(GetDlgItem(hwndDlg,IDC_FILEDIR),FALSE);
 			EnableWindow(GetDlgItem(hwndDlg,IDC_FILEDIRBROWSE),FALSE);
-
-			GetDlgItemTextA(hwndDlg,IDC_FILEDIR,dat->szSavePath,SIZEOF(dat->szSavePath));
-			GetDlgItemTextA(hwndDlg,IDC_FILE,dat->szFilenames,SIZEOF(dat->szFilenames));
-			GetDlgItemTextA(hwndDlg,IDC_MSG,dat->szMsg,SIZEOF(dat->szMsg));
-			dat->hwndTransfer=FtMgr_AddTransfer(dat);
+			dat->hwndTransfer=CreateDialogParam(GetModuleHandle(NULL),MAKEINTRESOURCE(IDD_FILETRANSFERINFO),hwndDlg,DlgProcFileTransfer,(LPARAM)dat);
 			//check for auto-minimize here to fix BUG#647620
 			if(DBGetContactSettingByte(NULL,"SRFile","AutoAccept",0) && DBGetContactSettingByte(NULL,"SRFile","AutoMin",0)) {
 				ShowWindow(hwndDlg,SW_HIDE);
 				ShowWindow(hwndDlg,SW_SHOWMINNOACTIVE);
 			}
-			DestroyWindow(hwndDlg);
 			return TRUE;
 		case IDCANCEL:
 			if (dat->fs) CallContactService(dat->hContact,PSS_FILEDENY,(WPARAM)dat->fs,(LPARAM)Translate("Cancelled"));
 			dat->fs=NULL; /* the protocol will free the handle */
+			if(dat->hwndTransfer) return SendMessage(dat->hwndTransfer,msg,wParam,lParam);
 			DestroyWindow(hwndDlg);
 			return TRUE;
 		case IDC_ADD:
@@ -406,6 +405,10 @@ BOOL CALLBACK DlgProcRecvFile(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lPar
 		}
 		break;
 
+	case M_PRESHUTDOWN:
+		if (IsWindow(dat->hwndTransfer)) PostMessage(dat->hwndTransfer,WM_CLOSE,0,0);
+		break;
+
 	case WM_DESTROY:
 		Window_FreeIcon_IcoLib(hwndDlg);
 		Button_FreeIcon_IcoLib(hwndDlg,IDC_ADD);
@@ -413,6 +416,8 @@ BOOL CALLBACK DlgProcRecvFile(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lPar
 		Button_FreeIcon_IcoLib(hwndDlg,IDC_HISTORY);
 		Button_FreeIcon_IcoLib(hwndDlg,IDC_USERMENU);
 		if(dat->hPreshutdownEvent) UnhookEvent(dat->hPreshutdownEvent);
+		if(dat->hwndTransfer) DestroyWindow(dat->hwndTransfer);
+		mir_free(dat);
 		return TRUE;
 	}
 	return FALSE;

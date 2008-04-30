@@ -189,6 +189,44 @@ void  HtmlDecode( char* str )
 	*q = '\0';
 }
 
+/////////////////////////////////////////////////////////////////////////////////////////
+// HtmlEncode - replaces special HTML chars
+
+WCHAR*  HtmlEncodeW( const WCHAR* str )
+{
+	WCHAR* s, *p, *q;
+	int c;
+
+	if ( str == NULL )
+		return NULL;
+
+	for ( c=0,p=( WCHAR* )str; *p!=L'\0'; p++ ) {
+		switch ( *p ) {
+		case L'&': c += 5; break;
+		case L'\'': c += 6; break;
+		case L'>': c += 4; break;
+		case L'<': c += 4; break;
+		case L'"': c += 6; break;
+		default: c++; break;
+		}
+	}
+	if (( s=( WCHAR* )mir_alloc( (c+1) * sizeof(WCHAR) )) != NULL ) {
+		for ( p=( WCHAR* )str,q=s; *p!=L'\0'; p++ ) {
+			switch ( *p ) {
+			case L'&': wcscpy( q, L"&amp;" ); q += 5; break;
+			case L'\'': wcscpy( q, L"&apos;" ); q += 6; break;
+			case L'>': wcscpy( q, L"&gt;" ); q += 4; break;
+			case L'<': wcscpy( q, L"&lt;" ); q += 4; break;
+			case L'"': wcscpy( q, L"&quot;" ); q += 6; break;
+			default: *q = *p; q++; break;
+			}
+		}
+		*q = L'\0';
+	}
+
+	return s;
+}
+
 char*  HtmlEncode( const char* str )
 {
 	char* s, *p, *q;
@@ -229,29 +267,27 @@ char*  HtmlEncode( const char* str )
 
 void  UrlEncode( const char* src, char* dest, size_t cbDest )
 {
-	unsigned char* d = (unsigned char*)dest;
+	BYTE* d = ( BYTE* )dest;
 	size_t   i = 0;
 
-	for (const unsigned char* s = (unsigned char*)src; *s; s++) 
-	{
-		if (( *s <= '/' && *s != '.' && *s != '-' ) ||
+	for( const BYTE* s = ( const BYTE* )src; *s; s++ ) {
+		if (( *s < '0' && *s != '.' && *s != '-' ) ||
 			 ( *s >= ':' && *s <= '?' ) ||
 			 ( *s >= '[' && *s <= '`' && *s != '_' ))
 		{
-			if ( i + 4 >= cbDest ) break;
+			if ( i + 4 >= cbDest )
+				break;
 
 			*d++ = '%';
-			_itoa( *s, (char*)d, 16 );
+			_itoa( *s, ( char* )d, 16 );
 			d += 2;
 			i += 3;
 		}
 		else
 		{
-			if ( ++i >= cbDest ) break;
+			if ( ++i == cbDest ) break;
 			*d++ = *s;
 	}	}
 
 	*d = '\0';
 }
-
-

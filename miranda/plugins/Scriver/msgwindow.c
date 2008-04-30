@@ -220,7 +220,6 @@ static int GetTabFromHWND(ParentWindowData *dat, HWND child)
 	int l, i;
 	l = TabCtrl_GetItemCount(dat->hwndTabs);
 	for (i = 0; i < l; i++) {
-		ZeroMemory(&tci, sizeof(TCITEM));
 		tci.mask = TCIF_PARAM;
 		TabCtrl_GetItem(dat->hwndTabs, i, &tci);
 		mwtd = (MessageWindowTabData *) tci.lParam;
@@ -235,12 +234,9 @@ static int GetTabFromHWND(ParentWindowData *dat, HWND child)
 static MessageWindowTabData * GetChildFromTab(HWND hwndTabs, int tabId)
 {
 	TCITEM tci;
-	ZeroMemory(&tci, sizeof(TCITEM));
 	tci.mask = TCIF_PARAM;
-	if (TabCtrl_GetItem(hwndTabs, tabId, &tci)) {
-		return (MessageWindowTabData *) tci.lParam;
-	}
-	return NULL;
+	TabCtrl_GetItem(hwndTabs, tabId, &tci);
+	return (MessageWindowTabData *) tci.lParam;
 }
 
 static MessageWindowTabData * GetChildFromHWND(ParentWindowData *dat, HWND hwnd)
@@ -250,7 +246,6 @@ static MessageWindowTabData * GetChildFromHWND(ParentWindowData *dat, HWND hwnd)
 	int l, i;
 	l = TabCtrl_GetItemCount(dat->hwndTabs);
 	for (i = 0; i < l; i++) {
-		ZeroMemory(&tci, sizeof(TCITEM));
 		tci.mask = TCIF_PARAM;
 		TabCtrl_GetItem(dat->hwndTabs, i, &tci);
 		mwtd = (MessageWindowTabData *) tci.lParam;
@@ -302,10 +297,7 @@ static int AddOrReplaceIcon(HIMAGELIST hList, int prevIndex, HICON hIcon) {
     int usageIdx = -1;
     int i;
     for (i = 0; i < g_dat->tabIconListUsageSize; i++) {
-		if (!g_dat->tabIconListUsage[i].used && usageIdx == -1) {
-            usageIdx = i;
-		}
-        if (g_dat->tabIconListUsage[i].index == prevIndex) {
+        if (!g_dat->tabIconListUsage[i].used || g_dat->tabIconListUsage[i].index == prevIndex) {
             usageIdx = i;
             break;
         }
@@ -330,6 +322,7 @@ static void ReleaseIcon(int index) {
         }
     }
 }
+
 
 static void ActivateChild(ParentWindowData *dat, HWND child) {
 	int i;
@@ -428,16 +421,6 @@ static void ActivatePrevChild(ParentWindowData *dat, HWND child)
 	ActivateChild(dat, GetChildFromTab(dat->hwndTabs, i)->hwnd);
 }
 
-static void ActivateChildByIndex(ParentWindowData *dat, int index)
-{
-	int l = TabCtrl_GetItemCount(dat->hwndTabs);
-	if (index < l) {
-		MessageWindowTabData *mwtd = GetChildFromTab(dat->hwndTabs, index);
-		if (mwtd != NULL) {
-			ActivateChild(dat, mwtd->hwnd);
-		}
-	}
-}
 
 static void SetContainerWindowStyle(ParentWindowData *dat)
 {
@@ -1033,18 +1016,11 @@ BOOL CALLBACK DlgProcParentWindow(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM 
 		ActivateNextChild(dat, (HWND) lParam);
 		SetFocus(dat->hwndActive);
 		return TRUE;
-	case CM_ACTIVATEBYINDEX:
-		ActivateChildByIndex(dat, (int) lParam);
-		SetFocus(dat->hwndActive);
-		return TRUE;
 	case CM_GETCHILDCOUNT:
 		SetWindowLong(hwndDlg, DWL_MSGRESULT, (LONG)GetChildCount(dat));
 		return TRUE;
 	case CM_GETACTIVECHILD:
 		SetWindowLong(hwndDlg, DWL_MSGRESULT, (LONG)dat->hwndActive);
-		return TRUE;
-	case CM_GETTOOLBARSTATUS:
-		SetWindowLong(hwndDlg, DWL_MSGRESULT, (LONG)(dat->flags2 & SMF2_SHOWTOOLBAR) != 0);
 		return TRUE;
 	case DM_SENDMESSAGE:
 		{
@@ -1101,7 +1077,6 @@ BOOL CALLBACK DlgProcParentWindow(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM 
 		}
 	case DM_STATUSICONCHANGE:
 		SendMessage(dat->hwndStatus, SB_SETTEXT, (WPARAM)(SBT_OWNERDRAW) | 2, (LPARAM)0);
-		SetupStatusBar(dat);
 		RedrawWindow(dat->hwndStatus, NULL, NULL, RDW_INVALIDATE | RDW_UPDATENOW);
 		break;
 	case CM_UPDATETABCONTROL:
@@ -1217,10 +1192,9 @@ static void DrawTab(ParentWindowData *dat, HWND hwnd, WPARAM wParam, LPARAM lPar
 			int bSelected = lpDIS->itemState & ODS_SELECTED;
 			int	iOldBkMode = SetBkMode(lpDIS->hDC, TRANSPARENT);
 			int atTop = (GetWindowLong(hwnd, GWL_STYLE) & TCS_BOTTOM) == 0;
+	//		COLORREF crOldColor = SetTextColor(lpDIS->hDC, (tci.dwState & TCIS_HIGHLIGHTED) ? RGB(196, 0, 0) : GetSysColor(COLOR_BTNTEXT));
 			UINT dwFormat;
-			if (!pfnIsAppThemed) {
-				FillRect(lpDIS->hDC, &rect, GetSysColorBrush(COLOR_BTNFACE));
-			} else if (!pfnIsAppThemed()) {
+			if (pfnIsAppThemed && !pfnIsAppThemed()) {
 				FillRect(lpDIS->hDC, &rect, GetSysColorBrush(COLOR_BTNFACE));
 			}
 			if (bSelected) {

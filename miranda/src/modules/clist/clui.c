@@ -2,7 +2,7 @@
 
   Miranda IM: the free IM client for Microsoft* Windows*
 
-  Copyright 2000-2008 Miranda ICQ/IM project,
+  Copyright 2000-2007 Miranda ICQ/IM project,
   all portions of this codebase are copyrighted to the people
   listed in contributors.txt.
 
@@ -81,9 +81,15 @@ static void RestoreMode(HWND hwnd)
 // Happens on shutdown and standby.
 static void DisconnectAll()
 {
+	PROTOCOLDESCRIPTOR **ppProtoDesc;
+	int nProtoCount;
 	int nProto;
-	for (nProto = 0; nProto < accounts.count; nProto++)
-		CallProtoService( accounts.items[nProto]->szModuleName, PS_SETSTATUS, ID_STATUS_OFFLINE, 0);
+
+	CallService(MS_PROTO_ENUMPROTOCOLS, (WPARAM) & nProtoCount, (LPARAM) & ppProtoDesc);
+	for (nProto = 0; nProto < nProtoCount; nProto++) {
+		if (ppProtoDesc[nProto]->type == PROTOTYPE_PROTOCOL)
+			CallProtoService(ppProtoDesc[nProto]->szName, PS_SETSTATUS, ID_STATUS_OFFLINE, 0);
+	}
 }
 
 static int CluiIconsChanged(WPARAM wParam, LPARAM lParam)
@@ -155,9 +161,7 @@ static BOOL CALLBACK AskForConfirmationDlgProc(HWND hWnd, UINT msg, WPARAM wPara
 		}
 		SetWindowPos(hWnd, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
 		return TRUE;
-	case WM_SHOWWINDOW:
-		SetFocus(GetDlgItem(hWnd,IDNO));
-		return TRUE;
+
 	case WM_COMMAND:
 		switch (LOWORD(wParam)) {
 		case IDYES:
@@ -189,9 +193,8 @@ static int MenuItem_DeleteContact(WPARAM wParam, LPARAM lParam)
 {
 	//see notes about deleting contacts on PF1_SERVERCLIST servers in m_protosvc.h
 	int action;
-	
-	if (DBGetContactSettingByte(NULL, "CList", "ConfirmDelete", SETTING_CONFIRMDELETE_DEFAULT) && 
-		!(GetKeyState(VK_SHIFT)&0x8000) )
+
+	if (DBGetContactSettingByte(NULL, "CList", "ConfirmDelete", SETTING_CONFIRMDELETE_DEFAULT))
 		// Ask user for confirmation, and if the contact should be archived (hidden, not deleted)
 		action = DialogBoxParam(GetModuleHandle(0), MAKEINTRESOURCE(IDD_DELETECONTACT), (HWND) lParam, AskForConfirmationDlgProc, wParam);
 	else
@@ -277,7 +280,7 @@ int LoadCLUIModule(void)
 	DBVARIANT dbv;
 	TCHAR titleText[256];
 
-	uMsgProcessProfile = RegisterWindowMessage( _T("Miranda::ProcessProfile"));
+	uMsgProcessProfile = RegisterWindowMessageA("Miranda::ProcessProfile");
 	cli.pfnLoadCluiGlobalOpts();
 	hUserDll = LoadLibraryA("user32.dll");
 	if (hUserDll) {
@@ -984,19 +987,18 @@ LRESULT CALLBACK fnContactListWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM
 				else
 					x += 2;
 				if (showOpts & 2) {
-					PROTOACCOUNT* pa;
-					TCHAR tszName[64];
-					if (( pa = Proto_GetAccount( szProto )) != NULL )
-						mir_sntprintf( tszName, SIZEOF(tszName), _T("%s "), pa->tszAccountName );
-					else
-						tszName[0] = 0;
-
-					GetTextExtentPoint32(dis->hDC, tszName, lstrlen(tszName), &textSize);
-					TextOut(dis->hDC, x, (dis->rcItem.top + dis->rcItem.bottom - textSize.cy) >> 1, tszName, lstrlen(tszName));
+					char szName[64];
+					szName[0] = 0;
+					if (CallProtoService(szProto, PS_GETNAME, sizeof(szName), (LPARAM) szName))
+						strcpy(szName, szProto);
+					if (lstrlenA(szName) < SIZEOF(szName) - 1)
+						lstrcatA(szName, " ");
+					GetTextExtentPoint32A(dis->hDC, szName, lstrlenA(szName), &textSize);
+					TextOutA(dis->hDC, x, (dis->rcItem.top + dis->rcItem.bottom - textSize.cy) >> 1, szName, lstrlenA(szName));
 					x += textSize.cx;
 				}
 				if (showOpts & 4) {
-					TCHAR* szStatus = cli.pfnGetStatusModeDescription( status, 0 );
+					TCHAR* szStatus = ( TCHAR* )CallService( MS_CLIST_GETSTATUSMODEDESCRIPTION, status, GCMDF_TCHAR );
 					if ( !szStatus )
 						szStatus = _T("");
 					GetTextExtentPoint32( dis->hDC, szStatus, lstrlen(szStatus), &textSize );

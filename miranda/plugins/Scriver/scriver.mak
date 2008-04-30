@@ -40,7 +40,6 @@ CLEAN :
 	-@erase "$(INTDIR)\cmdlist.obj"
 	-@erase "$(INTDIR)\colorchooser.obj"
 	-@erase "$(INTDIR)\globals.obj"
-	-@erase "$(INTDIR)\input.obj"
 	-@erase "$(INTDIR)\log.obj"
 	-@erase "$(INTDIR)\main.obj"
 	-@erase "$(INTDIR)\manager.obj"
@@ -115,7 +114,6 @@ LINK32_FLAGS=comctl32.lib kernel32.lib user32.lib gdi32.lib shell32.lib ole32.li
 LINK32_OBJS= \
 	"$(INTDIR)\cmdlist.obj" \
 	"$(INTDIR)\globals.obj" \
-	"$(INTDIR)\input.obj" \
 	"$(INTDIR)\msgdialog.obj" \
 	"$(INTDIR)\msglog.obj" \
 	"$(INTDIR)\msgoptions.obj" \
@@ -156,7 +154,6 @@ CLEAN :
 	-@erase "$(INTDIR)\cmdlist.obj"
 	-@erase "$(INTDIR)\colorchooser.obj"
 	-@erase "$(INTDIR)\globals.obj"
-	-@erase "$(INTDIR)\input.obj"
 	-@erase "$(INTDIR)\log.obj"
 	-@erase "$(INTDIR)\main.obj"
 	-@erase "$(INTDIR)\manager.obj"
@@ -232,7 +229,6 @@ LINK32_FLAGS=comctl32.lib kernel32.lib user32.lib gdi32.lib shell32.lib ole32.li
 LINK32_OBJS= \
 	"$(INTDIR)\cmdlist.obj" \
 	"$(INTDIR)\globals.obj" \
-	"$(INTDIR)\input.obj" \
 	"$(INTDIR)\msgdialog.obj" \
 	"$(INTDIR)\msglog.obj" \
 	"$(INTDIR)\msgoptions.obj" \
@@ -273,7 +269,6 @@ CLEAN :
 	-@erase "$(INTDIR)\cmdlist.obj"
 	-@erase "$(INTDIR)\colorchooser.obj"
 	-@erase "$(INTDIR)\globals.obj"
-	-@erase "$(INTDIR)\input.obj"
 	-@erase "$(INTDIR)\log.obj"
 	-@erase "$(INTDIR)\main.obj"
 	-@erase "$(INTDIR)\manager.obj"
@@ -348,7 +343,6 @@ LINK32_FLAGS=comctl32.lib kernel32.lib user32.lib gdi32.lib shell32.lib ole32.li
 LINK32_OBJS= \
 	"$(INTDIR)\cmdlist.obj" \
 	"$(INTDIR)\globals.obj" \
-	"$(INTDIR)\input.obj" \
 	"$(INTDIR)\msgdialog.obj" \
 	"$(INTDIR)\msglog.obj" \
 	"$(INTDIR)\msgoptions.obj" \
@@ -389,7 +383,6 @@ CLEAN :
 	-@erase "$(INTDIR)\cmdlist.obj"
 	-@erase "$(INTDIR)\colorchooser.obj"
 	-@erase "$(INTDIR)\globals.obj"
-	-@erase "$(INTDIR)\input.obj"
 	-@erase "$(INTDIR)\log.obj"
 	-@erase "$(INTDIR)\main.obj"
 	-@erase "$(INTDIR)\manager.obj"
@@ -465,7 +458,6 @@ LINK32_FLAGS=comctl32.lib kernel32.lib user32.lib gdi32.lib shell32.lib ole32.li
 LINK32_OBJS= \
 	"$(INTDIR)\cmdlist.obj" \
 	"$(INTDIR)\globals.obj" \
-	"$(INTDIR)\input.obj" \
 	"$(INTDIR)\msgdialog.obj" \
 	"$(INTDIR)\msglog.obj" \
 	"$(INTDIR)\msgoptions.obj" \
@@ -514,11 +506,6 @@ SOURCE=.\cmdlist.c
 SOURCE=.\globals.c
 
 "$(INTDIR)\globals.obj" : $(SOURCE) "$(INTDIR)"
-
-
-SOURCE=.\input.c
-
-"$(INTDIR)\input.obj" : $(SOURCE) "$(INTDIR)"
 
 
 SOURCE=.\msgdialog.c
@@ -577,6 +564,7 @@ SOURCE=.\resource.rc
 	$(RSC) $(RSC_PROJ) $(SOURCE)
 
 
+SOURCE=.\chat\chat.rc
 SOURCE=.\chat\clist.c
 
 "$(INTDIR)\clist.obj" : $(SOURCE) "$(INTDIR)"

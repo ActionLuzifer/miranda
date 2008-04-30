@@ -2,7 +2,7 @@
 
 Miranda IM: the free IM client for Microsoft* Windows*
 
-Copyright 2000-2008 Miranda ICQ/IM project,
+Copyright 2000-2007 Miranda ICQ/IM project,
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
 
@@ -69,7 +69,7 @@ static BOOL CALLBACK ReadAwayMsgDlgProc(HWND hwndDlg,UINT message,WPARAM wParam,
 				TCHAR* contactName=(TCHAR*)CallService(MS_CLIST_GETCONTACTDISPLAYNAME,(WPARAM)dat->hContact,GCDNF_TCHAR);
 				char*  szProto=(char*)CallService(MS_PROTO_GETCONTACTBASEPROTO,(WPARAM)dat->hContact,0);
 				WORD   dwStatus = DBGetContactSettingWord(dat->hContact,szProto,"Status",ID_STATUS_OFFLINE);
-				TCHAR* status = cli.pfnGetStatusModeDescription( dwStatus, 0 );
+				TCHAR* status=(TCHAR*)CallService(MS_CLIST_GETSTATUSMODEDESCRIPTION,dwStatus,GCMDF_TCHAR);
 				GetWindowText(hwndDlg,format,SIZEOF(format));
 				mir_sntprintf(str,SIZEOF(str),format,status,contactName);
 				SetWindowText(hwndDlg,str);
@@ -128,28 +128,31 @@ static int GetMessageCommand(WPARAM wParam,LPARAM lParam)
 static int AwayMsgPreBuildMenu(WPARAM wParam,LPARAM lParam)
 {
 	CLISTMENUITEM clmi;
-	TCHAR str[128];
+	char str[128];
+	int status;
 	char *szProto;
 
 	szProto=(char*)CallService(MS_PROTO_GETCONTACTBASEPROTO,wParam,0);
 	ZeroMemory(&clmi,sizeof(clmi));
-	clmi.cbSize = sizeof(clmi);
-	clmi.flags = CMIM_FLAGS | CMIF_NOTOFFLINE | CMIF_HIDDEN | CMIF_TCHAR;
+	clmi.cbSize=sizeof(clmi);
+	clmi.flags=CMIM_FLAGS|CMIF_NOTOFFLINE|CMIF_HIDDEN;
 
-	if ( szProto != NULL ) {
-	   int chatRoom = szProto ? DBGetContactSettingByte((HANDLE)wParam, szProto, "ChatRoom", 0) : 0;
+	if(szProto!=NULL) {
+	   int chatRoom = szProto?DBGetContactSettingByte((HANDLE)wParam, szProto, "ChatRoom", 0):0;
 	   if ( !chatRoom ) {
-			int status = DBGetContactSettingWord((HANDLE)wParam,szProto,"Status",ID_STATUS_OFFLINE);
-			mir_sntprintf( str, SIZEOF(str), TranslateT("Re&ad %s Message"), cli.pfnGetStatusModeDescription( status, 0 ));
-			clmi.ptszName = str;
-			if ( CallProtoService( szProto, PS_GETCAPS, PFLAGNUM_1, 0 ) & PF1_MODEMSGRECV ) {
-				if ( CallProtoService( szProto, PS_GETCAPS, PFLAGNUM_3, 0 ) & Proto_Status2Flag( status )) {
-					clmi.flags = CMIM_FLAGS | CMIM_NAME | CMIF_NOTOFFLINE | CMIM_ICON | CMIF_TCHAR;
+			status=DBGetContactSettingWord((HANDLE)wParam,szProto,"Status",ID_STATUS_OFFLINE);
+			wsprintfA(str,Translate("Re&ad %s Message"),(char*)CallService(MS_CLIST_GETSTATUSMODEDESCRIPTION,status,0));
+			clmi.pszName=str;
+			if(CallProtoService(szProto,PS_GETCAPS,PFLAGNUM_1,0)&PF1_MODEMSGRECV) {
+				if(CallProtoService(szProto,PS_GETCAPS,PFLAGNUM_3,0)&Proto_Status2Flag(status)){
+					clmi.flags=CMIM_FLAGS|CMIM_NAME|CMIF_NOTOFFLINE|CMIM_ICON;
 					clmi.hIcon = LoadSkinProtoIcon(szProto, status);
-	}	}	}	}
-
-	CallService( MS_CLIST_MODIFYMENUITEM, ( WPARAM )hAwayMsgMenuItem, ( LPARAM )&clmi );
-	IconLib_ReleaseIcon(clmi.hIcon,0);
+				}
+			}
+		}
+	}
+	CallService(MS_CLIST_MODIFYMENUITEM,(WPARAM)hAwayMsgMenuItem,(LPARAM)&clmi);
+    IconLib_ReleaseIcon(clmi.hIcon,0);
 	return 0;
 }
 

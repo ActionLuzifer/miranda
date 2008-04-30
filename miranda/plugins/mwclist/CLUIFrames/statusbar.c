@@ -24,7 +24,7 @@ RECT OldRc={0};
 static	HBITMAP hBmpBackground;
 static int backgroundBmpUse;
 static COLORREF bkColour;
-extern BYTE showOpts;
+int showOpts;
 int extraspace;
 
 int OnStatusBarBackgroundChange()

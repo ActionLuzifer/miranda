@@ -2,7 +2,7 @@
 
 Miranda IM: the free IM client for Microsoft* Windows*
 
-Copyright 2000-2008 Miranda ICQ/IM project,
+Copyright 2000-2007 Miranda ICQ/IM project,
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
 
@@ -434,9 +434,6 @@ void fnFreeEvent( struct CListEvent* p )
 void UninitCListEvents(void)
 {
 	int i;
-
-	if (cli.events.count) KillTimer(NULL, flashTimerId);
-
 	for (i = 0; i < cli.events.count; i++)
 		cli.pfnFreeEvent(( struct CListEvent* )cli.events.items[i] );
 	List_Destroy(( SortedList* )&cli.events );

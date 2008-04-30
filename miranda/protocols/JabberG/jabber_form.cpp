@@ -2,7 +2,7 @@
 
 Jabber Protocol Plugin for Miranda IM
 Copyright ( C ) 2002-04  Santithorn Bunchua
-Copyright ( C ) 2005-08  George Hazan
+Copyright ( C ) 2005-07  George Hazan
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -18,7 +18,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-File name      : $URL$
+File name      : $Source: /cvsroot/miranda/miranda/protocols/JabberG/jabber_form.cpp,v $
 Revision       : $Revision$
 Last change on : $Date$
 Last change by : $Author$
@@ -26,6 +26,7 @@ Last change by : $Author$
 */
 
 #include "jabber.h"
+#include "resource.h"
 #include "jabber_caps.h"
 
 
@@ -123,11 +124,11 @@ void JabberFormSetInstruction( HWND hwndForm, TCHAR *text )
 	int len = lstrlen(text);
 	int fixedLen = len;
 	for (int i = 1; i < len; ++i)
-		if ((text[i - 1] == _T('\n')) && (text[i] != _T('\r')))
+		if ((text[i] == _T('\n')) && (text[i] != _T('\r')))
 			++fixedLen;
-	TCHAR *fixedText = NULL;
+	char *fixedText = NULL;
 	if (fixedLen != len) {
-		fixedText = (TCHAR *)mir_alloc(sizeof(TCHAR) * (fixedLen+1));
+		TCHAR *fixedText = (TCHAR *)mir_alloc(sizeof(TCHAR) * (fixedLen+1));
 		TCHAR *p = fixedText;
 		for (int i = 0; i < len; ++i) {
 			*p = text[i];
@@ -301,7 +302,7 @@ void JabberFormLayoutSingleControl(TJabberFormControlInfo *item, TJabberFormLayo
 
 #define JabberFormCreateLabel()	\
 	CreateWindow( _T("static"), labelStr, WS_CHILD|WS_VISIBLE|SS_CENTERIMAGE, \
-		0, 0, 0, 0, hwndStatic, ( HMENU )-1, hInst, NULL )
+		0, 0, 0, 0, hwndStatic, ( HMENU ) IDC_STATIC, hInst, NULL )
 
 TJabberFormControlInfo *JabberFormAppendControl(HWND hwndStatic, TJabberFormLayoutInfo *layout_info, TJabberFormControlType type, TCHAR *labelStr, TCHAR *valueStr)
 {
@@ -376,7 +377,7 @@ TJabberFormControlInfo *JabberFormAppendControl(HWND hwndStatic, TJabberFormLayo
 			item->hCtrl = CreateWindow( _T("edit"), valueStr,
 				WS_CHILD|WS_VISIBLE|ES_MULTILINE|ES_READONLY|ES_AUTOHSCROLL,
 				0, 0, 0, 0,
-				hwndStatic, ( HMENU )-1, hInst, NULL );
+				hwndStatic, ( HMENU ) IDC_STATIC, hInst, NULL );
 			break;
 		}
 		case JFORM_CTYPE_HIDDEN:
@@ -690,7 +691,6 @@ XmlNode* JabberFormGetData( HWND hwndStatic, XmlNode* xNode )
 }
 
 typedef struct {
-	CJabberProto* ppro;
 	XmlNode *xNode;
 	TCHAR defTitle[128];	// Default title if no <title/> in xNode
 	RECT frameRect;		// Clipping region of the frame to scroll
@@ -828,7 +828,7 @@ static BOOL CALLBACK JabberFormDlgProc( HWND hwndDlg, UINT msg, WPARAM wParam, L
 			jfi = ( JABBER_FORM_INFO * ) GetWindowLong( hwndDlg, GWL_USERDATA );
 			if ( jfi != NULL ) {
 				XmlNode* n = JabberFormGetData( GetDlgItem( hwndDlg, IDC_FRAME ), jfi->xNode );
-				( jfi->ppro->*(jfi->pfnSubmit))( n, jfi->userdata );
+				( jfi->pfnSubmit )( n, jfi->userdata );
 			}
 			// fall through
 		case IDCANCEL:
@@ -861,13 +861,12 @@ static VOID CALLBACK JabberFormCreateDialogApcProc( DWORD param )
 	CreateDialogParam( hInst, MAKEINTRESOURCE( IDD_FORM ), NULL, JabberFormDlgProc, ( LPARAM )param );
 }
 
-void CJabberProto::FormCreateDialog( XmlNode *xNode, TCHAR* defTitle, JABBER_FORM_SUBMIT_FUNC pfnSubmit, void *userdata )
+void JabberFormCreateDialog( XmlNode *xNode, TCHAR* defTitle, JABBER_FORM_SUBMIT_FUNC pfnSubmit, void *userdata )
 {
 	JABBER_FORM_INFO *jfi;
 
 	jfi = ( JABBER_FORM_INFO * ) mir_alloc( sizeof( JABBER_FORM_INFO ));
 	memset( jfi, 0, sizeof( JABBER_FORM_INFO ));
-	jfi->ppro = this;
 	jfi->xNode = JabberXmlCopyNode( xNode );
 	if ( defTitle )
 		_tcsncpy( jfi->defTitle, defTitle, SIZEOF( jfi->defTitle ));

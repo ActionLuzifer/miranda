@@ -2,7 +2,7 @@
 
 Miranda IM: the free IM client for Microsoft* Windows*
 
-Copyright 2000-2008 Miranda ICQ/IM project,
+Copyright 2000-2007 Miranda ICQ/IM project,
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
 
@@ -418,11 +418,6 @@ typedef struct
 	void   ( *pfnUnlockTray )( void );
 
 	VOID ( CALLBACK *pfnTrayCycleTimerProc )( HWND hwnd, UINT message, UINT idEvent, DWORD dwTime );
-
-	/*************************************************************************************
-	 * version 6 additions (0.8.0.x) - accounts
-	 *************************************************************************************/
-	int    ( *pfnGetAccountIndexByPos )( int pos );
 }
 	CLIST_INTERFACE;
 

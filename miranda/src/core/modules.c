@@ -2,7 +2,7 @@
 
 Miranda IM: the free IM client for Microsoft* Windows*
 
-Copyright 2000-2008 Miranda ICQ/IM project,
+Copyright 2000-2007 Miranda ICQ/IM project,
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
 
@@ -24,6 +24,25 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <m_plugins.h>
 
 // list of hooks
+
+typedef struct
+{
+	MIRANDAHOOK pfnHook;
+	HINSTANCE hOwner;
+	HWND hwnd;
+	UINT message;
+}
+	THookSubscriber;
+
+typedef struct
+{
+	char name[ MAXMODULELABELLENGTH ];
+	int  id;
+	int  subscriberCount;
+	THookSubscriber* subscriber;
+	MIRANDAHOOK pfnHook;
+}
+	THook;
 
 struct
 {
@@ -49,15 +68,9 @@ typedef struct
 {
 	DWORD nameHash;
 	HINSTANCE hOwner;
-	union {
-		MIRANDASERVICE pfnService;
-		MIRANDASERVICEPARAM pfnServiceParam;
-		MIRANDASERVICEOBJ pfnServiceObj;
-		MIRANDASERVICEOBJPARAM pfnServiceObjParam;
-	};
-	int flags;
+	MIRANDASERVICE pfnService;
+	int isParam;
 	LPARAM lParam;
-	void* object;
 	char name[1];
 }
 	TService;
@@ -81,13 +94,12 @@ typedef struct
 	TServiceToMainThreadItem;
 
 // other static variables
-static BOOL bServiceMode = FALSE;
+
 static CRITICAL_SECTION csHooks,csServices;
 static DWORD  mainThreadId;
 static int    hookId = 1;
 static HANDLE hMainThread;
 static HANDLE hMissingService;
-static THook *pLastHook = NULL;
 
 HINSTANCE GetInstByAddress( void* codePtr );
 
@@ -97,7 +109,6 @@ int LoadNewPluginsModule(void);	// core: N.O. plugins
 int LoadNetlibModule(void);		// core: network
 int LoadLangPackModule(void);	// core: translation
 int LoadProtocolsModule(void);	// core: protocol manager
-int LoadAccountsModule(void);    // core: account manager
 int LoadIgnoreModule(void);		// protocol filter: ignore
 
 int LoadSendRecvUrlModule(void);	//send/recv
@@ -108,9 +119,7 @@ int LoadSendRecvFileModule(void);	//send/recv
 int LoadContactListModule(void);// ui: clist
 int LoadOptionsModule(void);	// ui: options dialog
 int LoadFindAddModule(void);	// ui: search/add users
-int LoadSkinIcons(void);
-int LoadSkinSounds(void);
-int LoadSkinHotkeys(void);
+int LoadSkinModule(void);		// ui: skin
 int LoadHelpModule(void);		// ui: help stuff
 int LoadUserInfoModule(void);	// ui: user info
 int LoadHistoryModule(void);	// ui: history viewer
@@ -129,24 +138,6 @@ int LoadContactsModule(void);    // random: contact
 int LoadFontserviceModule(void); // ui: font manager
 int LoadIcoLibModule(void);   // ui: icons manager
 int LoadUpdateNotifyModule(void); // random: update notification
-int LoadServiceModePlugin(void);
-
-void UnloadUtilsModule(void);
-void UnloadButtonModule(void);
-void UnloadClcModule(void);
-void UnloadContactListModule(void);
-void UnloadEventsModule(void);
-void UnloadIdleModule(void);
-void UnloadLangPackModule(void);
-void UnloadNetlibModule(void);
-void UnloadNewPlugins(void);
-void UnloadUpdateNotifyModule(void);
-void UnloadIcoLibModule(void);
-void UnloadSkinSounds(void);
-void UnloadSkinHotkeys(void);
-void UnloadNetlibModule(void);
-void UnloadProtocolsModule(void);
-void UnloadAccountsModule(void);
 
 static int LoadDefaultModules(void)
 {
@@ -157,34 +148,19 @@ static int LoadDefaultModules(void)
 	if (LoadLangPackModule()) return 1; // langpack will be a system module in the new order so this is moved 'ere
 	if (LoadUtilsModule()) return 1;		//order not important for this, but no dependencies and no point in pluginising
 	if (LoadNewPluginsModuleInfos()) return 1;
-
-	// database is available here
-	if (LoadButtonModule()) return 1;
-	if (LoadIcoLibModule()) return 1;
-	if (LoadSkinIcons()) return 1;
-
-	bServiceMode = LoadServiceModePlugin();
-	switch ( bServiceMode )
-	{
-		case 1:	return 0; // stop loading here
-		case 0: break;
-		default: return 1;
-	}
-
-	if (LoadSkinSounds()) return 1;
-	if (LoadSkinHotkeys()) return 1;
-	if (LoadOptionsModule()) return 1;
-	if (LoadNetlibModule()) return 1;
 	if (LoadProtocolsModule()) return 1;
-	    LoadDbAccounts();                    // retrieves the account array from a database
+	if (LoadIcoLibModule()) return 1;
+	if (LoadSkinModule()) return 1;
+	if (LoadButtonModule()) return 1;
+	if (LoadOptionsModule()) return 1;
 	if (LoadContactsModule()) return 1;
 	if (LoadContactListModule()) return 1;
 	if (LoadAddContactModule()) return 1;
-	if (LoadNewPluginsModule()) return 1;    // will call Load() on everything, clist will load first
-	if (LoadAccountsModule()) return 1;
+	if (LoadNewPluginsModule()) return 1; // will call Load() on everything, clist will load first
 
 	//this info will be available at LoadNewPluginsModule()
 	disableDefaultModule=(int*)CallService(MS_PLUGINS_GETDISABLEDEFAULTARRAY,0,0);
+	if (!disableDefaultModule[DEFMOD_PROTOCOLNETLIB]) if (LoadNetlibModule()) return 1;
 
 	//order becomes less important below here
 	if (!disableDefaultModule[DEFMOD_FONTSERVICE]) if (LoadFontserviceModule()) return 1;
@@ -206,28 +182,9 @@ static int LoadDefaultModules(void)
 	return 0;
 }
 
-void UnloadDefaultModules(void)
-{
-	UnloadAccountsModule();
-	UnloadNewPlugins();
-	UnloadProtocolsModule();
-	UnloadSkinSounds();
-	UnloadSkinHotkeys();
-	UnloadIcoLibModule();
-	UnloadUtilsModule();
-	UnloadButtonModule();
-	UnloadClcModule();
-	UnloadContactListModule();
-	UnloadEventsModule();
-	UnloadIdleModule();
-	UnloadUpdateNotifyModule();
-	UnloadNetlibModule();
-	UnloadLangPackModule();
-}
-
 static int compareServices( const TService* p1, const TService* p2 )
 {
-	if ( p1->nameHash == p2->nameHash )
+	if ( p1->nameHash == p2->nameHash ) 
 		return 0;
 
 	return ( p1->nameHash > p2->nameHash ) ? 1 : -1;
@@ -259,14 +216,11 @@ int InitialiseModularEngine(void)
 void DestroyModularEngine(void)
 {
 	int i;
-	THook* p;
 	EnterCriticalSection( &csHooks );
 	for( i=0; i < hooks.count; i++ ) {
-		p = hooks.items[i];
- 		if ( p->subscriberCount )
-			mir_free( p->subscriber );
-		DeleteCriticalSection( &p->csHook );
-		mir_free( p );
+ 		if ( hooks.items[i]->subscriberCount )
+			mir_free( hooks.items[i]->subscriber );
+		mir_free( hooks.items[i] );
 	}
 	List_Destroy(( SortedList* )&hooks );
 	LeaveCriticalSection( &csHooks );
@@ -342,9 +296,8 @@ HANDLE CreateHookableEvent(const char *name)
 	strncpy( ret->name, name, sizeof( ret->name )); ret->name[ MAXMODULELABELLENGTH-1 ] = 0;
 	ret->id = hookId++;
 	ret->subscriberCount = 0;
-	ret->subscriber = NULL;
+	ret->subscriber = NULL; 
 	ret->pfnHook = NULL;
-	InitializeCriticalSection( &ret->csHook );
 	List_Insert(( SortedList* )&hooks, ret, idx );
 
 	LeaveCriticalSection( &csHooks );
@@ -357,11 +310,8 @@ int DestroyHookableEvent( HANDLE hEvent )
 	THook* p;
 
 	EnterCriticalSection( &csHooks );
-	if ( pLastHook == ( THook* )hEvent )
-		pLastHook = NULL;
-
 	if (( idx = List_IndexOf(( SortedList* )&hooks, hEvent )) == -1 ) {
-      LeaveCriticalSection(&csHooks);
+      LeaveCriticalSection(&csHooks); 
 		return 1;
 	}
 	p = hooks.items[idx];
@@ -371,7 +321,6 @@ int DestroyHookableEvent( HANDLE hEvent )
 		p->subscriberCount = 0;
 	}
 	List_Remove(( SortedList* )&hooks, idx );
-	DeleteCriticalSection( &p->csHook );
 	mir_free( p );
 
 	LeaveCriticalSection( &csHooks );
@@ -392,57 +341,40 @@ int SetHookDefaultForHookableEvent(HANDLE hEvent, MIRANDAHOOK pfnHook)
 int CallHookSubscribers( HANDLE hEvent, WPARAM wParam, LPARAM lParam )
 {
 	int i, returnVal = 0;
-	THook* p = ( THook* )hEvent;
-	if ( p == NULL )
-		return -1;
+	THook* p = ( THook* )hEvent; 
 
-	EnterCriticalSection( &p->csHook );
+	EnterCriticalSection( &csHooks );
+	if ( List_IndexOf(( SortedList* )&hooks, p ) == -1 ) {
+		LeaveCriticalSection( &csHooks );
+		return -1;
+	}
 
 	// NOTE: We've got the critical section while all this lot are called. That's mostly safe, though.
 	for ( i = 0; i < p->subscriberCount; i++ ) {
-		THookSubscriber* s = &p->subscriber[i];
-		switch ( s->type ) {
-			case 1:	returnVal = s->pfnHook( wParam, lParam );	break;
-			case 2:	returnVal = s->pfnHookParam( wParam, lParam, s->lParam ); break;
-			case 3:	returnVal = s->pfnHookObj( s->object, wParam, lParam ); break;
-			case 4:	returnVal = s->pfnHookObjParam( s->object, wParam, lParam, s->lParam ); break;
-			case 5:	returnVal = SendMessage( s->hwnd, s->message, wParam, lParam ); break;
-			default: continue;
+		if ( p->subscriber[i].pfnHook != NULL ) {
+			returnVal = p->subscriber[i].pfnHook( wParam, lParam );
+			if ( returnVal ) 
+				break;
 		}
-		if ( returnVal )
-			break;
-	}
+		else if ( p->subscriber[i].hwnd != NULL ) {
+			returnVal = SendMessage( p->subscriber[i].hwnd, p->subscriber[i].message, wParam, lParam );
+			if ( returnVal )
+				break;
+	}	}
 
 	// check for no hooks and call the default hook if any
 	if ( p->subscriberCount == 0 && p->pfnHook != 0 )
 		returnVal = p->pfnHook( wParam, lParam );
 
-	LeaveCriticalSection( &p->csHook );
+	LeaveCriticalSection(&csHooks);
 	return returnVal;
-}
-
-static int checkHook( HANDLE hHook )
-{
-	EnterCriticalSection( &csHooks );
-	if ( pLastHook != hHook || !pLastHook ) {
-		if ( List_IndexOf(( SortedList* )&hooks, hHook ) == -1 ) {
-			LeaveCriticalSection( &csHooks );
-			return -1;
-		}
-		pLastHook = hHook;
-	}
-	LeaveCriticalSection( &csHooks );
-	return 0;
 }
 
 static void CALLBACK HookToMainAPCFunc(DWORD dwParam)
 {
 	THookToMainThreadItem* item = ( THookToMainThreadItem* )dwParam;
 
-	if ( checkHook( item->hook ) == -1 )
-		item->result = -1;
-	else
-		item->result = CallHookSubscribers( item->hook, item->wParam, item->lParam );
+	item->result = CallHookSubscribers( item->hook, item->wParam, item->lParam );
 	SetEvent( item->hDoneEvent );
 }
 
@@ -464,11 +396,11 @@ int NotifyEventHooks( HANDLE hEvent, WPARAM wParam, LPARAM lParam )
 		CloseHandle( item.hDoneEvent );
 		return item.result;
 	}
-
-	return ( checkHook( hEvent ) == -1 ) ? -1 : CallHookSubscribers( hEvent, wParam, lParam );
+	
+   return CallHookSubscribers( hEvent, wParam, lParam );
 }
 
-static HANDLE HookEventInt( int type, const char* name, MIRANDAHOOK hookProc, void* object, LPARAM lParam )
+HANDLE HookEvent( const char* name, MIRANDAHOOK hookProc )
 {
 	int idx;
 	THook* p;
@@ -487,36 +419,14 @@ static HANDLE HookEventInt( int type, const char* name, MIRANDAHOOK hookProc, vo
 
 	p = hooks.items[ idx ];
 	p->subscriber = ( THookSubscriber* )mir_realloc( p->subscriber, sizeof( THookSubscriber )*( p->subscriberCount+1 ));
-	p->subscriber[ p->subscriberCount ].type = type;
 	p->subscriber[ p->subscriberCount ].pfnHook = hookProc;
-	p->subscriber[ p->subscriberCount ].object = object;
-	p->subscriber[ p->subscriberCount ].lParam = lParam;
 	p->subscriber[ p->subscriberCount ].hOwner  = GetInstByAddress( hookProc );
+	p->subscriber[ p->subscriberCount ].hwnd    = NULL;
 	p->subscriberCount++;
 
 	ret = ( HANDLE )(( p->id << 16 ) | p->subscriberCount );
 	LeaveCriticalSection( &csHooks );
 	return ret;
-}
-
-HANDLE HookEvent( const char* name, MIRANDAHOOK hookProc )
-{
-	return HookEventInt( 1, name, hookProc, 0, 0 );
-}
-
-HANDLE HookEventParam( const char* name, MIRANDAHOOKPARAM hookProc, LPARAM lParam )
-{
-	return HookEventInt( 2, name, (MIRANDAHOOK)hookProc, 0, lParam );
-}
-
-HANDLE HookEventObj( const char* name, MIRANDAHOOKOBJ hookProc, void* object)
-{
-	return HookEventInt( 3, name, (MIRANDAHOOK)hookProc, object, 0 );
-}
-
-HANDLE HookEventObjParam( const char* name, MIRANDAHOOKOBJPARAM hookProc, void* object, LPARAM lParam )
-{
-	return HookEventInt( 4, name, (MIRANDAHOOK)hookProc, object, lParam );
 }
 
 HANDLE HookEventMessage( const char* name, HWND hwnd, UINT message )
@@ -536,7 +446,7 @@ HANDLE HookEventMessage( const char* name, HWND hwnd, UINT message )
 
 	p = hooks.items[ idx ];
 	p->subscriber = ( THookSubscriber* )mir_realloc( p->subscriber, sizeof( THookSubscriber )*( p->subscriberCount+1 ));
-	p->subscriber[ p->subscriberCount ].type = 5;
+	p->subscriber[ p->subscriberCount ].pfnHook = NULL;
 	p->subscriber[ p->subscriberCount ].hwnd = hwnd;
 	p->subscriber[ p->subscriberCount ].message = message;
 	p->subscriberCount++;
@@ -570,10 +480,10 @@ int UnhookEvent( HANDLE hHook )
 		return 1;
 	}
 
-	p->subscriber[subscriberId].type    = 0;
 	p->subscriber[subscriberId].pfnHook = NULL;
+	p->subscriber[subscriberId].hwnd    = NULL;
 	p->subscriber[subscriberId].hOwner  = NULL;
-	while( p->subscriberCount && p->subscriber[p->subscriberCount-1].type == 0 )
+	while( p->subscriberCount && p->subscriber[p->subscriberCount-1].pfnHook == NULL && p->subscriber[p->subscriberCount-1].hwnd == NULL )
 		p->subscriberCount--;
 	if ( p->subscriberCount == 0 ) {
 		if ( p->subscriber ) mir_free( p->subscriber );
@@ -606,25 +516,6 @@ void KillModuleEventHooks( HINSTANCE hInst )
 	LeaveCriticalSection(&csHooks);
 }
 
-void KillObjectEventHooks( void* pObject )
-{
-	int i, j;
-
-	EnterCriticalSection(&csHooks);
-	for ( i = hooks.count-1; i >= 0; i-- ) {
-		if ( hooks.items[i]->subscriberCount == 0 )
-			continue;
-
-		for ( j = hooks.items[i]->subscriberCount-1; j >= 0; j-- ) {
-			if ( hooks.items[i]->subscriber[j].object == pObject ) {
-				UnhookEvent(( HANDLE )(( hooks.items[i]->id << 16 ) + j + 1 ));
-				if ( hooks.items[i]->subscriberCount == 0 )
-					break;
-	}	}	}
-
-	LeaveCriticalSection(&csHooks);
-}
-
 /////////////////////SERVICES
 
 static __inline TService* FindServiceByHash(DWORD hash)
@@ -640,7 +531,7 @@ static __inline TService* FindServiceByName( const char *name )
 	return FindServiceByHash( NameHashFunction( name ));
 }
 
-static HANDLE CreateServiceInt( int type, const char *name, MIRANDASERVICE serviceProc, void* object, LPARAM lParam)
+HANDLE CreateServiceFunction( const char *name, MIRANDASERVICE serviceProc )
 {
 	DWORD hash;
 	int   idx;
@@ -667,33 +558,46 @@ static HANDLE CreateServiceInt( int type, const char *name, MIRANDASERVICE servi
 	p->nameHash   = hash;
 	p->pfnService = serviceProc;
 	p->hOwner     = GetInstByAddress( serviceProc );
-	p->flags      = type;
-	p->lParam     = lParam;
-	p->object     = object;
+	p->isParam    = 0;
 	List_Insert(( SortedList* )&services, p, idx );
 
 	LeaveCriticalSection( &csServices );
 	return ( HANDLE )hash;
 }
 
-HANDLE CreateServiceFunction( const char *name, MIRANDASERVICE serviceProc )
-{
-	return CreateServiceInt( 0, name, serviceProc, 0, 0 );
-}
-
 HANDLE CreateServiceFunctionParam(const char *name,MIRANDASERVICEPARAM serviceProc,LPARAM lParam)
 {
-	return CreateServiceInt( 1, name, (MIRANDASERVICE)serviceProc, 0, lParam );
-}
+	DWORD hash;
+	int   idx;
+	TService* p;
+#ifdef _DEBUG
+	if ( name == NULL ) {
+		MessageBoxA(0,"Someone tried to create a NULL'd service, see call stack for more info","",0);
+		DebugBreak();
+		return NULL;
+	}
+#else
+	if ( name == NULL ) return NULL;
+#endif
+	hash = NameHashFunction( name );
+	EnterCriticalSection( &csServices );
 
-HANDLE CreateServiceFunctionObj(const char *name,MIRANDASERVICEOBJ serviceProc,void* object)
-{
-	return CreateServiceInt( 2, name, (MIRANDASERVICE)serviceProc, object, 0 );
-}
+	if ( List_GetIndex(( SortedList* )&services, &hash, &idx )) {
+		LeaveCriticalSection( &csServices );
+		return NULL;
+	}
 
-HANDLE CreateServiceFunctionObjParam(const char *name,MIRANDASERVICEOBJPARAM serviceProc,void* object,LPARAM lParam)
-{
-	return CreateServiceInt( 3, name, (MIRANDASERVICE)serviceProc, object, lParam );
+	p = mir_alloc( sizeof( *p ) + strlen( name ));
+	strcpy( p->name, name );
+	p->nameHash   = hash;
+	p->pfnService = ( MIRANDASERVICE )serviceProc;
+	p->hOwner     = GetInstByAddress( serviceProc );
+	p->isParam    = 1;
+	p->lParam     = lParam;
+	List_Insert(( SortedList* )&services, p, idx );
+
+	LeaveCriticalSection( &csServices );
+	return (HANDLE)hash;
 }
 
 int DestroyServiceFunction(HANDLE hService)
@@ -726,9 +630,8 @@ int CallService(const char *name,WPARAM wParam,LPARAM lParam)
 {
 	TService *pService;
 	MIRANDASERVICE pfnService;
-	int flags;
+	int isParam;
 	LPARAM fnParam;
-	void* object;
 
 #ifdef _DEBUG
 	if (name==NULL) {
@@ -757,17 +660,15 @@ int CallService(const char *name,WPARAM wParam,LPARAM lParam)
 		} */
 		return CALLSERVICE_NOTFOUND;
 	}
-	pfnService = pService->pfnService;
-	flags = pService->flags;
-	fnParam = pService->lParam;
-	object = pService->object;
+	pfnService=pService->pfnService;
+	isParam=pService->isParam;
+	fnParam=pService->lParam;
 	LeaveCriticalSection(&csServices);
-	switch( flags ) {
-		case 1:  return ((MIRANDASERVICEPARAM)pfnService)(wParam,lParam,fnParam);
-		case 2:  return ((MIRANDASERVICEOBJ)pfnService)(object,wParam,lParam);
-		case 3:  return ((MIRANDASERVICEOBJPARAM)pfnService)(object,wParam,lParam,fnParam);
-		default: return pfnService(wParam,lParam);
-}	}
+	if (isParam)
+		return ((int (*)(WPARAM,LPARAM,LPARAM))pfnService)(wParam,lParam,fnParam);
+	else
+		return ((int (*)(WPARAM,LPARAM))pfnService)(wParam,lParam);
+}
 
 static void CALLBACK CallServiceToMainAPCFunc(DWORD dwParam)
 {
@@ -822,18 +723,6 @@ void KillModuleServices( HINSTANCE hInst )
 				services.items[i]->name, szModuleName );
 			DestroyServiceFunction(( HANDLE )services.items[i]->nameHash );
 	}	}
-
-	LeaveCriticalSection(&csServices);
-}
-
-void KillObjectServices( void* pObject )
-{
-	int i;
-
-	EnterCriticalSection(&csServices);
-	for ( i = services.count-1; i >= 0; i-- )
-		if ( services.items[i]->object == pObject )
-			DestroyServiceFunction(( HANDLE )services.items[i]->nameHash );
 
 	LeaveCriticalSection(&csServices);
 }

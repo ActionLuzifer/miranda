@@ -2,7 +2,7 @@
 
 Miranda IM: the free IM client for Microsoft* Windows*
 
-Copyright 2000-2008 Miranda ICQ/IM project,
+Copyright 2000-2007 Miranda ICQ/IM project,
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
 
@@ -63,7 +63,7 @@ static int srvRetrieveInterface( WPARAM wParam, LPARAM lParam )
 	int rc;
 
 	if ( interfaceInited == 0 ) {
-		cli.version = 6;
+		cli.version = 5;
 
 		cli.pfnClcOptionsChanged               = fnClcOptionsChanged;
 		cli.pfnClcBroadcast                    = fnClcBroadcast;
@@ -199,9 +199,8 @@ static int srvRetrieveInterface( WPARAM wParam, LPARAM lParam )
 		cli.pfnMOGetIntMenuItem                = MO_GetIntMenuItem;
 		cli.pfnMOGetMenuItemByGlobalID         = GetMenuItemByGlobalID;
 		cli.pfnGetProtocolVisibility           = fnGetProtocolVisibility;
-		cli.pfnGetProtoIndexByPos              = fnGetProtoIndexByPos;
+		cli.pfnGetProtoIndexByPos              = GetProtoIndexByPos;
 		cli.pfnReloadProtoMenus                = fnReloadProtoMenus;
-		cli.pfnGetAccountIndexByPos            = fnGetAccountIndexByPos;
 
 		cli.hInst = ( HMODULE )lParam;
 
