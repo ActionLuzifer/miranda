@@ -1,4 +1,4 @@
-/* $Id: tif_fax3.c,v 1.22 2008/04/05 17:55:37 drolon Exp $ */
+/* $Id: tif_fax3.c,v 1.16 2006/10/28 19:36:43 drolon Exp $ */
 
 /*
  * Copyright (c) 1990-1997 Sam Leffler
@@ -776,7 +776,7 @@ static	int32 find1span(unsigned char*, int32, int32);
  * table.  The ``base'' of the bit string is supplied
  * along with the start+end bit indices.
  */
-static int32
+inline static int32
 find0span(unsigned char* bp, int32 bs, int32 be)
 {
 	int32 bits = be - bs;
@@ -835,7 +835,7 @@ find0span(unsigned char* bp, int32 bs, int32 be)
 	return (span);
 }
 
-static int32
+inline static int32
 find1span(unsigned char* bp, int32 bs, int32 be)
 {
 	int32 bits = be - bs;
@@ -1086,9 +1086,6 @@ Fax3Cleanup(TIFF* tif)
 
 	if (Fax3State(tif)->subaddress)
 		_TIFFfree(Fax3State(tif)->subaddress);
-	if (Fax3State(tif)->faxdcs)
-		_TIFFfree(Fax3State(tif)->faxdcs);
-
 	_TIFFfree(tif->tif_data);
 	tif->tif_data = NULL;
 
@@ -1312,15 +1309,6 @@ InitCCITTFax3(TIFF* tif)
 	Fax3BaseState* sp;
 
 	/*
-	 * Merge codec-specific tag information.
-	 */
-	if (!_TIFFMergeFieldInfo(tif, faxFieldInfo, N(faxFieldInfo))) {
-		TIFFErrorExt(tif->tif_clientdata, "InitCCITTFax3",
-			"Merging common CCITT Fax codec-specific tags failed");
-		return 0;
-	}
-
-	/*
 	 * Allocate state block so tag methods have storage to record values.
 	 */
 	tif->tif_data = (tidata_t)
@@ -1336,8 +1324,10 @@ InitCCITTFax3(TIFF* tif)
         sp->rw_mode = tif->tif_mode;
 
 	/*
-	 * Override parent get/set field methods.
+	 * Merge codec-specific tag information and
+	 * override parent get/set field methods.
 	 */
+	_TIFFMergeFieldInfo(tif, faxFieldInfo, N(faxFieldInfo));
 	sp->vgetparent = tif->tif_tagmethods.vgetfield;
 	tif->tif_tagmethods.vgetfield = Fax3VGetField; /* hook for codec tags */
 	sp->vsetparent = tif->tif_tagmethods.vsetfield;
@@ -1380,21 +1370,14 @@ TIFFInitCCITTFax3(TIFF* tif, int scheme)
 {
 	(void) scheme;
 	if (InitCCITTFax3(tif)) {
-		/*
-		 * Merge codec-specific tag information.
-		 */
-		if (!_TIFFMergeFieldInfo(tif, fax3FieldInfo, N(fax3FieldInfo))) {
-			TIFFErrorExt(tif->tif_clientdata, "TIFFInitCCITTFax3",
-			"Merging CCITT Fax 3 codec-specific tags failed");
-			return 0;
-		}
+		_TIFFMergeFieldInfo(tif, fax3FieldInfo, N(fax3FieldInfo));
 
 		/*
 		 * The default format is Class/F-style w/o RTC.
 		 */
 		return TIFFSetField(tif, TIFFTAG_FAXMODE, FAXMODE_CLASSF);
 	} else
-		return 01;
+		return (0);
 }
 
 /*
@@ -1488,14 +1471,7 @@ TIFFInitCCITTFax4(TIFF* tif, int scheme)
 {
 	(void) scheme;
 	if (InitCCITTFax3(tif)) {		/* reuse G3 support */
-		/*
-		 * Merge codec-specific tag information.
-		 */
-		if (!_TIFFMergeFieldInfo(tif, fax4FieldInfo, N(fax4FieldInfo))) {
-			TIFFErrorExt(tif->tif_clientdata, "TIFFInitCCITTFax4",
-			"Merging CCITT Fax 4 codec-specific tags failed");
-			return 0;
-		}
+		_TIFFMergeFieldInfo(tif, fax4FieldInfo, N(fax4FieldInfo));
 
 		tif->tif_decoderow = Fax4Decode;
 		tif->tif_decodestrip = Fax4Decode;

@@ -41,21 +41,20 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define WIN32_LEAN_AND_MEAN
 #define _USE_32BIT_TIME_T
 
-#include <windows.h>
-#include <process.h>
-#include <stdio.h>
-#include <stdarg.h>
-#include <time.h>
-#include <limits.h>
 #include <wchar.h>
 #include <tchar.h>
+#include <stdio.h>
+#include <windows.h>
+#include <process.h>
 #include <shellapi.h>
 #include <commctrl.h>
 #include <commdlg.h>
 #include <ole2.h>
+#include <time.h>
 #include <stddef.h>
+#include <process.h>
+#include "resource.h"
 #include <win2k.h>
-
 #include <newpluginapi.h>
 #include <m_system.h>
 #include <m_database.h>
@@ -77,22 +76,16 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <m_fontservice.h>
 #include <m_icoLib.h>
 #include <m_avatars.h>
-#include <m_hotkeys.h>
-#include <m_popup.h>
 
-#include "m_ieview.h"
-
-#include "resource.h"
 #include "globals.h"
 #include "msgs.h"
 #include "msgwindow.h"
 #include "utils.h"
-#include "input.h"
 #include "sendqueue.h"
 
 #include "m_smileyadd.h"
 #include "m_metacontacts.h"
-#include "m_historyevents.h"
+#include "m_ieview.h"
 
 #ifndef IMF_AUTOFONTSIZEADJUST
 #define IMF_AUTOFONTSIZEADJUST	0x0010
@@ -108,14 +101,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #endif
 #ifndef CFM_WEIGHT
 #define	CFM_WEIGHT			0x00400000
-#endif
-
-#ifndef _MSC_VER
-typedef struct tagTVKEYDOWN {
-    NMHDR hdr;
-    WORD wVKey;
-    UINT flags;
-} NMTVKEYDOWN, FAR *LPNMTVKEYDOWN;
 #endif
 
 extern HWND SM_FindWindowByContact(HANDLE hContact);

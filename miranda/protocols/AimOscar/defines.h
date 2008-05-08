@@ -7,22 +7,25 @@
 #pragma warning (disable : 4996)
 //System includes
 #include <windows.h>
+#include <prsht.h>
+#include <Tmschema.h>
+//#include <vssym32.h>
+#include <richedit.h>
+
 #include <ctype.h>
 #include <fcntl.h>
 #include <io.h>
 #include <malloc.h>
 #include <process.h>
-#include <prsht.h>
-#include <richedit.h>
 #include <stdio.h>
 #include <sys/stat.h>
 #include <time.h>
-#include <vssym32.h>
-#include <winuser.h>
+
 //Miranda IM includes
 #pragma warning( disable: 4100 )
 #pragma warning( disable: 4244 )
 #pragma warning( disable: 4201 )
+
 #include <newpluginapi.h>
 #include <statusmodes.h>
 #include <m_button.h>
@@ -55,6 +58,7 @@
 #include "tlv.h"
 //rest o includes
 #include "avatars.h"
+#include "aim.h"
 #include "away.h"
 #include "utility.h"
 #include "client.h"

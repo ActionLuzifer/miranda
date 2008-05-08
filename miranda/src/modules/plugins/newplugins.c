@@ -24,7 +24,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 // block these plugins
 #define DEFMOD_REMOVED_UIPLUGINOPTS     21
-#define DEFMOD_REMOVED_PROTOCOLNETLIB   22
 
 // basic export prototypes
 typedef int (__cdecl * Miranda_Plugin_Load) ( PLUGINLINK * );
@@ -59,8 +58,7 @@ typedef struct { // can all be NULL
 #define PCLASS_OK		 0x10   // plugin should be loaded, if DB means nothing
 #define PCLASS_LOADED	 0x20   // Load() has been called, Unload() should be called.
 #define PCLASS_STOPPED   0x40 	// wasn't loaded cos plugin name not on white list
-#define PCLASS_CLIST 	 0x80   // a CList implementation
-#define PCLASS_SERVICE 	 0x100  // has Service Mode implementation
+#define PCLASS_CLIST 	 0x80  // a CList implementation
 
 typedef struct pluginEntry {
 	char pluginname[64];
@@ -80,13 +78,9 @@ const int pluginBannedListCount = SIZEOF(pluginBannedList);
 
 SortedList pluginList = { 0 }, pluginListAddr = { 0 };
 
-static BOOL bModuleInitialized = FALSE;
-
 PLUGINLINK pluginCoreLink;
 char   mirandabootini[MAX_PATH];
 static DWORD mirandaVersion;
-static int serviceModeIdx = -1;
-static pluginEntry * pluginListSM;
 static pluginEntry * pluginListDb;
 static pluginEntry * pluginListUI;
 static pluginEntry * pluginList_freeimg = NULL;
@@ -98,6 +92,9 @@ int  InitIni(void);
 void UninitIni(void);
 
 #define PLUGINDISABLELIST "PluginDisable"
+
+void KillModuleEventHooks( HINSTANCE );
+void KillModuleServices( HINSTANCE );
 
 int CallHookSubscribers( HANDLE hEvent, WPARAM wParam, LPARAM lParam );
 
@@ -146,8 +143,7 @@ static int equalUUID(MUUID u1, MUUID u2)
     return memcmp(&u1, &u2, sizeof(MUUID))?0:1;
 }
 
-static MUUID miid_last = MIID_LAST;
-static MUUID miid_servicemode = MIID_SERVICEMODE;
+static 	MUUID miid_last = MIID_LAST;
 
 static int validInterfaceList(Miranda_Plugin_Interfaces ifaceProc)
 {
@@ -171,53 +167,17 @@ static int isPluginBanned(MUUID u1) {
 }
 
 // returns true if the API exports were good, otherwise, passed in data is returned
-#define CHECKAPI_NONE 	 0
-#define CHECKAPI_DB 	 1
-#define CHECKAPI_CLIST   2
+#define CHECKAPI_NONE 	0
+#define CHECKAPI_DB 	1
+#define CHECKAPI_CLIST  2
 
-/*
- * historyeditor added by nightwish - plugin is problematic and can ruin database as it does not understand UTF-8 message
- * storage
- */
-     
-static char* modulesToSkip[] = { "autoloadavatars.dll", "multiwindow.dll", "fontservice.dll", "icolib.dll", "historyeditor.dll" };
+static char* modulesToSkip[] = { "autoloadavatars.dll", "multiwindow.dll", "fontservice.dll", "icolib.dll" };
 // The following plugins will be checked for a valid MUUID or they will not be loaded
 static char* expiredModulesToSkip[] = { "scriver.dll", "nconvers.dll", "tabsrmm.dll", "nhistory.dll", "historypp.dll", "help.dll", "loadavatars.dll",
                                         "tabsrmm_unicode.dll", "clist_nicer_plus.dll", "changeinfo.dll", "png2dib.dll", "dbx_mmap.dll", "dbx_3x.dll",
                                         "sramm.dll", "srmm_mod.dll", "srmm_mod (no Unicode).dll", "singlemodeSRMM.dll", "msg_export.dll" };
 
-static int checkPI( BASIC_PLUGIN_INFO* bpi, PLUGININFOEX* pi )
-{
-	int bHasValidInfo = FALSE;
-
-	if ( pi == NULL )
-		return FALSE;
-
-	if ( bpi->InfoEx ) {
-		if ( pi->cbSize == sizeof(PLUGININFOEX))
-			if ( !validInterfaceList(bpi->Interfaces) || isPluginBanned( pi->uuid ))
-				return FALSE;
-
-		bHasValidInfo = TRUE;
-	}
-	
-	if ( !bHasValidInfo )
-		if ( bpi->Info && pi->cbSize != sizeof(PLUGININFO))
-			return FALSE;
-
-	if ( pi->shortName == NULL || pi->description == NULL || pi->author == NULL ||
-		  pi->authorEmail == NULL || pi->copyright == NULL || pi->homepage == NULL )
-		return FALSE;
-
-	if ( pi->replacesDefaultModule > DEFMOD_HIGHEST ||
-		  pi->replacesDefaultModule == DEFMOD_REMOVED_UIPLUGINOPTS ||
-		  pi->replacesDefaultModule == DEFMOD_REMOVED_PROTOCOLNETLIB )
-		return FALSE;
-
-	return TRUE;
-}
-
-static int checkAPI(char* plugin, BASIC_PLUGIN_INFO* bpi, DWORD mirandaVersion, int checkTypeAPI, int* exports)
+static int checkAPI(char * plugin, BASIC_PLUGIN_INFO * bpi, DWORD mirandaVersion, int checkTypeAPI, int * exports)
 {
 	HINSTANCE h = NULL;
 	// this is evil but these plugins are buggy/old and people are blaming Miranda
@@ -239,27 +199,34 @@ static int checkAPI(char* plugin, BASIC_PLUGIN_INFO* bpi, DWORD mirandaVersion, 
 	bpi->Info = (Miranda_Plugin_Info) GetProcAddress(h, "MirandaPluginInfo");
 	bpi->InfoEx = (Miranda_Plugin_InfoEx) GetProcAddress(h, "MirandaPluginInfoEx");
 	bpi->Interfaces = (Miranda_Plugin_Interfaces) GetProcAddress(h, "MirandaPluginInterfaces");
-
 	// if they were present
-	if ( bpi->Load && bpi->Unload && ( bpi->Info || ( bpi->InfoEx && bpi->Interfaces ))) {
-		PLUGININFOEX* pi = 0;
+	if ( bpi->Load && bpi->Unload && (bpi->Info||(bpi->InfoEx&&bpi->Interfaces)) )
+	{
+		PLUGININFOEX * pi = 0;
 		if (bpi->InfoEx)
 			pi = bpi->InfoEx(mirandaVersion);
 		else
 			pi = (PLUGININFOEX*)bpi->Info(mirandaVersion);
+        if (pi) {
+            // similar to the above hack but these plugins are checked for a valid interface first (in case there are updates to the plugin later)
+            char * p = strrchr(plugin,'\\');
+            if ( p != NULL && ++p ) {
+                if ( !bpi->InfoEx || pi->cbSize != sizeof(PLUGININFOEX)) {
+                    int i;
+                    for ( i = 0; i < SIZEOF(expiredModulesToSkip); i++ ) {
+                        if ( lstrcmpiA( p, expiredModulesToSkip[i] ) == 0 ) {
+                            FreeLibrary(h);
+                            return 0;
+                        }
+                    }
+                }
+            }
+        }
+		if ( pi && ((bpi->Info&&pi->cbSize==sizeof(PLUGININFO))||(bpi->InfoEx&&pi->cbSize==sizeof(PLUGININFOEX)&&validInterfaceList(bpi->Interfaces)&&!isPluginBanned(pi->uuid))) && pi->shortName && pi->description
+				&& pi->author && pi->authorEmail && pi->copyright && pi->homepage
+				&& pi->replacesDefaultModule <= DEFMOD_HIGHEST
+				&& pi->replacesDefaultModule != DEFMOD_REMOVED_UIPLUGINOPTS)
 		{
-			// similar to the above hack but these plugins are checked for a valid interface first (in case there are updates to the plugin later)
-			char* p = strrchr(plugin,'\\');
-			if ( pi != NULL && p != NULL && ++p ) {
-				if ( !bpi->InfoEx || pi->cbSize != sizeof(PLUGININFOEX)) {
-					int i;
-					for ( i = 0; i < SIZEOF(expiredModulesToSkip); i++ ) {
-						if ( lstrcmpiA( p, expiredModulesToSkip[i] ) == 0 ) {
-							FreeLibrary(h);
-							return 0;
-		}	}	}	}	}
-
-		if ( checkPI( bpi, pi )) {
 			bpi->pluginInfo = pi;
 			// basic API is present
 			if ( checkTypeAPI == CHECKAPI_NONE ) {
@@ -295,7 +262,6 @@ static int checkAPI(char* plugin, BASIC_PLUGIN_INFO* bpi, DWORD mirandaVersion, 
 					return 1;
 				}
 			}
-
 		} // if
 		if ( exports != NULL ) *exports=1;
 	} //if
@@ -336,18 +302,6 @@ static int validguess_clist_name(char * name)
 	name[6]=0;
 	rc=lstrcmpiA(name,"clist_") == 0;
 	name[6]=x;
-	return rc;
-}
-
-// returns true if the given file matches svc_*.dll
-static int validguess_servicemode_name(char * name)
-{
-	int rc=0;
-	// argh evil
-	char x = name[4];
-	name[4]=0;
-	rc=lstrcmpiA(name,"svc_") == 0;
-	name[4]=x;
 	return rc;
 }
 
@@ -468,29 +422,6 @@ static BOOL scanPluginsDir (WIN32_FIND_DATAA * fd, char * path, WPARAM wParam, L
 		pluginListUI=p;
 		p->pclass |= PCLASS_CLIST;
 	}
-	else if ( validguess_servicemode_name(fd->cFileName) ) {
-		char buf[MAX_PATH];
-		mir_snprintf(buf,SIZEOF(buf),"%s\\Plugins\\%s", path, fd->cFileName);
-		if ( checkAPI(buf, &bpi, mirandaVersion, CHECKAPI_NONE, NULL)) {
-			p->pclass |= (PCLASS_OK|PCLASS_BASICAPI);
-			p->bpi=bpi;
-			if ( bpi.Interfaces ) {
-				int i = 0;
-				MUUID *piface = bpi.Interfaces();
-				while ( !equalUUID(miid_last, piface[i]) ) {
-					if ( !equalUUID(miid_servicemode, piface[i++]) )
-						continue;
-					p->pclass |= (PCLASS_SERVICE);
-					if ( pluginListSM != NULL ) p->nextclass=pluginListSM;
-					pluginListSM=p;
-					break;
-				}
-			}
-		}
-		else
-			// didn't have basic APIs or DB exports - failed.
-			p->pclass |= PCLASS_FAILED;
-	}
 	else if ( lstrcmpiA(fd->cFileName, "advaimg.dll") == 0)
 		pluginList_freeimg = p;
 
@@ -543,77 +474,6 @@ static pluginEntry* getCListModule(char * exe, char * slice, int useWhiteList)
 		p = p->nextclass;
 	}
 	return NULL;
-}
-
-int UnloadPlugin( char* buf, int bufLen )
-{
-	int i;
-	for ( i = pluginList.realCount-1; i >= 0; i-- ) {
-		pluginEntry* p = pluginList.items[i];
-		if ( !_stricmp( p->pluginname, buf )) {
-			GetModuleFileNameA( p->bpi.hInst, buf, bufLen );
-			Plugin_Uninit( p );
-			return TRUE;
-	}	}
-
-	return FALSE;
-}
-
-/////////////////////////////////////////////////////////////////////////////////////////
-//
-//   Service plugins functions
-
-char **GetSeviceModePluginsList(void)
-{
-	int i = 0;
-	char **list = NULL;
-	pluginEntry * p = pluginListSM;
-	while ( p != NULL ) {
-		i++;
-		p = p->nextclass;
-	}
-	if ( i ) {
-		list = (char**)mir_calloc( (i + 1) * sizeof(char*) );
-		p = pluginListSM;
-		i = 0;
-		while ( p != NULL ) {
-			list[i++] = p->bpi.pluginInfo->shortName;
-			p = p->nextclass;
-		}
-	}
-	return list;
-}
-
-void SetServiceModePlugin( int idx )
-{
-	serviceModeIdx = idx;
-}
-
-int LoadServiceModePlugin(void)
-{
-	int i = 0;
-	pluginEntry * p = pluginListSM;
-
-	if ( serviceModeIdx < 0 )
-		return 0;
-
-	while ( p != NULL ) {
-		if ( serviceModeIdx == i++ ) {
-			if ( p->bpi.Load(&pluginCoreLink) == 0 ) {
-				p->pclass |= PCLASS_LOADED;
-				if ( CallService( MS_SERVICEMODE_LAUNCH, 0, 0 ) != CALLSERVICE_NOTFOUND )
-					return 1;
-				else {
-					MessageBoxA(NULL,Translate("Unable to load plugin in Service Mode!"), p->pluginname, 0);
-					return -1;
-				}
-			}
-			Plugin_Uninit( p );
-			return -1;
-		}
-		p = p->nextclass;
-	}
-	return -1;
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////
@@ -970,39 +830,32 @@ int LoadNewPluginsModule(void)
 	for ( i=0; i < pluginList.realCount; i++ ) {
 		p = pluginList.items[i];
 		CharLowerA(p->pluginname);
-		if ( !(p->pclass&PCLASS_LOADED) && !(p->pclass&PCLASS_DB) && !(p->pclass&PCLASS_CLIST) ) 
-		{
-			if (isPluginOnWhiteList(p->pluginname))
-			{
-				BASIC_PLUGIN_INFO bpi;
-				mir_snprintf(slice,&exe[SIZEOF(exe)] - slice, "\\Plugins\\%s", p->pluginname);
-				if ( checkAPI(exe, &bpi, mirandaVersion, CHECKAPI_NONE, NULL) ) {
-					int rm = bpi.pluginInfo->replacesDefaultModule;
-					p->bpi = bpi;
-					p->pclass |= PCLASS_OK | PCLASS_BASICAPI;
+		if ( !(p->pclass&PCLASS_LOADED) && !(p->pclass&PCLASS_DB)
+			&& !(p->pclass&PCLASS_CLIST) && isPluginOnWhiteList(p->pluginname) ) {
+			BASIC_PLUGIN_INFO bpi;
+			mir_snprintf(slice,&exe[SIZEOF(exe)] - slice, "\\Plugins\\%s", p->pluginname);
+			if ( checkAPI(exe, &bpi, mirandaVersion, CHECKAPI_NONE, NULL) ) {
+				int rm = bpi.pluginInfo->replacesDefaultModule;
+				p->bpi = bpi;
+				p->pclass |= PCLASS_OK | PCLASS_BASICAPI;
 
-					List_InsertPtr( &pluginListAddr, p );
+				List_InsertPtr( &pluginListAddr, p );
 
-					if ( pluginDefModList[rm] == NULL ) {
-						if ( bpi.Load(&pluginCoreLink) == 0 ) p->pclass |= PCLASS_LOADED;
-						else {
-							Plugin_Uninit( p );
-							i--;
-						}
-						if ( rm ) pluginDefModList[rm]=p;
-					} //if
+				if ( pluginDefModList[rm] == NULL ) {
+					if ( bpi.Load(&pluginCoreLink) == 0 ) p->pclass |= PCLASS_LOADED;
 					else {
-						SetPluginOnWhiteList( p->pluginname, 0 );
 						Plugin_Uninit( p );
 						i--;
 					}
+					if ( rm ) pluginDefModList[rm]=p;
+				} //if
+				else {
+					SetPluginOnWhiteList( p->pluginname, 0 );
+					Plugin_Uninit( p );
+					i--;
 				}
-				else p->pclass |= PCLASS_FAILED;
 			}
-			else {
-				Plugin_Uninit( p );
-				i--;
-			}
+			else p->pclass |= PCLASS_FAILED;
 		}
 		else if ( p->bpi.hInst != NULL )
 			List_InsertPtr( &pluginListAddr, p );
@@ -1027,8 +880,6 @@ static int sttComparePluginsByName( pluginEntry* p1, pluginEntry* p2 )
 
 int LoadNewPluginsModuleInfos(void)
 {
-	bModuleInitialized = TRUE;
-
 	pluginList.increment = 10;
 	pluginList.sortFunc = sttComparePluginsByName;
 
@@ -1041,30 +892,22 @@ int LoadNewPluginsModuleInfos(void)
 	CreateServiceFunction(MS_PLUGINS_ENUMDBPLUGINS, PluginsEnum);
 	CreateServiceFunction(MS_PLUGINS_GETDISABLEDEFAULTARRAY, PluginsGetDefaultArray);
 	// make sure plugins can get internal core APIs
-	pluginCoreLink.CallService                    = CallService;
-	pluginCoreLink.ServiceExists                  = ServiceExists;
-	pluginCoreLink.CreateServiceFunction          = CreateServiceFunction;
-	pluginCoreLink.CreateServiceFunctionParam     = CreateServiceFunctionParam;
-	pluginCoreLink.CreateServiceFunctionObj       = CreateServiceFunctionObj;
-	pluginCoreLink.CreateServiceFunctionObjParam  = CreateServiceFunctionObjParam;
-	pluginCoreLink.CreateTransientServiceFunction = CreateServiceFunction;
-	pluginCoreLink.DestroyServiceFunction         = DestroyServiceFunction;
-	pluginCoreLink.CreateHookableEvent            = CreateHookableEvent;
-	pluginCoreLink.DestroyHookableEvent           = DestroyHookableEvent;
-	pluginCoreLink.HookEvent                      = HookEvent;
-	pluginCoreLink.HookEventParam                 = HookEventParam;
-	pluginCoreLink.HookEventObj                   = HookEventObj;
-	pluginCoreLink.HookEventObjParam              = HookEventObjParam;
-	pluginCoreLink.HookEventMessage               = HookEventMessage;
-	pluginCoreLink.UnhookEvent                    = UnhookEvent;
-	pluginCoreLink.NotifyEventHooks               = NotifyEventHooks;
-	pluginCoreLink.SetHookDefaultForHookableEvent = SetHookDefaultForHookableEvent;
-	pluginCoreLink.CallServiceSync                = CallServiceSync;
-	pluginCoreLink.CallFunctionAsync              = CallFunctionAsync;
-	pluginCoreLink.NotifyEventHooksDirect         = CallHookSubscribers;
-	pluginCoreLink.CallProtoService               = CallProtoService;
-	pluginCoreLink.CallContactService             = CallContactService;
-
+	pluginCoreLink.CallService=CallService;
+	pluginCoreLink.ServiceExists=ServiceExists;
+	pluginCoreLink.CreateServiceFunction=CreateServiceFunction;
+	pluginCoreLink.CreateTransientServiceFunction=CreateServiceFunction;
+	pluginCoreLink.CreateServiceFunctionParam=CreateServiceFunctionParam;
+	pluginCoreLink.DestroyServiceFunction=DestroyServiceFunction;
+	pluginCoreLink.CreateHookableEvent=CreateHookableEvent;
+	pluginCoreLink.DestroyHookableEvent=DestroyHookableEvent;
+	pluginCoreLink.HookEvent=HookEvent;
+	pluginCoreLink.HookEventMessage=HookEventMessage;
+	pluginCoreLink.UnhookEvent=UnhookEvent;
+	pluginCoreLink.NotifyEventHooks=NotifyEventHooks;
+	pluginCoreLink.SetHookDefaultForHookableEvent=SetHookDefaultForHookableEvent;
+	pluginCoreLink.CallServiceSync=CallServiceSync;
+	pluginCoreLink.CallFunctionAsync=CallFunctionAsync;
+	pluginCoreLink.NotifyEventHooksDirect=CallHookSubscribers;
 	// remember where the mirandaboot.ini goes
 	{
 		char exe[MAX_PATH];
@@ -1088,11 +931,9 @@ int LoadNewPluginsModuleInfos(void)
 //   Plugins module unloading
 //   called at the end of module chain unloading, just modular engine left at this point
 
-void UnloadNewPluginsModule(void)
+int UnloadNewPluginsModule(void)
 {
 	int i;
-
-	if ( !bModuleInitialized ) return;
 
 	// unload everything but the DB
 	for ( i = pluginList.realCount-1; i >= 0; i-- ) {
@@ -1113,4 +954,5 @@ void UnloadNewPluginsModule(void)
 	List_Destroy( &pluginList );
 	List_Destroy( &pluginListAddr );
 	UninitIni();
+	return 0;
 }

@@ -1,8 +1,11 @@
 /*
 Plugin of Miranda IM for communicating with users of the MSN Messenger protocol.
-Copyright (c) 2006-2008 Boris Krasnovskiy.
-Copyright (c) 2003-2005 George Hazan.
-Copyright (c) 2002-2003 Richard Hughes (original version).
+Copyright (c) 2006-7 Boris Krasnovskiy.
+Copyright (c) 2003-5 George Hazan.
+Copyright (c) 2002-3 Richard Hughes (original version).
+
+Miranda IM: the free icq client for MS Windows
+Copyright (C) 2000-2002 Richard Hughes, Roland Rabien & Tristan Van de Vreede
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -15,33 +18,15 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with this program.  If not, see <http://www.gnu.org/licenses/>.
+along with this program; if not, write to the Free Software
+Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
-
 #include "msn_global.h"
-#include <m_history.h>
+#include "../../include/m_history.h"
 
 static LONG sttChatID = 0;
 extern HANDLE hInitChat;
-
-
-HANDLE MSN_GetChatInernalHandle(HANDLE hContact)
-{
-	HANDLE result = hContact;
-	int type = DBGetContactSettingByte(hContact, msnProtocolName, "ChatRoom", 0);
-	if (type != 0) 
-	{
-		DBVARIANT dbv;
-		if (DBGetContactSettingString(hContact, msnProtocolName, "ChatRoomID", &dbv) == 0)
-		{
-			result = (HANDLE)(-atol(dbv.pszVal));
-			MSN_FreeVariant(&dbv);
-		}	
-	}
-	return result;
-}
-
 
 int MSN_ChatInit( WPARAM wParam, LPARAM lParam )
 {
@@ -257,7 +242,7 @@ int MSN_GCEventHook(WPARAM wParam,LPARAM lParam) {
 				gce.bIsMe = TRUE;
 				CallServiceSync( MS_GC_EVENT, 0, (LPARAM)&gce );
 
-				mir_free((void*)gce.ptszUID);
+				mir_free(( void* )gce.pszUID );
 				if ( !bError )
 					MSN_FreeVariant( &dbv );
 			}
@@ -271,7 +256,7 @@ int MSN_GCEventHook(WPARAM wParam,LPARAM lParam) {
 			break;
 		}
 		case GC_USER_PRIVMESS: {
-			HANDLE hContact = MSN_HContactFromEmail((char*)gch->pszUID, NULL, false, false);
+			HANDLE hContact = MSN_HContactFromEmail((char*)gch->pszUID, NULL, 0, 0);
 			MSN_CallService(MS_MSG_SENDMESSAGE, (WPARAM)hContact, 0);
 			break;
 		}
@@ -291,13 +276,7 @@ int MSN_GCEventHook(WPARAM wParam,LPARAM lParam) {
 			}
 			break;
 		case GC_USER_NICKLISTMENU: {
-#ifdef _UNICODE
-			char *email = mir_u2a(gch->ptszUID);
-			HANDLE hContact = MSN_HContactFromEmail( email, email, false, false );
-			mir_free(email);
-#else
-			HANDLE hContact = MSN_HContactFromEmail( gch->ptszUID, gch->ptszUID, false, false );
-#endif
+			HANDLE hContact = MSN_HContactFromEmailT( gch->ptszUID );
 
 			switch(gch->dwData) {
 			case 10:

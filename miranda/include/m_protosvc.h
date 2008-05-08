@@ -2,7 +2,7 @@
 
 Miranda IM: the free IM client for Microsoft* Windows*
 
-Copyright 2000-2008 Miranda ICQ/IM project,
+Copyright 2000-2007 Miranda ICQ/IM project,
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
 
@@ -132,7 +132,7 @@ static __inline unsigned long Proto_Status2Flag(int status)
 
 #define PFLAG_UNIQUEIDTEXT  100    //returns a static buffer of text describing the unique field by which this protocol identifies users (already translated), or NULL
 
-#define PFLAG_MAXCONTACTSPERPACKET  200   //v0.1.2.2+: returns the maximum number of contacts which can be sent in a single PSS_CONTACTS, lParam=(LPARAM)hContact.
+#define PFLAG_MAXCONTACTSPERPACKET  200   //v0.1.2.2+: returns the maximum number of contacts which can be sent in a single PSS_CONTACTS.
 
 #define PFLAG_UNIQUEIDSETTING 300 // returns the setting name of where the unique id is stored
 
@@ -273,15 +273,6 @@ will pick this up and everything will be good.
 // wParam=lParam=0
 // Returns 0 on success, nonzero on failure
 #define PSS_ADDED	"/YouWereAdded"
-
-//Create account manager UI form
-//wParam=0
-//lParam=(LPARAM)(HWND)hwndAccMgr
-//Returns handle on newly created form.
-//Size for best fit is 186x134 DLUs, please avoid groupboxes
-//paddind and advanced options. This should provide minimal setup
-//for initial connect.
-#define PS_CREATEACCMGRUI "/CreateAccMgrUI"
 
 //Send a basic search request
 //wParam=0

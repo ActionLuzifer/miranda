@@ -2,7 +2,7 @@
 
 Miranda IM: the free IM client for Microsoft* Windows*
 
-Copyright 2000-2008 Miranda ICQ/IM project,
+Copyright 2000-2007 Miranda ICQ/IM project,
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
 
@@ -33,7 +33,6 @@ int UninitCustomMenus( void );
 
 void MTG_OnmodulesLoad( void );
 
-static BOOL bModuleInitialized = FALSE;
 static HANDLE hClcWindowList;
 static HANDLE hShowInfoTipEvent;
 HANDLE hHideInfoTipEvent;
@@ -123,11 +122,15 @@ static int ClcSettingChanged(WPARAM wParam, LPARAM lParam)
 
 static int ClcModulesLoaded(WPARAM wParam, LPARAM lParam)
 {
-	int i;
-	for (i = 0; i < accounts.count; i++) {
-		PROTOACCOUNT* pa = accounts.items[i];
+	PROTOCOLDESCRIPTOR **proto;
+	int protoCount, i;
+
+	CallService(MS_PROTO_ENUMPROTOCOLS, (WPARAM) & protoCount, (LPARAM) & proto);
+	for (i = 0; i < protoCount; i++) {
+		if (proto[i]->type != PROTOTYPE_PROTOCOL)
+			continue;
 		cli.clcProto = (ClcProtoStatus *) mir_realloc(cli.clcProto, sizeof(ClcProtoStatus) * (cli.hClcProtoCount + 1));
-		cli.clcProto[cli.hClcProtoCount].szProto = pa->szModuleName;
+		cli.clcProto[cli.hClcProtoCount].szProto = proto[i]->szName;
 		cli.clcProto[cli.hClcProtoCount].dwStatus = ID_STATUS_OFFLINE;
 		cli.hClcProtoCount++;
 	}
@@ -199,8 +202,6 @@ static void SortClcByTimer( HWND hwnd )
 
 int LoadCLCModule(void)
 {
-	bModuleInitialized = TRUE;
-	
 	g_IconWidth = GetSystemMetrics(SM_CXSMICON);
 	g_IconHeight = GetSystemMetrics(SM_CYSMICON);
 
@@ -226,8 +227,6 @@ int LoadCLCModule(void)
 
 void UnloadClcModule()
 {
-	if ( !bModuleInitialized ) return;
-	
 	UnhookEvent(hAckHook);
 	UnhookEvent(hClcSettingsChanged);
 

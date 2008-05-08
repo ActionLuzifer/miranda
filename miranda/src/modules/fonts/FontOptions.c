@@ -2,7 +2,7 @@
 
 Miranda IM: the free IM client for Microsoft* Windows*
 
-Copyright 2000-2008 Miranda ICQ/IM project,
+Copyright 2000-2007 Miranda ICQ/IM project,
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
 
@@ -264,6 +264,34 @@ static HTREEITEM sttFindNamedTreeItemAt(HWND hwndTree, HTREEITEM hItem, const TC
 	return NULL;
 }
 
+static BOOL sttGetTreeNodeText( HWND hwndTree, HTREEITEM hItem, char* szBuf, int cbLen )
+{
+	int codepage = CallService( MS_LANGPACK_GETCODEPAGE, 0, 0 );
+	char *bufPtr = szBuf;
+	while (hItem)
+	{
+		TCHAR tmpBuf[128];
+		TVITEM tvi;
+		tvi.hItem = hItem;
+		tvi.pszText = tmpBuf;
+		tvi.cchTextMax = 128;
+		tvi.mask = TVIF_HANDLE|TVIF_TEXT;
+		TreeView_GetItem(hwndTree, &tvi);
+#ifdef _UNICODE
+		bufPtr += WideCharToMultiByte( codepage, 0, tvi.pszText, lstrlen(tvi.pszText), bufPtr, cbLen-(bufPtr-szBuf), NULL, NULL );
+#else
+		strncpy( bufPtr, tvi.pszText, cbLen-(bufPtr-szBuf) );
+		bufPtr += lstrlen(tvi.pszText);
+#endif
+		if ((bufPtr - szBuf) >= cbLen) break;
+		*bufPtr++ = '@';
+
+		hItem = TreeView_GetParent(hwndTree, hItem);
+	}
+	szBuf[min(bufPtr-szBuf, cbLen-1)] = 0;
+	return TRUE;
+}
+
 static void sttFsuiCreateSettingsTreeNode(HWND hwndTree, const TCHAR *groupName)
 {
 	TCHAR itemName[1024];
@@ -282,6 +310,7 @@ static void sttFsuiCreateSettingsTreeNode(HWND hwndTree, const TCHAR *groupName)
 		if (sectionName = _tcschr(sectionName, '/')) {
 			// one level deeper
 			*sectionName = 0;
+			sectionName++;
 		}
 
 		pItemName = TranslateTS( pItemName );
@@ -290,28 +319,23 @@ static void sttFsuiCreateSettingsTreeNode(HWND hwndTree, const TCHAR *groupName)
 		if (!sectionName || !hItem) {
 			if (!hItem) {
 				TVINSERTSTRUCT tvis = {0};
-				TreeItem *treeItem = (TreeItem *)mir_alloc(sizeof(TreeItem));
-				treeItem->groupName = sectionName ? NULL : mir_tstrdup(groupName);
-				treeItem->paramName = mir_t2a(itemName);
+				char paramName[MAX_PATH];
 
 				tvis.hParent = hSection;
-				tvis.hInsertAfter = TVI_SORT;//TVI_LAST;
+				tvis.hInsertAfter = TVI_LAST;//TVI_SORT;
 				tvis.item.mask = TVIF_TEXT|TVIF_PARAM;
 				tvis.item.pszText = pItemName;
-				tvis.item.lParam = (LPARAM)treeItem;
+				tvis.item.lParam = sectionName ? 0 : (LPARAM)mir_tstrdup(groupName);
 
 				hItem = TreeView_InsertItem(hwndTree, &tvis);
+				sttGetTreeNodeText( hwndTree, hItem, paramName, sizeof(paramName) );
 
 				ZeroMemory(&tvis.item, sizeof(tvis.item));
 				tvis.item.hItem = hItem;
 				tvis.item.mask = TVIF_HANDLE|TVIF_STATE;
-				tvis.item.state = tvis.item.stateMask = DBGetContactSettingByte(NULL, "FontServiceUI", treeItem->paramName, TVIS_EXPANDED );
+				tvis.item.state = tvis.item.stateMask = DBGetContactSettingByte(NULL, "FontServiceUI", paramName, TVIS_EXPANDED );
 				TreeView_SetItem(hwndTree, &tvis.item);
 			}
-		}
-		if (sectionName) {
-			*sectionName = '/';
-			sectionName++;
 		}
 
 		sectionLevel++;
@@ -323,12 +347,13 @@ static void sttFsuiCreateSettingsTreeNode(HWND hwndTree, const TCHAR *groupName)
 static void sttSaveCollapseState( HWND hwndTree )
 {
 	HTREEITEM hti;
+	int codepage = CallService( MS_LANGPACK_GETCODEPAGE, 0, 0 );
 	TVITEM tvi;
 
 	hti = TreeView_GetRoot( hwndTree );
 	while( hti != NULL ) {
 		HTREEITEM ht;
-		TreeItem *treeItem;
+		char paramName[MAX_PATH];
 
 		tvi.mask = TVIF_STATE | TVIF_HANDLE | TVIF_CHILDREN | TVIF_PARAM;
 		tvi.hItem = hti;
@@ -336,40 +361,24 @@ static void sttSaveCollapseState( HWND hwndTree )
 		TreeView_GetItem( hwndTree, &tvi );
 
 		if( tvi.cChildren > 0 ) {
-			treeItem = (TreeItem *)tvi.lParam;
+			sttGetTreeNodeText( hwndTree, hti, paramName, sizeof(paramName) );
 			if ( tvi.state & TVIS_EXPANDED )
-				DBWriteContactSettingByte(NULL, "FontServiceUI", treeItem->paramName, TVIS_EXPANDED );
+				DBWriteContactSettingByte(NULL, "FontServiceUI", paramName, TVIS_EXPANDED );
 			else
-				DBWriteContactSettingByte(NULL, "FontServiceUI", treeItem->paramName, 0 );
+				DBWriteContactSettingByte(NULL, "FontServiceUI", paramName, 0 );
 		}
 
 		ht = TreeView_GetChild( hwndTree, hti );
 		if( ht == NULL ) {
 			ht = TreeView_GetNextSibling( hwndTree, hti );
-			while( ht == NULL ) {
-				hti = TreeView_GetParent( hwndTree, hti );
-				if( hti == NULL ) break;
-				ht = TreeView_GetNextSibling( hwndTree, hti );
+			if( ht == NULL ) {
+				ht = TreeView_GetParent( hwndTree, hti );
+				if( ht == NULL ) break;
+				ht = TreeView_GetNextSibling( hwndTree, ht );
 		}	}
 
 		hti = ht;
 }	}
-
-static void sttFreeListItems(HWND hList) 
-{
-	int idx = 0;
-	int res;
-	FSUIListItemData *itemData;
-	int count = SendMessage( hList, LB_GETCOUNT, 0, 0 ); 
-	if ( count > 0 ) {
-		while ( idx < count) {
-			res = SendMessage( hList, LB_GETITEMDATA, idx++, 0 );
-			itemData = (FSUIListItemData *)res;
-			if ( itemData && res != LB_ERR )
-				mir_free( itemData );
-		}
-	}
-}
 
 static BOOL CALLBACK DlgProcLogOptions(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 {
@@ -410,16 +419,13 @@ static BOOL CALLBACK DlgProcLogOptions(HWND hwndDlg, UINT msg, WPARAM wParam, LP
 
 		case UM_SETFONTGROUP:
 		{
-			TreeItem *treeItem;
 			TCHAR *group_buff = NULL;
 			TVITEM tvi = {0};
 			tvi.hItem = TreeView_GetSelection(GetDlgItem(hwndDlg, IDC_FONTGROUP));
 			tvi.mask = TVIF_HANDLE|TVIF_PARAM;
 			TreeView_GetItem(GetDlgItem(hwndDlg, IDC_FONTGROUP), &tvi);
-			treeItem = (TreeItem *)tvi.lParam;
-			group_buff = treeItem->groupName;
+			group_buff = (TCHAR *)tvi.lParam;
 
-			sttFreeListItems(GetDlgItem(hwndDlg, IDC_FONTLIST));
 			SendDlgItemMessage(hwndDlg, IDC_FONTLIST, LB_RESETCONTENT, 0, 0);
 			SendDlgItemMessage(hwndDlg, IDC_COLOURLIST, CB_RESETCONTENT, 0, 0);
 
@@ -794,7 +800,7 @@ static BOOL CALLBACK DlgProcLogOptions(HWND hwndDlg, UINT msg, WPARAM wParam, LP
 							}
 							InvalidateRect(GetDlgItem(hwndDlg, IDC_FONTLIST), NULL, TRUE);
 							EnableWindow(GetDlgItem(hwndDlg, IDC_BTN_UNDO), TRUE);
-							SendMessage(GetParent(hwndDlg), PSM_CHANGED, 0, 0);
+							break;
 						}
 
 						mir_free(selItems);
@@ -1001,12 +1007,8 @@ static BOOL CALLBACK DlgProcLogOptions(HWND hwndDlg, UINT msg, WPARAM wParam, LP
 				case TVN_DELETEITEMA: // no idea why both TVN_SELCHANGEDA/W should be there but let's keep this both too...
 				case TVN_DELETEITEMW:
 					{
-						TreeItem *treeItem = (TreeItem *)(((LPNMTREEVIEW)lParam)->itemOld.lParam);
-						if (treeItem) {
-							mir_free(treeItem->groupName);
-							mir_free(treeItem->paramName);
-							mir_free(treeItem);
-						}
+						TCHAR *name = (TCHAR *)(((LPNMTREEVIEW)lParam)->itemOld.lParam);
+						if (name) mir_free(name);
 						break;
 					}
 				}
@@ -1021,7 +1023,6 @@ static BOOL CALLBACK DlgProcLogOptions(HWND hwndDlg, UINT msg, WPARAM wParam, LP
 			DestroyList(( SortedList* )&font_id_list_w3 );
 			DestroyList(( SortedList* )&colour_id_list_w2 );
 			DestroyList(( SortedList* )&colour_id_list_w3 );
-			sttFreeListItems(GetDlgItem(hwndDlg, IDC_FONTLIST));
 			break;
 	}
 	return FALSE;

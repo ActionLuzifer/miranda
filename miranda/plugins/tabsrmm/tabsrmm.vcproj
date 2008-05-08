@@ -5,8 +5,10 @@
 	Name="tabSRMM"
 	ProjectGUID="{99D26CA1-BFD4-4E77-9A1E-919E54CF33F7}"
 	RootNamespace="srmm"
-	SccProjectName=""
-	SccLocalPath="">
+	SccProjectName="SAK"
+	SccAuxPath="SAK"
+	SccLocalPath="SAK"
+	SccProvider="SAK">
 	<Platforms>
 		<Platform
 			Name="Win32"/>
@@ -106,8 +108,6 @@
 				Name="VCLinkerTool"
 				IgnoreImportLibrary="TRUE"
 				AdditionalDependencies="comctl32.lib shlwapi.lib"
-				AdditionalLibraryDirectories="../../lib"
-				IgnoreAllDefaultLibraries="FALSE"
 				DelayLoadDLLs=""
 				GenerateDebugInformation="TRUE"
 				GenerateMapFile="TRUE"
@@ -285,9 +285,6 @@
 		<Filter
 			Name="Source Files"
 			Filter="cpp;c;cxx;rc;def;r;odl;idl;hpj;bat">
-			<File
-				RelativePath=".\buttonsbar.c">
-			</File>
 			<File
 				RelativePath=".\container.c">
 			</File>
@@ -536,9 +533,6 @@
 			</File>
 			<File
 				RelativePath="TSButton.c">
-			</File>
-			<File
-				RelativePath=".\typingnotify.c">
 			</File>
 			<File
 				RelativePath="userprefs.c">
@@ -994,10 +988,10 @@
 				RelativePath=".\res\rightarrow.ico">
 			</File>
 			<File
-				RelativePath=".\res\save.ico">
+				RelativePath=".\res\angeli-icons\Save.ico">
 			</File>
 			<File
-				RelativePath=".\res\angeli-icons\Save.ico">
+				RelativePath=".\res\save.ico">
 			</File>
 			<File
 				RelativePath=".\res\angeli-icons\SaveXP.ico">

@@ -2,7 +2,7 @@
 
 Miranda IM: the free IM client for Microsoft* Windows*
 
-Copyright 2000-2008 Miranda ICQ/IM project,
+Copyright 2000-2007 Miranda ICQ/IM project,
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
 
@@ -23,12 +23,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "commonheaders.h"
 #include "netlib.h"
 
-static BOOL bModuleInitialized = FALSE;
-
 struct NetlibUser **netlibUser=NULL;
 int netlibUserCount=0;
 CRITICAL_SECTION csNetlibUser;
-HANDLE hConnectionHeaderMutex, hSendEvent=NULL, hRecvEvent=NULL;
+HANDLE hConnectionHeaderMutex;
 DWORD g_LastConnectionTick; // protected by csNetlibUser
 
 void NetlibFreeUserSettingsStruct(NETLIBUSERSETTINGS *settings)
@@ -173,8 +171,6 @@ static int NetlibRegisterUser(WPARAM wParam,LPARAM lParam)
 	thisUser->settings.specifyOutgoingPorts=GetNetlibUserSettingInt(thisUser->user.szSettingsModule,"NLSpecifyOutgoingPorts",0);
 	thisUser->settings.szOutgoingPorts=GetNetlibUserSettingString(thisUser->user.szSettingsModule,"NLOutgoingPorts",0);
 	thisUser->settings.enableUPnP=GetNetlibUserSettingInt(thisUser->user.szSettingsModule,"NLEnableUPnP",1); //default to on
-
-	thisUser->toLog=GetNetlibUserSettingInt(thisUser->user.szSettingsModule,"NLlog",1);
 
 	EnterCriticalSection(&csNetlibUser);
 	netlibUser=(struct NetlibUser**)mir_realloc(netlibUser,sizeof(struct NetlibUser*)*++netlibUserCount);
@@ -450,22 +446,16 @@ int NetlibBase64Decode(WPARAM wParam,LPARAM lParam)
 
 void UnloadNetlibModule(void)
 {
-	if ( !bModuleInitialized ) return;
-
 	if ( hConnectionHeaderMutex != NULL ) {
 		int i;
 
 		NetlibSecurityDestroy();
 		NetlibUPnPDestroy();
 		NetlibLogShutdown();
-
-		DestroyHookableEvent(hRecvEvent); hRecvEvent = NULL;
-		DestroyHookableEvent(hSendEvent); hSendEvent = NULL;
-
-		for ( i = netlibUserCount; i > 0; i-- )
-			NetlibCloseHandle(( WPARAM )netlibUser[i-1], 0 );
-		if( netlibUser )
-			mir_free( netlibUser );
+		for(i=netlibUserCount;i>0;i--)
+			NetlibCloseHandle((WPARAM)netlibUser[i-1],0);
+		if(netlibUser)
+			mir_free(netlibUser);
 
 		CloseHandle(hConnectionHeaderMutex);
 		DeleteCriticalSection(&csNetlibUser);
@@ -475,9 +465,6 @@ void UnloadNetlibModule(void)
 int LoadNetlibModule(void)
 {
 	WSADATA wsadata;
-
-	bModuleInitialized = TRUE;
-	
 	WSAStartup(MAKEWORD(1,1), &wsadata);
 
 	HookEvent(ME_OPT_INITIALISE,NetlibOptInitialise);
@@ -510,9 +497,6 @@ int LoadNetlibModule(void)
 	CreateServiceFunction(MS_NETLIB_CREATEPACKETRECVER,NetlibPacketRecverCreate);
 	CreateServiceFunction(MS_NETLIB_GETMOREPACKETS,NetlibPacketRecverGetMore);
 	CreateServiceFunction(MS_NETLIB_SETPOLLINGTIMEOUT,NetlibHttpSetPollingTimeout);
-
-	hRecvEvent = CreateHookableEvent( ME_NETLIB_FASTRECV );
-	hSendEvent = CreateHookableEvent( ME_NETLIB_FASTSEND );
 
 	NetlibUPnPInit();
 	NetlibSecurityInit();

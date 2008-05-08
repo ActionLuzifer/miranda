@@ -2,7 +2,7 @@
 
 Miranda IM: the free IM client for Microsoft* Windows*
 
-Copyright 2000-2008 Miranda ICQ/IM project, 
+Copyright 2000-2007 Miranda ICQ/IM project, 
 all portions of this codebase are copyrighted to the people 
 listed in contributors.txt.
 
@@ -237,18 +237,23 @@ static void BeginSearchFailed(void * arg)
 
 int BeginSearch(HWND hwndDlg,struct FindAddDlgData *dat,const char *szProto,const char *szSearchService,DWORD requiredCapability,void *pvSearchParams)
 {
-	int i;
-	if ( szProto == NULL ) {
-		int failures = 0;
-		dat->searchCount = 0;
-		dat->search = (struct ProtoSearchInfo*)mir_calloc(sizeof(struct ProtoSearchInfo) * accounts.count);
-		for( i=0; i < accounts.count;i++) {
-			PROTOACCOUNT* pa = accounts.items[i];
-			DWORD caps=(DWORD)CallProtoService(pa->szModuleName,PS_GETCAPS,PFLAGNUM_1,0);
+	int protoCount,i;
+	PROTOCOLDESCRIPTOR **protos;
+
+	if(szProto==NULL) {
+		int failures=0;
+		DWORD caps;
+
+		CallService(MS_PROTO_ENUMPROTOCOLS,(WPARAM)&protoCount,(LPARAM)&protos);
+		dat->searchCount=0;
+		dat->search=(struct ProtoSearchInfo*)mir_calloc(sizeof(struct ProtoSearchInfo) * protoCount);
+		for(i=0;i<protoCount;i++) {
+			if(protos[i]->type!=PROTOTYPE_PROTOCOL) continue;
+			caps=(DWORD)CallProtoService(protos[i]->szName,PS_GETCAPS,PFLAGNUM_1,0);
 			if(!(caps&requiredCapability)) continue;
-			dat->search[dat->searchCount].hProcess = (HANDLE)CallProtoService(pa->szModuleName,szSearchService,0,(LPARAM)pvSearchParams);
-			dat->search[dat->searchCount].szProto = pa->szModuleName;
-			if ( dat->search[dat->searchCount].hProcess == NULL ) failures++;
+			dat->search[dat->searchCount].hProcess=(HANDLE)CallProtoService(protos[i]->szName,szSearchService,0,(LPARAM)pvSearchParams);
+			dat->search[dat->searchCount].szProto=protos[i]->szName;
+			if(dat->search[dat->searchCount].hProcess==NULL) failures++;
 			else dat->searchCount++;
 		}
 		if(failures) {
@@ -277,22 +282,26 @@ int BeginSearch(HWND hwndDlg,struct FindAddDlgData *dat,const char *szProto,cons
 	return 0;
 }
 
-// !!!!!!!! this code is dangerous like a hell
 void SetStatusBarSearchInfo(HWND hwndStatus,struct FindAddDlgData *dat)
 {
 	TCHAR str[256];
 
 	if (dat->searchCount != 0 ) {
+		char szProtoName[64];
 		int i;
 
 		lstrcpy( str, TranslateT("Searching"));
-		for( i=0; i < dat->searchCount; i++ ) {
-			PROTOACCOUNT* pa = Proto_GetAccount( dat->search[i].szProto );
-			if ( !pa )
-				continue;
-
+		for( i=0; i <dat->searchCount; i++ ) {
 			lstrcat(str, i ? _T(",") : _T( " " ));
-			lstrcat(str, pa->tszAccountName );
+			CallProtoService(dat->search[i].szProto,PS_GETNAME,SIZEOF(szProtoName),(LPARAM)szProtoName);
+			#if !defined( _UNICODE )
+				lstrcatA( str, szProtoName );
+			#else
+				{	TCHAR* p = a2u(szProtoName);
+					lstrcat(str, p);
+					mir_free(p);
+				}
+			#endif
 	}	}
 	else lstrcpy(str, TranslateT("Idle"));
 		
@@ -333,29 +342,43 @@ void SetStatusBarResultInfo(HWND hwndDlg,struct FindAddDlgData *dat)
 		}
 	}
 	if ( total != 0 ) {
+		char szProtoName[64];
 		TCHAR substr[64];
-		PROTOACCOUNT* pa = Proto_GetAccount( subtotal[0].szProto );
-		if ( pa == NULL )
-			return;
+		TCHAR* ptszProto;
+
+		CallProtoService( subtotal[0].szProto, PS_GETNAME, SIZEOF(szProtoName), (LPARAM)szProtoName );
+		#if defined( _UNICODE )
+			ptszProto = a2u( szProtoName );
+		#else
+			ptszProto = szProtoName;
+		#endif
 
 		if ( subtotalCount == 1 ) {
-			if(total==1) mir_sntprintf( str, SIZEOF(str), TranslateT("1 %s user found"), pa->tszAccountName );
-			else         mir_sntprintf( str, SIZEOF(str), TranslateT("%d %s users found"), total, pa->tszAccountName );
+			if(total==1) mir_sntprintf( str, SIZEOF(str), TranslateT("1 %s user found"), ptszProto );
+			else         mir_sntprintf( str, SIZEOF(str), TranslateT("%d %s users found"), total, ptszProto );
 		}
 		else {
 			mir_sntprintf( str, SIZEOF(str), TranslateT("%d users found ("),total);
 			for( i=0; i < subtotalCount; i++ ) {
-				if ( i ) {
-					if (( pa = Proto_GetAccount( subtotal[i].szProto )) == NULL )
-						return;
+				if(i) {
+					CallProtoService(subtotal[i].szProto,PS_GETNAME,SIZEOF(szProtoName),(LPARAM)szProtoName);
+					#if defined( _UNICODE )
+						mir_free( ptszProto );
+						ptszProto = a2u( szProtoName );
+					#else
+						ptszProto = szProtoName;
+					#endif
 					lstrcat( str, _T(", "));
 				}
-				mir_sntprintf( substr, SIZEOF(substr), _T("%d %s"), subtotal[i].count, pa->tszAccountName );
+				mir_sntprintf( substr, SIZEOF(substr), _T("%d %s"), subtotal[i].count, ptszProto );
 				lstrcat( str, substr );
 			}
 			lstrcat( str, _T(")"));
 		}
 		mir_free(subtotal);
+		#if defined( _UNICODE )
+			mir_free( ptszProto );
+		#endif
 	}
 	else lstrcpy(str, TranslateT("No users found"));
 	SendMessage(hwndStatus, SB_SETTEXT, 2, (LPARAM)str );
@@ -421,5 +444,4 @@ void ShowMoreOptionsMenu(HWND hwndDlg,int x,int y)
 	DestroyMenu(hPopupMenu);
 	DestroyMenu(hMenu);
 }
-
 

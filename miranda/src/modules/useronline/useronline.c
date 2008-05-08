@@ -2,7 +2,7 @@
 
 Miranda IM: the free IM client for Microsoft* Windows*
 
-Copyright 2000-2008 Miranda ICQ/IM project, 
+Copyright 2000-2007 Miranda ICQ/IM project, 
 all portions of this codebase are copyrighted to the people 
 listed in contributors.txt.
 
@@ -84,11 +84,15 @@ static int UserOnlineAck(WPARAM wParam, LPARAM lParam)
 
 static int UserOnlineModulesLoaded(WPARAM wParam, LPARAM lParam)
 {
-	// reset the counter
-	int j;
-	for ( j=0; j < accounts.count; j++ )
-		db_dword_set( NULL, "UserOnline", accounts.items[j]->szModuleName, GetTickCount());
+	int protoCount=0, j;
+	PROTOCOLDESCRIPTOR **protos = 0;
 
+	CallService(MS_PROTO_ENUMPROTOCOLS, (WPARAM)&protoCount, (LPARAM)&protos);
+	// reset the counter
+	for (j=0 ; j < protoCount; j++) 
+		if (protos[j]->type == PROTOTYPE_PROTOCOL) {
+			db_dword_set(NULL, "UserOnline", protos[j]->szName, GetTickCount());
+		}
 	return 0;
 }
 

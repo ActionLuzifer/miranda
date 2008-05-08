@@ -2,7 +2,7 @@
 
 Miranda IM: the free IM client for Microsoft* Windows*
 
-Copyright 2000-2008 Miranda ICQ/IM project,
+Copyright 2000-2007 Miranda ICQ/IM project,
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
 
@@ -68,7 +68,6 @@ struct OptionsPageData
 	DWORD flags;
 	TCHAR *pszTitle, *pszGroup, *pszTab;
 	BOOL insideTab;
-	LPARAM dwInitParam;
 };
 
 struct OptionsDlgData
@@ -175,7 +174,8 @@ static BOOL CALLBACK OptionsDlgProc(HWND hdlg,UINT message,WPARAM wParam,LPARAM 
 
 	switch ( message ) {
 	case WM_INITDIALOG:
-	{	
+	{	HRSRC hrsrc;
+		HGLOBAL hglb;
 		PROPSHEETHEADER *psh=(PROPSHEETHEADER*)lParam;
 		OPENOPTIONSDIALOG *ood=(OPENOPTIONSDIALOG*)psh->pStartPage;
 		OPTIONSDIALOGPAGE *odp;
@@ -230,14 +230,14 @@ static BOOL CALLBACK OptionsDlgProc(HWND hdlg,UINT message,WPARAM wParam,LPARAM 
 		}
 		else lastTab = LangPackPcharToTchar( ood->pszTab );
 
-		for ( i=0; i < dat->pageCount; i++, odp++ ) {
-			struct OptionsPageData* opd = &dat->opd[i];
-			HRSRC hrsrc=FindResourceA(odp->hInstance,odp->pszTemplate,MAKEINTRESOURCEA(5));
-			HGLOBAL hglb=LoadResource(odp->hInstance,hrsrc);
-			DWORD resSize=SizeofResource(odp->hInstance,hrsrc);
-			opd->pTemplate=mir_alloc(resSize);
-			memcpy(opd->pTemplate,LockResource(hglb),resSize);
-			dte=(struct DlgTemplateExBegin*)opd->pTemplate;
+		for ( i=0; i < dat->pageCount; i++ ) {
+			DWORD resSize;
+			hrsrc=FindResourceA(odp[i].hInstance,odp[i].pszTemplate,MAKEINTRESOURCEA(5));
+			hglb=LoadResource(odp[i].hInstance,hrsrc);
+			resSize=SizeofResource(odp[i].hInstance,hrsrc);
+			dat->opd[i].pTemplate=mir_alloc(resSize);
+			memcpy(dat->opd[i].pTemplate,LockResource(hglb),resSize);
+			dte=(struct DlgTemplateExBegin*)dat->opd[i].pTemplate;
 			if ( dte->signature == 0xFFFF ) {
 				//this feels like an access violation, and is according to boundschecker
 				//...but it works - for now
@@ -246,57 +246,56 @@ static BOOL CALLBACK OptionsDlgProc(HWND hdlg,UINT message,WPARAM wParam,LPARAM 
 				dte->style|=WS_CHILD;
 			}
 			else {
-				opd->pTemplate->style&=~(WS_VISIBLE|WS_CHILD|WS_POPUP|WS_OVERLAPPED|WS_CAPTION|WS_SYSMENU|DS_MODALFRAME|DS_CENTER);
-				opd->pTemplate->style|=WS_CHILD;
+				dat->opd[i].pTemplate->style&=~(WS_VISIBLE|WS_CHILD|WS_POPUP|WS_OVERLAPPED|WS_CAPTION|WS_SYSMENU|DS_MODALFRAME|DS_CENTER);
+				dat->opd[i].pTemplate->style|=WS_CHILD;
 			}
-			opd->dlgProc=odp->pfnDlgProc;
-			opd->hInst=odp->hInstance;
-			opd->hwnd=NULL;
-			opd->changed=0;
-			opd->simpleHeight=opd->expertHeight=0;
-			opd->simpleBottomControlId=odp->nIDBottomSimpleControl;
-			opd->simpleWidth=opd->expertWidth=0;
-			opd->simpleRightControlId=odp->nIDRightSimpleControl;
-			opd->nExpertOnlyControls=odp->nExpertOnlyControls;
-			opd->expertOnlyControls=odp->expertOnlyControls;
-			opd->flags=odp->flags;
-			opd->dwInitParam=odp->dwInitParam;
-			if ( odp->pszTitle == NULL )
-				opd->pszTitle = NULL;
-			else if ( odp->flags & ODPF_UNICODE ) {
+			dat->opd[i].dlgProc=odp[i].pfnDlgProc;
+			dat->opd[i].hInst=odp[i].hInstance;
+			dat->opd[i].hwnd=NULL;
+			dat->opd[i].changed=0;
+			dat->opd[i].simpleHeight=dat->opd[i].expertHeight=0;
+			dat->opd[i].simpleBottomControlId=odp[i].nIDBottomSimpleControl;
+			dat->opd[i].simpleWidth=dat->opd[i].expertWidth=0;
+			dat->opd[i].simpleRightControlId=odp[i].nIDRightSimpleControl;
+			dat->opd[i].nExpertOnlyControls=odp[i].nExpertOnlyControls;
+			dat->opd[i].expertOnlyControls=odp[i].expertOnlyControls;
+			dat->opd[i].flags=odp[i].flags;
+			if ( odp[i].pszTitle == NULL )
+				dat->opd[i].pszTitle = NULL;
+			else if ( odp[i].flags & ODPF_UNICODE ) {
 				#if defined ( _UNICODE )
-					opd->pszTitle = ( TCHAR* )mir_wstrdup( odp->ptszTitle );
+					dat->opd[i].pszTitle = ( TCHAR* )mir_wstrdup( odp[i].ptszTitle );
 				#else
-					opd->pszTitle = u2a(( WCHAR* )odp->ptszTitle );
+					dat->opd[i].pszTitle = u2a(( WCHAR* )odp[i].ptszTitle );
 				#endif
 			}
-			else opd->pszTitle = ( TCHAR* )mir_strdup( odp->pszTitle );
+			else dat->opd[i].pszTitle = ( TCHAR* )mir_strdup( odp[i].pszTitle );
 
-			if ( odp->pszGroup == NULL )
-				opd->pszGroup = NULL;
-			else if ( odp->flags & ODPF_UNICODE ) {
+			if ( odp[i].pszGroup == NULL )
+				dat->opd[i].pszGroup = NULL;
+			else if ( odp[i].flags & ODPF_UNICODE ) {
 				#if defined ( _UNICODE )
-					opd->pszGroup = ( TCHAR* )mir_wstrdup( odp->ptszGroup );
+					dat->opd[i].pszGroup = ( TCHAR* )mir_wstrdup( odp[i].ptszGroup );
 				#else
-					opd->pszGroup = u2a(( WCHAR* )odp->ptszGroup );
+					dat->opd[i].pszGroup = u2a(( WCHAR* )odp[i].ptszGroup );
 				#endif
 			}
-			else opd->pszGroup = ( TCHAR* )mir_strdup( odp->pszGroup );
+			else dat->opd[i].pszGroup = ( TCHAR* )mir_strdup( odp[i].pszGroup );
 
-			if ( odp->pszTab == NULL )
-				opd->pszTab = NULL;
-			else if ( odp->flags & ODPF_UNICODE ) {
+			if ( odp[i].pszTab == NULL )
+				dat->opd[i].pszTab = NULL;
+			else if ( odp[i].flags & ODPF_UNICODE ) {
 				#if defined ( _UNICODE )
-					opd->pszTab = ( TCHAR* )mir_wstrdup( odp->ptszTab );
+					dat->opd[i].pszTab = ( TCHAR* )mir_wstrdup( odp[i].ptszTab );
 				#else
-					opd->pszTab = u2a(( WCHAR* )odp->ptszTab );
+					dat->opd[i].pszTab = u2a(( WCHAR* )odp[i].ptszTab );
 				#endif
 			}
-			else opd->pszTab = ( TCHAR* )mir_strdup( odp->pszTab );
+			else dat->opd[i].pszTab = ( TCHAR* )mir_strdup( odp[i].pszTab );
 
-			if ( !lstrcmp( lastPage, odp->ptszTitle ) &&
-				  !lstrcmpnull( lastGroup, odp->ptszGroup ) &&
-				  (( ood->pszTab == NULL && dat->currentPage == -1 ) || !lstrcmpnull( lastTab, odp->ptszTab )))
+			if ( !lstrcmp( lastPage, odp[i].ptszTitle ) &&
+				!lstrcmpnull( lastGroup, odp[i].ptszGroup ) &&
+				!lstrcmpnull( lastTab, odp[i].ptszTab ) )
 				dat->currentPage = i;
 		}
 		mir_free( lastGroup );
@@ -353,22 +352,10 @@ static BOOL CALLBACK OptionsDlgProc(HWND hdlg,UINT message,WPARAM wParam,LPARAM 
 		tvis.item.mask = TVIF_TEXT | TVIF_STATE | TVIF_PARAM;
 		tvis.item.state = tvis.item.stateMask = TVIS_EXPANDED;
 		for ( i=0; i < dat->pageCount; i++ ) {
-			static TCHAR *fullTitle=NULL;
-			TCHAR * useTitle;
-			if (fullTitle) mir_free(fullTitle);
-			fullTitle=NULL;
 			if ( FilterInst!=NULL && dat->opd[i].hInst!=FilterInst ) continue;
 			if (( dat->opd[i].flags & ODPF_SIMPLEONLY ) && IsDlgButtonChecked( hdlg, IDC_EXPERT )) continue;
 			if (( dat->opd[i].flags & ODPF_EXPERTONLY ) && !IsDlgButtonChecked( hdlg, IDC_EXPERT )) continue;
 			tvis.hParent = NULL;
-			if ( FilterInst!=NULL ) {
-				size_t sz=dat->opd[i].pszGroup?_tcslen(dat->opd[i].pszGroup)+1:0;
-				if (sz) sz+=3;
-				sz+=dat->opd[i].pszTitle?_tcslen(dat->opd[i].pszTitle)+1:0;
-				fullTitle=mir_alloc(sz*sizeof(TCHAR));
-				mir_sntprintf(fullTitle,sz,(dat->opd[i].pszGroup && dat->opd[i].pszTitle)?_T("%s - %s"):_T("%s%s"),dat->opd[i].pszGroup?dat->opd[i].pszGroup:_T(""),dat->opd[i].pszTitle?dat->opd[i].pszTitle:_T("") );
-			}
-			useTitle=fullTitle?fullTitle:dat->opd[i].pszTitle;
 			if(dat->opd[i].pszGroup != NULL && FilterInst==NULL) {
 				tvis.hParent = FindNamedTreeItemAtRoot(GetDlgItem(hdlg,IDC_PAGETREE),dat->opd[i].pszGroup);
 				if(tvis.hParent == NULL) {
@@ -379,7 +366,7 @@ static BOOL CALLBACK OptionsDlgProc(HWND hdlg,UINT message,WPARAM wParam,LPARAM 
 			}
 			else {
 				TVITEM tvi;
-				tvi.hItem = FindNamedTreeItemAtRoot(GetDlgItem(hdlg,IDC_PAGETREE),useTitle);
+				tvi.hItem = FindNamedTreeItemAtRoot(GetDlgItem(hdlg,IDC_PAGETREE),dat->opd[i].pszTitle);
 				if( tvi.hItem != NULL ) {
 					if ( i == dat->currentPage ) dat->hCurrentPage=tvi.hItem;
 					tvi.mask = TVIF_PARAM;
@@ -393,9 +380,9 @@ static BOOL CALLBACK OptionsDlgProc(HWND hdlg,UINT message,WPARAM wParam,LPARAM 
 			if ( dat->opd[i].pszTab != NULL ) {
 				HTREEITEM hItem;
 				if (tvis.hParent == NULL)
-					hItem = FindNamedTreeItemAtRoot(GetDlgItem(hdlg,IDC_PAGETREE),useTitle);
+					hItem = FindNamedTreeItemAtRoot(GetDlgItem(hdlg,IDC_PAGETREE),dat->opd[i].pszTitle);
 				else
-					hItem = FindNamedTreeItemAtChildren(GetDlgItem(hdlg,IDC_PAGETREE),tvis.hParent,useTitle);
+					hItem = FindNamedTreeItemAtChildren(GetDlgItem(hdlg,IDC_PAGETREE),tvis.hParent,dat->opd[i].pszTitle);
 				if( hItem != NULL ) {
 					if ( i == dat->currentPage ) {
 						TVITEM tvi;
@@ -409,14 +396,11 @@ static BOOL CALLBACK OptionsDlgProc(HWND hdlg,UINT message,WPARAM wParam,LPARAM 
 				}
 			}
 
-			tvis.item.pszText = useTitle;
+			tvis.item.pszText = dat->opd[i].pszTitle;
 			tvis.item.lParam = i;
 			dat->opd[i].hTreeItem = TreeView_InsertItem( GetDlgItem(hdlg,IDC_PAGETREE), &tvis);
 			if ( i == dat->currentPage )
-				dat->hCurrentPage = dat->opd[i].hTreeItem;	
-
-			if (fullTitle) mir_free(fullTitle);
-			fullTitle=NULL;
+				dat->hCurrentPage = dat->opd[i].hTreeItem;
 		}
 		tvi.mask = TVIF_TEXT | TVIF_STATE;
 		tvi.pszText = str;
@@ -503,7 +487,7 @@ static BOOL CALLBACK OptionsDlgProc(HWND hdlg,UINT message,WPARAM wParam,LPARAM 
 							RECT rcControl,rc;
 							int w,h,pages=0;
 
-							dat->opd[dat->currentPage].hwnd=CreateDialogIndirectParamA(dat->opd[dat->currentPage].hInst,dat->opd[dat->currentPage].pTemplate,hdlg,dat->opd[dat->currentPage].dlgProc,dat->opd[dat->currentPage].dwInitParam);
+							dat->opd[dat->currentPage].hwnd=CreateDialogIndirectA(dat->opd[dat->currentPage].hInst,dat->opd[dat->currentPage].pTemplate,hdlg,dat->opd[dat->currentPage].dlgProc);
 							if(dat->opd[dat->currentPage].flags&ODPF_BOLDGROUPS)
 								EnumChildWindows(dat->opd[dat->currentPage].hwnd,BoldGroupTitlesEnumChildren,(LPARAM)dat->hBoldFont);
 							GetClientRect(dat->opd[dat->currentPage].hwnd,&rcPage);
@@ -591,15 +575,18 @@ static BOOL CALLBACK OptionsDlgProc(HWND hdlg,UINT message,WPARAM wParam,LPARAM 
 	case WM_COMMAND:
 		switch(LOWORD(wParam)) {
 			case IDC_MODULES:
-				if ( HIWORD(wParam)==CBN_SELCHANGE ) {
+			{
+
+				if ( HIWORD(wParam)==CBN_SELCHANGE )
+				{
 					SaveOptionsTreeState(hdlg);
 					SendMessage(hdlg,DM_REBUILDPAGETREE,0,0);
 				}
 				break;
+			}
 
 			case IDC_EXPERT:
-			{
-				int expert=IsDlgButtonChecked(hdlg,IDC_EXPERT);
+			{	int expert=IsDlgButtonChecked(hdlg,IDC_EXPERT);
 				int i,j;
 				PSHNOTIFY pshn;
 				RECT rcPage;
@@ -769,73 +756,45 @@ static BOOL CALLBACK OptionsDlgProc(HWND hdlg,UINT message,WPARAM wParam,LPARAM 
 	return FALSE;
 }
 
-static void FreeOptionsData( struct OptionsPageInit* popi )
-{
-	int i;
-	for ( i=0; i < popi->pageCount; i++ ) {
-		mir_free(( char* )popi->odp[i].pszTitle );
-		mir_free( popi->odp[i].pszGroup );
-		mir_free( popi->odp[i].pszTab );
-		if (( DWORD )popi->odp[i].pszTemplate & 0xFFFF0000 )
-			mir_free((char*)popi->odp[i].pszTemplate);
-	}
-	mir_free(popi->odp);
-}
-
-void OpenAccountOptions( PROTOACCOUNT* pa )
-{
-	struct OptionsPageInit opi = { 0 };
-	if ( pa->ppro == NULL )
-		return;
-
-	pa->ppro->vtbl->OnEvent( pa->ppro, EV_PROTO_ONOPTIONS, ( WPARAM )&opi, 0 );
-	if ( opi.pageCount > 0 ) {
-		TCHAR tszTitle[ 100 ];
-		OPENOPTIONSDIALOG ood = { 0 };
-		PROPSHEETHEADER psh = { 0 };
-
-		mir_sntprintf( tszTitle, SIZEOF(tszTitle), TranslateT("%s options"), pa->tszAccountName );
-		
-		ood.cbSize = sizeof(ood);
-		ood.pszGroup = LPGEN("Network");
-		ood.pszPage = mir_t2a( pa->tszAccountName );
-
-		psh.dwSize = sizeof(psh);
-		psh.dwFlags = PSH_PROPSHEETPAGE|PSH_NOAPPLYNOW;
-		psh.hwndParent = NULL;
-		psh.nPages = opi.pageCount;
-		psh.pStartPage = (LPCTSTR)&ood;
-		psh.pszCaption = tszTitle;
-		psh.ppsp = (PROPSHEETPAGE*)opi.odp;
-		hwndOptions = CreateDialogParam(GetModuleHandle(NULL),MAKEINTRESOURCE(IDD_OPTIONS),NULL,OptionsDlgProc,(LPARAM)&psh);
-		mir_free(( void* )ood.pszPage );
-		FreeOptionsData( &opi );
-}	}
-
 static void OpenOptionsNow(const char *pszGroup,const char *pszPage,const char *pszTab)
 {
-	if ( IsWindow( hwndOptions )) {
-		ShowWindow( hwndOptions, SW_RESTORE );
-		SetForegroundWindow( hwndOptions );
+	PROPSHEETHEADER psh;
+	struct OptionsPageInit opi;
+	int i;
+	OPENOPTIONSDIALOG ood;
+
+	if(IsWindow(hwndOptions)) {
+		ShowWindow(hwndOptions,SW_RESTORE);
+		SetForegroundWindow(hwndOptions);
+		return;
 	}
-	else {
-		struct OptionsPageInit opi = { 0 };
-		NotifyEventHooks( hOptionsInitEvent, ( WPARAM )&opi, 0 );
-		if ( opi.pageCount > 0 ) {
-			OPENOPTIONSDIALOG ood = { 0 };
-			PROPSHEETHEADER psh = { 0 };
-			psh.dwSize = sizeof(psh);
-			psh.dwFlags = PSH_PROPSHEETPAGE | PSH_NOAPPLYNOW;
-			psh.nPages = opi.pageCount;
-			ood.pszGroup = pszGroup;
-			ood.pszPage = pszPage;
-			ood.pszTab = pszTab;
-			psh.pStartPage = (LPCTSTR)&ood;	  //more structure misuse
-			psh.pszCaption = TranslateT("Miranda IM Options");
-			psh.ppsp = (PROPSHEETPAGE*)opi.odp;		  //blatent misuse of the structure, but what the hell
-			hwndOptions = CreateDialogParam(GetModuleHandle(NULL),MAKEINTRESOURCE(IDD_OPTIONS),NULL,OptionsDlgProc,(LPARAM)&psh);
-			FreeOptionsData( &opi );
-}	}	}
+	opi.pageCount=0;
+	opi.odp=NULL;
+	NotifyEventHooks(hOptionsInitEvent,(WPARAM)&opi,0);
+	if(opi.pageCount==0) return;
+
+	ZeroMemory(&psh,sizeof(psh));
+	psh.dwSize = sizeof(psh);
+	psh.dwFlags = PSH_PROPSHEETPAGE|PSH_NOAPPLYNOW;
+	psh.hwndParent = NULL;
+	psh.nPages = opi.pageCount;
+	ood.pszGroup=pszGroup;
+	ood.pszPage=pszPage;
+	ood.pszTab=pszTab;
+	psh.pStartPage = (LPCTSTR)&ood;	  //more structure misuse
+	psh.pszCaption = TranslateT("Miranda IM Options");
+	psh.ppsp = (PROPSHEETPAGE*)opi.odp;		  //blatent misuse of the structure, but what the hell
+	hwndOptions=CreateDialogParam(GetModuleHandle(NULL),MAKEINTRESOURCE(IDD_OPTIONS),NULL,OptionsDlgProc,(LPARAM)&psh);
+	for ( i=0; i < opi.pageCount; i++ ) {
+		mir_free(( char* )opi.odp[i].pszTitle );
+		mir_free( opi.odp[i].pszGroup );
+		mir_free( opi.odp[i].pszTab );
+		if (( DWORD )opi.odp[i].pszTemplate & 0xFFFF0000 )
+			mir_free((char*)opi.odp[i].pszTemplate);
+	}
+	mir_free(opi.odp);
+
+}
 
 static int OpenOptions(WPARAM wParam,LPARAM lParam)
 {
@@ -866,8 +825,7 @@ static int AddOptionsPage(WPARAM wParam,LPARAM lParam)
 	if(odp==NULL||opi==NULL) return 1;
 	if(odp->cbSize!=sizeof(OPTIONSDIALOGPAGE)
 			&& odp->cbSize != OPTIONPAGE_OLD_SIZE
-			&& odp->cbSize != OPTIONPAGE_OLD_SIZE2
-			&& odp->cbSize != OPTIONPAGE_OLD_SIZE3)
+			&& odp->cbSize != OPTIONPAGE_OLD_SIZE2)
 		return 1;
 
 	opi->odp=(OPTIONSDIALOGPAGE*)mir_realloc(opi->odp,sizeof(OPTIONSDIALOGPAGE)*(opi->pageCount+1));

@@ -2,7 +2,7 @@
 
 Miranda IM: the free IM client for Microsoft* Windows*
 
-Copyright 2000-2008 Miranda ICQ/IM project,
+Copyright 2000-2007 Miranda ICQ/IM project,
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
 
@@ -82,22 +82,16 @@ typedef struct {
 			TCHAR* ptszTab;		 //v0.6.0.0+
 		};
 	#endif
-
-	#if MIRANDA_VER >= 0x0720
-		LPARAM dwInitParam;	 //v0.7.2.0+  a value to pass to lParam of WM_INITDIALOG message
-	#endif
 }
 	OPTIONSDIALOGPAGE;
 
 #define OPTIONPAGE_OLD_SIZE  40
 #define OPTIONPAGE_OLD_SIZE2 60
-#define OPTIONPAGE_OLD_SIZE3 64
 
 #define ODPF_SIMPLEONLY   1	// page is only shown when in simple mode
 #define ODPF_EXPERTONLY   2	//         "                 expert mode
 #define ODPF_BOLDGROUPS   4   // give group box titles a bold font
 #define ODPF_UNICODE      8   // string fields in OPTIONSDIALOGPAGE are WCHAR*
-#define ODPF_USERINFOTAB  16  // options page is tabbed
 
 #if defined( _UNICODE )
 	#define ODPF_TCHAR     ODPF_UNICODE

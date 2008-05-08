@@ -2,7 +2,7 @@
 
 Jabber Protocol Plugin for Miranda IM
 Copyright ( C ) 2002-04  Santithorn Bunchua
-Copyright ( C ) 2005-08  George Hazan
+Copyright ( C ) 2005-07  George Hazan
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -18,12 +18,14 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-File name      : $URL$
+File name      : $Source: /cvsroot/miranda/miranda/protocols/JabberG/jabber_ssl.cpp,v $
 Revision       : $Revision$
 Last change on : $Date$
 Last change by : $Author$
 
 */
+
+#define _JABBER_SSL_C_
 
 #include "jabber.h"
 #include "jabber_ssl.h"
@@ -39,7 +41,7 @@ PFN_SSL_int_pvoid            pfn_SSL_connect;           // int SSL_connect( SSL 
 PFN_SSL_int_pvoid_pvoid_int  pfn_SSL_read;              // int SSL_read( SSL *ssl, void *buffer, int bufsize )
 PFN_SSL_int_pvoid_pvoid_int  pfn_SSL_write;             // int SSL_write( SSL *ssl, void *buffer, int bufsize )
 
-static BOOL jabberSslInit()
+BOOL JabberSslInit()
 {
 	if ( hLibSSL )
 		return TRUE;
@@ -77,26 +79,26 @@ static BOOL jabberSslInit()
 			hLibSSL = NULL;
 	}	}
 
-	if ( !hLibSSL )
-		return FALSE;
-		
-	pfn_SSL_library_init();
-	return TRUE;
-}
+	if ( hLibSSL ) {
+		JabberLog( "SSL library load successful" );
+		pfn_SSL_library_init();
+		jabberSslCtx = pfn_SSL_CTX_new( pfn_SSLv23_client_method());
 
-BOOL CJabberProto::SslInit()
-{
-	if ( !jabberSslInit() ) {
-		Log( "SSL library cannot load" );
-		JSetByte( "UseTLS", 0 );
-		JSetByte( "UseSSL", 0 );
-		return FALSE;
+		return TRUE;
 	}
-		Netlib_Logf( NULL, "SSL library load successful" );
 
-	Log( "SSL library load successful" );
-	if ( m_sslCtx == NULL )
-		m_sslCtx = pfn_SSL_CTX_new( pfn_SSLv23_client_method());
-
-	return TRUE;
+	JabberLog( "SSL library cannot load" );
+	JSetByte( "UseTLS", 0 );
+	JSetByte( "UseSSL", 0 );
+	return FALSE;
 }
+
+void JabberSslUninit()
+{
+	if ( hLibSSL ) {
+		pfn_SSL_CTX_free( jabberSslCtx );
+
+		JabberLog( "Free SSL library" );
+		FreeLibrary( hLibSSL );
+		hLibSSL = NULL;
+}	}

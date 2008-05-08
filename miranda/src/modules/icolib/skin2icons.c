@@ -2,7 +2,7 @@
 
 Miranda IM: the free IM client for Microsoft* Windows*
 
-Copyright 2000-2008 Miranda ICQ/IM project,
+Copyright 2000-2007 Miranda ICQ/IM project,
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
 
@@ -21,21 +21,21 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
+#define _WIN32_IE 0x0560
+#define _WIN32_WINNT 0x0501
+
 #include "commonheaders.h"
 
 #include "IcoLib.h"
 
-static BOOL bModuleInitialized = FALSE;
 static HANDLE hIcons2ChangedEvent, hIconsChangedEvent;
 static HICON hIconBlank = NULL;
 
-HANDLE hIcoLib_AddNewIcon, hIcoLib_RemoveIcon, hIcoLib_GetIcon, hIcoLib_GetIcon2,
+HANDLE hIcoLib_AddNewIcon, hIcoLib_RemoveIcon, hIcoLib_GetIcon, hIcoLib_GetIcon2, 
        hIcoLib_IsManaged, hIcoLib_AddRef, hIcoLib_ReleaseIcon;
 
 static HIMAGELIST hCacheIconList;
 static int iconEventActive = 0;
-
-static BOOL bNeedRebuild = FALSE;
 
 struct IcoLibOptsData {
 	HWND hwndIndex;
@@ -86,62 +86,6 @@ static void __fastcall SafeDestroyIcon( HICON* icon )
 		*icon = NULL;
 }	}
 
-
-// Helper function to get valid icons with valid alpha from ImageList, borrowed from clist_modern code
-static HICON ImageList_GetIcon_Fixed( HIMAGELIST himl, int i, UINT fStyle )
-{
-	IMAGEINFO imi = { 0 };
-	BITMAP bm = { 0 };
-
-	if (IsWinVerXPPlus() && i != -1) {
-		ImageList_GetImageInfo( himl, i, &imi );
-		GetObject( imi.hbmImage, sizeof(bm), &bm);
-		if ( bm.bmBitsPixel == 32 ) //stupid bug of Microsoft
-			// Icons bitmaps are not premultiplied
-			// So Imagelist_AddIcon - premultiply alpha
-			// But incorrect - it is possible that alpha will
-			// be less than color and
-			// ImageList_GetIcon will return overflowed colors
-		{
-			BYTE *bits = bm.bmBits;
-			if ( !bits ) {
-				bits = malloc( bm.bmWidthBytes * bm.bmHeight );
-				GetBitmapBits( imi.hbmImage, bm.bmWidthBytes * bm.bmHeight, bits );
-			}
-			{	int iy;
-				BYTE *bcbits;
-				int wb = (( imi.rcImage.right - imi.rcImage.left ) * bm.bmBitsPixel >> 3 );
-				bcbits = bits + ( bm.bmHeight - imi.rcImage.bottom ) * bm.bmWidthBytes + ( imi.rcImage.left * bm.bmBitsPixel >> 3 );
-				for ( iy = 0; iy < imi.rcImage.bottom - imi.rcImage.top; iy++ )	{
-					int x;
-					// Dummy microsoft fix - alpha can be less than r,g or b
-					// Looks like color channels in icons should be non-premultiplied with alpha
-					// But AddIcon store it premultiplied (incorrectly cause can be Alpha==7F, but R,G or B==80
-					// So i check that alpha is 0x7F and set it to 0x80
-					DWORD *c = ((DWORD*) bcbits);
-					for ( x = 0; x < imi.rcImage.right - imi.rcImage.left; x++ ) {
-						DWORD val = *c;
-						BYTE a = (BYTE)(val >> 24);
-						if ( a != 0 ) {
-							BYTE r = (BYTE)((val & 0xFF0000) >> 16);
-							BYTE g = (BYTE)((val & 0xFF00) >> 8);
-							BYTE b = (BYTE)(val & 0xFF);
-							if ( a < r || a < g || a < b ) {
-								a = max(max(r, g), b);
-								val = a << 24 | r << 16 | g << 8 | b;
-								*c = val;
-						}	}
-						c++;
-					}
-					bcbits += bm.bmWidthBytes;
-			}	}
-			if ( !bm.bmBits ) {
-				SetBitmapBits( imi.hbmImage, bm.bmWidthBytes * bm.bmHeight, bits );
-				free( bits );
-	}	}	}
-	return ImageList_GetIcon( himl, i, ILD_TRANSPARENT );
-}
-
 /////////////////////////////////////////////////////////////////////////////////////////
 // Service functions
 
@@ -159,7 +103,7 @@ static HICON ExtractIconFromPath( const TCHAR *path, int cxIcon, int cyIcon )
 	comma = _tcsrchr( file, ',' );
 	if ( !comma )
 		n = 0;
-	else {
+	else {  
 		n = _ttoi( comma+1 );
 		*comma = 0;
 	}
@@ -173,7 +117,7 @@ static HICON ExtractIconFromPath( const TCHAR *path, int cxIcon, int cyIcon )
 
 static SectionItem* IcoLib_AddSection(TCHAR *sectionName, BOOL create_new)
 {
-	SectionItem key = { sectionName, 0 };
+	SectionItem key = { sectionName, 0 };    
 	int indx;
 
 	if ( !sectionName )
@@ -183,11 +127,10 @@ static SectionItem* IcoLib_AddSection(TCHAR *sectionName, BOOL create_new)
 		return sectionList.items[ indx ];
 
 	if ( create_new ) {
-		SectionItem* newItem = ( SectionItem* )mir_calloc( sizeof( SectionItem ));
+		SectionItem* newItem = ( SectionItem* )mir_alloc( sizeof( SectionItem ));
 		newItem->name = mir_tstrdup( sectionName );
 		newItem->flags = 0;
 		List_Insert(( SortedList* )&sectionList, newItem, indx );
-		bNeedRebuild = TRUE;
 		return newItem;
 	}
 
@@ -396,7 +339,7 @@ static int IcoLib_RemoveIcon( WPARAM wParam, LPARAM lParam )
 		int indx;
 		EnterCriticalSection( &csIconList );
 
-		if ( List_GetIndex(( SortedList* )&iconList, ( void* )&lParam, &indx )) {
+		if ( List_GetIndex(( SortedList* )&iconList, ( void* )lParam, &indx )) {
 			IcoLib_FreeIcon( iconList.items[ indx ] );
 			List_Remove(( SortedList* )&iconList, indx );
 		}
@@ -417,7 +360,7 @@ HICON IconItem_GetDefaultIcon( IconItem* item )
 	}
 
 	if ( !hIcon && item->default_icon_index != -1 )
-		hIcon = ImageList_GetIcon_Fixed( hCacheIconList, item->default_icon_index, ILD_NORMAL );
+		hIcon = ImageList_GetIcon( hCacheIconList, item->default_icon_index, ILD_NORMAL );
 
 	if ( !hIcon && item->default_file )
 		_ExtractIconEx( item->default_file, item->default_indx, item->cx, item->cy, &hIcon, LR_COLOR );
@@ -438,7 +381,7 @@ HICON IconItem_GetIcon( IconItem* item )
 		return item->icon;
 
 	if ( item->icon_cache_valid )
-		hIcon = ImageList_GetIcon_Fixed( hCacheIconList, item->icon_cache_index, ILD_NORMAL );
+		hIcon = ImageList_GetIcon( hCacheIconList, item->icon_cache_index, ILD_NORMAL );
 
 	if ( !hIcon && !DBGetContactSettingTString( NULL, "SkinIcons", item->name, &dbv )) {
 		hIcon = ExtractIconFromPath( dbv.ptszVal, item->cx, item->cy );
@@ -535,7 +478,7 @@ HICON IcoLib_GetIconByHandle( HANDLE hItem )
 	else result = hIconBlank;
 
 	LeaveCriticalSection( &csIconList );
-	return result;
+	return result;			
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////
@@ -647,15 +590,13 @@ static void LoadSectionIcons(TCHAR *filename, SectionItem* sectionActive)
 void LoadSubIcons(HWND htv, TCHAR *filename, HTREEITEM hItem)
 {
 	TVITEM tvi;
-	TreeItem *treeItem;
 	SectionItem* sectionActive;
 
 	tvi.mask = TVIF_HANDLE | TVIF_PARAM;
 	tvi.hItem = hItem;
 
 	TreeView_GetItem( htv, &tvi );
-	treeItem = (TreeItem *)tvi.lParam;
-	sectionActive = sectionList.items[ SECTIONPARAM_INDEX(treeItem->value) ];
+	sectionActive = sectionList.items[ SECTIONPARAM_INDEX(tvi.lParam) ];
 
 	tvi.hItem = TreeView_GetChild( htv, tvi.hItem );
 	while ( tvi.hItem ) {
@@ -663,7 +604,7 @@ void LoadSubIcons(HWND htv, TCHAR *filename, HTREEITEM hItem)
 		tvi.hItem = TreeView_GetNextSibling( htv, tvi.hItem );
 	}
 
-	if ( SECTIONPARAM_FLAGS(treeItem->value) & SECTIONPARAM_HAVEPAGE )
+	if ( SECTIONPARAM_FLAGS(tvi.lParam) & SECTIONPARAM_HAVEPAGE )
 		LoadSectionIcons( filename, sectionActive );
 }
 
@@ -681,19 +622,17 @@ static void UndoChanges( int iconIndx, int cmd )
 void UndoSubItemChanges( HWND htv, HTREEITEM hItem, int cmd )
 {
 	TVITEM tvi = {0};
-	TreeItem *treeItem;
 	int indx;
 
 	tvi.mask = TVIF_HANDLE | TVIF_PARAM;
 	tvi.hItem = hItem;
 	TreeView_GetItem( htv, &tvi );
-	treeItem = (TreeItem *)tvi.lParam;
 
-	if ( SECTIONPARAM_FLAGS( treeItem->value ) & SECTIONPARAM_HAVEPAGE ) {
+	if ( SECTIONPARAM_FLAGS( tvi.lParam ) & SECTIONPARAM_HAVEPAGE ) {
 		EnterCriticalSection( &csIconList );
 
 		for ( indx = 0; indx < iconList.count; indx++ )
-			if ( iconList.items[ indx ]->section == sectionList.items[ SECTIONPARAM_INDEX(treeItem->value) ])
+			if ( iconList.items[ indx ]->section == sectionList.items[ SECTIONPARAM_INDEX(tvi.lParam) ])
 				UndoChanges( indx, cmd );
 
 		LeaveCriticalSection( &csIconList );
@@ -760,7 +699,7 @@ static TCHAR* OpenFileDlg( HWND hParent, const TCHAR* szFile, BOOL bAll )
 	ofn.Flags = OFN_FILEMUSTEXIST | OFN_HIDEREADONLY;
 	ofn.nMaxFile = MAX_PATH*2;
 
-	if (!GetOpenFileName(&ofn))
+	if (!GetOpenFileName(&ofn)) 
 		return NULL;
 
 	return mir_tstrdup(file);
@@ -852,7 +791,7 @@ static int IconDlg_Resize(HWND hwndDlg,LPARAM lParam, UTILRESIZECONTROL *urc)
 		return RD_ANCHORX_RIGHT | RD_ANCHORY_TOP;
 
 	case IDC_PREVIEW:
-		return RD_ANCHORX_WIDTH | RD_ANCHORY_HEIGHT;
+		return RD_ANCHORX_WIDTH | RD_ANCHORY_HEIGHT;      
 
 	case IDC_GETMORE:
 		return RD_ANCHORX_CENTRE | RD_ANCHORY_BOTTOM;
@@ -865,17 +804,17 @@ BOOL CALLBACK DlgProcIconImport(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lP
 	static HWND hwndParent,hwndDragOver;
 	static int dragging;
 	static int dragItem,dropHiLite;
-	static HWND hPreview = NULL;
+
+	HWND hPreview = GetDlgItem(hwndDlg, IDC_PREVIEW);
 
 	switch (msg) {
 	case WM_INITDIALOG:
-		TranslateDialogDefault(hwndDlg);
 		hwndParent = (HWND)lParam;
-		hPreview = GetDlgItem(hwndDlg, IDC_PREVIEW);
 		dragging = dragItem = 0;
+		TranslateDialogDefault(hwndDlg);
 		ListView_SetImageList(hPreview, ImageList_Create(GetSystemMetrics(SM_CXSMICON),GetSystemMetrics(SM_CYSMICON),ILC_COLOR32|ILC_MASK,0,100), LVSIL_NORMAL);
 		ListView_SetIconSpacing(hPreview, 56, 67);
-		{
+		{  
 			RECT rcThis, rcParent;
 			int cxScreen = GetSystemMetrics(SM_CXSCREEN);
 
@@ -893,7 +832,7 @@ BOOL CALLBACK DlgProcIconImport(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lP
 			GetClientRect(hwndDlg, &rcThis);
 			SendMessage(hwndDlg, WM_SIZE, 0, MAKELPARAM(rcThis.right-rcThis.left, rcThis.bottom-rcThis.top));
 		}
-		{
+		{  
 			HRESULT (STDAPICALLTYPE *MySHAutoComplete)(HWND,DWORD);
 
 			MySHAutoComplete = (HRESULT (STDAPICALLTYPE*)(HWND,DWORD))GetProcAddress(GetModuleHandleA("shlwapi"),"SHAutoComplete");
@@ -903,7 +842,7 @@ BOOL CALLBACK DlgProcIconImport(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lP
 		return TRUE;
 
 	case DM_REBUILDICONSPREVIEW:
-		{
+		{  
 			LVITEM lvi;
 			TCHAR filename[MAX_PATH],caption[64];
 			HIMAGELIST hIml;
@@ -915,7 +854,7 @@ BOOL CALLBACK DlgProcIconImport(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lP
 			hIml = ListView_GetImageList(hPreview, LVSIL_NORMAL);
 			ImageList_RemoveAll(hIml);
 			GetDlgItemText(hwndDlg, IDC_ICONSET, filename, SIZEOF(filename));
-			{
+			{  
 				RECT rcPreview,rcGroup;
 
 				GetWindowRect(hPreview, &rcPreview);
@@ -949,7 +888,7 @@ BOOL CALLBACK DlgProcIconImport(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lP
 	case WM_COMMAND:
 		switch( LOWORD( wParam )) {
 		case IDC_BROWSE:
-			{
+			{ 
 				TCHAR str[MAX_PATH];
 				TCHAR *file;
 
@@ -1049,7 +988,7 @@ BOOL CALLBACK DlgProcIconImport(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lP
 				dragItem = ((LPNMLISTVIEW)lParam)->iItem;
 				dropHiLite = -1;
 				ImageList_BeginDrag(ListView_GetImageList(hPreview, LVSIL_NORMAL), dragItem, GetSystemMetrics(SM_CXICON)/2, GetSystemMetrics(SM_CYICON)/2);
-				{
+				{  
 					POINT pt;
 					RECT rc;
 
@@ -1091,22 +1030,50 @@ BOOL CALLBACK DlgProcIconImport(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lP
 // IcoLib options window procedure
 
 static int CALLBACK DoSortIconsFunc(LPARAM lParam1, LPARAM lParam2, LPARAM lParamSort)
-{	return lstrcmpi(TranslateTS(iconList.items[lParam1]->description), TranslateTS(iconList.items[lParam2]->description));
+{	return lstrcmpi(iconList.items[lParam1]->description, iconList.items[lParam2]->description);
 }
 
 static int CALLBACK DoSortIconsFuncByOrder(LPARAM lParam1, LPARAM lParam2, LPARAM lParamSort)
 {	return iconList.items[lParam1]->orderID - iconList.items[lParam2]->orderID;
 }
 
+BOOL getTreeNodeText( HWND hwndTree, LPARAM lParam, char* szBuf, size_t cbLen )
+{
+	int codepage = CallService( MS_LANGPACK_GETCODEPAGE, 0, 0 );
+	DWORD indx = SECTIONPARAM_LEVEL( lParam );
+	SectionItem* section = sectionList.items[ SECTIONPARAM_INDEX( lParam ) ];
+	TCHAR *p = section->name;
+	while( indx-- ) {
+		p = _tcschr( p, '/' );
+		if( p == NULL ) {
+			*szBuf = 0; return FALSE;
+		}
+		p++;
+	}
+	p = _tcschr( p, '/' );
+	if( p == NULL )
+		p = section->name + _tcslen( section->name );
+
+	#ifdef _UNICODE
+		indx = WideCharToMultiByte( codepage, 0, section->name, (p - section->name), szBuf, cbLen, NULL, NULL );
+		szBuf[ min(indx, cbLen-1) ] = 0;
+	#else
+		strncpy( szBuf, section->name, cbLen );
+		szBuf[ cbLen-1 ] = 0;
+	#endif
+	return TRUE;
+}
+
 static void SaveCollapseState( HWND hwndTree )
 {
 	HTREEITEM hti;
+	int codepage = CallService( MS_LANGPACK_GETCODEPAGE, 0, 0 );
 	TVITEM tvi;
 
 	hti = TreeView_GetRoot( hwndTree );
 	while( hti != NULL ) {
 		HTREEITEM ht;
-		TreeItem *treeItem;
+		char paramName[MAX_PATH];
 
 		tvi.mask = TVIF_STATE | TVIF_HANDLE | TVIF_CHILDREN | TVIF_PARAM;
 		tvi.hItem = hti;
@@ -1114,20 +1081,20 @@ static void SaveCollapseState( HWND hwndTree )
 		TreeView_GetItem( hwndTree, &tvi );
 
 		if( tvi.cChildren > 0 ) {
-			treeItem = (TreeItem *)tvi.lParam;
+			getTreeNodeText( hwndTree, tvi.lParam, paramName, sizeof(paramName) );
 			if ( tvi.state & TVIS_EXPANDED )
-				DBWriteContactSettingByte(NULL, "SkinIconsUI", treeItem->paramName, TVIS_EXPANDED );
+				DBWriteContactSettingByte(NULL, "SkinIconsUI", paramName, TVIS_EXPANDED );
 			else
-				DBWriteContactSettingByte(NULL, "SkinIconsUI", treeItem->paramName, 0 );
+				DBWriteContactSettingByte(NULL, "SkinIconsUI", paramName, 0 );
 		}
 
 		ht = TreeView_GetChild( hwndTree, hti );
 		if( ht == NULL ) {
 			ht = TreeView_GetNextSibling( hwndTree, hti );
-			while( ht == NULL ) {
-				hti = TreeView_GetParent( hwndTree, hti );
-				if( hti == NULL ) break;
-				ht = TreeView_GetNextSibling( hwndTree, hti );
+			if( ht == NULL ) {
+				ht = TreeView_GetParent( hwndTree, hti );
+				if( ht == NULL ) break;
+				ht = TreeView_GetNextSibling( hwndTree, ht );
 		}	}
 
 		hti = ht;
@@ -1137,13 +1104,13 @@ BOOL CALLBACK DlgProcIcoLibOpts(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lP
 {
 	struct IcoLibOptsData *dat;
 	static HTREEITEM prevItem = 0;
-	static HWND hPreview = NULL;
+	HWND hPreview = GetDlgItem(hwndDlg, IDC_PREVIEW);
 
 	dat = (struct IcoLibOptsData*)GetWindowLong(hwndDlg, GWL_USERDATA);
 	switch (msg) {
 	case WM_INITDIALOG:
 		TranslateDialogDefault(hwndDlg);
-		hPreview = GetDlgItem(hwndDlg, IDC_PREVIEW);
+
 		dat = (struct IcoLibOptsData*)mir_alloc(sizeof(struct IcoLibOptsData));
 		dat->hwndIndex = NULL;
 		SetWindowLong(hwndDlg, GWL_USERDATA, (LONG)dat);
@@ -1158,7 +1125,6 @@ BOOL CALLBACK DlgProcIcoLibOpts(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lP
 				iconList.items[indx]->temp_icon = NULL;
 				iconList.items[indx]->temp_reset = FALSE;
 			}
-			bNeedRebuild = FALSE;
 		}
 		LeaveCriticalSection(&csIconList);
 		//
@@ -1176,8 +1142,6 @@ BOOL CALLBACK DlgProcIcoLibOpts(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lP
 			int indx;
 			TCHAR itemName[1024];
 			HTREEITEM hSection;
-
-			if (!hwndTree) break;
 
 			TreeView_SelectItem(hwndTree, NULL);
 			TreeView_DeleteAllItems(hwndTree);
@@ -1198,6 +1162,7 @@ BOOL CALLBACK DlgProcIcoLibOpts(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lP
 					if (sectionName = _tcschr(sectionName, '/')) {
 						// one level deeper
 						*sectionName = 0;
+						sectionName++;
 					}
 
 					pItemName = TranslateTS( pItemName );
@@ -1206,34 +1171,29 @@ BOOL CALLBACK DlgProcIcoLibOpts(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lP
 					if (!sectionName || !hItem) {
 						if (!hItem) {
 							TVINSERTSTRUCT tvis = {0};
-							TreeItem *treeItem = (TreeItem *)mir_alloc(sizeof(TreeItem));
-							treeItem->value = SECTIONPARAM_MAKE( indx, sectionLevel, sectionName?0:SECTIONPARAM_HAVEPAGE );
-							treeItem->paramName = mir_t2a(itemName);
+							char paramName[MAX_PATH];
 
 							tvis.hParent = hSection;
-							tvis.hInsertAfter = TVI_SORT; //TVI_LAST;
+							tvis.hInsertAfter = TVI_LAST;//TVI_SORT;
 							tvis.item.mask = TVIF_TEXT|TVIF_PARAM|TVIF_STATE;
 							tvis.item.pszText = pItemName;
-							tvis.item.lParam = (LPARAM) treeItem;
+							tvis.item.lParam = SECTIONPARAM_MAKE( indx, sectionLevel, sectionName?0:SECTIONPARAM_HAVEPAGE );
 
-							tvis.item.state = tvis.item.stateMask = DBGetContactSettingByte(NULL, "SkinIconsUI", treeItem->paramName, TVIS_EXPANDED );
+							getTreeNodeText( hwndTree, tvis.item.lParam, paramName, sizeof(paramName) );
+							tvis.item.state = tvis.item.stateMask = DBGetContactSettingByte(NULL, "SkinIconsUI", paramName, TVIS_EXPANDED );
 							hItem = TreeView_InsertItem(hwndTree, &tvis);
 						}
 						else {
 							TVITEM tvi = {0};
-							TreeItem *treeItem;
+
 							tvi.hItem = hItem;
-							tvi.mask = TVIF_HANDLE | TVIF_PARAM;
-							TreeView_GetItem( hwndTree, &tvi );
-							treeItem = (TreeItem *)tvi.lParam;
-							treeItem->value = SECTIONPARAM_MAKE( indx, sectionLevel, SECTIONPARAM_HAVEPAGE );
+							tvi.lParam = SECTIONPARAM_MAKE( indx, sectionLevel, SECTIONPARAM_HAVEPAGE );
+							tvi.mask = TVIF_PARAM | TVIF_HANDLE;
+							TreeView_SetItem(hwndTree, &tvi);
 					}	}
 
-					if (sectionName) {
-						*sectionName = '/';
-						sectionName++;
-					}
 					sectionLevel++;
+
 
 					hSection = hItem;
 			}	}
@@ -1246,7 +1206,7 @@ BOOL CALLBACK DlgProcIcoLibOpts(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lP
 
 	//  Rebuild preview to new section
 	case DM_REBUILDICONSPREVIEW:
-		{
+		{  
 			LVITEM lvi = {0};
 			HIMAGELIST hIml;
 			HICON hIcon;
@@ -1293,7 +1253,7 @@ BOOL CALLBACK DlgProcIcoLibOpts(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lP
 
 	// Refresh preview to new section
 	case DM_UPDATEICONSPREVIEW:
-		{
+		{  
 			LVITEM lvi = {0};
 			HICON hIcon;
 			int indx, count;
@@ -1447,15 +1407,6 @@ BOOL CALLBACK DlgProcIcoLibOpts(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lP
 			}	}
 			break;
 
-		case IDC_PREVIEW:
-			if ( bNeedRebuild )	{
-				EnterCriticalSection(&csIconList);
-				bNeedRebuild = FALSE;
-				LeaveCriticalSection(&csIconList);
-				SendMessage(hwndDlg, DM_REBUILD_CTREE, 0, 0);
-			}
-			break;
-
 		case IDC_CATEGORYLIST:
 			switch(((NMHDR*)lParam)->code) {
 			case TVN_SELCHANGEDA: // !!!! This needs to be here - both !!
@@ -1463,24 +1414,14 @@ BOOL CALLBACK DlgProcIcoLibOpts(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lP
 				{
 					NMTREEVIEW *pnmtv = (NMTREEVIEW*)lParam;
 					TVITEM tvi = pnmtv->itemNew;
-					TreeItem *treeItem = (TreeItem *)tvi.lParam;
-					if ( treeItem )
-						SendMessage(hwndDlg, DM_REBUILDICONSPREVIEW, 0, ( LPARAM )(
-							(SECTIONPARAM_FLAGS(treeItem->value)&SECTIONPARAM_HAVEPAGE)?
-							sectionList.items[ SECTIONPARAM_INDEX(treeItem->value) ] : NULL ) );
-					break;
-				}
-			case TVN_DELETEITEMA: // no idea why both TVN_SELCHANGEDA/W should be there but let's keep this both too...
-			case TVN_DELETEITEMW:
-				{
-					TreeItem *treeItem = (TreeItem *)(((LPNMTREEVIEW)lParam)->itemOld.lParam);
-					if (treeItem) {
-						mir_free(treeItem->paramName);
-						mir_free(treeItem);
-					}
+
+					SendMessage(hwndDlg, DM_REBUILDICONSPREVIEW, 0, ( LPARAM )(
+					    (SECTIONPARAM_FLAGS(tvi.lParam)&SECTIONPARAM_HAVEPAGE)?
+						sectionList.items[ SECTIONPARAM_INDEX(tvi.lParam) ] : NULL ) );
 					break;
 		}	}	}
 		break;
+
 	case WM_DESTROY:
 		{
 			int indx;
@@ -1509,32 +1450,6 @@ BOOL CALLBACK DlgProcIcoLibOpts(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lP
 	return FALSE;
 }
 
-static UINT iconsExpertOnlyControls[]={IDC_IMPORT};
-
-static int SkinOptionsInit(WPARAM wParam,LPARAM lParam)
-{
-	OPTIONSDIALOGPAGE odp = {0};
-
-	odp.cbSize = sizeof(odp);
-	odp.hInstance = GetModuleHandle(NULL);
-	odp.flags = ODPF_BOLDGROUPS | ODPF_TCHAR;
-	odp.position = -180000000;
-	odp.pszTemplate = MAKEINTRESOURCEA(IDD_OPT_ICOLIB);
-	odp.ptszTitle = TranslateT("Icons");
-	odp.ptszGroup = TranslateT("Customize");
-	odp.pfnDlgProc = DlgProcIcoLibOpts;
-	odp.expertOnlyControls = iconsExpertOnlyControls;
-	odp.nExpertOnlyControls = SIZEOF(iconsExpertOnlyControls);
-	CallService(MS_OPT_ADDPAGE, wParam, (LPARAM)&odp);
-	return 0;
-}
-
-static int SkinSystemModulesLoaded(WPARAM wParam,LPARAM lParam)
-{
-	HookEvent(ME_OPT_INITIALISE, SkinOptionsInit);
-	return 0;
-}
-
 /////////////////////////////////////////////////////////////////////////////////////////
 // Module initialization and finalization procedure
 
@@ -1558,10 +1473,8 @@ static int sttIcoLib_GetIconByHandle( WPARAM wParam, LPARAM lParam )
 {	return (int)IcoLib_GetIconByHandle(( HANDLE )lParam );
 }
 
-int LoadIcoLibModule(void)
+int InitSkin2Icons(void)
 {
-	bModuleInitialized = TRUE;
-
 	sectionList.increment = iconList.increment = 20;
 	sectionList.sortFunc  = ( FSortFunc )sttCompareSections;
 	iconList.sortFunc     = ( FSortFunc )sttCompareIcons;
@@ -1576,22 +1489,19 @@ int LoadIcoLibModule(void)
 	hIcoLib_GetIcon     = CreateServiceFunction(MS_SKIN2_GETICON,         sttIcoLib_GetIcon);
 	hIcoLib_GetIcon2    = CreateServiceFunction(MS_SKIN2_GETICONBYHANDLE, sttIcoLib_GetIconByHandle);
 	hIcoLib_IsManaged   = CreateServiceFunction(MS_SKIN2_ISMANAGEDICON,   ( MIRANDASERVICE )IcoLib_IsManaged);
-	hIcoLib_AddRef      = CreateServiceFunction(MS_SKIN2_ADDREFICON,      IcoLib_AddRef);
+	hIcoLib_AddRef      = CreateServiceFunction(MS_SKIN2_ADDREFICON,      IcoLib_AddRef); 
 	hIcoLib_ReleaseIcon = CreateServiceFunction(MS_SKIN2_RELEASEICON,     ( MIRANDASERVICE )IcoLib_ReleaseIcon);
 
 	hIcons2ChangedEvent = CreateHookableEvent(ME_SKIN2_ICONSCHANGED);
 	hIconsChangedEvent = CreateHookableEvent(ME_SKIN_ICONSCHANGED);
-
-	HookEvent(ME_SYSTEM_MODULESLOADED, SkinSystemModulesLoaded);
-
 	return 0;
 }
 
-void UnloadIcoLibModule(void)
+void UninitSkin2Icons(void)
 {
 	int indx;
 
-	if ( !bModuleInitialized ) return;
+	if (hIconBlank == NULL) return;
 
 	DestroyHookableEvent(hIconsChangedEvent);
 	DestroyHookableEvent(hIcons2ChangedEvent);

@@ -26,9 +26,6 @@ $Id$
 #ifndef _MSGDLGUTILS_H
 #define _MSGDLGUTILS_H
 
-//MAD
-HWND GetLastChild(HWND hwndParent);
-//MAD_
 void        CalcDynamicAvatarSize(HWND hwndDlg, struct MessageWindowData *dat, BITMAP *bminfo);
 int         IsMetaContact(HWND hwndDlg, struct MessageWindowData *dat);
 char        *GetCurrentMetaContactProto(HWND hwndDlg, struct MessageWindowData *dat);
@@ -53,7 +50,7 @@ void        SaveInputHistory(HWND hwndDlg, struct MessageWindowData *dat, WPARAM
 void        GetContactUIN(HWND hwndDlg, struct MessageWindowData *dat);
 void        SetMessageLog(HWND hwndDlg, struct MessageWindowData *dat);
 void        SwitchMessageLog(HWND hwndDlg, struct MessageWindowData *dat, int iMode);
-unsigned int GetIEViewMode(HWND hwndDlg, HANDLE hContact);
+unsigned int GetIEViewMode(HWND hwndDlg, struct MessageWindowData *dat);
 void        FindFirstEvent(HWND hwndDlg, struct MessageWindowData *dat);
 void        SaveSplitter(HWND hwndDlg, struct MessageWindowData *dat);
 void        LoadSplitter(HWND hwndDlg, struct MessageWindowData *dat);
@@ -61,6 +58,7 @@ void        PlayIncomingSound(struct ContainerWindowData *pContainer, HWND hwnd)
 void        SwitchMessageLog(HWND hwndDlg, struct MessageWindowData *dat, int iMode);
 void        GetSendFormat(HWND hwndDlg, struct MessageWindowData *dat, int mode);
 void        GetLocaleID(struct MessageWindowData *dat, char *szKLName);
+BOOL        IsUnicodeAscii(const wchar_t* pBuffer, int nSize);
 void        GetDataDir();
 void        LoadOwnAvatar(HWND hwndDlg, struct MessageWindowData *dat);
 void        LoadContactAvatar(HWND hwndDlg, struct MessageWindowData *dat);

@@ -2,7 +2,7 @@
 
 Miranda IM: the free IM client for Microsoft* Windows*
 
-Copyright 2000-2008 Miranda ICQ/IM project,
+Copyright 2000-2007 Miranda ICQ/IM project,
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
 
@@ -46,7 +46,7 @@ void ConvertFontID( FontID *fid, TFontID* fidw )
 
 	MultiByteToWideChar( code_page, 0, fid->group, -1, fidw->group, 64);
 	MultiByteToWideChar( code_page, 0, fid->name, -1, fidw->name, 64);
-	if (fid->cbSize >= FontID_SIZEOF_V2A) {
+	if (fid->cbSize >= FontID_SIZEOF_V2) {
 		MultiByteToWideChar( code_page, 0, fid->backgroundGroup, -1, fidw->backgroundGroup, 64);
 		MultiByteToWideChar( code_page, 0, fid->backgroundName, -1, fidw->backgroundName, 64);
 	}
