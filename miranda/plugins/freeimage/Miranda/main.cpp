@@ -56,7 +56,7 @@ PLUGININFO pluginInfo = {
 	"Generic image services for Miranda IM",
 	"Nightwish, The FreeImage project (http://freeimage.sourceforge.net/)",
 	"",
-	"Copyright 2000-2008 Miranda-IM project, uses the FreeImage distribution",
+	"Copyright 2000-2007 Miranda-IM project, uses the FreeImage distribution",
 	"http://www.miranda-im.org",
 	UNICODE_AWARE,
 	0
@@ -69,7 +69,7 @@ PLUGININFOEX pluginInfoEx = {
 	"Generic image services for Miranda IM",
 	"Nightwish, The FreeImage project (http://freeimage.sourceforge.net/)",
 	"",
-	"Copyright 2000-2008 Miranda-IM project, uses the FreeImage distribution",
+	"Copyright 2000-2007 Miranda-IM project, uses the FreeImage distribution",
 	"http://www.miranda-im.org",
 	UNICODE_AWARE,
 	0,
@@ -565,8 +565,7 @@ extern "C" BOOL __declspec(dllexport) mempng2dib(BYTE* pSource, DWORD cbSourceSi
 	png_uint_32				ulRowBytes;
 	png_byte*				pbImageData;
 	png_byte**				ppbRowPointers = NULL;
-	int						i;
-	png_uint_32				j;
+	int						i, j;
 	int						wDIRowBytes;
 	BYTE*                pImageData;
 
@@ -670,8 +669,8 @@ extern "C" BOOL __declspec(dllexport) mempng2dib(BYTE* pSource, DWORD cbSourceSi
 	ppbRowPointers = ( png_bytepp )alloca( iHeight * sizeof( png_bytep ));
 
 	// set the individual row-pointers to point at the correct offsets
-	for ( j = 0; j < iHeight; j++ )
-		ppbRowPointers[j] = ( png_bytep )&pImageData[ j*ulRowBytes ];
+	for ( i = 0; i < iHeight; i++ )
+		ppbRowPointers[i] = ( png_bytep )&pImageData[ i*ulRowBytes ];
 
 	// now we can go ahead and just read the whole image
 	png_read_image( png_ptr, ppbRowPointers );
@@ -960,7 +959,7 @@ static int serviceSave(WPARAM wParam, LPARAM lParam)
 		if(isi->cbSize != sizeof(IMGSRVC_INFO))
 			return 0;
 
-		if(isi->szName || isi->wszName) {
+		if(isi->szName) {
 			if(isi->fif == FIF_UNKNOWN) {
 				if(lParam & IMGL_WCHAR)
 					fif = FreeImage_GetFIFFromFilenameU(isi->wszName);
@@ -1227,8 +1226,6 @@ static HANDLE hGetIF, hLoad, hLoadFromMem, hSave, hUnload, hResize, hGetVersion;
 
 static int IMGSERVICE_Load()
 {
-	FI_Populate();
-
 	hDib2mempng = CreateServiceFunction( MS_DIB2PNG, serviceDib2Png );
 	hMempng2Dib = CreateServiceFunction( MS_PNG2DIB, servicePng2Dib );
 	hGetIF = CreateServiceFunction(MS_IMG_GETINTERFACE, serviceGetInterface);

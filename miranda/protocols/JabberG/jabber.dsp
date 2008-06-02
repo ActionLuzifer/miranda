@@ -25,8 +25,8 @@ CFG=jabberg - Win32 Debug Unicode
 
 # Begin Project
 # PROP AllowPerConfigDependencies 0
-# PROP Scc_ProjName ""
-# PROP Scc_LocalPath ""
+# PROP Scc_ProjName ""$/Miranda/miranda/protocols/JabberG", NEOAAAAA"
+# PROP Scc_LocalPath "."
 CPP=cl.exe
 MTL=midl.exe
 RSC=rc.exe
@@ -104,7 +104,7 @@ LINK32=link.exe
 # ADD BASE MTL /nologo /D "NDEBUG" /mktyplib203 /win32
 # ADD MTL /nologo /D "NDEBUG" /mktyplib203 /win32
 # ADD BASE RSC /l 0x409 /d "NDEBUG"
-# ADD RSC /l 0x409 /d "NDEBUG" /d "UNICODE"
+# ADD RSC /l 0x409 /d "NDEBUG"
 BSC32=bscmake.exe
 # ADD BASE BSC32 /nologo
 # ADD BSC32 /nologo
@@ -133,7 +133,7 @@ LINK32=link.exe
 # ADD BASE MTL /nologo /D "_DEBUG" /mktyplib203 /win32
 # ADD MTL /nologo /D "_DEBUG" /mktyplib203 /win32
 # ADD BASE RSC /l 0x409 /d "_DEBUG"
-# ADD RSC /l 0x409 /d "_DEBUG" /d "UNICODE"
+# ADD RSC /l 0x409 /d "_DEBUG"
 BSC32=bscmake.exe
 # ADD BASE BSC32 /nologo
 # ADD BSC32 /nologo
@@ -195,10 +195,6 @@ SOURCE=.\jabber_disco.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\jabber_events.cpp
-# End Source File
-# Begin Source File
-
 SOURCE=.\jabber_file.cpp
 # ADD CPP /Yu
 # End Source File
@@ -220,6 +216,10 @@ SOURCE=.\jabber_groupchat.cpp
 # Begin Source File
 
 SOURCE=.\jabber_ibb.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=.\jabber_opttree.cpp
 # End Source File
 # Begin Source File
 
@@ -270,20 +270,12 @@ SOURCE=.\jabber_opt.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\jabber_opttree.cpp
-# End Source File
-# Begin Source File
-
 SOURCE=.\jabber_password.cpp
 # ADD CPP /Yu
 # End Source File
 # Begin Source File
 
 SOURCE=.\jabber_privacy.cpp
-# End Source File
-# Begin Source File
-
-SOURCE=.\jabber_proto.cpp
 # End Source File
 # Begin Source File
 
@@ -358,14 +350,6 @@ SOURCE=.\jabber_xstatus.cpp
 
 SOURCE=.\jabber_zstream.cpp
 # End Source File
-# Begin Source File
-
-SOURCE=.\MString.cpp
-# End Source File
-# Begin Source File
-
-SOURCE=.\ui_utils.cpp
-# End Source File
 # End Group
 # Begin Group "Header Files"
 
@@ -404,15 +388,7 @@ SOURCE=.\jabber_list.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\jabber_opttree.h
-# End Source File
-# Begin Source File
-
 SOURCE=.\jabber_privacy.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\jabber_proto.h
 # End Source File
 # Begin Source File
 
@@ -421,6 +397,10 @@ SOURCE=.\jabber_proxy.h
 # Begin Source File
 
 SOURCE=.\jabber_rc.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\jabber_opttree.h
 # End Source File
 # Begin Source File
 
@@ -437,14 +417,6 @@ SOURCE=.\jabber_ssl.h
 # Begin Source File
 
 SOURCE=.\jabber_xml.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\MString.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\ui_utils.h
 # End Source File
 # End Group
 # Begin Group "Resource Files"

@@ -390,4 +390,3 @@ static int gg_chpass(WPARAM wParam, LPARAM lParam)
 	DBFreeVariant(&dbv_email);
 }
 
-

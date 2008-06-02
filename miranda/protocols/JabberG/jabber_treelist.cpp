@@ -2,7 +2,7 @@
 
 Jabber Protocol Plugin for Miranda IM
 Copyright ( C ) 2002-04  Santithorn Bunchua
-Copyright ( C ) 2005-08  George Hazan
+Copyright ( C ) 2005-07  George Hazan
 Copyright ( C ) 2007     Victor Pavlychko
 
 This program is free software; you can redistribute it and/or
@@ -19,14 +19,16 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-File name      : $URL$
-Revision       : $Revision$
-Last change on : $Date$
-Last change by : $Author$
-
 */
 
 #include "jabber.h"
+
+#ifdef _WIN32_WINNT
+	#undef _WIN32_WINNT
+#endif
+#define _WIN32_WINNT 0x501
+
+#include <commctrl.h>
 
 #define TLIF_VISIBLE	0x01
 #define TLIF_EXPANDED	0x02
@@ -266,6 +268,7 @@ void TreeList_Update(HWND hwnd)
 {
 	TTreeList_Data *data = (TTreeList_Data *)GetWindowLong(hwnd, GWL_USERDATA);
 	HTREELISTITEM hItem = data->root;
+	LVITEM lvi = {0};
 	int sortIndex = 0;
 
 	SendMessage(hwnd, WM_SETREDRAW, FALSE, 0);
@@ -439,7 +442,7 @@ BOOL TreeList_ProcessMessage(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, 
 				ListView_HitTest(lpnmia->hdr.hwndFrom, &lvhti);
 
 				HTREELISTITEM ptli = ( HTREELISTITEM )lvi.lParam;
-				if ((lvhti.iSubItem == 0) && ( (lvhti.flags&LVHT_ONITEM) == LVHT_ONITEMSTATEICON ) &&
+				if ((lvhti.iSubItem == 0) && ( lvhti.flags & LVHT_ONITEMSTATEICON ) &&
 					(ptli->subItems.getCount() || ptli->flags & TLIF_FAKEPARENT))
 				{
 					if ( ptli->flags & TLIF_EXPANDED )

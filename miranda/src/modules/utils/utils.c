@@ -2,7 +2,7 @@
 
 Miranda IM: the free IM client for Microsoft* Windows*
 
-Copyright 2000-2008 Miranda ICQ/IM project,
+Copyright 2000-2007 Miranda ICQ/IM project,
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
 
@@ -25,7 +25,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 int ResizeDialog(WPARAM wParam,LPARAM lParam);
 int InitOpenUrl(void);
 int InitWindowList(void);
-void FreeWindowList(void);
 int InitHyperlink(void);
 int InitColourPicker(void);
 int InitBitmapFilter(void);
@@ -38,8 +37,6 @@ void shaInit(mir_sha1_ctx *ctx);
 void shaUpdate(mir_sha1_ctx *ctx, mir_sha1_byte_t *dataIn, int len);
 void shaFinal(mir_sha1_ctx *ctx, mir_sha1_byte_t hashout[20]);
 void shaBlock(mir_sha1_byte_t *dataIn, int len, mir_sha1_byte_t hashout[20]);
-
-static BOOL bModuleInitialized = FALSE;
 
 static struct CountryListEntry countries[]={
 	{0   ,"Unspecified"},
@@ -409,11 +406,11 @@ int GetMD5Interface(WPARAM wParam, LPARAM lParam)
 		return 1;
 	if ( md5i->cbSize != sizeof( struct MD5_INTERFACE ))
 		return 1;
-
+    
 	md5i->md5_init = md5_init;
 	md5i->md5_append = md5_append;
 	md5i->md5_finish = md5_finish;
-	md5i->md5_hash = md5_hash_string;
+    md5i->md5_hash = md5_hash_string;
 	return 0;
 }
 
@@ -424,38 +421,23 @@ int GetSHA1Interface(WPARAM wParam, LPARAM lParam)
 		return 1;
 	if ( sha1i->cbSize != sizeof( struct SHA1_INTERFACE ))
 		return 1;
-
+    
 	sha1i->sha1_init = shaInit;
 	sha1i->sha1_append = shaUpdate;
 	sha1i->sha1_finish = shaFinal;
-	sha1i->sha1_hash = shaBlock;
+    sha1i->sha1_hash = shaBlock;
 	return 0;
 }
 
-static int RestartMiranda(WPARAM wParam, LPARAM lParam)
-{
-	TCHAR mirandaPath[ MAX_PATH ], cmdLine[ 100 ];
-	PROCESS_INFORMATION pi;
-	STARTUPINFO si = { 0 };
-	si.cb = sizeof(si);
-	GetModuleFileName( NULL, mirandaPath, SIZEOF(mirandaPath));
-	mir_sntprintf( cmdLine, SIZEOF( cmdLine ), _T("/restart:%d"), GetCurrentProcessId());
-	CreateProcess( mirandaPath, cmdLine, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi );
-	return 0;
-}	
-
 int LoadUtilsModule(void)
 {
-	bModuleInitialized = TRUE;
-
 	CreateServiceFunction(MS_UTILS_RESIZEDIALOG,ResizeDialog);
 	CreateServiceFunction(MS_UTILS_SAVEWINDOWPOSITION,SaveWindowPosition);
 	CreateServiceFunction(MS_UTILS_RESTOREWINDOWPOSITION,RestoreWindowPosition);
 	CreateServiceFunction(MS_UTILS_GETCOUNTRYBYNUMBER,GetCountryByNumber);
 	CreateServiceFunction(MS_UTILS_GETCOUNTRYLIST,GetCountryList);
-	CreateServiceFunction(MS_SYSTEM_RESTART,RestartMiranda);
-	CreateServiceFunction(MS_SYSTEM_GET_MD5I,GetMD5Interface);
-	CreateServiceFunction(MS_SYSTEM_GET_SHA1I,GetSHA1Interface);
+    CreateServiceFunction(MS_SYSTEM_GET_MD5I,GetMD5Interface);
+    CreateServiceFunction(MS_SYSTEM_GET_SHA1I,GetSHA1Interface);
 	InitOpenUrl();
 	InitWindowList();
 	InitHyperlink();
@@ -463,11 +445,4 @@ int LoadUtilsModule(void)
 	InitBitmapFilter();
 	InitPathUtils();
 	return 0;
-}
-
-void UnloadUtilsModule(void)
-{
-	if ( !bModuleInitialized ) return;
-
-	FreeWindowList();
 }

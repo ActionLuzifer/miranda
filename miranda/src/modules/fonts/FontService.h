@@ -2,7 +2,7 @@
 
 Miranda IM: the free IM client for Microsoft* Windows*
 
-Copyright 2000-2008 Miranda ICQ/IM project
+Copyright 2000-2007 Miranda ICQ/IM project
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
 
@@ -84,13 +84,6 @@ typedef struct
 	FSortFunc	sortFunc;
 }
 	ColourIdList;
-
-typedef struct
-{
-	char *paramName;
-	TCHAR *groupName;
-}
-	TreeItem;
 
 extern FontIdList   font_id_list;
 extern ColourIdList colour_id_list;

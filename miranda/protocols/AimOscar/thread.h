@@ -1,22 +1,19 @@
 #ifndef THREAD_H
 #define THREAD_H
-
-struct CAimProto;
-
-struct file_thread_param
+#include "defines.h"
+struct FORK_ARG
 {
-	file_thread_param( CAimProto* _ppro, char* _arg ) :
-		ppro( _ppro ),
-		blob( _arg )
-	{}
-
-	CAimProto* ppro;
-	char* blob;
+	HANDLE hEvent;
+	void (__cdecl *threadcode)(void*);
+	void *arg;
 };
-
-void aim_keepalive_thread( CAimProto* fa );
-
-void accept_file_thread( file_thread_param* );
-void redirected_file_thread( file_thread_param* );
-void proxy_file_thread( file_thread_param* );
+typedef void ( __cdecl* pThreadFunc )( void* );
+void __cdecl forkthread_r(struct FORK_ARG *fa);
+unsigned long ForkThread(pThreadFunc threadcode,void *arg);
+void aim_keepalive_thread(void* fa);
+//void contact_setting_changed_thread(char* data);
+//void message_box_thread(char* data);
+void accept_file_thread(char* szFile);
+void redirected_file_thread(char* blob);
+void proxy_file_thread(char* blob);
 #endif

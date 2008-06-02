@@ -2,7 +2,7 @@
 
 Jabber Protocol Plugin for Miranda IM
 Copyright ( C ) 2002-04  Santithorn Bunchua
-Copyright ( C ) 2005-08  George Hazan
+Copyright ( C ) 2005-07  George Hazan
 Copyright ( C ) 2007     Artem Shpynov
 
 Module implements an XMPP protocol extension for reporting and executing ad-hoc, 
@@ -23,7 +23,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-File name      : $URL$
+File name      : $Source: /cvsroot/miranda/miranda/protocols/JabberG/jabber_adhoc.cpp,v $
 Revision       : $Revision$
 Last change on : $Date$
 Last change by : $Author$
@@ -33,6 +33,7 @@ Last change by : $Author$
 #include "jabber.h"
 #include <CommCtrl.h>
 #include "jabber_iq.h"
+#include "resource.h"
 #include "m_clui.h"
 #include "jabber_caps.h"
 
@@ -40,26 +41,48 @@ Last change by : $Author$
 #define ShowDlgItem( a, b, c )	 ShowWindow( GetDlgItem( a, b ), c )
 #define EnableDlgItem( a, b, c ) EnableWindow( GetDlgItem( a, b ), c )
 
+typedef struct _tagJabberAdHocData
+{
+	int CurrentHeight;
+	int curPos;
+	int frameHeight;
+	RECT frameRect;
+	XmlNode * AdHocNode;
+	XmlNode * CommandsNode;
+	TCHAR * ResponderJID;
+
+}JabberAdHocData;
 enum 
 {
 	JAHM_COMMANDLISTRESULT = WM_USER+1,
 	JAHM_PROCESSRESULT
 };
 
+
+static HWND hwndCommandWindow=NULL;
+
 //Declarators
 static HWND sttGetWindowFromIq( XmlNode *iqNode );
 static BOOL CALLBACK sttDeleteChildWindowsProc( HWND hwnd, LPARAM lParam );
-
+static void JabberIqResult_ListOfCommands( XmlNode *iqNode, void *userdata );
+static void JabberIqResult_CommandExecution( XmlNode *iqNode, void *userdata );
+static int	JabberAdHoc_RequestListOfCommands( TCHAR * szResponder, HWND hwndDlg );
+static int	JabberAdHoc_ExecuteCommand( HWND hwndDlg, TCHAR * jid, JabberAdHocData* dat );
+static int	JabberAdHoc_SubmitCommandForm( HWND hwndDlg, JabberAdHocData * dat, char * action );
+static int	JabberAdHoc_OnJAHMCommandListResult( HWND hwndDlg, XmlNode * iqNode, JabberAdHocData* dat );
+static int	JabberAdHoc_OnJAHMProcessResult( HWND hwndDlg, XmlNode *workNode, JabberAdHocData* dat );
+static int	JabberAdHoc_AddCommandRadio( HWND hFrame, TCHAR * labelStr, int id, int ypos, int value );
+static void JabberAdHoc_RefreshFrameScroll( HWND hwndDlg, JabberAdHocData * dat );
 static BOOL CALLBACK JabberAdHoc_CommandDlgProc( HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam );
 
 //implementations
 
 // convert iqID to dialog hwnd
-HWND CJabberProto::GetWindowFromIq( XmlNode *iqNode )
+static HWND sttGetWindowFromIq( XmlNode *iqNode )
 {
 	TCHAR * id=JabberXmlGetAttrValue(iqNode, "id");
 	if (_tcslen(id)>4)	return (HWND)_tcstol(id+4,NULL,10);
-	return m_hwndCommandWindow;
+	return hwndCommandWindow;
 
 }
 // Callback to clear form content
@@ -82,55 +105,32 @@ static void sttShowControls( HWND hwndDlg, BOOL bShow, int * controlsID )
 	while ( controlsID[i]!=0 )
 		ShowDlgItem( hwndDlg, controlsID[i++], (bShow) ? SW_SHOW : SW_HIDE );
 }
-
-static void JabberAdHoc_RefreshFrameScroll(HWND hwndDlg, JabberAdHocData * dat)
-{
-	HWND hFrame = GetDlgItem( hwndDlg, IDC_FRAME );
-	HWND hwndScroll = GetDlgItem( hwndDlg, IDC_VSCROLL );
-	RECT rc;
-	RECT rcScrollRc;
-	GetClientRect( hFrame, &rc );
-	GetClientRect( hFrame, &dat->frameRect );
-	GetWindowRect( hwndScroll, &rcScrollRc );
-	dat->frameRect.right-=(rcScrollRc.right-rcScrollRc.left);
-	dat->frameHeight = rc.bottom-rc.top;
-	if ( dat->frameHeight < dat->CurrentHeight) {
-		ShowWindow( hwndScroll, SW_SHOW );
-		EnableWindow( hwndScroll, TRUE );
-	}
-	else ShowWindow( hwndScroll, SW_HIDE );
-
-	SetScrollRange( hwndScroll, SB_CTL, 0, dat->CurrentHeight-dat->frameHeight, FALSE );
-
-}
-
 //////////////////////////////////////////////////////////////////////////
 // Iq handlers
 // Forwards to dialog window procedure
-
-void CJabberProto::OnIqResult_ListOfCommands( XmlNode *iqNode, void *userdata )
+static void JabberIqResult_ListOfCommands( XmlNode *iqNode, void *userdata )
 {
-	SendMessage( GetWindowFromIq( iqNode ), JAHM_COMMANDLISTRESULT, 0, (LPARAM)iqNode );
+	SendMessage( sttGetWindowFromIq( iqNode ), JAHM_COMMANDLISTRESULT, 0, (LPARAM)iqNode );
 }
 
-void CJabberProto::OnIqResult_CommandExecution( XmlNode *iqNode, void *userdata )
+static void JabberIqResult_CommandExecution( XmlNode *iqNode, void *userdata )
 {
-	SendMessage( GetWindowFromIq( iqNode ), JAHM_PROCESSRESULT, (WPARAM)JabberXmlCopyNode( iqNode ), 0 );
+	SendMessage( sttGetWindowFromIq( iqNode ), JAHM_PROCESSRESULT, (WPARAM)JabberXmlCopyNode( iqNode ), 0 );
 }
 
-int CJabberProto::AdHoc_RequestListOfCommands( TCHAR * szResponder, HWND hwndDlg )
+static int JabberAdHoc_RequestListOfCommands( TCHAR * szResponder, HWND hwndDlg )
 {
 	int iqId = (int)hwndDlg;
 	XmlNodeIq iq( "get", iqId, szResponder );
 	XmlNode* query = iq.addChild( "query" );
 	query->addAttr( "xmlns", JABBER_FEAT_DISCO_ITEMS );
 	query->addAttr( "node", JABBER_FEAT_COMMANDS );
-	IqAdd( iqId, IQ_PROC_DISCOCOMMANDS, &CJabberProto::OnIqResult_ListOfCommands );
-	m_ThreadInfo->send( iq );
+	JabberIqAdd( iqId, IQ_PROC_DISCOCOMMANDS, JabberIqResult_ListOfCommands );
+	jabberThreadInfo->send( iq );
 	return iqId;
 }
 
-int CJabberProto::AdHoc_ExecuteCommand( HWND hwndDlg, TCHAR * jid, JabberAdHocData* dat )
+static int JabberAdHoc_ExecuteCommand( HWND hwndDlg, TCHAR * jid, JabberAdHocData* dat )
 {
 	for ( int i = 1; i <= dat->CommandsNode->numChild; i++ )
 		if ( IsDlgButtonChecked( GetDlgItem( hwndDlg, IDC_FRAME ), i )) {
@@ -138,27 +138,27 @@ int CJabberProto::AdHoc_ExecuteCommand( HWND hwndDlg, TCHAR * jid, JabberAdHocDa
 			if ( itemNode ) {
 				TCHAR * node = JabberXmlGetAttrValue( itemNode, "node" );
 				if ( node ) {
-					TCHAR *jid2 = JabberXmlGetAttrValue( itemNode, "jid" );
+					TCHAR * jid			= JabberXmlGetAttrValue( itemNode, "jid" );
 
 					int iqId = (int)hwndDlg;
-					XmlNodeIq iq( "set", iqId, jid2 );
+					XmlNodeIq iq( "set", iqId, jid );
 					XmlNode* query = iq.addChild( "command" );
 					query->addAttr( "xmlns", JABBER_FEAT_COMMANDS );
 					query->addAttr( "node", node );
 					query->addAttr( "action", _T("execute"));
-					IqAdd( iqId, IQ_PROC_EXECCOMMANDS, &CJabberProto::OnIqResult_CommandExecution );
-					m_ThreadInfo->send( iq );
+					JabberIqAdd( iqId, IQ_PROC_EXECCOMMANDS, JabberIqResult_CommandExecution );
+					jabberThreadInfo->send( iq );
 
 					EnableDlgItem( hwndDlg, IDC_SUBMIT, FALSE );
 					SetDlgItemText( hwndDlg, IDC_SUBMIT, TranslateT( "OK" ) );
 		}	}	}
 	if ( dat->CommandsNode ) delete dat->CommandsNode;
 	dat->CommandsNode = NULL;
-	return TRUE;
+	return (TRUE);
 }
 
 //Messages handlers
-int CJabberProto::AdHoc_OnJAHMCommandListResult( HWND hwndDlg, XmlNode * iqNode, JabberAdHocData* dat )
+static int JabberAdHoc_OnJAHMCommandListResult( HWND hwndDlg, XmlNode * iqNode, JabberAdHocData* dat )
 {
 	int nodeIdx = 0;
 	TCHAR * type = JabberXmlGetAttrValue( iqNode, "type" );
@@ -203,7 +203,7 @@ int CJabberProto::AdHoc_OnJAHMCommandListResult( HWND hwndDlg, XmlNode * iqNode,
 				if (itemNode) {
 					TCHAR *name = JabberXmlGetAttrValue( itemNode, "name" );
 					if (!name) name = JabberXmlGetAttrValue( itemNode, "node" );
-					ypos = AdHoc_AddCommandRadio( GetDlgItem( hwndDlg,IDC_FRAME ), TranslateTS(name), nodeIdx, ypos, (nodeIdx==1) ? 1 : 0);
+					ypos = JabberAdHoc_AddCommandRadio( GetDlgItem( hwndDlg,IDC_FRAME ), TranslateTS(name), nodeIdx, ypos, (nodeIdx==1) ? 1 : 0);
 					dat->CurrentHeight = ypos;
 				}
 				else break;
@@ -222,7 +222,7 @@ int CJabberProto::AdHoc_OnJAHMCommandListResult( HWND hwndDlg, XmlNode * iqNode,
 	return (TRUE);
 }
 
-int CJabberProto::AdHoc_OnJAHMProcessResult(HWND hwndDlg, XmlNode *workNode, JabberAdHocData* dat)
+static int JabberAdHoc_OnJAHMProcessResult(HWND hwndDlg, XmlNode *workNode, JabberAdHocData* dat)
 {
 	EnumChildWindows( GetDlgItem( hwndDlg, IDC_FRAME ), sttDeleteChildWindowsProc, 0 );
 	dat->CurrentHeight = 0;
@@ -316,7 +316,7 @@ int CJabberProto::AdHoc_OnJAHMProcessResult(HWND hwndDlg, XmlNode *workNode, Jab
 	return TRUE;
 }
 
-int CJabberProto::AdHoc_SubmitCommandForm(HWND hwndDlg, JabberAdHocData * dat, char * action)
+static int JabberAdHoc_SubmitCommandForm(HWND hwndDlg, JabberAdHocData * dat, char * action)
 {
 	XmlNode * commandNode = JabberXmlGetChild( dat->AdHocNode, "command" );
 	XmlNode * xNode		  = JabberXmlGetChild( commandNode, "x" );
@@ -339,8 +339,8 @@ int CJabberProto::AdHoc_SubmitCommandForm(HWND hwndDlg, JabberAdHocData * dat, c
 		command->addAttr( "action", action );
 	
 	command->addChild( dataNode );
-	IqAdd( iqId, IQ_PROC_EXECCOMMANDS, &CJabberProto::OnIqResult_CommandExecution );
-	m_ThreadInfo->send( iq );
+	JabberIqAdd( iqId, IQ_PROC_EXECCOMMANDS, JabberIqResult_CommandExecution );
+	jabberThreadInfo->send( iq );
 	
 	JabberFormSetInstruction(hwndDlg,TranslateT("In progress. Please Wait..."));
 	
@@ -351,7 +351,7 @@ int CJabberProto::AdHoc_SubmitCommandForm(HWND hwndDlg, JabberAdHocData * dat, c
 }
 
 
-int CJabberProto::AdHoc_AddCommandRadio(HWND hFrame, TCHAR * labelStr, int id, int ypos, int value)
+static int JabberAdHoc_AddCommandRadio(HWND hFrame, TCHAR * labelStr, int id, int ypos, int value)
 {
 	int labelHeight;
 	RECT strRect={0};
@@ -378,6 +378,28 @@ int CJabberProto::AdHoc_AddCommandRadio(HWND hFrame, TCHAR * labelStr, int id, i
 
 }
 
+
+static void JabberAdHoc_RefreshFrameScroll(HWND hwndDlg, JabberAdHocData * dat)
+{
+	HWND hFrame = GetDlgItem( hwndDlg, IDC_FRAME );
+	HWND hwndScroll = GetDlgItem( hwndDlg, IDC_VSCROLL );
+	RECT rc;
+	RECT rcScrollRc;
+	GetClientRect( hFrame, &rc );
+	GetClientRect( hFrame, &dat->frameRect );
+	GetWindowRect( hwndScroll, &rcScrollRc );
+	dat->frameRect.right-=(rcScrollRc.right-rcScrollRc.left);
+	dat->frameHeight = rc.bottom-rc.top;
+	if ( dat->frameHeight < dat->CurrentHeight) {
+		ShowWindow( hwndScroll, SW_SHOW );
+		EnableWindow( hwndScroll, TRUE );
+	}
+	else ShowWindow( hwndScroll, SW_HIDE );
+
+	SetScrollRange( hwndScroll, SB_CTL, 0, dat->CurrentHeight-dat->frameHeight, FALSE );
+
+}
+
 static BOOL CALLBACK JabberAdHoc_CommandDlgProc( HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam )
 {
 	JabberAdHocData* dat = ( JabberAdHocData* )GetWindowLong( hwndDlg, GWL_USERDATA );
@@ -385,17 +407,11 @@ static BOOL CALLBACK JabberAdHoc_CommandDlgProc( HWND hwndDlg, UINT msg, WPARAM 
 	{
 	case WM_INITDIALOG:
 		{
-			CJabberAdhocStartupParams* pStartupParams = (CJabberAdhocStartupParams *)lParam;
 			dat=(JabberAdHocData *)mir_alloc(sizeof(JabberAdHocData));
 			memset(dat,0,sizeof(JabberAdHocData));
-			
-			//hmmm, useless code? if (dat->ResponderJID) mir_free(dat->ResponderJID);
-			dat->ResponderJID = mir_tstrdup(pStartupParams->m_szJid);
-			dat->proto = pStartupParams->m_pProto;
-
 			SetWindowLong(hwndDlg,GWL_USERDATA,(LPARAM)dat);
-			SendMessage( hwndDlg, WM_SETICON, ICON_BIG, ( LPARAM )dat->proto->LoadIconEx( "adhoc" ));
-			dat->proto->m_hwndCommandWindow = hwndDlg;
+			SendMessage( hwndDlg, WM_SETICON, ICON_BIG, ( LPARAM )LoadIconEx( "adhoc" ));
+			hwndCommandWindow = hwndDlg;
 			TranslateDialogDefault( hwndDlg );
 
 			//Firstly hide frame
@@ -417,8 +433,13 @@ static BOOL CALLBACK JabberAdHoc_CommandDlgProc( HWND hwndDlg, UINT msg, WPARAM 
 			SetDlgItemText(hwndDlg,IDC_SUBMIT, TranslateT("Execute"));
 			JabberFormSetInstruction(hwndDlg,TranslateT("Requesting command list. Please wait..."));
 
+			CJabberAdhocStartupParams* pStartupParams = (CJabberAdhocStartupParams *)lParam;
+			
+			if (dat->ResponderJID) mir_free(dat->ResponderJID);
+			dat->ResponderJID=mir_tstrdup(pStartupParams->m_szJid);
+
 			if ( !pStartupParams->m_szNode ) {
-				dat->proto->AdHoc_RequestListOfCommands(pStartupParams->m_szJid, hwndDlg);
+				JabberAdHoc_RequestListOfCommands(pStartupParams->m_szJid, hwndDlg);
 
 				TCHAR Caption[ 512 ];
 				_sntprintf(Caption, SIZEOF(Caption), _T("%s %s"), TranslateT("Jabber Ad-Hoc commands at"), dat->ResponderJID );
@@ -432,8 +453,8 @@ static BOOL CALLBACK JabberAdHoc_CommandDlgProc( HWND hwndDlg, UINT msg, WPARAM 
 				query->addAttr( "xmlns", JABBER_FEAT_COMMANDS );
 				query->addAttr( "node", pStartupParams->m_szNode );
 				query->addAttr( "action", _T("execute"));
-				dat->proto->IqAdd( iqId, IQ_PROC_EXECCOMMANDS, &CJabberProto::OnIqResult_CommandExecution );
-				dat->proto->m_ThreadInfo->send( iq );
+				JabberIqAdd( iqId, IQ_PROC_EXECCOMMANDS, JabberIqResult_CommandExecution );
+				jabberThreadInfo->send( iq );
 
 				EnableDlgItem( hwndDlg, IDC_SUBMIT, FALSE );
 				SetDlgItemText( hwndDlg, IDC_SUBMIT, TranslateT( "OK" ) );
@@ -464,18 +485,18 @@ static BOOL CALLBACK JabberAdHoc_CommandDlgProc( HWND hwndDlg, UINT msg, WPARAM 
 			{
 
 			case IDC_PREV:
-				return dat->proto->AdHoc_SubmitCommandForm(hwndDlg,dat,"prev");
+				return JabberAdHoc_SubmitCommandForm(hwndDlg,dat,"prev");
 			case IDC_NEXT:
-				return dat->proto->AdHoc_SubmitCommandForm(hwndDlg,dat,"next");
+				return JabberAdHoc_SubmitCommandForm(hwndDlg,dat,"next");
 			case IDC_COMPLETE:
-				return dat->proto->AdHoc_SubmitCommandForm(hwndDlg,dat,"complete");
+				return JabberAdHoc_SubmitCommandForm(hwndDlg,dat,"complete");
 			case IDC_SUBMIT:
 				if (!dat->AdHocNode && dat->CommandsNode && LOWORD( wParam )==IDC_SUBMIT) 
-					return dat->proto->AdHoc_ExecuteCommand(hwndDlg,dat->ResponderJID, dat);
+					return JabberAdHoc_ExecuteCommand(hwndDlg,dat->ResponderJID, dat);
 				else
-					return dat->proto->AdHoc_SubmitCommandForm(hwndDlg,dat, NULL);
-			case IDCLOSE:
+					return JabberAdHoc_SubmitCommandForm(hwndDlg,dat, NULL);
 			case IDCANCEL:
+			case IDCLOSE:
 				if ( dat->AdHocNode )
 					delete dat->AdHocNode;
 				dat->AdHocNode=NULL;
@@ -485,9 +506,9 @@ static BOOL CALLBACK JabberAdHoc_CommandDlgProc( HWND hwndDlg, UINT msg, WPARAM 
 			break;
 		}
 	case JAHM_COMMANDLISTRESULT:
-		return dat->proto->AdHoc_OnJAHMCommandListResult(hwndDlg,(XmlNode *)lParam,dat);
+		return (JabberAdHoc_OnJAHMCommandListResult(hwndDlg,(XmlNode *)lParam,dat));	
 	case JAHM_PROCESSRESULT:
-		return dat->proto->AdHoc_OnJAHMProcessResult(hwndDlg,(XmlNode *) wParam,dat);
+		return JabberAdHoc_OnJAHMProcessResult(hwndDlg,(XmlNode *) wParam,dat);
 
 	case WM_MOUSEWHEEL:
 		{
@@ -545,7 +566,7 @@ static BOOL CALLBACK JabberAdHoc_CommandDlgProc( HWND hwndDlg, UINT msg, WPARAM 
 		{
 			JabberFormDestroyUI(GetDlgItem(hwndDlg, IDC_FRAME));
 
-			dat->proto->m_hwndCommandWindow = NULL;
+			hwndCommandWindow = NULL;
 			if (dat->AdHocNode) delete dat->AdHocNode;
 			dat->AdHocNode=NULL;
 			if (dat->ResponderJID) mir_free(dat->ResponderJID);
@@ -561,22 +582,25 @@ static BOOL CALLBACK JabberAdHoc_CommandDlgProc( HWND hwndDlg, UINT msg, WPARAM 
 	return FALSE;
 }
 
-int __cdecl CJabberProto::ContactMenuRunCommands(WPARAM wParam, LPARAM lParam )
+
+
+
+int JabberContactMenuRunCommands(WPARAM wParam, LPARAM lParam)
 {
 	HANDLE hContact;
 	DBVARIANT dbv;
-	int res = -1;
+	int res=-1;
 	JABBER_LIST_ITEM * item=NULL;
 	
-	if ((( hContact=( HANDLE ) wParam )!=NULL || (lParam!=0)) && m_bJabberOnline ) {
+	if ((( hContact=( HANDLE ) wParam )!=NULL || (lParam!=0)) && jabberOnline ) {
 		if ( wParam && !JGetStringT( hContact, "jid", &dbv )) {
 			TCHAR jid[ 512 ];
 			int selected = 0;
 			_tcsncpy(jid, dbv.ptszVal, SIZEOF(jid));
 
-			ListLock();
+			JabberListLock();
 			{
-				item = ListGetItemPtr( LIST_ROSTER, jid);
+				item=JabberListGetItemPtr( LIST_ROSTER, jid);
 				if (item)
 				{
 					if (item->resourceCount>1)
@@ -604,13 +628,13 @@ int __cdecl CJabberProto::ContactMenuRunCommands(WPARAM wParam, LPARAM lParam )
 							_tcsncat(jid,item->resource[selected].resourceName,SIZEOF(jid));
 						}
 						selected=1;
-					}
-				}
+					}				
+				}  
 			}
-			ListUnlock();
-
+			JabberListUnlock();
+			
 			if (!item || selected) {
-				CJabberAdhocStartupParams* pStartupParams = new CJabberAdhocStartupParams( this, jid, NULL );
+				CJabberAdhocStartupParams* pStartupParams = new CJabberAdhocStartupParams( jid, NULL );
 				CreateDialogParam( hInst, MAKEINTRESOURCE( IDD_FORM ), NULL, JabberAdHoc_CommandDlgProc, ( LPARAM )(pStartupParams) );
 			}
 			JFreeVariant( &dbv );
@@ -620,10 +644,4 @@ int __cdecl CJabberProto::ContactMenuRunCommands(WPARAM wParam, LPARAM lParam )
 			CreateDialogParam( hInst, MAKEINTRESOURCE( IDD_FORM ), NULL, JabberAdHoc_CommandDlgProc, lParam );
 	}
 	return res;
-}
-
-void CJabberProto::ContactMenuAdhocCommands( CJabberAdhocStartupParams* param )
-{
-	if( param )
-		CreateDialogParam( hInst, MAKEINTRESOURCE( IDD_FORM ), NULL, JabberAdHoc_CommandDlgProc, (LPARAM)param );
 }

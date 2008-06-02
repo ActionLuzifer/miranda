@@ -2,7 +2,7 @@
 
 Miranda IM: the free IM client for Microsoft* Windows*
 
-Copyright 2000-2008 Miranda ICQ/IM project,
+Copyright 2000-2007 Miranda ICQ/IM project,
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
 
@@ -324,17 +324,14 @@ BOOL CALLBACK DlgProcSendFile(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lPar
 				forkthread(ChooseFilesThread,0,hwndDlg);
 				break;
 			case IDOK:
+				if(dat->hwndTransfer) return SendMessage(dat->hwndTransfer,msg,wParam,lParam);
 				EnableWindow(GetDlgItem(hwndDlg,IDC_FILENAME),FALSE);
 				EnableWindow(GetDlgItem(hwndDlg,IDC_MSG),FALSE);
 				EnableWindow(GetDlgItem(hwndDlg,IDC_CHOOSE),FALSE);
-
-				GetDlgItemTextA(hwndDlg,IDC_FILEDIR,dat->szSavePath,SIZEOF(dat->szSavePath));
-				GetDlgItemTextA(hwndDlg,IDC_FILE,dat->szFilenames,SIZEOF(dat->szFilenames));
-				GetDlgItemTextA(hwndDlg,IDC_MSG,dat->szMsg,SIZEOF(dat->szMsg));
-				dat->hwndTransfer=FtMgr_AddTransfer(dat);
-				DestroyWindow(hwndDlg);
+				dat->hwndTransfer=CreateDialogParam(GetModuleHandle(NULL),MAKEINTRESOURCE(IDD_FILETRANSFERINFO),hwndDlg,DlgProcFileTransfer,(LPARAM)dat);
 				return TRUE;
 			case IDCANCEL:
+				if(dat->hwndTransfer) return SendMessage(dat->hwndTransfer,msg,wParam,lParam);
 				DestroyWindow(hwndDlg);
 				return TRUE;
 			case IDC_USERMENU:
@@ -354,13 +351,21 @@ BOOL CALLBACK DlgProcSendFile(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lPar
 		}
 		break;
 
+	case M_PRESHUTDOWN:
+		if ( IsWindow( dat->hwndTransfer ))
+			PostMessage( dat->hwndTransfer, WM_CLOSE, 0, 0 );
+		break;
+
 	case WM_DESTROY:
 		Window_FreeIcon_IcoLib(hwndDlg);
 		Button_FreeIcon_IcoLib(hwndDlg,IDC_DETAILS);
 		Button_FreeIcon_IcoLib(hwndDlg,IDC_HISTORY);
 		Button_FreeIcon_IcoLib(hwndDlg,IDC_USERMENU);
 		if(dat->hPreshutdownEvent) UnhookEvent(dat->hPreshutdownEvent);
+		if(dat->hwndTransfer) DestroyWindow(dat->hwndTransfer);
+		FreeFilesMatrix(&dat->files);
 		SetWindowLong(GetDlgItem(hwndDlg,IDC_MSG),GWL_WNDPROC,(LONG)OldSendEditProc);
+		mir_free(dat);
 		return TRUE;
 	}
 	return FALSE;

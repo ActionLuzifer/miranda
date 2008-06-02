@@ -2,7 +2,7 @@
 
 Miranda IM: the free IM client for Microsoft* Windows*
 
-Copyright 2000-2008 Miranda ICQ/IM project,
+Copyright 2000-2007 Miranda ICQ/IM project,
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
 
@@ -37,8 +37,7 @@ int InitGroupServices(void);
 int Docking_IsDocked(WPARAM wParam, LPARAM lParam);
 void InitDisplayNameCache(void);
 void FreeDisplayNameCache(void);
-int LoadCLUIModule(void);
-int InitClistHotKeys(void);
+void LoadCLUIModule();
 
 pfnMyMonitorFromPoint  MyMonitorFromPoint = NULL;
 pfnMyMonitorFromWindow MyMonitorFromWindow = NULL;
@@ -129,7 +128,7 @@ static int GetStatusModeDescription(WPARAM wParam, LPARAM lParam)
 		if ( !( lParam & GCMDF_TCHAR ))
 		{
 			static char szMode[64]={0};
-			TCHAR* buf1 = (TCHAR*)cli.pfnGetStatusModeDescription( wParam, lParam );
+			TCHAR* buf1 = (TCHAR*)cli.pfnGetStatusModeDescription(wParam,lParam);
 			char *buf2 = u2a(buf1);
 			_snprintf(szMode,sizeof(szMode),"%s",buf2);
 			mir_free(buf2);
@@ -204,7 +203,8 @@ static int GetContactIcon(WPARAM wParam, LPARAM lParam)
 
 static int ContactListModulesLoaded(WPARAM wParam, LPARAM lParam)
 {
-	int i, j, iImg;
+	int i, protoCount, j, iImg;
+	PROTOCOLDESCRIPTOR **protoList;
 
 	if ( !ServiceExists( MS_DB_CONTACT_GETSETTING_STR )) {
 		MessageBox( NULL, TranslateT( "This plugin requires db3x plugin version 0.5.1.0 or later" ), _T("CList"), MB_OK );
@@ -214,14 +214,16 @@ static int ContactListModulesLoaded(WPARAM wParam, LPARAM lParam)
 	CheckProtocolOrder();
 	RebuildMenuOrder();
 
+	CallService(MS_PROTO_ENUMPROTOCOLS, (WPARAM) & protoCount, (LPARAM) & protoList);
 	protoIconIndexCount = 0;
 	protoIconIndex = NULL;
-	for (i = 0; i < accounts.count; i++) {
-		PROTOACCOUNT* pa = accounts.items[i];
+	for (i = 0; i < protoCount; i++) {
+		if (protoList[i]->type != PROTOTYPE_PROTOCOL)
+			continue;
 		protoIconIndex = (struct ProtoIconIndex *) mir_realloc(protoIconIndex, sizeof(struct ProtoIconIndex) * (protoIconIndexCount + 1));
-		protoIconIndex[protoIconIndexCount].szProto = pa->szModuleName;
+		protoIconIndex[protoIconIndexCount].szProto = protoList[i]->szName;
 		for (j = 0; j < SIZEOF(statusModeList); j++) {
-			iImg = ImageList_AddIcon_ProtoIconLibLoaded(hCListImages, pa->szModuleName, statusModeList[j] );
+			iImg = ImageList_AddIcon_ProtoIconLibLoaded(hCListImages, protoList[i]->szName, statusModeList[j] );
 			if (j == 0)
 				protoIconIndex[protoIconIndexCount].iIconBase = iImg;
 		}
@@ -230,9 +232,6 @@ static int ContactListModulesLoaded(WPARAM wParam, LPARAM lParam)
 	cli.pfnLoadContactTree();
 
 	LoadCLUIModule();
-
-	InitClistHotKeys();
-
 	return 0;
 }
 

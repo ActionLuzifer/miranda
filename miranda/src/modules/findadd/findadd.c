@@ -2,7 +2,7 @@
 
 Miranda IM: the free IM client for Microsoft* Windows*
 
-Copyright 2000-2008 Miranda ICQ/IM project,
+Copyright 2000-2007 Miranda ICQ/IM project,
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
 
@@ -296,9 +296,10 @@ static BOOL CALLBACK DlgProcFindAdd(HWND hwndDlg, UINT msg, WPARAM wParam, LPARA
 
 	switch (msg) {
 		case WM_INITDIALOG:
-		{	
-			int i,netProtoCount;
+		{	int protoCount,i,netProtoCount;
+			PROTOCOLDESCRIPTOR **protos;
 			COMBOBOXEXITEM cbei;
+			char szProtoName[64];
 			HICON hIcon;
 
 			TranslateDialogDefault(hwndDlg);
@@ -349,20 +350,22 @@ static BOOL CALLBACK DlgProcFindAdd(HWND hwndDlg, UINT msg, WPARAM wParam, LPARA
 				SetStatusBarSearchInfo(GetDlgItem(hwndDlg,IDC_STATUSBAR),dat);
 			}
 			{
-				TCHAR *szProto = NULL;
+				char *szProto = NULL;
 				int index = 0;
 				DBVARIANT dbv={0};
 				HDC hdc;
 				SIZE textSize;
 				RECT rect;
 				int cbwidth = 0;
+				DWORD caps;
 
-				if ( !DBGetContactSettingTString( NULL, "FindAdd", "LastSearched", &dbv ))
-					szProto = dbv.ptszVal;
-				
-				for( i=0, netProtoCount=0; i < accounts.count; i++ ) {
-					DWORD caps = (DWORD)CallProtoService( accounts.items[i]->szModuleName, PS_GETCAPS, PFLAGNUM_1, 0 );
-					if (caps & PF1_BASICSEARCH || caps & PF1_EXTSEARCH || caps & PF1_SEARCHBYEMAIL || caps & PF1_SEARCHBYNAME)
+				if(!DBGetContactSettingString(NULL, "FindAdd", "LastSearched", &dbv))
+					szProto=(char*)dbv.pszVal;
+				CallService(MS_PROTO_ENUMPROTOCOLS,(WPARAM)&protoCount,(LPARAM)&protos);
+				for(i=0,netProtoCount=0;i<protoCount;i++) {
+					if(protos[i]->type!=PROTOTYPE_PROTOCOL) continue;
+					caps=(DWORD)CallProtoService(protos[i]->szName,PS_GETCAPS,PFLAGNUM_1,0);
+					if (caps&PF1_BASICSEARCH || caps&PF1_EXTSEARCH || caps&PF1_SEARCHBYEMAIL || caps&PF1_SEARCHBYNAME)
 						netProtoCount++;
 				}
 				dat->himlComboIcons=ImageList_Create(GetSystemMetrics(SM_CXSMICON),GetSystemMetrics(SM_CYSMICON),(IsWinVerXPPlus()?ILC_COLOR32:ILC_COLOR16)|ILC_MASK,netProtoCount+1,netProtoCount+1);
@@ -380,22 +383,28 @@ static BOOL CALLBACK DlgProcFindAdd(HWND hwndDlg, UINT msg, WPARAM wParam, LPARA
 					SendDlgItemMessageA(hwndDlg,IDC_PROTOLIST,CBEM_INSERTITEM,0,(LPARAM)&cbei);
 					cbei.iItem++;
 				}
-				for( i=0; i < accounts.count; i++ ) {
-					PROTOACCOUNT* pa = accounts.items[i];
-					DWORD caps=(DWORD)CallProtoService( pa->szModuleName, PS_GETCAPS, PFLAGNUM_1, 0 );
-					if ( !(caps&PF1_BASICSEARCH) && !(caps&PF1_EXTSEARCH) && !(caps&PF1_SEARCHBYEMAIL) && !(caps&PF1_SEARCHBYNAME))
+				for(i=0;i<protoCount;i++) {
+					if(protos[i]->type!=PROTOTYPE_PROTOCOL) continue;
+					caps=(DWORD)CallProtoService(protos[i]->szName,PS_GETCAPS,PFLAGNUM_1,0);
+					if (!(caps&PF1_BASICSEARCH) && !(caps&PF1_EXTSEARCH) && !(caps&PF1_SEARCHBYEMAIL) && !(caps&PF1_SEARCHBYNAME))
 						continue;
-					
-					cbei.pszText = pa->tszAccountName;
+					CallProtoService(protos[i]->szName,PS_GETNAME,SIZEOF(szProtoName),(LPARAM)szProtoName);
+					#if !defined( _UNICODE )
+						cbei.pszText=(char*)szProtoName;
+					#else
+					{	TCHAR wszProtoName[ 64 ];
+						MultiByteToWideChar( CP_ACP, 0, szProtoName, 64, wszProtoName, 64 );
+						cbei.pszText = wszProtoName;
+					}
+					#endif
 					GetTextExtentPoint32(hdc,cbei.pszText,lstrlen(cbei.pszText),&textSize);
 					if (textSize.cx>cbwidth) cbwidth = textSize.cx;
-					hIcon=(HICON)CallProtoService( pa->szModuleName,PS_LOADICON,PLI_PROTOCOL|PLIF_SMALL,0);
+					hIcon=(HICON)CallProtoService(protos[i]->szName,PS_LOADICON,PLI_PROTOCOL|PLIF_SMALL,0);
 					cbei.iImage=cbei.iSelectedImage=ImageList_AddIcon(dat->himlComboIcons,hIcon);
 					DestroyIcon(hIcon);
-					cbei.lParam=(LPARAM)pa->szModuleName;
+					cbei.lParam=(LPARAM)protos[i]->szName;
 					SendDlgItemMessageA(hwndDlg,IDC_PROTOLIST,CBEM_INSERTITEM,0,(LPARAM)&cbei);
-					if (szProto && cbei.pszText && !lstrcmp( szProto, pa->tszAccountName ))
-						index = cbei.iItem;
+					if (szProto && cbei.pszText && !lstrcmpA(szProto,szProtoName)) index=cbei.iItem;
 					cbei.iItem++;
 				}
 				cbwidth+=32;
@@ -452,20 +461,21 @@ static BOOL CALLBACK DlgProcFindAdd(HWND hwndDlg, UINT msg, WPARAM wParam, LPARA
 		}
 		case M_SETGROUPVISIBILITIES:
 		{	char *szProto;
-			int i;
+			int protoCount,i;
+			PROTOCOLDESCRIPTOR **protos;
 			DWORD protoCaps;
 			MINMAXINFO mmi;
 			RECT rc;
 			int checkmarkVisible;
 
-			dat->showAdvanced = dat->showEmail = dat->showName = dat->showProtoId = dat->showTiny = 0;
+			dat->showAdvanced=dat->showEmail=dat->showName=dat->showProtoId=dat->showTiny=0;
 			szProto=(char*)SendDlgItemMessage(hwndDlg,IDC_PROTOLIST,CB_GETITEMDATA,SendDlgItemMessage(hwndDlg,IDC_PROTOLIST,CB_GETCURSEL,0,0),0);
-			if ( szProto == (char *)CB_ERR )
-				break;
-			if ( szProto == NULL ) {
-				for ( i=0; i < accounts.count; i++ ) {
-					PROTOACCOUNT* pa = accounts.items[i];
-					protoCaps=(DWORD)CallProtoService(pa->szModuleName,PS_GETCAPS,PFLAGNUM_1,0);
+			if ( szProto == (char *)CB_ERR ) break;
+			if(szProto==NULL) {
+				CallService(MS_PROTO_ENUMPROTOCOLS,(WPARAM)&protoCount,(LPARAM)&protos);
+				for(i=0;i<protoCount;i++) {
+					if(protos[i]->type!=PROTOTYPE_PROTOCOL) continue;
+					protoCaps=(DWORD)CallProtoService(protos[i]->szName,PS_GETCAPS,PFLAGNUM_1,0);
 					if(protoCaps&PF1_SEARCHBYEMAIL) dat->showEmail=1;
 					if(protoCaps&PF1_SEARCHBYNAME) dat->showName=1;
 				}
@@ -941,7 +951,8 @@ static int FindAddCommand(WPARAM wParam,LPARAM lParam)
 	}
 	else {
 		INITCOMMONCONTROLSEX icce={0};
-		int netProtoCount, i;
+		int netProtoCount, protoCount, i;
+		PROTOCOLDESCRIPTOR **protos;
 
 		// Make sure we have some networks to search on. This is not ideal since
 		// this check will be repeated every time the dialog is requested, but it
@@ -949,12 +960,13 @@ static int FindAddCommand(WPARAM wParam,LPARAM lParam)
 		// One alternative would be to only create the service if we have network
 		// protocols loaded but that would delay the creation until MODULE_LOADED and
 		// that is not good either...
-		for ( i=0, netProtoCount=0; i < accounts.count; i++ ) {
-			PROTOACCOUNT* pa = accounts.items[i];
-			int protoCaps=CallProtoService( pa->szModuleName, PS_GETCAPS, PFLAGNUM_1, 0 );
-			if ( protoCaps&PF1_BASICSEARCH || protoCaps&PF1_SEARCHBYEMAIL || protoCaps&PF1_SEARCHBYNAME
-				|| protoCaps&PF1_EXTSEARCHUI ) netProtoCount++;
-		}
+		CallService(MS_PROTO_ENUMPROTOCOLS,(WPARAM)&protoCount,(LPARAM)&protos);
+		for(i=0,netProtoCount=0;i<protoCount;i++)
+			if(protos[i]->type==PROTOTYPE_PROTOCOL) {
+				int protoCaps=CallProtoService(protos[i]->szName, PS_GETCAPS, PFLAGNUM_1, 0);
+				if ( protoCaps&PF1_BASICSEARCH || protoCaps&PF1_SEARCHBYEMAIL || protoCaps&PF1_SEARCHBYNAME
+					|| protoCaps&PF1_EXTSEARCHUI ) netProtoCount++;
+			}
 		if (netProtoCount > 0) {
 			icce.dwSize=sizeof(icce);
 			icce.dwICC=ICC_USEREX_CLASSES;
@@ -982,15 +994,17 @@ int LoadFindAddModule(void)
 
 static int OnSystemModulesLoaded(WPARAM wParam,LPARAM lParam)
 {
-	int netProtoCount, i;
+	int netProtoCount, protoCount, i;
+	PROTOCOLDESCRIPTOR **protos;
 
 	// Make sure we have some networks to search on.
-	for ( i=0, netProtoCount=0; i < accounts.count; i++ ) {
-		PROTOACCOUNT* pa = accounts.items[i];
-		int protoCaps = CallProtoService( pa->szModuleName, PS_GETCAPS, PFLAGNUM_1, 0 );
-		if ( protoCaps & ( PF1_BASICSEARCH | PF1_SEARCHBYEMAIL | PF1_SEARCHBYNAME | PF1_EXTSEARCHUI ))
-			netProtoCount++;
-	}
+	CallService(MS_PROTO_ENUMPROTOCOLS,(WPARAM)&protoCount,(LPARAM)&protos);
+	for ( i=0, netProtoCount=0; i < protoCount; i++ )
+		if ( protos[i]->type == PROTOTYPE_PROTOCOL ) {
+			int protoCaps = CallProtoService( protos[i]->szName, PS_GETCAPS, PFLAGNUM_1, 0 );
+			if ( protoCaps & ( PF1_BASICSEARCH | PF1_SEARCHBYEMAIL | PF1_SEARCHBYNAME | PF1_EXTSEARCHUI ))
+				netProtoCount++;
+		}
 
 	if ( netProtoCount > 0 ) {
 		CLISTMENUITEM mi = { 0 };

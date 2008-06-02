@@ -2,7 +2,7 @@
 
 Miranda IM: the free IM client for Microsoft* Windows*
 
-Copyright 2000-2008 Miranda ICQ/IM project,
+Copyright 2000-2007 Miranda ICQ/IM project,
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
 
@@ -55,7 +55,7 @@ static int sttCompareFont( const TFontID* p1, const TFontID* p2 )
 	result = p1->order - p2->order;
 	if ( result != 0 )
 		return result;
-	return _tcscmp( TranslateTS(p1->name), TranslateTS(p2->name) );
+	return _tcscmp( p1->name, p2->name );
 }
 
 static int sttCompareColour( const TColourID* p1, const TColourID* p2 )
@@ -67,7 +67,7 @@ static int sttCompareColour( const TColourID* p1, const TColourID* p2 )
 	if ( result != 0 )
 		return result;
 
-	return _tcscmp( TranslateTS(p1->name), TranslateTS(p2->name) );
+	return _tcscmp( p1->name, p2->name );
 }
 
 static int ModulesLoaded(WPARAM wParam, LPARAM lParam)

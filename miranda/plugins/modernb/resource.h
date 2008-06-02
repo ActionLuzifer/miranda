@@ -11,7 +11,6 @@
 #define IDD_OPT_CLIST                   126
 #define IDD_OPT_SOUND                   134
 #define IDD_OPT_HOTKEYS                 134
-#define IDD_OPT_CLIST_LISTBKG			135
 #define IDI_URL                         138
 #define IDI_FINDUSER                    161
 #define IDI_OPTIONS                     163
@@ -618,7 +617,6 @@
 #define IDC_METADBLCLK                  1612
 #define IDC_NOSCROLLBAR                 1613
 #define IDC_METAEXPAND                  1613
-#define IDC_AEROGLASS                   1613
 #define IDC_METASUBEXTRA                1614
 #define IDC_METASUBEXTRA_IGN            1615
 #define IDC_METASUB_HIDEOFFLINE         1616
@@ -686,7 +684,6 @@
 #define IDC_CHECK_COLOR                 1762
 #define IDC_SHOW_STATUS_IF_NOAWAY       1762
 #define IDC_CHECK6                      1762
-#define IDC_CHECK_AUTOSIZE              1762
 #define IDC_DISCOVER_AWAYMSG            1763
 #define IDC_OFFSETSPIN                  1763
 #define IDC_CHECK_IMAGE                 1763
@@ -729,7 +726,6 @@
 #define IDC_EDIT_FILENAME               1773
 #define IDC_EDIT_FILENAME2              1774
 #define IDC_EDIT_SKIN_FILENAME          1774
-#define IDC_OFFSETICON4                 1774
 #define IDC_EDIT_LEFT                   1775
 #define IDC_EDIT_RIGHT                  1776
 #define IDC_EDIT_TOP                    1777
@@ -910,24 +906,6 @@
 #define IDC_SPIN_W                      2014
 #define IDC_SPIN_H                      2015
 #define IDC_SPIN_S                      2016
-#define IDC_CHECK_MULTILINE             2017
-#define IDC_CHECK_ATOSIZE               2018
-#define IDC_SBAR_HORIZ_ALIGN            2019
-#define IDC_SBAR_TOP_BORDER             2020
-#define IDC_SBAR_BOTTOM_BORDER          2021
-#define IDC_STATUSBAR_PER_PROTO         2022
-#define IDC_OFFSETICON_RIGHT            2023
-#define IDC_OFFSETSPIN_RIGHT            2024
-#define IDC_OFFSETICON_LEFT             2025
-#define IDC_OFFSETSPIN_LEFT             2026
-#define IDC_STATUSBAR_PROTO_LIST        2027
-#define IDC_SBAR_USE_ACCOUNT_SETTINGS   2028
-#define IDC_SBAR_HIDE_ACCOUNT_COMPLETELY 2029
-#define IDC_SBAR_BORDER_TOP             2030
-#define IDC_SBAR_BORDER_TOP_SPIN        2031
-#define IDC_SBAR_BORDER_BOTTOM          2032
-#define IDC_SBAR_BORDER_BOTTOM_SPIN     2033
-#define IDC_SBAR_VERT_ALIGN             2034
 #define IDC_CLSORT1                     6666
 #define IDC_CLSORT2                     6667
 #define IDC_CLSORT3                     6668
@@ -950,8 +928,6 @@
 #define IDC_SHOW_ANIAVATARS             11722
 #define IDC_SHOW_STATUSMSG              11723
 #define IDC_HIDE_ICON_ON_AVATAR         11723
-#define IDC_SHOW_ANIAVATARS2            11723
-#define IDC_AVATAR_FASTDRAW             11723
 #define IDC_SHOW_STATUSMSG2             11724
 #define IDC_SHOW_STATUS_MSG             11724
 #define IDC_SUBIDENTCAPT2               11767
@@ -1028,7 +1004,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        508
 #define _APS_NEXT_COMMAND_VALUE         40022
-#define _APS_NEXT_CONTROL_VALUE         2024
+#define _APS_NEXT_CONTROL_VALUE         2017
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

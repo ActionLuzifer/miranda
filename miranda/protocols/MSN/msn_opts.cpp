@@ -51,14 +51,15 @@ static iconList[] =
 
 void MsnInitIcons( void )
 {
-	char szFile[MAX_PATH];
+	char szFile[MAX_PATH], szSection[MAX_PATH];
 	GetModuleFileNameA(hInst, szFile, MAX_PATH);
 
 	SKINICONDESC sid = {0};
 	sid.cbSize = sizeof(SKINICONDESC);
 	sid.pszDefaultFile = szFile;
 	sid.cx = sid.cy = 16;
-	sid.pszSection = MSN_Translate( msnProtocolName );
+    mir_snprintf( szSection, sizeof(szSection), "%s/%s", MSN_Translate("Protocols"), MSN_Translate(msnProtocolName));
+	sid.pszSection = szSection;
 
 	for ( unsigned i = 0; i < SIZEOF(iconList); i++ ) {
 		char szSettingName[100];
@@ -121,7 +122,7 @@ static INT_PTR CALLBACK DlgProcMsnOpts(HWND hwndDlg, UINT msg, WPARAM wParam, LP
 		}
 		EnableWindow(wnd, msnLoggedIn);
 		EnableWindow(GetDlgItem(hwndDlg, IDC_MOBILESEND), msnLoggedIn && 
-			MSN_GetByte( "MobileEnabled", 0) && MSN_GetByte( "MobileAllowed", 0));
+			(MSN_GetByte( "MobileEnabled", 0) || MSN_GetByte( "MobileAllowed", 0)));
 
 		CheckDlgButton( hwndDlg, IDC_MOBILESEND,        MSN_GetByte( "MobileAllowed", 0 ));
 		CheckDlgButton( hwndDlg, IDC_SENDFONTINFO,      MSN_GetByte( "SendFontInfo", 1 ));
@@ -231,7 +232,7 @@ LBL_Continue:
 		break;
 
 	case WM_NOTIFY:
-		if (((LPNMHDR)lParam)->code == (UINT)PSN_APPLY ) {
+		if (((LPNMHDR)lParam)->code == PSN_APPLY ) {
 			bool reconnectRequired = false;
 			TCHAR screenStr[ MAX_PATH ];
 			char  password[ 100 ], szEmail[MSN_MAX_EMAIL_LEN];
@@ -247,7 +248,7 @@ LBL_Continue:
 			GetDlgItemTextA( hwndDlg, IDC_PASSWORD, password, sizeof( password ));
 			MSN_CallService( MS_DB_CRYPT_ENCODESTRING, sizeof( password ),( LPARAM )password );
 			if ( !DBGetContactSettingString( NULL, msnProtocolName, "Password", &dbv )) {
-				if ( strcmp( password, dbv.pszVal )) {
+				if ( lstrcmpA( password, dbv.pszVal )) {
 					reconnectRequired = true;
 					MSN_SetString( NULL, "Password", password );
 				}
@@ -258,12 +259,13 @@ LBL_Continue:
 				MSN_SetString( NULL, "Password", password );
 			}
 
-			GetDlgItemText( hwndDlg, IDC_HANDLE2, screenStr, SIZEOF( screenStr ));
+			GetDlgItemText( hwndDlg, IDC_HANDLE2, screenStr, sizeof( screenStr ));
 			if	( !MSN_GetStringT( "Nick", NULL, &dbv )) {
-				if ( _tcscmp( dbv.ptszVal, screenStr ))
+				if ( lstrcmp( dbv.ptszVal, screenStr ))
 					MSN_SendNicknameT( screenStr );
 				MSN_FreeVariant( &dbv );
 			}
+			MSN_SetStringT( NULL, "Nick", screenStr );
 
 			unsigned mblsnd = IsDlgButtonChecked( hwndDlg, IDC_MOBILESEND );
 			if (mblsnd != MSN_GetByte( "MobileAllowed", 0))
@@ -274,9 +276,7 @@ LBL_Continue:
 
 			unsigned tValue = IsDlgButtonChecked( hwndDlg, IDC_DISABLE_ANOTHER_CONTACTS );
 			if ( tValue != msnOtherContactsBlocked && msnLoggedIn ) {
-				msnOtherContactsBlocked = tValue;
-				msnNsThread->sendPacket( "BLP", tValue ? "BL" : "AL" );
-				MSN_ABUpdateAttr(NULL, "MSN.IM.BLP", tValue ? "0" : "1");
+				msnNsThread->sendPacket( "BLP", ( tValue ) ? "BL" : "AL" );
 				break;
 			}
 
@@ -286,7 +286,7 @@ LBL_Continue:
 			MSN_SetByte( "AwayAsBrb", ( BYTE )IsDlgButtonChecked( hwndDlg, IDC_AWAY_AS_BRB ));
 			MSN_SetByte( "ManageServer", ( BYTE )IsDlgButtonChecked( hwndDlg, IDC_MANAGEGROUPS ));
 
-			GetDlgItemText( hwndDlg, IDC_MAILER_APP, screenStr, SIZEOF( screenStr ));
+			GetDlgItemText( hwndDlg, IDC_MAILER_APP, screenStr, sizeof( screenStr ));
 			MSN_SetStringT( NULL, "MailerPath", screenStr );
 
 			if ( reconnectRequired && msnLoggedIn )
@@ -428,7 +428,7 @@ static INT_PTR CALLBACK DlgProcMsnConnOpts(HWND hwndDlg, UINT msg, WPARAM wParam
 		break;
 
 	case WM_NOTIFY:
-		if (((LPNMHDR)lParam)->code == (UINT)PSN_APPLY ) {
+		if (((LPNMHDR)lParam)->code == PSN_APPLY ) {
 			bool restartRequired = false, reconnectRequired = false;
 			char str[ MAX_PATH ];
 
@@ -659,7 +659,7 @@ int MsnOptInit(WPARAM wParam,LPARAM lParam)
 
 	odp.pszTab      = LPGEN("Notifications");
 	odp.pszTemplate	= MAKEINTRESOURCEA( IDD_HOTMAIL_OPT_POPUP );
-	odp.pfnDlgProc	= DlgProcHotmailPopUpOpts;
+	odp.pfnDlgProc		= DlgProcHotmailPopUpOpts;
 	MSN_CallService( MS_OPT_ADDPAGE, wParam, ( LPARAM )&odp );
 
 	return 0;

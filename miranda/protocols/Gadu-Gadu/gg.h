@@ -25,8 +25,6 @@
 #define DEBUGMODE				// Debug Mode
 #endif
 
-#define _USE_32BIT_TIME_T
-
 #if _WIN32_WINNT < 0x0500
 #define _WIN32_WINNT 0x0500
 #endif
@@ -413,7 +411,7 @@ int gg_gc_destroy();
 char * gg_gc_getchat(uin_t sender, uin_t *recipients, int recipients_count);
 GGGC *gg_gc_lookup(char *id);
 int gg_gc_changenick(HANDLE hContact, char *pszNick);
-#define UIN2ID(uin,id) _itoa(uin,id,10)
+#define UIN2ID(uin,id) itoa(uin,id,10)
 
 // Debug functions
 #ifdef DEBUGMODE

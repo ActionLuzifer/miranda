@@ -2,7 +2,7 @@
 
 Miranda IM: the free IM client for Microsoft* Windows*
 
-Copyright 2000-2008 Miranda ICQ/IM project,
+Copyright 2000-2007 Miranda ICQ/IM project,
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
 
@@ -32,8 +32,6 @@ struct
 }
 static eventTypes;
 
-static BOOL bModuleInitialized = FALSE;
-
 static int DbEventTypeRegister(WPARAM wParam, LPARAM lParam)
 {
 	DBEVENTTYPEDESCR* et = ( DBEVENTTYPEDESCR* )lParam;
@@ -41,32 +39,9 @@ static int DbEventTypeRegister(WPARAM wParam, LPARAM lParam)
 	int idx;
 	if ( !List_GetIndex(( SortedList* )&eventTypes, et, &idx )) {
 		DBEVENTTYPEDESCR* p = mir_alloc( sizeof( DBEVENTTYPEDESCR ));
-		p->cbSize = DBEVENTTYPEDESCR_SIZE;
+		*p = *et;
 		p->module = mir_strdup( et->module );
-		p->eventType = et->eventType; 
 		p->descr  = mir_strdup( et->descr  );
-		p->textService = NULL;
-		p->iconService = NULL;
-		p->eventIcon = NULL;
-		p->flags = 0;
-		if ( et->cbSize == DBEVENTTYPEDESCR_SIZE ) {
-			if ( et->textService )
-				p->textService = mir_strdup( et->textService );
-			if ( et->iconService )
-				p->iconService = mir_strdup( et->iconService );
-			p->eventIcon = et->eventIcon;
-			p->flags = et->flags;
-		}
-		if ( !p->textService ) {
-			char szServiceName[100];
-			mir_snprintf( szServiceName, sizeof(szServiceName), "%s/GetEventText%d", p->module, p->eventType );
-			p->textService = mir_strdup( szServiceName );
-		}
-		if ( !p->iconService ) {
-			char szServiceName[100];
-			mir_snprintf( szServiceName, sizeof(szServiceName), "%s/GetEventIcon%d", p->module, p->eventType );
-			p->iconService = mir_strdup( szServiceName );
-		}
 		List_Insert(( SortedList* )&eventTypes, p, idx );
 	}
 
@@ -92,10 +67,11 @@ static int DbEventGetText(WPARAM wParam, LPARAM lParam)
 	BOOL bIsDenyUnicode = (egt->datatype & DBVTF_DENYUNICODE);
 
 	DBEVENTINFO* dbei = egt->dbei;
-	DBEVENTTYPEDESCR* et = ( DBEVENTTYPEDESCR* )DbEventTypeGet( ( WPARAM )dbei->szModule, ( LPARAM )dbei->eventType );
 
-	if ( et && ServiceExists( et->textService ))
-		return CallService( et->textService, wParam, lParam );
+	char szServiceName[100];
+	mir_snprintf( szServiceName, sizeof(szServiceName), "%s/GetEventText%d", dbei->szModule, dbei->eventType );
+	if ( ServiceExists( szServiceName ))
+		return CallService( szServiceName, wParam, lParam );
 
 	if ( !dbei->pBlob ) return 0;
 
@@ -156,20 +132,15 @@ static int DbEventGetIcon( WPARAM wParam, LPARAM lParam )
 {
 	DBEVENTINFO* dbei = ( DBEVENTINFO* )lParam;
 	HICON icon;
-	DBEVENTTYPEDESCR* et = ( DBEVENTTYPEDESCR* )DbEventTypeGet( ( WPARAM )dbei->szModule, ( LPARAM )dbei->eventType );
-
-	if ( et && ServiceExists( et->iconService )) {
-		icon = ( HICON )CallService( et->iconService, wParam, lParam );
+	char szName[100];
+	mir_snprintf( szName, sizeof( szName ), "%s/GetEventIcon%d", dbei->szModule, dbei->eventType );
+	if ( ServiceExists( szName )) {
+		icon = ( HICON )CallService( szName, wParam, lParam );
 		if ( icon )
 			return ( int )icon;
 	}
-	if ( et && et->eventIcon )
-		icon = ( HICON )CallService( MS_SKIN2_GETICONBYHANDLE, 0, ( LPARAM )et->eventIcon );
-	if ( !icon ) {
-		char szName[100];
-		mir_snprintf( szName, sizeof( szName ), "eventicon_%s%d", dbei->szModule, dbei->eventType );
-		icon = ( HICON )CallService( MS_SKIN2_GETICON, 0, ( LPARAM )szName );
-	}
+	mir_snprintf( szName, sizeof( szName ), "eventicon_%s%d", dbei->szModule, dbei->eventType );
+	icon = ( HICON )CallService( MS_SKIN2_GETICON, 0, ( LPARAM )szName );
 
 	if ( !icon )
 	{
@@ -205,8 +176,6 @@ static int CompareEventTypes( const DBEVENTTYPEDESCR* p1, const DBEVENTTYPEDESCR
 
 int InitUtils()
 {
-	bModuleInitialized = TRUE;
-	
 	eventTypes.increment = 10;
 	eventTypes.sortFunc = CompareEventTypes;
 
@@ -220,15 +189,10 @@ int InitUtils()
 void UnloadEventsModule()
 {
 	int i;
-
-	if ( !bModuleInitialized ) return;
-
 	for ( i=0; i < eventTypes.count; i++ ) {
 		DBEVENTTYPEDESCR* p = eventTypes.items[i];
 		mir_free( p->module );
 		mir_free( p->descr );
-		mir_free( p->textService );
-		mir_free( p->iconService );
 		mir_free( p );
 	}
 

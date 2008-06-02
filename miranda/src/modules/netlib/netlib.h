@@ -2,8 +2,8 @@
 
 Miranda IM: the free IM client for Microsoft* Windows*
 
-Copyright 2000-2008 Miranda ICQ/IM project,
-all portions of this codebase are copyrighted to the people
+Copyright 2000-2007 Miranda ICQ/IM project, 
+all portions of this codebase are copyrighted to the people 
 listed in contributors.txt.
 
 This program is free software; you can redistribute it and/or
@@ -33,7 +33,6 @@ struct NetlibUser {
 	NETLIBUSER user;
 	NETLIBUSERSETTINGS settings;
 	char * szStickyHeaders;
-	int toLog;
 };
 
 struct NetlibNestedCriticalSection {
@@ -45,7 +44,7 @@ struct NetlibNestedCriticalSection {
 struct NetlibHTTPProxyPacketQueue {
 	struct NetlibHTTPProxyPacketQueue *next;
 	PBYTE dataBuffer;
-	int dataBufferLen;
+	int dataBufferLen;        
 };
 
 struct NetlibConnection {
@@ -144,7 +143,7 @@ int NetlibSelect(WPARAM wParam,LPARAM lParam);
 int NetlibSelectEx(WPARAM wParam,LPARAM lParam);
 
 //netlibupnp.c
-BOOL NetlibUPnPAddPortMapping(WORD intport, char *proto,
+BOOL NetlibUPnPAddPortMapping(WORD intport, char *proto, 
 							  WORD *extport, DWORD *extip, BOOL search);
 void NetlibUPnPDeletePortMapping(WORD extport, char* proto);
 void NetlibUPnPCleanup(void* extra);
@@ -167,3 +166,4 @@ static __inline int NLRecv(struct NetlibConnection *nlc,char *buf,int len,int fl
 	NETLIBBUFFER nlb={buf,len,flags};
 	return NetlibRecv((WPARAM)nlc,(LPARAM)&nlb);
 }
+

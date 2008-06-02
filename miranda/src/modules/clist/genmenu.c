@@ -475,7 +475,7 @@ int MO_SetOptionsMenuItem( int handle, int setting, int value )
 		return res;
 
 	EnterCriticalSection( &csMenuHook );
-	__try 
+	__try
 	{
 		PMO_IntMenuItem pimi = MO_GetIntMenuItem( handle );
 		if ( pimi != NULL ) {
@@ -504,7 +504,7 @@ int MO_SetOptionsMenuObject( int handle, int setting, int value )
 		return -1;
 
 	EnterCriticalSection( &csMenuHook );
-	__try 
+	__try
 	{
 		pimoidx = GetMenuObjbyId( handle );
 		res = pimoidx != -1;
@@ -592,14 +592,14 @@ static int GetNextObjectMenuItemId()
 	    // TODO: try to reuse not used (removed menus) ids
 	    menuID=NextObjectMenuItemId++;
 	}
-	else 
+	else
 	{
 		// TODO: otherwise simple increase
 		menuID=NextObjectMenuItemId++;
 	}
 
-	if (menuID>CLISTMENUIDMAX) 
-	{	
+	if (menuID>CLISTMENUIDMAX)
+	{
 		MessageBox(NULL,TranslateT("Too many menu items registered, please restart your Miranda to avoid unpredictable behaviour"),
 			            TranslateT("Error"),
 						MB_OK|MB_ICONERROR);
@@ -644,7 +644,7 @@ int MO_AddNewMenuItem( int menuobjecthandle, PMO_MenuItem pmi )
 		p->OverrideShow = TRUE;
 		p->originalPosition = pmi->position;
 		#if defined( _UNICODE )
-			if ( pmi->flags & CMIF_UNICODE ) 
+			if ( pmi->flags & CMIF_UNICODE )
 				p->mi.ptszName = mir_tstrdup(( pmi->flags & CMIF_KEEPUNTRANSLATED ) ? pmi->ptszName : TranslateTS( pmi->ptszName ));
 			else {
 				if ( pmi->flags & CMIF_KEEPUNTRANSLATED ) {
@@ -792,11 +792,14 @@ static void InsertMenuItemWithSeparators(HMENU hMenu,int uItem,BOOL fByPosition,
 	mii.cbSize = MENUITEMINFO_V4_SIZE;
 	//check for separator before
 	if ( uItem ) {
+		int needMenuBreak = 0;
 		mii.fMask = MIIM_SUBMENU | MIIM_DATA | MIIM_TYPE;
 		GetMenuItemInfo( hMenu, uItem-1, TRUE, &mii );
 		pimi = MO_GetIntMenuItem( mii.dwItemData );
 		if ( pimi != NULL ) {
-			if ( mii.fType == MFT_SEPARATOR )
+			if (( GetMenuItemCount( hMenu ) % 34 ) == 33 && pimi->mi.root != -1 )
+				needSeparator = needMenuBreak = 1;
+			else if ( mii.fType == MFT_SEPARATOR )
 				needSeparator = 0;
 			else
 				needSeparator = ( pimi->mi.position / SEPARATORPOSITIONINTERVAL ) != thisItemPosition / SEPARATORPOSITIONINTERVAL;
@@ -812,7 +815,11 @@ static void InsertMenuItemWithSeparators(HMENU hMenu,int uItem,BOOL fByPosition,
 				mii.fMask = MIIM_TYPE;
 				mii.fType = MFT_SEPARATOR;
 				InsertMenuItem( hMenu, uItem, TRUE, &mii );
-			}
+
+				if ( needMenuBreak ) {
+					ModifyMenu( hMenu, uItem, MF_MENUBARBREAK | MF_BYPOSITION, uItem, _T(""));
+					EnableMenuItem( hMenu, uItem, FALSE );
+			}	}
 			uItem++;
 	}	}
 
@@ -824,7 +831,7 @@ static void InsertMenuItemWithSeparators(HMENU hMenu,int uItem,BOOL fByPosition,
 		pimi = MO_GetIntMenuItem( mii.dwItemData );
 		if ( pimi != NULL ) {
 			if ( mii.fType == MFT_SEPARATOR )
-				needSeparator=0;
+				needSeparator = 0;
 			else
 				needSeparator = pimi->mi.position / SEPARATORPOSITIONINTERVAL != thisItemPosition / SEPARATORPOSITIONINTERVAL;
 		}
@@ -842,21 +849,7 @@ static void InsertMenuItemWithSeparators(HMENU hMenu,int uItem,BOOL fByPosition,
 		GetMenuItemInfo( hMenu, uItem, TRUE, &mii );
 	}
 
-	{	// create local copy *lpmii so we can change some flags
-		MENUITEMINFO mii_copy = *lpmii;
-		lpmii = &mii_copy;
-
-		if (( GetMenuItemCount( hMenu ) % 35 ) == 33 /* will be 34 after addition :) */ && pimi != NULL )
-			if ( pimi->mi.root != -1 )
-			{
-				if (!(lpmii->fMask&MIIM_FTYPE))
-					lpmii->fType = 0;
-				lpmii->fMask |= MIIM_FTYPE;
-				lpmii->fType |= MFT_MENUBARBREAK;
-			}
-
-		InsertMenuItem( hMenu, uItem, TRUE, lpmii );
-	}
+	InsertMenuItem( hMenu, uItem, TRUE, lpmii );
 }
 
 //wparam started hMenu

@@ -2,7 +2,7 @@
 
 Miranda IM: the free IM client for Microsoft* Windows*
 
-Copyright 2000-2008 Miranda ICQ/IM project, 
+Copyright 2000-2007 Miranda ICQ/IM project, 
 all portions of this codebase are copyrighted to the people 
 listed in contributors.txt.
 
@@ -232,12 +232,12 @@ int GetContactDisplayName(WPARAM wParam, LPARAM lParam)
 		if (ci.type == CNFT_DWORD) {
 			if (cacheEntry == NULL) {
 				buffer = ( char* )mir_alloc(15);
-				_ltoa(ci.dVal, buffer, 10 );
+				ltoa(ci.dVal, buffer, 10 );
 				return (int) buffer;
 			}
 			else {
 				buffer = ( char* )mir_alloc(15);
-				_ltoa(ci.dVal, buffer, 10 );
+				ltoa(ci.dVal, buffer, 10 );
 				#if defined( _UNICODE )
 					cacheEntry->szName = buffer;
 					cacheEntry->name = a2u( buffer );

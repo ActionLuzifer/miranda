@@ -1,8 +1,11 @@
 /*
 Plugin of Miranda IM for communicating with users of the MSN Messenger protocol.
-Copyright (c) 2006-2008 Boris Krasnovskiy.
-Copyright (c) 2003-2005 George Hazan.
-Copyright (c) 2002-2003 Richard Hughes (original version).
+Copyright (c) 2006-7 Boris Krasnovskiy.
+Copyright (c) 2003-5 George Hazan.
+Copyright (c) 2002-3 Richard Hughes (original version).
+
+Miranda IM: the free icq client for MS Windows
+Copyright (C) 2000-2002 Richard Hughes, Roland Rabien & Tristan Van de Vreede
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -15,7 +18,8 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with this program.  If not, see <http://www.gnu.org/licenses/>.
+along with this program; if not, write to the Free Software
+Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
 #include "msn_global.h"
@@ -88,13 +92,8 @@ void __cdecl MSNServerThread( ThreadData* info )
 		else if (info->mIsMainThread)
 			strcpy(info->mGatewayIP, info->mServer);
 
-		if (info->gatewayType)
-			strcpy(info->mGatewayIP, info->mServer);
-		else
-		{
-			if (*info->mGatewayIP == 0 && MSN_GetStaticString("LoginServer", NULL, info->mGatewayIP, sizeof(info->mGatewayIP)))
-				strcpy(info->mGatewayIP, MSN_DEFAULT_GATEWAY);
-		}
+		if (*info->mGatewayIP == 0 && MSN_GetStaticString("LoginServer", NULL, info->mGatewayIP, sizeof(info->mGatewayIP)))
+			strcpy(info->mGatewayIP, MSN_DEFAULT_GATEWAY);
 	}
 	else
 	{
@@ -149,17 +148,7 @@ void __cdecl MSNServerThread( ThreadData* info )
 	MSN_DebugLog( "Connected with handle=%08X", info->s );
 
 	if ( info->mType == SERVER_DISPATCH || info->mType == SERVER_NOTIFICATION ) {
-		info->sendPacket( "VER", "MSNP15 MSNP14 MSNP13 CVR0" );
-
-		OSVERSIONINFO osvi = {0};
-		osvi.dwOSVersionInfoSize = sizeof(OSVERSIONINFO);
-	    GetVersionEx(&osvi);
-
-		info->sendPacket( "CVR","0x0409 %s %d.%d i386 MSNMSGR %s msmsgs %s",
-			osvi.dwPlatformId >= 2 ? "winnt" : "win", osvi.dwMajorVersion, osvi.dwMinorVersion, 
-			msnProductVer, MyOptions.szEmail );
-
-		info->sendPacket( "USR", "SSO I %s", MyOptions.szEmail );
+		info->sendPacket( "VER", "MSNP12 MSNP11 MSNP10 CVR0" );
 	}
 	else if ( info->mType == SERVER_SWITCHBOARD ) {
 		info->sendPacket( info->mCaller ? "USR" : "ANS", "%s %s", MyOptions.szEmail, info->mCookie );
@@ -193,10 +182,8 @@ void __cdecl MSNServerThread( ThreadData* info )
 			if ( MSN_HandleMSNFTP( info, info->mData ))
 				break;
 		}
-		else 
-		{
-			for( ;; ) 
-			{
+		else {
+			for( ;; ) {
 				char* peol = strchr(info->mData,'\r');
 				if ( peol == NULL )
 					break;
@@ -216,16 +203,15 @@ void __cdecl MSNServerThread( ThreadData* info )
 				memmove( info->mData, peol, info->mBytesInData );
 				MSN_DebugLog( "RECV:%s", msg );
 
-				if ( info->mType == SERVER_NOTIFICATION )
-					SetEvent( hKeepAliveThreadEvt );
-
 				if ( !isalnum( msg[0] ) || !isalnum(msg[1]) || !isalnum(msg[2]) || (msg[3] && msg[3]!=' ')) {
 					MSN_DebugLog( "Invalid command name" );
 					continue;
 				}
 
-				if ( info->mType != SERVER_FILETRANS ) 
-				{
+				if ( info->mType != SERVER_FILETRANS ) {
+					if ( info->mType == SERVER_NOTIFICATION )
+						SetEvent( hKeepAliveThreadEvt );
+
 					int handlerResult;
 					if ( isdigit(msg[0]) && isdigit(msg[1]) && isdigit(msg[2]))   //all error messages
 						handlerResult = MSN_HandleErrors( info, msg );
@@ -259,7 +245,7 @@ LBL_Exit:
 		}
 	}
 
-	MSN_DebugLog( "Thread [%08X] ending now", GetCurrentThreadId() );
+	MSN_DebugLog( "Thread [%d] ending now", GetCurrentThreadId() );
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////
@@ -486,14 +472,8 @@ ThreadData* MSN_StartSB(HANDLE hContact, bool& isOffline)
 	ThreadData* thread = MSN_GetThreadByContact(hContact);
 	if (thread == NULL)
 	{
-		if (IsChatHandle(hContact))
-		{
-			isOffline = true;
-			return NULL;
-		}
-
 		WORD wStatus = MSN_GetWord(hContact, "Status", ID_STATUS_OFFLINE);
-		if (wStatus != ID_STATUS_OFFLINE)
+		if (wStatus != ID_STATUS_OFFLINE && msnStatusMode != ID_STATUS_INVISIBLE)
 		{
 			if (MSN_GetUnconnectedThread(hContact) == NULL && MsgQueue_CheckContact(hContact, 5) == NULL)
 				msnNsThread->sendPacket( "XFR", "SB" );
@@ -686,7 +666,6 @@ void ThreadData::processSessionData( const char* str )
 		s = NULL;
 	}
 	strcpy( mGatewayIP, tGateIP );
-	if (gatewayType) strcpy( mServer, tGateIP );
 	strcpy( mSessionID, tSessionID );
 }
 
@@ -753,9 +732,7 @@ HReadBuffer::~HReadBuffer()
 
 BYTE* HReadBuffer::surelyRead( int parBytes )
 {
-	const int bufferSize = sizeof( owner->mData );
-
-	if (( startOffset + parBytes ) > bufferSize )
+	if ( startOffset + parBytes > totalDataSize )
 	{
 		int tNewLen = totalDataSize - startOffset;
 		if ( tNewLen > 0 )
@@ -765,14 +742,15 @@ BYTE* HReadBuffer::surelyRead( int parBytes )
 
 		startOffset = 0;
 		totalDataSize = tNewLen;
-
-		if ( parBytes > bufferSize ) {
-			MSN_DebugLog( "HReadBuffer::surelyRead: not enough memory, %d %d %d", parBytes, bufferSize, startOffset );
-			return NULL;
-		}
 	}
 
-	while(( startOffset + parBytes ) > totalDataSize )
+	int bufferSize = sizeof( owner->mData );
+	if ( parBytes > bufferSize - startOffset ) {
+		MSN_DebugLog( "HReadBuffer::surelyRead: not enough memory, %d %d %d", parBytes, bufferSize, startOffset );
+		return NULL;
+	}
+
+	while( totalDataSize - startOffset < parBytes )
 	{
 		int recvResult = owner->recv(( char* )buffer + totalDataSize, bufferSize - totalDataSize );
 

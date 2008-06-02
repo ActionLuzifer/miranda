@@ -2,7 +2,7 @@
 
 Miranda IM: the free IM client for Microsoft* Windows*
 
-Copyright 2000-2008 Miranda ICQ/IM project, 
+Copyright 2000-2007 Miranda ICQ/IM project, 
 all portions of this codebase are copyrighted to the people 
 listed in contributors.txt.
 
@@ -53,12 +53,12 @@ static int UrlEventAdded(WPARAM wParam,LPARAM lParam)
 	SkinPlaySound("RecvUrl");
 	ZeroMemory(&cle,sizeof(cle));
 	cle.cbSize=sizeof(cle);
-	cle.flags = CLEF_TCHAR;
 	cle.hContact=(HANDLE)wParam;
 	cle.hDbEvent=(HANDLE)lParam;
 	cle.hIcon = LoadSkinIcon( SKINICON_EVENT_URL );
 	cle.pszService="SRUrl/ReadUrl";
-	contactName=(TCHAR*)CallService(MS_CLIST_GETCONTACTDISPLAYNAME,wParam,GCDNF_TCHAR);
+	cle.flags = CLEF_TCHAR;
+	contactName=(TCHAR*)CallService(MS_CLIST_GETCONTACTDISPLAYNAME, wParam, GCDNF_TCHAR);
 	mir_sntprintf(szTooltip,SIZEOF(szTooltip),TranslateT("URL from %s"),contactName);
 	cle.ptszTooltip=szTooltip;
 	CallService(MS_CLIST_ADDEVENT,0,(LPARAM)&cle);
@@ -75,7 +75,7 @@ static void RestoreUnreadUrlAlerts(void)
 {
 	CLISTEVENT cle={0};
 	DBEVENTINFO dbei={0};
-	TCHAR toolTip[256];
+	char toolTip[256];
 	HANDLE hDbEvent,hContact;
 
 	dbei.cbSize=sizeof(dbei);
@@ -92,9 +92,8 @@ static void RestoreUnreadUrlAlerts(void)
 			if(!(dbei.flags&(DBEF_SENT|DBEF_READ)) && dbei.eventType==EVENTTYPE_URL) {
 				cle.hContact=hContact;
 				cle.hDbEvent=hDbEvent;
-				cle.flags = CLEF_TCHAR;
-				mir_sntprintf(toolTip,SIZEOF(toolTip),TranslateT("URL from %s"),(TCHAR*)CallService(MS_CLIST_GETCONTACTDISPLAYNAME,(WPARAM)hContact,GCDNF_TCHAR));
-				cle.ptszTooltip=toolTip;
+				mir_snprintf(toolTip,SIZEOF(toolTip),Translate("URL from %s"),(char*)CallService(MS_CLIST_GETCONTACTDISPLAYNAME,(WPARAM)hContact,0));
+				cle.pszTooltip=toolTip;
 				CallService(MS_CLIST_ADDEVENT,0,(LPARAM)&cle);
 			}
 			hDbEvent=(HANDLE)CallService(MS_DB_EVENT_FINDNEXT,(WPARAM)hDbEvent,0);
@@ -116,21 +115,23 @@ static int ContactSettingChanged(WPARAM wParam, LPARAM lParam)
 
 static int SRUrlModulesLoaded(WPARAM wParam,LPARAM lParam)
 {
-	int i;
-
 	CLISTMENUITEM mi = { 0 };
+	PROTOCOLDESCRIPTOR **protocol;
+	int protoCount,i;
+
 	mi.cbSize = sizeof(mi);
 	mi.position = -2000040000;
 	mi.flags = CMIF_ICONFROMICOLIB;
 	mi.icolibItem = GetSkinIconHandle( SKINICON_EVENT_URL );
 	mi.pszName = LPGEN("Web Page Address (&URL)");
 	mi.pszService = MS_URL_SENDURL;
-
-	for ( i=0; i < accounts.count; i++ ) {
-		PROTOACCOUNT* pa = accounts.items[i];
-		if ( CallProtoService( pa->szModuleName, PS_GETCAPS, PFLAGNUM_1, 0 ) & PF1_URLSEND ) {
-			mi.pszContactOwner = pa->szModuleName;
-			CallService( MS_CLIST_ADDCONTACTMENUITEM, 0, ( LPARAM )&mi );
+	CallService(MS_PROTO_ENUMPROTOCOLS,(WPARAM)&protoCount,(LPARAM)&protocol);
+	for ( i=0; i < protoCount; i++ ) {
+		if ( protocol[i]->type != PROTOTYPE_PROTOCOL )
+			continue;
+		if ( CallProtoService( protocol[i]->szName,PS_GETCAPS,PFLAGNUM_1,0) & PF1_URLSEND ) {
+			mi.pszContactOwner = protocol[i]->szName;
+			CallService(MS_CLIST_ADDCONTACTMENUITEM,0,(LPARAM)&mi);
 	}	}
 
 	RestoreUnreadUrlAlerts();
