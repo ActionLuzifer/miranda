@@ -1,5 +1,6 @@
 #ifndef THEME_H
 #define THEME_H
+#include "defines.h"
 #define WinVerMajor()      LOBYTE(LOWORD(GetVersion()))
 #define IsWinVerXPPlus()   (WinVerMajor()>=5 && LOWORD(GetVersion())!=5)
 #define MGPROC(x) GetProcAddress(themeAPIHandle,x)

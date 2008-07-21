@@ -2,8 +2,8 @@
 
 Miranda IM: the free IM client for Microsoft* Windows*
 
-Copyright 2000-2008 Miranda ICQ/IM project,
-all portions of this codebase are copyrighted to the people
+Copyright 2000-2007 Miranda ICQ/IM project, 
+all portions of this codebase are copyrighted to the people 
 listed in contributors.txt.
 
 This program is free software; you can redistribute it and/or
@@ -28,14 +28,11 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define NLH_BOUNDPORT    'BIND'
 #define NLH_PACKETRECVER 'PCKT'
 
-struct SslHandle;
-
 struct NetlibUser {
 	int handleType;
 	NETLIBUSER user;
 	NETLIBUSERSETTINGS settings;
 	char * szStickyHeaders;
-	int toLog;
 };
 
 struct NetlibNestedCriticalSection {
@@ -47,7 +44,7 @@ struct NetlibNestedCriticalSection {
 struct NetlibHTTPProxyPacketQueue {
 	struct NetlibHTTPProxyPacketQueue *next;
 	PBYTE dataBuffer;
-	int dataBufferLen;
+	int dataBufferLen;        
 };
 
 struct NetlibConnection {
@@ -65,10 +62,8 @@ struct NetlibConnection {
 	LONG dontCloseNow;
 	struct NetlibNestedCriticalSection ncsSend,ncsRecv;
 	HANDLE hNtlmSecurity;
-	SslHandle* hSsl;
 	struct NetlibHTTPProxyPacketQueue * pHttpProxyPacketQueue;
 	int pollingTimeout;
-	char* szHost;
 };
 
 struct NetlibBoundPort {
@@ -148,7 +143,7 @@ int NetlibSelect(WPARAM wParam,LPARAM lParam);
 int NetlibSelectEx(WPARAM wParam,LPARAM lParam);
 
 //netlibupnp.c
-BOOL NetlibUPnPAddPortMapping(WORD intport, char *proto,
+BOOL NetlibUPnPAddPortMapping(WORD intport, char *proto, 
 							  WORD *extport, DWORD *extip, BOOL search);
 void NetlibUPnPDeletePortMapping(WORD extport, char* proto);
 void NetlibUPnPCleanup(void* extra);
@@ -172,19 +167,3 @@ static __inline int NLRecv(struct NetlibConnection *nlc,char *buf,int len,int fl
 	return NetlibRecv((WPARAM)nlc,(LPARAM)&nlb);
 }
 
-//netlibssl.c
-
-void NetlibSslFree(SslHandle *ssl);
-
-SslHandle* NetlibSslConnect(BOOL verify, DWORD proto, SOCKET s, const char* host);
-void NetlibSslShutdown(SslHandle *ssl);
-
-int NetlibSslWrite(SslHandle *ssl, const char *buf, int num);
-int NetlibSslRead(SslHandle *ssl, char *buf, int num, int peek);
-
-#define NL_SELECT_READ  0x0001
-#define NL_SELECT_WRITE 0x0002
-#define NL_SELECT_ALL   (NL_SELECT_READ+NL_SELECT_WRITE)
-BOOL NetlibSslPending(SslHandle *ssl);
-
-int NetlibStartSsl(WPARAM wParam, LPARAM lParam);

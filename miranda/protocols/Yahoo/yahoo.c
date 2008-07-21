@@ -92,39 +92,31 @@ int miranda_to_yahoo(int myyahooStatus)
     int ret = YAHOO_STATUS_AVAILABLE;
 	
     switch (myyahooStatus) {
-	case ID_STATUS_OFFLINE:
-						ret = YAHOO_STATUS_OFFLINE;
-						break;
-						
-	case ID_STATUS_FREECHAT:
+    case ID_STATUS_OFFLINE:
+                        ret = YAHOO_STATUS_OFFLINE;
+                        break;
+    case ID_STATUS_FREECHAT:
     case ID_STATUS_ONLINE: 
                         ret = YAHOO_STATUS_AVAILABLE;
                         break;
-						
     case ID_STATUS_AWAY:
                         ret = YAHOO_STATUS_STEPPEDOUT;
                         break;
-						
-	case ID_STATUS_NA:
+    case ID_STATUS_NA:
                         ret = YAHOO_STATUS_BRB;
                         break;
-						
     case ID_STATUS_OCCUPIED:
                         ret = YAHOO_STATUS_BUSY;
                         break;
-						
     case ID_STATUS_DND:
                         ret = YAHOO_STATUS_BUSY;
                         break;
-
     case ID_STATUS_ONTHEPHONE:
                         ret = YAHOO_STATUS_ONPHONE;
                         break;
-						
     case ID_STATUS_OUTTOLUNCH:
                         ret = YAHOO_STATUS_OUTTOLUNCH;                            
                         break;
-						
     case ID_STATUS_INVISIBLE:
                         ret = YAHOO_STATUS_INVISIBLE;
                         break;
@@ -157,10 +149,10 @@ int yahoo_to_miranda_status(int yahooStatus, int away)
                         ret = ID_STATUS_INVISIBLE;
                         break;
     case YAHOO_STATUS_NOTATHOME:
-	case YAHOO_STATUS_NOTATDESK:
-	case YAHOO_STATUS_NOTINOFFICE:
-	case YAHOO_STATUS_ONVACATION:
-	case YAHOO_STATUS_STEPPEDOUT:
+    case YAHOO_STATUS_NOTATDESK:
+    case YAHOO_STATUS_NOTINOFFICE:
+    case YAHOO_STATUS_ONVACATION:
+    case YAHOO_STATUS_STEPPEDOUT:
     case YAHOO_STATUS_IDLE:
                         ret = ID_STATUS_AWAY;
                         break;
@@ -173,26 +165,24 @@ int yahoo_to_miranda_status(int yahooStatus, int away)
 
 void yahoo_set_status(int myyahooStatus, char *msg, int away)
 {
-	LOG(("yahoo_set_status myyahooStatus: %d, msg: %s, away: %d", myyahooStatus, msg, away));
-
-	/* Safety check, don't dereference Invalid pointers */
-	if (ylad->id > 0)  {
-			
-		if (YAHOO_CUSTOM_STATUS != myyahooStatus)
-			yahoo_set_away(ylad->id, miranda_to_yahoo(myyahooStatus), msg, away);
-		else
-			yahoo_set_away(ylad->id, YAHOO_CUSTOM_STATUS, msg, away);
-	}
+   LOG(("yahoo_set_status myyahooStatus: %d, msg: %s, away: %d", myyahooStatus, msg, away));
+   /* Safety check, don't dereference Invalid pointers */
+   if (ylad->id > 0)  {
+       if (YAHOO_CUSTOM_STATUS != myyahooStatus)
+           yahoo_set_away(ylad->id, miranda_to_yahoo(myyahooStatus), msg, away);
+       else
+           yahoo_set_away(ylad->id, YAHOO_CUSTOM_STATUS, msg, away);
+   }
 }
 
 void yahoo_stealth(const char *buddy, int add)
 {
-	LOG(("yahoo_stealth buddy: %s, add: %d", buddy, add));
+   LOG(("yahoo_stealth buddy: %s, add: %d", buddy, add));
 
-	/* Safety check, don't dereference Invalid pointers */
-	if (ylad->id > 0) {
-		yahoo_set_stealth(ylad->id, buddy, add);
-	}
+   /* Safety check, don't dereference Invalid pointers */
+   if (ylad->id > 0) {
+       yahoo_set_stealth(ylad->id, buddy, add);
+   }
 }
 
 void YAHOO_remove_buddy(const char *who)
@@ -251,9 +241,8 @@ void yahoo_logout()
 	LOG(("[yahoo_logout] Logged out"));	*/
 	if (yahooLoggedIn)
 		yahoo_logoff(ylad->id);
-	
-	/* need to stop the server and close all the connections */
-	poll_loop = 0;
+    /* need to stop the server and close all the connections */
+    poll_loop = 0;
 }
 
 HANDLE getbuddyH(const char *yahoo_id)
@@ -380,7 +369,6 @@ void ext_yahoo_status_changed(int id, const char *who, int stat, const char *msg
 	}
 
 	if ( (away == 2) || (stat == YAHOO_STATUS_IDLE) || (idle > 0)) {
-		/* TODO: set Idle=-1, because of key 138=1 and don't set idlets then */
 		if (stat > 0) {
 			YAHOO_DebugLog("[ext_yahoo_status_changed] %s idle for %d:%02d:%02d", who, idle/3600, (idle/60)%60, idle%60);
 			
@@ -409,9 +397,6 @@ void ext_yahoo_status_logon(int id, const char *who, int stat, const char *msg, 
 	} 
 	
 	switch (client_version) {
-		case 2:
-				s = "Yahoo Mobile";
-				break;
 		case 3075:
 				s = "Yahoo Web Messenger";
 				break;
@@ -430,10 +415,6 @@ void ext_yahoo_status_logon(int id, const char *who, int stat, const char *msg, 
 				//Yahoo 7.5
 				s = "Yahoo 7.x"; 
 				break;
-		case 888327:
-				s = "Yahoo 9.0 for Vista";
-				break;
-			
 		case 822543:  /* ? "Yahoo Version 3.0 beta 1 (build 18274) OSX" */
 		case 1572799: /* 8.0.x ??  */ 
 		case 2097087: /* 8.1.0.195 */ 
@@ -446,12 +427,7 @@ void ext_yahoo_status_logon(int id, const char *who, int stat, const char *msg, 
 	
 	if (s != NULL) 
 		DBWriteContactSettingString( hContact, yahooProtocolName, "MirVer", s);
-	else
-		DBDeleteContactSetting( hContact, yahooProtocolName, "MirVer");
-
-	/* Add the client_Version # to the contact DB entry */
-	DBWriteContactSettingDword( hContact, yahooProtocolName, "ClientVersion", client_version);
-	
+		
 	/* Last thing check the checksum and request new one if we need to */
 	if (buddy_icon == -1) {
 		YAHOO_DebugLog("[ext_yahoo_status_logon] No avatar information in this packet? Not touching stuff!");
@@ -1497,7 +1473,7 @@ void ext_yahoo_login(int login_mode)
     }
 
 	lstrcpyn(fthost,YAHOO_GetByte("YahooJapan",0)?"filetransfer.msg.yahoo.co.jp":"filetransfer.msg.yahoo.com" , sizeof(fthost));
-	port = DBGetContactSettingWord(NULL, yahooProtocolName, YAHOO_LOGINPORT, YAHOO_DEFAULT_PORT);
+	port = DBGetContactSettingWord(NULL, yahooProtocolName, YAHOO_LOGINPORT, 5050);
 	
 #ifdef HTTP_GATEWAY			
 	nlus.cbSize = sizeof( nlus );

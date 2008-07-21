@@ -2,7 +2,7 @@
 
 Jabber Protocol Plugin for Miranda IM
 Copyright ( C ) 2002-04  Santithorn Bunchua
-Copyright ( C ) 2005-08  George Hazan
+Copyright ( C ) 2005-07  George Hazan
 Copyright ( C ) 2007     Maxim Mluhov
 
 This program is free software; you can redistribute it and/or
@@ -19,7 +19,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-File name      : $URL$
+File name      : $Source: /cvsroot/miranda/miranda/protocols/JabberG/jabber_byte.h,v $
 Revision       : $Revision$
 Last change on : $Date$
 Last change by : $Author$
@@ -31,10 +31,7 @@ Last change by : $Author$
 
 typedef enum { JBT_INIT, JBT_AUTH, JBT_CONNECT, JBT_SOCKSERR, JBT_SENDING, JBT_RECVING, JBT_DONE, JBT_ERROR } JABBER_BYTE_STATE;
 
-struct CJabberProto;
-
-typedef struct
-{
+typedef struct {
 	TCHAR* sid;
 	TCHAR* srcJID;
 	TCHAR* dstJID;
@@ -44,9 +41,9 @@ typedef struct
 	HANDLE hConn;
 	HANDLE hEvent;
 	XmlNode *iqNode;
-	BOOL ( CJabberProto::*pfnSend )( HANDLE hConn, void *userdata );
-	int ( CJabberProto::*pfnRecv )( HANDLE hConn, void *userdata, char* buffer, int datalen );
-	void ( CJabberProto::*pfnFinal )( BOOL success, void *userdata );
+	BOOL ( *pfnSend )( HANDLE hConn, void *userdata );
+	int ( *pfnRecv )( HANDLE hConn, void *userdata, char* buffer, int datalen );
+	void ( *pfnFinal )( BOOL success, void *userdata );
 	void *userdata;
 
 	// XEP-0065 proxy support
@@ -60,5 +57,8 @@ typedef struct
 	HANDLE hSendEvent;
 
 } JABBER_BYTE_TRANSFER;
+
+void __cdecl JabberByteSendThread( JABBER_BYTE_TRANSFER *jbt );
+void __cdecl JabberByteReceiveThread( JABBER_BYTE_TRANSFER *jbt );
 
 #endif

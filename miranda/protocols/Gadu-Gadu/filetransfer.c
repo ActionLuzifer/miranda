@@ -20,8 +20,6 @@
 
 #include "gg.h"
 #include <errno.h>
-#include <io.h>
-#include <fcntl.h>
 
 ////////////////////////////////////////////////////////////
 // Stop dcc
@@ -263,7 +261,7 @@ void *__stdcall gg_dccmainthread(void *empty)
 #ifdef DEBUGMODE
 				gg_netlog("gg_dccmainthread(): Socket closed.");
 #endif
-				// Remove socket and _close
+				// Remove socket and close
 				list_remove(&thread->watches, dcc, 0);
 				gg_dcc_socket_free(dcc);
 
@@ -286,7 +284,7 @@ void *__stdcall gg_dccmainthread(void *empty)
 				//
 				case GG_EVENT_NONE:
 					// If transfer in progress do status
-					if(dcc->file_fd != -1 && dcc->offset > 0 && (((tick = GetTickCount()) - dcc->tick) > GGSTATREFRESHEVERY))
+					if(dcc->file_fd && dcc->offset > 0 && (((tick = GetTickCount()) - dcc->tick) > GGSTATREFRESHEVERY))
 					{
 						PROTOFILETRANSFERSTATUS pfts;
 						dcc->tick = tick;
@@ -317,7 +315,7 @@ void *__stdcall gg_dccmainthread(void *empty)
 					// Remove from watches
 					list_remove(&thread->watches, dcc, 0);
 					// Close file & success
-					if(dcc->file_fd != -1)
+					if(dcc->file_fd)
 					{
 						PROTOFILETRANSFERSTATUS pfts;
 						strncpy(filename, dcc->folder, sizeof(filename));
@@ -337,11 +335,12 @@ void *__stdcall gg_dccmainthread(void *empty)
 						pfts.currentFileProgress = dcc->file_info.size;
 						pfts.currentFileTime = 0;
 						ProtoBroadcastAck(GG_PROTO, dcc->contact, ACKTYPE_FILE, ACKRESULT_DATA, dcc, (LPARAM)&pfts);
-						_close(dcc->file_fd); dcc->file_fd = -1;
+						fclose(dcc->file_fd); dcc->file_fd = NULL;
 						ProtoBroadcastAck(GG_PROTO, dcc->contact, ACKTYPE_FILE, ACKRESULT_SUCCESS, dcc, 0);
 					}
 					// Free dcc
 					gg_free_dcc(dcc); if(dcc == thread->dcc) thread->dcc = NULL;
+
 					break;
 
 				// Client error
@@ -371,7 +370,7 @@ void *__stdcall gg_dccmainthread(void *empty)
 					// Close file & fail
 					if(dcc->contact)
 					{
-						_close(dcc->file_fd); dcc->file_fd = -1;
+						fclose(dcc->file_fd); dcc->file_fd = NULL;
 						ProtoBroadcastAck(GG_PROTO, dcc->contact, ACKTYPE_FILE, ACKRESULT_FAILED, dcc, 0);
 					}
 					// Free dcc
@@ -622,7 +621,7 @@ int gg_sendfile(WPARAM wParam, LPARAM lParam)
 
 	// Store handle
 	dcc->contact = ccs->hContact;
-	dcc->folder = _strdup(files[0]);
+	dcc->folder = strdup(files[0]);
 	dcc->tick = 0;
 	// Make folder name
 	bslash = strrchr(dcc->folder, '\\');
@@ -641,7 +640,7 @@ int gg_fileallow(WPARAM wParam, LPARAM lParam)
 	char fileName[MAX_PATH];
 	strncpy(fileName, (char *) ccs->lParam, sizeof(fileName));
 	strncat(fileName, dcc->file_info.filename, sizeof(fileName) - strlen(fileName));
-	dcc->folder = _strdup((char *) ccs->lParam);
+	dcc->folder = strdup((char *) ccs->lParam);
 	dcc->tick = 0;
 
 	// Check if its proper dcc
@@ -651,7 +650,7 @@ int gg_fileallow(WPARAM wParam, LPARAM lParam)
 	list_remove(&ggThread->transfers, dcc, 0);
 
 	// Open file for appending and check if ok
-	if(!(dcc->file_fd = _open(fileName, O_APPEND | O_BINARY)))
+	if(!(dcc->file_fd = fopen(fileName, "ab+")))
 	{
 		// Free transfer
 		gg_free_dcc(dcc);
@@ -663,7 +662,8 @@ int gg_fileallow(WPARAM wParam, LPARAM lParam)
 	}
 
 	// Put an offset to the file
-	dcc->offset = _lseek(dcc->file_fd, 0, SEEK_END);
+	fseek(dcc->file_fd, 0, SEEK_END);
+	dcc->offset = ftell(dcc->file_fd);
 
 	// Add to watches and start transfer
 	list_add(&ggThread->watches, dcc, 0);
@@ -717,10 +717,10 @@ int gg_filecancel(WPARAM wParam, LPARAM lParam)
 	// Send failed info
 	ProtoBroadcastAck(GG_PROTO, dcc->contact, ACKTYPE_FILE, ACKRESULT_FAILED, dcc, 0);
 	// Close file
-	if(dcc->file_fd != -1)
+	if(dcc->file_fd)
 	{
-		_close(dcc->file_fd);
-		dcc->file_fd = -1;
+		fclose(dcc->file_fd);
+		dcc->file_fd = NULL;
 	}
 
 #ifdef DEBUGMODE

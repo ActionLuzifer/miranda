@@ -2,7 +2,7 @@
 
 Jabber Protocol Plugin for Miranda IM
 Copyright ( C ) 2002-04  Santithorn Bunchua
-Copyright ( C ) 2005-08  George Hazan
+Copyright ( C ) 2005-07  George Hazan
 Copyright ( C ) 2007     Maxim Mluhov
 
 This program is free software; you can redistribute it and/or
@@ -19,12 +19,13 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-File name      : $URL$
-Revision       : $Revision$
-Last change on : $Date$
-Last change by : $Author$
+File name      : $Source: /cvsroot/miranda/miranda/protocols/JabberG/jabber_privacy.cpp,v $
+Revision       : $Revision: 5337 $
+Last change on : $Date: 2007-04-28 13:26:31 +0300 (бс, 28 ря№ 2007) $
+Last change by : $Author: ghazan $
 
 */
+
 
 #include "jabber.h"
 
@@ -39,7 +40,7 @@ extern int bSecureIM;
 
 static int JGetMirandaProductText(WPARAM wParam,LPARAM lParam)
 {
-	char filename[MAX_PATH],*productName = NULL;
+	char filename[MAX_PATH],*productName;
 	DWORD unused;
 	DWORD verInfoSize;
 	UINT blockSize;
@@ -47,27 +48,23 @@ static int JGetMirandaProductText(WPARAM wParam,LPARAM lParam)
 	GetModuleFileNameA(NULL,filename,SIZEOF(filename));
 	verInfoSize=GetFileVersionInfoSizeA(filename,&unused);
 	pVerInfo=mir_alloc(verInfoSize);
-	if( GetFileVersionInfoA(filename,0,verInfoSize,pVerInfo) ) {
-		VerQueryValueA(pVerInfo,"\\StringFileInfo\\000004b0\\ProductName",(void**)&productName,&blockSize);
-		if( productName )
-		#if defined( _UNICODE )
-			mir_snprintf(( char* )lParam, wParam, "%s", productName );
-		#else
-			lstrcpynA((char*)lParam,productName,wParam);
-		#endif
-		else
-			*(char*)lParam = 0;
-		mir_free(pVerInfo);
-	} else
-		*(char*)lParam = 0;
+	GetFileVersionInfoA(filename,0,verInfoSize,pVerInfo);
+	VerQueryValueA(pVerInfo,"\\StringFileInfo\\000004b0\\ProductName",(void**)&productName,&blockSize);
+#if defined( _UNICODE )
+	mir_snprintf(( char* )lParam, wParam, "%s", productName );
+#else
+	lstrcpynA((char*)lParam,productName,wParam);
+#endif
+	mir_free(pVerInfo);
 	return 0;
 }
 
-void CJabberProto::OnIqRequestVersion( XmlNode* node, void* userdata, CJabberIqInfo* pInfo )
+void JabberProcessIqVersion( XmlNode* node, void* userdata, CJabberIqInfo* pInfo )
 {
 	if ( !pInfo->GetFrom() )
 		return;
 
+	char* version = JabberGetVersionText();
 	TCHAR* os = NULL;
 
 	if ( JGetByte( "ShowOSVersion", TRUE )) {
@@ -75,52 +72,64 @@ void CJabberProto::OnIqRequestVersion( XmlNode* node, void* userdata, CJabberIqI
 		osvi.dwOSVersionInfoSize = sizeof( OSVERSIONINFO );
 		if ( GetVersionEx( &osvi )) {
 			switch ( osvi.dwPlatformId ) {
-			case VER_PLATFORM_WIN32_NT:
-				if ( osvi.dwMajorVersion == 6 )
-					os = TranslateT( "Windows Vista" );
-				else if ( osvi.dwMajorVersion == 5 ) {
-					if ( osvi.dwMinorVersion == 2 ) os = TranslateT( "Windows Server 2003" );
-					else if ( osvi.dwMinorVersion == 1 ) os = TranslateT( "Windows XP" );
-					else if ( osvi.dwMinorVersion == 0 ) os = TranslateT( "Windows 2000" );
-				}
-				else if ( osvi.dwMajorVersion <= 4 ) {
-					os = TranslateT( "Windows NT" );
-				}
-				break;
-			case VER_PLATFORM_WIN32_WINDOWS:
-				if ( osvi.dwMajorVersion == 4 ) {
-					if ( osvi.dwMinorVersion == 0 ) os = TranslateT( "Windows 95" );
-					if ( osvi.dwMinorVersion == 10 ) os = TranslateT( "Windows 98" );
-					if ( osvi.dwMinorVersion == 90 ) os = TranslateT( "Windows ME" );
-				}
-				break;
+		case VER_PLATFORM_WIN32_NT:
+			if ( osvi.dwMajorVersion == 6 )
+				os = TranslateT( "Windows Vista" );
+			else if ( osvi.dwMajorVersion == 5 ) {
+				if ( osvi.dwMinorVersion == 2 ) os = TranslateT( "Windows Server 2003" );
+				else if ( osvi.dwMinorVersion == 1 ) os = TranslateT( "Windows XP" );
+				else if ( osvi.dwMinorVersion == 0 ) os = TranslateT( "Windows 2000" );
+			}
+			else if ( osvi.dwMajorVersion <= 4 ) {
+				os = TranslateT( "Windows NT" );
+			}
+			break;
+		case VER_PLATFORM_WIN32_WINDOWS:
+			if ( osvi.dwMajorVersion == 4 ) {
+				if ( osvi.dwMinorVersion == 0 ) os = TranslateT( "Windows 95" );
+				if ( osvi.dwMinorVersion == 10 ) os = TranslateT( "Windows 98" );
+				if ( osvi.dwMinorVersion == 90 ) os = TranslateT( "Windows ME" );
+			}
+			break;
 		}	}
 
 		if ( os == NULL ) os = TranslateT( "Windows" );
 	}
 
+	char mversion[100];
+	JCallService( MS_SYSTEM_GETVERSIONTEXT, sizeof( mversion ), ( LPARAM )mversion );
+
+	char mproduct[50];
+	JGetMirandaProductText( sizeof( mproduct ), ( LPARAM )mproduct );
+
+	TCHAR* fullVer = (TCHAR*)alloca(1000 * sizeof( TCHAR ));
+	mir_sntprintf( fullVer, 1000, _T(TCHAR_STR_PARAM) _T(" ") _T(TCHAR_STR_PARAM) _T(" (Jabber v.") _T(TCHAR_STR_PARAM) _T(" [%s])") _T(TCHAR_STR_PARAM),
+		mproduct, mversion, __VERSION_STRING, jabberThreadInfo->resource, bSecureIM ? " (SecureIM)":"" );
+
 	XmlNodeIq iq( "result", pInfo );
 	XmlNode* query = iq.addQuery( JABBER_FEAT_VERSION );
-	query->addChild( "name", _T("Miranda IM Jabber") );
-	query->addChild( "version", _T(__VERSION_STRING) );
+	query->addChild( "name", fullVer );
+	query->addChild( "version", version );
 	if (os) query->addChild( "os", os );
-	m_ThreadInfo->send( iq );
+	jabberThreadInfo->send( iq );
+
+	if ( version ) mir_free( version );
 }
 
 // last activity (XEP-0012) support
-void CJabberProto::OnIqRequestLastActivity( XmlNode* node, void* userdata, CJabberIqInfo *pInfo )
+void JabberProcessIqLast( XmlNode* node, void* userdata, CJabberIqInfo *pInfo )
 {
 	XmlNodeIq iq( "result", pInfo );
 	XmlNode* query = iq.addQuery( JABBER_FEAT_LAST_ACTIVITY );
-	query->addAttr("seconds", m_tmJabberIdleStartTime ? time( 0 ) - m_tmJabberIdleStartTime : 0 );
-	m_ThreadInfo->send( iq );
+	query->addAttr("seconds", jabberIdleStartTime ? time( 0 ) - jabberIdleStartTime : 0 );
+	jabberThreadInfo->send( iq );
 }
 
 // XEP-0199: XMPP Ping support
-void CJabberProto::OnIqRequestPing( XmlNode* node, void* userdata, CJabberIqInfo *pInfo )
+void JabberProcessIqPing( XmlNode* node, void* userdata, CJabberIqInfo *pInfo )
 {
 	XmlNodeIq iq( "result", pInfo );
-	m_ThreadInfo->send( iq );
+	jabberThreadInfo->send( iq );
 }
 
 // Returns the current GMT offset in seconds
@@ -149,7 +158,7 @@ int GetGMTOffset(void)
 }
 
 // entity time (XEP-0202) support
-void CJabberProto::OnIqRequestTime( XmlNode* node, void* userdata, CJabberIqInfo *pInfo )
+void JabberProcessIqTime202( XmlNode* node, void* userdata, CJabberIqInfo *pInfo )
 {
 	struct tm *gmt;
 	time_t ltime;
@@ -173,10 +182,10 @@ void CJabberProto::OnIqRequestTime( XmlNode* node, void* userdata, CJabberIqInfo
 	timeNode->addAttr( "xmlns", JABBER_FEAT_ENTITY_TIME );
 	timeNode->addChild( "utc", stime);
 	timeNode->addChild( "tzo", szTZ );
-	m_ThreadInfo->send(iq);
+	jabberThreadInfo->send(iq);
 }
 
-void CJabberProto::OnIqRequestAvatar( XmlNode* node, void* userdata, CJabberIqInfo *pInfo )
+void JabberProcessIqAvatar( XmlNode* node, void* userdata, CJabberIqInfo *pInfo )
 {
 	if ( !JGetByte( "EnableAvatars", TRUE ))
 		return;
@@ -195,13 +204,13 @@ void CJabberProto::OnIqRequestAvatar( XmlNode* node, void* userdata, CJabberIqIn
 	}
 
 	char szFileName[ MAX_PATH ];
-	GetAvatarFileName( NULL, szFileName, MAX_PATH );
+	JabberGetAvatarFileName( NULL, szFileName, MAX_PATH );
 
 	FILE* in = fopen( szFileName, "rb" );
 	if ( in == NULL )
 		return;
 
-	long bytes = _filelength( _fileno( in ));
+	long bytes = filelength( fileno( in ));
 	char* buffer = ( char* )mir_alloc( bytes*4/3 + bytes + 1000 );
 	if ( buffer == NULL ) {
 		fclose( in );
@@ -215,27 +224,27 @@ void CJabberProto::OnIqRequestAvatar( XmlNode* node, void* userdata, CJabberIqIn
 	XmlNodeIq iq( "result", pInfo );
 	XmlNode* query = iq.addQuery( JABBER_FEAT_AVATAR );
 	XmlNode* data = query->addChild( "data", str ); data->addAttr( "mimetype", szMimeType );
-	m_ThreadInfo->send( iq );
+	jabberThreadInfo->send( iq );
 	mir_free( str );
 	mir_free( buffer );
 }
 
-void CJabberProto::OnSiRequest( XmlNode* node, void* userdata, CJabberIqInfo *pInfo )
+void JabberHandleSiRequest( XmlNode* node, void* userdata, CJabberIqInfo *pInfo )
 {
 	TCHAR* szProfile = JabberXmlGetAttrValue( pInfo->GetChildNode(), "profile" );
 
 	if ( szProfile && !_tcscmp( szProfile, _T(JABBER_FEAT_SI_FT)))
-		FtHandleSiRequest( node );
+		JabberFtHandleSiRequest( node );
 	else {
 		XmlNodeIq iq( "error", pInfo );
 		XmlNode* error = iq.addChild( "error" ); error->addAttr( "code", "400" ); error->addAttr( "type", "cancel" );
 		XmlNode* brq = error->addChild( "bad-request" ); brq->addAttr( "xmlns", "urn:ietf:params:xml:ns:xmpp-stanzas" );
 		XmlNode* bp = error->addChild( "bad-profile" ); 
-		m_ThreadInfo->send( iq );
+		jabberThreadInfo->send( iq );
 	}
 }
 
-void CJabberProto::OnRosterPushRequest( XmlNode* node, void* userdata, CJabberIqInfo *pInfo )
+void JabberHandleRosterPushRequest( XmlNode* node, void* userdata, CJabberIqInfo *pInfo )
 {
 	XmlNode *queryNode = pInfo->GetChildNode();
 
@@ -245,7 +254,7 @@ void CJabberProto::OnRosterPushRequest( XmlNode* node, void* userdata, CJabberIq
 		if ( !szFrom )
 			return;
 
-		TCHAR* szTo = JabberPrepareJid( m_ThreadInfo->fullJID );
+		TCHAR* szTo = JabberPrepareJid( jabberThreadInfo->fullJID );
 		if ( !szTo ) {
 			mir_free( szFrom );
 			return;
@@ -264,7 +273,7 @@ void CJabberProto::OnRosterPushRequest( XmlNode* node, void* userdata, CJabberIq
 
 		// invalid JID
 		if ( !bRetVal ) {
-			Log( "<iq/> attempt to hack via roster push from " TCHAR_STR_PARAM, pInfo->GetFrom() );
+			JabberLog( "<iq/> attempt to hack via roster push from " TCHAR_STR_PARAM, pInfo->GetFrom() );
 			return;
 		}
 	}
@@ -275,7 +284,7 @@ void CJabberProto::OnRosterPushRequest( XmlNode* node, void* userdata, CJabberIq
 	HANDLE hContact = NULL;
 	TCHAR *jid, *nick, *str;
 
-	Log( "<iq/> Got roster push, query has %d children", queryNode->numChild );
+	JabberLog( "<iq/> Got roster push, query has %d children", queryNode->numChild );
 	for ( int i=0; i<queryNode->numChild; i++ ) {
 		itemNode = queryNode->child[i];
 		if ( strcmp( itemNode->name, "item" ) != 0 )
@@ -293,16 +302,16 @@ void CJabberProto::OnRosterPushRequest( XmlNode* node, void* userdata, CJabberIq
 				nick = JabberNickFromJID( jid );
 
 			if ( nick != NULL ) {
-				if (( item=ListAdd( LIST_ROSTER, jid )) != NULL ) {
+				if (( item=JabberListAdd( LIST_ROSTER, jid )) != NULL ) {
 					replaceStr( item->nick, nick );
 
 					XmlNode* groupNode = JabberXmlGetChild( itemNode, "group" );
 					replaceStr( item->group, ( groupNode ) ? groupNode->text : NULL );
 
-					if (( hContact=HContactFromJID( jid, 0 )) == NULL ) {
+					if (( hContact=JabberHContactFromJID( jid, 0 )) == NULL ) {
 						// Received roster has a new JID.
 						// Add the jid ( with empty resource ) to Miranda contact list.
-						hContact = DBCreateContact( jid, nick, FALSE, FALSE );
+						hContact = JabberDBCreateContact( jid, nick, FALSE, FALSE );
 					}
 					else JSetStringT( hContact, "jid", jid );
 
@@ -326,32 +335,34 @@ void CJabberProto::OnRosterPushRequest( XmlNode* node, void* userdata, CJabberIq
 					}
 					else DBDeleteContactSetting( hContact, "CList", "Group" );
 				}
-				mir_free( nick );
-		}	}
+				else mir_free( nick );
+			}	}
 
-		if (( item=ListGetItemPtr( LIST_ROSTER, jid )) != NULL ) {
+		if (( item=JabberListGetItemPtr( LIST_ROSTER, jid )) != NULL ) {
 			if ( !_tcscmp( str, _T("both"))) item->subscription = SUB_BOTH;
 			else if ( !_tcscmp( str, _T("to"))) item->subscription = SUB_TO;
 			else if ( !_tcscmp( str, _T("from"))) item->subscription = SUB_FROM;
 			else item->subscription = SUB_NONE;
-			Log( "Roster push for jid=" TCHAR_STR_PARAM ", set subscription to " TCHAR_STR_PARAM, jid, str );
+			JabberLog( "Roster push for jid=" TCHAR_STR_PARAM ", set subscription to " TCHAR_STR_PARAM, jid, str );
 			// subscription = remove is to remove from roster list
 			// but we will just set the contact to offline and not actually
 			// remove, so that history will be retained.
 			if ( !_tcscmp( str, _T("remove"))) {
-				if (( hContact=HContactFromJID( jid )) != NULL ) {
-					SetContactOfflineStatus( hContact );
-					ListRemove( LIST_ROSTER, jid );
-			}	}
+				if (( hContact=JabberHContactFromJID( jid )) != NULL ) {
+					JabberSetContactOfflineStatus( hContact );
+					JabberListRemove( LIST_ROSTER, jid );
+				}	}
 			else if ( JGetByte( hContact, "ChatRoom", 0 ))
 				DBDeleteContactSetting( hContact, "CList", "Hidden" );
-	}	}
+		}	}
 
-	UI_SAFE_NOTIFY(m_pDlgServiceDiscovery, WM_JABBER_TRANSPORT_REFRESH);
-	RebuildInfoFrame();
+	if ( hwndJabberAgents )
+		SendMessage( hwndJabberAgents, WM_JABBER_TRANSPORT_REFRESH, 0, 0 );
+	if ( hwndServiceDiscovery )
+		SendMessage( hwndServiceDiscovery, WM_JABBER_TRANSPORT_REFRESH, 0, 0 );
 }
 
-void CJabberProto::OnIqRequestOOB( XmlNode* node, void* userdata, CJabberIqInfo *pInfo )
+void JabberHandleIqRequestOOB( XmlNode* node, void* userdata, CJabberIqInfo *pInfo )
 {
 	if ( !pInfo->GetFrom() || !pInfo->GetHContact() )
 		return;
@@ -363,7 +374,7 @@ void CJabberProto::OnIqRequestOOB( XmlNode* node, void* userdata, CJabberIqInfo 
 		// reject
 		XmlNodeIq iq( "error", pInfo );
 		XmlNode* e = iq.addChild( "error", "File transfer refused" ); e->addAttr( "code", 406 );
-		m_ThreadInfo->send( iq );
+		jabberThreadInfo->send( iq );
 		return;
 	}
 
@@ -371,7 +382,7 @@ void CJabberProto::OnIqRequestOOB( XmlNode* node, void* userdata, CJabberIqInfo 
 	TCHAR *str, *p, *q;
 	
 	str = n->text;	// URL of the file to get
-	filetransfer* ft = new filetransfer( this );
+	filetransfer* ft = new filetransfer;
 	ft->std.totalFiles = 1;
 	ft->jid = mir_tstrdup( pInfo->GetFrom() );
 	ft->std.hContact = pInfo->GetHContact();
@@ -392,6 +403,7 @@ void CJabberProto::OnIqRequestOOB( XmlNode* node, void* userdata, CJabberIqInfo 
 					*p = '\0';
 				}
 				ft->httpHostName = mir_t2a( text );
+				ft->httpPath = mir_t2a( ++q );
 	}	}	}
 
 	if ( pInfo->GetIdStr() )
@@ -402,7 +414,7 @@ void CJabberProto::OnIqRequestOOB( XmlNode* node, void* userdata, CJabberIqInfo 
 		PROTORECVEVENT pre;
 		char* szBlob, *desc;
 
-		Log( "Host=%s Port=%d Path=%s", ft->httpHostName, ft->httpPort, ft->httpPath );
+		JabberLog( "Host=%s Port=%d Path=%s", ft->httpHostName, ft->httpPort, ft->httpPath );
 		if (( n=JabberXmlGetChild( pInfo->GetChildNode(), "desc" ))!=NULL && n->text!=NULL )
 			desc = mir_t2a( n->text );
 		else
@@ -410,7 +422,7 @@ void CJabberProto::OnIqRequestOOB( XmlNode* node, void* userdata, CJabberIqInfo 
 
 		if ( desc != NULL ) {
 			char* str2;
-			Log( "description = %s", desc );
+			JabberLog( "description = %s", desc );
 			if (( str2 = strrchr( ft->httpPath, '/' )) != NULL )
 				str2++;
 			else
@@ -439,23 +451,23 @@ void CJabberProto::OnIqRequestOOB( XmlNode* node, void* userdata, CJabberIqInfo 
 		// reject
 		XmlNodeIq iq( "error", pInfo );
 		XmlNode* e = iq.addChild( "error", "File transfer refused" ); e->addAttr( "code", 406 );
-		m_ThreadInfo->send( iq );
+		jabberThreadInfo->send( iq );
 		delete ft;
 	}
 }
 
-void CJabberProto::OnHandleDiscoInfoRequest( XmlNode* iqNode, void* userdata, CJabberIqInfo* pInfo )
+void JabberHandleDiscoInfoRequest( XmlNode* iqNode, void* userdata, CJabberIqInfo* pInfo )
 {
 	if ( !pInfo->GetChildNode() )
 		return;
 
 	TCHAR* szNode = JabberXmlGetAttrValue( pInfo->GetChildNode(), "node" );
 	// caps hack
-	if ( m_clientCapsManager.HandleInfoRequest( iqNode, userdata, pInfo, szNode ))
+	if ( g_JabberClientCapsManager.HandleInfoRequest( iqNode, userdata, pInfo, szNode ))
 		return;
 
 	// ad-hoc hack:
-	if ( szNode && m_adhocManager.HandleInfoRequest( iqNode, userdata, pInfo, szNode ))
+	if ( szNode && g_JabberAdhocManager.HandleInfoRequest( iqNode, userdata, pInfo, szNode ))
 		return;
 
 	// another request, send empty result
@@ -467,17 +479,17 @@ void CJabberProto::OnHandleDiscoInfoRequest( XmlNode* iqNode, void* userdata, CJ
 	XmlNode *notfoundNode = errorNode->addChild( "item-not-found" );
 	notfoundNode->addAttr( "xmlns", "urn:ietf:params:xml:ns:xmpp-stanzas" );
 
-	m_ThreadInfo->send( iq );
+	jabberThreadInfo->send( iq );
 }
 
-void CJabberProto::OnHandleDiscoItemsRequest( XmlNode* iqNode, void* userdata, CJabberIqInfo* pInfo )
+void JabberHandleDiscoItemsRequest( XmlNode* iqNode, void* userdata, CJabberIqInfo* pInfo )
 {
 	if ( !pInfo->GetChildNode() )
 		return;
 
 	// ad-hoc commands check:
 	TCHAR* szNode = JabberXmlGetAttrValue( pInfo->GetChildNode(), "node" );
-	if ( szNode && m_adhocManager.HandleItemsRequest( iqNode, userdata, pInfo, szNode ))
+	if ( szNode && g_JabberAdhocManager.HandleItemsRequest( iqNode, userdata, pInfo, szNode ))
 		return;
 
 	// another request, send empty result
@@ -489,61 +501,10 @@ void CJabberProto::OnHandleDiscoItemsRequest( XmlNode* iqNode, void* userdata, C
 
 	if ( !szNode && JGetByte( "EnableRemoteControl", FALSE )) {
 		XmlNode* item = resultQuery->addChild( "item" );
-		item->addAttr( "jid", m_ThreadInfo->fullJID );
+		item->addAttr( "jid", jabberThreadInfo->fullJID );
 		item->addAttr( "node", _T(JABBER_FEAT_COMMANDS) );
 		item->addAttr( "name", "Ad-hoc commands" );
 	}
 
-	m_ThreadInfo->send( iq );
-}
-
-BOOL CJabberProto::AddClistHttpAuthEvent( CJabberHttpAuthParams *pParams )
-{
-	CLISTEVENT cle = {0};
-	char szService[256];
-	mir_snprintf( szService, sizeof(szService),"%s%s", m_szModuleName, JS_HTTP_AUTH );
-	cle.cbSize = sizeof(CLISTEVENT);
-	cle.hIcon = (HICON) LoadIconEx("openid");
-	cle.flags = CLEF_PROTOCOLGLOBAL | CLEF_TCHAR;
-	cle.hDbEvent = (HANDLE)("test");
-	cle.lParam = (LPARAM) pParams;
-	cle.pszService = szService;
-	cle.ptszTooltip = TranslateT("Http authentication request received");
-	CallService(MS_CLIST_ADDEVENT, 0, (LPARAM)&cle);
-	
-	return TRUE;
-}
-
-void CJabberProto::OnIqHttpAuth( XmlNode* node, void* userdata, CJabberIqInfo* pInfo )
-{
-	if ( !JGetByte( "AcceptHttpAuth", TRUE ))
-		return;
-
-	if ( !node || !pInfo->GetChildNode() || !pInfo->GetFrom() || !pInfo->GetIdStr() )
-		return;
-
-	XmlNode *pConfirm = JabberXmlGetChild( node, "confirm" );
-	if ( !pConfirm )
-		return;
-
-	TCHAR *szId = JabberXmlGetAttrValue( pConfirm, "id" );
-	TCHAR *szMethod = JabberXmlGetAttrValue( pConfirm, "method" );
-	TCHAR *szUrl = JabberXmlGetAttrValue( pConfirm, "url" );
-
-	if ( !szId || !szMethod || !szUrl )
-		return;
-
-	CJabberHttpAuthParams *pParams = (CJabberHttpAuthParams *)mir_alloc( sizeof( CJabberHttpAuthParams ));
-	if ( !pParams )
-		return;
-	ZeroMemory( pParams, sizeof( CJabberHttpAuthParams ));
-	pParams->m_nType = CJabberHttpAuthParams::IQ;
-	pParams->m_szFrom = mir_tstrdup( pInfo->GetFrom() );
-	pParams->m_szId = mir_tstrdup( szId );
-	pParams->m_szMethod = mir_tstrdup( szMethod );
-	pParams->m_szUrl = mir_tstrdup( szUrl );
-
-	AddClistHttpAuthEvent( pParams );
-
-	return;
+	jabberThreadInfo->send( iq );
 }

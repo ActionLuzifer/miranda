@@ -29,7 +29,7 @@ PLUGININFOEX pluginInfo = {
 	"Provides support for Gadu-Gadu protocol",
 	"Adam Strzelecki",
 	"ono+miranda@java.pl",
-	"Copyright © 2003-2008 Adam Strzelecki",
+	"Copyright © 2003-2007 Adam Strzelecki",
 	"http://www.miranda-im.pl/",
 	0,
 	0,
@@ -310,12 +310,12 @@ void init_protonames()
 
 	// We copy to static variable
 	strncpy(ggProto, p, sizeof(ggProto));
-	_strupr(ggProto);
+	strupr(ggProto);
 	// Is it default GG.dll if yes do Gadu-Gadu as a title
 	if(!strcmp(ggProto, GGDEF_PROTO))
-		ggProtoName = _strdup(GGDEF_PROTONAME);
+		ggProtoName = strdup(GGDEF_PROTONAME);
 	else
-		ggProtoName = _strdup(p);
+		ggProtoName = strdup(p);
 }
 
 //////////////////////////////////////////////////////////
@@ -462,7 +462,7 @@ const char *ggdebug_eventtype(struct gg_event *e)
 
 void gg_debughandler(int level, const char *format, va_list ap)
 {
-	char szText[1024], *szFormat = _strdup(format);
+	char szText[1024], *szFormat = strdup(format);
 	// Kill end line
 	char *nl = strrchr(szFormat, '\n');
 	if(nl) *nl = 0;

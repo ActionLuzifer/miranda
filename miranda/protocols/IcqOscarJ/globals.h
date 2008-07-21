@@ -41,26 +41,47 @@
 typedef char uid_str[MAX_PATH];
 
 // from init.c
-extern HINSTANCE hInst;
+HINSTANCE hInst;
+char gpszICQProtoName[MAX_PATH];
+
+HANDLE ghServerNetlibUser;
+HANDLE ghDirectNetlibUser;
 
 // from init.h
-extern const int moodXStatus[];
-
-extern DWORD MIRANDA_VERSION;
+BYTE gbGatewayMode;
+BYTE gbSecureLogin;
+BYTE gbAimEnabled;
+BYTE gbUtfEnabled;
+WORD gwAnsiCodepage;
+BYTE gbDCMsgEnabled;
+BYTE gbTempVisListEnabled;
+BYTE gbSsiEnabled;
+BYTE gbAvatarsEnabled;
+BYTE gbXStatusEnabled;
+DWORD MIRANDA_VERSION;
 
 // from icqosc_svcs.c
+int gnCurrentStatus;
+DWORD dwLocalUIN;
 
-extern BYTE gbUnicodeCore;
+char gpszPassword[16];
+BYTE gbRememberPwd;
+
+BYTE gbUnicodeAPI;
+BYTE gbUnicodeCore;
 
 // from fam_04message.c
-struct icq_mode_messages
+typedef struct icq_mode_messages_s
 {
-  char *szAway;
-  char *szNa;
-  char *szDnd;
-  char *szOccupied;
-  char *szFfc;
-};
+  char* szAway;
+  char* szNa;
+  char* szDnd;
+  char* szOccupied;
+  char* szFfc;
+} icq_mode_messages;
+
+icq_mode_messages modeMsgs;
+CRITICAL_SECTION modeMsgsMutex;
 
 
 #endif /* __GLOBALS_H */

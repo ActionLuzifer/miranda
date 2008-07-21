@@ -17,6 +17,9 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
+#if defined(UNICODE) && !defined( _UNICODE)
+#define _UNICODE
+#endif
 
 #ifndef _CHAT_H_
 #define _CHAT_H_
@@ -26,11 +29,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #pragma warning( disable : 4786 ) // limitation in MSVC's debugger.
 #pragma warning( disable : 4996 ) // limitation in MSVC's debugger.
 
-#define WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN	
 #define _WIN32_WINNT 0x0501
-#define _WIN32_IE 0x0501
 
-#include "m_stdhdr.h"
+#define _USE_32BIT_TIME_T
 
 #include <tchar.h>
 #include <windows.h>
@@ -58,15 +60,15 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "../../include/m_addcontact.h"
 #include "../../include/m_clist.h"
 #include "../../include/m_clui.h"
-#include "../../include/m_message.h"
-#include "../../include/m_icolib.h"
 #include "../../include/m_popup.h"
-#include "../../include/m_chat.h"
 #include "resource.h"
+#include "m_chat.h"
 #include "m_ieview.h"
 #include "m_smileyadd.h"
+#include "IcoLib.h"
 
 #ifndef NDEBUG
+#include <crtdbg.h>
 #define new new(_NORMAL_BLOCK, __FILE__, __LINE__)
 #endif
 
@@ -284,7 +286,7 @@ typedef struct SESSION_INFO_TYPE
 	HWND        hwndStatus;
 	time_t      LastTime;
 
-	COMMAND_INFO*  lpCommands;
+	COMMAND_INFO*  lpCommands; 
 	COMMAND_INFO*  lpCurrentCommand;
 	LOGINFO*       pLog;
 	LOGINFO*       pLogEnd;
@@ -364,7 +366,6 @@ struct GlobalLogSettings_t {
 	COLORREF    crLogBackground;
 	COLORREF    crUserListColor;
 	COLORREF    crUserListBGColor;
-	COLORREF    crUserListSelectedBGColor;
 	COLORREF    crUserListHeadingsColor;
 	COLORREF    crPUTextColour;
 	COLORREF    crPUBkgColour;
@@ -419,7 +420,6 @@ void   UnhookEvents(void);
 void   CreateServiceFunctions(void);
 void   DestroyServiceFunctions(void);
 void   CreateHookableEvents(void);
-void   DestroyHookableEvents(void);
 void   TabsInit(void);
 void   ShowRoom(SESSION_INFO* si, WPARAM wp, BOOL bSetForeground);
 
