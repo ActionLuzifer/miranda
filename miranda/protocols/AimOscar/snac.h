@@ -1,5 +1,6 @@
 #ifndef SNAC_H
 #define SNAC_H
+#include <windows.h>
 #define SNAC_SIZE 10
 class SNAC
 {

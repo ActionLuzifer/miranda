@@ -2,7 +2,7 @@
 
 Miranda IM: the free IM client for Microsoft* Windows*
 
-Copyright 2000-2008 Miranda ICQ/IM project,
+Copyright 2000-2007 Miranda ICQ/IM project,
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
 
@@ -346,27 +346,14 @@ to a call of MS_DB_EVENT_GETTEXT (see below)
 Always returns 0.
 */
 
-#define DBEVENTTYPEDESCR_SIZE    sizeof(DBEVENTTYPEDESCR)
-#define DBEVENTTYPEDESCR_SIZE_V1 0x10
-
 typedef struct
 {
 	int   cbSize;      // structure size in bytes
 	char* module;      // event module name
 	int   eventType;   // event id, unique for this module
 	char* descr;       // event type description (i.e. "File Transfer")
-	char* textService; // service name for MS_DB_EVENT_GETTEXT (0.8+, default Module+'/GetEventText'+EvtID)
-	char* iconService; // service name for MS_DB_EVENT_GETICON (0.8+, default Module+'/GetEventIcon'+EvtID)
-	HANDLE eventIcon;  // icolib handle to eventicon (0.8+, default 'eventicon_'+Module+EvtID)
-	DWORD flags;       // flags, combination of the DETF_*
 }
 	DBEVENTTYPEDESCR;
-
-// constants for default event behaviour
-#define DETF_HISTORY    1   // show event in history
-#define DETF_MSGWINDOW  2   // show event in message window
-#define DETF_NONOTIFY   4   // block event notify (e.g. Popups)
-
 
 #define MS_DB_EVENT_REGISTERTYPE  "DB/EventType/Register"
 
@@ -716,15 +703,6 @@ If you want to keep it for longer you must allocation your own storage.
 typedef int (*DBMODULEENUMPROC)(const char *szModuleName,DWORD ofsModuleName,LPARAM lParam);
 #define MS_DB_MODULES_ENUM    "DB/Modules/Enum"
 
-/* DB/Module/Delete  0.8.0+
-
-Removes all settings for the specified module.
-wParam=0 (unused)
-lParam=(LPARAM)(char*)szModuleName - the module name to be deleted
-*/
-
-#define MS_DB_MODULE_DELETE "DB/Module/Delete"
-
 /******************************************************************/
 /************************** EVENTS ********************************/
 /******************************************************************/
@@ -950,7 +928,7 @@ __inline static int DBGetContactSettingString_Helper(HANDLE hContact,const char 
 	cgs.szModule=szModule;
 	cgs.szSetting=szSetting;
 	cgs.pValue=dbv;
-	dbv->type=(BYTE)nType;
+	dbv->type=nType;
 
 	rc=CallService(MS_DB_CONTACT_GETSETTING_STR,(WPARAM)hContact,(LPARAM)&cgs);
 #if defined(_DEBUG) && defined(DBCHECKSETTINGS)
@@ -1083,7 +1061,7 @@ __inline static int DBWriteContactSettingUTF8String(HANDLE hContact,const char *
 /* inlined range tolerate versions */
 
 __inline static BYTE DBGetContactSettingRangedByte(HANDLE hContact, const char *szModule, const char *szSetting, BYTE errorValue, BYTE minValue, BYTE maxValue) {
-	BYTE bVal = (BYTE)DBGetContactSettingByte(hContact, szModule, szSetting, errorValue);
+	BYTE bVal = DBGetContactSettingByte(hContact, szModule, szSetting, errorValue);
 
 	if (bVal < minValue || bVal > maxValue) {
 #ifdef _DEBUG
@@ -1098,7 +1076,7 @@ __inline static BYTE DBGetContactSettingRangedByte(HANDLE hContact, const char *
 }
 
 __inline static WORD DBGetContactSettingRangedWord(HANDLE hContact, const char *szModule, const char *szSetting, WORD errorValue, WORD minValue, WORD maxValue) {
-	WORD wVal = (WORD)DBGetContactSettingWord(hContact, szModule, szSetting, errorValue);
+	WORD wVal = DBGetContactSettingWord(hContact, szModule, szSetting, errorValue);
 
 	if (wVal < minValue || wVal > maxValue) {
 #ifdef _DEBUG

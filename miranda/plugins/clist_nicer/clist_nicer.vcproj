@@ -5,7 +5,9 @@
 	Name="clist_nicer"
 	ProjectGUID="{3C42510C-A29E-4A53-899C-203BFA874E0B}"
 	SccProjectName=""
-	SccLocalPath="">
+	SccAuxPath=""
+	SccLocalPath=""
+	SccProvider="">
 	<Platforms>
 		<Platform
 			Name="Win32"/>
@@ -108,10 +110,8 @@
 			<Tool
 				Name="VCLinkerTool"
 				IgnoreImportLibrary="TRUE"
-				AdditionalDependencies="vc7to6.lib comctl32.lib msimg32.lib shlwapi.lib"
+				AdditionalDependencies="comctl32.lib msimg32.lib shlwapi.lib"
 				SuppressStartupBanner="TRUE"
-				AdditionalLibraryDirectories="../../lib"
-				IgnoreAllDefaultLibraries="TRUE"
 				DelayLoadDLLs=""
 				GenerateDebugInformation="TRUE"
 				GenerateMapFile="TRUE"
@@ -248,9 +248,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				IgnoreImportLibrary="TRUE"
-				AdditionalDependencies="vc7to6.lib comctl32.lib msimg32.lib shlwapi.lib"
-				AdditionalLibraryDirectories="../../lib"
-				IgnoreAllDefaultLibraries="TRUE"
+				AdditionalDependencies="comctl32.lib msimg32.lib shlwapi.lib"
 				DelayLoadDLLs=""
 				GenerateDebugInformation="TRUE"
 				GenerateMapFile="TRUE"

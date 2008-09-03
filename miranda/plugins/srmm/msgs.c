@@ -24,12 +24,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #pragma hdrstop
 #include "m_fontservice.h"
 
-/* Missing MinGW GUIDs */
-#ifdef __MINGW32__
-const CLSID IID_IRichEditOle = { 0x00020D00, 0x00, 0x00, { 0xC0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x46 } };
-const CLSID IID_IRichEditOleCallback = { 0x00020D03, 0x00, 0x00, { 0xC0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x46 } };
-#endif
-
 static void InitREOleCallback(void);
 
 HCURSOR hCurSplitNS, hCurSplitWE, hCurHyperlinkHand;
@@ -334,8 +328,8 @@ static int FontsChanged(WPARAM wParam,LPARAM lParam)
 static int SplitmsgModulesLoaded(WPARAM wParam, LPARAM lParam)
 {
 	CLISTMENUITEM mi;
-	PROTOACCOUNT** accs;
-	int accCount, i;
+	PROTOCOLDESCRIPTOR **protocol;
+	int protoCount, i;
 
 	RegisterSRMMFonts();
 	LoadMsgLogIcons();
@@ -347,12 +341,12 @@ static int SplitmsgModulesLoaded(WPARAM wParam, LPARAM lParam)
 	mi.icolibItem = LoadSkinnedIconHandle( SKINICON_EVENT_MESSAGE );
 	mi.pszName = LPGEN("&Message");
 	mi.pszService = MS_MSG_SENDMESSAGE;
-	
-	ProtoEnumAccounts( &accCount, &accs );
-	for (i = 0; i < accCount; i++) {
-		PROTOACCOUNT* pa = accs[i];
-		if ( CallProtoService( pa->szModuleName, PS_GETCAPS, PFLAGNUM_1, 0) & PF1_IMSEND ) {
-			mi.pszContactOwner = pa->szModuleName;
+	CallService(MS_PROTO_ENUMPROTOCOLS, (WPARAM) & protoCount, (LPARAM) & protocol);
+	for (i = 0; i < protoCount; i++) {
+		if (protocol[i]->type != PROTOTYPE_PROTOCOL)
+			continue;
+		if (CallProtoService(protocol[i]->szName, PS_GETCAPS, PFLAGNUM_1, 0) & PF1_IMSEND) {
+			mi.pszContactOwner = protocol[i]->szName;
 			CallService(MS_CLIST_ADDCONTACTMENUITEM, 0, (LPARAM) & mi);
 	}	}
 

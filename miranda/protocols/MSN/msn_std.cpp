@@ -1,8 +1,11 @@
 /*
 Plugin of Miranda IM for communicating with users of the MSN Messenger protocol.
-Copyright (c) 2006-2008 Boris Krasnovskiy.
-Copyright (c) 2003-2005 George Hazan.
-Copyright (c) 2002-2003 Richard Hughes (original version).
+Copyright (c) 2006-7 Boris Krasnovskiy.
+Copyright (c) 2003-5 George Hazan.
+Copyright (c) 2002-3 Richard Hughes (original version).
+
+Miranda IM: the free icq client for MS Windows
+Copyright (C) 2000-2002 Richard Hughes, Roland Rabien & Tristan Van de Vreede
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -15,167 +18,21 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with this program.  If not, see <http://www.gnu.org/licenses/>.
+along with this program; if not, write to the Free Software
+Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
 #include "msn_global.h"
-#include "msn_proto.h"
 
-/////////////////////////////////////////////////////////////////////////////////////////
-// Standard functions
-
-void  CMsnProto::deleteSetting( HANDLE hContact, const char* valueName )
-{   DBDeleteContactSetting( hContact, m_szProtoName, valueName );
-}
-
-int CMsnProto::getByte( const char* name, BYTE defaultValue )
-{	return DBGetContactSettingByte( NULL, m_szProtoName, name, defaultValue );
-}
-
-int CMsnProto::getByte( HANDLE hContact, const char* name, BYTE defaultValue )
-{	return DBGetContactSettingByte(hContact, m_szProtoName, name, defaultValue );
-}
-
-int CMsnProto::getDword( const char* name, DWORD defaultValue )
-{	return DBGetContactSettingDword( NULL, m_szProtoName, name, defaultValue );
-}
-
-int CMsnProto::getDword( HANDLE hContact, const char* name, DWORD defaultValue )
-{	return DBGetContactSettingDword(hContact, m_szProtoName, name, defaultValue );
-}
-
-int CMsnProto::getString( const char* name, DBVARIANT* result )
-{	return DBGetContactSettingString( NULL, m_szProtoName, name, result );
-}
-
-int CMsnProto::getString( HANDLE hContact, const char* name, DBVARIANT* result )
-{	return DBGetContactSettingString( hContact, m_szProtoName, name, result );
-}
-
-int CMsnProto::getTString( const char* name, DBVARIANT* result )
-{	return DBGetContactSettingTString( NULL, m_szProtoName, name, result );
-}
-
-int CMsnProto::getTString( HANDLE hContact, const char* name, DBVARIANT* result )
-{	return DBGetContactSettingTString( hContact, m_szProtoName, name, result );
-}
-
-int  CMsnProto::getStaticString( HANDLE hContact, const char* valueName, char* dest, unsigned dest_len )
-{
-	DBVARIANT dbv;
-	dbv.pszVal = dest;
-	dbv.cchVal = (WORD)dest_len;
-	dbv.type = DBVT_ASCIIZ;
-
-	DBCONTACTGETSETTING sVal;
-	sVal.pValue = &dbv;
-	sVal.szModule = m_szProtoName;
-	sVal.szSetting = valueName;
-	if ( MSN_CallService( MS_DB_CONTACT_GETSETTINGSTATIC, ( WPARAM )hContact, ( LPARAM )&sVal ) != 0 )
-		return 1;
-
-	return ( dbv.type != DBVT_ASCIIZ );
-}
-
-int CMsnProto::getWord( const char* name, WORD defaultValue )
-{	return DBGetContactSettingWord( NULL, m_szProtoName, name, defaultValue );
-}
-
-int CMsnProto::getWord( HANDLE hContact, const char* name, WORD defaultValue )
-{	return DBGetContactSettingWord(hContact, m_szProtoName, name, defaultValue );
-}
-
-void CMsnProto::setByte( const char* name, BYTE value )
-{	DBWriteContactSettingByte(NULL, m_szProtoName, name, value );
-}
-
-void CMsnProto::setByte( HANDLE hContact, const char* name, BYTE value )
-{	DBWriteContactSettingByte(hContact, m_szProtoName, name, value );
-}
-
-void CMsnProto::setDword( const char* name, DWORD value )
-{	DBWriteContactSettingDword(NULL, m_szProtoName, name, value );
-}
-
-void CMsnProto::setDword( HANDLE hContact, const char* name, DWORD value )
-{	DBWriteContactSettingDword(hContact, m_szProtoName, name, value );
-}
-
-void CMsnProto::setString( const char* name, const char* value )
-{	DBWriteContactSettingString(NULL, m_szProtoName, name, value );
-}
-
-void CMsnProto::setString( HANDLE hContact, const char* name, const char* value )
-{	DBWriteContactSettingString(hContact, m_szProtoName, name, value );
-}
-
-void CMsnProto::setStringUtf( HANDLE hContact, const char* name, const char* value )
-{	DBWriteContactSettingStringUtf(hContact, m_szProtoName, name, value );
-}
-
-void CMsnProto::setTString( const char* name, const TCHAR* value )
-{	DBWriteContactSettingTString(NULL, m_szProtoName, name, value );
-}
-
-void CMsnProto::setTString( HANDLE hContact, const char* name, const TCHAR* value )
-{	DBWriteContactSettingTString(hContact, m_szProtoName, name, value );
-}
-
-void CMsnProto::setWord( const char* name, WORD value )
-{	DBWriteContactSettingWord(NULL, m_szProtoName, name, value );
-}
-
-void CMsnProto::setWord( HANDLE hContact, const char* name, WORD value )
-{	DBWriteContactSettingWord(hContact, m_szProtoName, name, value );
-}
- 
-/////////////////////////////////////////////////////////////////////////////////////////
-
-void CMsnProto::CreateProtoService(const char* szService, MsnServiceFunc serviceProc)
+HANDLE  MSN_CreateProtoServiceFunction(
+	const char* szService,
+	MIRANDASERVICE serviceProc )
 {
 	char str[ MAXMODULELABELLENGTH ];
-
-	mir_snprintf(str, sizeof(str), "%s%s", m_szProtoName, szService);
-	::CreateServiceFunctionObj( str, ( MIRANDASERVICEOBJ )*( void** )&serviceProc, this );
+	strcpy( str, msnProtocolName );
+	strcat( str, szService );
+	return CreateServiceFunction( str, serviceProc );
 }
-
-void CMsnProto::CreateProtoServiceParam( const char* szService, MsnServiceFuncParam serviceProc, LPARAM lParam )
-{
-	char str[ MAXMODULELABELLENGTH ];
-	mir_snprintf(str, sizeof(str), "%s%s", m_szProtoName, szService);
-	::CreateServiceFunctionObjParam( str, ( MIRANDASERVICEOBJPARAM )*( void** )&serviceProc, this, lParam );
-}
-
-HANDLE CMsnProto::CreateProtoEvent( const char* szService )
-{
-	char str[ MAXMODULELABELLENGTH ];
-	mir_snprintf(str, sizeof(str), "%s%s", m_szProtoName, szService);
-	return ::CreateHookableEvent( str );
-}
-
-void CMsnProto::HookProtoEvent(const char* szEvent, MsnEventFunc pFunc)
-{  ::HookEventObj( szEvent, ( MIRANDAHOOKOBJ )*( void** )&pFunc, this );
-}
-
-void CMsnProto::ForkThread( MsnThreadFunc pFunc, void* param )
-{
-	UINT threadID;
-	CloseHandle(( HANDLE )mir_forkthreadowner(( pThreadFuncOwner )*( void** )&pFunc, this, param, &threadID ));
-}
-
-int  CMsnProto::SendBroadcast( HANDLE hContact, int type, int result, HANDLE hProcess, LPARAM lParam )
-{
-	ACKDATA ack = {0};
-	ack.cbSize = sizeof( ACKDATA );
-	ack.szModule = m_szProtoName;
-	ack.hContact = hContact;
-	ack.type = type;
-	ack.result = result;
-	ack.hProcess = hProcess;
-	ack.lParam = lParam;
-	return MSN_CallService( MS_PROTO_BROADCASTACK, 0, ( LPARAM )&ack );
-}
-
 
 #if !defined( _DEBUG )
 int  MSN_CallService( const char* szSvcName, WPARAM wParam, LPARAM lParam )
@@ -184,14 +41,104 @@ int  MSN_CallService( const char* szSvcName, WPARAM wParam, LPARAM lParam )
 }
 #endif
 
+void  MSN_DeleteSetting( HANDLE hContact, const char* valueName )
+{
+	DBDeleteContactSetting( hContact, msnProtocolName, valueName );
+}
+
+DWORD  MSN_GetByte( const char* valueName, int parDefltValue )
+{
+	return DBGetContactSettingByte( NULL, msnProtocolName, valueName, parDefltValue );
+}
+
+char*  MSN_GetContactName( HANDLE hContact )
+{
+	return ( char* )MSN_CallService( MS_CLIST_GETCONTACTDISPLAYNAME, WPARAM( hContact), 0 );
+}
+
 TCHAR*  MSN_GetContactNameT( HANDLE hContact )
 {
 	return ( TCHAR* )MSN_CallService( MS_CLIST_GETCONTACTDISPLAYNAME, WPARAM( hContact), GCDNF_TCHAR );
 }
 
+DWORD  MSN_GetDword( HANDLE hContact, const char* valueName, DWORD parDefltValue )
+{
+	return DBGetContactSettingDword( hContact, msnProtocolName, valueName, parDefltValue );
+}
+
+int  MSN_GetStaticString( const char* valueName, HANDLE hContact, char* dest, unsigned dest_len )
+{
+	DBVARIANT dbv;
+	dbv.pszVal = dest;
+	dbv.cchVal = (WORD)dest_len;
+	dbv.type = DBVT_ASCIIZ;
+
+	DBCONTACTGETSETTING sVal;
+	sVal.pValue = &dbv;
+	sVal.szModule = msnProtocolName;
+	sVal.szSetting = valueName;
+	if ( MSN_CallService( MS_DB_CONTACT_GETSETTINGSTATIC, ( WPARAM )hContact, ( LPARAM )&sVal ) != 0 )
+		return 1;
+
+	return ( dbv.type != DBVT_ASCIIZ );
+}
+
+int  MSN_GetStringT( const char* valueName, HANDLE hContact, DBVARIANT* dbv )
+{
+	return DBGetContactSettingTString( hContact, msnProtocolName, valueName, dbv );
+}
+
+WORD  MSN_GetWord( HANDLE hContact, const char* valueName, int parDefltValue )
+{
+	return (WORD)DBGetContactSettingWord( hContact, msnProtocolName, valueName, parDefltValue );
+}
+
 void MSN_FreeVariant( DBVARIANT* dbv )
 {
 	DBFreeVariant( dbv );
+}
+
+int  MSN_SendBroadcast( HANDLE hContact, int type, int result, HANDLE hProcess, LPARAM lParam )
+{
+	ACKDATA ack = {0};
+	ack.cbSize = sizeof( ACKDATA );
+	ack.szModule = msnProtocolName;
+	ack.hContact = hContact;
+	ack.type = type;
+	ack.result = result;
+	ack.hProcess = hProcess;
+	ack.lParam = lParam;
+	return MSN_CallService( MS_PROTO_BROADCASTACK, 0, ( LPARAM )&ack );
+}
+
+DWORD  MSN_SetByte( const char* valueName, BYTE parValue )
+{
+	return DBWriteContactSettingByte( NULL, msnProtocolName, valueName, parValue );
+}
+
+DWORD  MSN_SetDword( HANDLE hContact, const char* valueName, DWORD parValue )
+{
+	return DBWriteContactSettingDword( hContact, msnProtocolName, valueName, parValue );
+}
+
+DWORD  MSN_SetString( HANDLE hContact, const char* valueName, const char* parValue )
+{
+	return DBWriteContactSettingString( hContact, msnProtocolName, valueName, parValue );
+}
+
+DWORD  MSN_SetStringT( HANDLE hContact, const char* valueName, const TCHAR* parValue )
+{
+	return DBWriteContactSettingTString( hContact, msnProtocolName, valueName, parValue );
+}
+
+DWORD  MSN_SetStringUtf( HANDLE hContact, const char* valueName, char* parValue )
+{
+	return DBWriteContactSettingStringUtf( hContact, msnProtocolName, valueName, parValue );
+}
+
+DWORD  MSN_SetWord( HANDLE hContact, const char* valueName, WORD parValue )
+{
+	return DBWriteContactSettingWord( hContact, msnProtocolName, valueName, parValue );
 }
 
 char*  MSN_Translate( const char* str )
