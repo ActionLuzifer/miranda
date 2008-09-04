@@ -38,7 +38,7 @@ typedef struct _GGTOKENDLGDATA
 
 BOOL CALLBACK gg_tokendlgproc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 {
-	GGTOKENDLGDATA *dat = (GGTOKENDLGDATA *)GetWindowLongPtr(hwndDlg, GWLP_USERDATA);
+	GGTOKENDLGDATA *dat = (GGTOKENDLGDATA *)GetWindowLongPtr(hwndDlg, GWL_USERDATA);
 
 	switch(msg)
 	{
@@ -48,7 +48,7 @@ BOOL CALLBACK gg_tokendlgproc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lPar
 			TranslateDialogDefault(hwndDlg);
 			GetClientRect(GetDlgItem(hwndDlg, IDC_WHITERECT), &rc);
 			InvalidateRect(hwndDlg, &rc, TRUE);
-			SetWindowLongPtr(hwndDlg, GWLP_USERDATA, lParam);
+			SetWindowLongPtr(hwndDlg, GWL_USERDATA, lParam);
 			return TRUE;
 		}
 		case WM_CTLCOLORSTATIC:
@@ -116,7 +116,7 @@ BOOL CALLBACK gg_tokendlgproc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lPar
 
 ////////////////////////////////////////////////////////////////////////////////
 // Gets GG token
-int gg_gettoken(GGPROTO *gg, GGTOKEN *token)
+int gg_gettoken(GGTOKEN *token)
 {
 	struct gg_http *h = NULL;
 	struct gg_token *t = NULL;

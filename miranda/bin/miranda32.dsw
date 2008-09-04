@@ -54,18 +54,6 @@ Package=<4>
 
 ###############################################################################
 
-Project: "JABBER_XSTATUS"=..\protocols\JabberG\jabber_xstatus\JABBER_XSTATUS.dsp - Package Owner=<4>
-
-Package=<5>
-{{{
-}}}
-
-Package=<4>
-{{{
-}}}
-
-###############################################################################
-
 Project: "Yahoo"=..\protocols\Yahoo\Yahoo.dsp - Package Owner=<4>
 
 Package=<5>
@@ -178,6 +166,10 @@ Project: "dbtool"="..\..\miranda-tools\dbtool\dbtool.dsp" - Package Owner=<4>
 
 Package=<5>
 {{{
+    begin source code control
+    "$/Miranda/miranda-tools/dbtool", DIIAAAAA
+    ..\..\miranda-tools\dbtool
+    end source code control
 }}}
 
 Package=<4>
@@ -309,6 +301,18 @@ Package=<4>
 
 ###############################################################################
 
+Project: "winssl"=..\plugins\winssl\winssl.dsp - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
 Project: "zlib"=..\plugins\zlib\zlib.dsp - Package Owner=<4>
 
 Package=<5>
@@ -332,5 +336,4 @@ Package=<3>
 }}}
 
 ###############################################################################
-
 

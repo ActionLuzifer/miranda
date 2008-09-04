@@ -2,8 +2,8 @@
 //                ICQ plugin for Miranda Instant Messenger
 //                ________________________________________
 // 
-// Copyright © 2001-2004 Richard Hughes, Martin Öberg
-// Copyright © 2004-2008 Joe Kucera, Bio
+// Copyright © 2001,2002,2003,2004 Richard Hughes, Martin Öberg
+// Copyright © 2004,2005,2006 Joe Kucera, Bio
 // 
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -21,7 +21,7 @@
 //
 // -----------------------------------------------------------------------------
 //
-// File name      : $URL$
+// File name      : $Source: /cvsroot/miranda/miranda/protocols/IcqOscarJ/changeinfo/changeinfo.h,v $
 // Revision       : $Revision$
 // Last change on : $Date$
 // Last change by : $Author$
@@ -58,6 +58,12 @@
 #define LIF_PASSWORD     0x20000000
 #define LIF_CHANGEONLY   0x10000000
 
+char Password[10];
+HANDLE hUpload[2];
+HWND hwndList;
+HFONT hListFont;
+int iEditItem;
+
 typedef struct {
   char *szDescription;
   unsigned displayType;    //LI_ constant
@@ -78,18 +84,33 @@ typedef struct {
 extern SettingItem setting[];
 extern const int settingCount;
 
+//main.c
+int InitChangeDetails(WPARAM wParam,LPARAM lParam);
+
 //dlgproc.c
 BOOL CALLBACK ChangeInfoDlgProc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam);
 
+//db.c
+void LoadSettingsFromDb(int keepChanged);
+void FreeStoredDbSettings(void);
+void ClearChangeFlags(void);
+int ChangesMade(void);
+int SaveSettingsToDb(HWND hwndDlg);
+
 //editstring.c
-void  BeginStringEdit(int iItem,RECT *rc,int i,WORD wVKey);
-void  EndStringEdit(int save);
-int   IsStringEditWindow(HWND hwnd);
-char* BinaryToEscapes(char *str);
+void BeginStringEdit(int iItem,RECT *rc,int i,WORD wVKey);
+void EndStringEdit(int save);
+int IsStringEditWindow(HWND hwnd);
+char *BinaryToEscapes(char *str);
 
 //editlist.c
 void BeginListEdit(int iItem,RECT *rc,int i,WORD wVKey);
 void EndListEdit(int save);
 int IsListEditWindow(HWND hwnd);
+
+//upload.c
+int StringToListItemId(const char *szSetting,int def);
+int UploadSettings(HWND hwndParent);
+
 
 #endif /* __CHANGEINFO_H */

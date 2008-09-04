@@ -25,38 +25,33 @@
 
 LIBPORT = $(top_builddir)/port/libport.la
 LIBTIFF = $(top_builddir)/libtiff/libtiff.la
-libtiffincludedir = $(includedir)
 
 EXTRA_DIST = Makefile.vc \
 	     SConstruct \
 	     tif_config.h-vms \
 	     tif_config.vc.h \
-	     tif_config.wince.h \
 	     tiffconf.vc.h \
-	     tiffconf.wince.h \
 	     libtiff.def \
 	     $(EXTRA_SRCS)
 
-libtiffinclude_HEADERS = \
+HDRS = \
 	tiff.h \
+        tiffconf.h \
 	tiffio.h \
 	tiffvers.h
 
 if HAVE_CXX
-libtiffinclude_HEADERS += tiffio.hxx
+HDRS +=	tiffio.hxx
 endif
 
-noinst_HEADERS = \
+EXTRA_HDRS = \
 	t4.h \
 	tif_dir.h \
 	tif_predict.h \
 	tiffiop.h \
 	uvcode.h
 
-nodist_libtiffinclude_HEADERS = \
-	tiffconf.h
-
-libtiff_la_SOURCES = \
+SRCS = \
 	tif_aux.c \
 	tif_close.c \
 	tif_codec.c \
@@ -95,7 +90,7 @@ libtiff_la_SOURCES = \
 	tif_write.c \
 	tif_zip.c
 
-libtiffxx_la_SOURCES = \
+SRCSXX = \
 	tif_stream.cxx
 
 EXTRA_SRCS = \
@@ -107,11 +102,16 @@ EXTRA_SRCS = \
 	tif_win3.c \
 	tif_win32.c
 
+libtiffincludedir = $(includedir)
+libtiffinclude_HEADERS = $(HDRS)
+noinst_HEADERS = $(EXTRA_HDRS)
+
 lib_LTLIBRARIES = libtiff.la
 if HAVE_CXX
 lib_LTLIBRARIES += libtiffxx.la
 endif
 
+libtiff_la_SOURCES = $(SRCS)
 libtiff_la_LDFLAGS = \
 	-no-undefined \
 	-version-number $(LIBTIFF_VERSION_INFO)
@@ -120,6 +120,7 @@ libtiff_la_LDFLAGS += $(LIBDIR)
 endif
 libtiff_la_LIBADD = $(LIBPORT)
 
+libtiffxx_la_SOURCES = $(SRCSXX)
 libtiffxx_la_LDFLAGS = \
 	-no-undefined \
 	-version-number $(LIBTIFF_VERSION_INFO)

@@ -254,8 +254,8 @@ void YAHOO_get_avatar(const char *who, const char *pic_url, long cksum)
 	struct avatar_info *avt;
 	
 	avt = malloc(sizeof(struct avatar_info));
-	avt->who = strdup(who);
-	avt->pic_url = strdup(pic_url);
+	avt->who = _strdup(who);
+	avt->pic_url = _strdup(pic_url);
 	avt->cksum = cksum;
 	
 	mir_forkthread(yahoo_recv_avatarthread, (void *) avt);
@@ -786,7 +786,7 @@ int YahooGetMyAvatar(WPARAM wParam, LPARAM lParam)
 		if (YAHOO_GetDword("AvatarHash", 0)){
 			
 			if (!DBGetContactSettingString(NULL, yahooProtocolName, "AvatarFile", &dbv)){
-				if (_access(dbv.pszVal, 0) == 0){
+				if (access(dbv.pszVal, 0) == 0){
 					strncpy(buffer, dbv.pszVal, size-1);
 					buffer[size-1] = '\0';
 

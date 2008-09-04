@@ -1,19 +1,22 @@
-#include "aim.h"
 #include "proxy.h"
-
-void __cdecl CAimProto::aim_proxy_helper( void* hContact )
+void __cdecl aim_proxy_helper(HANDLE hContact)
 {
-	HANDLE Connection=(HANDLE)getDword( hContact, AIM_KEY_DH, 0 );//really just the proxy handle not a dc handle
-	int stage = getByte( hContact, AIM_KEY_PS, 0 );
-	int sender = getByte( hContact, AIM_KEY_FT, 0 );
-	if ( Connection ) {
+	HANDLE Connection=(HANDLE)DBGetContactSettingDword(hContact,AIM_PROTOCOL_NAME,AIM_KEY_DH,0);//really just the proxy handle not a dc handle
+	int stage= DBGetContactSettingByte(hContact,AIM_PROTOCOL_NAME,AIM_KEY_PS,0);
+	int sender= DBGetContactSettingByte(hContact,AIM_PROTOCOL_NAME,AIM_KEY_FT,0);
+	if(Connection)
+	{
 		char cookie[8];
 		read_cookie(hContact,cookie);
 		DBVARIANT dbv;//CHECK FOR FREE VARIANT!
-		if ( !getString(AIM_KEY_SN, &dbv)) {
-			if ( stage == 1 && !sender || stage == 2 && sender || stage==3 && !sender ) {
-				unsigned short port_check = (unsigned short)getWord( hContact, AIM_KEY_PC, 0 );
-				if ( proxy_initialize_recv( Connection, dbv.pszVal, cookie, port_check )) {
+		if (!DBGetContactSettingString(NULL, AIM_PROTOCOL_NAME, AIM_KEY_SN, &dbv))
+		{
+			
+			if(stage==1&&!sender||stage==2&&sender||stage==3&&!sender)
+			{
+				unsigned short port_check=(unsigned short)DBGetContactSettingWord(hContact,AIM_PROTOCOL_NAME,AIM_KEY_PC,0);
+				if(proxy_initialize_recv(Connection,dbv.pszVal,cookie,port_check))
+				{
 					DBFreeVariant(&dbv);
 					return;//error
 				}
@@ -35,18 +38,27 @@ void __cdecl CAimProto::aim_proxy_helper( void* hContact )
 			hServerPacketRecver = (HANDLE) CallService(MS_NETLIB_CREATEPACKETRECVER, (WPARAM)Connection, 2048 * 4);
 			packetRecv.cbSize = sizeof(packetRecv);
 			packetRecv.dwTimeout = INFINITE;
-			for(;;)
+			#if _MSC_VER
+			#pragma warning( disable: 4127)
+			#endif
+			while(1)
 			{
+				#if _MSC_VER
+				#pragma warning( default: 4127)
+				#endif
 				recvResult = CallService(MS_NETLIB_GETMOREPACKETS, (WPARAM) hServerPacketRecver, (LPARAM) & packetRecv);
-				if ( recvResult == 0) {
-					ProtoBroadcastAck(m_szModuleName, hContact, ACKTYPE_FILE, ACKRESULT_FAILED,(HANDLE)hContact,0);
+				if (recvResult == 0)
+				{
+					ProtoBroadcastAck(AIM_PROTOCOL_NAME, hContact, ACKTYPE_FILE, ACKRESULT_FAILED,(HANDLE)hContact,0);
 					break;
 				}
-				if ( recvResult == SOCKET_ERROR) {
-					ProtoBroadcastAck(m_szModuleName, hContact, ACKTYPE_FILE, ACKRESULT_FAILED,(HANDLE)hContact,0);
+				if (recvResult == SOCKET_ERROR)
+				{
+					ProtoBroadcastAck(AIM_PROTOCOL_NAME, hContact, ACKTYPE_FILE, ACKRESULT_FAILED,(HANDLE)hContact,0);
 					break;
 				}
-				if ( recvResult > 0 ) {
+				if(recvResult>0)
+				{
 					unsigned short* length=(unsigned short*)&packetRecv.buffer[0];
 					*length=_htons(*length);
 					packetRecv.bytesUsed=*length+2;
@@ -88,24 +100,28 @@ void __cdecl CAimProto::aim_proxy_helper( void* hContact )
 						unsigned long* ip=(unsigned long*)&packetRecv.buffer[14];
 						*port=_htons(*port);
 						*ip=_htonl(*ip);
-						if ( !getString( hContact, AIM_KEY_SN, &dbv)) {
-							if ( stage == 1 && sender ) {
+						if (!DBGetContactSettingString(hContact, AIM_PROTOCOL_NAME, AIM_KEY_SN, &dbv))
+						{
+							if(stage==1&&sender)
+							{
 								LOG("Stage 1 Proxy ft and we are the sender.");
-								char* sn=strldup(dbv.pszVal,lstrlenA(dbv.pszVal));
+								char* sn=strldup(dbv.pszVal,lstrlen(dbv.pszVal));
 								DBFreeVariant(&dbv);
 								char vip[20];
 								char *file, *descr;
 								unsigned long size;
 								long_ip_to_char_ip(*ip,vip);
-								setString( hContact, AIM_KEY_IP, vip );
-								if ( !getString( hContact, AIM_KEY_FN, &dbv )) {
-									file = strldup(dbv.pszVal,lstrlenA(dbv.pszVal));
+								DBWriteContactSettingString(hContact,AIM_PROTOCOL_NAME,AIM_KEY_IP,vip);
+								if (!DBGetContactSettingString(hContact, AIM_PROTOCOL_NAME, AIM_KEY_FN, &dbv))
+								{
+									file=strldup(dbv.pszVal,lstrlen(dbv.pszVal));
 									DBFreeVariant(&dbv);
-									if ( !getString( hContact, AIM_KEY_FD, &dbv )) {
-										descr = strldup(dbv.pszVal,lstrlenA(dbv.pszVal));
+									if (!DBGetContactSettingString(hContact, AIM_PROTOCOL_NAME, AIM_KEY_FD, &dbv))
+									{
+										descr=strldup(dbv.pszVal,lstrlen(dbv.pszVal));
 										DBFreeVariant(&dbv);
-										size = getDword(hContact, AIM_KEY_FS, 0);
-										if ( !size )
+										size=DBGetContactSettingDword(hContact, AIM_PROTOCOL_NAME, AIM_KEY_FS, 0);
+										if(!size)
 											return;
 									}
 									else
@@ -115,7 +131,7 @@ void __cdecl CAimProto::aim_proxy_helper( void* hContact )
 									return;
 								char* pszfile = strrchr(file, '\\');
 								pszfile++;
-								aim_send_file(hServerConn,seqno,sn,cookie,*ip,*port,1,1,pszfile,size,descr);
+								aim_send_file(conn.hServerConn,conn.seqno,sn,cookie,*ip,*port,1,1,pszfile,size,descr);
 								delete[] file;
 								delete[] sn;
 								delete[] descr;
@@ -123,13 +139,13 @@ void __cdecl CAimProto::aim_proxy_helper( void* hContact )
 							else if(stage==2&&!sender)
 							{
 								LOG("Stage 2 Proxy ft and we are not the sender.");
-								aim_file_proxy_request(hServerConn,seqno,dbv.pszVal,cookie,0x02,*ip,*port);
+								aim_file_proxy_request(conn.hServerConn,conn.seqno,dbv.pszVal,cookie,0x02,*ip,*port);
 								DBFreeVariant(&dbv);
 							}
 							else if(stage==3&&sender)
 							{
 								LOG("Stage 3 Proxy ft and we are the sender.");
-								aim_file_proxy_request(hServerConn,seqno,dbv.pszVal,cookie,0x03,*ip,*port);
+								aim_file_proxy_request(conn.hServerConn,conn.seqno,dbv.pszVal,cookie,0x03,*ip,*port);
 								DBFreeVariant(&dbv);
 							}
 							else
@@ -138,32 +154,35 @@ void __cdecl CAimProto::aim_proxy_helper( void* hContact )
 							}
 						}
 					}
-					else if(*type==0x0005) {
-						if ( !getString(hContact, AIM_KEY_IP, &dbv )) {
+					else if(*type==0x0005)
+					{
+						if (!DBGetContactSettingString(hContact, AIM_PROTOCOL_NAME, AIM_KEY_IP, &dbv))
+						{
 							unsigned long ip=char_ip_to_long_ip(dbv.pszVal);
 							DBWriteContactSettingDword(NULL,FILE_TRANSFER_KEY,dbv.pszVal,(DWORD)hContact);
 							DBFreeVariant(&dbv);
-							if ( stage == 1 && !sender || stage == 2 && sender || stage == 3 && !sender ) {
-								if ( !getString(hContact, AIM_KEY_SN, &dbv)) {
-									aim_accept_file(hServerConn,seqno,dbv.pszVal,cookie);
+							if(stage==1&&!sender||stage==2&&sender||stage==3&&!sender)
+							{
+								if (!DBGetContactSettingString(hContact, AIM_PROTOCOL_NAME, AIM_KEY_SN, &dbv))
+								{
+									aim_accept_file(conn.hServerConn,conn.seqno,dbv.pszVal,cookie);
 									DBFreeVariant(&dbv);
 								}
 							}
-							aim_direct_connection_initiated(Connection, ip, this);
+							aim_direct_connection_initiated(Connection, ip,NULL);
 						}
 					}
 				}
 			}
 		}
 	}
-	deleteSetting(hContact, AIM_KEY_FT);
-	deleteSetting(hContact, AIM_KEY_DH);
-	deleteSetting(hContact, AIM_KEY_IP);
+	DBDeleteContactSetting(hContact,AIM_PROTOCOL_NAME,AIM_KEY_FT);
+	DBDeleteContactSetting(hContact,AIM_PROTOCOL_NAME,AIM_KEY_DH);
+	DBDeleteContactSetting(hContact,AIM_PROTOCOL_NAME,AIM_KEY_IP);
 }
-
 int proxy_initialize_send(HANDLE connection,char* sn, char* cookie)
 {
-	char sn_length=(char)lstrlenA(sn);
+	char sn_length=(char)lstrlen(sn);
 	unsigned short length = _htons(39+sn_length);
 	char* clength =(char*)&length;
 	char* msg_frag= new char[25+sn_length+sizeof(AIM_CAP_SEND_FILES)];
@@ -185,10 +204,9 @@ int proxy_initialize_send(HANDLE connection,char* sn, char* cookie)
 		return 0;
 	}
 }
-
 int proxy_initialize_recv(HANDLE connection,char* sn, char* cookie,unsigned short port_check)
 {
-	char sn_length=(char)lstrlenA(sn);
+	char sn_length=(char)lstrlen(sn);
 	unsigned short length = _htons(41+sn_length);
 	char* clength =(char*)&length;
 	char* msg_frag= new char[27+sn_length+sizeof(AIM_CAP_SEND_FILES)];

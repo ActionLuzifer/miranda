@@ -10,7 +10,6 @@
  * I want to thank Robert Rainwater and George Hazan for their code and support
  * and for answering some of my questions during development of this plugin.
  */
-
 #include <malloc.h>
 #include <time.h>
 
@@ -68,12 +67,12 @@ int GetCaps(WPARAM wParam,LPARAM lParam)
 
         case PFLAGNUM_2:
             ret = PF2_ONLINE | PF2_SHORTAWAY | PF2_LONGAWAY | PF2_ONTHEPHONE | 
-                  PF2_OUTTOLUNCH | PF2_INVISIBLE | PF2_LIGHTDND /*| PF2_HEAVYDND*/; 
+                  PF2_OUTTOLUNCH | PF2_INVISIBLE | PF2_LIGHTDND /*| PF2_HEAVYDND*/;
             break;
 
         case PFLAGNUM_3:
             ret = PF2_ONLINE | PF2_SHORTAWAY | PF2_LONGAWAY | PF2_ONTHEPHONE | 
-                  PF2_OUTTOLUNCH | PF2_LIGHTDND ; 
+                  PF2_OUTTOLUNCH | PF2_LIGHTDND ;
             break;
             
         case PFLAGNUM_4:
@@ -205,10 +204,7 @@ int SetStatus(WPARAM wParam,LPARAM lParam)
 		
 		//DBWriteContactSettingWord(NULL, yahooProtocolName, "StartupStatus", status);
 		gStartStatus = status;
-
-		//reset the unread email count. We'll get a new packet since we are connecting.
-		mUnreadMessages = 0;
-
+		
 		yahoo_util_broadcaststatus(ID_STATUS_CONNECTING);
 		
 		status = (status == ID_STATUS_INVISIBLE) ? YAHOO_STATUS_INVISIBLE: YAHOO_STATUS_AVAILABLE;
@@ -239,24 +235,24 @@ void yahoo_util_broadcaststatus(int s)
         return;
         
     //yahooStatus = s;
-	switch (s) {
-	case ID_STATUS_OFFLINE:
-	case ID_STATUS_CONNECTING:
-	case ID_STATUS_ONLINE: 
-    case ID_STATUS_AWAY:
-    case ID_STATUS_NA:
-    case ID_STATUS_OCCUPIED:
-    case ID_STATUS_ONTHEPHONE:
-    case ID_STATUS_OUTTOLUNCH:
-    case ID_STATUS_INVISIBLE:
-			yahooStatus = s;
-			break;
-	case ID_STATUS_DND:
-			yahooStatus = ID_STATUS_OCCUPIED;
-			break;
-	default:
-			yahooStatus = ID_STATUS_ONLINE;
-	}
+    switch (s) {
+       case ID_STATUS_OFFLINE:
+       case ID_STATUS_CONNECTING:
+       case ID_STATUS_ONLINE:
+       case ID_STATUS_AWAY:
+       case ID_STATUS_NA:
+       case ID_STATUS_OCCUPIED:
+       case ID_STATUS_ONTHEPHONE:
+       case ID_STATUS_OUTTOLUNCH:
+       case ID_STATUS_INVISIBLE:
+            yahooStatus = s;
+            break;
+      case ID_STATUS_DND:
+            yahooStatus = ID_STATUS_OCCUPIED;
+            break;
+      default:
+            yahooStatus = ID_STATUS_ONLINE;
+    }
 
 	YAHOO_DebugLog("[yahoo_util_broadcaststatus] Old Status: %s (%d), New Status: %s (%d)",
 			NEWSTR_ALLOCA((char *) CallService(MS_CLIST_GETSTATUSMODEDESCRIPTION, oldStatus, 0)), oldStatus,
@@ -644,7 +640,7 @@ int YahooSetAwayMessage(WPARAM wParam, LPARAM lParam)
 			if (szStartMsg) free(szStartMsg);
 			
 			if (c != NULL) 
-				szStartMsg = strdup(c);
+				szStartMsg = _strdup(c);
 			else
 				szStartMsg = NULL;
 			
@@ -659,7 +655,7 @@ int YahooSetAwayMessage(WPARAM wParam, LPARAM lParam)
 	
 	/* now decide what we tell the server */
 	if (c != 0) {
-		szStartMsg = strdup(c);
+		szStartMsg = _strdup(c);
 		if(wParam == ID_STATUS_ONLINE) {
 			yahoo_set_status(YAHOO_CUSTOM_STATUS, c, 0);
 		} else if(wParam != ID_STATUS_INVISIBLE){ 
@@ -734,7 +730,7 @@ static BOOL CALLBACK DlgProcSetCustStat(HWND hwndDlg, UINT msg, WPARAM wParam, L
 						
 						/* set for Idle/AA */
 						if (szStartMsg) free(szStartMsg);
-						szStartMsg = strdup(str);
+						szStartMsg = _strdup(str);
 						
 						/* notify Server about status change */
 						yahoo_set_status(YAHOO_CUSTOM_STATUS, str, ( BYTE )IsDlgButtonChecked( hwndDlg, IDC_CUSTSTATBUSY ));

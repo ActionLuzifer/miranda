@@ -27,13 +27,12 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "aim.h"
 #include "strl.h"
 
 /*
  * Copy src to string dst of size siz.  At most siz-1 characters
  * will be copied.  Always NUL terminates (unless siz == 0).
- * Returns lstrlenA(src); if retval >= siz, truncation occurred.
+ * Returns lstrlen(src); if retval >= siz, truncation occurred.
  */
 size_t strlcpy(char* dst,const char *src, size_t siz)
 {
@@ -86,21 +85,19 @@ size_t wcslcpy(wchar_t *dst, const wchar_t *src, size_t siz)
 char* strldup(const char* src,size_t siz)
 {
 	char* dst=new char[siz+1];
-	memcpy(dst,src,siz);
-	dst[siz] = 0;
+	memcpy(dst,src,siz+1);
 	return dst;
 }
 wchar_t* wcsldup(const wchar_t* src,size_t siz)
 {
 	wchar_t* dst=new wchar_t[siz+1];
-	memcpy(dst,src,siz*2);
-	dst[siz] = 0;
+	memcpy(dst,src,siz*2+2);
 	return dst;
 }
 char* strlcat(const char* dst,const char *src)
 {
-	char* nstr=new char[lstrlenA(dst)+lstrlenA(src)+1];
-	memcpy(nstr,dst,lstrlenA(dst));
-	memcpy(&nstr[lstrlenA(dst)],src,lstrlenA(src)+1);
+	char* nstr=new char[lstrlen(dst)+lstrlen(src)+1];
+	memcpy(nstr,dst,lstrlen(dst));
+	memcpy(&nstr[lstrlen(dst)],src,lstrlen(src)+1);
 	return nstr;
 }

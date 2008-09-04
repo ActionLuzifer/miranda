@@ -1,39 +1,10 @@
-#include "aim.h"
 #include "avatars.h"
-
-void __cdecl CAimProto::avatar_request_thread( void* param )
+CRITICAL_SECTION avatarMutex;
+static int avatar_module_size=0;
+static char* avatar_module_ptr=NULL;
+void avatar_request_handler(TLV &tlv, HANDLE &hContact,char* sn,int &offset)//checks to see if the avatar needs requested
 {
-	char* data = NEWSTR_ALLOCA(( char* )param );
-	delete[] param;
-
-	EnterCriticalSection( &avatarMutex );
-	if ( !hAvatarConn && hServerConn ) {
-		LOG("Starting Avatar Connection.");
-		ResetEvent( hAvatarEvent ); //reset incase a disconnection occured and state is now set following the removal of queued threads
-		hAvatarConn = (HANDLE)1;    //set so no additional service request attempts are made while aim is still processing the request
-		aim_new_service_request( hServerConn, seqno, 0x0010 ) ;//avatar service connection!
-	}
-	LeaveCriticalSection( &avatarMutex );//not further below because the thread will become trapped if the connection dies.
-
-	if ( WaitForSingleObject( hAvatarEvent, INFINITE ) == WAIT_OBJECT_0 ) 	{
-		if (Miranda_Terminated() || m_iStatus==ID_STATUS_OFFLINE) {
-			SetEvent( hAvatarEvent );
-			LeaveCriticalSection( &avatarMutex );
-			return;
-		}
-		
-		char* sn = strtok(data,";");
-		char* hash_string = strtok(NULL,";");
-		char* hash = new char[lstrlenA(hash_string)/2];
-		string_to_bytes( hash_string, hash );
-		LOG("Requesting an Avatar: %s(Hash: %s)", sn, hash_string );
-		aim_request_avatar( hAvatarConn, avatar_seqno, sn, hash, (unsigned short)lstrlenA(hash_string)/2 );
-	}
-}
-
-void CAimProto::avatar_request_handler(TLV &tlv, HANDLE &hContact,char* sn,int &offset)//checks to see if the avatar needs requested
-{
-	if(!getByte( AIM_KEY_DA, 0))
+	if(!DBGetContactSettingByte(NULL, AIM_PROTOCOL_NAME, AIM_KEY_DA, 0))
 	{
 		if(char* norm_sn=normalize_name(sn))
 		{
@@ -41,22 +12,22 @@ void CAimProto::avatar_request_handler(TLV &tlv, HANDLE &hContact,char* sn,int &
 			int hash_size=(int)tlv.ubyte(offset+3);
 			char* hash=tlv.part(offset+4,hash_size);
 			char* hash_string=bytes_to_string(hash,hash_size);
-			if(lstrcmpA(hash_string,"0201d20472"))//gaim default icon fix- we don't want their blank icon displaying.
+			if(lstrcmp(hash_string,"0201d20472"))//gaim default icon fix- we don't want their blank icon displaying.
 			{
 				
 				if(char* photo_path=getSetting(hContact,"ContactPhoto","File"))//check for image type in db 
 				{
 					char filetype[5];
-					memcpy(&filetype,&photo_path[lstrlenA(photo_path)]-4,5);
+					memcpy(&filetype,&photo_path[lstrlen(photo_path)]-4,5);
 					char* filename=strlcat(norm_sn,filetype);
 					char* path;
 					FILE* out=open_contact_file(norm_sn,filename,"rb",path,0);
 					if(out!=NULL)//make sure file exist then check hash in db
 					{
 						fclose(out);
-						if(char* hash=getSetting(hContact,m_szModuleName,AIM_KEY_AH))
+						if(char* hash=getSetting(hContact,AIM_PROTOCOL_NAME,AIM_KEY_AH))
 						{
-							avatar_exist=lstrcmpA(hash_string,hash);
+							avatar_exist=lstrcmp(hash_string,hash);
 							if(!avatar_exist)//NULL means it exist
 							{
 								LOG("Avatar exist for %s. So attempting to apply it",norm_sn);
@@ -71,11 +42,11 @@ void CAimProto::avatar_request_handler(TLV &tlv, HANDLE &hContact,char* sn,int &
 				}
 				if(avatar_exist)//NULL means it exist
 				{
-					int length=lstrlenA(sn)+2+hash_size*2;
+					int length=lstrlen(sn)+2+hash_size*2;
 					char* blob= new char[length];
 					mir_snprintf(blob,length,"%s;%s",sn,hash_string);
 					LOG("Starting avatar request thread for %s)",sn);
-					ForkThread( &CAimProto::avatar_request_thread, blob );
+					ForkThread((pThreadFunc)avatar_request_thread,blob);
 				}
 			}
 			delete[] hash;
@@ -84,19 +55,55 @@ void CAimProto::avatar_request_handler(TLV &tlv, HANDLE &hContact,char* sn,int &
 		}
 	}
 }
-
-void __cdecl CAimProto::avatar_request_limit_thread( void* )
+void avatar_request_thread(char* data)
+{
+	EnterCriticalSection(&avatarMutex);
+	if(!conn.hAvatarConn&&conn.hServerConn)
+	{
+		LOG("Starting Avatar Connection.");
+		ResetEvent(conn.hAvatarEvent);//reset incase a disconnection occured and state is now set following the removal of queued threads
+		conn.hAvatarConn=(HANDLE)1;//set so no additional service request attempts are made while aim is still processing the request
+		aim_new_service_request(conn.hServerConn,conn.seqno,0x0010);//avatar service connection!
+	}
+	LeaveCriticalSection(&avatarMutex);//not further below because the thread will become trapped if the connection dies.
+	if(WaitForSingleObject(conn.hAvatarEvent ,  INFINITE )==WAIT_OBJECT_0)
+	{
+		if (Miranda_Terminated())
+		{
+			LeaveCriticalSection(&avatarMutex);
+			delete[] data;
+			return;
+		}
+		if(conn.hServerConn)
+		{
+			char* sn=strtok(data,";");
+			char* hash_string=strtok(NULL,";");
+			char* hash= new char[lstrlen(hash_string)/2];
+			string_to_bytes(hash_string,hash);
+			LOG("Requesting an Avatar: %s(Hash: %s)",sn,hash_string);
+			aim_request_avatar(conn.hAvatarConn,conn.avatar_seqno,sn,hash,(unsigned short)lstrlen(hash_string)/2);
+		}
+		else
+		{
+			SetEvent(conn.hAvatarEvent);
+			LeaveCriticalSection(&avatarMutex);
+			return;
+		}
+	}
+	delete[] data;
+}
+void avatar_request_limit_thread()
 {
 	LOG("Avatar Request Limit thread begin");
-	while( AvatarLimitThread ) {
-		SleepEx(1000, TRUE);
+	while(conn.AvatarLimitThread)
+	{
+		Sleep(1000);
 		LOG("Setting Avatar Request Event...");
-		SetEvent( hAvatarEvent );
+		SetEvent(conn.hAvatarEvent);
 	}
 	LOG("Avatar Request Limit Thread has ended");
 }
-
-void CAimProto::avatar_retrieval_handler(SNAC &snac)
+void avatar_retrieval_handler(SNAC &snac)
 {
 	int sn_length=(int)snac.ubyte(0);
 	char* sn=snac.part(1,sn_length);
@@ -109,9 +116,9 @@ void CAimProto::avatar_retrieval_handler(SNAC &snac)
 		{
 			char* hash=snac.part(5+sn_length,hash_size);
 			char* hash_string=bytes_to_string(hash,hash_size);
-			setString(hContact,AIM_KEY_AH,hash_string);
+			DBWriteContactSettingString(hContact,AIM_PROTOCOL_NAME,AIM_KEY_AH,hash_string);
 			char* file_data=snac.val(7+sn_length+hash_size);
-			char type[5]; 
+			char type[5];
 			detect_image_type(file_data,type);
 			char* filename=strlcat(norm_sn,type);
 			char* path;
@@ -136,13 +143,12 @@ void CAimProto::avatar_retrieval_handler(SNAC &snac)
 	}
 	delete[] sn;
 }
-
-void CAimProto::avatar_apply(HANDLE &hContact,char* sn,char* filename)
+void avatar_apply(HANDLE &hContact,char* sn,char* filename)
 {
 	if(char* photo_path=getSetting(hContact,"ContactPhoto","File"))//compare filenames if different and exist then ignore icon change
 	{
-		filename[lstrlenA(filename)-4]='\0';
-		/*if(lstrcmpiA(filename,photo_path))
+		filename[lstrlen(filename)-4]='\0';
+		/*if(lstrcmpi(filename,photo_path))
 		{
 			char* path;
 			FILE* out=open_contact_file(sn,photo_path,"rb",path);
@@ -155,27 +161,26 @@ void CAimProto::avatar_apply(HANDLE &hContact,char* sn,char* filename)
 			}
 		}*/
 		delete[] photo_path;
-		filename[lstrlenA(filename)]='.';
+		filename[lstrlen(filename)]='.';
 	}
 	PROTO_AVATAR_INFORMATION AI;
 	AI.cbSize = sizeof AI;
 	AI.hContact = hContact;
-	strlcpy(AI.filename,filename,lstrlenA(filename)+1);
+	strlcpy(AI.filename,filename,lstrlen(filename)+1);
 	char filetype[4];
-	memcpy(&filetype,&filename[lstrlenA(filename)]-3,4);
-	if(!lstrcmpiA(filetype,"jpg")||!lstrcmpiA(filetype,"jpeg"))
+	memcpy(&filetype,&filename[lstrlen(filename)]-3,4);
+	if(!lstrcmpi(filetype,"jpg")||!lstrcmpi(filetype,"jpeg"))
 		AI.format=PA_FORMAT_JPEG;
-	else if(!lstrcmpiA(filetype,"gif"))
+	else if(!lstrcmpi(filetype,"gif"))
 		AI.format=PA_FORMAT_GIF;
-	else if(!lstrcmpiA(filetype,"png"))
+	else if(!lstrcmpi(filetype,"png"))
 		AI.format=PA_FORMAT_PNG;
-	else if(!lstrcmpiA(filetype,"bmp"))
+	else if(!lstrcmpi(filetype,"bmp"))
 		AI.format=PA_FORMAT_BMP;
 	DBWriteContactSettingString( hContact, "ContactPhoto", "File", AI.filename );
 	LOG("Successfully added avatar for %s(%s)",sn,AI.filename);
-	ProtoBroadcastAck(m_szModuleName, hContact, ACKTYPE_AVATAR, ACKRESULT_SUCCESS,&AI,0);
+	ProtoBroadcastAck(AIM_PROTOCOL_NAME, hContact, ACKTYPE_AVATAR, ACKRESULT_SUCCESS,&AI,0);
 }
-
 void detect_image_type(char* stream,char* type_ret)
 {
 	if(stream[0]=='G'&&stream[1]=='I'&&stream[2]=='F')

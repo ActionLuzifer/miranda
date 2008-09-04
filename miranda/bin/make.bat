@@ -123,11 +123,6 @@ call :Nmake mwclist.mak "mwclist - Win32 Release"
 popd
 if errorlevel 1 goto :Error
 
-pushd ..\..\miranda\plugins\scriver
-call :Nmake scriver.mak "scriver - Win32 Release"
-popd
-if errorlevel 1 goto :Error
-
 pushd ..\..\miranda\plugins\srmm
 call :Nmake srmm.mak "srmm - Win32 Release"
 popd
@@ -196,7 +191,7 @@ echo             VALUE "CompanyName", " \0"                                     
 echo             VALUE "FileDescription", "Miranda IM\0"                           >>..\src\version.rc
 echo             VALUE "FileVersion", "0.%1.%2 alpha build #%3\0"                  >>..\src\version.rc
 echo             VALUE "InternalName", "miranda32\0"                               >>..\src\version.rc
-echo             VALUE "LegalCopyright", "Copyright © 2000-2008 Miranda IM Project. This software is released under the terms of the GNU General Public License.\0"    >>..\src\version.rc
+echo             VALUE "LegalCopyright", "Copyright © 2000-2007 Miranda IM Project. This software is released under the terms of the GNU General Public License.\0"    >>..\src\version.rc
 echo             VALUE "LegalTrademarks", "\0"                                     >>..\src\version.rc
 echo             VALUE "OriginalFilename", "miranda32.exe\0"                       >>..\src\version.rc
 echo             VALUE "PrivateBuild", "\0"                                        >>..\src\version.rc
@@ -230,8 +225,8 @@ echo 			   ^<link^>http://files.miranda-im.org/builds/?%yy%%mm%%dd%%hh%%mn%^</li
 echo                ^<description^>                                                >>%temp%\index.xml
 echo                     Miranda 0.%1.%2 alpha %3 is now available at http://files.miranda-im.org/builds/miranda-v%1a%3.zip >>%temp%\index.xml
 echo                ^</description^>                                               >>%temp%\index.xml
-echo                ^<pubDate^>%yy%-%mm%-%dd% %hh%:%mn%^</pubDate^>                >>%temp%\index.xml
-echo                ^<category^>Nightly Builds^</category^>                        >>%temp%\index.xml
+echo                ^<pubDate^>%yy%-%mm%-%dd% %hh%:%mn%^</pubDate^>                 >>%temp%\index.xml
+echo                ^<category^>Nightly Builds</category^>                         >>%temp%\index.xml
 echo                ^<author^>Miranda IM Development Team^</author^>               >>%temp%\index.xml
 echo           ^</item^>                                                           >>%temp%\index.xml
 echo      ^</channel^>                                                             >>%temp%\index.xml
@@ -251,9 +246,9 @@ goto :eof
 
 :Pack
 if %2 == 00 (
-   set FileVer=v0%1a%3.zip
+   set FileVer=v%1a%3.zip
 ) else (
-   set FileVer=v0%1%2a%3.zip
+   set FileVer=v%1%2a%3.zip
 )
 
 del /Q /F "%Temp%\miranda-%FileVer%"
