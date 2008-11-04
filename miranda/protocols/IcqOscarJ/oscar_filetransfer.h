@@ -2,10 +2,10 @@
 //                ICQ plugin for Miranda Instant Messenger
 //                ________________________________________
 // 
-// Copyright © 2000-2001 Richard Hughes, Roland Rabien, Tristan Van de Vreede
-// Copyright © 2001-2002 Jon Keating, Richard Hughes
-// Copyright © 2002-2004 Martin Öberg, Sam Kothari, Robert Rainwater
-// Copyright © 2004-2008 Joe Kucera
+// Copyright © 2000,2001 Richard Hughes, Roland Rabien, Tristan Van de Vreede
+// Copyright © 2001,2002 Jon Keating, Richard Hughes
+// Copyright © 2002,2003,2004 Martin Öberg, Sam Kothari, Robert Rainwater
+// Copyright © 2004,2005,2006,2007 Joe Kucera
 // 
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -37,76 +37,81 @@
 #ifndef __OSCAR_FILETRANSFER_H
 #define __OSCAR_FILETRANSFER_H
 
+
+void InitOscarFileTransfer();
+void UninitOscarFileTransfer();
+
+
 #define FT_MAGIC_ICQ    0x00
 #define FT_MAGIC_OSCAR  0x4F
 
 #define OFT_BUFFER_SIZE 8192
 
 typedef struct {
-	char *szContainer;
-	char *szFile;
+  char* szContainer;
+  char* szFile;
 } oft_file_record;
 
-char *FindFilePathContainer(const char **files, int iFile, char *szContainer);
+char* FindFilePathContainer(const char** files, int iFile, char* szContainer);
 
 
 typedef struct {
-	message_cookie_data pMessage;
-	BYTE ft_magic;
+  message_cookie_data pMessage;
+  BYTE ft_magic;
 } basic_filetransfer;
 
 typedef struct {
-	message_cookie_data pMessage;
-	BYTE ft_magic;
-	HANDLE hContact;
-	int initialized;
-	int sending;
-	int containerCount;
-	char **file_containers;
-	oft_file_record* files;
-	char **files_ansi; // sending only 
-	int iCurrentFile;
-	int currentIsDir;
-	int bUseProxy;
-	DWORD dwProxyIP;
-	DWORD dwRemoteInternalIP;
-	DWORD dwRemoteExternalIP;
-	WORD wRemotePort;
-	char *szSavePath;
-	char *szDescription;
-	char *szThisFile; 
-	char *szThisPath;
-	// Request sequence
-	DWORD dwCookie;
-	WORD wReqNum;
-	// OFT2 header data
-	WORD wEncrypt, wCompress;
-	WORD wFilesCount,wFilesLeft;
-	WORD wPartsCount, wPartsLeft;
-	DWORD64 qwTotalSize;
-	DWORD64 qwThisFileSize;
-	DWORD dwThisFileDate; // modification date
-	DWORD dwThisFileCheck;
-	DWORD dwRecvForkCheck, dwThisForkSize;
-	DWORD dwThisFileCreation; // creation date (not used)
-	DWORD dwThisForkCheck;
-	DWORD64 qwBytesDone;
-	DWORD dwRecvFileCheck;
-	char rawIDString[32];
-	BYTE bHeaderFlags;
-	BYTE bNameOff, bSizeOff;
-	BYTE rawDummy[69];
-	BYTE rawMacInfo[16];
-	WORD wEncoding, wSubEncoding;
-	WORD cbRawFileName;
-	char *rawFileName;
-	// helper data
-	DWORD64 qwFileBytesDone;
-	int fileId;
-	struct oscar_connection* connection;
-	void* listener;
-	DWORD dwLastNotify;
-	int resumeAction;
+  message_cookie_data pMessage;
+  BYTE ft_magic;
+  HANDLE hContact;
+  int initialized;
+  int sending;
+  int containerCount;
+  char **file_containers;
+  oft_file_record* files;
+  char **files_ansi; // sending only 
+  int iCurrentFile;
+  int currentIsDir;
+  int bUseProxy;
+  DWORD dwProxyIP;
+  DWORD dwRemoteInternalIP;
+  DWORD dwRemoteExternalIP;
+  WORD wRemotePort;
+  char *szSavePath;
+  char *szDescription;
+  char *szThisFile; 
+  char *szThisPath;
+  // Request sequence
+  DWORD dwCookie;
+  WORD wReqNum;
+  // OFT2 header data
+  WORD wEncrypt, wCompress;
+  WORD wFilesCount,wFilesLeft;
+  WORD wPartsCount, wPartsLeft;
+  DWORD64 qwTotalSize;
+  DWORD64 qwThisFileSize;
+  DWORD dwThisFileDate; // modification date
+  DWORD dwThisFileCheck;
+  DWORD dwRecvForkCheck, dwThisForkSize;
+  DWORD dwThisFileCreation; // creation date (not used)
+  DWORD dwThisForkCheck;
+  DWORD64 qwBytesDone;
+  DWORD dwRecvFileCheck;
+  char rawIDString[32];
+  BYTE bHeaderFlags;
+  BYTE bNameOff, bSizeOff;
+  BYTE rawDummy[69];
+  BYTE rawMacInfo[16];
+  WORD wEncoding, wSubEncoding;
+  WORD cbRawFileName;
+  char *rawFileName;
+  // helper data
+  DWORD64 qwFileBytesDone;
+  int fileId;
+  void* connection;
+  void* listener;
+  DWORD dwLastNotify;
+  int resumeAction;
 } oscar_filetransfer;
 
 #define OFT_TYPE_REQUEST        0x0101 // I am going to send you this file, is that ok?
@@ -118,19 +123,19 @@ typedef struct {
 
 void SafeReleaseFileTransfer(void **ft);
 
-struct oscar_connection {
-	HANDLE hContact;
-	HANDLE hConnection;
-	int status;
-	DWORD dwUin;
-	uid_str szUid;
-	DWORD dwLocalInternalIP;
-	DWORD dwLocalExternalIP;
-	int type;
-	int incoming;
-	oscar_filetransfer *ft;
-	int wantIdleTime;
-};
+typedef struct {
+  HANDLE hContact;
+  HANDLE hConnection;
+  int status;
+  DWORD dwUin;
+  uid_str szUid;
+  DWORD dwLocalInternalIP;
+  DWORD dwLocalExternalIP;
+  int type;
+  int incoming;
+  oscar_filetransfer *ft;
+  int wantIdleTime;
+} oscar_connection;
 
 #define OCT_NORMAL      0
 #define OCT_REVERSE     1
@@ -147,13 +152,33 @@ struct oscar_connection {
 #define OCS_PROXY       8
 #define OCS_WAITING     10
 
-struct oscar_listener {
-  CIcqProto *ppro;
+typedef struct {
   WORD wPort;
   HANDLE hBoundPort;
-  oscar_filetransfer *ft;
-};
+  oscar_filetransfer* ft;
+} oscar_listener;
 
+oscar_listener* CreateOscarListener(oscar_filetransfer *ft, NETLIBNEWCONNECTIONPROC_V2 handler);
+void ReleaseOscarListener(oscar_listener **pListener);
+
+filetransfer *CreateIcqFileTransfer();
+
+int IsValidFileTransfer(void *ft);
+int IsValidOscarTransfer(void *ft);
+
+void OpenOscarConnection(HANDLE hContact, oscar_filetransfer *ft, int type);
+void CloseOscarConnection(oscar_connection *oc);
+
+void handleRecvServMsgOFT(unsigned char *buf, WORD wLen, DWORD dwUin, char *szUID, DWORD dwID1, DWORD dwID2, WORD wCommand);
+void handleRecvServResponseOFT(unsigned char *buf, WORD wLen, DWORD dwUin, char *szUID, void* ft);
+
+int oftInitTransfer(HANDLE hContact, DWORD dwUin, char *szUid, char** files, char* pszDesc);
+
+DWORD oftFileAllow(HANDLE hContact, WPARAM wParam, LPARAM lParam);
+DWORD oftFileDeny(HANDLE hContact, WPARAM wParam, LPARAM lParam);
+DWORD oftFileCancel(HANDLE hContact, WPARAM wParam, LPARAM lParam);
+
+void oftFileResume(oscar_filetransfer *ft, int action, const char *szFilename);
 
 #endif /* __OSCAR_FILETRANSFER_H */
 

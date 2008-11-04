@@ -2,7 +2,7 @@
 
 Miranda IM: the free IM client for Microsoft* Windows*
 
-Copyright 2000-2008 Miranda ICQ/IM project, 
+Copyright 2000-2007 Miranda ICQ/IM project, 
 all portions of this codebase are copyrighted to the people 
 listed in contributors.txt.
 
@@ -315,7 +315,6 @@ typedef struct {
 #define NLOCF_STICKYHEADERS 0x0002 //this connection should send the sticky headers associated with NetLib user apart of any HTTP request
 #define NLOCF_V2 0x0004 //this connection understands the newer structure, newer cbSize isnt enough
 #define NLOCF_UDP 0x0008 // this connection is UDP
-#define NLOCF_SSL 0x0010 // this connection is SSL
 
 /* Added during 0.4.0+ development!! (2004/11/29) prior to this, connect() blocks til a connection is made or
 a hard timeout is reached, this can be anywhere between 30-60 seconds, and it stops Miranda from unloading whilst
@@ -603,13 +602,6 @@ typedef struct {
 // added in v0.3.3
 #define MS_NETLIB_SELECTEX	   "Netlib/SelectEx"
 
-//Shutdown connection
-//wParam=(WPARAM)(HANDLE)hConnection
-//lParam=(LPARAM)0
-//Returns 0 
-#define MS_NETLIB_SHUTDOWN	   "Netlib/Shutdown"
-__inline static void Netlib_Shutdown(HANDLE h) {CallService(MS_NETLIB_SHUTDOWN,(WPARAM)h,0);}
-
 //Create a packet receiver
 //wParam=(WPARAM)(HANDLE)hConnection
 //lParam=(LPARAM)(int)maxPacketSize
@@ -665,12 +657,6 @@ typedef struct {
 //Errors: -1
 #define MS_NETLIB_SETPOLLINGTIMEOUT "Netlib/SetPollingTimeout"
 
-//Makes connection SSL 
-//wParam=(WPARAM)(HANDLE)hConn
-//lParam=0
-//Returns 0 on failure 1 on success
-#define MS_NETLIB_STARTSSL "Netlib/StartSsl"
-
 //here's a handy piece of code to let you log using printf-style specifiers:
 //#include <stdarg.h> and <stdio.h> before including this header in order to
 //use it.
@@ -724,25 +710,5 @@ static __inline char* Netlib_NtlmCreateResponse( HANDLE hProvider, char* szChall
 	return (char*)CallService( MS_NETLIB_NTLMCREATERESPONSE, (WPARAM)hProvider, (LPARAM)&temp );
 }
 
-/////////////////////////////////////////////////////////////////////////////////////////
-// Netlib hooks (0.8+)
-
-// WARNING: these hooks are being called in the context of the calling thread, without switching
-// to the first thread, like all another events do. The hook procedure should be ready for the
-// multithreaded mode
-//
-// Parameters:
-//    wParam: NETLIBNOTIFY* - points to the data being sent/received
-//    lParam: NETLIBUSER*   - points to the protocol definition
-
-typedef struct {
-   NETLIBBUFFER* nlb;      // pointer to the request buffer
-	int           result;   // amount of bytes really sent/received
-}
-	NETLIBNOTIFY;
-
-#define ME_NETLIB_FASTRECV "Netlib/OnRecv"  // being called on every receive
-#define ME_NETLIB_FASTSEND "Netlib/OnSend"  // being called on every send
-#define ME_NETLIB_FASTDUMP "Netlib/OnDump"  // being called on every dump
-
 #endif // M_NETLIB_H__
+

@@ -2,7 +2,7 @@
 
 Miranda IM: the free IM client for Microsoft* Windows*
 
-Copyright 2000-2008 Miranda ICQ/IM project, 
+Copyright 2000-2007 Miranda ICQ/IM project, 
 all portions of this codebase are copyrighted to the people 
 listed in contributors.txt.
 
@@ -21,39 +21,10 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
-#include "m_protoint.h"
-
 #define NEWSTR_ALLOCA(A) (A==NULL)?NULL:strcpy((char*)alloca(strlen(A)+1),A)
-
-typedef HDESK (WINAPI* pfnOpenInputDesktop)( DWORD, BOOL, DWORD );
-extern pfnOpenInputDesktop openInputDesktop;
-
-typedef HDESK (WINAPI* pfnCloseDesktop)( HDESK );
-extern pfnCloseDesktop closeDesktop;
-
-typedef HTHEME  ( STDAPICALLTYPE *pfnOpenThemeData )( HWND, LPCWSTR );
-typedef HRESULT ( STDAPICALLTYPE *pfnIsThemeBackgroundPartiallyTransparent )( HTHEME, int, int );
-typedef HRESULT ( STDAPICALLTYPE *pfnDrawThemeParentBackground )( HWND, HDC, const RECT * );
-typedef HRESULT ( STDAPICALLTYPE *pfnDrawThemeBackground )( HTHEME, HDC, int, int, const RECT *, const RECT * );
-typedef HRESULT ( STDAPICALLTYPE *pfnDrawThemeBackgroundEx )( HTHEME, HDC, int, int, const RECT *,  const DTBGOPTS *pOptions );
-typedef HRESULT ( STDAPICALLTYPE *pfnDrawThemeText)( HTHEME, HDC, int, int, LPCWSTR, int, DWORD, DWORD, const RECT *);
-typedef HRESULT ( STDAPICALLTYPE *pfnGetThemeFont)( HTHEME,HDC,int,int,int,LOGFONT *);
-typedef HRESULT ( STDAPICALLTYPE *pfnCloseThemeData )( HTHEME );
-typedef HRESULT ( STDAPICALLTYPE *pfnEnableThemeDialogTexture )( HWND hwnd, DWORD dwFlags );
-
-extern pfnOpenThemeData openThemeData;
-extern pfnIsThemeBackgroundPartiallyTransparent isThemeBackgroundPartiallyTransparent;
-extern pfnDrawThemeParentBackground drawThemeParentBackground;
-extern pfnDrawThemeBackground drawThemeBackground;
-extern pfnDrawThemeBackgroundEx drawThemeBackgroundEx;
-extern pfnDrawThemeText drawThemeText;
-extern pfnGetThemeFont getThemeFont;
-extern pfnCloseThemeData closeThemeData;
-extern pfnEnableThemeDialogTexture enableThemeDialogTexture;
 
 /**** memory.c *************************************************************************/
 
-#ifdef _STATIC
 void*  mir_alloc( size_t );
 void*  mir_calloc( size_t );
 void*  mir_realloc( void* ptr, size_t );
@@ -70,21 +41,6 @@ WCHAR* mir_a2u_cp(const char* src, int codepage);
 WCHAR* mir_a2u(const char* src);
 char*  mir_u2a_cp(const wchar_t* src, int codepage);
 char*  mir_u2a( const wchar_t* src);
-#endif
-
-/**** miranda.c ************************************************************************/
-
-extern HINSTANCE hMirandaInst;
-extern pfnExceptionFilter pMirandaExceptFilter;
-
-/**** modules.c ************************************************************************/
-
-void KillModuleEventHooks( HINSTANCE );
-void KillModuleServices( HINSTANCE );
-
-void KillObjectEventHooks( void* pObject );
-void KillObjectServices( void* pObject );
-void KillObjectThreads( void* pObject );
 
 /**** utf.c ****************************************************************************/
 
@@ -147,35 +103,3 @@ void Window_FreeIcon_IcoLib(HWND hWnd);
 extern int statusModeList[ MAX_STATUS_COUNT ];
 extern int skinIconStatusList[ MAX_STATUS_COUNT ];
 extern int skinIconStatusFlags[ MAX_STATUS_COUNT ];
-
-/**** protocols.c ***********************************************************************/
-
-#define OFFSET_PROTOPOS 200
-#define OFFSET_VISIBLE  400
-#define OFFSET_ENABLED  600
-#define OFFSET_NAME     800
-
-extern LIST<PROTOACCOUNT> accounts;
-
-PROTOACCOUNT* Proto_GetAccount( const char* accName );
-PROTOCOLDESCRIPTOR* Proto_IsProtocolLoaded( const char* szProtoName );
-
-PROTO_INTERFACE* AddDefaultAccount( const char* szProtoName );
-int  FreeDefaultAccount( PROTO_INTERFACE* ppi );
-
-BOOL ActivateAccount( PROTOACCOUNT* pa );
-void EraseAccount( PROTOACCOUNT* pa );
-void DeactivateAccount( PROTOACCOUNT* pa, BOOL bIsDynamic );
-void UnloadAccount( PROTOACCOUNT* pa, BOOL bIsDynamic );
-void OpenAccountOptions( PROTOACCOUNT* pa );
-
-void LoadDbAccounts( void );
-void WriteDbAccounts( void );
-
-int CallProtoServiceInt( HANDLE hContact, const char* szModule, const char* szService, WPARAM, LPARAM );
-int CallContactService( HANDLE hContact, const char *szProtoService, WPARAM, LPARAM );
-
-__inline static int CallProtoService( const char* szModule, const char* szService, WPARAM wParam, LPARAM lParam )
-{
-	return CallProtoServiceInt( NULL, szModule, szService, wParam, lParam );
-}

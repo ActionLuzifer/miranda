@@ -23,7 +23,7 @@
 //
 // -----------------------------------------------------------------------------
 //
-// File name      : $URL$
+// File name      : $URL: https://miranda.svn.sourceforge.net/svnroot/miranda/trunk/miranda/protocols/IcqOscarJ/init.h $
 // Revision       : $Revision$
 // Last change on : $Date$
 // Last change by : $Author$
@@ -33,6 +33,10 @@
 //  Describe me here please...
 //
 // -----------------------------------------------------------------------------
+
+
+void UpdateGlobalSettings(void);
+
 
 // Debug defines
 #undef DBG_CAPHTML

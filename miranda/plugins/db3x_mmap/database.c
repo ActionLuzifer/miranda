@@ -137,7 +137,7 @@ int LoadDatabaseModule(void)
 	log0("DB logging running");
 	{
 		DWORD dummy=0;
-		hDbFile=CreateFileA(szDbPath,GENERIC_READ|GENERIC_WRITE, FILE_SHARE_READ, NULL, OPEN_ALWAYS, 0, NULL);
+		hDbFile=CreateFile(szDbPath,GENERIC_READ|GENERIC_WRITE, FILE_SHARE_READ, NULL, OPEN_ALWAYS, 0, NULL);
 		if ( hDbFile == INVALID_HANDLE_VALUE ) {
 			return 1;
 		}
@@ -161,29 +161,30 @@ int LoadDatabaseModule(void)
 }
 
 static DWORD DatabaseCorrupted=0;
-static TCHAR *msg = NULL;
+static char *msg = NULL;
 static DWORD dwErr = 0;
 
 void __cdecl dbpanic(void *arg)
 {
 	if (msg)
 	{
-		TCHAR err[256];
+		char err[256];
 
 		if (dwErr==ERROR_DISK_FULL)
-			msg = TranslateT("Disk is full. Miranda will now shutdown.");
+			msg = Translate("Disk is full. Miranda will now shutdown.");
 
-		mir_sntprintf(err, SIZEOF(err), msg, TranslateT("Database failure. Miranda will now shutdown."), dwErr);
+		mir_snprintf(err, sizeof(err), msg, Translate("Database failure. Miranda will now shutdown."), dwErr);
 
-		MessageBox(0,err,TranslateT("Database Error"),MB_SETFOREGROUND|MB_TOPMOST|MB_APPLMODAL|MB_ICONWARNING|MB_OK);
+		MessageBox(0,err,Translate("Database Error"),MB_SETFOREGROUND|MB_TOPMOST|MB_APPLMODAL|MB_ICONWARNING|MB_OK);
 	}
 	else
-		MessageBox(0,TranslateT("Miranda has detected corruption in your database. This corruption maybe fixed by DBTool.  Please download it from http://www.miranda-im.org. Miranda will now shutdown."),
-					TranslateT("Database Panic"),MB_SETFOREGROUND|MB_TOPMOST|MB_APPLMODAL|MB_ICONWARNING|MB_OK);
+		MessageBox(0,Translate("Miranda has detected corruption in your database. This corruption maybe fixed by DBTool.  Please download it from http://www.miranda-im.org. Miranda will now shutdown."),
+					Translate("Database Panic"),MB_SETFOREGROUND|MB_TOPMOST|MB_APPLMODAL|MB_ICONWARNING|MB_OK);
 	TerminateProcess(GetCurrentProcess(),255);
+	return;
 }
 
-void DatabaseCorruption(TCHAR *text)
+void DatabaseCorruption(char *text)
 {
 	int kill=0;
 

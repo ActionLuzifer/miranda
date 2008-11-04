@@ -1,8 +1,11 @@
 /*
 Plugin of Miranda IM for communicating with users of the MSN Messenger protocol.
-Copyright (c) 2006-2008 Boris Krasnovskiy.
-Copyright (c) 2003-2005 George Hazan.
-Copyright (c) 2002-2003 Richard Hughes (original version).
+Copyright (c) 2006-7 Boris Krasnovskiy.
+Copyright (c) 2003-5 George Hazan.
+Copyright (c) 2002-3 Richard Hughes (original version).
+
+Miranda IM: the free icq client for MS Windows
+Copyright (C) 2000-2002 Richard Hughes, Roland Rabien & Tristan Van de Vreede
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -15,14 +18,15 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with this program.  If not, see <http://www.gnu.org/licenses/>.
+along with this program; if not, write to the Free Software
+Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
 #include "msn_global.h"
-#include "msn_proto.h"
 
+int MSN_HandleErrors(ThreadData *info,char *cmdString);
 
-void CMsnProto::msnftp_sendAcceptReject( filetransfer *ft, bool acc )
+void msnftp_sendAcceptReject( filetransfer *ft, bool acc )
 {
 	ThreadData* thread = MSN_GetThreadByContact( ft->std.hContact );
 	if ( thread == NULL ) return;
@@ -50,7 +54,7 @@ void CMsnProto::msnftp_sendAcceptReject( filetransfer *ft, bool acc )
 	}
 }
 
-void CMsnProto::msnftp_invite( filetransfer *ft )
+void msnftp_invite( filetransfer *ft )
 {
 	bool isOffline;
 	ThreadData* thread = MSN_StartSB(ft->std.hContact, isOffline);
@@ -63,7 +67,7 @@ void CMsnProto::msnftp_invite( filetransfer *ft )
 	else
 		pszFiles = *ft->std.files;
 
-    mir_snprintf( msg, sizeof( msg ),
+	mir_snprintf( msg, sizeof( msg ),
 		"Content-Type: text/x-msmsgsinvite; charset=UTF-8\r\n\r\n"
 		"Application-Name: File Transfer\r\n"
 		"Application-GUID: {5D3E02AB-6190-11d3-BBBB-00C04F795683}\r\n"
@@ -76,14 +80,14 @@ void CMsnProto::msnftp_invite( filetransfer *ft )
 	if ( thread == NULL )
 		MsgQueue_Add( ft->std.hContact, 'S', msg, -1, ft );
 	else
-		thread->sendMessage( 'S', NULL, 1, msg, MSG_DISABLE_HDR );
+		thread->sendMessage( 'S', msg, MSG_DISABLE_HDR );
 }
 
 
 /////////////////////////////////////////////////////////////////////////////////////////
 //	MSN File Transfer Protocol commands processing
 
-int CMsnProto::MSN_HandleMSNFTP( ThreadData *info, char *cmdString )
+int MSN_HandleMSNFTP( ThreadData *info, char *cmdString )
 {
 	char* params = "";
 	filetransfer* ft = info->mMsnFtp;
@@ -140,7 +144,7 @@ int CMsnProto::MSN_HandleMSNFTP( ThreadData *info, char *cmdString )
 				ft->std.totalProgress += packetLen;
 				ft->std.currentFileProgress += packetLen;
 
-				SendBroadcast( ft->std.hContact, ACKTYPE_FILE, ACKRESULT_DATA, ft, ( LPARAM )&ft->std );
+				MSN_SendBroadcast( ft->std.hContact, ACKTYPE_FILE, ACKRESULT_DATA, ft, ( LPARAM )&ft->std );
 			}
 
 			ft->complete();
@@ -188,7 +192,7 @@ LBL_InvalidCommand:
 			}
 			else if ( info->mCaller == 2 )  //send
 			{
-				static const char sttCommand[] = "VER MSNFTP\r\n";
+				static char sttCommand[] = "VER MSNFTP\r\n";
 				info->send( sttCommand, strlen( sttCommand ));
 			}
 			break;
@@ -218,7 +222,7 @@ LBL_Error:		ft->close();
 
 				if ( tIsTransitionFinished ) {
 LBL_Success:
-					static const char sttCommand[] = "BYE 16777989\r\n";
+					static char sttCommand[] = "BYE 16777989\r\n";
 					info->send( sttCommand, strlen( sttCommand ));
 					return 1;
 				}
@@ -231,7 +235,7 @@ LBL_Success:
 				ft->std.totalProgress += dataLen;
 				ft->std.currentFileProgress += dataLen;
 
-				SendBroadcast( ft->std.hContact, ACKTYPE_FILE, ACKRESULT_DATA, ft, ( LPARAM )&ft->std );
+				MSN_SendBroadcast( ft->std.hContact, ACKTYPE_FILE, ACKRESULT_DATA, ft, ( LPARAM )&ft->std );
 
 				if ( ft->std.currentFileProgress == ft->std.totalBytes ) {
 					ft->complete();
@@ -244,10 +248,8 @@ LBL_Success:
 /////////////////////////////////////////////////////////////////////////////////////////
 //	ft_startFileSend - sends a file using the old f/t protocol
 
-void __cdecl CMsnProto::msnftp_sendFileThread( void* arg )
+static void __cdecl sttSendFileThread( ThreadData* info )
 {
-	ThreadData* info = (ThreadData*)arg;
-
 	MSN_DebugLog( "Waiting for an incoming connection to '%s'...", info->mServer );
 
 	switch( WaitForSingleObject( info->hWaitEvent, 60000 )) {
@@ -309,7 +311,7 @@ void __cdecl CMsnProto::msnftp_sendFileThread( void* arg )
 	MSN_DebugLog( "Closing file transfer thread" );
 }
 
-void CMsnProto::msnftp_startFileSend( ThreadData* info, const char* Invcommand, const char* Invcookie )
+void ft_startFileSend( ThreadData* info, const char* Invcommand, const char* Invcookie )
 {
 	if ( _stricmp( Invcommand, "ACCEPT" ))
 		return;
@@ -321,8 +323,6 @@ void CMsnProto::msnftp_startFileSend( ThreadData* info, const char* Invcommand, 
 	if ( ft != NULL ) {
 		nlb.cbSize = sizeof( nlb );
 		nlb.pfnNewConnectionV2 = MSN_ConnectionProc;
-		nlb.pExtra = this;
-
 		sb = ( HANDLE )MSN_CallService( MS_NETLIB_BINDPORT, ( WPARAM )hNetlibUser, ( LPARAM )&nlb);
 		if ( sb == NULL )
 			MSN_DebugLog( "Unable to bind the port for incoming transfers" );
@@ -350,8 +350,9 @@ void CMsnProto::msnftp_startFileSend( ThreadData* info, const char* Invcommand, 
 		newThread->mMsnFtp = ft;
 		newThread->mIncomingBoundPort = sb;
 		newThread->mIncomingPort = nlb.wPort;
-		newThread->startThread( &CMsnProto::msnftp_sendFileThread, this );
+		newThread->startThread(( pThreadFunc )sttSendFileThread );
 	}
 	else
 		delete ft;
+	
 }

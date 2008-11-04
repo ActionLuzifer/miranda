@@ -22,25 +22,32 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
 #include "msn_global.h"
-#include "msn_proto.h"
 
-int CMsnProto::MSN_HandleErrors( ThreadData* info, char* cmdString )
+extern int tridUrlInbox, tridUrlEdit;
+
+int MSN_HandleErrors( ThreadData* info, char* cmdString )
 {
 	int errorCode, packetID = -1;
 	sscanf( cmdString, "%d %d", &errorCode, &packetID );
+
+	if ( packetID == msnSearchID )
+	{
+		MSN_SendBroadcast( NULL, ACKTYPE_SEARCH, ACKRESULT_SUCCESS, (HANDLE)msnSearchID, 0 );
+		msnSearchID = -1;
+	}
 
 	MSN_DebugLog( "Server error:%s", cmdString );
 
 	switch( errorCode ) {
 	case ERR_INTERNAL_SERVER:
 		MSN_ShowError( "MSN Services are temporarily unavailable, please try to connect later" );
-		SendBroadcast( NULL, ACKTYPE_LOGIN, ACKRESULT_FAILED, NULL, LOGINERR_NOSERVER );
+		MSN_SendBroadcast( NULL, ACKTYPE_LOGIN, ACKRESULT_FAILED, NULL, LOGINERR_NOSERVER );
 		return 1;
 
 	case ERR_SERVER_BUSY:
 	case ERR_SERVER_UNAVAILABLE:
 		MSN_ShowError( "MSN Services are too busy, please try to connect later" );
-		SendBroadcast( NULL, ACKTYPE_LOGIN, ACKRESULT_FAILED, NULL, LOGINERR_NOSERVER );
+		MSN_SendBroadcast( NULL, ACKTYPE_LOGIN, ACKRESULT_FAILED, NULL, LOGINERR_NOSERVER );
 		return 1;
 
 	case ERR_NOT_ALLOWED_WHEN_OFFLINE:
@@ -55,15 +62,8 @@ int CMsnProto::MSN_HandleErrors( ThreadData* info, char* cmdString )
 		MSN_ShowError( "User is already in your contact list" );
 		return 0;
 
-	case ERR_CONTACT_LIST_FAILED:
-	case ERR_LIST_UNAVAILABLE:
-			char* tWords[ 3 ];
-			if ( sttDivideWords( cmdString, 3, tWords ) == 3 )
-				HReadBuffer(info, 0).surelyRead(atol(tWords[2])); 
-			return 0;
-
 	case ERR_NOT_ONLINE:
-		SendBroadcast( info->mInitialContact, ACKTYPE_MESSAGE, ACKRESULT_FAILED, 
+		MSN_SendBroadcast( info->mInitialContact, ACKTYPE_MESSAGE, ACKRESULT_FAILED, 
 			( HANDLE )999999, ( LPARAM )MSN_Translate("User not online"));
 		return 1;
 
@@ -74,13 +74,18 @@ int CMsnProto::MSN_HandleErrors( ThreadData* info, char* cmdString )
 	case ERR_AUTHENTICATION_FAILED:
 		if ( info->mType != SERVER_SWITCHBOARD ) {
 			MSN_ShowError( "Your username or password is incorrect" );
-			SendBroadcast( NULL, ACKTYPE_LOGIN, ACKRESULT_FAILED, NULL, LOGINERR_WRONGPASSWORD );
+			MSN_SendBroadcast( NULL, ACKTYPE_LOGIN, ACKRESULT_FAILED, NULL, LOGINERR_WRONGPASSWORD );
 		}
 		return 1;
 
 	case ERR_INVALID_LOCALE:
 		if ( packetID == tridUrlInbox ) {
 			tridUrlInbox = -1;
+			return 0;
+		}
+
+		if ( packetID == tridUrlEdit ) {
+			tridUrlEdit  = msnNsThread->sendPacket( "URL", "PROFILE 0x0409" );
 			return 0;
 		}
 		// fall through

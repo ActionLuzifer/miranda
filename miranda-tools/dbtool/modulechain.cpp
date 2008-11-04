@@ -27,7 +27,6 @@ static int modChainCount;
 static DWORD ofsCurrent;
 static int phase,iCurrentModName;
 static DWORD ofsLast;
-static int last_mod = 0;
 
 int WorkModuleChain(int firstTime)
 {
@@ -36,7 +35,6 @@ int WorkModuleChain(int firstTime)
 	if(firstTime) {
 		AddToStatus(STATUS_MESSAGE,TranslateT("Processing module name chain"));
 		modChainCount=0;
-		last_mod = 0;
 		if(modChain!=NULL) free(modChain);
 		modChain = (ModChainEntry*)malloc(sizeof(ModChainEntry));
 		phase=0;
@@ -113,17 +111,16 @@ int WorkModuleChain(int firstTime)
 
 DWORD ConvertModuleNameOfs(DWORD ofsOld)
 {
-	int i;
+	static int i = 0;
 
-	if ( modChain[last_mod].ofsOld==ofsOld )
-		return modChain[last_mod].ofsNew;
+	if (modChain[i].ofsOld==ofsOld)
+		return modChain[i].ofsNew;
 
 	for(i=0;i<modChainCount;i++)
-		if(modChain[i].ofsOld==ofsOld) {
-			last_mod = i;
-			return modChain[last_mod].ofsNew;
-		}
+		if(modChain[i].ofsOld==ofsOld)
+			return modChain[i].ofsNew;
 
+	i = 0;
 	AddToStatus(STATUS_ERROR,TranslateT("Invalid module name offset, skipping data"));
 	return 0;
 }
@@ -133,6 +130,5 @@ void FreeModuleChain()
 	if(modChain!=NULL) {
 		free(modChain);
 		modChain = NULL;
-		last_mod = 0;
 	}
 }

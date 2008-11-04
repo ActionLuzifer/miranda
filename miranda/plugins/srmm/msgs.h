@@ -66,7 +66,6 @@ struct MessageWindowData
 	WORD wOldStatus;
 	TCmdList *cmdList;
 	TCmdList *cmdListCurrent;
-	TCHAR* lastMsg;
 	int bIsRtl, bIsFirstAppend, bIsAutoRTL, bIsUtf;
 	int lastEventType;
 	HWND hwndErrorDlg;
@@ -96,7 +95,6 @@ struct MessageWindowData
 #define DM_STATUSICONCHANGE  (WM_USER+31)
 
 #define EVENTTYPE_JABBER_CHATSTATES     2000
-#define EVENTTYPE_JABBER_PRESENCE       2001
 #define EVENTTYPE_STATUSCHANGE          25368
 
 struct CREOleCallback
@@ -133,9 +131,7 @@ extern const int msgDlgFontCount;
 #define LOADHISTORY_COUNT     1
 #define LOADHISTORY_TIME      2
 
-#define SRMMMOD 	"SRMM"
-#define SRMSGMOD 	"SRMsg"
-#define DBSAVEDMSG 	"SavedMsg"
+#define SRMMMOD                    "SRMM"
 
 #define SRMSGSET_POPFLAGS          "PopupFlags"
 #define SRMSGDEFSET_POPFLAGS       0

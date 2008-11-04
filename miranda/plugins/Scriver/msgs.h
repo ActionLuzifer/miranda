@@ -1,7 +1,7 @@
 /*
 Scriver
 
-Copyright 2000-2008 Miranda ICQ/IM project,
+Copyright 2000-2007 Miranda ICQ/IM project,
 
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
@@ -50,6 +50,7 @@ typedef struct TabCtrlDataStruct
 	WPARAM  clickWParam;
 	LPARAM  clickLParam;
 	POINT	mouseLBDownPos;
+	int		lastClickTab;
 	HIMAGELIST hDragImageList;
 	int		bDragging;
 	int		bDragged;
@@ -102,23 +103,14 @@ typedef struct NewMessageWindowLParamStruct
 	int		flags;
 } NewMessageWindowLParam;
 
-#define CWDF_RTF_INPUT 1
-
-typedef struct CommonWindowDataStruct {
-	HANDLE hContact;
-	TCmdList *cmdList;
-	TCmdList *cmdListCurrent;
-	int		  codePage;
-	DWORD	  flags;
-	HWND 	  hwndLog;
-}CommonWindowData;
-
 struct MessageWindowData
 {
 	HWND hwnd;
 	int	tabId;
+	HANDLE hContact;
 	ParentWindowData *parent;
 	HWND hwndParent;
+	HWND hwndLog;
 	HANDLE hDbEventFirst, hDbEventLast, hDbUnreadEventFirst;
 	int splitterPos;
 	SIZE minEditBoxSize;
@@ -140,23 +132,25 @@ struct MessageWindowData
 	char *szProto;
 	WORD wStatus;
 	WORD wOldStatus;
+	TCmdList *cmdList;
+	TCmdList *cmdListCurrent;
+	TCmdList *cmdListNew;
 	time_t	startTime;
 	time_t 	lastEventTime;
 	int    	lastEventType;
 	HANDLE  lastEventContact;
 	DWORD	flags;
 	int		messagesInProgress;
+	int		codePage;
 	struct avatarCacheEntry *ace;
 	int		isMixed;
 	int		sendAllConfirm;
-	HICON   statusIcon;
-	HICON   statusIconOverlay;
-	CommonWindowData windowData;
+	HICON   userMenuIcon;
 };
 
-
-#define HM_DBEVENTADDED      (WM_USER+10)
+#define HM_EVENTSENT         (WM_USER+10)
 #define DM_REMAKELOG         (WM_USER+11)
+#define HM_DBEVENTADDED      (WM_USER+12)
 #define DM_CASCADENEWWINDOW  (WM_USER+13)
 #define DM_OPTIONSAPPLIED    (WM_USER+14)
 #define DM_SPLITTERMOVED     (WM_USER+15)
@@ -185,20 +179,22 @@ struct MessageWindowData
 #define DM_SWITCHTITLEBAR	 (WM_USER+49)
 #define DM_SWITCHRTL		 (WM_USER+50)
 #define DM_SWITCHUNICODE	 (WM_USER+51)
-#define DM_SWITCHTYPING		 (WM_USER+52)
+#define DM_GETCODEPAGE		 (WM_USER+52)
+#define DM_SETCODEPAGE		 (WM_USER+53)
 #define DM_MESSAGESENDING	 (WM_USER+54)
 #define DM_GETWINDOWSTATE	 (WM_USER+55)
 #define DM_STATUSICONCHANGE  (WM_USER+56)
 
+#define DM_DEACTIVATE		 (WM_USER+61)
 #define DM_MYAVATARCHANGED	 (WM_USER+62)
 #define DM_PROTOAVATARCHANGED (WM_USER+63)
 #define DM_AVATARCHANGED	 (WM_USER+64)
+#define DM_SETFOCUS			  (WM_USER+65)
 
 #define EM_SUBCLASSED        (WM_USER+0x101)
 #define EM_UNSUBCLASSED      (WM_USER+0x102)
 
 #define EVENTTYPE_JABBER_CHATSTATES     2000
-#define EVENTTYPE_JABBER_PRESENCE       2001
 #define EVENTTYPE_STATUSCHANGE          25368
 
 struct CREOleCallback
@@ -289,11 +285,9 @@ extern int fontOptionsListSize;
 #define SRMSGSET_AUTOPOPUP         "AutoPopupMsg"
 #define SRMSGDEFSET_AUTOPOPUP      0
 #define SRMSGSET_STAYMINIMIZED     "StayMinimized"
-#define SRMSGDEFSET_STAYMINIMIZED  0
-#define SRMSGSET_SWITCHTOACTIVE    "SwitchToActiveTab"
 #define SRMSGDEFSET_SWITCHTOACTIVE 0
-#define SRMSGSET_DONOTSTEALFOCUS   "DoNotStealFocus"
-#define SRMSGDEFSET_DONOTSTEALFOCUS   0
+#define SRMSGSET_SWITCHTOACTIVE    "SwitchToActiveTab"
+#define SRMSGDEFSET_STAYMINIMIZED  0
 #define SRMSGSET_AUTOMIN           "AutoMin"
 #define SRMSGDEFSET_AUTOMIN        0
 #define SRMSGSET_AUTOCLOSE         "AutoClose"
@@ -385,8 +379,6 @@ extern int fontOptionsListSize;
 #define SRMSGDEFSET_SHOWTYPINGNOWIN 0
 #define SRMSGSET_SHOWTYPINGCLIST    "ShowTypingClist"
 #define SRMSGDEFSET_SHOWTYPINGCLIST 1
-#define SRMSGSET_SHOWTYPINGSWITCH    "ShowTypingSwitch"
-#define SRMSGDEFSET_SHOWTYPINGSWITCH 1
 
 #define SRMSGSET_AVATARENABLE       "AvatarEnable"
 #define SRMSGDEFSET_AVATARENABLE    1

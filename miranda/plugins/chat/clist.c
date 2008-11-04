@@ -47,7 +47,7 @@ HANDLE CList_AddRoom(const char* pszModule, const TCHAR* pszRoom, const TCHAR* p
 
 		if ( pszGroup[0] ) {
 			for (i = 0;; i++) {
-				_itoa( i, str, 10 );
+				itoa( i, str, 10 );
 				if ( DBGetContactSettingTString( NULL, "CListGroups", str, &dbv )) {
 					DBWriteContactSettingTString(hContact, "CList", "Group", pszGroup);
 					goto END_GROUPLOOP;
@@ -67,8 +67,8 @@ HANDLE CList_AddRoom(const char* pszModule, const TCHAR* pszRoom, const TCHAR* p
 END_GROUPLOOP:
 		DBWriteContactSettingWord( hContact, pszModule, "Status", ID_STATUS_OFFLINE );
 		DBWriteContactSettingTString(hContact, pszModule, "Nick", pszDisplayName );
-/*		if ( iType != GCW_SERVER )
-			DBWriteContactSettingByte(hContact, "CList", "Hidden", 1);*/
+		if ( iType != GCW_SERVER )
+			DBWriteContactSettingByte(hContact, "CList", "Hidden", 1);
 		return hContact;
 	}
 
@@ -86,7 +86,7 @@ END_GROUPLOOP:
 	DBWriteContactSettingByte( hContact, pszModule, "ChatRoom", (BYTE)iType );
 	DBWriteContactSettingWord( hContact, pszModule, "Status", ID_STATUS_OFFLINE );
 //	if (iType == GCW_SERVER)
-    //	DBWriteContactSettingByte(hContact, "CList", "Hidden", 1);
+		DBWriteContactSettingByte(hContact, "CList", "Hidden", 1);
 	return hContact;
 }
 
@@ -97,8 +97,8 @@ BOOL CList_SetOffline(HANDLE hContact, BOOL bHide)
 		int i = DBGetContactSettingByte(hContact, szProto, "ChatRoom", 0);
 		DBWriteContactSettingWord(hContact, szProto,"ApparentMode",(LPARAM) 0);
 		DBWriteContactSettingWord(hContact, szProto, "Status", ID_STATUS_OFFLINE);
-/*		if ( bHide && i != GCW_SERVER )
-			DBWriteContactSettingByte(hContact, "CList", "Hidden", 1);*/
+		if ( bHide && i != GCW_SERVER )
+			DBWriteContactSettingByte(hContact, "CList", "Hidden", 1);
 		return TRUE;
 	}
 
@@ -118,8 +118,8 @@ BOOL CList_SetAllOffline(BOOL bHide)
 			if ( i != 0 ) {
 				DBWriteContactSettingWord(hContact, szProto,"ApparentMode",(LPARAM)(WORD) 0);
 				DBWriteContactSettingWord(hContact, szProto, "Status", ID_STATUS_OFFLINE);
-/*				if (bHide && i == GCW_CHATROOM) 
-					DBWriteContactSettingByte(hContact, "CList", "Hidden", 1);*/
+				if (bHide && i == GCW_CHATROOM) 
+					DBWriteContactSettingByte(hContact, "CList", "Hidden", 1);
 		}	}
 
 		hContact = (HANDLE) CallService(MS_DB_CONTACT_FINDNEXT, (WPARAM) hContact, 0);
@@ -185,7 +185,7 @@ void CList_CreateGroup(TCHAR* group)
 
 	for (i = 0;; i++) 
 	{
-		_itoa(i, str, 10);
+		itoa(i, str, 10);
 		if ( DBGetContactSettingTString( NULL, "CListGroups", str, &dbv ))
 			break;
 
@@ -231,7 +231,7 @@ BOOL CList_AddEvent(HANDLE hContact, HICON Icon, HANDLE event, int type, TCHAR* 
 	}
 	else {
 		if (CallService(MS_CLIST_GETEVENT, (WPARAM)hContact, (LPARAM)0))
-			CallService(MS_CLIST_REMOVEEVENT, (WPARAM)hContact, (LPARAM)event);
+			CallService(MS_CLIST_REMOVEEVENT, (WPARAM)hContact, (LPARAM)"chaticon");
 		CallService(MS_CLIST_ADDEVENT,(WPARAM) hContact,(LPARAM) &cle);
 	}
 	return TRUE;

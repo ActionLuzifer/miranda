@@ -48,10 +48,10 @@ static iconList[] =
 static int skinIconStatusToResourceId[] = 	{IDI_OFFLINE,	IDI_ONLINE,	IDI_AWAY,	IDI_INVISIBLE};
 static int skinStatusToGGStatus[] = 		{0,				1,			2,			3};
 
-void gg_icolib_init(GGPROTO *gg)
+void gg_icolib_init()
 {
 	SKINICONDESC sid = {0};
-	char szFile[MAX_PATH];
+	char szFile[MAX_PATH], szSection[MAX_PATH];
 	int i;
 
 	GetModuleFileNameA(hInstance, szFile, MAX_PATH);
@@ -59,11 +59,12 @@ void gg_icolib_init(GGPROTO *gg)
 	sid.cbSize = sizeof(SKINICONDESC);
 	sid.pszDefaultFile = szFile;
 	sid.cx = sid.cy = 16;
-	sid.pszSection = Translate(GGDEF_PROTONAME);
+    mir_snprintf(szSection, sizeof(szSection), "%s/%s", Translate("Protocols"), Translate(GG_PROTONAME));
+	sid.pszSection = szSection;
 
 	for(i = 0; i < sizeof(iconList) / sizeof(iconList[0]); i++) {
 		char szSettingName[100];
-		mir_snprintf(szSettingName, sizeof(szSettingName), "%s_%s", GGDEF_PROTO, iconList[i].szName);
+		mir_snprintf(szSettingName, sizeof(szSettingName), "%s_%s", GG_PROTO, iconList[i].szName);
 		sid.pszName = szSettingName;
 		sid.pszDescription = Translate(iconList[i].szDescr);
 		sid.iDefaultIndex = -iconList[i].defIconID;
@@ -90,7 +91,7 @@ HANDLE GetIconHandle(int iconId)
 	return NULL;
 }
 
-void gg_refreshblockedicon(GGPROTO *gg)
+void gg_refreshblockedicon()
 {
 	// Store blocked icon
 	char strFmt1[MAX_PATH];
@@ -110,9 +111,9 @@ void gg_refreshblockedicon(GGPROTO *gg)
 	}
 }
 
-int gg_iconschanged(GGPROTO *gg, WPARAM wParam, LPARAM lParam)
+int gg_iconschanged(WPARAM wParam, LPARAM lParam)
 {
-	gg_refreshblockedicon(gg);
+	gg_refreshblockedicon();
 
 	return 0;
 }

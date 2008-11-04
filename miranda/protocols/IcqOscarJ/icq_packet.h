@@ -2,10 +2,10 @@
 //                ICQ plugin for Miranda Instant Messenger
 //                ________________________________________
 // 
-// Copyright © 2000-2001 Richard Hughes, Roland Rabien, Tristan Van de Vreede
-// Copyright © 2001-2002 Jon Keating, Richard Hughes
-// Copyright © 2002-2004 Martin Öberg, Sam Kothari, Robert Rainwater
-// Copyright © 2004-2008 Joe Kucera, Bio
+// Copyright © 2000,2001 Richard Hughes, Roland Rabien, Tristan Van de Vreede
+// Copyright © 2001,2002 Jon Keating, Richard Hughes
+// Copyright © 2002,2003,2004 Martin Öberg, Sam Kothari, Robert Rainwater
+// Copyright © 2004,2005,2006,2007 Joe Kucera, Bio
 // 
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -23,7 +23,7 @@
 //
 // -----------------------------------------------------------------------------
 //
-// File name      : $URL$
+// File name      : $URL: https://miranda.svn.sourceforge.net/svnroot/miranda/trunk/miranda/protocols/IcqOscarJ/icq_packet.h $
 // Revision       : $Revision$
 // Last change on : $Date$
 // Last change by : $Author$
@@ -43,13 +43,13 @@ typedef unsigned long  DWORD;
 
 /*---------* Structures *--------------*/
 
-struct icq_packet
+typedef struct icq_packet_s
 {
   WORD wPlace;
   BYTE nChannel;
   WORD wLen;
   BYTE *pData;
-};
+} icq_packet;
 
 /*---------* Functions *---------------*/
 
@@ -72,9 +72,9 @@ void packTLVDWord(icq_packet *pPacket, WORD wType, DWORD dwData);
 void packBuffer(icq_packet* pPacket, const BYTE* pbyBuffer, WORD wLength);
 //void packLEWordSizedBuffer(icq_packet* pPacket, const BYTE* pbyBuffer, WORD wLength);
 int __fastcall getUINLen(DWORD dwUin);
-int __fastcall getUIDLen(DWORD dwUin, const char *szUid);
+int __fastcall getUIDLen(DWORD dwUin, char* szUid);
 void __fastcall packUIN(icq_packet *pPacket, DWORD dwUin);
-void __fastcall packUID(icq_packet *pPacket, DWORD dwUin, const char *szUid);
+void __fastcall packUID(icq_packet *pPacket, DWORD dwUin, char* szUid);
 void packFNACHeader(icq_packet *d, WORD wFamily, WORD wSubtype);
 void packFNACHeaderFull(icq_packet *d, WORD wFamily, WORD wSubtype, WORD wFlags, DWORD wSeq);
 
@@ -87,6 +87,7 @@ void ppackByte(PBYTE *buf,int *buflen,BYTE b);
 void ppackLEWord(PBYTE *buf,int *buflen,WORD w);
 void ppackLEDWord(PBYTE *buf,int *buflen,DWORD d);
 void ppackLELNTS(PBYTE *buf, int *buflen, const char *str);
+void ppackLELNTSfromDB(PBYTE *buf, int *buflen, const char *szSetting);
 
 void ppackTLVByte(PBYTE *buf, int *buflen, BYTE b, WORD wType, BYTE always);
 void ppackTLVWord(PBYTE *buf, int *buflen, WORD w, WORD wType, BYTE always);
@@ -95,14 +96,18 @@ void ppackTLVLNTS(PBYTE *buf, int *buflen, const char *str, WORD wType, BYTE alw
 void ppackTLVWordLNTS(PBYTE *buf, int *buflen, WORD w, const char *str, WORD wType, BYTE always);
 void ppackTLVLNTSByte(PBYTE *buf, int *buflen, const char *str, BYTE b, WORD wType);
 
+void ppackTLVLNTSfromDB(PBYTE *buf, int *buflen, const char *szSetting, WORD wType);
+void ppackTLVWordLNTSfromDB(PBYTE *buf, int *buflen, WORD w, const char *szSetting, WORD wType);
+void ppackTLVLNTSBytefromDB(PBYTE *buf, int *buflen, const char *szSetting, BYTE b, WORD wType);
+
 void __fastcall unpackByte(unsigned char **, BYTE *);
 void __fastcall unpackWord(unsigned char **, WORD *);
 void __fastcall unpackDWord(unsigned char **, DWORD *);
 void __fastcall unpackQWord(unsigned char **, DWORD64 *);
-void unpackString(BYTE **buf, char *string, WORD len);
-void unpackWideString(BYTE **buf, WCHAR *string, WORD len);
-void unpackTypedTLV(BYTE *buf, int buflen, WORD type, WORD *ttype, WORD *tlen, BYTE **ttlv);
-BOOL unpackUID(BYTE **ppBuf, WORD *pwLen, DWORD *pdwUIN, uid_str *ppszUID);
+void unpackString(unsigned char **buf, char *string, WORD len);
+void unpackWideString(unsigned char **buf, WCHAR *string, WORD len);
+void unpackTypedTLV(unsigned char *, int, WORD, WORD *, WORD *, char **);
+BOOL unpackUID(unsigned char** ppBuf, WORD* pwLen, DWORD *pdwUIN, uid_str* ppszUID);
 
 void __fastcall unpackLEWord(unsigned char **, WORD *);
 void __fastcall unpackLEDWord(unsigned char **, DWORD *);

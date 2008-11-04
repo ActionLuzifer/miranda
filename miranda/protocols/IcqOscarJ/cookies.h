@@ -23,7 +23,7 @@
 //
 // -----------------------------------------------------------------------------
 //
-// File name      : $URL$
+// File name      : $URL: https://miranda.svn.sourceforge.net/svnroot/miranda/trunk/miranda/protocols/IcqOscarJ/cookies.h $
 // Revision       : $Revision$
 // Last change on : $Date$
 // Last change by : $Author$
@@ -49,21 +49,19 @@
 #define CKT_AVATAR          0x20
 #define CKT_CHECKSPAMBOT    0x40
 
-struct CIcqProto;
-
 typedef struct icq_cookie_info_s
 {
   DWORD dwCookie;
   HANDLE hContact;
   void *pvExtra;
-  time_t dwTime;
+  DWORD dwTime;
   BYTE bType;
 } icq_cookie_info;
 
 typedef struct familyrequest_rec_s
 {
   WORD wFamily;
-  void (CIcqProto::*familyhandler)(HANDLE hConn, char* cookie, WORD cookieLen);
+  void (*familyhandler)(HANDLE hConn, char* cookie, WORD cookieLen);
 } familyrequest_rec;
 
 
@@ -121,7 +119,7 @@ typedef struct avatarcookie_t
   DWORD dwUin;
   HANDLE hContact;
   unsigned int hashlen;
-  BYTE *hash;
+  char *hash;
   unsigned int cbData;
   char *szFile;
 } avatarcookie;
@@ -133,5 +131,24 @@ typedef struct {
   int type;
   void *ft;
 } reverse_cookie;
+
+
+void InitCookies(void);
+void UninitCookies(void);
+
+DWORD AllocateCookie(BYTE bType, WORD wIdent, HANDLE hContact, void *pvExtra);
+void FreeCookie(DWORD dwCookie);
+void ReleaseCookie(DWORD dwCookie);
+DWORD GenerateCookie(WORD wIdent);
+
+int GetCookieType(DWORD dwCookie);
+
+int FindCookie(DWORD wCookie, HANDLE *phContact, void **ppvExtra);
+int FindCookieByData(void *pvExtra, DWORD *pdwCookie, HANDLE *phContact);
+int FindCookieByType(BYTE bType, DWORD *pdwCookie, HANDLE *phContact, void** ppvExtra);
+int FindMessageCookie(DWORD dwMsgID1, DWORD dwMsgID2, DWORD *pdwCookie, HANDLE *phContact, message_cookie_data **ppvExtra);
+
+void InitMessageCookie(message_cookie_data *pCookie);
+message_cookie_data *CreateMessageCookie(WORD bMsgType, BYTE bAckType);
 
 #endif /* __COOKIES_H */

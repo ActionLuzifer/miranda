@@ -29,7 +29,7 @@ typedef struct
 
 	PMO_IntMenuItem MenuItems;
 	int MenuItemsCount;
-	HIMAGELIST hMenuIcons;
+	HANDLE hMenuIcons;
 	BOOL bUseUserDefinedItems;
 }
 	TIntMenuObject,*PIntMenuObject;
