@@ -65,7 +65,7 @@ NNQuantizer::NNQuantizer(int PaletteSize)
 		if(bias) free(bias);
 		if(freq) free(freq);
 		if(radpower) free(radpower);
-		throw FI_MSG_ERROR_MEMORY;
+		throw "Not enough memory";
 	}
 }
 

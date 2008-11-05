@@ -1,4 +1,4 @@
-/* $Id: tif_zip.c,v 1.22 2008/04/05 17:55:40 drolon Exp $ */
+/* $Id: tif_zip.c,v 1.16 2006/10/28 19:36:43 drolon Exp $ */
 
 /*
  * Copyright (c) 1995-1997 Sam Leffler
@@ -119,7 +119,7 @@ ZIPPreDecode(TIFF* tif, tsample_t s)
 	assert(sp != NULL);
 
         if( (sp->state & ZSTATE_INIT_DECODE) == 0 )
-            tif->tif_setupdecode( tif );
+            ZIPSetupDecode(tif);
 
 	sp->stream.next_in = tif->tif_rawdata;
 	sp->stream.avail_in = tif->tif_rawcc;
@@ -197,7 +197,7 @@ ZIPPreEncode(TIFF* tif, tsample_t s)
 	(void) s;
 	assert(sp != NULL);
         if( sp->state != ZSTATE_INIT_ENCODE )
-            tif->tif_setupencode( tif );
+            ZIPSetupEncode(tif);
 
 	sp->stream.next_out = tif->tif_rawdata;
 	sp->stream.avail_out = tif->tif_rawdatasize;
@@ -342,21 +342,10 @@ static const TIFFFieldInfo zipFieldInfo[] = {
 int
 TIFFInitZIP(TIFF* tif, int scheme)
 {
-	static const char module[] = "TIFFInitZIP";
 	ZIPState* sp;
 
 	assert( (scheme == COMPRESSION_DEFLATE)
 		|| (scheme == COMPRESSION_ADOBE_DEFLATE));
-
-	/*
-	 * Merge codec-specific tag information.
-	 */
-	if (!_TIFFMergeFieldInfo(tif, zipFieldInfo,
-				 TIFFArrayCount(zipFieldInfo))) {
-		TIFFErrorExt(tif->tif_clientdata, module,
-			     "Merging Deflate codec-specific tags failed");
-		return 0;
-	}
 
 	/*
 	 * Allocate state block so tag methods have storage to record values.
@@ -371,8 +360,10 @@ TIFFInitZIP(TIFF* tif, int scheme)
 	sp->stream.data_type = Z_BINARY;
 
 	/*
-	 * Override parent get/set field methods.
+	 * Merge codec-specific tag information and
+	 * override parent get/set field methods.
 	 */
+	_TIFFMergeFieldInfo(tif, zipFieldInfo, TIFFArrayCount(zipFieldInfo));
 	sp->vgetparent = tif->tif_tagmethods.vgetfield;
 	tif->tif_tagmethods.vgetfield = ZIPVGetField; /* hook for codec tags */
 	sp->vsetparent = tif->tif_tagmethods.vsetfield;
@@ -403,7 +394,7 @@ TIFFInitZIP(TIFF* tif, int scheme)
 	(void) TIFFPredictorInit(tif);
 	return (1);
 bad:
-	TIFFErrorExt(tif->tif_clientdata, module,
+	TIFFErrorExt(tif->tif_clientdata, "TIFFInitZIP",
 		     "No space for ZIP state block");
 	return (0);
 }

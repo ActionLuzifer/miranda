@@ -1,6 +1,4 @@
-#include "aim.h"
 #include "tlv.h"
-
 TLV::TLV(char* buf)
 {
 	type_=_htons((*(unsigned short*)&buf[0]));
@@ -9,7 +7,7 @@ TLV::TLV(char* buf)
 	memcpy(value_,&buf[4],length_);
 	value_[length_]='\0';
 }
-TLV::TLV(unsigned short type, unsigned short length, const char* value)
+TLV::TLV(unsigned short type, unsigned short length, char* value)
 {
 	type_=type;
 	length_=length;
@@ -36,14 +34,6 @@ char* TLV::dup()//duplicates the tlv value
 	char* value=new char[length_+1];
 	memcpy(value,value_,length_);
 	value[length_]='\0';
-	return value;
-}
-wchar_t* TLV::dupw()//duplicates the tlv value
-{
-    size_t len = length_ / sizeof(wchar_t);
-	wchar_t* value=new wchar_t[len+1];
-	memcpy(value,value_,length_);
-	value[len]=0;
 	return value;
 }
 unsigned short TLV::len()

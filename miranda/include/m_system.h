@@ -2,7 +2,7 @@
 
 Miranda IM: the free IM client for Microsoft* Windows*
 
-Copyright 2000-2008 Miranda ICQ/IM project,
+Copyright 2000-2007 Miranda ICQ/IM project,
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
 
@@ -55,10 +55,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //the database is still guaranteed to be running during this hook.
 //wParam=lParam=0
 #define ME_SYSTEM_SHUTDOWN   "Miranda/System/Shutdown"
-
-//restarts miranda ( 0.8+ )
-//wParam=lParam=0
-#define MS_SYSTEM_RESTART    "Miranda/System/Restart"
 
 //miranda/system/oktoexit event
 //called before the app goes into shutdown routine to make sure everyone is
@@ -420,7 +416,7 @@ __forceinline int mir_forkthread( pThreadFunc aFunc, void* arg )
 }
 
 /* 0.5.2+
-wParam=void* - thread owner object
+wParam=0
 lParam=FORK_THREADEX_PARAMS*
 
 registers a thread in the core and forks it
@@ -428,8 +424,7 @@ passes the extended parameters info and returns the thread id
 
 */
 
-typedef unsigned (__stdcall *pThreadFuncEx)(void* param);
-typedef unsigned (__cdecl *pThreadFuncOwner)(void *owner, void* param);
+typedef unsigned (__stdcall *pThreadFuncEx)(void*);
 
 typedef struct
 {
@@ -451,28 +446,6 @@ static __inline int mir_forkthreadex( pThreadFuncEx aFunc, void* arg, int stackS
 	params.threadID   = pThreadID;
 	return CallService( MS_SYSTEM_FORK_THREAD_EX, 0, (LPARAM)&params );
 }
-
-/* 0.8.0+
-wParam=(void*)owner
-lParam=FORK_THREADEX_PARAMS*
-
-registers a thread, owned by some object, in the core and forks it
-passes the owner info and extended parameters info and returns the thread id
-
-*/
-
-#define MS_SYSTEM_FORK_OWNED_THREAD    "Miranda/Thread/ForkOwned"
-
-static __inline int mir_forkthreadowner( pThreadFuncOwner aFunc, void* owner, void* arg, unsigned* pThreadID )
-{
-	FORK_THREADEX_PARAMS params;
-	params.pFunc      = ( pThreadFuncEx )aFunc;
-	params.arg        = arg;
-	params.iStackSize = 0;
-	params.threadID   = pThreadID;
-	return CallService( MS_SYSTEM_FORK_THREAD_EX, (WPARAM)owner, (LPARAM)&params );
-}
-
 
 /*
 wParam=0
@@ -577,28 +550,5 @@ typedef struct
 	MISSING_SERVICE_PARAMS;
 
 #define ME_SYSTEM_MISSINGSERVICE "System/MissingService"
-
-/* Unhandled exceptions filter
-Is being called inside any thread launched via mir_forkthread, including the main thread.
-If a plugin's author executes a large piece of code inside __try/__except, he should
-obtain this filter and call it inside the __except section
-
-0.8.0+ addition (2008/07/20)
-*/
-
-typedef DWORD ( __cdecl *pfnExceptionFilter )( DWORD code, EXCEPTION_POINTERS* info );
-
-#define MS_SYSTEM_GETEXCEPTFILTER "System/GetExceptFilter"
-
-__inline static pfnExceptionFilter Miranda_GetExceptFilter( void )
-{	return ( pfnExceptionFilter )CallService( MS_SYSTEM_GETEXCEPTFILTER, 0, 0 );
-}
-
-#define MS_SYSTEM_SETEXCEPTFILTER "System/SetExceptFilter"
-
-__inline static pfnExceptionFilter Miranda_SetExceptFilter( pfnExceptionFilter foo )
-{	return ( pfnExceptionFilter )CallService( MS_SYSTEM_SETEXCEPTFILTER, 0, (LPARAM)foo );
-}
-
 
 #endif // M_SYSTEM_H

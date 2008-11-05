@@ -1,7 +1,5 @@
-#include "aim.h"
 #include "snac.h"
 #include "packets.h"
-
 SNAC::SNAC(char* buf,unsigned short length)
 {
 	service_=_htons((*(unsigned short*)&buf[0]));

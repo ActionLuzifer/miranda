@@ -33,8 +33,6 @@ FIBITMAP* ConvertRGBFToY(FIBITMAP *src);
 BOOL LuminanceFromYxy(FIBITMAP *dib, float *maxLum, float *minLum, float *worldLum);
 BOOL LuminanceFromY(FIBITMAP *dib, float *maxLum, float *minLum, float *worldLum);
 
-void NormalizeY(FIBITMAP *Y, float minPrct, float maxPrct);
-
 FIBITMAP* ClampConvertRGBFTo24(FIBITMAP *src);
 
 #ifdef __cplusplus

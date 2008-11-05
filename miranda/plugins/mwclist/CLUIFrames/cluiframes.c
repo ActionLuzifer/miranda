@@ -20,7 +20,7 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
-#include "../commonheaders.h"
+#include "..\commonheaders.h"
 
 extern HINSTANCE g_hInst;
 
@@ -559,7 +559,7 @@ int DBLoadFrameSettingsAtPos(int pos,int Frameid)
 	char buf[255];
 //	char *oldtb;
 
-	_itoa(pos,sadd,10);
+	itoa(pos,sadd,10);
 
 	//DBWriteContactSettingTString(0,CLUIFrameModule,strcat("Name",sadd),Frames[Frameid].tname);
 
@@ -592,7 +592,7 @@ int DBStoreFrameSettingsAtPos(int pos,int Frameid)
 	char sadd[16];
 	char buf[255];
 
-	_itoa(pos,sadd,10);
+	itoa(pos,sadd,10);
 
 	DBWriteContactSettingTString(0,CLUIFrameModule,AS(buf,"Name",sadd),Frames[Frameid].name);
 	//boolean
