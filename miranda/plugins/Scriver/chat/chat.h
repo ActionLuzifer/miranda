@@ -2,7 +2,6 @@
 Chat module plugin for Miranda IM
 
 Copyright (C) 2003 Jörgen Persson
-Copyright 2003-2008 Miranda ICQ/IM project,
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -24,6 +23,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include <malloc.h>
 #include <m_protomod.h>
+#include <m_popup.h>
 #include "m_chat.h"
 
 #ifndef TVM_GETITEMSTATE
@@ -124,7 +124,6 @@ typedef struct  MODULE_INFO_TYPE
 	BOOL		bItalics;
 	BOOL		bColor;
 	BOOL		bBkgColor;
-	BOOL		bFontSize;
 	BOOL		bChanMgr;
 	BOOL		bAckMsg;
 	BOOL		bSingleFormat;
@@ -234,18 +233,21 @@ typedef struct SESSION_INFO_TYPE
 	WORD        wCommandsNum;
 	DWORD       dwItemData;
 	DWORD       dwFlags;
+	HANDLE      hContact;
+	HWND        hwndStatus;
 	time_t      LastTime;
-	CommonWindowData windowData;
+
+	COMMAND_INFO*  lpCommands;
+	COMMAND_INFO*  lpCurrentCommand;
 	LOGINFO*       pLog;
 	LOGINFO*       pLogEnd;
 	USERINFO*      pUsers;
 	USERINFO*      pMe;
 	STATUSINFO*    pStatuses;
-	TCHAR          szSearch[255];
-	int            iSearchItem;
 
 	struct SESSION_INFO_TYPE *next;
 
+	int			codePage;
 }SESSION_INFO;
 
 typedef struct
@@ -256,7 +258,6 @@ typedef struct
 	LOGINFO*      lin;
 	BOOL          bStripFormat;
 	BOOL          bRedraw;
-	BOOL		  isFirst;
 	SESSION_INFO* si;
 }
 	LOGSTREAMDATA;
@@ -327,7 +328,7 @@ void UpgradeCheck(void);
 BOOL CALLBACK DlgProcColorToolWindow(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam);
 
 //log.c
-void   Log_StreamInEvent(HWND hwndDlg, LOGINFO* lin, SESSION_INFO* si, BOOL bRedraw);
+void   Log_StreamInEvent(HWND hwndDlg, LOGINFO* lin, SESSION_INFO* si, BOOL bRedraw, BOOL bPhaseTwo);
 void   LoadMsgLogBitmaps(void);
 void   FreeMsgLogBitmaps(void);
 void   ValidateFilename (char * filename);
@@ -379,7 +380,7 @@ SESSION_INFO* SM_AddSession(const TCHAR* pszID, const char* pszModule);
 int           SM_RemoveSession(const TCHAR* pszID, const char* pszModule);
 SESSION_INFO* SM_FindSession(const TCHAR* pszID, const char* pszModule);
 HWND          SM_FindWindowByContact(HANDLE hContact);
-USERINFO*     SM_AddUser(SESSION_INFO* si, const TCHAR* pszUID, const TCHAR* pszNick, WORD wStatus);
+USERINFO*     SM_AddUser(const TCHAR* pszID, const char* pszModule, const TCHAR* pszUID, const TCHAR* pszNick, WORD wStatus);
 BOOL          SM_ChangeUID(const TCHAR* pszID, const char* pszModule, const TCHAR* pszUID, const TCHAR* pszNewUID);
 BOOL          SM_ChangeNick(const TCHAR* pszID, const char* pszModule, GCEVENT * gce);
 BOOL          SM_RemoveUser(const TCHAR* pszID, const char* pszModule, const TCHAR* pszUID);
@@ -399,12 +400,13 @@ BOOL          SM_GiveStatus(const TCHAR* pszID, const char* pszModule, const TCH
 BOOL          SM_SetContactStatus(const TCHAR* pszID, const char* pszModule, const TCHAR* pszUID, WORD pszStatus);
 BOOL          SM_TakeStatus(const TCHAR* pszID, const char* pszModule, const TCHAR* pszUID, const TCHAR* pszStatus);
 BOOL          SM_MoveUser(const TCHAR* pszID, const char* pszModule, const TCHAR* pszUID);
+void          SM_AddCommand(const TCHAR* pszID, const char* pszModule, const char* lpNewCommand);
+char*         SM_GetPrevCommand(const TCHAR* pszID, const char* pszModule);
+char*         SM_GetNextCommand(const TCHAR* pszID, const char* pszModule);
 int           SM_GetCount(const char* pszModule);
 SESSION_INFO* SM_FindSessionByIndex(const char* pszModule, int iItem);
 char*         SM_GetUsers(SESSION_INFO* si);
 USERINFO*     SM_GetUserFromIndex(const TCHAR* pszID, const char* pszModule, int index);
-char          SM_GetStatusIndicator(SESSION_INFO* si, USERINFO * ui);
-SESSION_INFO* SM_FindSessionAutoComplete(const char* pszModule, SESSION_INFO* prevSession, const TCHAR* pszOriginal, const TCHAR* pszCurrent);
 MODULEINFO*   MM_AddModule(const char* pszModule);
 MODULEINFO*   MM_FindModule(const char* pszModule);
 void          MM_FixColors();
@@ -459,6 +461,7 @@ BOOL          IsEventSupported(int eventType);
 BOOL          LogToFile(SESSION_INFO* si, GCEVENT * gce);
 
 // message.c
+char*         Message_GetFromStream(HWND hwndDlg, SESSION_INFO* si);
 TCHAR*        DoRtfToTags( char* pszRtfText, SESSION_INFO* si);
 
 //////////////////////////////////////////////////////////////////////////////////

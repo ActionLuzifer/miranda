@@ -21,14 +21,12 @@
 			CharacterSet="2">
 			<Tool
 				Name="VCCLCompilerTool"
-				Optimization="3"
-				GlobalOptimizations="TRUE"
+				Optimization="2"
 				InlineFunctionExpansion="1"
-				FavorSizeOrSpeed="2"
 				AdditionalIncludeDirectories="../../include"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;AIM_EXPORTS"
 				StringPooling="TRUE"
-				RuntimeLibrary="2"
+				RuntimeLibrary="0"
 				EnableFunctionLevelLinking="TRUE"
 				UsePrecompiledHeader="2"
 				WarningLevel="3"
@@ -38,12 +36,8 @@
 				Name="VCCustomBuildTool"/>
 			<Tool
 				Name="VCLinkerTool"
-				IgnoreImportLibrary="TRUE"
-				AdditionalDependencies="vc7to6.lib eh7.lib wsock32.lib"
 				LinkIncremental="1"
 				SuppressStartupBanner="TRUE"
-				AdditionalLibraryDirectories="../../lib"
-				IgnoreAllDefaultLibraries="TRUE"
 				TargetMachine="1"/>
 			<Tool
 				Name="VCMIDLTool"
@@ -88,7 +82,7 @@
 				AdditionalIncludeDirectories="../../include"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;AIM_EXPORTS"
 				BasicRuntimeChecks="3"
-				RuntimeLibrary="3"
+				RuntimeLibrary="1"
 				UsePrecompiledHeader="0"
 				PrecompiledHeaderThrough=""
 				BrowseInformation="1"
@@ -100,7 +94,7 @@
 				Name="VCCustomBuildTool"/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="wsock32.lib"
+				AdditionalOptions="Ws2_32.lib"
 				LinkIncremental="1"
 				SuppressStartupBanner="TRUE"
 				GenerateDebugInformation="TRUE"
@@ -144,14 +138,14 @@
 			ConfigurationType="2"
 			UseOfMFC="0"
 			ATLMinimizesCRunTimeLibraryUsage="FALSE"
-			CharacterSet="1">
+			CharacterSet="2">
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
 				AdditionalIncludeDirectories="../../include"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;AIM_EXPORTS"
 				BasicRuntimeChecks="3"
-				RuntimeLibrary="3"
+				RuntimeLibrary="1"
 				UsePrecompiledHeader="0"
 				PrecompiledHeaderThrough=""
 				BrowseInformation="1"
@@ -163,8 +157,8 @@
 				Name="VCCustomBuildTool"/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="wsock32.lib"
-				LinkIncremental="2"
+				AdditionalOptions="Ws2_32.lib"
+				LinkIncremental="1"
 				SuppressStartupBanner="TRUE"
 				GenerateDebugInformation="TRUE"
 				TargetMachine="1"/>
@@ -207,17 +201,15 @@
 			ConfigurationType="2"
 			UseOfMFC="0"
 			ATLMinimizesCRunTimeLibraryUsage="FALSE"
-			CharacterSet="1">
+			CharacterSet="2">
 			<Tool
 				Name="VCCLCompilerTool"
-				Optimization="3"
-				GlobalOptimizations="TRUE"
+				Optimization="2"
 				InlineFunctionExpansion="1"
-				FavorSizeOrSpeed="2"
 				AdditionalIncludeDirectories="../../include"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;AIM_EXPORTS"
 				StringPooling="TRUE"
-				RuntimeLibrary="2"
+				RuntimeLibrary="0"
 				EnableFunctionLevelLinking="TRUE"
 				UsePrecompiledHeader="2"
 				WarningLevel="3"
@@ -227,11 +219,8 @@
 				Name="VCCustomBuildTool"/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="vc7to6.lib eh7.lib wsock32.lib"
 				LinkIncremental="1"
 				SuppressStartupBanner="TRUE"
-				AdditionalLibraryDirectories="../../lib"
-				IgnoreAllDefaultLibraries="TRUE"
 				TargetMachine="1"/>
 			<Tool
 				Name="VCMIDLTool"
@@ -275,7 +264,13 @@
 					Name="Debug|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						RuntimeLibrary="3"/>
+						RuntimeLibrary="1"/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug Unicode|Win32">
+					<Tool
+						Name="VCCLCompilerTool"
+						RuntimeLibrary="1"/>
 				</FileConfiguration>
 			</File>
 			<File
@@ -318,9 +313,6 @@
 				RelativePath=".\popup.cpp">
 			</File>
 			<File
-				RelativePath=".\proto.cpp">
-			</File>
-			<File
 				RelativePath=".\proxy.cpp">
 			</File>
 			<File
@@ -348,7 +340,7 @@
 				RelativePath=".\utility.cpp">
 			</File>
 			<File
-				RelativePath=".\ui.cpp">
+				RelativePath=".\windows.cpp">
 			</File>
 		</Filter>
 		<Filter
@@ -428,9 +420,6 @@
 				RelativePath=".\popup.h">
 			</File>
 			<File
-				RelativePath=".\proto.h">
-			</File>
-			<File
 				RelativePath=".\proxy.h">
 			</File>
 			<File
@@ -461,7 +450,7 @@
 				RelativePath=".\utility.h">
 			</File>
 			<File
-				RelativePath=".\ui.h">
+				RelativePath=".\windows.h">
 			</File>
 		</Filter>
 		<File

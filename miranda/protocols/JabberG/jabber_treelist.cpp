@@ -2,7 +2,7 @@
 
 Jabber Protocol Plugin for Miranda IM
 Copyright ( C ) 2002-04  Santithorn Bunchua
-Copyright ( C ) 2005-08  George Hazan
+Copyright ( C ) 2005-07  George Hazan
 Copyright ( C ) 2007     Victor Pavlychko
 
 This program is free software; you can redistribute it and/or
@@ -19,14 +19,16 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-File name      : $URL$
-Revision       : $Revision$
-Last change on : $Date$
-Last change by : $Author$
-
 */
 
 #include "jabber.h"
+
+#ifdef _WIN32_WINNT
+	#undef _WIN32_WINNT
+#endif
+#define _WIN32_WINNT 0x501
+
+#include <commctrl.h>
 
 #define TLIF_VISIBLE	0x01
 #define TLIF_EXPANDED	0x02
@@ -92,16 +94,6 @@ static void sttTreeList_CreateItems(HTREELISTITEM hItem, LPARAM data);
 static void sttTreeList_CreateItems_List(HTREELISTITEM hItem, LPARAM data);
 static int CALLBACK sttTreeList_SortFunc(LPARAM lParam1, LPARAM lParam2, LPARAM lParamSort);
 
-static __forceinline void sttTreeList_SeWindowData(HWND hwnd, LONG data)
-{
-	SetPropA(hwnd, "Miranda.TreeList", (HANDLE)data);
-}
-
-static __forceinline LONG sttTreeList_GeWindowData(HWND hwnd)
-{
-	return (LONG)GetPropA(hwnd, "Miranda.TreeList");
-}
-
 // tree list implementation
 LPARAM TreeList_GetData(HTREELISTITEM hItem)
 {
@@ -110,7 +102,7 @@ LPARAM TreeList_GetData(HTREELISTITEM hItem)
 
 HTREELISTITEM TreeList_GetRoot(HWND hwnd)
 {
-	TTreeList_Data *data = (TTreeList_Data *)sttTreeList_GeWindowData(hwnd);
+	TTreeList_Data *data = (TTreeList_Data *)GetWindowLong(hwnd, GWL_USERDATA);
 	return data->root;
 }
 
@@ -131,7 +123,7 @@ void TreeList_Create(HWND hwnd)
 	data->root->flags = TLIF_EXPANDED|TLIF_VISIBLE|TLIF_ROOT;
 	data->root->indent = -1;
 	data->hItemSelected = data->root;
-	sttTreeList_SeWindowData(hwnd, (LONG)data);
+	SetWindowLong(hwnd, GWL_USERDATA, (LONG)data);
 
 	ListView_SetExtendedListViewStyle(hwnd, LVS_EX_FULLROWSELECT | LVS_EX_DOUBLEBUFFER | LVS_EX_GRIDLINES | LVS_EX_INFOTIP );
 
@@ -149,14 +141,14 @@ void TreeList_Create(HWND hwnd)
 void TreeList_Destroy(HWND hwnd)
 {
 	ListView_DeleteAllItems(hwnd);
-	TTreeList_Data *data = (TTreeList_Data *)sttTreeList_GeWindowData(hwnd);
+	TTreeList_Data *data = (TTreeList_Data *)GetWindowLong(hwnd, GWL_USERDATA);
 	delete data;
 }
 
 void TreeList_Reset(HWND hwnd)
 {
 	ListView_DeleteAllItems(hwnd);
-	TTreeList_Data *data = (TTreeList_Data *)sttTreeList_GeWindowData(hwnd);
+	TTreeList_Data *data = (TTreeList_Data *)GetWindowLong(hwnd, GWL_USERDATA);
 	delete data->root;
 	data->root = new TTreeList_ItemInfo;
 	data->root->flags = TLIF_EXPANDED|TLIF_VISIBLE|TLIF_ROOT;
@@ -166,7 +158,7 @@ void TreeList_Reset(HWND hwnd)
 
 void TreeList_SetMode(HWND hwnd, int mode)
 {
-	TTreeList_Data *data = (TTreeList_Data *)sttTreeList_GeWindowData(hwnd);
+	TTreeList_Data *data = (TTreeList_Data *)GetWindowLong(hwnd, GWL_USERDATA);
 	data->mode = mode;
 	ListView_DeleteAllItems(hwnd);
 	TreeList_Update(hwnd);
@@ -174,7 +166,7 @@ void TreeList_SetMode(HWND hwnd, int mode)
 
 void TreeList_SetSortMode(HWND hwnd, int col, BOOL descending)
 {
-	TTreeList_Data *data = (TTreeList_Data *)sttTreeList_GeWindowData(hwnd);
+	TTreeList_Data *data = (TTreeList_Data *)GetWindowLong(hwnd, GWL_USERDATA);
 	if ((col >= 0) && (col < 2))
 		data->sortMode = 1 + col * 2 + (descending ? 1 : 0);
 	else
@@ -184,7 +176,7 @@ void TreeList_SetSortMode(HWND hwnd, int col, BOOL descending)
 
 void TreeList_SetFilter(HWND hwnd, TCHAR *filter)
 {
-	TTreeList_Data *data = (TTreeList_Data *)sttTreeList_GeWindowData(hwnd);
+	TTreeList_Data *data = (TTreeList_Data *)GetWindowLong(hwnd, GWL_USERDATA);
 	if (data->filter) mir_free(data->filter);
 	data->filter = NULL;
 	if (filter) data->filter = mir_tstrdup(filter);
@@ -193,7 +185,7 @@ void TreeList_SetFilter(HWND hwnd, TCHAR *filter)
 
 HTREELISTITEM TreeList_GetActiveItem(HWND hwnd)
 {
-	TTreeList_Data *data = (TTreeList_Data *)sttTreeList_GeWindowData(hwnd);
+	TTreeList_Data *data = (TTreeList_Data *)GetWindowLong(hwnd, GWL_USERDATA);
 	LVITEM lvi = {0};
 	lvi.mask = LVIF_PARAM;
 	lvi.iItem = ListView_GetNextItem(hwnd, -1, LVNI_SELECTED);
@@ -205,7 +197,7 @@ HTREELISTITEM TreeList_GetActiveItem(HWND hwnd)
 
 HTREELISTITEM TreeList_AddItem(HWND hwnd, HTREELISTITEM hParent, TCHAR *text, LPARAM nodeDdata)
 {
-	TTreeList_Data *data = (TTreeList_Data *)sttTreeList_GeWindowData(hwnd);
+	TTreeList_Data *data = (TTreeList_Data *)GetWindowLong(hwnd, GWL_USERDATA);
 	if (!hParent) hParent = data->root;
 
 	TTreeList_ItemInfo *item = new TTreeList_ItemInfo;
@@ -225,7 +217,7 @@ HTREELISTITEM TreeList_AddItem(HWND hwnd, HTREELISTITEM hParent, TCHAR *text, LP
 
 void TreeList_ResetItem(HWND hwnd, HTREELISTITEM hParent)
 {
-	TTreeList_Data *data = (TTreeList_Data *)sttTreeList_GeWindowData(hwnd);
+	TTreeList_Data *data = (TTreeList_Data *)GetWindowLong(hwnd, GWL_USERDATA);
 
 	for (int i = hParent->subItems.getCount(); i--; )
 		delete hParent->subItems[i];
@@ -274,8 +266,9 @@ void TreeList_RecursiveApply(HTREELISTITEM hItem, void (*func)(HTREELISTITEM, LP
 
 void TreeList_Update(HWND hwnd)
 {
-	TTreeList_Data *data = (TTreeList_Data *)sttTreeList_GeWindowData(hwnd);
+	TTreeList_Data *data = (TTreeList_Data *)GetWindowLong(hwnd, GWL_USERDATA);
 	HTREELISTITEM hItem = data->root;
+	LVITEM lvi = {0};
 	int sortIndex = 0;
 
 	SendMessage(hwnd, WM_SETREDRAW, FALSE, 0);
@@ -346,7 +339,7 @@ BOOL TreeList_ProcessMessage(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, 
 		if (((LPNMHDR)lparam)->idFrom != idc)
 			break;
 
-		TTreeList_Data *data = (TTreeList_Data *)sttTreeList_GeWindowData(GetDlgItem(hwnd, idc));
+		TTreeList_Data *data = (TTreeList_Data *)GetWindowLong(GetDlgItem(hwnd, idc), GWL_USERDATA);
 		switch (((LPNMHDR)lparam)->code) {
 		case LVN_COLUMNCLICK:
 			{
@@ -449,7 +442,7 @@ BOOL TreeList_ProcessMessage(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, 
 				ListView_HitTest(lpnmia->hdr.hwndFrom, &lvhti);
 
 				HTREELISTITEM ptli = ( HTREELISTITEM )lvi.lParam;
-				if ((lvhti.iSubItem == 0) && ( (lvhti.flags&LVHT_ONITEM) == LVHT_ONITEMSTATEICON ) &&
+				if ((lvhti.iSubItem == 0) && ( lvhti.flags & LVHT_ONITEMSTATEICON ) &&
 					(ptli->subItems.getCount() || ptli->flags & TLIF_FAKEPARENT))
 				{
 					if ( ptli->flags & TLIF_EXPANDED )
@@ -533,7 +526,7 @@ static void sttTreeList_FilterItems(HTREELISTITEM hItem, LPARAM data)
 
 static void sttTreeList_CreateItems(HTREELISTITEM hItem, LPARAM data)
 {
-	TTreeList_Data *listData = (TTreeList_Data *)sttTreeList_GeWindowData((HWND)data);
+	TTreeList_Data *listData = (TTreeList_Data *)GetWindowLong((HWND)data, GWL_USERDATA);
 	if (( hItem->flags & TLIF_VISIBLE ) && (!listData->filter || ( hItem->flags & TLIF_FILTERED )) && !( hItem->flags & TLIF_HASITEM ) && !( hItem->flags & TLIF_ROOT )) {
 		LVITEM lvi = {0};
 		lvi.mask = LVIF_INDENT | LVIF_PARAM | LVIF_IMAGE | LVIF_TEXT | LVIF_STATE;
@@ -555,7 +548,7 @@ static void sttTreeList_CreateItems(HTREELISTITEM hItem, LPARAM data)
 
 static void sttTreeList_CreateItems_List(HTREELISTITEM hItem, LPARAM data)
 {
-	TTreeList_Data *listData = (TTreeList_Data *)sttTreeList_GeWindowData((HWND)data);
+	TTreeList_Data *listData = (TTreeList_Data *)GetWindowLong((HWND)data, GWL_USERDATA);
 	if ((!listData->filter || ( hItem->flags & TLIF_FILTERED )) && !( hItem->flags & TLIF_HASITEM ) && !( hItem->flags & TLIF_ROOT )) {
 		LVITEM lvi = {0};
 		lvi.mask = LVIF_INDENT | LVIF_PARAM | LVIF_IMAGE | LVIF_TEXT | LVIF_STATE;

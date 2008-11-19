@@ -23,12 +23,12 @@
 # http://gnuwin32.sourceforge.net/.  Indent.exe will need to be in
 # the path or in the same directory as the source.
 ####################################################################
-SRC =\
-	snac.cpp \
+SRC =	snac.cpp \
 	flap.cpp \
 	conv.cpp \
 	aim.cpp \
  	connection.cpp \
+	md5.cpp \
 	packets.cpp \
 	services.cpp \
 	thread.cpp \
@@ -38,16 +38,13 @@ SRC =\
 	proxy.cpp \
 	direct_connect.cpp \
 	file.cpp \
-	ui.cpp \
+	windows.cpp \
 	strl.cpp \
 	links.cpp \
 	server.cpp \
 	client.cpp \
 	error.cpp \
-	tlv.cpp \
-	proto.cpp \
-	away.cpp \
-	avatars.cpp
+	tlv.cpp 
 		
 OBJ =	$(SRC:.cpp=.o)
 RES = resource.res
@@ -58,6 +55,7 @@ HDR = defines.h \
 	aim.h \
 	client.h \
  	connection.h \
+	md5.h \
 	packets.h \
 	services.h \
 	client.h \
@@ -70,17 +68,15 @@ HDR = defines.h \
 	direct_connect.ch \
 	file.h \
 	resource.h \
-	ui.h \
+	windows. h \
 	m_cluiframes.h \
 	strl.h \
 	links.h \
 	error.h \
-	conv.h \
-	proto.h \
-	avatars.h
+	conv.h
 
-LIB = -lgdi32 -lComdlg32 -lwsock32 -lstdc++ 
-CC = gcc
+LIB = -lgdi32 -lComdlg32
+CC = g++
 RC = windres
 RM = rm
 ID = indent
@@ -110,7 +106,7 @@ endif
 
 # Targets
 all : $(OBJ) $(RES)
-	$(CC) $(LFLAGS) -o $(BIN) $(OBJ) $(RES) $(LIB) -Wl
+	$(CC) $(LFLAGS) $(CFLAGS) -o $(BIN) $(OBJ) $(RES) $(LIB) -Wl
 
 $(OBJ) :
 	$(CC) -c $(SRC) $(CFLAGS)

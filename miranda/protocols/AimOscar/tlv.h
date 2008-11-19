@@ -1,5 +1,7 @@
 #ifndef TLV_H
 #define TLV_H
+#include <stdio.h>
+#include <windows.h>
 #include "packets.h"
 #define TLV_HEADER_SIZE	4
 class TLV
@@ -10,11 +12,10 @@ private:
 	char* value_;
 public:
 	TLV(char* buf);
-	TLV(unsigned short type, unsigned short length, const char* value);
+	TLV(unsigned short type, unsigned short length, char* value);
 	~TLV();
 	int cmp(unsigned short type);
 	char* dup();
-    wchar_t* dupw();
 	unsigned short len();
 	char* part(int pos, int length);
 	char* whole();
