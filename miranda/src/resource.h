@@ -107,22 +107,6 @@
 #define IDI_TYPING                      274
 #define IDD_UPDATE_NOTIFY               275
 #define IDD_OPT_UPDATENOTIFY            276
-#define IDD_OPT_KEYBINDINGS             277
-#define IDD_OPT_HOTKEYS                 278
-#define IDI_UNDO                        279
-#define IDI_WINDOW                      280
-#define IDI_WINDOWS                     281
-#define IDI_ACCMGR                      282
-#define IDD_ACCMGR                      283
-#define IDD_ACCFORM                     284
-#define IDD_WAITRESTART                 285
-#define IDD_FTMGR                       286
-#define IDD_FTPAGE                      287
-#define IDD_OPT_KEYWORDFILTER           288
-#define IDI_JOINCHAT                    289
-#define IDI_LEAVECHAT                   290
-#define IDI_STATUS_LOCKED               291
-#define IDD_CHOOSE_FONT_EFFECT          289
 #define IDC_SAVE                        1001
 #define IDI_ONTHEPHONE                  1002
 #define IDC_MESSAGE                     1002
@@ -138,8 +122,6 @@
 #define IDC_PROXYTYPE                   1009
 #define IDC_STATIC23                    1010
 #define IDC_NAMEVAL                     1010
-#define IDC_LNK_NETWORK                 1010
-#define IDC_LNK_ADDONS                  1011
 #define IDC_SPECIFYPORTS                1013
 #define IDC_ST_ENTERMSG                 1013
 #define IDC_ST_ENTERURL                 1014
@@ -165,8 +147,6 @@
 #define IDC_BTN_EXPORT                  1054
 #define IDC_FONTLIST                    1056
 #define IDC_CHOOSEFONT                  1057
-#define IDC_EFFECT                      1058
-#define IDC_EFFECT_STATIC               1059
 #define IDC_GENDER                      1060
 #define IDC_CITY                        1061
 #define IDC_STATE                       1062
@@ -199,19 +179,14 @@
 #define IDC_GENMENU_SET                 1087
 #define IDC_GENMENU_SET2                1088
 #define IDC_GENMENU_DEFAULT             1089
-#define IDC_CANVAS                      1094
-#define IDC_CANVAS2                     1095
 #define IDC_BUILDTIME                   1108
 #define IDC_CREDITSFILE                 1109
 #define IDC_NUMBER                      1113
 #define IDC_UIN                         1123
-#define IDC_UIN2                        1124
-#define IDC_PROTONAME                   1124
 #define IDC_FINDWHAT                    1131
 #define IDC_FIND                        1132
 #define IDC_FILE                        1133
 #define IDC_PROFILELIST                 1134
-#define IDC_EFFECT_COMBO                1140
 #define IDC_TABS                        1141
 #define IDC_RESULTS                     1142
 #define IDC_STATUS                      1144
@@ -252,7 +227,6 @@
 #define IDC_NODIALOG                    1211
 #define IDC_USESPECIFIC                 1212
 #define IDC_FILEDIR                     1213
-#define IDC_TRANSFERCOMPLETED           1214
 #define IDC_ALLFILESPROGRESS            1217
 #define IDC_CURRENTSPEED                1219
 #define IDC_WHITERECT                   1221
@@ -275,9 +249,7 @@
 #define IDC_PROTOLIST                   1245
 #define IDC_TODEFICON                   1246
 #define IDC_IMPORTMULTI                 1247
-#define IDC_EFFECT_COLOUR1              1266
 #define IDC_BKGCOLOUR                   1269
-#define IDC_EFFECT_COLOUR2              1269
 #define IDC_FILENAME                    1271
 #define IDC_FONTCOLOUR                  1282
 #define IDC_INTERESTS                   1305
@@ -350,10 +322,8 @@
 #define IDC_SCANCMDLINEBROWSE           1476
 #define IDC_ALLTRANSFERRED              1477
 #define IDC_OPENFOLDER                  1478
-#define IDC_ALLTRANSFERRED2             1478
 #define IDC_OPENFILE                    1479
 #define IDC_TOTALSIZE                   1480
-#define IDC_CONTACT                     1480
 #define IDC_AUTOACCEPT                  1484
 #define IDC_SCANCMDLINE                 1485
 #define IDC_WARNBEFOREOPENING           1488
@@ -400,7 +370,6 @@
 #define IDC_SCREENSAVER                 1642
 #define IDC_LOCKED                      1643
 #define IDC_IDLESHORT                   1644
-#define IDC_UPGRADE                     1645
 #define IDC_IDLE1STTIME                 1646
 #define IDC_IDLEPRIVATE                 1649
 #define IDC_AASTATUS                    1650
@@ -432,39 +401,8 @@
 #define IDC_ENABLEUPDATES               1700
 #define IDC_ENABLEALPHA                 1701
 #define IDC_RESETMENU                   1702
-#define IDC_KEYWORD_FILTER              1704
-#define IDC_FILTER                      1706
-#define IDC_PATH                        1707
-#define IDC_LV_HOTKEYS                  1708
-#define IDC_HOTKEY                      1709
-#define IDC_SM_COMBO                    1710
-#define IDC_SM_LABEL                    1711
-#define IDC_REMOVE                      1712
-#define IDC_ACCLIST                     1713
-#define IDC_ACCNAME                     1714
-#define IDC_PROTOTYPECOMBO              1715
-#define IDC_ACCINTERNALNAME             1716
-#define IDC_OPTIONS                     1717
-#define IDC_BUTTON1                     1718
-#define IDC_CLEAR                       1718
-#define IDC_PROGRESS1                   1719
-#define IDC_PROGRESSBAR                 1719
-#define IDC_TXT_ACCOUNT                 1720
-#define IDC_TXT_ADDITIONAL              1721
-#define IDC_TXT_INFO                    1722
-#define IDC_CONTACTNAME                 1724
-#define IDC_FRAME                       1725
-#define IDC_LIST1                       1726
-#define IDC_ALLFILES                    1726
-#define IDC_ALLPRECENTAGE               1727
-#define IDC_ALLPRECENTS                 1727
-#define IDC_CLOSE                       1728
-#define IDC_ENABLE_KEYWORDFILTERING     1729
-#define IDC_BKGCOLOUR_STATIC            1730
-#define IDC_EFFECT_COLOUR_TEXT1         1853
-#define IDC_EFFECT_COLOUR_SPIN1         1854
-#define IDC_EFFECT_COLOUR_TEXT2         11803
-#define IDC_EFFECT_COLOUR_SPIN2         11806
+#define IDC_MODULES                     1704
+#define IDC_STATIC_FILTERCAPTION        1705
 #define IDI_SEARCHALL                   32548
 #define ID_ICQ_EXIT                     40001
 #define IDM_COPY                        40001
@@ -489,14 +427,15 @@
 #define POPUP_NEWGROUP                  40050
 #define POPUP_RENAMEGROUP               40052
 #define POPUP_DELETEGROUP               40053
+#define IDC_STATIC                      -1
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        289
+#define _APS_NEXT_RESOURCE_VALUE        277
 #define _APS_NEXT_COMMAND_VALUE         40018
-#define _APS_NEXT_CONTROL_VALUE         1731
+#define _APS_NEXT_CONTROL_VALUE         1706
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

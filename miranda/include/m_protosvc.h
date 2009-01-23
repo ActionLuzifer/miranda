@@ -2,7 +2,7 @@
 
 Miranda IM: the free IM client for Microsoft* Windows*
 
-Copyright 2000-2008 Miranda ICQ/IM project,
+Copyright 2000-2007 Miranda ICQ/IM project,
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
 
@@ -129,11 +129,10 @@ static __inline unsigned long Proto_Status2Flag(int status)
 #define PF4_AVATARS		  0x00000020 // protocol has avatar support, added during v0.3.4 (2004/09/13)
 #define PF4_OFFLINEFILES  0x00000040 // protocols supports sending files to offline users (v0.5.2)
 #define PF4_IMSENDUTF     0x00000080 // protocol is able to process messages in utf-8 (v.0.7.0+)
-#define PF4_INFOSETTINGSVC 0x00000100 // protocol supports user info translation services (v0.8.0+)
 
 #define PFLAG_UNIQUEIDTEXT  100    //returns a static buffer of text describing the unique field by which this protocol identifies users (already translated), or NULL
 
-#define PFLAG_MAXCONTACTSPERPACKET  200   //v0.1.2.2+: returns the maximum number of contacts which can be sent in a single PSS_CONTACTS, lParam=(LPARAM)hContact.
+#define PFLAG_MAXCONTACTSPERPACKET  200   //v0.1.2.2+: returns the maximum number of contacts which can be sent in a single PSS_CONTACTS.
 
 #define PFLAG_UNIQUEIDSETTING 300 // returns the setting name of where the unique id is stored
 
@@ -274,15 +273,6 @@ will pick this up and everything will be good.
 // wParam=lParam=0
 // Returns 0 on success, nonzero on failure
 #define PSS_ADDED	"/YouWereAdded"
-
-//Create account manager UI form
-//wParam=0
-//lParam=(LPARAM)(HWND)hwndAccMgr
-//Returns handle on newly created form.
-//Size for best fit is 186x134 DLUs, please avoid groupboxes
-//paddind and advanced options. This should provide minimal setup
-//for initial connect.
-#define PS_CREATEACCMGRUI "/CreateAccMgrUI"
 
 //Send a basic search request
 //wParam=0
@@ -432,32 +422,6 @@ typedef struct {
 	const char *szFilename;  //full path. Only valid if action==FILERESUME_RENAME
 } PROTOFILERESUME;
 #define PS_FILERESUME     "/FileResume"
-
-//Asks a protocol to join the chatroom from contact  v0.8.0+
-//wParam=(WPARAM)(HANDLE)hContact
-//lParam=(LPARAM)0
-//Returns 0 on success, nonzero on failure
-#define PS_JOINCHAT "/JoinChat"
-
-//Asks a protocol to leave the chatroom from contact  v0.8.0+
-//wParam=(WPARAM)(HANDLE)hContact
-//lParam=(LPARAM)0
-//Returns 0 on success, nonzero on failure
-#define PS_LEAVECHAT "/LeaveChat"
-
-//Asks a protocol to read contact information and translate them (for a lookup fields)  v0.8.0+
-//wParam=(WPARAM)(HANDLE)hContact
-//lParam=(LPARAM)(DBCONTACTGETSETTING*)&dbcgs
-//The flag PF4_INFOSETTINGSVC indicates that a protocol supports this. Basically it should
-//do the same as MS_DB_CONTACT_GETSETTING_STR, except that for a lookup settings (e.g. Language)
-//it returns string instead of an ID stored in the database.
-//Caller is responsible for free()ing dbcgs.pValue->pszVal and pbVal if they are
-//returned. You must **NOT** do this from your version of free() you have to use Miranda's free()
-//you can get a function pointer to Miranda's free() via MS_SYSTEM_GET_MMI, see m_system.h
-//Returns 0 on success or nonzero if the setting name was not found or hContact
-//was invalid
-#define PS_GETINFOSETTING "/GetInfoSetting"
-
 
 /****************************** SENDING SERVICES *************************/
 //these should be called with CallContactService()
@@ -659,8 +623,8 @@ repeat {
 }
 userNick should be a human-readable description of the user. It need not
 be the nick, or even confined to displaying just one type of
-information. The dbe.flags can contain DBEF_UTF defining userNick as utf-8
-encoded.
+information. The dbe.flags can contain DBEF_UTF defining userNick as utf-8 
+encoded. 
 userId should be a machine-readable representation of the unique
 protocol identifying field of the user. Because of the need to be
 zero-terminated, binary data should be converted to text.

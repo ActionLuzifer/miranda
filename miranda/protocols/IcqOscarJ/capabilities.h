@@ -2,10 +2,9 @@
 //                ICQ plugin for Miranda Instant Messenger
 //                ________________________________________
 // 
-// Copyright © 2000-2001 Richard Hughes, Roland Rabien, Tristan Van de Vreede
-// Copyright © 2001-2002 Jon Keating, Richard Hughes
-// Copyright © 2002-2004 Martin Öberg, Sam Kothari, Robert Rainwater
-// Copyright © 2004-2008 Joe Kucera
+// Copyright © 2000,2001 Richard Hughes, Roland Rabien, Tristan Van de Vreede
+// Copyright © 2001,2002 Jon Keating, Richard Hughes
+// Copyright © 2002,2003,2004 Martin Öberg, Sam Kothari, Robert Rainwater
 // 
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -23,7 +22,7 @@
 //
 // -----------------------------------------------------------------------------
 //
-// File name      : $URL$
+// File name      : $Source: /cvsroot/miranda/miranda/protocols/IcqOscarJ/capabilities.h,v $
 // Revision       : $Revision$
 // Last change on : $Date$
 // Last change by : $Author$
@@ -34,3 +33,19 @@
 //
 // -----------------------------------------------------------------------------
 
+
+
+// Deletes all oscar capabilities for a given contact.
+void ClearAllContactCapabilities(HANDLE hContact);
+
+// Deletes one or many oscar capabilities for a given contact.
+void ClearContactCapabilities(HANDLE hContact, DWORD fdwCapabilities);
+
+// Sets one or many oscar capabilities for a given contact.
+void SetContactCapabilities(HANDLE hContact, DWORD fdwCapabilities);
+
+// Returns true if the given contact supports the requested capabilites.
+BOOL CheckContactCapabilities(HANDLE hContact, DWORD fdwCapabilities);
+
+// Scans a binary buffer for oscar capabilities and adds them to the db.
+void AddCapabilitiesFromBuffer(HANDLE hContact, BYTE* pbyBuffer, int nLength);

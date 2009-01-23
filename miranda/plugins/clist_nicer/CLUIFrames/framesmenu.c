@@ -58,8 +58,8 @@ static int AddContextFrameMenuItem(WPARAM wParam,LPARAM lParam)
 	tmi.position=mi->position;
 	tmi.pszName=mi->pszName;
 
-	if( mi->flags & CMIF_ROOTHANDLE )
-		tmi.root = mi->hParentMenu;
+	if(mi->flags&CMIF_ROOTPOPUP||mi->flags&CMIF_CHILDPOPUP)
+		tmi.root=(int)mi->pszPopupName;
 	{
 		lpFrameMenuExecParam fmep;
 		fmep=(lpFrameMenuExecParam)mir_alloc(sizeof(FrameMenuExecParam));
@@ -134,10 +134,14 @@ static int BuildContextFrameMenu(WPARAM wParam,LPARAM lParam)
 {
 	CLISTMENUITEM *mi=(CLISTMENUITEM*)lParam;
 	HMENU hMenu;
-	ListParam param = { 0 };
+	ListParam param;
+
+	memset(&param,0,sizeof(param));
+
 	param.MenuObjectHandle=hFrameMenuObject;
 	param.wParam=wParam;
 	param.lParam=lParam;
+	param.rootlevel=-1;
 
 	hMenu=CreatePopupMenu();
 	//NotifyEventHooks(hPreBuildFrameMenuEvent,wParam,-1);

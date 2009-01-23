@@ -49,8 +49,6 @@ static HANDLE hPreviousContact = INVALID_HANDLE_VALUE;
 static HANDLE hPreviousDbEvent = NULL;
 
 static HANDLE hHookModulesLoaded;
-static HANDLE hHookOnExit;
-static HANDLE hImportService = NULL;
 
 BOOL UnicodeDB = FALSE;
 
@@ -64,11 +62,11 @@ char str[512];
 PLUGININFOEX pluginInfo = {
 	sizeof(PLUGININFOEX),
 	"Import contacts and messages",
-	PLUGIN_MAKE_VERSION(0,8,0,0),
+	PLUGIN_MAKE_VERSION(0,7,2,0),
 	"Imports contacts and messages from Mirabilis ICQ and Miranda IM.",
 	"Miranda team",
 	"info@miranda-im.org",
-	"© 2000-2008 Martin Öberg, Richard Hughes, Dmitry Kuzkin, George Hazan",
+	"© 2000-2007 Martin Öberg, Richard Hughes, Dmitry Kuzkin, George Hazan",
 	"http://www.miranda-im.org",
 	UNICODE_AWARE,
 	0,	//{2D77A746-00A6-4343-BFC5-F808CDD772EA}
@@ -301,13 +299,13 @@ HANDLE HContactFromID(char* pszProtoName, char* pszSetting, char* pszID)
 		if ( !lstrcmpA(szProto, pszProtoName)) {
 			DBVARIANT dbv;
 			if (DBGetContactSettingString(hContact, pszProtoName, pszSetting, &dbv) == 0) {
-				if (strcmp(pszID, dbv.pszVal) == 0) {
-					mir_free(dbv.pszVal);
-					return hContact;
-				}
+                if (strcmp(pszID, dbv.pszVal) == 0) {
+                    mir_free(dbv.pszVal);
+                    return hContact;
+                }
 				DBFreeVariant(&dbv);
-			}	
-		}
+            }	
+        }
 
 		hContact = (HANDLE)CallService(MS_DB_CONTACT_FINDNEXT, (WPARAM)hContact, 0);
 	}
@@ -320,7 +318,7 @@ HANDLE AddContact(HWND hdlgProgress, char* pszProtoName, char* pszUniqueSetting,
 {
 	HANDLE hContact;
 	char szid[ 40 ];
-	char* pszUserID = ( id->type == DBVT_DWORD ) ? _ltoa( id->dVal, szid, 10 ) : id->pszVal;
+	char* pszUserID = ( id->type == DBVT_DWORD ) ? ltoa( id->dVal, szid, 10 ) : id->pszVal;
 
 	hContact = (HANDLE)CallService(MS_DB_CONTACT_ADD, 0, 0);
 	if ( CallService(MS_PROTO_ADDTOCONTACT, (WPARAM)hContact, (LPARAM)pszProtoName) != 0) {
@@ -384,7 +382,7 @@ int GroupNameExists(const char* name)
 	int i;
 
 	for (i = 0; ; i++) {
-		_itoa(i, idstr, 10);
+		itoa(i, idstr, 10);
 		if (DBGetContactSettingString(NULL, "CListGroups", idstr, &dbv))
 			break;
 
@@ -412,7 +410,7 @@ int CreateGroup(HWND hdlgProgress, BYTE type, const char* name)
 		int groupId;
 		char groupIdStr[11];
 		for (groupId = 0; ; groupId++) {
-			_itoa(groupId, groupIdStr,10);
+			itoa(groupId, groupIdStr,10);
 			if (DBGetContactSettingString(NULL, "CListGroups", groupIdStr, &dbv))
 				break;
 			DBFreeVariant(&dbv);
@@ -488,14 +486,10 @@ static int ModulesLoaded(WPARAM wParam, LPARAM lParam)
 			break;
 	}	}
 
-	UnicodeDB = ServiceExists(MS_DB_CONTACT_GETSETTING_STR);
-	return 0;
-}
+	if (hHookModulesLoaded)
+		UnhookEvent(hHookModulesLoaded);
 
-static int OnExit(WPARAM wParam, LPARAM lParam)
-{
-	if ( hwndWizard )
-		SendMessage(hwndWizard, WM_CLOSE, 0, 0);
+	UnicodeDB = ServiceExists(MS_DB_CONTACT_GETSETTING_STR);
 	return 0;
 }
 
@@ -504,7 +498,7 @@ int __declspec(dllexport) Load(PLUGINLINK *link)
 	pluginLink = link;
 	mir_getMMI( &mmi );
 
-	hImportService = CreateServiceFunction(IMPORT_SERVICE, ImportCommand);
+	CreateServiceFunction(IMPORT_SERVICE, ImportCommand);
 	{
 		CLISTMENUITEM mi;
 		ZeroMemory(&mi, sizeof(mi));
@@ -515,8 +509,7 @@ int __declspec(dllexport) Load(PLUGINLINK *link)
 		mi.pszService = IMPORT_SERVICE;
 		CallService(MS_CLIST_ADDMAINMENUITEM, 0, (LPARAM)&mi);
 	}
-	hHookModulesLoaded = HookEvent(ME_SYSTEM_MODULESLOADED, ModulesLoaded);
-	hHookOnExit = HookEvent(ME_SYSTEM_OKTOEXIT, OnExit);
+	HookEvent(ME_SYSTEM_MODULESLOADED, ModulesLoaded);
 	{
 		INITCOMMONCONTROLSEX icex;
 		icex.dwSize = sizeof(icex);
@@ -534,8 +527,6 @@ int __declspec(dllexport) Unload(void)
 {
 	if (hHookModulesLoaded)
 		UnhookEvent(hHookModulesLoaded);
-	if (hImportService)
-		DestroyServiceFunction(hImportService);
 
 	return 0;
 }

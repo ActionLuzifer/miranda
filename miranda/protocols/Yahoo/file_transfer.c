@@ -250,7 +250,7 @@ static void dl_file(int id, int fd, int error,	const char *filename, unsigned lo
 		LOG(("dir: %s, file: %s", sf->savepath, sf->filename ));
 		wsprintf(buf, "%s\\%s", sf->savepath, sf->filename);
 		
-		pfts.currentFile = strdup(buf);		
+		pfts.currentFile = _strdup(buf);		
 		LOG(("Saving: %s",  pfts.currentFile));
 		
 		if ( sf->hWaitEvent != INVALID_HANDLE_VALUE )
@@ -296,7 +296,7 @@ static void dl_file(int id, int fd, int error,	const char *filename, unsigned lo
 			}
 			
 			//pfts.files = &buf;
-			pfts.currentFile = strdup(buf);		
+			pfts.currentFile = _strdup(buf);		
 	
 			LOG(("Getting file: %s", buf));
 			myhFile    = CreateFile(buf,
@@ -396,7 +396,7 @@ void ext_yahoo_got_file(int id, const char *me, const char *who, const char *url
 	
 	hContact = getbuddyH(who);
 	if (hContact == NULL) 
-		hContact = add_buddy(who, who, 0 /* NO FT for other IMs */, PALF_TEMPORARY);
+		hContact = add_buddy(who, who, PALF_TEMPORARY);
 	
 	ZeroMemory(fn, 1024);
 	
@@ -516,7 +516,7 @@ int YahooFileAllow(WPARAM wParam,LPARAM lParam)
 	YAHOO_DebugLog("[YahooFileAllow]");
 	
     //LOG(LOG_INFO, "[%s] Requesting file from %s", ft->cookie, ft->user);
-    ft->savepath = strdup((char *) ccs->lParam);
+    ft->savepath = _strdup((char *) ccs->lParam);
 	
 	len = lstrlen(ft->savepath) - 1;
 	if (ft->savepath[len] == '\\')

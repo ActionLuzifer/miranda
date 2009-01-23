@@ -2,7 +2,7 @@
 
 Miranda IM: the free IM client for Microsoft* Windows*
 
-Copyright 2000-2008 Miranda ICQ/IM project, 
+Copyright 2000-2007 Miranda ICQ/IM project, 
 all portions of this codebase are copyrighted to the people 
 listed in contributors.txt.
 
@@ -81,16 +81,7 @@ typedef struct {
 #define NUF_NOOPTIONS     0x08  //don't create an options page for this. szDescriptiveName is never used.
 #define NUF_HTTPCONNS     0x10  //at least some connections are made for HTTP communication. Enables the HTTP proxy option in options.
 #define NUF_NOHTTPSOPTION 0x20  //disable the HTTPS proxy option in options. Use this if all communication is HTTP.
-#define NUF_UNICODE 0x40  //if set ptszDescriptiveName points to Unicode, otherwise it points to ANSI string
 #define MS_NETLIB_REGISTERUSER   "Netlib/RegisterUser"
-
-#if defined(_UNICODE)
-	#define NUF_TCHAR NUF_UNICODE
-#else
-	#define NUF_TCHAR 0
-#endif
-
-
 
 //Assign a Netlib user handle a set of dynamic HTTP headers to be used with all
 //
@@ -324,7 +315,6 @@ typedef struct {
 #define NLOCF_STICKYHEADERS 0x0002 //this connection should send the sticky headers associated with NetLib user apart of any HTTP request
 #define NLOCF_V2 0x0004 //this connection understands the newer structure, newer cbSize isnt enough
 #define NLOCF_UDP 0x0008 // this connection is UDP
-#define NLOCF_SSL 0x0010 // this connection is SSL
 
 /* Added during 0.4.0+ development!! (2004/11/29) prior to this, connect() blocks til a connection is made or
 a hard timeout is reached, this can be anywhere between 30-60 seconds, and it stops Miranda from unloading whilst
@@ -445,12 +435,10 @@ typedef struct {
 #define NLHRF_SMARTREMOVEHOST 0x00000004   //removes host and/or protocol from szUrl unless the connection was opened through an HTTP or HTTPS proxy.
 #define NLHRF_SMARTAUTHHEADER 0x00000008   //if the connection was opened through an HTTP or HTTPS proxy then send a Proxy-Authorization header if required.
 #define NLHRF_HTTP11          0x00000010   //use HTTP 1.1
-#define NLHRF_PERSISTENT      0x00000020   //preserve connection on exit
 #define NLHRF_NODUMP          0x00010000   //never dump this to the log
 #define NLHRF_NODUMPHEADERS   0x00020000   //don't dump http headers (only useful for POSTs and MS_NETLIB_HTTPTRANSACTION)
 #define NLHRF_DUMPPROXY       0x00040000   //this transaction is a proxy communication. For dump filtering only.
 #define NLHRF_DUMPASTEXT      0x00080000   //dump posted and reply data as text. Headers are always dumped as text.
-#define NLHRF_NODUMPSEND      0x00100000   //do not dump sent message.
 struct NETLIBHTTPREQUEST_tag {
 	int cbSize;
 	int requestType;	//a REQUEST_
@@ -614,13 +602,6 @@ typedef struct {
 // added in v0.3.3
 #define MS_NETLIB_SELECTEX	   "Netlib/SelectEx"
 
-//Shutdown connection
-//wParam=(WPARAM)(HANDLE)hConnection
-//lParam=(LPARAM)0
-//Returns 0 
-#define MS_NETLIB_SHUTDOWN	   "Netlib/Shutdown"
-__inline static void Netlib_Shutdown(HANDLE h) {CallService(MS_NETLIB_SHUTDOWN,(WPARAM)h,0);}
-
 //Create a packet receiver
 //wParam=(WPARAM)(HANDLE)hConnection
 //lParam=(LPARAM)(int)maxPacketSize
@@ -676,20 +657,6 @@ typedef struct {
 //Errors: -1
 #define MS_NETLIB_SETPOLLINGTIMEOUT "Netlib/SetPollingTimeout"
 
-//Makes connection SSL 
-//wParam=(WPARAM)(HANDLE)hConn
-//lParam=(LPARAM)(NETLIBSSL*)&nlssl or null if no certficate validation required
-//Returns 0 on failure 1 on success
-#define MS_NETLIB_STARTSSL "Netlib/StartSsl"
-
-typedef struct 
-{
-    int cbSize;
-	const char *host; //Expected host name
-	int flags;        //Reserved
-} NETLIBSSL;
-
-
 //here's a handy piece of code to let you log using printf-style specifiers:
 //#include <stdarg.h> and <stdio.h> before including this header in order to
 //use it.
@@ -743,25 +710,5 @@ static __inline char* Netlib_NtlmCreateResponse( HANDLE hProvider, char* szChall
 	return (char*)CallService( MS_NETLIB_NTLMCREATERESPONSE, (WPARAM)hProvider, (LPARAM)&temp );
 }
 
-/////////////////////////////////////////////////////////////////////////////////////////
-// Netlib hooks (0.8+)
-
-// WARNING: these hooks are being called in the context of the calling thread, without switching
-// to the first thread, like all another events do. The hook procedure should be ready for the
-// multithreaded mode
-//
-// Parameters:
-//    wParam: NETLIBNOTIFY* - points to the data being sent/received
-//    lParam: NETLIBUSER*   - points to the protocol definition
-
-typedef struct {
-   NETLIBBUFFER* nlb;      // pointer to the request buffer
-	int           result;   // amount of bytes really sent/received
-}
-	NETLIBNOTIFY;
-
-#define ME_NETLIB_FASTRECV "Netlib/OnRecv"  // being called on every receive
-#define ME_NETLIB_FASTSEND "Netlib/OnSend"  // being called on every send
-#define ME_NETLIB_FASTDUMP "Netlib/OnDump"  // being called on every dump
-
 #endif // M_NETLIB_H__
+

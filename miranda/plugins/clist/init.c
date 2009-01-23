@@ -22,12 +22,13 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
 #include "commonheaders.h"
-#include <m_icolib.h>
 
 HINSTANCE g_hInst = 0;
 PLUGINLINK *pluginLink;
 CLIST_INTERFACE* pcli = NULL;
 HIMAGELIST himlCListClc = NULL;
+
+extern int currentDesiredStatusMode;
 
 struct MM_INTERFACE mmi;
 BOOL(WINAPI * MySetLayeredWindowAttributes) (HWND, COLORREF, BYTE, DWORD) = NULL;
@@ -35,7 +36,6 @@ BOOL(WINAPI * MySetLayeredWindowAttributes) (HWND, COLORREF, BYTE, DWORD) = NULL
 /////////////////////////////////////////////////////////////////////////////////////////
 // external functions
 
-void RegisterCListFonts( void );
 void InitCustomMenus( void );
 void PaintClc(HWND hwnd, struct ClcData *dat, HDC hdc, RECT * rcPaint);
 
@@ -59,11 +59,11 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD dwReason, LPVOID reserved)
 PLUGININFOEX pluginInfo = {
 	sizeof(PLUGININFOEX),
 	"Classic contact list",
-	PLUGIN_MAKE_VERSION(0, 8, 0, 1),
+	PLUGIN_MAKE_VERSION(0, 7, 1, 0),
 	"Display contacts, event notifications, protocol status",
 	"Miranda IM project",
 	"ghazan@miranda-im.org",
-	"Copyright 2000-2008 Miranda IM project",
+	"Copyright 2000-2006 Miranda IM project",
 	"http://www.miranda-im.org",
 	UNICODE_AWARE,
 	DEFMOD_CLISTALL,
@@ -76,13 +76,11 @@ PLUGININFOEX pluginInfo = {
 
 __declspec(dllexport) PLUGININFOEX *MirandaPluginInfoEx(DWORD mirandaVersion)
 {
-	if (mirandaVersion < PLUGIN_MAKE_VERSION(0, 8, 0, 9))
+	if (mirandaVersion < PLUGIN_MAKE_VERSION(0, 4, 3, 0))
 		return NULL;
 	return &pluginInfo;
 }
 
-/////////////////////////////////////////////////////////////////////////////////////////
-// returns plugin's interfaces information
 
 static const MUUID interfaces[] = {MIID_CLIST, MIID_LAST};
 __declspec(dllexport) const MUUID * MirandaPluginInterfaces(void)
@@ -95,7 +93,6 @@ __declspec(dllexport) const MUUID * MirandaPluginInterfaces(void)
 
 static int OnModulesLoaded( WPARAM wParam, LPARAM lParam )
 {
-	RegisterCListFonts();
 	himlCListClc = (HIMAGELIST) CallService(MS_CLIST_GETICONSIMAGELIST, 0, 0);
 	return 0;
 }
@@ -124,6 +121,7 @@ static int GetStatusMode(WPARAM wParam, LPARAM lParam)
 
 int __declspec(dllexport) CListInitialise(PLUGINLINK * link)
 {
+	int rc = 0;
 	pluginLink = link;
 	#ifdef _DEBUG
 		_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
@@ -135,10 +133,10 @@ int __declspec(dllexport) CListInitialise(PLUGINLINK * link)
 	pcli = ( CLIST_INTERFACE* )CallService(MS_CLIST_RETRIEVE_INTERFACE, 0, (LPARAM)g_hInst);
 	if ( (int)pcli == CALLSERVICE_NOTFOUND ) {
 LBL_Error:
-		MessageBoxA( NULL, "This version of plugin requires Miranda IM 0.8.0.9 or later", "Fatal error", MB_OK );
+		MessageBoxA( NULL, "This version of plugin requires Miranda IM 0.7.0.8 or later", "Fatal error", MB_OK );
 		return 1;
 	}
-	if ( pcli->version < 6 )
+	if ( pcli->version < 4 )
 		goto LBL_Error;
 
 	pcli->pfnPaintClc = PaintClc;

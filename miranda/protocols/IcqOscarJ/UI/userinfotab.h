@@ -32,3 +32,7 @@
 //  Describe me here please...
 //
 // -----------------------------------------------------------------------------
+
+
+
+int OnDetailsInit(WPARAM wParam, LPARAM lParam);

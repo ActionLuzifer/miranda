@@ -22,16 +22,11 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #define MIRANDA_VER 0x0700
 
-#define _USE_32BIT_TIME_T
-
 #if !defined( _UNICODE ) && defined( UNICODE )
 	#define _UNICODE
 #endif
 
 #include <tchar.h>
-
-#define _WIN32_WINNT 0x0501
-#define _WIN32_IE 0x0501
 
 #include <windows.h>
 #include <commctrl.h> // datetimepicker

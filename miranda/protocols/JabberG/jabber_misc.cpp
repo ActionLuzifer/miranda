@@ -2,7 +2,7 @@
 
 Jabber Protocol Plugin for Miranda IM
 Copyright ( C ) 2002-04  Santithorn Bunchua
-Copyright ( C ) 2005-09  George Hazan
+Copyright ( C ) 2005-07  George Hazan
 Copyright ( C ) 2007     Maxim Mluhov
 
 This program is free software; you can redistribute it and/or
@@ -19,7 +19,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-File name      : $URL$
+File name      : $Source: /cvsroot/miranda/miranda/protocols/JabberG/jabber_misc.cpp,v $
 Revision       : $Revision$
 Last change on : $Date: 2006-07-13 16:11:29 +0400
 Last change by : $Author$
@@ -35,14 +35,24 @@ Last change by : $Author$
 ///////////////////////////////////////////////////////////////////////////////
 // JabberAddContactToRoster() - adds a contact to the roster
 
-void CJabberProto::AddContactToRoster( const TCHAR* jid, const TCHAR* nick, const TCHAR* grpName )
+void JabberAddContactToRoster( const TCHAR* jid, const TCHAR* nick, const TCHAR* grpName, JABBER_SUBSCRIPTION subscription )
 {
-	XmlNodeIq iq( _T("set"), SerialNext());
-	HXML query = iq << XQUERY( _T(JABBER_FEAT_IQ_ROSTER))
-		<< XCHILD( _T("item")) << XATTR( _T("jid"), jid ) << XATTR( _T("name"), nick );
-	if ( grpName )
-		query << XCHILD( _T("group"), grpName );
-	m_ThreadInfo->send( iq );
+	XmlNodeIq iq( "set" );
+	XmlNode* query = iq.addQuery( JABBER_FEAT_IQ_ROSTER );
+	XmlNode* item = query->addChild( "item" ); item->addAttr( "jid", jid );
+	if ( nick )
+		item->addAttr( "name", nick );
+	switch( subscription ) {
+		case SUB_BOTH: item->addAttr( "subscription", "both" ); break;
+		case SUB_TO:   item->addAttr( "subscription", "to" );   break;
+		case SUB_FROM: item->addAttr( "subscription", "from" ); break;
+		default:       item->addAttr( "subscription", "none" ); break;
+	}
+
+	if ( grpName != NULL )
+		item->addChild( "group", grpName );
+	jabberThreadInfo->send( iq );
+
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -66,8 +76,8 @@ int JabberCompareJids( const TCHAR* jid1, const TCHAR* jid2 )
 	// match only node@domain part
 	TCHAR szTempJid1[ JABBER_MAX_JID_LEN ], szTempJid2[ JABBER_MAX_JID_LEN ];
 	return lstrcmpi(
-		JabberStripJid( jid1, szTempJid1, SIZEOF(szTempJid1) ),
-		JabberStripJid( jid2, szTempJid2, SIZEOF(szTempJid2)) );
+		JabberStripJid( jid1, szTempJid1, sizeof szTempJid1 ),
+		JabberStripJid( jid2, szTempJid2, sizeof szTempJid2 ));
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -80,7 +90,7 @@ static void JabberContactListCreateClistGroup( TCHAR* groupName )
 	DBVARIANT dbv;
 
 	for ( i=0;;i++ ) {
-		_itoa( i, str, 10 );
+		itoa( i, str, 10 );
 		if ( DBGetContactSettingTString( NULL, "CListGroups", str, &dbv ))
 			break;
 		TCHAR* name = dbv.ptszVal;
@@ -122,9 +132,9 @@ void JabberContactListCreateGroup( TCHAR* groupName )
 ///////////////////////////////////////////////////////////////////////////////
 // JabberDBAddAuthRequest()
 
-void CJabberProto::DBAddAuthRequest( const TCHAR* jid, const TCHAR* nick )
+void JabberDBAddAuthRequest( TCHAR* jid, TCHAR* nick )
 {
-	HANDLE hContact = DBCreateContact( jid, NULL, FALSE, TRUE );
+	HANDLE hContact = JabberDBCreateContact( jid, NULL, FALSE, TRUE );
 	JDeleteSetting( hContact, "Hidden" );
 	//JSetStringT( hContact, "Nick", nick );
 
@@ -135,7 +145,7 @@ void CJabberProto::DBAddAuthRequest( const TCHAR* jid, const TCHAR* nick )
 	//blob is: 0( DWORD ), hContact( HANDLE ), nick( ASCIIZ ), ""( ASCIIZ ), ""( ASCIIZ ), email( ASCIIZ ), ""( ASCIIZ )
 	DBEVENTINFO dbei = {0};
 	dbei.cbSize = sizeof( DBEVENTINFO );
-	dbei.szModule = m_szModuleName;
+	dbei.szModule = jabberProtoName;
 	dbei.timestamp = ( DWORD )time( NULL );
 	dbei.flags = 0;
 	dbei.eventType = EVENTTYPE_AUTHREQUEST;
@@ -150,7 +160,7 @@ void CJabberProto::DBAddAuthRequest( const TCHAR* jid, const TCHAR* nick )
 	*pCurBlob = '\0';					//reason
 
 	JCallService( MS_DB_EVENT_ADD, ( WPARAM ) ( HANDLE ) NULL, ( LPARAM )&dbei );
-	Log( "Setup DBAUTHREQUEST with nick='" TCHAR_STR_PARAM "' jid='" TCHAR_STR_PARAM "'", szNick, szJid );
+	JabberLog( "Setup DBAUTHREQUEST with nick='" TCHAR_STR_PARAM "' jid='" TCHAR_STR_PARAM "'", szNick, szJid );
 
 	mir_free( szJid );
 	mir_free( szNick );
@@ -159,7 +169,7 @@ void CJabberProto::DBAddAuthRequest( const TCHAR* jid, const TCHAR* nick )
 ///////////////////////////////////////////////////////////////////////////////
 // JabberDBCreateContact()
 
-HANDLE CJabberProto::DBCreateContact( const TCHAR* jid, const TCHAR* nick, BOOL temporary, BOOL stripResource )
+HANDLE JabberDBCreateContact( TCHAR* jid, TCHAR* nick, BOOL temporary, BOOL stripResource )
 {
 	TCHAR* s, *p, *q;
 	int len;
@@ -183,7 +193,7 @@ HANDLE CJabberProto::DBCreateContact( const TCHAR* jid, const TCHAR* nick, BOOL 
 	HANDLE hContact = ( HANDLE ) JCallService( MS_DB_CONTACT_FINDFIRST, 0, 0 );
 	while ( hContact != NULL ) {
 		szProto = ( char* )JCallService( MS_PROTO_GETCONTACTBASEPROTO, ( WPARAM ) hContact, 0 );
-		if ( szProto!=NULL && !strcmp( m_szModuleName, szProto )) {
+		if ( szProto!=NULL && !strcmp( jabberProtoName, szProto )) {
 			DBVARIANT dbv;
 			if ( !JGetStringT( hContact, "jid", &dbv )) {
 				p = dbv.ptszVal;
@@ -198,57 +208,20 @@ HANDLE CJabberProto::DBCreateContact( const TCHAR* jid, const TCHAR* nick, BOOL 
 
 	if ( hContact == NULL ) {
 		hContact = ( HANDLE ) JCallService( MS_DB_CONTACT_ADD, 0, 0 );
-		JCallService( MS_PROTO_ADDTOCONTACT, ( WPARAM ) hContact, ( LPARAM )m_szModuleName );
+		JCallService( MS_PROTO_ADDTOCONTACT, ( WPARAM ) hContact, ( LPARAM )jabberProtoName );
 		JSetStringT( hContact, "jid", s );
 		if ( nick != NULL && *nick != '\0' )
 			JSetStringT( hContact, "Nick", nick );
 		if ( temporary )
 			DBWriteContactSettingByte( hContact, "CList", "NotOnList", 1 );
 		else
-			SendGetVcard( s );
-		Log( "Create Jabber contact jid=" TCHAR_STR_PARAM ", nick=" TCHAR_STR_PARAM, s, nick );
-		DBCheckIsTransportedContact(s,hContact);
+			JabberSendGetVcard( s );
+		JabberLog( "Create Jabber contact jid=" TCHAR_STR_PARAM ", nick=" TCHAR_STR_PARAM, s, nick );
+		JabberDBCheckIsTransportedContact(s,hContact);
 	}
 
 	mir_free( s );
 	return hContact;
-}
-
-BOOL CJabberProto::AddDbPresenceEvent(HANDLE hContact, BYTE btEventType)
-{
-	if ( !hContact )
-		return FALSE;
-
-	switch ( btEventType )
-	{
-	case JABBER_DB_EVENT_PRESENCE_SUBSCRIBE:
-	case JABBER_DB_EVENT_PRESENCE_SUBSCRIBED:
-	case JABBER_DB_EVENT_PRESENCE_UNSUBSCRIBE:
-	case JABBER_DB_EVENT_PRESENCE_UNSUBSCRIBED:
-		{
-			if ( !m_options.LogPresence )
-				return FALSE;
-			break;
-		}
-	case JABBER_DB_EVENT_PRESENCE_ERROR:
-		{
-			if ( !m_options.LogPresenceErrors )
-				return FALSE;
-			break;
-		}
-	}
-
-	DBEVENTINFO dbei;
-	dbei.cbSize = sizeof( dbei );
-	dbei.pBlob = &btEventType;
-	dbei.cbBlob = sizeof( btEventType );
-	dbei.eventType = JABBER_DB_EVENT_TYPE_PRESENCE;
-	dbei.flags = DBEF_READ;
-	dbei.timestamp = time( NULL );
-	dbei.szModule = m_szModuleName;
-	CallService( MS_DB_EVENT_ADD, (WPARAM)hContact, (LPARAM)&dbei );
-
-	return TRUE;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -257,7 +230,7 @@ BOOL CJabberProto::AddDbPresenceEvent(HANDLE hContact, BYTE btEventType)
 static HANDLE hJabberAvatarsFolder = NULL;
 static bool bInitDone = false;
 
-void CJabberProto::InitCustomFolders( void )
+void InitCustomFolders( void )
 {
 	if ( bInitDone )
 		return;
@@ -267,10 +240,10 @@ void CJabberProto::InitCustomFolders( void )
 		char AvatarsFolder[MAX_PATH]; AvatarsFolder[0] = 0;
 		CallService( MS_DB_GETPROFILEPATH, ( WPARAM )MAX_PATH, ( LPARAM )AvatarsFolder );
 		strcat( AvatarsFolder, "\\Jabber" );
-		hJabberAvatarsFolder = FoldersRegisterCustomPath(m_szModuleName, "Avatars", AvatarsFolder);	// title!!!!!!!!!!!
+		hJabberAvatarsFolder = FoldersRegisterCustomPath(jabberProtoName, "Avatars", AvatarsFolder);
 }	}
 
-void CJabberProto::GetAvatarFileName( HANDLE hContact, char* pszDest, int cbLen )
+void JabberGetAvatarFileName( HANDLE hContact, char* pszDest, int cbLen )
 {
 	size_t tPathLen;
 	char* path = ( char* )alloca( cbLen );
@@ -291,7 +264,7 @@ void CJabberProto::GetAvatarFileName( HANDLE hContact, char* pszDest, int cbLen 
 
 	pszDest[ tPathLen++ ] = '\\';
 
-	char* szFileType = NULL;
+	char* szFileType;
 	switch( JGetByte( hContact, "AvatarType", PA_FORMAT_PNG )) {
 		case PA_FORMAT_JPEG: szFileType = "jpg";   break;
 		case PA_FORMAT_PNG:  szFileType = "png";   break;
@@ -307,23 +280,23 @@ void CJabberProto::GetAvatarFileName( HANDLE hContact, char* pszDest, int cbLen 
 			str[ sizeof(str)-1 ] = 0;
 			JFreeVariant( &dbv );
 		}
-		else _ltoa(( long )hContact, str, 10 );
+		else ltoa(( long )hContact, str, 10 );
 
 		char* hash = JabberSha1( str );
 		mir_snprintf( pszDest + tPathLen, MAX_PATH - tPathLen, "%s.%s", hash, szFileType );
 		mir_free( hash );
 	}
-	else if ( m_ThreadInfo != NULL ) {
+	else if ( jabberThreadInfo != NULL ) {
 		mir_snprintf( pszDest + tPathLen, MAX_PATH - tPathLen, TCHAR_STR_PARAM "@%s avatar.%s", 
-			m_ThreadInfo->username, m_ThreadInfo->server, szFileType );
+			jabberThreadInfo->username, jabberThreadInfo->server, szFileType );
 	}
 	else {
 		DBVARIANT dbv1, dbv2;
-		BOOL res1 = DBGetContactSettingString( NULL, m_szModuleName, "LoginName", &dbv1 );
-		BOOL res2 = DBGetContactSettingString( NULL, m_szModuleName, "LoginServer", &dbv2 );
+		BOOL res1 = DBGetContactSettingString( NULL, jabberProtoName, "LoginName", &dbv1 );
+		BOOL res2 = DBGetContactSettingString( NULL, jabberProtoName, "LoginServer", &dbv2 );
 		mir_snprintf( pszDest + tPathLen, MAX_PATH - tPathLen, "%s@%s avatar.%s",
 			res1 ? "noname" : dbv1.pszVal,
-			res2 ? m_szModuleName : dbv2.pszVal,
+			res2 ? jabberProtoName : dbv2.pszVal,
 			szFileType );
 		if (!res1) JFreeVariant( &dbv1 );
 		if (!res2) JFreeVariant( &dbv2 );
@@ -333,16 +306,16 @@ void CJabberProto::GetAvatarFileName( HANDLE hContact, char* pszDest, int cbLen 
 ///////////////////////////////////////////////////////////////////////////////
 // JabberResolveTransportNicks - massive vcard update
 
-void CJabberProto::ResolveTransportNicks( const TCHAR* jid )
+void JabberResolveTransportNicks( TCHAR* jid )
 {
 	// Set all contacts to offline
-	HANDLE hContact = m_ThreadInfo->resolveContact;
+	HANDLE hContact = jabberThreadInfo->resolveContact;
 	if ( hContact == NULL )
 		hContact = ( HANDLE ) JCallService( MS_DB_CONTACT_FINDFIRST, 0, 0 );
 
 	for ( ; hContact != NULL; hContact = ( HANDLE )JCallService( MS_DB_CONTACT_FINDNEXT, ( WPARAM ) hContact, 0 )) {
 		char* szProto = ( char* )JCallService( MS_PROTO_GETCONTACTBASEPROTO, ( WPARAM ) hContact, 0 );
-		if ( lstrcmpA( szProto, m_szModuleName ))
+		if ( lstrcmpA( szProto, jabberProtoName ))
 			continue;
 
 		if ( !JGetByte( hContact, "IsTransported", 0 ))
@@ -361,8 +334,8 @@ void CJabberProto::ResolveTransportNicks( const TCHAR* jid )
 			*p = 0;
 			if ( !lstrcmp( jid, p+1 ) && !lstrcmp( dbv.ptszVal, nick.ptszVal )) {
 				*p = '@';
-				m_ThreadInfo->resolveID = SendGetVcard( dbv.ptszVal );
-				m_ThreadInfo->resolveContact = hContact;
+				jabberThreadInfo->resolveID = JabberSendGetVcard( dbv.ptszVal );
+				jabberThreadInfo->resolveContact = hContact;
 				JFreeVariant( &dbv );
 				JFreeVariant( &nick );
 				return;
@@ -372,43 +345,43 @@ void CJabberProto::ResolveTransportNicks( const TCHAR* jid )
 		JFreeVariant( &nick );
 	}
 
-	m_ThreadInfo->resolveID = -1;
-	m_ThreadInfo->resolveContact = NULL;
+	jabberThreadInfo->resolveID = -1;
+	jabberThreadInfo->resolveContact = NULL;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
 // JabberSetServerStatus()
 
-void CJabberProto::SetServerStatus( int iNewStatus )
+void JabberSetServerStatus( int iNewStatus )
 {
-	if ( !m_bJabberOnline )
+	if ( !jabberConnected )
 		return;
 
 	// change status
-	int oldStatus = m_iStatus;
+	int oldStatus = jabberStatus;
 	switch ( iNewStatus ) {
 	case ID_STATUS_ONLINE:
 	case ID_STATUS_NA:
 	case ID_STATUS_FREECHAT:
 	case ID_STATUS_INVISIBLE:
-		m_iStatus = iNewStatus;
+		jabberStatus = iNewStatus;
 		break;
 	case ID_STATUS_AWAY:
 	case ID_STATUS_ONTHEPHONE:
 	case ID_STATUS_OUTTOLUNCH:
-		m_iStatus = ID_STATUS_AWAY;
+		jabberStatus = ID_STATUS_AWAY;
 		break;
 	case ID_STATUS_DND:
 	case ID_STATUS_OCCUPIED:
-		m_iStatus = ID_STATUS_DND;
+		jabberStatus = ID_STATUS_DND;
 		break;
 	default:
 		return;
 	}
 
 	// send presence update
-	SendPresence( m_iStatus, true );
-	JSendBroadcast( NULL, ACKTYPE_STATUS, ACKRESULT_SUCCESS, ( HANDLE ) oldStatus, m_iStatus );
+	JabberSendPresence( jabberStatus, true );
+	JSendBroadcast( NULL, ACKTYPE_STATUS, ACKRESULT_SUCCESS, ( HANDLE ) oldStatus, jabberStatus );
 }
 
 // Process a string, and double all % characters, according to chat.dll's restrictions
@@ -435,11 +408,11 @@ TCHAR* EscapeChatTags(TCHAR* pszText)
 	return pszNewText;
 }
 
-TCHAR* UnEscapeChatTags(TCHAR* str_in)
+char* UnEscapeChatTags(char* str_in)
 {
-	TCHAR* s = str_in, *d = str_in;
+	char* s = str_in, *d = str_in;
 	while ( *s ) {
-		if ( *s == '%' && s[1] == '%' )
+		if (( *s == '%' && s[1] == '%' ) || ( *s == '\n' && s[1] == '\n' ))
 			s++;
 		*d++ = *s++;
 	}
@@ -450,24 +423,13 @@ TCHAR* UnEscapeChatTags(TCHAR* str_in)
 //////////////////////////////////////////////////////////////////////////
 // update MirVer with data for active resource
 
-struct
+void   JabberUpdateMirVer(JABBER_LIST_ITEM *item)
 {
-	TCHAR *node;
-	TCHAR *name;
-}
-static sttCapsNodeToName_Map[] =
-{
-	{ _T("http://miranda-im.org"), _T("Miranda IM Jabber") },
-	{ _T("http://www.google.com"), _T("GTalk") },
-};
-
-void CJabberProto::UpdateMirVer(JABBER_LIST_ITEM *item)
-{
-	HANDLE hContact = HContactFromJID(item->jid);
+	HANDLE hContact = JabberHContactFromJID(item->jid);
 	if (!hContact)
 		return;
 
-	Log("JabberUpdateMirVer: for jid " TCHAR_STR_PARAM, item->jid);
+	JabberLog("JabberUpdateMirVer: for jid " TCHAR_STR_PARAM, item->jid);
 
 	int resource = -1;
 	if (item->resourceMode == RSMODE_LASTSEEN)
@@ -477,10 +439,10 @@ void CJabberProto::UpdateMirVer(JABBER_LIST_ITEM *item)
 	if ((resource < 0) || (resource >= item->resourceCount))
 		return;
 
-	UpdateMirVer( hContact, &item->resource[resource] );
+	JabberUpdateMirVer( hContact, &item->resource[resource] );
 }
 
-void CJabberProto::FormatMirVer(JABBER_RESOURCE_STATUS *resource, TCHAR *buf, int bufSize)
+void JabberFormatMirVer(JABBER_RESOURCE_STATUS *resource, TCHAR *buf, int bufSize)
 {
 	if ( !buf || !bufSize ) return;
 	buf[ 0 ] = _T('\0');
@@ -488,76 +450,51 @@ void CJabberProto::FormatMirVer(JABBER_RESOURCE_STATUS *resource, TCHAR *buf, in
 
 	// jabber:iq:version info requested and exists?
 	if ( resource->dwVersionRequestTime && resource->software ) {
-		Log("JabberUpdateMirVer: for iq:version rc " TCHAR_STR_PARAM ": " TCHAR_STR_PARAM, resource->resourceName, resource->software);
-		if (_tcsstr(resource->software, resource->version))
-			lstrcpyn(buf, resource->software, bufSize);
-		else
-			mir_sntprintf(buf, bufSize, _T("%s %s"), resource->software, resource->version);
+		JabberLog("JabberUpdateMirVer: for iq:version rc " TCHAR_STR_PARAM ": " TCHAR_STR_PARAM, resource->resourceName, resource->software);
+		lstrcpyn(buf, resource->software, bufSize);
+		return;
 	}
-	else
 
 	// no version info and no caps info? set MirVer = resource name
 	if ( !resource->szCapsNode || !resource->szCapsVer ) {
-		Log("JabberUpdateMirVer: for rc " TCHAR_STR_PARAM ": " TCHAR_STR_PARAM, resource->resourceName, resource->resourceName);
+		JabberLog("JabberUpdateMirVer: for rc " TCHAR_STR_PARAM ": " TCHAR_STR_PARAM, resource->resourceName, resource->resourceName);
 		if ( resource->resourceName )
 			lstrcpyn(buf, resource->resourceName, bufSize);
+		return;
 	}
-	else
+	JabberLog("JabberUpdateMirVer: for rc " TCHAR_STR_PARAM ": " TCHAR_STR_PARAM "#" TCHAR_STR_PARAM, resource->resourceName, resource->szCapsNode, resource->szCapsVer);
 
 	// XEP-0115 caps mode
-	{
-		Log("JabberUpdateMirVer: for rc " TCHAR_STR_PARAM ": " TCHAR_STR_PARAM "#" TCHAR_STR_PARAM, resource->resourceName, resource->szCapsNode, resource->szCapsVer);
+	if ( _tcsstr( resource->szCapsNode, _T("miranda-im.org"))) {
+		if ( resource->szCapsExt ) {
+			mir_sntprintf( buf, bufSize, _T("Miranda IM %s (Jabber %s [%s]) (%s)"), resource->szCapsVer, resource->szCapsVer, resource->resourceName, resource->szCapsExt );
 
-		int i;
-
-		// search through known software list
-		for (i = 0; i < SIZEOF(sttCapsNodeToName_Map); ++i)
-			if ( _tcsstr( resource->szCapsNode, sttCapsNodeToName_Map[i].node ) )
-			{
-				mir_sntprintf( buf, bufSize, _T("%s %s"), sttCapsNodeToName_Map[i].name, resource->szCapsVer );
-				break;
-			}
-
-		// unknown software
-		if (i == SIZEOF(sttCapsNodeToName_Map))
-			mir_sntprintf( buf, bufSize, _T("%s %s"), resource->szCapsNode, resource->szCapsVer );
-	}
-
-	// attach additional info for fingerprint plguin
-	if (resource->resourceName && !_tcsstr(buf, resource->resourceName))
-	{
-		if (_tcsstr(buf, _T("Miranda IM")) || m_options.ShowForeignResourceInMirVer )
-		{
-			int offset = lstrlen(buf);
-			mir_sntprintf(buf + offset, bufSize - offset, _T(" [%s]"), resource->resourceName);
+			if (TCHAR *pszSecureIm = _tcsstr( buf, _T(JABBER_EXT_SECUREIM)))
+				_tcsncpy(pszSecureIm, _T("SecureIM"), 8);
 		}
+		else
+			mir_sntprintf( buf, bufSize, _T("Miranda IM %s (Jabber %s [%s])"), resource->szCapsVer, resource->szCapsVer, resource->resourceName );
 	}
-
-	if (resource->szCapsExt && _tcsstr(resource->szCapsExt, _T(JABBER_EXT_SECUREIM)) && !_tcsstr(buf, _T("(SecureIM)")))
-	{
-		int offset = lstrlen(buf);
-		mir_sntprintf(buf + offset, bufSize - offset, _T(" (SecureIM)"));
-	}
+	else if ( !resource->szCapsExt )
+		mir_sntprintf( buf, bufSize, _T("%s#%s"), resource->szCapsNode, resource->szCapsVer );
+	else if ( _tcsstr( resource->szCapsExt, _T(JABBER_EXT_SECUREIM) ))
+		mir_sntprintf( buf, bufSize, _T("%s#%s#%s (SecureIM)"), resource->szCapsNode, resource->szCapsVer, resource->szCapsExt );
+	else if ( _tcsstr( resource->szCapsNode, _T("www.google.com") ))
+		mir_sntprintf( buf, bufSize, _T("%s#%s#%s gtalk"), resource->szCapsNode, resource->szCapsVer, resource->szCapsExt );
+	else
+		mir_sntprintf( buf, bufSize, _T("%s#%s#%s"), resource->szCapsNode, resource->szCapsVer, resource->szCapsExt );
 }
 
 
-void CJabberProto::UpdateMirVer(HANDLE hContact, JABBER_RESOURCE_STATUS *resource)
+void JabberUpdateMirVer(HANDLE hContact, JABBER_RESOURCE_STATUS *resource)
 {
 	TCHAR szMirVer[ 512 ];
-	FormatMirVer(resource, szMirVer, SIZEOF(szMirVer));
+	JabberFormatMirVer(resource, szMirVer, SIZEOF(szMirVer));
 	JSetStringT( hContact, "MirVer", szMirVer );
-
-	DBVARIANT dbv;
-	if ( !JGetStringT( hContact, "jid", &dbv )) {
-		TCHAR szFullJid[ 512 ];
-		mir_sntprintf( szFullJid, SIZEOF( szFullJid ), _T("%s/%s"), dbv.ptszVal, resource->resourceName );
-		JSetStringT( hContact, DBSETTING_DISPLAY_UID, szFullJid );
-		JFreeVariant( &dbv );
-	}
 }
 
 
-void CJabberProto::SetContactOfflineStatus( HANDLE hContact )
+void JabberSetContactOfflineStatus( HANDLE hContact )
 {
 	if ( JGetWord( hContact, "Status", ID_STATUS_OFFLINE ) != ID_STATUS_OFFLINE )
 		JSetWord( hContact, "Status", ID_STATUS_OFFLINE );
@@ -565,10 +502,5 @@ void CJabberProto::SetContactOfflineStatus( HANDLE hContact )
 	JDeleteSetting( hContact, DBSETTING_XSTATUSID );
 	JDeleteSetting( hContact, DBSETTING_XSTATUSNAME );
 	JDeleteSetting( hContact, DBSETTING_XSTATUSMSG );
-	JDeleteSetting( hContact, DBSETTING_DISPLAY_UID );
-
-	ResetAdvStatus( hContact, ADVSTATUS_MOOD );
-	ResetAdvStatus( hContact, ADVSTATUS_TUNE );
-
-	//JabberUpdateContactExtraIcon(hContact);
+	JabberUpdateContactExtraIcon(hContact);
 }

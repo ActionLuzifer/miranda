@@ -4,9 +4,8 @@
 #define IDD_CONFIRM_SENDALL             103
 #define IDD_OPT_MSGDLG                  111
 #define IDD_OPT_MSGLOG                  112
+#define IDD_OPT_CONTAINER				113
 #define IDD_OPT_MSGTYPE                 114
-#define IDD_OPT_MSGTABS                 115
-#define IDD_OPT_LAYOUT                  116
 #define IDI_ADDCONTACT                  120
 #define IDI_USERDETAILS                 121
 #define IDI_HISTORY                     122
@@ -23,13 +22,6 @@
 #define IDI_NOTICE                      134
 #define IDI_CLOSEX                      135
 
-#define IDI_GOOGLE                      140
-#define IDI_YAHOO                       141
-#define IDI_WIKIPEDIA		  			142
-#define IDI_FOODNETWORK					143
-
-#define IDR_CONTEXT                     180
-
 /* chat dll */
 #define IDD_CHANNEL                     401
 #define IDD_OPTIONS1                    402
@@ -39,6 +31,7 @@
 #define IDI_BUNDERLINE                  420
 #define IDI_BBOLD                       421
 #define IDI_BITALICS                    422
+#define IDI_BSMILEY                     125
 #define IDI_TOPICBUT                    424
 #define IDI_BKGCOLOR                    425
 #define IDI_CHANMGR                     426
@@ -52,11 +45,14 @@
 #define IDI_KICK                        434
 #define IDI_NICK                        435
 #define IDI_CHAT_NOTICE                 436
+#define IDI_MESSAGE                     132
+#define IDI_MESSAGEOUT                  133
 #define IDI_TOPIC                       439
 #define IDI_INFO                        440
 #define IDI_ADDSTATUS                   441
 #define IDI_REMSTATUS                   442
 #define IDI_ACTION                      443
+#define IDI_HIGHLIGHT                   134
 #define IDR_MENU                        451
 #define IDD_COLORCHOOSER                452
 #define IDI_STATUS3                     453
@@ -68,15 +64,16 @@
 #define IDI_OVERLAY                     460
 #define IDI_NICKLIST2                   461
 #define IDI_FILTER2                     462
-#define IDI_TYPINGOFF                   463
 
-#define IDC_HYPERLINKHAND               600
-#define IDC_DRAGCURSOR					601
 
+#define IDR_CONTEXT                     180
+#define IDC_HYPERLINKHAND               214
+#define IDC_DRAGCURSOR					215
 #define IDC_TABS                        1000
 #define IDC_LOG                         1001
 #define IDC_MESSAGE                     1002
 #define IDC_AUTOPOPUP                   1003
+#define IDC_AUTOCLOSE                   1004
 #define IDC_AUTOMIN                     1005
 #define IDC_STAYMINIMIZED				1006
 #define IDC_SWITCHTOACTIVE				1007
@@ -86,7 +83,6 @@
 #define IDC_LIMITTABSNUM				1011
 #define IDC_LIMITCHATSTABS				1012
 #define IDC_LIMITCHATSTABSNUM			1013
-#define IDC_DONOTSTEALFOCUS				1014
 #define IDC_SPLITTER                    1017
 #define IDC_SHOWNAMES                   1020
 #define IDC_SHOWSENDBTN                 1021
@@ -107,7 +103,7 @@
 #define IDC_LOADCOUNTSPIN               1040
 #define IDC_SHOWINFOLINE                1041
 #define IDC_SHOWSTATUSBAR               1041
-#define IDC_SHOWTOOLBAR                 1042
+#define IDC_SHOWBUTTONLINE              1042
 #define IDC_LOADUNREAD                  1043
 #define IDC_SENDONENTER                 1043
 #define IDC_LOADCOUNT                   1044
@@ -138,6 +134,7 @@
 #define IDC_SECONDS                     1605
 #define IDC_NOTIFYTRAY                  1606
 #define IDC_NOTIFYBALLOON               1607
+#define IDC_CTRLSUPPORT                 1608
 #define IDC_DELTEMP                     1609
 #define IDC_AVATAR                      1610
 #define IDC_AVATARSUPPORT               1611
@@ -152,7 +149,7 @@
 #define IDC_ATRANSPARENCYPERC           1620
 #define IDC_ITRANSPARENCYVALUE			1621
 #define IDC_ITRANSPARENCYPERC           1622
-#define IDC_ALWAYSSHOWTABS              1623
+#define IDC_HIDEONETAB					1623
 #define IDC_SENDALL						1624
 #define IDC_AVATARTEXT1                 1625
 #define IDC_AVATARTEXT2					1626
@@ -169,11 +166,6 @@
 #define IDC_INDENTSPIN					1637
 #define IDC_HIDECONTAINERS				1638
 #define IDC_ORIGINALAVATARH             1639
-#define IDC_TYPINGSWITCH				1640
-#define IDC_LOADCOUNTTEXT2				1641
-#define IDC_CHAT_NICKROWTEXT2			1642
-#define IDC_CHAT_LIMITTEXT2				1643
-
 #define IDM_CUT                         40000
 #define IDM_COPY                        40001
 #define IDM_PASTE                       40002
@@ -189,10 +181,7 @@
 #define IDM_CLOSETAB					40020
 #define IDM_CLOSEOTHERTABS				40021
 #define IDM_TOPMOST						40040
-#define IDM_SEARCH_GOOGLE               40080
-#define IDM_SEARCH_YAHOO				40081
-#define IDM_SEARCH_WIKIPEDIA            40082
-#define IDM_SEARCH_FOODNETWORK        40083
+
 /* chat.dll resources */
 
 #define IDC_CHAT_LOG                         5005
@@ -208,7 +197,6 @@
 #define IDC_CHAT_SHOWNICKLIST                5016
 #define IDC_CHAT_COLOR                       5017
 #define IDC_CHAT_BKGCOLOR                    5019
-#define IDC_CHAT_FONTSIZE			5020
 #define IDC_CHAT_CHECKBOXES                  5021
 #define IDC_CHAT_HISTORY                     5022
 #define IDC_CHAT_CLOSE                       5023
@@ -253,4 +241,8 @@
 #define ID_CURR                         50003
 #define ID_COPY                         50004
 #define ID_COPYALL                      50006
+#define ID_CLEARLOG                     50009
 #define ID_Menu                         50026
+#define ID_SEARCH_GOOGLE                50027
+#define ID_SEARCH_WIKIPEDIA             50028
+#define ID_WIKIPEDIA_                   50029

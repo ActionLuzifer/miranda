@@ -1,4 +1,3 @@
-#pragma once
 void InitCacheAsync();
 void UninitCacheAsync();
 void gtaRenewText(HANDLE hContact);

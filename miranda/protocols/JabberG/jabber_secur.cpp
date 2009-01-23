@@ -2,7 +2,7 @@
 
 Jabber Protocol Plugin for Miranda IM
 Copyright ( C ) 2002-04  Santithorn Bunchua
-Copyright ( C ) 2005-09  George Hazan
+Copyright ( C ) 2005-07  George Hazan
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -18,10 +18,10 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-File name      : $URL$
-Revision       : $Revision$
-Last change on : $Date$
-Last change by : $Author$
+File name      : $Source: /cvsroot/miranda/miranda/protocols/JabberG/jabber_proxy.cpp,v $
+Revision       : $Revision: 2866 $
+Last change on : $Date: 2006-05-16 20:39:40 +0400 (Вт, 16 май 2006) $
+Last change by : $Author: ghazan $
 
 */
 
@@ -98,13 +98,14 @@ char* TMD5Auth::getChallenge( const TCHAR* challenge )
 
 	int resultLen;
 	char* text = JabberBase64Decode( challenge, &resultLen );
+	JabberLog( "MD5 challenge = <%s>", text );
 
 	TStringPairs pairs( text );
 	const char *realm = pairs["realm"], *nonce = pairs["nonce"];
 
 	char randomNumber[40], cnonce[40], tmpBuf[40];
 	srand( time(0));
-	_itoa( rand(), randomNumber, 10 );
+	itoa( rand(), randomNumber, 10 );
 
 	DWORD digest[4], hash1[4], hash2[4];
 	mir_md5_state_t ctx;
@@ -187,6 +188,7 @@ char* TPlainAuth::getInitialRequest()
 	mir_snprintf( toEncode, size+1, "%s@%s%c%s%c%s", temp, info->server, 0, temp, 0, info->password );
 	char* result = JabberBase64Encode( toEncode, size );
 	mir_free(temp);
+	JabberLog( "Never publish the hash below" );
 	return result;
 }
 
@@ -209,7 +211,7 @@ char* TJabberAuth::getInitialRequest()
 	return NULL;
 }
 
-char* TJabberAuth::getChallenge( const TCHAR* )
+char* TJabberAuth::getChallenge( const TCHAR* challenge )
 {
 	return NULL;
 }
