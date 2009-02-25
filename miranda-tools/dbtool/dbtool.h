@@ -32,7 +32,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <direct.h>
 #include <malloc.h>
 #include <commctrl.h>
-#include <time.h>
 
 //#include <newpluginapi.h> // Only needed to keep m_database.h happy
 #define CallService(a,b,c) 1
@@ -53,8 +52,6 @@ struct DbToolOptions {
 	TCHAR backupFilename[MAX_PATH];
 	HANDLE hFile;
 	HANDLE hOutFile;
-	HANDLE hMap;
-	BYTE *pFile;
 	DWORD error;
 	int bCheckOnly,bBackup,bAggressive;
 	int bEraseHistory,bMarkRead,bConvertUtf;
@@ -65,21 +62,6 @@ extern DbToolOptions opts;
 extern DBHeader dbhdr;
 
 int DoMyControlProcessing(HWND hdlg,UINT message,WPARAM wParam,LPARAM lParam,BOOL *bReturn);
-
-BOOL CALLBACK SelectDbDlgProc(HWND hdlg,UINT message,WPARAM wParam,LPARAM lParam);
-BOOL CALLBACK CleaningDlgProc(HWND hdlg,UINT message,WPARAM wParam,LPARAM lParam);
-BOOL CALLBACK ProgressDlgProc(HWND hdlg,UINT message,WPARAM wParam,LPARAM lParam);
-BOOL CALLBACK FileAccessDlgProc(HWND hdlg,UINT message,WPARAM wParam,LPARAM lParam);
-BOOL CALLBACK WizardDlgProc(HWND hdlg,UINT message,WPARAM wParam,LPARAM lParam);
-BOOL CALLBACK FinishedDlgProc(HWND hdlg,UINT message,WPARAM wParam,LPARAM lParam);
-BOOL CALLBACK WelcomeDlgProc(HWND hdlg,UINT message,WPARAM wParam,LPARAM lParam);
-BOOL CALLBACK OpenErrorDlgProc(HWND hdlg,UINT message,WPARAM wParam,LPARAM lParam);
-
-struct DBSignature {
-  char name[15];
-  BYTE eof;
-};
-static struct DBSignature dbSignature={"Miranda ICQ DB",0x1A};
 
 #define SIZEOF(X) (sizeof(X)/sizeof(X[0]))
 
@@ -97,7 +79,6 @@ int ReadSegment(DWORD ofs,PVOID buf,int cbBytes);
 #define WSOFS_END   0xFFFFFFFF
 #define WS_ERROR    0xFFFFFFFF
 DWORD WriteSegment(DWORD ofs,PVOID buf,int cbBytes);
-int ReadWrittenSegment(DWORD ofs,PVOID buf,int cbBytes);
 int SignatureValid(DWORD ofs,DWORD signature);
 DWORD ConvertModuleNameOfs(DWORD ofsOld);
 void FreeModuleChain();

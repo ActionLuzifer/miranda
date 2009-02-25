@@ -2,8 +2,8 @@
 
 Miranda IM: the free IM client for Microsoft* Windows*
 
-Copyright 2000-2004 Miranda ICQ/IM project,
-all portions of this codebase are copyrighted to the people
+Copyright 2000-2004 Miranda ICQ/IM project, 
+all portions of this codebase are copyrighted to the people 
 listed in contributors.txt.
 
 This program is free software; you can redistribute it and/or
@@ -21,11 +21,20 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
-#define MIRANDA_VER  0x0800
+#if defined( UNICODE ) && !defined( _UNICODE )
+	#define _UNICODE
+#endif
+#include <tchar.h>
+
+#ifdef _DEBUG
+#   define _CRTDBG_MAP_ALLOC
+#   include <stdlib.h>
+#   include <crtdbg.h>
+#else
+#	include <malloc.h>
+#endif
+
 #define _WIN32_WINNT 0x0501
-
-#include "m_stdhdr.h"
-
 #include <windows.h>
 #include <gdiplus.h>
 #include <commctrl.h>
@@ -41,6 +50,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 extern "C"
 {
+#define MIRANDA_VER 0x0600
 #include <newpluginapi.h>
 #include <m_clist.h>
 #include <m_clc.h>
@@ -115,5 +125,3 @@ int SetAvatarAttribute(HANDLE hContact, DWORD attrib, int mode);
 
 
 #define GAIR_FAILED 1000
-
-#define AVS_IGNORENOTIFY 0x1000

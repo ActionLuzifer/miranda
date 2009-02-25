@@ -2,7 +2,7 @@
 
 Miranda IM: the free IM client for Microsoft* Windows*
 
-Copyright 2000-2008 Miranda ICQ/IM project, 
+Copyright 2000-2007 Miranda ICQ/IM project, 
 all portions of this codebase are copyrighted to the people 
 listed in contributors.txt.
 
@@ -59,10 +59,6 @@ struct FileDlgData {
 	int *fileVirusScanned;
 	HANDLE hPreshutdownEvent;
 	DWORD dwTicks;
-
-	char szSavePath[MAX_PATH];
-	char szMsg[450], szFilenames[1024];
-	HICON hIcon, hIconFolder;
 };
 
 //file.c
@@ -89,33 +85,13 @@ int SRFile_GetRegValue(HKEY hKeyBase,const char *szSubKey,const char *szValue,ch
 BOOL CALLBACK DlgProcSendFile(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam);
 //filerecv.c
 BOOL CALLBACK DlgProcRecvFile(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam);
-void GetContactReceivedFilesDir(HANDLE hContact,char *szDir,int cchDir,BOOL substVars);
-void GetReceivedFilesDir(char *szDir,int cchDir);
+void GetContactReceivedFilesDir(HANDLE hContact,char *szDir,int cchDir);
 int BrowseForFolder(HWND hwnd,char *szPath);
 //fileexistsdlg.c
-struct TDlgProcFileExistsParam
-{
-	HWND hwndParent;
-	PROTOFILETRANSFERSTATUS *fts;
-};
 BOOL CALLBACK DlgProcFileExists(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam);
 //filexferdlg.c
 BOOL CALLBACK DlgProcFileTransfer(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam);
 //fileopts.c
 int FileOptInitialise(WPARAM wParam,LPARAM lParam);
-//ftmanager.c
-#define WM_FT_ADD			(WM_APP+1)
-#define WM_FT_RESIZE		(WM_APP+2)
-#define WM_FT_REMOVE		(WM_APP+3)
-#define WM_FT_SELECTPAGE	(WM_APP+4)
-#define WM_FT_CLEANUP		(WM_APP+5)
-
-HWND FtMgr_Show(bool bForceActivate);
-void FtMgr_Destroy();
-HWND FtMgr_AddTransfer(struct FileDlgData *dat);
-
-
-
-
 
 

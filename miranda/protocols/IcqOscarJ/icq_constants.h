@@ -5,7 +5,7 @@
 // Copyright © 2000-2001 Richard Hughes, Roland Rabien, Tristan Van de Vreede
 // Copyright © 2001-2002 Jon Keating, Richard Hughes
 // Copyright © 2002-2004 Martin Öberg, Sam Kothari, Robert Rainwater
-// Copyright © 2004-2009 Joe Kucera
+// Copyright © 2004-2008 Joe Kucera
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -43,18 +43,6 @@
 #define __ICQ_CONSTANTS_H
 
 
-/* Static icon indexes */
-#define ISI_AUTH_REQUEST            0
-#define ISI_AUTH_GRANT              1
-#define ISI_AUTH_REVOKE             2
-#define ISI_ADD_TO_SERVLIST         3
-
-/* Contact menu item indexes */
-#define ICMI_AUTH_REQUEST           0
-#define ICMI_AUTH_GRANT             1
-#define ICMI_AUTH_REVOKE            2
-#define ICMI_ADD_TO_SERVLIST        3
-#define ICMI_XSTATUS_DETAILS        4
 
 /* Some default settings */
 #define DEFAULT_SERVER_PORT         5190
@@ -80,7 +68,6 @@
 #define DEFAULT_XSTATUS_ENABLED     1
 #define DEFAULT_XSTATUS_AUTO        1
 #define DEFAULT_XSTATUS_RESET       0
-#define DEFAULT_XSTATUS_STATUS_NOTE 1 // use Custom Status message as Status Note
 #define DEFAULT_KILLSPAM_ENABLED    1
 
 #define DEFAULT_SLOWSEND            1
@@ -107,33 +94,11 @@
 #define DEFAULT_SPAM_TIMEOUT        0
 #define DEFAULT_POPUPS_WIN_COLORS   0
 
-/* Database setting names */
+// Database setting names
 #define DBSETTING_CAPABILITIES      "caps"
-// Contact's server-list items
-#define DBSETTING_SERVLIST_ID       "ServerId"
-#define DBSETTING_SERVLIST_GROUP    "SrvGroupId"
-#define DBSETTING_SERVLIST_PERMIT   "SrvPermitId"
-#define DBSETTING_SERVLIST_DENY     "SrvDenyId"
-#define DBSETTING_SERVLIST_IGNORE   "SrvIgnoreId"
-// Owner's server-list items
-#define DBSETTING_SERVLIST_PRIVACY  "SrvVisibilityID"
-#define DBSETTING_SERVLIST_PHOTO    "SrvPhotoID"
-#define DBSETTING_SERVLIST_AVATAR   "SrvAvatarID"
-#define DBSETTING_SERVLIST_METAINFO "SrvMetaInfoID"
-// Contact's data from server-list
-#define DBSETTING_SERVLIST_DATA     "ServerData"
-// User Details
-#define DBSETTING_METAINFO_TOKEN    "MetaInfoToken"
-#define DBSETTING_METAINFO_TIME     "MetaInfoTime"
-#define DBSETTING_METAINFO_SAVED    "InfoTS"
-// Status Note & Mood
-#define DBSETTING_STATUS_NOTE       "StatusNote"
-#define DBSETTING_STATUS_NOTE_TIME  "StatusNoteTS"
-#define DBSETTING_STATUS_MOOD       "StatusMood"
-// Custom Status
-#define DBSETTING_XSTATUS_ID        "XStatusId"
-#define DBSETTING_XSTATUS_NAME      "XStatusName"
-#define DBSETTING_XSTATUS_MSG       "XStatusMsg"
+#define DBSETTING_XSTATUSID         "XStatusId"
+#define DBSETTING_XSTATUSNAME       "XStatusName"
+#define DBSETTING_XSTATUSMSG        "XStatusMsg"
 
 
 // Status FLAGS (used to determine status of other users)
@@ -174,7 +139,6 @@
 
 // Ascii Capability IDs
 #define CAP_RTFMSGS                 "{97B12751-243C-4334-AD22-D6ABF73F1492}"
-#define CAP_HTMLMSGS                "{0138CA7B-769A-4915-88F2-13FC00979EA8}"
 #define CAP_UTF8MSGS                "{0946134E-4C7F-11D1-8222-444553540000}"
 
 // Binary Capability IDs
@@ -183,7 +147,7 @@
 #define CAP_UTF                     0x09, 0x46, 0x13, 0x4e, 0x4c, 0x7f, 0x11, 0xd1, 0x82, 0x22, 0x44, 0x45, 0x53, 0x54, 0x00, 0x00
 #define CAP_RTF                     0x97, 0xb1, 0x27, 0x51, 0x24, 0x3c, 0x43, 0x34, 0xad, 0x22, 0xd6, 0xab, 0xf7, 0x3f, 0x14, 0x92
 #define CAP_HTML                    0x01, 0x38, 0xca, 0x7b, 0x76, 0x9a, 0x49, 0x15, 0x88, 0xf2, 0x13, 0xfc, 0x00, 0x97, 0x9e, 0xa8
-#define CAP_CONTACTS                0x09, 0x46, 0x13, 0x4b, 0x4c, 0x7f, 0x11, 0xd1, 0x82, 0x22, 0x44, 0x45, 0x53, 0x54, 0x00, 0x00
+#define CAP_CONTACTS                0x09, 0x46, 0x13, 0x4b, 0x4c, 0x7f, 0x11, 0xd1, 0x82, 0x22, 0x44, 0x45, 0x53, 0x54, 0x00, 0x00 
 #define CAP_TYPING                  0x56, 0x3f, 0xc8, 0x09, 0x0b, 0x6f, 0x41, 0xbd, 0x9f, 0x79, 0x42, 0x26, 0x09, 0xdf, 0xa2, 0xf3
 #define CAP_ICQDIRECT               0x09, 0x46, 0x13, 0x44, 0x4c, 0x7f, 0x11, 0xd1, 0x82, 0x22, 0x44, 0x45, 0x53, 0x54, 0x00, 0x00
 #define CAP_XTRAZ                   0x1A, 0x09, 0x3C, 0x6C, 0xD7, 0xFD, 0x4E, 0xC5, 0x9D, 0x51, 0xA6, 0x47, 0x4E, 0x34, 0xF5, 0xA0
@@ -199,9 +163,7 @@
 #define CAPF_ICQDIRECT              0x00000080
 #define CAPF_XTRAZ                  0x00000100
 #define CAPF_OSCAR_FILE             0x00000400
-#define CAPF_STATUSMSG_EXT          0x01000000
-#define CAPF_STATUS_MOOD            0x40000000
-#define CAPF_XSTATUS                0x80000000
+#define CAPF_STATUSMSGEXT           0x01000000
 
 
 // Message Capability IDs
@@ -258,7 +220,7 @@
 #define MGTYPE_STATUSMSGEXT_s       0x811a18bc, 0x0e6c1847, 0xa5916f18, 0xdcc76f1a
 #define MGTYPE_FILE_s               0xF02D12D9, 0x3091D311, 0x8DD70010, 0x4B06462E
 #define MGTYPE_WEBURL_s             0x371C5872, 0xE987D411, 0xA4C100D0, 0xB759B1D9
-#define MGTYPE_CONTACTS_s           0x2A0E7D46, 0x7676D411, 0xBCE60004, 0xAC961EA6
+#define MGTYPE_CONTACTS_s           0x2A0E7D46, 0x7676D411, 0xBCE60004, 0xAC961EA6 
 #define MGTYPE_GREETING_CARD_s      0x01E53B48, 0x2AE4D111, 0xB6790060, 0x97E1E294
 #define MGTYPE_CHAT_s               0xBFF720B2, 0x378ED411, 0xBD280004, 0xAC96D905
 #define MGTYPE_SMS_MESSAGE_s        0x0e28f600, 0x11e7d311, 0xbcf30004, 0xac969dc2
@@ -290,13 +252,10 @@
 #define ICQ_BOS_FAMILY              0x0009
 #define ICQ_LOOKUP_FAMILY           0x000a
 #define ICQ_STATS_FAMILY            0x000b
-#define ICQ_CHAT_NAVIGATION_FAMILY  0x000d
-#define ICQ_CHAT_FAMILY             0x000e
 #define ICQ_AVATAR_FAMILY           0x0010
 #define ICQ_LISTS_FAMILY            0x0013
 #define ICQ_EXTENSIONS_FAMILY       0x0015
 #define ICQ_AUTHORIZATION_FAMILY    0x0017
-#define ICQ_DIRECTORY_FAMILY        0x0025
 
 /* Subtypes for Service Family 0x0001 */
 #define ICQ_ERROR                   0x0001
@@ -333,13 +292,11 @@
 /* Subtypes for Buddy Family 0x0003 */
 #define ICQ_USER_CLI_REQBUDDY       0x0002
 #define ICQ_USER_SRV_REPLYBUDDY     0x0003
-#define ICQ_USER_ADDTOLIST          0x0004  /* deprecated */
-#define ICQ_USER_REMOVEFROMLIST     0x0005  /* deprecated */
+#define ICQ_USER_ADDTOLIST          0x0004
+#define ICQ_USER_REMOVEFROMLIST     0x0005
 #define ICQ_USER_NOTIFY_REJECTED    0x000a
 #define ICQ_USER_ONLINE             0x000b
 #define ICQ_USER_OFFLINE            0x000c
-#define ICQ_USER_ADDTOLIST2         0x000f
-#define ICQ_USER_REMOVEFROMLIST2    0x0010
 
 /* Subtypes for Message Family 0x0004 */
 #define ICQ_MSG_SRV_ERROR           0x0001
@@ -407,7 +364,7 @@
 
 /* Subtypes for ICQ Extensions Family 0x0015 */
 #define ICQ_META_ERROR              0x0001
-#define ICQ_META_CLI_REQUEST        0x0002
+#define ICQ_META_CLI_REQ            0x0002
 #define ICQ_META_SRV_REPLY          0x0003
 
 /* Subtypes for Authorization Family 0x0017 */
@@ -430,8 +387,6 @@
 #define CLASS_AWAY                  0x0020
 #define CLASS_ICQ                   0x0040
 #define CLASS_WIRELESS              0x0080
-#define CLASS_FORWARDING            0x0200
-#define CLASS_BOT                   0x0400
 
 // Reply types for SNAC 15/02 & 15/03
 #define CLI_DELETE_OFFLINE_MSGS_REQ 0x003E
@@ -463,23 +418,11 @@
 #define META_SEARCH_GENERIC         0x055F // Search user by details (TLV)
 #define META_SEARCH_UIN             0x0569 // Search user by UIN (TLV)
 #define META_SEARCH_EMAIL           0x0573 // Search user by E-mail (TLV)
-#define META_DIRECTORY_QUERY        0x0FA0
-#define META_DIRECTORY_DATA         0x0FAA
-#define META_DIRECTORY_RESPONSE     0x0FB4
-#define META_DIRECTORY_UPDATE       0x0FD2
-#define META_DIRECTORY_UPDATE_ACK   0x0FDC
 
 #define META_XML_INFO               0x08A2 // Server variable requested via xml
 #define META_SET_FULLINFO_REQ       0x0C3A // Set full user info request
 #define META_SET_FULLINFO_ACK       0x0C3F // Server ack for set fullinfo command
 #define META_SPAM_REPORT_ACK        0x2012 // Server ack for user spam report
-
-// Subtypes for Directory meta requests (family 0x5b9)
-#define DIRECTORY_QUERY_INFO        0x0002
-#define DIRECTORY_SET_INFO          0x0003
-#define DIRECTORY_QUERY_MULTI_INFO  0x0006
-#define DIRECTORY_QUERY_INFO_ACK    0x0009
-#define DIRECTORY_SET_INFO_ACK      0x000A
 
 // TLV types
 
@@ -577,17 +520,15 @@
 #define SSI_ITEM_DENY               0x0003  // Deny record ("Block" list in AIM, and "Invisible" list in ICQ)
 #define SSI_ITEM_VISIBILITY         0x0004  // Permit/deny settings or/and bitmask of the AIM classes
 #define SSI_ITEM_PRESENCE           0x0005  // Presence info (if others can see your idle status, etc)
-#define SSI_ITEM_CLIENTDATA         0x0009  // Client specific, e.g. ICQ2k shortcut bar items
+#define SSI_ITEM_UNKNOWN1           0x0009  // Unknown. ICQ2k shortcut bar items ?
 #define SSI_ITEM_IGNORE             0x000e  // Ignore list record.
 #define SSI_ITEM_LASTUPDATE         0x000f  // Item that contain roster update time (name: "LastUpdateDate")
 #define SSI_ITEM_NONICQ             0x0010  // Non-ICQ contact (to send SMS). Name: 1#EXT, 2#EXT, etc
 #define SSI_ITEM_UNKNOWN2           0x0011  // Unknown.
 #define SSI_ITEM_IMPORTTIME         0x0013  // Item that contain roster import time (name: "Import time")
-#define SSI_ITEM_BUDDYICON          0x0014  // Buddy icon info. (names: "1", "8", etc. according ot the icon type)
-#define SSI_ITEM_METAINFO           0x0020  // Owner Details' token & last update time
+#define SSI_ITEM_BUDDYICON          0x0014  // Buddy icon info. (names: from "0" and incrementing by one)
 
 #define SSI_TLV_AWAITING_AUTH       0x0066  // Contact not authorized in list
-#define SSI_TLV_NOT_IN_LIST         0x006A  // Always empty
 #define SSI_TLV_UNKNOWN             0x006D  // WTF ?
 #define SSI_TLV_SUBITEMS            0x00C8  // List of sub-items IDs
 #define SSI_TLV_VISIBILITY          0x00CA
@@ -595,14 +536,9 @@
 #define SSI_TLV_TIMESTAMP           0x00D4  // Import Timestamp
 #define SSI_TLV_AVATARHASH          0x00D5
 #define SSI_TLV_NAME                0x0131  // Custom contact nickname
-#define SSI_TLV_GROUP_OPENNED       0x0134
 #define SSI_TLV_EMAIL               0x0137  // Custom contact email
-#define SSI_TLV_PHONE               0x0138  // Custom contact phone number
-#define SSI_TLV_PHONE_CELLULAR      0x0139  // Custom contact cellphone number
-#define SSI_TLV_PHONE_SMS           0x013A  // Custom contact SMS number
+#define SSI_TLV_PHONE               0x013A  // Custom contact SMS number
 #define SSI_TLV_COMMENT             0x013C  // User comment
-#define SSI_TLV_METAINFO_TOKEN      0x015C  // Privacy token for Contact's details
-#define SSI_TLV_METAINFO_TIME       0x015D  // Contact's details last update time
 
 #define MAX_SSI_TLV_NAME_SIZE       0x40
 #define MAX_SSI_TLV_COMMENT_SIZE    0x50
@@ -615,13 +551,13 @@
 
 
 // Internal Constants
-#define ICQ_PROTOCOL_NAME           LPGEN("ICQ")
-#define ICQ_PLUG_VERSION            0x80050005
+#define ICQ_PLUG_VERSION            0x00030A0F
 #define ICQ_VERSION                 8         // Protocol version
 #define DC_TYPE                     DC_NORMAL // Used for DC settings
 #define MAX_CONTACTSSEND            15
 #define MAX_MESSAGESNACSIZE         8000
 #define CLIENTRATELIMIT             0
+#define UPDATE_THRESHOLD            14        // Two weeks
 #define COOKIE_TIMEOUT              3600      // One hour
 #define KEEPALIVE_INTERVAL          57000     // One minute
 #define WEBFRONTPORT                0x50
@@ -635,13 +571,13 @@
 #define OSCAR_PROXY_HOST            "ars.oscar.aol.com"
 #define OSCAR_PROXY_VERSION         0x044A
 
-#define CLIENT_ID_STRING            "ICQ Client"  // Client identification, mimic ICQ 6.5
+#define CLIENT_ID_STRING            "ICQ Client"  // Client identification, mimic ICQ 6
 #define CLIENT_ID_CODE              0x010a
 #define CLIENT_VERSION_MAJOR        0x0006
-#define CLIENT_VERSION_MINOR        0x0005
+#define CLIENT_VERSION_MINOR        0x0000
 #define CLIENT_VERSION_LESSER       0x0000
-#define CLIENT_VERSION_BUILD        0x03ed
-#define CLIENT_DISTRIBUTION         0x00007537
+#define CLIENT_VERSION_BUILD        0x1B67
+#define CLIENT_DISTRIBUTION         0x00007535
 #define CLIENT_LANGUAGE             "en"
 #define CLIENT_COUNTRY              "us"
 

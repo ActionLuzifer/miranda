@@ -4,8 +4,8 @@
 /* ************************************************************************** */
 /* *                                                                        * */
 /* * project   : libmng                                                     * */
-/* * file      : libmng_chunk_descr.h      copyright (c) 2007 G.Juyn        * */
-/* * version   : 1.0.10                                                     * */
+/* * file      : libmng_chunk_descr.h      copyright (c) 2004 G.Juyn        * */
+/* * version   : 1.0.9                                                      * */
 /* *                                                                        * */
 /* * purpose   : Chunk descriptor functions (implementation)                * */
 /* *                                                                        * */
@@ -15,11 +15,6 @@
 /* *                                                                        * */
 /* * changes   : 1.0.9 - 12/06/2004 - G.Juyn                                * */
 /* *             - added conditional MNG_OPTIMIZE_CHUNKREADER               * */
-/* *                                                                        * */
-/* *             1.0.10 - 04/08/2007 - G.Juyn                               * */
-/* *             - added support for mPNG proposal                          * */
-/* *             1.0.10 - 04/12/2007 - G.Juyn                               * */
-/* *             - added support for ANG proposal                           * */
 /* *                                                                        * */
 /* ************************************************************************** */
 
@@ -63,7 +58,6 @@ MNG_F_SPECIALFUNC (mng_drop_entries) ;
 MNG_F_SPECIALFUNC (mng_ordr_entries) ;
 MNG_F_SPECIALFUNC (mng_debunk_magn) ;
 MNG_F_SPECIALFUNC (mng_evnt_entries) ;
-MNG_F_SPECIALFUNC (mng_adat_tiles) ;
 
 /* ************************************************************************** */
 
@@ -127,9 +121,6 @@ MNG_C_SPECIALFUNC (mng_special_ordr) ;
 
 MNG_C_SPECIALFUNC (mng_special_magn) ;
 MNG_C_SPECIALFUNC (mng_special_evnt) ;
-MNG_C_SPECIALFUNC (mng_special_mpng) ;
-MNG_C_SPECIALFUNC (mng_special_ahdr) ;
-MNG_C_SPECIALFUNC (mng_special_adat) ;
 MNG_C_SPECIALFUNC (mng_special_unknown) ;
 
 /* ************************************************************************** */

@@ -1,4 +1,4 @@
-/* $Id: tif_predict.c,v 1.22 2008/04/05 17:55:38 drolon Exp $ */
+/* $Id: tif_predict.c,v 1.16 2006/10/28 19:36:43 drolon Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -105,22 +105,19 @@ PredictorSetupDecode(TIFF* tif)
 
 	if (sp->predictor == 2) {
 		switch (td->td_bitspersample) {
-			case 8:  sp->decodepfunc = horAcc8; break;
-			case 16: sp->decodepfunc = horAcc16; break;
+			case 8:  sp->pfunc = horAcc8; break;
+			case 16: sp->pfunc = horAcc16; break;
 		}
 		/*
 		 * Override default decoding method with one that does the
 		 * predictor stuff.
 		 */
-                if( tif->tif_decoderow != PredictorDecodeRow )
-                {
-                    sp->decoderow = tif->tif_decoderow;
-                    tif->tif_decoderow = PredictorDecodeRow;
-                    sp->decodestrip = tif->tif_decodestrip;
-                    tif->tif_decodestrip = PredictorDecodeTile;
-                    sp->decodetile = tif->tif_decodetile;
-                    tif->tif_decodetile = PredictorDecodeTile;
-                }
+		sp->coderow = tif->tif_decoderow;
+		tif->tif_decoderow = PredictorDecodeRow;
+		sp->codestrip = tif->tif_decodestrip;
+		tif->tif_decodestrip = PredictorDecodeTile;
+		sp->codetile = tif->tif_decodetile;
+		tif->tif_decodetile = PredictorDecodeTile;
 		/*
 		 * If the data is horizontally differenced 16-bit data that
 		 * requires byte-swapping, then it must be byte swapped before
@@ -129,28 +126,25 @@ PredictorSetupDecode(TIFF* tif)
 		 * the library setup when the directory was read.
 		 */
 		if (tif->tif_flags & TIFF_SWAB) {
-			if (sp->decodepfunc == horAcc16) {
-				sp->decodepfunc = swabHorAcc16;
+			if (sp->pfunc == horAcc16) {
+				sp->pfunc = swabHorAcc16;
 				tif->tif_postdecode = _TIFFNoPostDecode;
 			} /* else handle 32-bit case... */
 		}
 	}
 
 	else if (sp->predictor == 3) {
-		sp->decodepfunc = fpAcc;
+		sp->pfunc = fpAcc;
 		/*
 		 * Override default decoding method with one that does the
 		 * predictor stuff.
 		 */
-                if( tif->tif_decoderow != PredictorDecodeRow )
-                {
-                    sp->decoderow = tif->tif_decoderow;
-                    tif->tif_decoderow = PredictorDecodeRow;
-                    sp->decodestrip = tif->tif_decodestrip;
-                    tif->tif_decodestrip = PredictorDecodeTile;
-                    sp->decodetile = tif->tif_decodetile;
-                    tif->tif_decodetile = PredictorDecodeTile;
-                }
+		sp->coderow = tif->tif_decoderow;
+		tif->tif_decoderow = PredictorDecodeRow;
+		sp->codestrip = tif->tif_decodestrip;
+		tif->tif_decodestrip = PredictorDecodeTile;
+		sp->codetile = tif->tif_decodetile;
+		tif->tif_decodetile = PredictorDecodeTile;
 		/*
 		 * The data should not be swapped outside of the floating
 		 * point predictor, the accumulation routine should return
@@ -179,39 +173,33 @@ PredictorSetupEncode(TIFF* tif)
 
 	if (sp->predictor == 2) {
 		switch (td->td_bitspersample) {
-			case 8:  sp->encodepfunc = horDiff8; break;
-			case 16: sp->encodepfunc = horDiff16; break;
+			case 8:  sp->pfunc = horDiff8; break;
+			case 16: sp->pfunc = horDiff16; break;
 		}
 		/*
 		 * Override default encoding method with one that does the
 		 * predictor stuff.
 		 */
-                if( tif->tif_encoderow != PredictorEncodeRow )
-                {
-                    sp->encoderow = tif->tif_encoderow;
-                    tif->tif_encoderow = PredictorEncodeRow;
-                    sp->encodestrip = tif->tif_encodestrip;
-                    tif->tif_encodestrip = PredictorEncodeTile;
-                    sp->encodetile = tif->tif_encodetile;
-                    tif->tif_encodetile = PredictorEncodeTile;
-                }
+		sp->coderow = tif->tif_encoderow;
+		tif->tif_encoderow = PredictorEncodeRow;
+		sp->codestrip = tif->tif_encodestrip;
+		tif->tif_encodestrip = PredictorEncodeTile;
+		sp->codetile = tif->tif_encodetile;
+		tif->tif_encodetile = PredictorEncodeTile;
 	}
 	
 	else if (sp->predictor == 3) {
-		sp->encodepfunc = fpDiff;
+		sp->pfunc = fpDiff;
 		/*
 		 * Override default encoding method with one that does the
 		 * predictor stuff.
 		 */
-                if( tif->tif_encoderow != PredictorEncodeRow )
-                {
-                    sp->encoderow = tif->tif_encoderow;
-                    tif->tif_encoderow = PredictorEncodeRow;
-                    sp->encodestrip = tif->tif_encodestrip;
-                    tif->tif_encodestrip = PredictorEncodeTile;
-                    sp->encodetile = tif->tif_encodetile;
-                    tif->tif_encodetile = PredictorEncodeTile;
-                }
+		sp->coderow = tif->tif_encoderow;
+		tif->tif_encoderow = PredictorEncodeRow;
+		sp->codestrip = tif->tif_encodestrip;
+		tif->tif_encodestrip = PredictorEncodeTile;
+		sp->codetile = tif->tif_encodetile;
+		tif->tif_encodetile = PredictorEncodeTile;
 	}
 
 	return 1;
@@ -349,11 +337,11 @@ PredictorDecodeRow(TIFF* tif, tidata_t op0, tsize_t occ0, tsample_t s)
 	TIFFPredictorState *sp = PredictorState(tif);
 
 	assert(sp != NULL);
-	assert(sp->decoderow != NULL);
-	assert(sp->decodepfunc != NULL);
+	assert(sp->coderow != NULL);
+	assert(sp->pfunc != NULL);
 
-	if ((*sp->decoderow)(tif, op0, occ0, s)) {
-		(*sp->decodepfunc)(tif, op0, occ0);
+	if ((*sp->coderow)(tif, op0, occ0, s)) {
+		(*sp->pfunc)(tif, op0, occ0);
 		return 1;
 	} else
 		return 0;
@@ -372,14 +360,14 @@ PredictorDecodeTile(TIFF* tif, tidata_t op0, tsize_t occ0, tsample_t s)
 	TIFFPredictorState *sp = PredictorState(tif);
 
 	assert(sp != NULL);
-	assert(sp->decodetile != NULL);
+	assert(sp->codetile != NULL);
 
-	if ((*sp->decodetile)(tif, op0, occ0, s)) {
+	if ((*sp->codetile)(tif, op0, occ0, s)) {
 		tsize_t rowsize = sp->rowsize;
 		assert(rowsize > 0);
-		assert(sp->decodepfunc != NULL);
+		assert(sp->pfunc != NULL);
 		while ((long)occ0 > 0) {
-			(*sp->decodepfunc)(tif, op0, (tsize_t) rowsize);
+			(*sp->pfunc)(tif, op0, (tsize_t) rowsize);
 			occ0 -= rowsize;
 			op0 += rowsize;
 		}
@@ -493,56 +481,33 @@ PredictorEncodeRow(TIFF* tif, tidata_t bp, tsize_t cc, tsample_t s)
 	TIFFPredictorState *sp = PredictorState(tif);
 
 	assert(sp != NULL);
-	assert(sp->encodepfunc != NULL);
-	assert(sp->encoderow != NULL);
+	assert(sp->pfunc != NULL);
+	assert(sp->coderow != NULL);
 
 	/* XXX horizontal differencing alters user's data XXX */
-	(*sp->encodepfunc)(tif, bp, cc);
-	return (*sp->encoderow)(tif, bp, cc, s);
+	(*sp->pfunc)(tif, bp, cc);
+	return (*sp->coderow)(tif, bp, cc, s);
 }
 
 static int
 PredictorEncodeTile(TIFF* tif, tidata_t bp0, tsize_t cc0, tsample_t s)
 {
-	static const char module[] = "PredictorEncodeTile";
 	TIFFPredictorState *sp = PredictorState(tif);
-        uint8 *working_copy;
 	tsize_t cc = cc0, rowsize;
-	unsigned char* bp;
-        int result_code;
+	unsigned char* bp = bp0;
 
 	assert(sp != NULL);
-	assert(sp->encodepfunc != NULL);
-	assert(sp->encodetile != NULL);
-
-        /* 
-         * Do predictor manipulation in a working buffer to avoid altering
-         * the callers buffer. http://trac.osgeo.org/gdal/ticket/1965
-         */
-        working_copy = (uint8*) _TIFFmalloc(cc0);
-        if( working_copy == NULL )
-        {
-            TIFFErrorExt(tif->tif_clientdata, module, 
-                         "Out of memory allocating %d byte temp buffer.",
-                         cc0 );
-            return 0;
-        }
-        memcpy( working_copy, bp0, cc0 );
-        bp = working_copy;
+	assert(sp->pfunc != NULL);
+	assert(sp->codetile != NULL);
 
 	rowsize = sp->rowsize;
 	assert(rowsize > 0);
-	assert((cc0%rowsize)==0);
-	while (cc > 0) {
-		(*sp->encodepfunc)(tif, bp, rowsize);
+	while ((long)cc > 0) {
+		(*sp->pfunc)(tif, bp, (tsize_t) rowsize);
 		cc -= rowsize;
 		bp += rowsize;
 	}
-	result_code = (*sp->encodetile)(tif, working_copy, cc0, s);
-
-        _TIFFfree( working_copy );
-
-        return result_code;
+	return (*sp->codetile)(tif, bp0, cc0, s);
 }
 
 #define	FIELD_PREDICTOR	(FIELD_CODEC+0)		/* XXX */
@@ -551,6 +516,7 @@ static const TIFFFieldInfo predictFieldInfo[] = {
     { TIFFTAG_PREDICTOR,	 1, 1, TIFF_SHORT,	FIELD_PREDICTOR,
       FALSE,	FALSE,	"Predictor" },
 };
+#define	N(a)	(sizeof (a) / sizeof (a[0]))
 
 static int
 PredictorVSetField(TIFF* tif, ttag_t tag, va_list ap)
@@ -617,18 +583,10 @@ TIFFPredictorInit(TIFF* tif)
 	assert(sp != 0);
 
 	/*
-	 * Merge codec-specific tag information.
+	 * Merge codec-specific tag information and
+	 * override parent get/set field methods.
 	 */
-	if (!_TIFFMergeFieldInfo(tif, predictFieldInfo,
-				 TIFFArrayCount(predictFieldInfo))) {
-		TIFFErrorExt(tif->tif_clientdata, "TIFFPredictorInit",
-			     "Merging Predictor codec-specific tags failed");
-		return 0;
-	}
-
-	/*
-	 * Override parent get/set field methods.
-	 */
+	_TIFFMergeFieldInfo(tif, predictFieldInfo, N(predictFieldInfo));
 	sp->vgetparent = tif->tif_tagmethods.vgetfield;
 	tif->tif_tagmethods.vgetfield =
             PredictorVGetField;/* hook for predictor tag */
@@ -645,8 +603,7 @@ TIFFPredictorInit(TIFF* tif)
 	tif->tif_setupencode = PredictorSetupEncode;
 
 	sp->predictor = 1;			/* default value */
-	sp->encodepfunc = NULL;			/* no predictor routine */
-	sp->decodepfunc = NULL;			/* no predictor routine */
+	sp->pfunc = NULL;			/* no predictor routine */
 	return 1;
 }
 

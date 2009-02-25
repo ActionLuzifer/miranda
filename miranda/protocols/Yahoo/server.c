@@ -52,11 +52,8 @@ int PASCAL recv(SOCKET s, char FAR *buf, int len, int flags)
 	RecvResult = Netlib_Recv((HANDLE)s, buf, len, (len == 1) ? MSG_NODUMP : 0);
 	
 	//LOG(("Got bytes: %d, len: %d", RecvResult, len));
-	if (RecvResult == 0) {
-		LOG(("[recv] Connection closed gracefully."));
-        return 0;
-	} else if (RecvResult == SOCKET_ERROR) {
-        LOG(("[recv] Connection abortively closed"));
+    if (RecvResult == SOCKET_ERROR) {
+        LOG(("Receive error on socket: %d", s));
         return -1;
     }
 
@@ -68,7 +65,7 @@ extern yahoo_local_account * ylad;
 void __cdecl yahoo_server_main(void *empty)
 {
 	int status = (int) empty;
-	time_t lLastPing, lLastKeepAlive;
+	time_t lLastPing;
     YList *l;
     NETLIBSELECTEX nls = {0};
 	int recvResult, ridx = 0, widx = 0, i;
@@ -82,7 +79,7 @@ void __cdecl yahoo_server_main(void *empty)
 	
 	ext_yahoo_login(status);
 
-	lLastKeepAlive = lLastPing = time(NULL);
+	lLastPing = time(NULL);
 	
 	while (poll_loop) {
 		nls.cbSize = sizeof(nls);
@@ -138,20 +135,12 @@ void __cdecl yahoo_server_main(void *empty)
 			//YAHOO_DebugLog("HTTPGateway: %d", iHTTPGateway);
 			if	(!iHTTPGateway) {
 #endif					
-				if (yahooLoggedIn && time(NULL) - lLastKeepAlive >= 60) {
+				if (yahooLoggedIn && time(NULL) - lLastPing >= 60) {
 					LOG(("[TIMER] Sending a keep alive message"));
 					yahoo_keepalive(ylad->id);
 					
-					lLastKeepAlive = time(NULL);
-				}
-				
-				if (yahooLoggedIn && time(NULL) - lLastPing >= 3600) {
-					LOG(("[TIMER] Sending ping"));
-					yahoo_send_ping(ylad->id);
-					
 					lLastPing = time(NULL);
 				}
-				
 #ifdef HTTP_GATEWAY					
 			} else {
 				YAHOO_DebugLog("[SERVER] Got packets: %d", ylad->rpkts);

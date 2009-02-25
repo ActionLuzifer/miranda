@@ -1,413 +1,106 @@
 # Microsoft Developer Studio Generated Dependency File, included by Gadu-Gadu.mak
 
 .\libgadu\common.c : \
-	"..\..\include\openssl\asn1.h"\
-	"..\..\include\openssl\bio.h"\
-	"..\..\include\openssl\bn.h"\
-	"..\..\include\openssl\buffer.h"\
-	"..\..\include\openssl\comp.h"\
-	"..\..\include\openssl\crypto.h"\
-	"..\..\include\openssl\dh.h"\
-	"..\..\include\openssl\dsa.h"\
-	"..\..\include\openssl\dtls1.h"\
-	"..\..\include\openssl\e_os2.h"\
-	"..\..\include\openssl\ebcdic.h"\
-	"..\..\include\openssl\ec.h"\
-	"..\..\include\openssl\ecdh.h"\
-	"..\..\include\openssl\ecdsa.h"\
-	"..\..\include\openssl\evp.h"\
-	"..\..\include\openssl\kssl.h"\
-	"..\..\include\openssl\lhash.h"\
-	"..\..\include\openssl\obj_mac.h"\
-	"..\..\include\openssl\objects.h"\
-	"..\..\include\openssl\opensslconf.h"\
-	"..\..\include\openssl\opensslv.h"\
-	"..\..\include\openssl\ossl_typ.h"\
-	"..\..\include\openssl\pem.h"\
-	"..\..\include\openssl\pem2.h"\
-	"..\..\include\openssl\pkcs7.h"\
-	"..\..\include\openssl\pq_compat.h"\
-	"..\..\include\openssl\pqueue.h"\
-	"..\..\include\openssl\rsa.h"\
-	"..\..\include\openssl\safestack.h"\
-	"..\..\include\openssl\sha.h"\
-	"..\..\include\openssl\ssl.h"\
-	"..\..\include\openssl\ssl2.h"\
-	"..\..\include\openssl\ssl23.h"\
-	"..\..\include\openssl\ssl3.h"\
-	"..\..\include\openssl\stack.h"\
-	"..\..\include\openssl\symhacks.h"\
-	"..\..\include\openssl\tls1.h"\
-	"..\..\include\openssl\x509.h"\
-	"..\..\include\openssl\x509_vfy.h"\
+	".\libgadu\libgadu-config.h"\
 	".\libgadu\libgadu.h"\
-	".\libgadu\win32.h"\
+	".\libgadu\win32\arpa\inet.h"\
+	".\libgadu\win32\netdb.h"\
+	".\libgadu\win32\netinet\in.h"\
+	".\libgadu\win32\stdint.h"\
+	".\libgadu\win32\sys\ioctl.h"\
+	".\libgadu\win32\sys\socket.h"\
+	".\libgadu\win32\unistd.h"\
 	".\ssl.h"\
 	
 
 .\libgadu\dcc.c : \
-	"..\..\include\openssl\asn1.h"\
-	"..\..\include\openssl\bio.h"\
-	"..\..\include\openssl\bn.h"\
-	"..\..\include\openssl\buffer.h"\
-	"..\..\include\openssl\comp.h"\
-	"..\..\include\openssl\crypto.h"\
-	"..\..\include\openssl\dh.h"\
-	"..\..\include\openssl\dsa.h"\
-	"..\..\include\openssl\dtls1.h"\
-	"..\..\include\openssl\e_os2.h"\
-	"..\..\include\openssl\ebcdic.h"\
-	"..\..\include\openssl\ec.h"\
-	"..\..\include\openssl\ecdh.h"\
-	"..\..\include\openssl\ecdsa.h"\
-	"..\..\include\openssl\evp.h"\
-	"..\..\include\openssl\kssl.h"\
-	"..\..\include\openssl\lhash.h"\
-	"..\..\include\openssl\obj_mac.h"\
-	"..\..\include\openssl\objects.h"\
-	"..\..\include\openssl\opensslconf.h"\
-	"..\..\include\openssl\opensslv.h"\
-	"..\..\include\openssl\ossl_typ.h"\
-	"..\..\include\openssl\pem.h"\
-	"..\..\include\openssl\pem2.h"\
-	"..\..\include\openssl\pkcs7.h"\
-	"..\..\include\openssl\pq_compat.h"\
-	"..\..\include\openssl\pqueue.h"\
-	"..\..\include\openssl\rsa.h"\
-	"..\..\include\openssl\safestack.h"\
-	"..\..\include\openssl\sha.h"\
-	"..\..\include\openssl\ssl.h"\
-	"..\..\include\openssl\ssl2.h"\
-	"..\..\include\openssl\ssl23.h"\
-	"..\..\include\openssl\ssl3.h"\
-	"..\..\include\openssl\stack.h"\
-	"..\..\include\openssl\symhacks.h"\
-	"..\..\include\openssl\tls1.h"\
-	"..\..\include\openssl\x509.h"\
-	"..\..\include\openssl\x509_vfy.h"\
 	".\libgadu\compat.h"\
+	".\libgadu\libgadu-config.h"\
 	".\libgadu\libgadu.h"\
-	".\libgadu\win32.h"\
+	".\libgadu\win32\arpa\inet.h"\
+	".\libgadu\win32\netinet\in.h"\
+	".\libgadu\win32\stdint.h"\
+	".\libgadu\win32\sys\ioctl.h"\
+	".\libgadu\win32\sys\socket.h"\
+	".\libgadu\win32\unistd.h"\
 	".\ssl.h"\
 	
 
 .\libgadu\dcc7.c : \
-	"..\..\include\openssl\asn1.h"\
-	"..\..\include\openssl\bio.h"\
-	"..\..\include\openssl\bn.h"\
-	"..\..\include\openssl\buffer.h"\
-	"..\..\include\openssl\comp.h"\
-	"..\..\include\openssl\crypto.h"\
-	"..\..\include\openssl\dh.h"\
-	"..\..\include\openssl\dsa.h"\
-	"..\..\include\openssl\dtls1.h"\
-	"..\..\include\openssl\e_os2.h"\
-	"..\..\include\openssl\ebcdic.h"\
-	"..\..\include\openssl\ec.h"\
-	"..\..\include\openssl\ecdh.h"\
-	"..\..\include\openssl\ecdsa.h"\
-	"..\..\include\openssl\evp.h"\
-	"..\..\include\openssl\kssl.h"\
-	"..\..\include\openssl\lhash.h"\
-	"..\..\include\openssl\obj_mac.h"\
-	"..\..\include\openssl\objects.h"\
-	"..\..\include\openssl\opensslconf.h"\
-	"..\..\include\openssl\opensslv.h"\
-	"..\..\include\openssl\ossl_typ.h"\
-	"..\..\include\openssl\pem.h"\
-	"..\..\include\openssl\pem2.h"\
-	"..\..\include\openssl\pkcs7.h"\
-	"..\..\include\openssl\pq_compat.h"\
-	"..\..\include\openssl\pqueue.h"\
-	"..\..\include\openssl\rsa.h"\
-	"..\..\include\openssl\safestack.h"\
-	"..\..\include\openssl\sha.h"\
-	"..\..\include\openssl\ssl.h"\
-	"..\..\include\openssl\ssl2.h"\
-	"..\..\include\openssl\ssl23.h"\
-	"..\..\include\openssl\ssl3.h"\
-	"..\..\include\openssl\stack.h"\
-	"..\..\include\openssl\symhacks.h"\
-	"..\..\include\openssl\tls1.h"\
-	"..\..\include\openssl\x509.h"\
-	"..\..\include\openssl\x509_vfy.h"\
 	".\libgadu\compat.h"\
+	".\libgadu\libgadu-config.h"\
 	".\libgadu\libgadu.h"\
-	".\libgadu\win32.h"\
+	".\libgadu\win32\arpa\inet.h"\
+	".\libgadu\win32\netinet\in.h"\
+	".\libgadu\win32\stdint.h"\
+	".\libgadu\win32\sys\ioctl.h"\
+	".\libgadu\win32\sys\socket.h"\
+	".\libgadu\win32\unistd.h"\
 	".\ssl.h"\
 	
 
 .\libgadu\events.c : \
-	"..\..\include\openssl\asn1.h"\
-	"..\..\include\openssl\bio.h"\
-	"..\..\include\openssl\bn.h"\
-	"..\..\include\openssl\buffer.h"\
-	"..\..\include\openssl\comp.h"\
-	"..\..\include\openssl\crypto.h"\
-	"..\..\include\openssl\dh.h"\
-	"..\..\include\openssl\dsa.h"\
-	"..\..\include\openssl\dtls1.h"\
-	"..\..\include\openssl\e_os2.h"\
-	"..\..\include\openssl\ebcdic.h"\
-	"..\..\include\openssl\ec.h"\
-	"..\..\include\openssl\ecdh.h"\
-	"..\..\include\openssl\ecdsa.h"\
-	"..\..\include\openssl\err.h"\
-	"..\..\include\openssl\evp.h"\
-	"..\..\include\openssl\kssl.h"\
-	"..\..\include\openssl\lhash.h"\
-	"..\..\include\openssl\obj_mac.h"\
-	"..\..\include\openssl\objects.h"\
-	"..\..\include\openssl\opensslconf.h"\
-	"..\..\include\openssl\opensslv.h"\
-	"..\..\include\openssl\ossl_typ.h"\
-	"..\..\include\openssl\pem.h"\
-	"..\..\include\openssl\pem2.h"\
-	"..\..\include\openssl\pkcs7.h"\
-	"..\..\include\openssl\pq_compat.h"\
-	"..\..\include\openssl\pqueue.h"\
-	"..\..\include\openssl\rsa.h"\
-	"..\..\include\openssl\safestack.h"\
-	"..\..\include\openssl\sha.h"\
-	"..\..\include\openssl\ssl.h"\
-	"..\..\include\openssl\ssl2.h"\
-	"..\..\include\openssl\ssl23.h"\
-	"..\..\include\openssl\ssl3.h"\
-	"..\..\include\openssl\stack.h"\
-	"..\..\include\openssl\symhacks.h"\
-	"..\..\include\openssl\tls1.h"\
-	"..\..\include\openssl\x509.h"\
-	"..\..\include\openssl\x509_vfy.h"\
 	".\libgadu\compat.h"\
+	".\libgadu\libgadu-config.h"\
 	".\libgadu\libgadu.h"\
-	".\libgadu\win32.h"\
+	".\libgadu\win32\arpa\inet.h"\
+	".\libgadu\win32\netinet\in.h"\
+	".\libgadu\win32\stdint.h"\
+	".\libgadu\win32\sys\ioctl.h"\
+	".\libgadu\win32\sys\socket.h"\
+	".\libgadu\win32\sys\wait.h"\
+	".\libgadu\win32\unistd.h"\
 	".\ssl.h"\
 	
 
 .\libgadu\http.c : \
-	"..\..\include\openssl\asn1.h"\
-	"..\..\include\openssl\bio.h"\
-	"..\..\include\openssl\bn.h"\
-	"..\..\include\openssl\buffer.h"\
-	"..\..\include\openssl\comp.h"\
-	"..\..\include\openssl\crypto.h"\
-	"..\..\include\openssl\dh.h"\
-	"..\..\include\openssl\dsa.h"\
-	"..\..\include\openssl\dtls1.h"\
-	"..\..\include\openssl\e_os2.h"\
-	"..\..\include\openssl\ebcdic.h"\
-	"..\..\include\openssl\ec.h"\
-	"..\..\include\openssl\ecdh.h"\
-	"..\..\include\openssl\ecdsa.h"\
-	"..\..\include\openssl\evp.h"\
-	"..\..\include\openssl\kssl.h"\
-	"..\..\include\openssl\lhash.h"\
-	"..\..\include\openssl\obj_mac.h"\
-	"..\..\include\openssl\objects.h"\
-	"..\..\include\openssl\opensslconf.h"\
-	"..\..\include\openssl\opensslv.h"\
-	"..\..\include\openssl\ossl_typ.h"\
-	"..\..\include\openssl\pem.h"\
-	"..\..\include\openssl\pem2.h"\
-	"..\..\include\openssl\pkcs7.h"\
-	"..\..\include\openssl\pq_compat.h"\
-	"..\..\include\openssl\pqueue.h"\
-	"..\..\include\openssl\rsa.h"\
-	"..\..\include\openssl\safestack.h"\
-	"..\..\include\openssl\sha.h"\
-	"..\..\include\openssl\ssl.h"\
-	"..\..\include\openssl\ssl2.h"\
-	"..\..\include\openssl\ssl23.h"\
-	"..\..\include\openssl\ssl3.h"\
-	"..\..\include\openssl\stack.h"\
-	"..\..\include\openssl\symhacks.h"\
-	"..\..\include\openssl\tls1.h"\
-	"..\..\include\openssl\x509.h"\
-	"..\..\include\openssl\x509_vfy.h"\
 	".\libgadu\compat.h"\
+	".\libgadu\libgadu-config.h"\
 	".\libgadu\libgadu.h"\
-	".\libgadu\win32.h"\
+	".\libgadu\win32\arpa\inet.h"\
+	".\libgadu\win32\netdb.h"\
+	".\libgadu\win32\netinet\in.h"\
+	".\libgadu\win32\stdint.h"\
+	".\libgadu\win32\sys\socket.h"\
+	".\libgadu\win32\sys\wait.h"\
+	".\libgadu\win32\unistd.h"\
 	".\ssl.h"\
 	
 
 .\libgadu\libgadu.c : \
-	"..\..\include\openssl\asn1.h"\
-	"..\..\include\openssl\bio.h"\
-	"..\..\include\openssl\bn.h"\
-	"..\..\include\openssl\buffer.h"\
-	"..\..\include\openssl\comp.h"\
-	"..\..\include\openssl\crypto.h"\
-	"..\..\include\openssl\dh.h"\
-	"..\..\include\openssl\dsa.h"\
-	"..\..\include\openssl\dtls1.h"\
-	"..\..\include\openssl\e_os2.h"\
-	"..\..\include\openssl\ebcdic.h"\
-	"..\..\include\openssl\ec.h"\
-	"..\..\include\openssl\ecdh.h"\
-	"..\..\include\openssl\ecdsa.h"\
-	"..\..\include\openssl\err.h"\
-	"..\..\include\openssl\evp.h"\
-	"..\..\include\openssl\kssl.h"\
-	"..\..\include\openssl\lhash.h"\
-	"..\..\include\openssl\obj_mac.h"\
-	"..\..\include\openssl\objects.h"\
-	"..\..\include\openssl\opensslconf.h"\
-	"..\..\include\openssl\opensslv.h"\
-	"..\..\include\openssl\ossl_typ.h"\
-	"..\..\include\openssl\pem.h"\
-	"..\..\include\openssl\pem2.h"\
-	"..\..\include\openssl\pkcs7.h"\
-	"..\..\include\openssl\pq_compat.h"\
-	"..\..\include\openssl\pqueue.h"\
-	"..\..\include\openssl\rand.h"\
-	"..\..\include\openssl\rsa.h"\
-	"..\..\include\openssl\safestack.h"\
-	"..\..\include\openssl\sha.h"\
-	"..\..\include\openssl\ssl.h"\
-	"..\..\include\openssl\ssl2.h"\
-	"..\..\include\openssl\ssl23.h"\
-	"..\..\include\openssl\ssl3.h"\
-	"..\..\include\openssl\stack.h"\
-	"..\..\include\openssl\symhacks.h"\
-	"..\..\include\openssl\tls1.h"\
-	"..\..\include\openssl\x509.h"\
-	"..\..\include\openssl\x509_vfy.h"\
 	".\libgadu\compat.h"\
+	".\libgadu\libgadu-config.h"\
 	".\libgadu\libgadu.h"\
-	".\libgadu\win32.h"\
+	".\libgadu\win32\arpa\inet.h"\
+	".\libgadu\win32\netdb.h"\
+	".\libgadu\win32\netinet\in.h"\
+	".\libgadu\win32\stdint.h"\
+	".\libgadu\win32\sys\socket.h"\
+	".\libgadu\win32\sys\wait.h"\
+	".\libgadu\win32\unistd.h"\
 	".\ssl.h"\
 	
 
 .\libgadu\pubdir.c : \
-	"..\..\include\openssl\asn1.h"\
-	"..\..\include\openssl\bio.h"\
-	"..\..\include\openssl\bn.h"\
-	"..\..\include\openssl\buffer.h"\
-	"..\..\include\openssl\comp.h"\
-	"..\..\include\openssl\crypto.h"\
-	"..\..\include\openssl\dh.h"\
-	"..\..\include\openssl\dsa.h"\
-	"..\..\include\openssl\dtls1.h"\
-	"..\..\include\openssl\e_os2.h"\
-	"..\..\include\openssl\ebcdic.h"\
-	"..\..\include\openssl\ec.h"\
-	"..\..\include\openssl\ecdh.h"\
-	"..\..\include\openssl\ecdsa.h"\
-	"..\..\include\openssl\evp.h"\
-	"..\..\include\openssl\kssl.h"\
-	"..\..\include\openssl\lhash.h"\
-	"..\..\include\openssl\obj_mac.h"\
-	"..\..\include\openssl\objects.h"\
-	"..\..\include\openssl\opensslconf.h"\
-	"..\..\include\openssl\opensslv.h"\
-	"..\..\include\openssl\ossl_typ.h"\
-	"..\..\include\openssl\pem.h"\
-	"..\..\include\openssl\pem2.h"\
-	"..\..\include\openssl\pkcs7.h"\
-	"..\..\include\openssl\pq_compat.h"\
-	"..\..\include\openssl\pqueue.h"\
-	"..\..\include\openssl\rsa.h"\
-	"..\..\include\openssl\safestack.h"\
-	"..\..\include\openssl\sha.h"\
-	"..\..\include\openssl\ssl.h"\
-	"..\..\include\openssl\ssl2.h"\
-	"..\..\include\openssl\ssl23.h"\
-	"..\..\include\openssl\ssl3.h"\
-	"..\..\include\openssl\stack.h"\
-	"..\..\include\openssl\symhacks.h"\
-	"..\..\include\openssl\tls1.h"\
-	"..\..\include\openssl\x509.h"\
-	"..\..\include\openssl\x509_vfy.h"\
+	".\libgadu\libgadu-config.h"\
 	".\libgadu\libgadu.h"\
+	".\libgadu\win32\stdint.h"\
+	".\libgadu\win32\unistd.h"\
 	".\ssl.h"\
 	
 
 .\libgadu\pubdir50.c : \
-	"..\..\include\openssl\asn1.h"\
-	"..\..\include\openssl\bio.h"\
-	"..\..\include\openssl\bn.h"\
-	"..\..\include\openssl\buffer.h"\
-	"..\..\include\openssl\comp.h"\
-	"..\..\include\openssl\crypto.h"\
-	"..\..\include\openssl\dh.h"\
-	"..\..\include\openssl\dsa.h"\
-	"..\..\include\openssl\dtls1.h"\
-	"..\..\include\openssl\e_os2.h"\
-	"..\..\include\openssl\ebcdic.h"\
-	"..\..\include\openssl\ec.h"\
-	"..\..\include\openssl\ecdh.h"\
-	"..\..\include\openssl\ecdsa.h"\
-	"..\..\include\openssl\evp.h"\
-	"..\..\include\openssl\kssl.h"\
-	"..\..\include\openssl\lhash.h"\
-	"..\..\include\openssl\obj_mac.h"\
-	"..\..\include\openssl\objects.h"\
-	"..\..\include\openssl\opensslconf.h"\
-	"..\..\include\openssl\opensslv.h"\
-	"..\..\include\openssl\ossl_typ.h"\
-	"..\..\include\openssl\pem.h"\
-	"..\..\include\openssl\pem2.h"\
-	"..\..\include\openssl\pkcs7.h"\
-	"..\..\include\openssl\pq_compat.h"\
-	"..\..\include\openssl\pqueue.h"\
-	"..\..\include\openssl\rsa.h"\
-	"..\..\include\openssl\safestack.h"\
-	"..\..\include\openssl\sha.h"\
-	"..\..\include\openssl\ssl.h"\
-	"..\..\include\openssl\ssl2.h"\
-	"..\..\include\openssl\ssl23.h"\
-	"..\..\include\openssl\ssl3.h"\
-	"..\..\include\openssl\stack.h"\
-	"..\..\include\openssl\symhacks.h"\
-	"..\..\include\openssl\tls1.h"\
-	"..\..\include\openssl\x509.h"\
-	"..\..\include\openssl\x509_vfy.h"\
+	".\libgadu\libgadu-config.h"\
 	".\libgadu\libgadu.h"\
-	".\libgadu\win32.h"\
+	".\libgadu\win32\stdint.h"\
+	".\libgadu\win32\sys\socket.h"\
 	".\ssl.h"\
 	
 
 .\libgadu\sha1.c : \
-	"..\..\include\openssl\asn1.h"\
-	"..\..\include\openssl\bio.h"\
-	"..\..\include\openssl\bn.h"\
-	"..\..\include\openssl\buffer.h"\
-	"..\..\include\openssl\comp.h"\
-	"..\..\include\openssl\crypto.h"\
-	"..\..\include\openssl\dh.h"\
-	"..\..\include\openssl\dsa.h"\
-	"..\..\include\openssl\dtls1.h"\
-	"..\..\include\openssl\e_os2.h"\
-	"..\..\include\openssl\ebcdic.h"\
-	"..\..\include\openssl\ec.h"\
-	"..\..\include\openssl\ecdh.h"\
-	"..\..\include\openssl\ecdsa.h"\
-	"..\..\include\openssl\evp.h"\
-	"..\..\include\openssl\kssl.h"\
-	"..\..\include\openssl\lhash.h"\
-	"..\..\include\openssl\obj_mac.h"\
-	"..\..\include\openssl\objects.h"\
-	"..\..\include\openssl\opensslconf.h"\
-	"..\..\include\openssl\opensslv.h"\
-	"..\..\include\openssl\ossl_typ.h"\
-	"..\..\include\openssl\pem.h"\
-	"..\..\include\openssl\pem2.h"\
-	"..\..\include\openssl\pkcs7.h"\
-	"..\..\include\openssl\pq_compat.h"\
-	"..\..\include\openssl\pqueue.h"\
-	"..\..\include\openssl\rsa.h"\
-	"..\..\include\openssl\safestack.h"\
-	"..\..\include\openssl\sha.h"\
-	"..\..\include\openssl\ssl.h"\
-	"..\..\include\openssl\ssl2.h"\
-	"..\..\include\openssl\ssl23.h"\
-	"..\..\include\openssl\ssl3.h"\
-	"..\..\include\openssl\stack.h"\
-	"..\..\include\openssl\symhacks.h"\
-	"..\..\include\openssl\tls1.h"\
-	"..\..\include\openssl\x509.h"\
-	"..\..\include\openssl\x509_vfy.h"\
+	".\libgadu\libgadu-config.h"\
 	".\libgadu\libgadu.h"\
+	".\libgadu\win32\stdint.h"\
 	".\ssl.h"\
 	
 
@@ -420,7 +113,6 @@
 	"..\..\include\m_database.h"\
 	"..\..\include\m_icolib.h"\
 	"..\..\include\m_ignore.h"\
-	"..\..\include\m_imgsrvc.h"\
 	"..\..\include\m_langpack.h"\
 	"..\..\include\m_message.h"\
 	"..\..\include\m_netlib.h"\
@@ -475,10 +167,11 @@
 	"..\..\include\openssl\x509.h"\
 	"..\..\include\openssl\x509_vfy.h"\
 	"..\..\include\statusmodes.h"\
-	"..\..\include\m_freeimage.h"\
 	".\dynstuff.h"\
 	".\gg.h"\
+	".\libgadu\libgadu-config.h"\
 	".\libgadu\libgadu.h"\
+	".\libgadu\win32\stdint.h"\
 	".\pthread.h"\
 	".\resource.h"\
 	".\ssl.h"\
@@ -493,7 +186,6 @@
 	"..\..\include\m_database.h"\
 	"..\..\include\m_icolib.h"\
 	"..\..\include\m_ignore.h"\
-	"..\..\include\m_imgsrvc.h"\
 	"..\..\include\m_langpack.h"\
 	"..\..\include\m_message.h"\
 	"..\..\include\m_netlib.h"\
@@ -548,10 +240,11 @@
 	"..\..\include\openssl\x509.h"\
 	"..\..\include\openssl\x509_vfy.h"\
 	"..\..\include\statusmodes.h"\
-	"..\..\include\m_freeimage.h"\
 	".\dynstuff.h"\
 	".\gg.h"\
+	".\libgadu\libgadu-config.h"\
 	".\libgadu\libgadu.h"\
+	".\libgadu\win32\stdint.h"\
 	".\pthread.h"\
 	".\resource.h"\
 	".\ssl.h"\
@@ -566,7 +259,6 @@
 	"..\..\include\m_database.h"\
 	"..\..\include\m_icolib.h"\
 	"..\..\include\m_ignore.h"\
-	"..\..\include\m_imgsrvc.h"\
 	"..\..\include\m_langpack.h"\
 	"..\..\include\m_message.h"\
 	"..\..\include\m_netlib.h"\
@@ -621,10 +313,11 @@
 	"..\..\include\openssl\x509.h"\
 	"..\..\include\openssl\x509_vfy.h"\
 	"..\..\include\statusmodes.h"\
-	"..\..\include\m_freeimage.h"\
 	".\dynstuff.h"\
 	".\gg.h"\
+	".\libgadu\libgadu-config.h"\
 	".\libgadu\libgadu.h"\
+	".\libgadu\win32\stdint.h"\
 	".\pthread.h"\
 	".\resource.h"\
 	".\ssl.h"\
@@ -639,7 +332,6 @@
 	"..\..\include\m_database.h"\
 	"..\..\include\m_icolib.h"\
 	"..\..\include\m_ignore.h"\
-	"..\..\include\m_imgsrvc.h"\
 	"..\..\include\m_langpack.h"\
 	"..\..\include\m_message.h"\
 	"..\..\include\m_netlib.h"\
@@ -694,10 +386,11 @@
 	"..\..\include\openssl\x509.h"\
 	"..\..\include\openssl\x509_vfy.h"\
 	"..\..\include\statusmodes.h"\
-	"..\..\include\m_freeimage.h"\
 	".\dynstuff.h"\
 	".\gg.h"\
+	".\libgadu\libgadu-config.h"\
 	".\libgadu\libgadu.h"\
+	".\libgadu\win32\stdint.h"\
 	".\pthread.h"\
 	".\resource.h"\
 	".\ssl.h"\
@@ -712,7 +405,6 @@
 	"..\..\include\m_database.h"\
 	"..\..\include\m_icolib.h"\
 	"..\..\include\m_ignore.h"\
-	"..\..\include\m_imgsrvc.h"\
 	"..\..\include\m_langpack.h"\
 	"..\..\include\m_message.h"\
 	"..\..\include\m_netlib.h"\
@@ -767,10 +459,11 @@
 	"..\..\include\openssl\x509.h"\
 	"..\..\include\openssl\x509_vfy.h"\
 	"..\..\include\statusmodes.h"\
-	"..\..\include\m_freeimage.h"\
 	".\dynstuff.h"\
 	".\gg.h"\
+	".\libgadu\libgadu-config.h"\
 	".\libgadu\libgadu.h"\
+	".\libgadu\win32\stdint.h"\
 	".\pthread.h"\
 	".\resource.h"\
 	".\ssl.h"\
@@ -785,7 +478,6 @@
 	"..\..\include\m_database.h"\
 	"..\..\include\m_icolib.h"\
 	"..\..\include\m_ignore.h"\
-	"..\..\include\m_imgsrvc.h"\
 	"..\..\include\m_langpack.h"\
 	"..\..\include\m_message.h"\
 	"..\..\include\m_netlib.h"\
@@ -840,10 +532,11 @@
 	"..\..\include\openssl\x509.h"\
 	"..\..\include\openssl\x509_vfy.h"\
 	"..\..\include\statusmodes.h"\
-	"..\..\include\m_freeimage.h"\
 	".\dynstuff.h"\
 	".\gg.h"\
+	".\libgadu\libgadu-config.h"\
 	".\libgadu\libgadu.h"\
+	".\libgadu\win32\stdint.h"\
 	".\pthread.h"\
 	".\resource.h"\
 	".\ssl.h"\
@@ -858,7 +551,6 @@
 	"..\..\include\m_database.h"\
 	"..\..\include\m_icolib.h"\
 	"..\..\include\m_ignore.h"\
-	"..\..\include\m_imgsrvc.h"\
 	"..\..\include\m_langpack.h"\
 	"..\..\include\m_message.h"\
 	"..\..\include\m_netlib.h"\
@@ -913,16 +605,17 @@
 	"..\..\include\openssl\x509.h"\
 	"..\..\include\openssl\x509_vfy.h"\
 	"..\..\include\statusmodes.h"\
-	"..\..\include\m_freeimage.h"\
 	".\dynstuff.h"\
 	".\gg.h"\
+	".\libgadu\libgadu-config.h"\
 	".\libgadu\libgadu.h"\
+	".\libgadu\win32\stdint.h"\
 	".\pthread.h"\
 	".\resource.h"\
 	".\ssl.h"\
 	
 
-.\image.c : \
+.\image.cpp : \
 	"..\..\include\m_button.h"\
 	"..\..\include\m_chat.h"\
 	"..\..\include\m_clc.h"\
@@ -931,7 +624,6 @@
 	"..\..\include\m_database.h"\
 	"..\..\include\m_icolib.h"\
 	"..\..\include\m_ignore.h"\
-	"..\..\include\m_imgsrvc.h"\
 	"..\..\include\m_langpack.h"\
 	"..\..\include\m_message.h"\
 	"..\..\include\m_netlib.h"\
@@ -986,10 +678,11 @@
 	"..\..\include\openssl\x509.h"\
 	"..\..\include\openssl\x509_vfy.h"\
 	"..\..\include\statusmodes.h"\
-	"..\..\include\m_freeimage.h"\
 	".\dynstuff.h"\
 	".\gg.h"\
+	".\libgadu\libgadu-config.h"\
 	".\libgadu\libgadu.h"\
+	".\libgadu\win32\stdint.h"\
 	".\pthread.h"\
 	".\resource.h"\
 	".\ssl.h"\
@@ -1004,7 +697,6 @@
 	"..\..\include\m_database.h"\
 	"..\..\include\m_icolib.h"\
 	"..\..\include\m_ignore.h"\
-	"..\..\include\m_imgsrvc.h"\
 	"..\..\include\m_langpack.h"\
 	"..\..\include\m_message.h"\
 	"..\..\include\m_netlib.h"\
@@ -1059,10 +751,11 @@
 	"..\..\include\openssl\x509.h"\
 	"..\..\include\openssl\x509_vfy.h"\
 	"..\..\include\statusmodes.h"\
-	"..\..\include\m_freeimage.h"\
 	".\dynstuff.h"\
 	".\gg.h"\
+	".\libgadu\libgadu-config.h"\
 	".\libgadu\libgadu.h"\
+	".\libgadu\win32\stdint.h"\
 	".\pthread.h"\
 	".\resource.h"\
 	".\ssl.h"\
@@ -1077,7 +770,6 @@
 	"..\..\include\m_database.h"\
 	"..\..\include\m_icolib.h"\
 	"..\..\include\m_ignore.h"\
-	"..\..\include\m_imgsrvc.h"\
 	"..\..\include\m_langpack.h"\
 	"..\..\include\m_message.h"\
 	"..\..\include\m_netlib.h"\
@@ -1132,10 +824,11 @@
 	"..\..\include\openssl\x509.h"\
 	"..\..\include\openssl\x509_vfy.h"\
 	"..\..\include\statusmodes.h"\
-	"..\..\include\m_freeimage.h"\
 	".\dynstuff.h"\
 	".\gg.h"\
+	".\libgadu\libgadu-config.h"\
 	".\libgadu\libgadu.h"\
+	".\libgadu\win32\stdint.h"\
 	".\pthread.h"\
 	".\resource.h"\
 	".\ssl.h"\
@@ -1150,7 +843,6 @@
 	"..\..\include\m_database.h"\
 	"..\..\include\m_icolib.h"\
 	"..\..\include\m_ignore.h"\
-	"..\..\include\m_imgsrvc.h"\
 	"..\..\include\m_langpack.h"\
 	"..\..\include\m_message.h"\
 	"..\..\include\m_netlib.h"\
@@ -1205,10 +897,11 @@
 	"..\..\include\openssl\x509.h"\
 	"..\..\include\openssl\x509_vfy.h"\
 	"..\..\include\statusmodes.h"\
-	"..\..\include\m_freeimage.h"\
 	".\dynstuff.h"\
 	".\gg.h"\
+	".\libgadu\libgadu-config.h"\
 	".\libgadu\libgadu.h"\
+	".\libgadu\win32\stdint.h"\
 	".\pthread.h"\
 	".\resource.h"\
 	".\ssl.h"\
@@ -1223,7 +916,6 @@
 	"..\..\include\m_database.h"\
 	"..\..\include\m_icolib.h"\
 	"..\..\include\m_ignore.h"\
-	"..\..\include\m_imgsrvc.h"\
 	"..\..\include\m_langpack.h"\
 	"..\..\include\m_message.h"\
 	"..\..\include\m_netlib.h"\
@@ -1278,10 +970,11 @@
 	"..\..\include\openssl\x509.h"\
 	"..\..\include\openssl\x509_vfy.h"\
 	"..\..\include\statusmodes.h"\
-	"..\..\include\m_freeimage.h"\
 	".\dynstuff.h"\
 	".\gg.h"\
+	".\libgadu\libgadu-config.h"\
 	".\libgadu\libgadu.h"\
+	".\libgadu\win32\stdint.h"\
 	".\pthread.h"\
 	".\resource.h"\
 	".\ssl.h"\
@@ -1296,7 +989,6 @@
 	"..\..\include\m_database.h"\
 	"..\..\include\m_icolib.h"\
 	"..\..\include\m_ignore.h"\
-	"..\..\include\m_imgsrvc.h"\
 	"..\..\include\m_langpack.h"\
 	"..\..\include\m_message.h"\
 	"..\..\include\m_netlib.h"\
@@ -1351,10 +1043,11 @@
 	"..\..\include\openssl\x509.h"\
 	"..\..\include\openssl\x509_vfy.h"\
 	"..\..\include\statusmodes.h"\
-	"..\..\include\m_freeimage.h"\
 	".\dynstuff.h"\
 	".\gg.h"\
+	".\libgadu\libgadu-config.h"\
 	".\libgadu\libgadu.h"\
+	".\libgadu\win32\stdint.h"\
 	".\pthread.h"\
 	".\resource.h"\
 	".\ssl.h"\
@@ -1369,7 +1062,6 @@
 	"..\..\include\m_database.h"\
 	"..\..\include\m_icolib.h"\
 	"..\..\include\m_ignore.h"\
-	"..\..\include\m_imgsrvc.h"\
 	"..\..\include\m_langpack.h"\
 	"..\..\include\m_message.h"\
 	"..\..\include\m_netlib.h"\
@@ -1424,16 +1116,17 @@
 	"..\..\include\openssl\x509.h"\
 	"..\..\include\openssl\x509_vfy.h"\
 	"..\..\include\statusmodes.h"\
-	"..\..\include\m_freeimage.h"\
 	".\dynstuff.h"\
 	".\gg.h"\
+	".\libgadu\libgadu-config.h"\
 	".\libgadu\libgadu.h"\
+	".\libgadu\win32\stdint.h"\
 	".\pthread.h"\
 	".\resource.h"\
 	".\ssl.h"\
 	
 
-.\token.c : \
+.\token.cpp : \
 	"..\..\include\m_button.h"\
 	"..\..\include\m_chat.h"\
 	"..\..\include\m_clc.h"\
@@ -1442,7 +1135,6 @@
 	"..\..\include\m_database.h"\
 	"..\..\include\m_icolib.h"\
 	"..\..\include\m_ignore.h"\
-	"..\..\include\m_imgsrvc.h"\
 	"..\..\include\m_langpack.h"\
 	"..\..\include\m_message.h"\
 	"..\..\include\m_netlib.h"\
@@ -1497,10 +1189,11 @@
 	"..\..\include\openssl\x509.h"\
 	"..\..\include\openssl\x509_vfy.h"\
 	"..\..\include\statusmodes.h"\
-	"..\..\include\m_freeimage.h"\
 	".\dynstuff.h"\
 	".\gg.h"\
+	".\libgadu\libgadu-config.h"\
 	".\libgadu\libgadu.h"\
+	".\libgadu\win32\stdint.h"\
 	".\pthread.h"\
 	".\resource.h"\
 	".\ssl.h"\
@@ -1515,7 +1208,6 @@
 	"..\..\include\m_database.h"\
 	"..\..\include\m_icolib.h"\
 	"..\..\include\m_ignore.h"\
-	"..\..\include\m_imgsrvc.h"\
 	"..\..\include\m_langpack.h"\
 	"..\..\include\m_message.h"\
 	"..\..\include\m_netlib.h"\
@@ -1570,10 +1262,11 @@
 	"..\..\include\openssl\x509.h"\
 	"..\..\include\openssl\x509_vfy.h"\
 	"..\..\include\statusmodes.h"\
-	"..\..\include\m_freeimage.h"\
 	".\dynstuff.h"\
 	".\gg.h"\
+	".\libgadu\libgadu-config.h"\
 	".\libgadu\libgadu.h"\
+	".\libgadu\win32\stdint.h"\
 	".\pthread.h"\
 	".\resource.h"\
 	".\ssl.h"\

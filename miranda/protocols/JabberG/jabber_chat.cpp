@@ -2,7 +2,7 @@
 
 Jabber Protocol Plugin for Miranda IM
 Copyright ( C ) 2002-04  Santithorn Bunchua
-Copyright ( C ) 2005-09  George Hazan
+Copyright ( C ) 2005-07  George Hazan
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -18,7 +18,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-File name      : $URL$
+File name      : $Source: /cvsroot/miranda/miranda/protocols/JabberG/jabber_chat.cpp,v $
 Revision       : $Revision$
 Last change on : $Date$
 Last change by : $Author$
@@ -27,122 +27,124 @@ Last change by : $Author$
 
 #include "jabber.h"
 #include "jabber_iq.h"
+#include "resource.h"
 #include "jabber_caps.h"
 
-#include <m_addcontact.h>
-
-TCHAR xmlnsAdmin[] = _T("http://jabber.org/protocol/muc#admin");
-TCHAR xmlnsOwner[] = _T("http://jabber.org/protocol/muc#owner");
+extern HANDLE hInitChat;
 
 /////////////////////////////////////////////////////////////////////////////////////////
-// Global definitions
+// One string entry dialog
 
-enum {
-	IDM_CANCEL,
-
-	IDM_ROLE, IDM_AFFLTN,
-
-	IDM_CONFIG, IDM_NICK, IDM_DESTROY, IDM_INVITE, IDM_BOOKMARKS, IDM_LEAVE, IDM_TOPIC,
-	IDM_LST_PARTICIPANT, IDM_LST_MODERATOR,
-	IDM_LST_MEMBER, IDM_LST_ADMIN, IDM_LST_OWNER, IDM_LST_BAN,
-
-	IDM_MESSAGE, IDM_SLAP, IDM_VCARD, IDM_INFO, IDM_KICK,
-	IDM_RJID, IDM_RJID_ADD, IDM_RJID_VCARD, IDM_RJID_COPY,
-	IDM_SET_VISITOR, IDM_SET_PARTICIPANT, IDM_SET_MODERATOR,
-	IDM_SET_NONE, IDM_SET_MEMBER, IDM_SET_ADMIN, IDM_SET_OWNER, IDM_SET_BAN,
-	IDM_CPY_NICK, IDM_CPY_TOPIC, IDM_CPY_RJID,
-
-	IDM_LINK0, IDM_LINK1, IDM_LINK2, IDM_LINK3, IDM_LINK4, IDM_LINK5, IDM_LINK6, IDM_LINK7, IDM_LINK8, IDM_LINK9,
+struct JabberEnterStringParams
+{
+	TCHAR* caption;
+	TCHAR* result;
+	size_t resultLen;
 };
 
-struct TRoleOrAffiliationInfo
+static int sttEnterStringResizer(HWND hwndDlg, LPARAM lParam, UTILRESIZECONTROL *urc)
 {
-	int value;
-	int id;
-	TCHAR *title_en;
-	int min_role;
-	int min_affiliation;
-
-	TCHAR *title;
-
-	BOOL check(JABBER_RESOURCE_STATUS *me, JABBER_RESOURCE_STATUS *him)
+	switch (urc->wId)
 	{
-		if (me->affiliation == AFFILIATION_OWNER) return TRUE;
-		if (me == him) return FALSE;
-		if (me->affiliation <= him->affiliation) return FALSE;
-		if (me->role < this->min_role) return FALSE;
-		if (me->affiliation < this->min_affiliation) return FALSE;
+	case IDC_TOPIC:
+		return RD_ANCHORX_LEFT|RD_ANCHORY_TOP|RD_ANCHORX_WIDTH|RD_ANCHORY_HEIGHT;
+	case IDOK:
+	case IDCANCEL:
+		return RD_ANCHORX_RIGHT|RD_ANCHORY_BOTTOM;
+	}
+	return RD_ANCHORX_LEFT|RD_ANCHORY_TOP;
+}
+
+BOOL CALLBACK JabberEnterStringDlgProc( HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam )
+{
+	switch ( msg ) {
+	case WM_INITDIALOG:
+	{
+		//SetWindowPos( hwndDlg, HWND_TOPMOST ,0,0,0,0,SWP_NOSIZE|SWP_NOMOVE );
+		TranslateDialogDefault( hwndDlg );
+		SendMessage(hwndDlg, WM_SETICON, ICON_BIG, (LPARAM)LoadSkinnedIcon(SKINICON_OTHER_RENAME));
+		SendMessage(hwndDlg, WM_SETICON, ICON_SMALL, (LPARAM)LoadSkinnedIcon(SKINICON_OTHER_RENAME));
+		JabberEnterStringParams* params = ( JabberEnterStringParams* )lParam;
+		SetWindowLong( hwndDlg, GWL_USERDATA, ( LONG )params );
+		SetWindowText( hwndDlg, params->caption );
+		SetDlgItemText( hwndDlg, IDC_TOPIC, params->result );
+		SetTimer(hwndDlg, 1000, 50, NULL);
 		return TRUE;
 	}
-	void translate()
+	case WM_TIMER:
 	{
-		this->title = TranslateTS(this->title_en);
+		KillTimer(hwndDlg,1000);
+		EnableWindow(GetParent(hwndDlg), TRUE);
+		return TRUE;
 	}
-};
+	case WM_SIZE:
+	{
+		UTILRESIZEDIALOG urd = {0};
+		urd.cbSize = sizeof(urd);
+		urd.hInstance = hInst;
+		urd.hwndDlg = hwndDlg;
+		urd.lpTemplate = MAKEINTRESOURCEA(IDD_GROUPCHAT_INPUT);
+		urd.pfnResizer = sttEnterStringResizer;
+		CallService(MS_UTILS_RESIZEDIALOG, 0, (LPARAM)&urd);
+		break;
+	}
+	case WM_COMMAND:
+		switch ( LOWORD( wParam )) {
+		case IDOK:
+		{	JabberEnterStringParams* params = ( JabberEnterStringParams* )GetWindowLong( hwndDlg, GWL_USERDATA );
+			GetDlgItemText( hwndDlg, IDC_TOPIC, params->result, params->resultLen );
+			params->result[ params->resultLen-1 ] = 0;
+			EndDialog( hwndDlg, 1 );
+			break;
+		}
+		case IDCANCEL:
+			EndDialog( hwndDlg, 0 );
+			break;
+	}	}
 
-static TRoleOrAffiliationInfo sttAffiliationItems[] =
-{
-	{ AFFILIATION_NONE,		IDM_SET_NONE,			LPGENT("None"),			ROLE_NONE,		AFFILIATION_ADMIN	},
-	{ AFFILIATION_MEMBER,	IDM_SET_MEMBER,			LPGENT("Member"),		ROLE_NONE,		AFFILIATION_ADMIN	},
-	{ AFFILIATION_ADMIN,	IDM_SET_ADMIN,			LPGENT("Admin"),		ROLE_NONE,		AFFILIATION_OWNER	},
-	{ AFFILIATION_OWNER,	IDM_SET_OWNER,			LPGENT("Owner"),		ROLE_NONE,		AFFILIATION_OWNER	},
-};
+	return FALSE;
+}
 
-static TRoleOrAffiliationInfo sttRoleItems[] =
+BOOL JabberEnterString( TCHAR* caption, TCHAR* result, size_t resultLen )
 {
-	{ ROLE_VISITOR,			IDM_SET_VISITOR,		LPGENT("Visitor"),		ROLE_MODERATOR,	AFFILIATION_NONE	},
-	{ ROLE_PARTICIPANT,		IDM_SET_PARTICIPANT,	LPGENT("Participant"),	ROLE_MODERATOR,	AFFILIATION_NONE	},
-	{ ROLE_MODERATOR,		IDM_SET_MODERATOR,		LPGENT("Moderator"),	ROLE_MODERATOR,	AFFILIATION_ADMIN	},
-};
+	JabberEnterStringParams params = { caption, result, resultLen };
+	return DialogBoxParam( hInst, MAKEINTRESOURCE( IDD_GROUPCHAT_INPUT ), GetForegroundWindow(), JabberEnterStringDlgProc, LPARAM( &params ));
+}
+
+BOOL JabberEnterString( TCHAR* result, size_t resultLen )
+{
+	TCHAR *szCaption = mir_tstrdup( result );
+	result[ 0 ] = _T('\0');
+	JabberEnterStringParams params = { szCaption, result, resultLen };
+	BOOL bRetVal = DialogBoxParam( hInst, MAKEINTRESOURCE( IDD_GROUPCHAT_INPUT ), GetForegroundWindow(), JabberEnterStringDlgProc, LPARAM( &params ));
+	mir_free( szCaption );
+	return bRetVal;
+}
 
 /////////////////////////////////////////////////////////////////////////////////////////
 // JabberGcInit - initializes the new chat
 
-static TCHAR* sttStatuses[] = { _T("Visitors"), _T("Participants"), _T("Moderators"), _T("Owners") };
+static TCHAR* sttRoles[] = { _T("Other"), _T("Visitors"), _T("Participants"), _T("Moderators") };
 
-int JabberGcGetStatus(JABBER_GC_AFFILIATION a, JABBER_GC_ROLE r)
+int JabberGcInit( WPARAM wParam, LPARAM lParam )
 {
-	switch (a) {
-	case AFFILIATION_OWNER:		return 3;
-
-	default:
-		switch (r) {
-			case ROLE_MODERATOR:	return 2;
-			case ROLE_PARTICIPANT:	return 1;
-	}	}
-
-	return 0;
-}
-
-int JabberGcGetStatus(JABBER_RESOURCE_STATUS *r)
-{
-	return JabberGcGetStatus(r->affiliation, r->role);
-}
-
-int CJabberProto::JabberGcInit( WPARAM wParam, LPARAM )
-{
-	int i;
 	JABBER_LIST_ITEM* item = ( JABBER_LIST_ITEM* )wParam;
 	GCSESSION gcw = {0};
 	GCEVENT gce = {0};
 
-	// translate string for menus (this can't be done in initializer)
-	for (i = 0; i < SIZEOF(sttAffiliationItems); ++i) sttAffiliationItems[i].translate();
-	for (i = 0; i < SIZEOF(sttRoleItems); ++i) sttRoleItems[i].translate();
-
 	TCHAR* szNick = JabberNickFromJID( item->jid );
 	gcw.cbSize = sizeof(GCSESSION);
 	gcw.iType = GCW_CHATROOM;
-	gcw.pszModule = m_szModuleName;
+	gcw.pszModule = jabberProtoName;
 	gcw.ptszName = szNick;
 	gcw.ptszID = item->jid;
 	gcw.dwFlags = GC_TCHAR;
 	CallServiceSync( MS_GC_NEWSESSION, NULL, (LPARAM)&gcw );
 
-	HANDLE hContact = HContactFromJID( item->jid );
+	HANDLE hContact = JabberHContactFromJID( item->jid );
 	if ( hContact != NULL ) {
 		DBVARIANT dbv;
-		if ( !DBGetContactSettingTString( hContact, m_szModuleName, "MyNick", &dbv )) {
+		if ( !DBGetContactSettingTString( hContact, jabberProtoName, "MyNick", &dbv )) {
 			if ( !lstrcmp( dbv.ptszVal, szNick ))
 				JDeleteSetting( hContact, "MyNick" );
 			else
@@ -155,123 +157,38 @@ int CJabberProto::JabberGcInit( WPARAM wParam, LPARAM )
 
 	item->bChatActive = TRUE;
 
-	GCDEST gcd = { m_szModuleName, NULL, GC_EVENT_ADDGROUP };
+	GCDEST gcd = { jabberProtoName, NULL, GC_EVENT_ADDGROUP };
 	gcd.ptszID = item->jid;
 	gce.cbSize = sizeof(GCEVENT);
 	gce.pDest = &gcd;
 	gce.dwFlags = GC_TCHAR;
-	for (i = SIZEOF(sttStatuses)-1; i >= 0; i-- ) {
-		gce.ptszStatus = TranslateTS( sttStatuses[i] );
+	for ( int i = SIZEOF(sttRoles)-1; i >= 0; i-- ) {
+		gce.ptszStatus = TranslateTS( sttRoles[i] );
 		CallServiceSync( MS_GC_EVENT, NULL, ( LPARAM )&gce );
 	}
 
 	gce.cbSize = sizeof(GCEVENT);
 	gce.pDest = &gcd;
 	gcd.iType = GC_EVENT_CONTROL;
-	CallServiceSync( MS_GC_EVENT, (item->bAutoJoin && m_options.AutoJoinHidden) ? WINDOW_HIDDEN : SESSION_INITDONE, (LPARAM)&gce );
+	CallServiceSync( MS_GC_EVENT, SESSION_INITDONE, (LPARAM)&gce );
 	CallServiceSync( MS_GC_EVENT, SESSION_ONLINE, (LPARAM)&gce );
 	return 0;
 }
 
-void CJabberProto::GcLogCreate( JABBER_LIST_ITEM* item )
+void JabberGcLogCreate( JABBER_LIST_ITEM* item )
 {
 	if ( item->bChatActive )
 		return;
 
-	NotifyEventHooks( m_hInitChat, (WPARAM)item, 0 );
+	NotifyEventHooks( hInitChat, (WPARAM)item, 0 );
 }
 
-void CJabberProto::GcLogShowInformation( JABBER_LIST_ITEM *item, JABBER_RESOURCE_STATUS *user, TJabberGcLogInfoType type )
-{
-	if (!item || !user || (item->bChatActive != 2)) return;
-
-	TCHAR buf[512] = {0};
-
-	switch (type)
-	{
-		case INFO_BAN:
-			if (m_options.GcLogBans)
-			{
-				mir_sntprintf(buf, SIZEOF(buf), TranslateT("User %s in now banned."), user->resourceName);
-			}
-			break;
-		case INFO_STATUS:
-			if (m_options.GcLogStatuses)
-			{
-				if (user->statusMessage && user->statusMessage)
-				{
-					mir_sntprintf(buf, SIZEOF(buf), TranslateT("User %s changed status to %s with message: %s"),
-						user->resourceName,
-						CallService(MS_CLIST_GETSTATUSMODEDESCRIPTION, user->status, GCMDF_TCHAR),
-						user->statusMessage);
-				} else
-				{
-					mir_sntprintf(buf, SIZEOF(buf), TranslateT("User %s changed status to %s"),
-						user->resourceName,
-						CallService(MS_CLIST_GETSTATUSMODEDESCRIPTION, user->status, GCMDF_TCHAR));
-				}
-			}
-			break;
-		case INFO_CONFIG:
-			if (m_options.GcLogConfig)
-			{
-				mir_sntprintf(buf, SIZEOF(buf), TranslateT("Room configuration was changed."));
-			}
-			break;
-		case INFO_AFFILIATION:
-			if (m_options.GcLogAffiliations)
-			{
-				TCHAR *name = NULL;
-				switch (user->affiliation)
-				{
-					case AFFILIATION_NONE:		name = TranslateT("None"); break;
-					case AFFILIATION_MEMBER:	name = TranslateT("Member"); break;
-					case AFFILIATION_ADMIN:		name = TranslateT("Admin"); break;
-					case AFFILIATION_OWNER:		name = TranslateT("Owner"); break;
-					case AFFILIATION_OUTCAST:	name = TranslateT("Outcast"); break;
-				}
-				if (name) mir_sntprintf(buf, SIZEOF(buf), TranslateT("Affiliation of %s was changed to '%s'."), user->resourceName, name);
-			}
-			break;
-		case INFO_ROLE:
-			if (m_options.GcLogRoles)
-			{
-				TCHAR *name = NULL;
-				switch (user->role)
-				{
-					case ROLE_NONE:			name = TranslateT("None"); break;
-					case ROLE_VISITOR:		name = TranslateT("Visitor"); break;
-					case ROLE_PARTICIPANT:	name = TranslateT("Participant"); break;
-					case ROLE_MODERATOR:    name = TranslateT("Moderator"); break;
-				}
-				if (name) mir_sntprintf(buf, SIZEOF(buf), TranslateT("Role of %s was changed to '%s'."), user->resourceName, name);
-			}
-			break;
-	}
-
-	if (*buf)
-	{
-		GCDEST gcd = { m_szModuleName, 0, 0 };
-		gcd.ptszID = item->jid;
-		GCEVENT gce = {0};
-		gce.cbSize = sizeof(GCEVENT);
-		gce.ptszNick = user->resourceName;
-		gce.ptszUID = user->resourceName;
-		gce.ptszText = buf;
-		gce.dwFlags = GC_TCHAR|GCEF_ADDTOLOG;
-		gce.pDest = &gcd;
-		gce.time = time(0);
-		gcd.iType = GC_EVENT_INFORMATION;
-		CallServiceSync( MS_GC_EVENT, NULL, ( LPARAM )&gce );
-	}
-}
-
-void CJabberProto::GcLogUpdateMemberStatus( JABBER_LIST_ITEM* item, const TCHAR* nick, const TCHAR* jid, int action, HXML reason, int nStatusCode )
+void JabberGcLogUpdateMemberStatus( JABBER_LIST_ITEM* item, TCHAR* nick, TCHAR* jid, int action, XmlNode* reason, int nStatusCode )
 {
 	int statusToSet = 0;
-	const TCHAR* szReason = NULL;
-	if ( reason != NULL && xmlGetText( reason ) != NULL )
-		szReason = xmlGetText( reason );
+	TCHAR* szReason = NULL;
+	if ( reason != NULL && reason->text != NULL )
+		szReason = reason->text;
 
 	if ( !szReason ) {
 		if ( nStatusCode == 322 )
@@ -282,9 +199,9 @@ void CJabberProto::GcLogUpdateMemberStatus( JABBER_LIST_ITEM* item, const TCHAR*
 
 	TCHAR* myNick = (item->nick == NULL) ? NULL : mir_tstrdup( item->nick );
 	if ( myNick == NULL )
-		myNick = JabberNickFromJID( m_szJabberJID );
+		myNick = JabberNickFromJID( jabberJID );
 
-	GCDEST gcd = { m_szModuleName, 0, 0 };
+	GCDEST gcd = { jabberProtoName, 0, 0 };
 	gcd.ptszID = item->jid;
 	GCEVENT gce = {0};
 	gce.cbSize = sizeof(GCEVENT);
@@ -318,7 +235,7 @@ void CJabberProto::GcLogUpdateMemberStatus( JABBER_LIST_ITEM* item, const TCHAR*
 					}
 					gce.ptszText = TranslateT( "Moderator" );
 				}
-				gce.ptszStatus = TranslateTS( sttStatuses[JabberGcGetStatus(&JS)] );
+				gce.ptszStatus = TranslateTS( sttRoles[ JS.role ] );
 				gce.bIsMe = ( lstrcmp( nick, myNick ) == 0 );
 				statusToSet = JS.status;
 				break;
@@ -344,15 +261,13 @@ void CJabberProto::GcLogUpdateMemberStatus( JABBER_LIST_ITEM* item, const TCHAR*
 	mir_free( myNick );
 }
 
-void CJabberProto::GcQuit( JABBER_LIST_ITEM* item, int code, HXML reason )
+void JabberGcQuit( JABBER_LIST_ITEM* item, int code, XmlNode* reason )
 {
-	TCHAR *szMessage = NULL;
+	TCHAR* szReason = NULL;
+	if ( reason != NULL && reason->text != NULL )
+		szReason = reason->text;
 
-	const TCHAR* szReason = NULL;
-	if ( reason != NULL && xmlGetText( reason ) != NULL )
-		szReason = xmlGetText( reason );
-
-	GCDEST gcd = { m_szModuleName, NULL, GC_EVENT_CONTROL };
+	GCDEST gcd = { jabberProtoName, NULL, GC_EVENT_CONTROL };
 	gcd.ptszID = item->jid;
 	GCEVENT gce = {0};
 	gce.cbSize = sizeof(GCEVENT);
@@ -361,85 +276,42 @@ void CJabberProto::GcQuit( JABBER_LIST_ITEM* item, int code, HXML reason )
 	gce.dwFlags = GC_TCHAR;
 	gce.pDest = &gcd;
 
-	if ( code != 307 && code != 301 ) {
+	if ( code != 307 ) {
 		CallServiceSync( MS_GC_EVENT, SESSION_TERMINATE, ( LPARAM )&gce );
 		CallServiceSync( MS_GC_EVENT, WINDOW_CLEARLOG, ( LPARAM )&gce );
-
-		DBVARIANT dbvMessage;
-		if (!DBGetContactSettingTString( NULL, m_szModuleName, "GcMsgQuit", &dbvMessage)) {
-			szMessage = NEWTSTR_ALLOCA(dbvMessage.ptszVal);
-			DBFreeVariant(&dbvMessage);
-		}
-		else szMessage = TranslateTS(JABBER_GC_MSG_QUIT);
 	}
 	else {
-		TCHAR* myNick = JabberNickFromJID( m_szJabberJID );
-		GcLogUpdateMemberStatus( item, myNick, NULL, GC_EVENT_KICK, reason );
+		TCHAR* myNick = JabberNickFromJID( jabberJID );
+		JabberGcLogUpdateMemberStatus( item, myNick, NULL, GC_EVENT_KICK, reason );
 		mir_free( myNick );
 		CallServiceSync( MS_GC_EVENT, SESSION_OFFLINE, ( LPARAM )&gce );
 	}
 
-	DBDeleteContactSetting( HContactFromJID( item->jid ), "CList", "Hidden" );
+	DBDeleteContactSetting( JabberHContactFromJID( item->jid ), "CList", "Hidden" );
 	item->bChatActive = FALSE;
 
-	if ( m_bJabberOnline ) {
-		TCHAR szPresenceTo[ 512 ];
-		mir_sntprintf( szPresenceTo, SIZEOF( szPresenceTo ), _T("%s/%s"), item->jid, item->nick );
-
-		m_ThreadInfo->send(
-			XmlNode( _T("presence")) << XATTR( _T("to"), szPresenceTo ) << XATTR( _T("type"), _T("unavailable")) 
-				<< XCHILD( _T("status"), szMessage));
-
-		ListRemove( LIST_CHATROOM, item->jid );
+	if ( jabberOnline ) {
+		XmlNode p( "presence" ); p.addAttr( "to", item->jid ); p.addAttr( "type", "unavailable" );
+		jabberThreadInfo->send( p );
+		JabberListRemove( LIST_CHATROOM, item->jid );
 }	}
 
 /////////////////////////////////////////////////////////////////////////////////////////
 // Context menu hooks
 
-static struct gc_item *sttFindGcMenuItem(GCMENUITEMS *items, DWORD id)
-{
-	for (int i = 0; i < items->nItems; ++i)
-		if (items->Item[i].dwID == id)
-			return items->Item + i;
-	return NULL;
-}
+#define IDM_LEAVE       10
+#define IDM_TOPIC       12
 
-static void sttSetupGcMenuItem(GCMENUITEMS *items, DWORD id, bool disabled)
-{
-	for (int i = 0; i < items->nItems; ++i)
-		if (!id || (items->Item[i].dwID == id))
-			items->Item[i].bDisabled = disabled;
-}
-
-static void sttShowGcMenuItem(GCMENUITEMS *items, DWORD id, int type)
-{
-	for (int i = 0; i < items->nItems; ++i)
-		if (!id || (items->Item[i].dwID == id))
-			items->Item[i].uType = type;
-}
-
-static void sttSetupGcMenuItems(GCMENUITEMS *items, DWORD *ids, bool disabled)
-{
-	for ( ; *ids; ++ids)
-		sttSetupGcMenuItem(items, *ids, disabled);
-}
-
-static void sttShowGcMenuItems(GCMENUITEMS *items, DWORD *ids, int type)
-{
-	for ( ; *ids; ++ids)
-		sttShowGcMenuItem(items, *ids, type);
-}
-
-int CJabberProto::JabberGcMenuHook( WPARAM, LPARAM lParam )
+int JabberGcMenuHook( WPARAM wParam, LPARAM lParam )
 {
 	GCMENUITEMS* gcmi= ( GCMENUITEMS* )lParam;
 	if ( gcmi == NULL )
 		return 0;
 
-	if ( lstrcmpiA( gcmi->pszModule, m_szModuleName ))
+	if ( lstrcmpiA( gcmi->pszModule, jabberProtoName ))
 		return 0;
 
-	JABBER_LIST_ITEM* item = ListGetItemPtr( LIST_CHATROOM, gcmi->pszID );
+	JABBER_LIST_ITEM* item = JabberListGetItemPtr( LIST_CHATROOM, gcmi->pszID );
 	if ( item == NULL )
 		return 0;
 
@@ -450,196 +322,76 @@ int CJabberProto::JabberGcMenuHook( WPARAM, LPARAM lParam )
 		if ( !lstrcmp( p.resourceName, gcmi->pszUID ))  him = &p;
 	}
 
-	if ( gcmi->Type == MENU_ON_LOG )
-	{
-		static TCHAR url_buf[1024] = {0};
-		static struct gc_item sttLogListItems[] = 
-		{
-			{ TranslateT("Change &nickname"),		IDM_NICK,				MENU_ITEM			},
-			{ TranslateT("&Invite a user"),			IDM_INVITE,				MENU_ITEM			},
-			{ NULL,									0,						MENU_SEPARATOR		},
-
-			{ TranslateT("&Roles"),					IDM_ROLE,				MENU_NEWPOPUP		},
-			{ TranslateT("&Participant list"),		IDM_LST_PARTICIPANT,	MENU_POPUPITEM		},
-			{ TranslateT("&Moderator list"),		IDM_LST_MODERATOR,		MENU_POPUPITEM		},
-
-			{ TranslateT("&Affiliations"),			IDM_AFFLTN,				MENU_NEWPOPUP		},
-			{ TranslateT("&Member list"),			IDM_LST_MEMBER,			MENU_POPUPITEM		},
-			{ TranslateT("&Admin list"),			IDM_LST_ADMIN,			MENU_POPUPITEM		},
-			{ TranslateT("&Owner list"),			IDM_LST_OWNER,			MENU_POPUPITEM		},
-			{ NULL,									0,						MENU_POPUPSEPARATOR	},
-			{ TranslateT("Outcast list (&ban)"),	IDM_LST_BAN,			MENU_POPUPITEM		},
-
-			{ TranslateT("&Room options"),			0,						MENU_NEWPOPUP		},
-			{ TranslateT("View/change &topic"),		IDM_TOPIC,				MENU_POPUPITEM		},
-			{ TranslateT("Add to &bookmarks"),		IDM_BOOKMARKS,			MENU_POPUPITEM		},
-			{ TranslateT("&Configure..."),			IDM_CONFIG,				MENU_POPUPITEM		},
-			{ TranslateT("&Destroy room"),			IDM_DESTROY,			MENU_POPUPITEM		},
-
-			{ NULL,									0,						MENU_SEPARATOR		},
-
-			{ TranslateT("Lin&ks"),					0,						MENU_NEWPOPUP		},
-			{ NULL,									IDM_LINK0,				0					},
-			{ NULL,									IDM_LINK1,				0					},
-			{ NULL,									IDM_LINK2,				0					},
-			{ NULL,									IDM_LINK3,				0					},
-			{ NULL,									IDM_LINK4,				0					},
-			{ NULL,									IDM_LINK5,				0					},
-			{ NULL,									IDM_LINK6,				0					},
-			{ NULL,									IDM_LINK7,				0					},
-			{ NULL,									IDM_LINK8,				0					},
-			{ NULL,									IDM_LINK9,				0					},
-
-			{ TranslateT("Copy room &JID"),			IDM_CPY_RJID,			MENU_ITEM			},
-			{ TranslateT("Copy room topic"),		IDM_CPY_TOPIC,			MENU_ITEM			},
-			{ NULL,									0,						MENU_SEPARATOR		},
-			{ TranslateT("&Leave chat session"),	IDM_LEAVE,				MENU_ITEM			},
-		};
+	if ( gcmi->Type == MENU_ON_LOG ) {
+		static struct gc_item sttLogListItems[] = {
+			{ TranslateT( "&Leave chat session" ),    IDM_LEAVE,     MENU_ITEM, FALSE },
+			{ TranslateT( "Add to Bookmarks" ),       IDM_BOOKMARKS, MENU_ITEM, TRUE },
+			{ NULL, 0, MENU_SEPARATOR, FALSE },
+			{ TranslateT( "&Voice List..." ),         IDM_VOICE,     MENU_ITEM, TRUE  },
+			{ TranslateT( "&Ban List..." ),           IDM_BAN,       MENU_ITEM, TRUE  },
+			{ NULL, 0, MENU_SEPARATOR, FALSE },
+			{ TranslateT( "&Member List..." ),        IDM_MEMBER,    MENU_ITEM, TRUE  },
+			{ TranslateT( "Mo&derator List..." ),     IDM_MODERATOR, MENU_ITEM, TRUE  },
+			{ TranslateT( "&Admin List..." ),         IDM_ADMIN,     MENU_ITEM, TRUE  },
+			{ TranslateT( "&Owner List..." ),         IDM_OWNER,     MENU_ITEM, TRUE  },
+			{ NULL, 0, MENU_SEPARATOR, FALSE },
+			{ TranslateT( "Change &Nickname..." ),    IDM_NICK,      MENU_ITEM, FALSE },
+			{ TranslateT( "Set &Topic..." ),          IDM_TOPIC,     MENU_ITEM, FALSE },
+			{ TranslateT( "&Invite a User..." ),      IDM_INVITE,    MENU_ITEM, FALSE },
+			{ TranslateT( "Room Con&figuration..." ), IDM_CONFIG,    MENU_ITEM, TRUE  },
+			{ NULL, 0, MENU_SEPARATOR, FALSE },
+			{ TranslateT( "Destroy Room..." ),        IDM_DESTROY,   MENU_ITEM, TRUE  }};
 
 		gcmi->nItems = sizeof( sttLogListItems ) / sizeof( sttLogListItems[0] );
 		gcmi->Item = sttLogListItems;
-
-		static DWORD sttModeratorItems[] = { IDM_LST_PARTICIPANT, 0 };
-		static DWORD sttAdminItems[] = { IDM_LST_MODERATOR, IDM_LST_MEMBER, IDM_LST_ADMIN, IDM_LST_OWNER, IDM_LST_BAN, 0 };
-		static DWORD sttOwnerItems[] = { IDM_CONFIG, IDM_DESTROY, 0 };
 		
-		sttSetupGcMenuItem(gcmi, 0, FALSE);
+		if ( me != NULL ) {
+				sttLogListItems[3].bDisabled = ( me->role != ROLE_MODERATOR );
 
-		int idx = IDM_LINK0;
-		if (item->itemResource.statusMessage && *item->itemResource.statusMessage)
-		{
-			TCHAR *bufPtr = url_buf;
-			for (TCHAR *p = _tcsstr(item->itemResource.statusMessage, _T("http://")); p && *p; p = _tcsstr(p+1, _T("http://")))
-			{
-				lstrcpyn(bufPtr, p, SIZEOF(url_buf) - (bufPtr - url_buf));
-				sttFindGcMenuItem(gcmi, idx)->pszDesc = bufPtr;
-				sttFindGcMenuItem(gcmi, idx)->uType = MENU_POPUPITEM;
-				for ( ; *bufPtr && !_istspace(*bufPtr); ++bufPtr) ;
-				*bufPtr++ = 0;
+				sttLogListItems[4].bDisabled = sttLogListItems[6].bDisabled = sttLogListItems[7].bDisabled =
+				sttLogListItems[8].bDisabled = sttLogListItems[9].bDisabled = ( me->affiliation < AFFILIATION_ADMIN );
 
-				if (++idx > IDM_LINK9) break;
-			}
+				sttLogListItems[14].bDisabled = sttLogListItems[16].bDisabled = ( me->affiliation != AFFILIATION_OWNER );
 		}
-		for ( ; idx <= IDM_LINK9; ++idx)
-			sttFindGcMenuItem(gcmi, idx)->uType = 0;
+		if ( jabberThreadInfo->jabberServerCaps & JABBER_CAPS_PRIVATE_STORAGE ) sttLogListItems[1].bDisabled = FALSE;
+	}
+	else if ( gcmi->Type == MENU_ON_NICKLIST ) {
+		static struct gc_item sttListItems[] = {
+			{ TranslateT( "&User Details" ),          IDM_VCARD,     MENU_ITEM, FALSE },
+			{ TranslateT( "&Leave chat session" ),    IDM_LEAVE,     MENU_ITEM, FALSE },
+			{ NULL, 0, MENU_SEPARATOR, FALSE },
+			{ TranslateT( "Kick" ),                   IDM_KICK,      MENU_ITEM, TRUE },
+			{ TranslateT( "Ban" ),                    IDM_BAN,       MENU_ITEM, TRUE },
+			{ NULL, 0, MENU_SEPARATOR, FALSE },
+			{ TranslateT( "Toggle &Voice" ),          IDM_VOICE,     MENU_ITEM, TRUE },
+			{ TranslateT( "Toggle Member" ),          IDM_MEMBER,    MENU_ITEM, TRUE },
+			{ TranslateT( "Toggle Moderator" ),       IDM_MODERATOR, MENU_ITEM, TRUE },
+			{ TranslateT( "Toggle Admin" ),           IDM_ADMIN,     MENU_ITEM, TRUE },
+			{ TranslateT( "Toggle Owner" ),           IDM_OWNER,     MENU_ITEM, TRUE }};
 
-		if (!GetAsyncKeyState(VK_CONTROL))
-		{
-			//sttFindGcMenuItem(gcmi, IDM_DESTROY)->uType = 0;
-
-			if (me)
-			{
-				sttSetupGcMenuItems(gcmi, sttModeratorItems, (me->role < ROLE_MODERATOR));
-				sttSetupGcMenuItems(gcmi, sttAdminItems, (me->affiliation < AFFILIATION_ADMIN));
-				sttSetupGcMenuItems(gcmi, sttOwnerItems, (me->affiliation < AFFILIATION_OWNER));
-			}
-			if (m_ThreadInfo->jabberServerCaps & JABBER_CAPS_PRIVATE_STORAGE)
-				sttSetupGcMenuItem(gcmi, IDM_BOOKMARKS, FALSE);
-		} else
-		{
-			//sttFindGcMenuItem(gcmi, IDM_DESTROY)->uType = MENU_ITEM;
-		}
-	} else
-	if ( gcmi->Type == MENU_ON_NICKLIST )
-	{
-		static TCHAR sttRJidBuf[JABBER_MAX_JID_LEN] = {0};
-		static struct gc_item sttListItems[] =
-		{
-			{ TranslateT("&Slap"),					IDM_SLAP,				MENU_ITEM			},	// 0
-			{ TranslateT("&User details"),			IDM_VCARD,				MENU_ITEM			},	// 1
-			{ TranslateT("Member &info"),			IDM_INFO,				MENU_ITEM			},	// 2
-
-			{ sttRJidBuf,							0,						MENU_NEWPOPUP		},	// 3 -> accessed explicitly by index!!!
-			{ TranslateT("User &details"),			IDM_RJID_VCARD,			MENU_POPUPITEM		},
-			{ TranslateT("&Add to roster"),			IDM_RJID_ADD,			MENU_POPUPITEM		},
-			{ TranslateT("&Copy to clipboard"),		IDM_RJID_COPY,			MENU_POPUPITEM		},
-
-			{ NULL,									0,						MENU_SEPARATOR		},
-
-			{ TranslateT("Set &role"),				IDM_ROLE,				MENU_NEWPOPUP		},
-			{ TranslateT("&Visitor"),				IDM_SET_VISITOR,		MENU_POPUPITEM		},
-			{ TranslateT("&Participant"),			IDM_SET_PARTICIPANT,	MENU_POPUPITEM		},
-			{ TranslateT("&Moderator"),				IDM_SET_MODERATOR,		MENU_POPUPITEM		},
-
-			{ TranslateT("Set &affiliation"),		IDM_AFFLTN,				MENU_NEWPOPUP		},
-			{ TranslateT("&None"),					IDM_SET_NONE,			MENU_POPUPITEM		},
-			{ TranslateT("&Member"),				IDM_SET_MEMBER,			MENU_POPUPITEM		},
-			{ TranslateT("&Admin"),					IDM_SET_ADMIN,			MENU_POPUPITEM		},
-			{ TranslateT("&Owner"),					IDM_SET_OWNER,			MENU_POPUPITEM		},
-			{ NULL,									0,						MENU_POPUPSEPARATOR	},
-			{ TranslateT("Outcast (&ban)"),			IDM_SET_BAN,			MENU_POPUPITEM		},
-
-			{ TranslateT("&Kick"),					IDM_KICK,				MENU_ITEM			},
-			{ NULL,									0,						MENU_SEPARATOR		},
-			{ TranslateT("Copy &nickname"),			IDM_CPY_NICK,			MENU_ITEM			},
-			{ TranslateT("Copy real &JID"),			IDM_CPY_RJID,			MENU_ITEM			},
-		};
-
-		gcmi->nItems = SIZEOF(sttListItems);
+		gcmi->nItems = sizeof( sttListItems )/sizeof( sttListItems[0] );
 		gcmi->Item = sttListItems;
 
-		static DWORD sttRJidItems[] = { IDM_RJID_VCARD, IDM_RJID_ADD, IDM_RJID_COPY, 0 };
-
-		if (me && him)
-		{
-			int i;
-			BOOL force = GetAsyncKeyState(VK_CONTROL);
-			sttSetupGcMenuItem(gcmi, 0, FALSE);
-
-			for (i = 0; i < SIZEOF(sttAffiliationItems); ++i)
-			{
-				struct gc_item *item = sttFindGcMenuItem(gcmi, sttAffiliationItems[i].id);
-				item->uType = (him->affiliation == sttAffiliationItems[i].value) ? MENU_POPUPCHECK : MENU_POPUPITEM;
-				item->bDisabled = !(force || sttAffiliationItems[i].check(me, him));
-			}
-			for (i = 0; i < SIZEOF(sttRoleItems); ++i)
-			{
-				struct gc_item *item = sttFindGcMenuItem(gcmi, sttRoleItems[i].id);
-				item->uType = (him->role == sttRoleItems[i].value) ? MENU_POPUPCHECK : MENU_POPUPITEM;
-				item->bDisabled = !(force || sttRoleItems[i].check(me, him));
+		for (int i=3; i<=10; i++) sttListItems[i].bDisabled = TRUE;
+		if ( me != NULL && him != NULL && me != him) {
+			// TODO: an admin should be able to set moderator's role to participant
+			if ( me->role == ROLE_MODERATOR && (me->role > him->role) ) {
+				sttListItems[3].bDisabled =	sttListItems[6].bDisabled = FALSE;
 			}
 
-			if (him->szRealJid && *him->szRealJid)
+			switch( me->affiliation )
 			{
-				mir_sntprintf(sttRJidBuf, SIZEOF(sttRJidBuf), TranslateT("Real &JID: %s"), him->szRealJid);
-				if (TCHAR *tmp = _tcschr(sttRJidBuf, _T('/'))) *tmp = 0;
-
-				if (HANDLE hContact = HContactFromJID(him->szRealJid))
-				{
-					gcmi->Item[3].uType = MENU_HMENU;
-					gcmi->Item[3].dwID = CallService(MS_CLIST_MENUBUILDCONTACT, (WPARAM)hContact, 0);
-					sttShowGcMenuItems(gcmi, sttRJidItems, 0);
-				} else
-				{
-					gcmi->Item[3].uType = MENU_NEWPOPUP;
-					sttShowGcMenuItems(gcmi, sttRJidItems, MENU_POPUPITEM);
-				}
-
-				sttSetupGcMenuItem(gcmi, IDM_CPY_RJID, FALSE);
-			} else
-			{
-				gcmi->Item[3].uType = 0;
-				sttShowGcMenuItems(gcmi, sttRJidItems, 0);
-
-				sttSetupGcMenuItem(gcmi, IDM_CPY_RJID, TRUE);
+				case AFFILIATION_ADMIN:
+					if ( me->affiliation > him->affiliation )
+						sttListItems[4].bDisabled = sttListItems[7].bDisabled = sttListItems[8].bDisabled = FALSE;
+				break;
+				case AFFILIATION_OWNER:
+					if ( me->affiliation > him->affiliation )
+						sttListItems[8].bDisabled = FALSE;
+					sttListItems[4].bDisabled = sttListItems[7].bDisabled = sttListItems[9].bDisabled = sttListItems[10].bDisabled = FALSE;
+				break;
 			}
-
-			if (!force)
-			{
-				if (me->role < ROLE_MODERATOR || (me->affiliation <= him->affiliation))
-					sttSetupGcMenuItem(gcmi, IDM_KICK, TRUE);
-
-				if ((me->affiliation < AFFILIATION_ADMIN) ||
-					(me->affiliation == AFFILIATION_ADMIN) && (me->affiliation <= him->affiliation))
-					sttSetupGcMenuItem(gcmi, IDM_SET_BAN, TRUE);
-			}
-		} else
-		{
-			sttSetupGcMenuItem(gcmi, 0, TRUE);
-			gcmi->Item[2].uType = 0;
-			sttShowGcMenuItems(gcmi, sttRJidItems, 0);
-		}
-	}
+	}	}
 
 	return 0;
 }
@@ -647,366 +399,215 @@ int CJabberProto::JabberGcMenuHook( WPARAM, LPARAM lParam )
 /////////////////////////////////////////////////////////////////////////////////////////
 // Conference invitation dialog
 
-class CGroupchatInviteDlg : public CJabberDlgFancy
+static void FilterList(HWND hwndList)
 {
-	typedef CJabberDlgFancy CSuper;
-
-	struct JabberGcLogInviteDlgJidData
+	for	(HANDLE hContact = (HANDLE)CallService(MS_DB_CONTACT_FINDFIRST, 0, 0);
+			hContact;
+			hContact = (HANDLE)CallService(MS_DB_CONTACT_FINDNEXT, (WPARAM)hContact, 0))
 	{
-		int hItem;
-		TCHAR jid[JABBER_MAX_JID_LEN];
-	};
+		char *proto = (char *)CallService(MS_PROTO_GETCONTACTBASEPROTO, (WPARAM)hContact, 0);
+		if (!proto || lstrcmpA(proto, jabberProtoName) || DBGetContactSettingByte(hContact, proto, "ChatRoom", 0))
+			if (int hItem = SendMessage(hwndList, CLM_FINDCONTACT, (WPARAM)hContact, 0))
+				SendMessage(hwndList, CLM_DELETEITEM, (WPARAM)hItem, 0);
+}	}
+ 
+static void ResetListOptions(HWND hwndList)
+{
+	int i;
+	SendMessage(hwndList,CLM_SETBKBITMAP,0,(LPARAM)(HBITMAP)NULL);
+	SendMessage(hwndList,CLM_SETBKCOLOR,GetSysColor(COLOR_WINDOW),0);
+	SendMessage(hwndList,CLM_SETGREYOUTFLAGS,0,0);
+	SendMessage(hwndList,CLM_SETLEFTMARGIN,4,0);
+	SendMessage(hwndList,CLM_SETINDENT,10,0);
+	SendMessage(hwndList,CLM_SETHIDEEMPTYGROUPS,1,0);
+	SendMessage(hwndList,CLM_SETHIDEOFFLINEROOT,1,0);
+	for ( i=0; i <= FONTID_MAX; i++ )
+		SendMessage( hwndList, CLM_SETTEXTCOLOR, i, GetSysColor( COLOR_WINDOWTEXT ));
+}
 
-	LIST<JabberGcLogInviteDlgJidData> m_newJids;
-	TCHAR *m_room;
+static void InviteUser(TCHAR *room, TCHAR *pUser, TCHAR *text)
+{
+	int iqId = JabberSerialNext();
 
-	CCtrlButton  m_btnInvite;
-	CCtrlEdit    m_txtNewJid;
-	CCtrlMButton m_btnAddJid;
-	CCtrlEdit    m_txtReason;
-	CCtrlClc     m_clc;
+	XmlNode m( "message" ); m.addAttr( "to", room ); m.addAttrID( iqId );
+	XmlNode* x = m.addChild( "x" ); x->addAttr( "xmlns", _T("http://jabber.org/protocol/muc#user"));
+	XmlNode* i = x->addChild( "invite" ); i->addAttr( "to", pUser ); 
+	if ( text[0] != 0 )
+		i->addChild( "reason", text );
+	jabberThreadInfo->send( m );
+}
 
-	void FilterList(CCtrlClc *)
-	{
-		for	(HANDLE hContact = (HANDLE)CallService(MS_DB_CONTACT_FINDFIRST, 0, 0);
-				hContact;
-				hContact = (HANDLE)CallService(MS_DB_CONTACT_FINDNEXT, (WPARAM)hContact, 0))
-		{
-			char *proto = (char *)CallService(MS_PROTO_GETCONTACTBASEPROTO, (WPARAM)hContact, 0);
-			if (lstrcmpA(proto, m_proto->m_szModuleName) || DBGetContactSettingByte(hContact, proto, "ChatRoom", 0))
-				if (HANDLE hItem = m_clc.FindContact(hContact))
-					m_clc.DeleteItem(hItem);
-	}	}
-	 
-	void ResetListOptions(CCtrlClc *)
-	{
-		m_clc.SetBkBitmap(0, NULL);
-		m_clc.SetBkColor(GetSysColor(COLOR_WINDOW));
-		m_clc.SetGreyoutFlags(0);
-		m_clc.SetLeftMargin(4);
-		m_clc.SetIndent(10);
-		m_clc.SetHideEmptyGroups(1);
-		m_clc.SetHideOfflineRoot(1);
-		for (int i=0; i <= FONTID_MAX; i++)
-			m_clc.SetTextColor(i, GetSysColor(COLOR_WINDOWTEXT));
-	}
-
-	void InviteUser(TCHAR *pUser, TCHAR *text)
-	{
-		XmlNode msg( _T("message"));
-		HXML invite = msg << XATTR( _T("to"), m_room ) << XATTRID( m_proto->SerialNext())
-			<< XCHILDNS( _T("x"), _T("http://jabber.org/protocol/muc#user"))
-				<< XCHILD( _T("invite")) << XATTR( _T("to"), pUser );
-		if ( text )
-			invite << XCHILD( _T("reason"), text );
-
-		m_proto->m_ThreadInfo->send( msg );
-	}
-
-public:
-	CGroupchatInviteDlg(CJabberProto* ppro, TCHAR *room) :
-		CJabberDlgFancy(ppro, IDD_GROUPCHAT_INVITE, NULL),
-		m_newJids(1),
-		m_btnInvite(this, IDC_INVITE),
-		m_txtNewJid(this, IDC_NEWJID),
-		m_btnAddJid(this, IDC_ADDJID, ppro->LoadIconEx("addroster"), "Add"),
-		m_txtReason(this, IDC_REASON),
-		m_clc(this, IDC_CLIST)
-	{
-		m_room = mir_tstrdup(room);
-		m_btnAddJid.OnClick = Callback( this, &CGroupchatInviteDlg::OnCommand_AddJid );
-		m_btnInvite.OnClick = Callback( this, &CGroupchatInviteDlg::OnCommand_Invite );
-		m_clc.OnNewContact =
-		m_clc.OnListRebuilt = Callback( this, &CGroupchatInviteDlg::FilterList );
-		m_clc.OnOptionsChanged = Callback( this, &CGroupchatInviteDlg::ResetListOptions );
-	}
-
-	~CGroupchatInviteDlg()
-	{
-		for (int i = 0; i < m_newJids.getCount(); ++i)
-			mir_free(m_newJids[i]);
-		mir_free(m_room);
-	}
-
-	void OnInitDialog()
-	{
-		CSuper::OnInitDialog();
-
-		SetDlgItemText( m_hwnd, IDC_TITLE, m_room );
-		SendMessage( m_hwnd, WM_SETICON, ICON_BIG, ( LPARAM )m_proto->LoadIconEx( "group" ));
-
-		SetWindowLong(GetDlgItem(m_hwnd, IDC_CLIST), GWL_STYLE,
-			GetWindowLong(GetDlgItem(m_hwnd, IDC_CLIST), GWL_STYLE)|CLS_HIDEOFFLINE|CLS_CHECKBOXES|CLS_HIDEEMPTYGROUPS|CLS_USEGROUPS|CLS_GREYALTERNATE|CLS_GROUPCHECKBOXES);
-		SendMessage(GetDlgItem(m_hwnd, IDC_CLIST), CLM_SETEXSTYLE, CLS_EX_DISABLEDRAGDROP|CLS_EX_TRACKSELECT, 0);
-		ResetListOptions(&m_clc);
-		FilterList(&m_clc);
-	}
-
-	void OnCommand_AddJid( CCtrlButton* )
-	{
-		TCHAR buf[JABBER_MAX_JID_LEN];
-		m_txtNewJid.GetText(buf, SIZEOF(buf));
-		m_txtNewJid.SetTextA("");
-
-		HANDLE hContact = m_proto->HContactFromJID(buf);
-		if ( hContact )
-		{
-			int hItem = SendDlgItemMessage( m_hwnd, IDC_CLIST, CLM_FINDCONTACT, (WPARAM)hContact, 0 );
-			if ( hItem )
-				SendDlgItemMessage( m_hwnd, IDC_CLIST, CLM_SETCHECKMARK, hItem, 1 );
-			return;
-		}
-
-		int i;
-		for (i = 0; i < m_newJids.getCount(); ++i)
-			if (!lstrcmp(m_newJids[i]->jid, buf))
-				break;
-		if (i != m_newJids.getCount())
-			return;
-
-		JabberGcLogInviteDlgJidData *jidData = (JabberGcLogInviteDlgJidData *)mir_alloc(sizeof(JabberGcLogInviteDlgJidData));
-		lstrcpy(jidData->jid, buf);
-		CLCINFOITEM cii = {0};
-		cii.cbSize = sizeof(cii);
-		cii.flags = CLCIIF_CHECKBOX;
-		mir_sntprintf(buf, SIZEOF(buf), _T("%s (%s)"), jidData->jid, TranslateT("not on roster"));
-		cii.pszText = buf;
-		jidData->hItem = SendDlgItemMessage(m_hwnd,IDC_CLIST,CLM_ADDINFOITEM,0,(LPARAM)&cii);
-		SendDlgItemMessage(m_hwnd, IDC_CLIST, CLM_SETCHECKMARK, jidData->hItem, 1);
-		m_newJids.insert(jidData);
-	}
-
-	void OnCommand_Invite( CCtrlButton* )
-	{
-		if (!m_room) return;
-
-		TCHAR *text = m_txtReason.GetText();
-		HWND hwndList = GetDlgItem(m_hwnd, IDC_CLIST);
-
-		// invite users from roster
-		for	(HANDLE hContact = (HANDLE)CallService(MS_DB_CONTACT_FINDFIRST, 0, 0);
-				hContact;
-				hContact = (HANDLE)CallService(MS_DB_CONTACT_FINDNEXT, (WPARAM)hContact, 0))
-		{
-			char *proto = (char *)CallService(MS_PROTO_GETCONTACTBASEPROTO, (WPARAM)hContact, 0);
-			if (!lstrcmpA(proto, m_proto->m_szModuleName) && !DBGetContactSettingByte(hContact, proto, "ChatRoom", 0))
-			{
-				if (int hItem = SendMessage(hwndList, CLM_FINDCONTACT, (WPARAM)hContact, 0))
-				{
-					if (SendMessage(hwndList, CLM_GETCHECKMARK, (WPARAM)hItem, 0))
-					{
-						DBVARIANT dbv={0};
-						m_proto->JGetStringT(hContact, "jid", &dbv);
-						if (dbv.ptszVal && ( dbv.type == DBVT_ASCIIZ || dbv.type == DBVT_WCHAR ))
-							InviteUser(dbv.ptszVal, text);
-						JFreeVariant(&dbv);
-					}
-				}
-			}
-		}
-
-		// invite others
-		for (int i = 0; i < m_newJids.getCount(); ++i)
-			if (SendMessage(hwndList, CLM_GETCHECKMARK, (WPARAM)m_newJids[i]->hItem, 0))
-				InviteUser(m_newJids[i]->jid, text);
-
-		mir_free(text);
-		Close();
-	}
+struct JabberGcLogInviteDlgJidData
+{
+	int hItem;
+	TCHAR jid[JABBER_MAX_JID_LEN];
 };
+
+struct JabberGcLogInviteDlgData 
+{
+	JabberGcLogInviteDlgData(const TCHAR *room2):
+		newJids(1), room(mir_tstrdup(room2)) {}
+	~JabberGcLogInviteDlgData()
+	{
+		for (int i = 0; i < newJids.getCount(); ++i)
+			mir_free(newJids[i]);
+		mir_free(room);
+	}
+
+	LIST<JabberGcLogInviteDlgJidData> newJids;
+	TCHAR *room;
+};
+
+static BOOL CALLBACK JabberGcLogInviteDlgProc( HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam )
+{
+	switch ( msg ) {
+	case WM_INITDIALOG:
+		{
+			RECT dlgRect, scrRect;
+			GetWindowRect( hwndDlg, &dlgRect );
+			SystemParametersInfo( SPI_GETWORKAREA, 0, &scrRect, 0 );
+			SetWindowPos( hwndDlg, HWND_TOPMOST, (scrRect.right/2)-(dlgRect.right/2), (scrRect.bottom/2)-(dlgRect.bottom/2), 0, 0, SWP_NOSIZE );
+			TranslateDialogDefault( hwndDlg );
+			SendMessage( hwndDlg, WM_SETICON, ICON_BIG, ( LPARAM )LoadIconEx( "group" ));
+			SetDlgItemText( hwndDlg, IDC_ROOM, ( TCHAR* )lParam );
+
+			SetWindowLong(GetDlgItem(hwndDlg, IDC_CLIST), GWL_STYLE,
+				GetWindowLong(GetDlgItem(hwndDlg, IDC_CLIST), GWL_STYLE)|CLS_HIDEOFFLINE|CLS_CHECKBOXES|CLS_HIDEEMPTYGROUPS|CLS_USEGROUPS|CLS_GREYALTERNATE|CLS_GROUPCHECKBOXES);
+			SendMessage(GetDlgItem(hwndDlg, IDC_CLIST), CLM_SETEXSTYLE, CLS_EX_DISABLEDRAGDROP|CLS_EX_TRACKSELECT, 0);
+			ResetListOptions(GetDlgItem(hwndDlg, IDC_CLIST));
+			FilterList(GetDlgItem(hwndDlg, IDC_CLIST));
+
+			SendDlgItemMessage(hwndDlg, IDC_ADDJID, BUTTONSETASFLATBTN, 0, 0);
+			SendDlgItemMessage(hwndDlg, IDC_ADDJID, BM_SETIMAGE, IMAGE_ICON, (LPARAM)LoadIconEx("addroster"));
+
+			// use new operator to properly construct LIST object
+			JabberGcLogInviteDlgData *data = new JabberGcLogInviteDlgData((TCHAR *)lParam);
+			SetWindowLong(hwndDlg, GWL_USERDATA, (LONG)data);
+		}
+		return TRUE;
+
+	case WM_COMMAND:
+		switch ( LOWORD( wParam )) {
+		case IDC_ADDJID:
+			{
+				TCHAR buf[JABBER_MAX_JID_LEN];
+				GetWindowText(GetDlgItem(hwndDlg, IDC_NEWJID), buf, SIZEOF(buf));
+				SetWindowText(GetDlgItem(hwndDlg, IDC_NEWJID), _T(""));
+
+				if (JabberHContactFromJID(buf))
+					break;
+
+				JabberGcLogInviteDlgData *data = (JabberGcLogInviteDlgData *)GetWindowLong(hwndDlg, GWL_USERDATA);
+
+				int i;
+				for (i = 0; i < data->newJids.getCount(); ++i)
+					if (!lstrcmp(data->newJids[i]->jid, buf))
+						break;
+				if (i != data->newJids.getCount())
+					break;
+
+				JabberGcLogInviteDlgJidData *jidData = (JabberGcLogInviteDlgJidData *)mir_alloc(sizeof(JabberGcLogInviteDlgJidData));
+				lstrcpy(jidData->jid, buf);
+				CLCINFOITEM cii = {0};
+				cii.cbSize = sizeof(cii);
+				cii.flags = CLCIIF_CHECKBOX;
+				mir_sntprintf(buf, SIZEOF(buf), _T("%s (%s)"), jidData->jid, TranslateT("not on roster"));
+				cii.pszText = buf;
+				jidData->hItem = SendDlgItemMessage(hwndDlg,IDC_CLIST,CLM_ADDINFOITEM,0,(LPARAM)&cii);
+				SendDlgItemMessage(hwndDlg, IDC_CLIST, CLM_SETCHECKMARK, jidData->hItem, 1);
+				data->newJids.insert(jidData);
+			}
+			break;
+
+		case IDC_INVITE:
+			{
+				JabberGcLogInviteDlgData *data = (JabberGcLogInviteDlgData *)GetWindowLong(hwndDlg, GWL_USERDATA);
+				TCHAR* room = data->room;
+				if ( room != NULL ) {
+					TCHAR text[256];
+					GetDlgItemText( hwndDlg, IDC_REASON, text, SIZEOF( text ));
+					HWND hwndList = GetDlgItem(hwndDlg, IDC_CLIST);
+
+					// invite users from roster
+					for	(HANDLE hContact = (HANDLE)CallService(MS_DB_CONTACT_FINDFIRST, 0, 0);
+							hContact;
+							hContact = (HANDLE)CallService(MS_DB_CONTACT_FINDNEXT, (WPARAM)hContact, 0)) {
+						char *proto = (char *)CallService(MS_PROTO_GETCONTACTBASEPROTO, (WPARAM)hContact, 0);
+						if ( !lstrcmpA(proto, jabberProtoName) && !DBGetContactSettingByte(hContact, proto, "ChatRoom", 0)) {
+							if (int hItem = SendMessage(hwndList, CLM_FINDCONTACT, (WPARAM)hContact, 0)) {
+								if ( SendMessage(hwndList, CLM_GETCHECKMARK, (WPARAM)hItem, 0 )) {
+									DBVARIANT dbv={0};
+									JGetStringT(hContact, "jid", &dbv);
+									if (dbv.ptszVal && ( dbv.type == DBVT_ASCIIZ || dbv.type == DBVT_WCHAR ))
+										InviteUser(room, dbv.ptszVal, text);
+									JFreeVariant(&dbv);
+					}	}	}	}
+
+					// invite others
+					for (int i = 0; i < data->newJids.getCount(); ++i)
+						if (SendMessage(hwndList, CLM_GETCHECKMARK, (WPARAM)data->newJids[i]->hItem, 0))
+							InviteUser(room, data->newJids[i]->jid, text);
+			}	}
+			// Fall through
+		case IDCANCEL:
+		case IDCLOSE:
+			DestroyWindow( hwndDlg );
+			return TRUE;
+		}
+		break;
+
+	case WM_NOTIFY:
+		if (((LPNMHDR)lParam)->idFrom == IDC_CLIST) {
+			switch (((LPNMHDR)lParam)->code) {
+			case CLN_NEWCONTACT:
+				FilterList(GetDlgItem(hwndDlg,IDC_CLIST));
+				break;
+			case CLN_LISTREBUILT:
+				FilterList(GetDlgItem(hwndDlg,IDC_CLIST));
+				break;
+			case CLN_OPTIONSCHANGED:
+				ResetListOptions(GetDlgItem(hwndDlg,IDC_CLIST));
+				break;
+		}	}
+		break;
+
+	case WM_CLOSE:
+		DestroyWindow( hwndDlg );
+		break;
+
+	case WM_DESTROY:
+		JabberGcLogInviteDlgData *data = (JabberGcLogInviteDlgData *)GetWindowLong(hwndDlg, GWL_USERDATA);
+		delete data;
+		SetWindowLong( hwndDlg, GWL_USERDATA, NULL );
+		break;
+	}
+
+	return FALSE;
+}
 
 /////////////////////////////////////////////////////////////////////////////////////////
 // Context menu processing
 
-void CJabberProto::AdminSet( const TCHAR* to, const TCHAR* ns, const TCHAR* szItem, const TCHAR* itemVal, const TCHAR* var, const TCHAR* varVal )
+static void JabberAdminSet( const TCHAR* to, const char* ns, const char* szItem, const TCHAR* itemVal, const char* var, const TCHAR* varVal )
 {
-	m_ThreadInfo->send( XmlNodeIq( _T("set"), SerialNext(), to ) << XQUERY( ns ) << XCHILD( _T("item")) << XATTR( szItem, itemVal ) << XATTR( var, varVal ));
+	XmlNodeIq iq( "set", NOID, to );
+	XmlNode* query = iq.addQuery( ns );
+	XmlNode* item = query->addChild( "item" ); item->addAttr( szItem, itemVal ); item->addAttr( var, varVal );
+	jabberThreadInfo->send( iq );
 }
 
-void CJabberProto::AdminGet( const TCHAR* to, const TCHAR* ns, const TCHAR* var, const TCHAR* varVal, JABBER_IQ_PFUNC foo )
+static void JabberAdminGet( const TCHAR* to, const char* ns, const char* var, const TCHAR* varVal, JABBER_IQ_PFUNC foo )
 {
-	int id = SerialNext();
-	IqAdd( id, IQ_PROC_NONE, foo );
-	m_ThreadInfo->send( XmlNodeIq( _T("get"), id, to ) << XQUERY( ns ) << XCHILD( _T("item")) << XATTR( var, varVal ));
+	int id = JabberSerialNext();
+	JabberIqAdd( id, IQ_PROC_NONE, foo );
+
+	XmlNodeIq iq( "get", id, to );
+	XmlNode* query = iq.addQuery( ns );
+	XmlNode* item = query->addChild( "item" ); item->addAttr( var, varVal );
+	jabberThreadInfo->send( iq );
 }
 
-// Member info dialog
-struct TUserInfoData
-{
-	CJabberProto* ppro;
-	JABBER_LIST_ITEM *item;
-	JABBER_RESOURCE_STATUS *me, *him;
-};
-
-static LRESULT CALLBACK sttUserInfoDlgProc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam)
-{
-	TUserInfoData *dat = (TUserInfoData *)GetWindowLong(hwndDlg, GWL_USERDATA);
-
-	switch (msg) {
-	case WM_INITDIALOG:
-	{
-		int i, idx;
-		TCHAR buf[256];
-
-		TranslateDialogDefault(hwndDlg);
-
-		SetWindowLong(hwndDlg, GWL_USERDATA, lParam);
-		dat = (TUserInfoData *)lParam;
-
-		SendMessage(hwndDlg, WM_SETICON, ICON_BIG, (LPARAM)dat->ppro->LoadIconEx("group"));
-
-		LOGFONT lf;
-		GetObject((HFONT)SendDlgItemMessage(hwndDlg, IDC_TITLE, WM_GETFONT, 0, 0), sizeof(lf), &lf);
-		lf.lfWeight = FW_BOLD;
-		HFONT hfnt = CreateFontIndirect(&lf);
-		SendDlgItemMessage(hwndDlg, IDC_TITLE, WM_SETFONT, (WPARAM)hfnt, TRUE);
-		SendDlgItemMessage(hwndDlg, IDC_TXT_NICK, WM_SETFONT, (WPARAM)hfnt, TRUE);
-
-		SendDlgItemMessage(hwndDlg, IDC_BTN_AFFILIATION, BM_SETIMAGE, IMAGE_ICON, (LPARAM)LoadSkinnedIcon(SKINICON_EVENT_FILE));
-		SendDlgItemMessage(hwndDlg, IDC_BTN_AFFILIATION, BUTTONSETASFLATBTN, 0, 0);
-		SendDlgItemMessage(hwndDlg, IDC_BTN_AFFILIATION, BUTTONADDTOOLTIP, (WPARAM)"Apply", 0);
-
-		SendDlgItemMessage(hwndDlg, IDC_BTN_ROLE, BM_SETIMAGE, IMAGE_ICON, (LPARAM)LoadSkinnedIcon(SKINICON_EVENT_FILE));
-		SendDlgItemMessage(hwndDlg, IDC_BTN_ROLE, BUTTONSETASFLATBTN, 0, 0);
-		SendDlgItemMessage(hwndDlg, IDC_BTN_ROLE, BUTTONADDTOOLTIP, (WPARAM)"Apply", 0);
-
-		SendDlgItemMessage(hwndDlg, IDC_ICO_STATUS, STM_SETICON, (WPARAM)LoadSkinnedProtoIcon(dat->ppro->m_szModuleName, dat->him->status), 0);
-
-		mir_sntprintf(buf, SIZEOF(buf), _T("%s %s"), TranslateT("Member Info:"), dat->him->resourceName);
-		SetWindowText(hwndDlg, buf);
-
-		mir_sntprintf(buf, SIZEOF(buf), _T("%s %s %s"), dat->him->resourceName, TranslateT("from"), dat->item->jid);
-		SetDlgItemText(hwndDlg, IDC_DESCRIPTION, buf);
-
-		SetDlgItemText(hwndDlg, IDC_TXT_NICK, dat->him->resourceName);
-		SetDlgItemText(hwndDlg, IDC_TXT_JID, dat->him->szRealJid ? dat->him->szRealJid : TranslateT("Real JID not available"));
-		SetDlgItemText(hwndDlg, IDC_TXT_STATUS, dat->him->statusMessage);
-
-		for (i = 0; i < SIZEOF(sttRoleItems); ++i)
-		{
-			if ((sttRoleItems[i].value == dat->him->role) || sttRoleItems[i].check(dat->me, dat->him))
-			{
-				SendDlgItemMessage(hwndDlg, IDC_TXT_ROLE, CB_SETITEMDATA,
-					idx = SendDlgItemMessage(hwndDlg, IDC_TXT_ROLE, CB_ADDSTRING, 0, (LPARAM)sttRoleItems[i].title),
-					sttRoleItems[i].value);
-				if (sttRoleItems[i].value == dat->him->role)
-					SendDlgItemMessage(hwndDlg, IDC_TXT_ROLE, CB_SETCURSEL, idx, 0);
-			}
-		}
-		for (i = 0; i < SIZEOF(sttAffiliationItems); ++i)
-		{
-			if ((sttAffiliationItems[i].value == dat->him->affiliation) || sttAffiliationItems[i].check(dat->me, dat->him))
-			{
-				SendDlgItemMessage(hwndDlg, IDC_TXT_AFFILIATION, CB_SETITEMDATA,
-					idx = SendDlgItemMessage(hwndDlg, IDC_TXT_AFFILIATION, CB_ADDSTRING, 0, (LPARAM)sttAffiliationItems[i].title),
-					sttAffiliationItems[i].value);
-				if (sttAffiliationItems[i].value == dat->him->affiliation)
-					SendDlgItemMessage(hwndDlg, IDC_TXT_AFFILIATION, CB_SETCURSEL, idx, 0);
-			}
-		}
-
-		EnableWindow(GetDlgItem(hwndDlg, IDC_BTN_ROLE), FALSE);
-		EnableWindow(GetDlgItem(hwndDlg, IDC_BTN_AFFILIATION), FALSE);
-
-		break;
-	}
-
-	case WM_COMMAND:
-		if (!dat)break;
-
-		switch ( LOWORD( wParam )) {
-		case IDCANCEL:
-			PostMessage(hwndDlg, WM_CLOSE, 0, 0);
-			break;
-
-		case IDC_TXT_AFFILIATION:
-			if (HIWORD(wParam) == CBN_SELCHANGE)
-			{
-				int value = SendDlgItemMessage(hwndDlg, IDC_TXT_AFFILIATION, CB_GETITEMDATA,
-					SendDlgItemMessage(hwndDlg, IDC_TXT_AFFILIATION, CB_GETCURSEL, 0, 0), 0);
-				EnableWindow(GetDlgItem(hwndDlg, IDC_BTN_AFFILIATION), dat->him->affiliation != value);
-			}
-			break;
-
-		case IDC_BTN_AFFILIATION:
-			{
-				int value = SendDlgItemMessage(hwndDlg, IDC_TXT_AFFILIATION, CB_GETITEMDATA,
-					SendDlgItemMessage(hwndDlg, IDC_TXT_AFFILIATION, CB_GETCURSEL, 0, 0), 0);
-				if (dat->him->affiliation == value) break;
-
-				switch (value)
-				{
-					case AFFILIATION_NONE:
-						dat->ppro->AdminSet(dat->item->jid, xmlnsAdmin, _T("nick"), dat->him->resourceName, _T("affiliation"), _T("none"));
-						break;
-					case AFFILIATION_MEMBER:
-						dat->ppro->AdminSet(dat->item->jid, xmlnsAdmin, _T("nick"), dat->him->resourceName, _T("affiliation"),  _T("member"));
-						break;
-					case AFFILIATION_ADMIN:
-						dat->ppro->AdminSet(dat->item->jid, xmlnsAdmin, _T("nick"), dat->him->resourceName, _T("affiliation"), _T("admin"));
-						break;
-					case AFFILIATION_OWNER:
-						dat->ppro->AdminSet(dat->item->jid, xmlnsAdmin, _T("nick"), dat->him->resourceName, _T("affiliation"), _T("owner"));
-						break;
-				}
-			}
-			break;
-
-		case IDC_TXT_ROLE:
-			if (HIWORD(wParam) == CBN_SELCHANGE)
-			{
-				int value = SendDlgItemMessage(hwndDlg, IDC_TXT_ROLE, CB_GETITEMDATA,
-					SendDlgItemMessage(hwndDlg, IDC_TXT_ROLE, CB_GETCURSEL, 0, 0), 0);
-				EnableWindow(GetDlgItem(hwndDlg, IDC_BTN_ROLE), dat->him->role != value);
-			}
-			break;
-
-		case IDC_BTN_ROLE:
-			{
-				int value = SendDlgItemMessage(hwndDlg, IDC_TXT_ROLE, CB_GETITEMDATA,
-					SendDlgItemMessage(hwndDlg, IDC_TXT_ROLE, CB_GETCURSEL, 0, 0), 0);
-				if (dat->him->role == value) break;
-
-				switch (value) {
-				case ROLE_VISITOR:
-					dat->ppro->AdminSet(dat->item->jid, xmlnsAdmin, _T("nick"), dat->him->resourceName, _T("role"), _T("visitor"));
-					break;
-				case ROLE_PARTICIPANT:
-					dat->ppro->AdminSet(dat->item->jid, xmlnsAdmin, _T("nick"), dat->him->resourceName, _T("role"), _T("participant"));
-					break;
-				case ROLE_MODERATOR:
-					dat->ppro->AdminSet(dat->item->jid, xmlnsAdmin, _T("nick"), dat->him->resourceName, _T("role"), _T("moderator"));
-					break;
-				}
-			}
-			break;
-		}
-		break;
-
-	case WM_CTLCOLORSTATIC:
-		if ( ((HWND)lParam == GetDlgItem(hwndDlg, IDC_WHITERECT)) ||
-			 ((HWND)lParam == GetDlgItem(hwndDlg, IDC_TITLE)) ||
-			 ((HWND)lParam == GetDlgItem(hwndDlg, IDC_DESCRIPTION)) )
-			return (BOOL)GetStockObject(WHITE_BRUSH);
-		return FALSE;
-
-	case WM_CLOSE:
-		DestroyWindow(hwndDlg);
-		break;
-
-	case WM_DESTROY:
-		{
-			TUserInfoData *dat = (TUserInfoData *)GetWindowLong(hwndDlg, GWL_USERDATA);
-			if (!dat)break;
-			SetWindowLong(hwndDlg, GWL_USERDATA, 0);
-			mir_free(dat);
-			break;
-		}
-	}
-	return FALSE;
-}
-
-static void sttNickListHook( CJabberProto* ppro, JABBER_LIST_ITEM* item, GCHOOK* gch )
+static void sttNickListHook( JABBER_LIST_ITEM* item, GCHOOK* gch )
 {
 	JABBER_RESOURCE_STATUS *me = NULL, *him = NULL;
 	for ( int i=0; i < item->resourceCount; i++ ) {
@@ -1018,47 +619,13 @@ static void sttNickListHook( CJabberProto* ppro, JABBER_LIST_ITEM* item, GCHOOK*
 	if ( him == NULL || me == NULL )
 		return;
 
-	// 1 kick per second, prevents crashes...
-	enum { BAN_KICK_INTERVAL = 1000 };
-	static DWORD dwLastBanKickTime = 0;
-
 	TCHAR szBuffer[ 1024 ];
-	TCHAR szTitle[256];
-
-	if ((gch->dwData >= CLISTMENUIDMIN) && (gch->dwData <= CLISTMENUIDMAX))
-	{
-		if (him->szRealJid && *him->szRealJid)
-			if (HANDLE hContact = ppro->HContactFromJID(him->szRealJid))
-				CallService(MS_CLIST_MENUPROCESSCOMMAND, MAKEWPARAM(gch->dwData, MPCF_CONTACTMENU), (LPARAM)hContact);
-		return;
-	}
 
 	switch( gch->dwData ) {
-	case IDM_SLAP:
-	{
-		if ( ppro->m_bJabberOnline ) {
-			DBVARIANT dbv = {0};
-			TCHAR *szMessage = DBGetContactSettingTString( NULL, ppro->m_szModuleName, "GcMsgSlap", &dbv) ?
-				NEWTSTR_ALLOCA(TranslateTS(JABBER_GC_MSG_SLAP)) : dbv.ptszVal;
-
-			TCHAR buf[256];
-			// do not use snprintf to avoid possible problems with % symbol
-			if (TCHAR *p = _tcsstr(szMessage, _T("%s"))) {
-				*p = 0;
-				mir_sntprintf(buf, SIZEOF(buf), _T("%s%s%s"), szMessage, him->resourceName, p+2);
-			} 
-			else lstrcpyn(buf, szMessage, SIZEOF(buf));
-			UnEscapeChatTags( buf );
-
-			ppro->m_ThreadInfo->send( 
-				XmlNode( _T("message")) << XATTR( _T("to"), item->jid ) << XATTR( _T("type"), _T("groupchat"))
-					<< XCHILD( _T("body"), buf ));
-
-			if (szMessage == dbv.ptszVal)
-				DBFreeVariant(&dbv);
-		}
+	case IDM_LEAVE:
+		JabberGcQuit( item, 0, 0 );
 		break;
-	}
+
 	case IDM_VCARD:
 	{
 		HANDLE hContact;
@@ -1066,166 +633,93 @@ static void sttNickListHook( CJabberProto* ppro, JABBER_LIST_ITEM* item, GCHOOK*
 		mir_sntprintf(jsr.jid, SIZEOF(jsr.jid), _T("%s/%s"), item->jid, him->resourceName );
 		jsr.hdr.cbSize = sizeof( JABBER_SEARCH_RESULT );
 		
-		JABBER_LIST_ITEM* item = ppro->ListAdd( LIST_VCARD_TEMP, jsr.jid );
+		JABBER_LIST_ITEM* item = JabberListAdd( LIST_VCARD_TEMP, jsr.jid );
 		item->bUseResource = TRUE;
-		ppro->ListAddResource( LIST_VCARD_TEMP, jsr.jid, him->status, him->statusMessage, him->priority );
+		JabberListAddResource( LIST_VCARD_TEMP, jsr.jid, him->status, him->statusMessage, him->priority );
 
-		hContact = ( HANDLE )CallProtoService( ppro->m_szModuleName, PS_ADDTOLIST, PALF_TEMPORARY, ( LPARAM )&jsr );
+		hContact = ( HANDLE )CallProtoService( jabberProtoName, PS_ADDTOLIST, PALF_TEMPORARY, ( LPARAM )&jsr );
 		CallService( MS_USERINFO_SHOWDIALOG, ( WPARAM )hContact, 0 );
-		break;
-	}
-	case IDM_INFO:
-	{
-		TUserInfoData *dat = (TUserInfoData *)mir_alloc(sizeof(TUserInfoData));
-		dat->me = me;
-		dat->him = him;
-		dat->item = item;
-		dat->ppro = ppro;
-		HWND hwndInfo = CreateDialogParam(hInst, MAKEINTRESOURCE(IDD_GROUPCHAT_INFO), NULL, (DLGPROC)sttUserInfoDlgProc, (LPARAM)dat);
-		ShowWindow(hwndInfo, SW_SHOW);
 		break;
 	}
 	case IDM_KICK:
 	{
-		if ((GetTickCount() - dwLastBanKickTime) > BAN_KICK_INTERVAL)
-		{
-			dwLastBanKickTime = GetTickCount();
-			mir_sntprintf( szBuffer, SIZEOF(szBuffer), _T("%s: "), me->resourceName );
-			mir_sntprintf( szTitle, SIZEOF(szTitle), _T("%s %s"), TranslateT( "Reason to kick" ), him->resourceName );
-			TCHAR *resourceName_copy = mir_tstrdup(him->resourceName); // copy resource name to prevent possible crash if user list rebuilds
-			if ( ppro->EnterString(szBuffer, SIZEOF(szBuffer), szTitle, JES_MULTINE, "gcReason_" ))
-				ppro->m_ThreadInfo->send( 
-					XmlNodeIq( _T("set"), ppro->SerialNext(), item->jid ) << XQUERY( xmlnsAdmin )
-						<< XCHILD( _T("item")) << XATTR( _T("nick"), resourceName_copy ) << XATTR( _T("role"), _T("none"))
-						<< XCHILD( _T("reason"), szBuffer ));
-
-			mir_free(resourceName_copy);
+		mir_sntprintf( szBuffer, SIZEOF(szBuffer), _T("%s %s"), TranslateT( "Reason to kick" ), him->resourceName );
+		if ( JabberEnterString( szBuffer, SIZEOF(szBuffer))) {
+			XmlNodeIq iq( "set", NOID, item->jid );
+			XmlNode* query = iq.addQuery( xmlnsAdmin );
+			XmlNode* item = query->addChild( "item" ); item->addAttr( "nick", him->resourceName ); item->addAttr( "role", "none" );
+			item->addChild( "reason", szBuffer );
+			jabberThreadInfo->send( iq );
 		}
-		dwLastBanKickTime = GetTickCount();
 		break;
 	}
 
-	case IDM_SET_VISITOR:
-		if (him->role != ROLE_VISITOR)
-			ppro->AdminSet(item->jid, xmlnsAdmin, _T("nick"), him->resourceName, _T("role"), _T("visitor"));
-		break;
-	case IDM_SET_PARTICIPANT:
-		if (him->role != ROLE_PARTICIPANT)
-			ppro->AdminSet(item->jid, xmlnsAdmin, _T("nick"), him->resourceName, _T("role"), _T("participant"));
-		break;
-	case IDM_SET_MODERATOR:
-		if (him->role != ROLE_MODERATOR)
-			ppro->AdminSet(item->jid, xmlnsAdmin, _T("nick"), him->resourceName, _T("role"), _T("moderator"));
-		break;
-
-	case IDM_SET_NONE:
-		if (him->affiliation != AFFILIATION_NONE)
-			ppro->AdminSet(item->jid, xmlnsAdmin, _T("nick"), him->resourceName, _T("affiliation"), _T("none"));
-		break;
-	case IDM_SET_MEMBER:
-		if (him->affiliation != AFFILIATION_MEMBER)
-			ppro->AdminSet(item->jid, xmlnsAdmin, _T("nick"), him->resourceName, _T("affiliation"),  _T("member"));
-		break;
-	case IDM_SET_ADMIN:
-		if (him->affiliation != AFFILIATION_ADMIN)
-			ppro->AdminSet(item->jid, xmlnsAdmin, _T("nick"), him->resourceName, _T("affiliation"), _T("admin"));
-		break;
-	case IDM_SET_OWNER:
-		if (him->affiliation != AFFILIATION_OWNER)
-			ppro->AdminSet(item->jid, xmlnsAdmin, _T("nick"), him->resourceName, _T("affiliation"), _T("owner"));
-		break;
-
-	case IDM_SET_BAN:
-		if ((GetTickCount() - dwLastBanKickTime) > BAN_KICK_INTERVAL)
-		{
-			dwLastBanKickTime = GetTickCount();
-			mir_sntprintf( szBuffer, SIZEOF(szBuffer), _T("%s: "), me->resourceName );
-			mir_sntprintf( szTitle, SIZEOF(szTitle), _T("%s %s"), TranslateT( "Reason to ban" ), him->resourceName );
-			TCHAR *resourceName_copy = NEWTSTR_ALLOCA(him->resourceName); // copy resource name to prevent possible crash if user list rebuilds
-			if ( ppro->EnterString(szBuffer, SIZEOF(szBuffer), szTitle, JES_MULTINE, "gcReason_" ))
-				ppro->m_ThreadInfo->send(
-					XmlNodeIq( _T("set"), ppro->SerialNext(), item->jid ) << XQUERY( xmlnsAdmin )
-						<< XCHILD( _T("item")) << XATTR( _T("nick"), resourceName_copy ) << XATTR( _T("affiliation"), _T("outcast"))
-						<< XCHILD( _T("reason"), szBuffer ));
+	case IDM_BAN:
+		mir_sntprintf( szBuffer, SIZEOF(szBuffer), _T("%s %s"), TranslateT( "Reason to ban" ), him->resourceName );
+		if ( JabberEnterString( szBuffer, SIZEOF(szBuffer))) {
+			XmlNodeIq iq( "set", NOID, item->jid );
+			XmlNode* query = iq.addQuery( xmlnsAdmin );
+			XmlNode* item = query->addChild( "item" ); item->addAttr( "nick", him->resourceName ); item->addAttr( "affiliation", "outcast" );
+			item->addChild( "reason", szBuffer );
+			jabberThreadInfo->send( iq );
 		}
-		dwLastBanKickTime = GetTickCount();
 		break;
 
-	case IDM_CPY_NICK:
-		JabberCopyText((HWND)CallService(MS_CLUI_GETHWND, 0, 0), him->resourceName);
-		break;
-	case IDM_RJID_COPY:
-	case IDM_CPY_RJID:
-		JabberCopyText((HWND)CallService(MS_CLUI_GETHWND, 0, 0), him->szRealJid);
+	case IDM_VOICE:
+		JabberAdminSet( item->jid, xmlnsAdmin, "nick", him->resourceName,
+			"role", ( him->role == ROLE_PARTICIPANT ) ? _T("visitor") : _T("participant"));
 		break;
 
-	case IDM_RJID_VCARD:
-		if (him->szRealJid && *him->szRealJid)
-		{
-			HANDLE hContact;
-			JABBER_SEARCH_RESULT jsr;
-			jsr.hdr.cbSize = sizeof( JABBER_SEARCH_RESULT );
-			mir_sntprintf(jsr.jid, SIZEOF(jsr.jid), _T("%s"), him->szRealJid);
-			if (TCHAR *tmp = _tcschr(jsr.jid, _T('/'))) *tmp = 0;
-			
-			JABBER_LIST_ITEM* item = ppro->ListAdd( LIST_VCARD_TEMP, jsr.jid );
-			item->bUseResource = TRUE;
-			ppro->ListAddResource( LIST_VCARD_TEMP, jsr.jid, him->status, him->statusMessage, him->priority );
+	case IDM_MEMBER:
+		JabberAdminSet( item->jid, xmlnsAdmin, "nick", him->resourceName,
+			"affiliation", ( him->affiliation != AFFILIATION_MEMBER ) ? _T("member") : _T("none"));
+	break;
 
-			hContact = ( HANDLE )CallProtoService( ppro->m_szModuleName, PS_ADDTOLIST, PALF_TEMPORARY, ( LPARAM )&jsr );
-			CallService( MS_USERINFO_SHOWDIALOG, ( WPARAM )hContact, 0 );
-			break;
-		}
+	case IDM_MODERATOR:
+		JabberAdminSet( item->jid, xmlnsAdmin, "nick", him->resourceName,
+			"role", ( him->role == ROLE_MODERATOR ) ? _T("participant") : _T("moderator"));
+		break;
 
-	case IDM_RJID_ADD:
-		if (him->szRealJid && *him->szRealJid)
-		{
-			JABBER_SEARCH_RESULT jsr={0};
-			jsr.hdr.cbSize = sizeof( JABBER_SEARCH_RESULT );
-			mir_sntprintf(jsr.jid, SIZEOF(jsr.jid), _T("%s"), him->szRealJid);
-			if (TCHAR *tmp = _tcschr(jsr.jid, _T('/'))) *tmp = 0;
-			jsr.hdr.nick = mir_t2a( jsr.jid );
+	case IDM_ADMIN:
+		JabberAdminSet( item->jid, xmlnsAdmin, "nick", him->resourceName,
+			"affiliation", ( him->affiliation==AFFILIATION_ADMIN )? _T("member") : _T("admin"));
+		break;
 
-			ADDCONTACTSTRUCT acs={0};
-			acs.handleType = HANDLE_SEARCHRESULT;
-			acs.szProto = ppro->m_szModuleName;
-			acs.psr = (PROTOSEARCHRESULT *)&jsr;
-			CallService(MS_ADDCONTACT_SHOW, (WPARAM)CallService(MS_CLUI_GETHWND, 0, 0), (LPARAM)&acs);
-			mir_free( jsr.hdr.nick );
-			break;
-		}
-	}
-}
+	case IDM_OWNER:
+		JabberAdminSet( item->jid, xmlnsAdmin, "nick", him->resourceName,
+			"affiliation", ( him->affiliation==AFFILIATION_OWNER ) ? _T("admin") : _T("owner"));
+		break;
+}	}
 
-static void sttLogListHook( CJabberProto* ppro, JABBER_LIST_ITEM* item, GCHOOK* gch )
+static void sttLogListHook( JABBER_LIST_ITEM* item, GCHOOK* gch )
 {
 	TCHAR szBuffer[ 1024 ];
 	TCHAR szCaption[ 1024 ];
 	szBuffer[ 0 ] = _T('\0');
 
 	switch( gch->dwData ) {
-	case IDM_LST_PARTICIPANT:
-		ppro->AdminGet(gch->pDest->ptszID, xmlnsAdmin, _T("role"), _T("participant"), &CJabberProto::OnIqResultMucGetVoiceList );
+	case IDM_VOICE:
+		JabberAdminGet( gch->pDest->ptszID, xmlnsAdmin, "role", _T("participant"), JabberIqResultMucGetVoiceList );
 		break;
 
-	case IDM_LST_MEMBER:
-		ppro->AdminGet(gch->pDest->ptszID, xmlnsAdmin, _T("affiliation"), _T("member"), &CJabberProto::OnIqResultMucGetMemberList );
+	case IDM_MEMBER:
+		JabberAdminGet( gch->pDest->ptszID, xmlnsAdmin, "affiliation", _T("member"), JabberIqResultMucGetMemberList );
 		break;
 
-	case IDM_LST_MODERATOR:
-		ppro->AdminGet(gch->pDest->ptszID, xmlnsAdmin, _T("role"), _T("moderator"), &CJabberProto::OnIqResultMucGetModeratorList );
+	case IDM_MODERATOR:
+		JabberAdminGet( gch->pDest->ptszID, xmlnsAdmin, "role", _T("moderator"), JabberIqResultMucGetModeratorList );
 		break;
 
-	case IDM_LST_BAN:
-		ppro->AdminGet(gch->pDest->ptszID, xmlnsAdmin, _T("affiliation"), _T("outcast"), &CJabberProto::OnIqResultMucGetBanList );
+	case IDM_BAN:
+		JabberAdminGet( gch->pDest->ptszID, xmlnsAdmin, "affiliation", _T("outcast"), JabberIqResultMucGetBanList );
 		break;
 
-	case IDM_LST_ADMIN:
-		ppro->AdminGet(gch->pDest->ptszID, xmlnsAdmin, _T("affiliation"), _T("admin"), &CJabberProto::OnIqResultMucGetAdminList );
+	case IDM_ADMIN:
+		JabberAdminGet( gch->pDest->ptszID, xmlnsAdmin, "affiliation", _T("admin"), JabberIqResultMucGetAdminList );
 		break;
 
-	case IDM_LST_OWNER:
-		ppro->AdminGet(gch->pDest->ptszID, xmlnsAdmin, _T("affiliation"), _T("owner"), &CJabberProto::OnIqResultMucGetOwnerList );
+	case IDM_OWNER:
+		JabberAdminGet( gch->pDest->ptszID, xmlnsAdmin, "affiliation", _T("owner"), JabberIqResultMucGetOwnerList );
 		break;
 
 	case IDM_TOPIC:
@@ -1244,120 +738,89 @@ static void sttLogListHook( CJabberProto* ppro, JABBER_LIST_ITEM* item, GCHOOK* 
 					break;
 			}
 		}
-		else szTmpBuff[ 0 ] = _T('\0');
-
-		if ( ppro->EnterString( szTmpBuff, SIZEOF(szTmpBuff), szCaption, JES_RICHEDIT, "gcTopic_" ))
-			ppro->m_ThreadInfo->send( 
-				XmlNode( _T("message")) << XATTR( _T("to"), gch->pDest->ptszID ) << XATTR( _T("type"), _T("groupchat"))
-					<< XCHILD( _T("subject"), szTmpBuff ));
-
+		else
+			szTmpBuff[ 0 ] = _T('\0');
+		if ( JabberEnterString( szCaption, szTmpBuff, SIZEOF(szTmpBuff))) {
+			XmlNode msg( "message" ); msg.addAttr( "to", gch->pDest->ptszID ); msg.addAttr( "type", "groupchat" );
+			msg.addChild( "subject", szTmpBuff );
+			jabberThreadInfo->send( msg );
+		}
 		break;
 
 	case IDM_NICK:
 		mir_sntprintf( szCaption, SIZEOF(szCaption), _T("%s %s"), TranslateT( "Change nickname in" ), gch->pDest->ptszID );
 		if ( item->nick )
 			mir_sntprintf( szBuffer, SIZEOF(szBuffer), _T("%s"), item->nick );
-		if ( ppro->EnterString(szBuffer, SIZEOF(szBuffer), szCaption, JES_COMBO, "gcNick_" )) {
-			JABBER_LIST_ITEM* item = ppro->ListGetItemPtr( LIST_CHATROOM, gch->pDest->ptszID );
+		if ( JabberEnterString( szCaption, szBuffer, SIZEOF(szBuffer))) {
+			JABBER_LIST_ITEM* item = JabberListGetItemPtr( LIST_CHATROOM, gch->pDest->ptszID );
 			if ( item != NULL ) {
 				TCHAR text[ 1024 ];
 				mir_sntprintf( text, SIZEOF( text ), _T("%s/%s"), gch->pDest->ptszID, szBuffer );
-				ppro->SendPresenceTo( ppro->m_iStatus == ID_STATUS_INVISIBLE ? ID_STATUS_ONLINE : ppro->m_iStatus, text, NULL );
+				JabberSendPresenceTo( jabberStatus, text, NULL );
 		}	}
 		break;
 
 	case IDM_INVITE:
-	{
-		CGroupchatInviteDlg *dlg = new CGroupchatInviteDlg( ppro, gch->pDest->ptszID );
-		dlg->Show();
-		break;	
-	}
+		CreateDialogParam( hInst, MAKEINTRESOURCE( IDD_GROUPCHAT_INVITE ), NULL, JabberGcLogInviteDlgProc, ( LPARAM )gch->pDest->pszID );
+		break;
 
 	case IDM_CONFIG:
 	{
-		int iqId = ppro->SerialNext();
-		ppro->IqAdd( iqId, IQ_PROC_NONE, &CJabberProto::OnIqResultGetMuc );
+		int iqId = JabberSerialNext();
+		JabberIqAdd( iqId, IQ_PROC_NONE, JabberIqResultGetMuc );
 
-		XmlNodeIq iq( _T("get"), iqId, gch->pDest->ptszID );
-		iq << XQUERY( xmlnsOwner );
-		ppro->m_ThreadInfo->send( iq );
+		XmlNodeIq iq( "get", iqId, gch->pDest->ptszID );
+		XmlNode* query = iq.addQuery( xmlnsOwner );
+		jabberThreadInfo->send( iq );
 		break;
 	}
 	case IDM_BOOKMARKS:
 	{
-		JABBER_LIST_ITEM* item = ppro->ListGetItemPtr( LIST_BOOKMARK, gch->pDest->ptszID );
+		JABBER_LIST_ITEM* item = JabberListGetItemPtr( LIST_BOOKMARK, gch->pDest->ptszID );
 		if ( item == NULL ) {
-			item = ppro->ListGetItemPtr( LIST_CHATROOM, gch->pDest->ptszID );
+			item = JabberListGetItemPtr( LIST_CHATROOM, gch->pDest->ptszID );
 			if (item != NULL) {
 				item->type = _T("conference");
-				HANDLE hContact = ppro->HContactFromJID( item->jid );
+				HANDLE hContact = JabberHContactFromJID( item->jid );
 				item->name = ( TCHAR* )JCallService( MS_CLIST_GETCONTACTDISPLAYNAME, (WPARAM) hContact, GCDNF_TCHAR );
-				ppro->AddEditBookmark( item );
+				JabberAddEditBookmark(NULL, (LPARAM) item);
 			}
 		}
 		break;
 	}
 	case IDM_DESTROY:
 		mir_sntprintf( szBuffer, SIZEOF(szBuffer), _T("%s %s"), TranslateT( "Reason to destroy" ), gch->pDest->ptszID );
-		if ( !ppro->EnterString(szBuffer, SIZEOF(szBuffer), NULL, JES_MULTINE, "gcReason_" ))
+		if ( !JabberEnterString( szBuffer, SIZEOF(szBuffer)))
 			break;
 
-		ppro->m_ThreadInfo->send( 
-			XmlNodeIq( _T("set"), ppro->SerialNext(), gch->pDest->ptszID ) << XQUERY( xmlnsOwner )
-				<< XCHILD( _T("destroy")) << XCHILD( _T("reason"), szBuffer ));
-
-	case IDM_LEAVE:
-		ppro->GcQuit( item, 0, NULL );
-		break;
-
-	case IDM_LINK0: case IDM_LINK1: case IDM_LINK2: case IDM_LINK3: case IDM_LINK4:
-	case IDM_LINK5: case IDM_LINK6: case IDM_LINK7: case IDM_LINK8: case IDM_LINK9:
-	{
-		unsigned idx = IDM_LINK0;
-		for (TCHAR *p = _tcsstr(item->itemResource.statusMessage, _T("http://")); p && *p; p = _tcsstr(p+1, _T("http://")))
-		{
-			if (idx == gch->dwData)
-			{
-				char *bufPtr, *url = mir_t2a(p);
-				for (bufPtr = url; *bufPtr && !isspace(*bufPtr); ++bufPtr) ;
-				*bufPtr++ = 0;
-				CallService(MS_UTILS_OPENURL, 1, (LPARAM)url);
-				mir_free(url);
-				break;
-			}
-
-			if (++idx > IDM_LINK9) break;
+		{	XmlNodeIq iq( "set", NOID, gch->pDest->ptszID );
+			XmlNode* query = iq.addQuery( xmlnsOwner );
+			query->addChild( "destroy" )->addChild( "reason", szBuffer );
+			jabberThreadInfo->send( iq );
 		}
 
+	case IDM_LEAVE:
+		JabberGcQuit( item, 0, 0 );
 		break;
-	}
-
-	case IDM_CPY_RJID:
-		JabberCopyText((HWND)CallService(MS_CLUI_GETHWND, 0, 0), item->jid);
-		break;
-	case IDM_CPY_TOPIC:
-		JabberCopyText((HWND)CallService(MS_CLUI_GETHWND, 0, 0), item->itemResource.statusMessage);
-		break;
-	}
-}
+}	}
 
 /////////////////////////////////////////////////////////////////////////////////////////
 // Sends a private message to a chat user
 
-static void sttSendPrivateMessage( CJabberProto* ppro, JABBER_LIST_ITEM* item, const TCHAR* nick )
+static void sttSendPrivateMessage( JABBER_LIST_ITEM* item, const TCHAR* nick )
 {
 	TCHAR szFullJid[ 256 ];
 	mir_sntprintf( szFullJid, SIZEOF(szFullJid), _T("%s/%s"), item->jid, nick );
-	HANDLE hContact = ppro->DBCreateContact( szFullJid, NULL, TRUE, FALSE );
+	HANDLE hContact = JabberDBCreateContact( szFullJid, NULL, TRUE, FALSE );
 	if ( hContact != NULL ) {
 		for ( int i=0; i < item->resourceCount; i++ ) {
 			if ( _tcsicmp( item->resource[i].resourceName, nick ) == 0 ) {
-				ppro->JSetWord( hContact, "Status", item->resource[i].status );
+				JSetWord( hContact, "Status", item->resource[i].status );
 				break;
 		}	}
 
 		DBWriteContactSettingByte( hContact, "CList", "Hidden", 1 );
-		ppro->JSetStringT( hContact, "Nick", nick );
+		JSetStringT( hContact, "Nick", nick );
 		DBWriteContactSettingDword( hContact, "Ignore", "Mask1", 0 );
 		JCallService( MS_MSG_SENDMESSAGE, ( WPARAM )hContact, 0 );
 }	}
@@ -1365,16 +828,16 @@ static void sttSendPrivateMessage( CJabberProto* ppro, JABBER_LIST_ITEM* item, c
 /////////////////////////////////////////////////////////////////////////////////////////
 // General chat event processing hook
 
-int CJabberProto::JabberGcEventHook(WPARAM, LPARAM lParam)
+int JabberGcEventHook(WPARAM wParam,LPARAM lParam)
 {
 	GCHOOK* gch = ( GCHOOK* )lParam;
 	if ( gch == NULL )
 		return 0;
 
-	if ( lstrcmpiA( gch->pDest->pszModule, m_szModuleName ))
+	if ( lstrcmpiA( gch->pDest->pszModule, jabberProtoName ))
 		return 0;
 
-	JABBER_LIST_ITEM* item = ListGetItemPtr( LIST_CHATROOM, gch->pDest->ptszID );
+	JABBER_LIST_ITEM* item = JabberListGetItemPtr( LIST_CHATROOM, gch->pDest->ptszID );
 	if ( item == NULL )
 		return 0;
 
@@ -1383,31 +846,34 @@ int CJabberProto::JabberGcEventHook(WPARAM, LPARAM lParam)
 		if ( gch->pszText && lstrlen( gch->ptszText) > 0 ) {
 			rtrim( gch->ptszText );
 
-			if ( m_bJabberOnline ) {
-				TCHAR* buf = NEWTSTR_ALLOCA(gch->ptszText);
-				UnEscapeChatTags( buf );
-				m_ThreadInfo->send( 
-					XmlNode( _T("message")) << XATTR( _T("to"), item->jid ) << XATTR( _T("type"), _T("groupchat"))
-						<< XCHILD( _T("body"), buf ));
+			if ( jabberOnline ) {
+				XmlNode m( "message" ); m.addAttr( "to", item->jid ); m.addAttr( "type", "groupchat" );
+				XmlNode* b = m.addChild( "body", gch->ptszText );
+				if ( b->sendText != NULL )
+					UnEscapeChatTags( b->sendText );
+				jabberThreadInfo->send( m );
 		}	}
 		break;
 
 	case GC_USER_PRIVMESS:
-		sttSendPrivateMessage( this, item, gch->ptszUID );
+		sttSendPrivateMessage( item, gch->ptszUID );
 		break;
 
 	case GC_USER_LOGMENU:
-		sttLogListHook( this, item, gch );
+		sttLogListHook( item, gch );
 		break;
 
 	case GC_USER_NICKLISTMENU:
-		sttNickListHook( this, item, gch );
+		sttNickListHook( item, gch );
 		break;
 
 	case GC_USER_CHANMGR:
-		int iqId = SerialNext();
-		IqAdd( iqId, IQ_PROC_NONE, &CJabberProto::OnIqResultGetMuc );
-		m_ThreadInfo->send( XmlNodeIq( _T("get"), iqId, item->jid ) << XQUERY( xmlnsOwner ));
+		int iqId = JabberSerialNext();
+		JabberIqAdd( iqId, IQ_PROC_NONE, JabberIqResultGetMuc );
+
+		XmlNodeIq iq( "get", iqId, item->jid );
+		XmlNode* query = iq.addQuery( xmlnsOwner );
+		jabberThreadInfo->send( iq );
 		break;
 	}
 
@@ -1416,57 +882,57 @@ int CJabberProto::JabberGcEventHook(WPARAM, LPARAM lParam)
 
 /////////////////////////////////////////////////////////////////////////////////////////////////
 
-void CJabberProto::AddMucListItem( JABBER_MUC_JIDLIST_INFO* jidListInfo, TCHAR* str )
+void JabberAddMucListItem( JABBER_MUC_JIDLIST_INFO* jidListInfo, TCHAR* str )
 {
-	const TCHAR* field = _tcschr(str,'@') ? _T("jid") : _T("nick");
+	const char* field = _tcschr(str,'@') ? "jid" : "nick";
 	TCHAR* roomJid = jidListInfo->roomJid;
 
 	switch (jidListInfo->type) {
 	case MUC_VOICELIST:
-		AdminSet( roomJid, xmlnsAdmin, field, str, _T("role"), _T("participant"));
-		AdminGet( roomJid, xmlnsAdmin, _T("role"), _T("participant"), &CJabberProto::OnIqResultMucGetVoiceList);
+		JabberAdminSet( roomJid, xmlnsAdmin, field, str, "role", _T("participant"));
+		JabberAdminGet( roomJid, xmlnsAdmin, "role", _T("participant"), JabberIqResultMucGetVoiceList);
 		break;
 	case MUC_MEMBERLIST:
-		AdminSet( roomJid, xmlnsAdmin, field, str, _T("affiliation"), _T("member"));
-		AdminGet( roomJid, xmlnsAdmin, _T("affiliation"), _T("member"), &CJabberProto::OnIqResultMucGetMemberList);
+		JabberAdminSet( roomJid, xmlnsAdmin, field, str, "affiliation", _T("member"));
+		JabberAdminGet( roomJid, xmlnsAdmin, "affiliation", _T("member"), JabberIqResultMucGetMemberList);
 		break;
 	case MUC_MODERATORLIST:
-		AdminSet( roomJid, xmlnsAdmin, field, str, _T("role"), _T("moderator"));
-		AdminGet( roomJid, xmlnsAdmin, _T("role"), _T("moderator"), &CJabberProto::OnIqResultMucGetModeratorList);
+		JabberAdminSet( roomJid, xmlnsAdmin, field, str, "role", _T("moderator"));
+		JabberAdminGet( roomJid, xmlnsAdmin, "role", _T("moderator"), JabberIqResultMucGetModeratorList);
 		break;
 	case MUC_BANLIST:
-		AdminSet( roomJid, xmlnsAdmin, field, str, _T("affiliation"), _T("outcast"));
-		AdminGet( roomJid, xmlnsAdmin, _T("affiliation"), _T("outcast"), &CJabberProto::OnIqResultMucGetBanList);
+		JabberAdminSet( roomJid, xmlnsAdmin, field, str, "affiliation", _T("outcast"));
+		JabberAdminGet( roomJid, xmlnsAdmin, "affiliation", _T("outcast"), JabberIqResultMucGetBanList);
 		break;
 	case MUC_ADMINLIST:
-		AdminSet( roomJid, xmlnsAdmin, field, str, _T("affiliation"), _T("admin"));
-		AdminGet( roomJid, xmlnsAdmin, _T("affiliation"), _T("admin"), &CJabberProto::OnIqResultMucGetAdminList);
+		JabberAdminSet( roomJid, xmlnsAdmin, field, str, "affiliation", _T("admin"));
+		JabberAdminGet( roomJid, xmlnsAdmin, "affiliation", _T("admin"), JabberIqResultMucGetAdminList);
 		break;
 	case MUC_OWNERLIST:
-		AdminSet( roomJid, xmlnsAdmin, field, str, _T("affiliation"), _T("owner"));
-		AdminGet( roomJid, xmlnsAdmin, _T("affiliation"), _T("owner"), &CJabberProto::OnIqResultMucGetOwnerList);
+		JabberAdminSet( roomJid, xmlnsAdmin, field, str, "affiliation", _T("owner"));
+		JabberAdminGet( roomJid, xmlnsAdmin, "affiliation", _T("owner"), JabberIqResultMucGetOwnerList);
 		break;
 }	}
 
-void CJabberProto::DeleteMucListItem( JABBER_MUC_JIDLIST_INFO* jidListInfo, TCHAR* jid )
+void JabberDeleteMucListItem( JABBER_MUC_JIDLIST_INFO* jidListInfo, TCHAR* jid )
 {
 	TCHAR* roomJid = jidListInfo->roomJid;
 
 	switch ( jidListInfo->type ) {
 	case MUC_VOICELIST:		// change role to visitor ( from participant )
-		AdminSet( roomJid, xmlnsAdmin, _T("jid"), jid, _T("role"), _T("visitor"));
+		JabberAdminSet( roomJid, xmlnsAdmin, "jid", jid, "role", _T("visitor"));
 		break;
 	case MUC_BANLIST:		// change affiliation to none ( from outcast )
 	case MUC_MEMBERLIST:	// change affiliation to none ( from member )
-		AdminSet( roomJid, xmlnsAdmin, _T("jid"), jid, _T("affiliation"), _T("none"));
+		JabberAdminSet( roomJid, xmlnsAdmin, "jid", jid, "affiliation", _T("none"));
 		break;
 	case MUC_MODERATORLIST:	// change role to participant ( from moderator )
-		AdminSet( roomJid, xmlnsAdmin, _T("jid"), jid, _T("role"), _T("participant"));
+		JabberAdminSet( roomJid, xmlnsAdmin, "jid", jid, "role", _T("participant"));
 		break;
 	case MUC_ADMINLIST:		// change affiliation to member ( from admin )
-		AdminSet( roomJid, xmlnsAdmin, _T("jid"), jid, _T("affiliation"), _T("member"));
+		JabberAdminSet( roomJid, xmlnsAdmin, "jid", jid, "affiliation", _T("member"));
 		break;
 	case MUC_OWNERLIST:		// change affiliation to admin ( from owner )
-		AdminSet( roomJid, xmlnsAdmin, _T("jid"), jid, _T("affiliation"), _T("admin"));
+		JabberAdminSet( roomJid, xmlnsAdmin, "jid", jid, "affiliation", _T("admin"));
 		break;
 }	}

@@ -2,7 +2,7 @@
 
 Miranda IM: the free IM client for Microsoft* Windows*
 
-Copyright 2000-2008 Miranda ICQ/IM project, 
+Copyright 2000-2007 Miranda ICQ/IM project, 
 all portions of this codebase are copyrighted to the people 
 listed in contributors.txt.
 
@@ -90,13 +90,6 @@ typedef struct {
 //  Returned HICON SHOULDN'T be destroyed, it is managed by IcoLib
 //
 #define MS_SKIN2_GETICON "Skin2/Icons/GetIcon"
-
-//
-//  Retrieve an icolib handle for icon by name specified in lParam
-//  wParam = (WPARAM)0
-//  lParam = (LPARAM)(char*)pszName
-//
-#define MS_SKIN2_GETICONHANDLE "Skin2/Icons/GetIconHandle"
 
 //
 //  Retrieve HICON with HANDLE specified in lParam

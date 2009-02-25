@@ -24,17 +24,17 @@
 extern yahoo_local_account *ylad;
 extern HANDLE   hYahooNudge;
 
-static void yahoo_send_msg(const char *id, int protocol, const char *msg, int utf8)
+static void yahoo_send_msg(const char *id, const char *msg, int utf8)
 {
 	int buddy_icon = 0;
-	LOG(("[yahoo_send_msg] Who: %s: protocol: %d Msg: '%s', utf: %d", id, protocol, msg, utf8));
+	LOG(("yahoo_send_msg: %s: %s, utf: %d", id, msg, utf8));
 	
 	buddy_icon = (YAHOO_GetDword("AvatarHash", 0) != 0) ? 2: 0;
 	
-	yahoo_send_im(ylad->id, NULL, id, protocol, msg, utf8, buddy_icon);
+	yahoo_send_im(ylad->id, NULL, id, msg, utf8, buddy_icon);
 }
 
-void ext_yahoo_got_im(int id, const char *me, const char *who, int protocol, const char *msg, long tm, int stat, int utf8, int buddy_icon, const char *seqn, int sendn)
+void ext_yahoo_got_im(int id, const char *me, const char *who, const char *msg, long tm, int stat, int utf8, int buddy_icon)
 {
     char 		*umsg;
 	const char	*c = msg;
@@ -60,17 +60,6 @@ void ext_yahoo_got_im(int id, const char *me, const char *who, int protocol, con
 		return;
 	}
 
-	if (YAHOO_GetByte( "IgnoreUnknown", 0 )) {
-		
-		/*
-		 * Check our buddy list to see if we have it there. And if it's not on the list then we don't accept any IMs.
-		 */
-		if (getbuddyH(who) == NULL) {
-			LOG(("Ignoring unknown user messages. User '%s'. Dropping Message.", who));
-			return;
-		}
-	}
-	
 	if (YAHOO_BuddyIgnored(who)) {
 		LOG(("User '%s' on our Ignore List. Dropping Message.", who));
 		return;
@@ -81,11 +70,11 @@ void ext_yahoo_got_im(int id, const char *me, const char *who, int protocol, con
 	
 	while ( *c != '\0') {
 			// Strip the font tag
-        if (!_strnicmp(c,"<font ",6) || !_strnicmp(c,"</font>",6) ||
+        if (!strnicmp(c,"<font ",6) || !strnicmp(c,"</font>",6) ||
 			// strip the fade tag
-			!_strnicmp(c, "<FADE ",6) || !_strnicmp(c,"</FADE>",7) ||
+			!strnicmp(c, "<FADE ",6) || !strnicmp(c,"</FADE>",7) ||
 			// strip the alternate colors tag
-			!_strnicmp(c, "<ALT ",5) || !_strnicmp(c, "</ALT>",6)){ 
+			!strnicmp(c, "<ALT ",5) || !strnicmp(c, "</ALT>",6)){ 
                 while ((*c++ != '>') && (*c != '\0')); 
 		} else
         // strip ANSI color combination
@@ -113,10 +102,7 @@ void ext_yahoo_got_im(int id, const char *me, const char *who, int protocol, con
 	//	:P("\a");
 	
 	ccs.szProtoService = PSR_MESSAGE;
-	ccs.hContact = hContact = add_buddy(who, who, protocol, PALF_TEMPORARY);
-	//YAHOO_SetWord(hContact, "yprotoid", protocol);
-	YAHOO_Set_Protocol(hContact, protocol);
-	
+	ccs.hContact = hContact = add_buddy(who, who, PALF_TEMPORARY);
 	ccs.wParam = 0;
 	ccs.lParam = (LPARAM) &pre;
 	pre.flags = (utf8) ? PREF_UTF : 0;
@@ -133,7 +119,7 @@ void ext_yahoo_got_im(int id, const char *me, const char *who, int protocol, con
 			dbei.cbBlob = 2;
 			if (!CallService(MS_DB_EVENT_GET, (WPARAM)hEvent, (LPARAM)&dbei)) 
 				// got that event, if newer than ts then reset to current time
-				if ((DWORD)tm < dbei.timestamp) tm = (long)time(NULL);
+				if (tm < dbei.timestamp) tm = time(NULL);
 		}
 
 		pre.timestamp = tm;
@@ -147,10 +133,6 @@ void ext_yahoo_got_im(int id, const char *me, const char *who, int protocol, con
     CallService(MS_PROTO_CONTACTISTYPING, (WPARAM) hContact, PROTOTYPE_CONTACTTYPING_OFF);
 	CallService(MS_PROTO_CHAINRECV, 0, (LPARAM) & ccs);
 
-	// ack the message we just got
-	if (seqn)
-		yahoo_send_im_ack(id, who, seqn, sendn);
-	
 	if (buddy_icon < 0) return;
 	
 	//?? Don't generate floods!!
@@ -219,7 +201,7 @@ int YahooSendMessage(WPARAM wParam, LPARAM lParam)
     }
 
 	if (!DBGetContactSettingString(ccs->hContact, yahooProtocolName, YAHOO_LOGINID, &dbv)) {
-		yahoo_send_msg(dbv.pszVal, YAHOO_GetWord(ccs->hContact, "yprotoid", 0), msg, (!bANSI) ? 1 : 0);
+		yahoo_send_msg(dbv.pszVal, msg, (!bANSI) ? 1 : 0);
 		
 		if (!bANSI)
 			mir_free(msg);
@@ -269,7 +251,7 @@ int YahooSendNudge(WPARAM wParam, LPARAM lParam)
     }
 
     if (!DBGetContactSettingString(hContact, yahooProtocolName, YAHOO_LOGINID, &dbv)) {
-        yahoo_send_msg(dbv.pszVal, YAHOO_GetWord(hContact, "yprotoid", 0), "<ding>", 0);
+        yahoo_send_msg(dbv.pszVal, "<ding>", 0);
         DBFreeVariant(&dbv);
 
         mir_forkthread(yahoo_im_sendacksuccess, hContact);

@@ -190,7 +190,6 @@ int DbEventIsShown(DBEVENTINFO * dbei, struct MessageWindowData *dat)
 		case EVENTTYPE_MESSAGE:
 			return 1;
 		case EVENTTYPE_JABBER_CHATSTATES:
-		case EVENTTYPE_JABBER_PRESENCE:
 		case EVENTTYPE_STATUSCHANGE:
 		case EVENTTYPE_FILE:
 			if (dbei->flags & DBEF_READ)
@@ -222,7 +221,7 @@ static char *CreateRTFFromDbEvent(struct MessageWindowData *dat, HANDLE hContact
 		CallService(MS_DB_EVENT_MARKREAD, (WPARAM) hContact, (LPARAM) hDbEvent);
 		CallService(MS_CLIST_REMOVEEVENT, (WPARAM) hContact, (LPARAM) hDbEvent);
 	}
-	else if (dbei.eventType == EVENTTYPE_STATUSCHANGE || dbei.eventType == EVENTTYPE_JABBER_CHATSTATES || dbei.eventType == EVENTTYPE_JABBER_PRESENCE) {
+	else if (dbei.eventType == EVENTTYPE_STATUSCHANGE || dbei.eventType == EVENTTYPE_JABBER_CHATSTATES) {
 		CallService(MS_DB_EVENT_MARKREAD, (WPARAM) hContact, (LPARAM) hDbEvent);
 	}
 	bufferEnd = 0;
@@ -263,7 +262,6 @@ static char *CreateRTFFromDbEvent(struct MessageWindowData *dat, HANDLE hContact
 				}
 				break;
 			case EVENTTYPE_JABBER_CHATSTATES:
-			case EVENTTYPE_JABBER_PRESENCE:
 			case EVENTTYPE_STATUSCHANGE:
 			case EVENTTYPE_FILE:
 				i = LOGICON_MSG_NOTICE;
@@ -291,7 +289,7 @@ static char *CreateRTFFromDbEvent(struct MessageWindowData *dat, HANDLE hContact
 		AppendToBufferWithRTF(&buffer, &bufferEnd, &bufferAlloced, str);
 		showColon = 1;
 	}
-	if (!(g_dat->flags&SMF_HIDENAMES) && dbei.eventType != EVENTTYPE_STATUSCHANGE && dbei.eventType != EVENTTYPE_JABBER_CHATSTATES && dbei.eventType != EVENTTYPE_JABBER_PRESENCE) {
+	if (!(g_dat->flags&SMF_HIDENAMES) && dbei.eventType != EVENTTYPE_STATUSCHANGE && dbei.eventType != EVENTTYPE_JABBER_CHATSTATES) {
 		TCHAR* szName;
 		CONTACTINFO ci;
 		ZeroMemory(&ci, sizeof(ci));
@@ -333,7 +331,6 @@ static char *CreateRTFFromDbEvent(struct MessageWindowData *dat, HANDLE hContact
 			break;
 		}
 		case EVENTTYPE_JABBER_CHATSTATES:
-		case EVENTTYPE_JABBER_PRESENCE:
 		case EVENTTYPE_STATUSCHANGE:
 		{
 			TCHAR *msg, *szName;
@@ -523,21 +520,18 @@ void LoadMsgLogIcons(void)
 	for (i = 0; i < SIZEOF(pLogIconBmpBits); i++) {
 		switch (i) {
 			case LOGICON_MSG_IN:
-				hIcon = LoadImage(g_hInst, MAKEINTRESOURCE(IDI_INCOMING), IMAGE_ICON, 0, 0, 0);
+				hIcon = LoadIcon(g_hInst, MAKEINTRESOURCE(IDI_INCOMING));
 				ImageList_AddIcon(g_hImageList, hIcon);
-				DestroyIcon(hIcon);
 				hIcon = ImageList_GetIcon(g_hImageList, LOGICON_MSG_IN, ILD_NORMAL);
 				break;
 			case LOGICON_MSG_OUT:
-				hIcon = LoadImage(g_hInst, MAKEINTRESOURCE(IDI_OUTGOING), IMAGE_ICON, 0, 0, 0);
+				hIcon = LoadIcon(g_hInst, MAKEINTRESOURCE(IDI_OUTGOING));
 				ImageList_AddIcon(g_hImageList, hIcon);
-				DestroyIcon(hIcon);
 				hIcon = ImageList_GetIcon(g_hImageList, LOGICON_MSG_OUT, ILD_NORMAL);
 				break;
 			case LOGICON_MSG_NOTICE:
-				hIcon = LoadImage(g_hInst, MAKEINTRESOURCE(IDI_NOTICE), IMAGE_ICON, 0, 0, 0);
+				hIcon = LoadIcon(g_hInst, MAKEINTRESOURCE(IDI_NOTICE));
 				ImageList_AddIcon(g_hImageList, hIcon);
-				DestroyIcon(hIcon);
 				hIcon = ImageList_GetIcon(g_hImageList, LOGICON_MSG_NOTICE, ILD_NORMAL);
 				break;
 		}

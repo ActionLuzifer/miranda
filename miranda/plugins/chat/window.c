@@ -22,7 +22,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 extern HBRUSH		hEditBkgBrush;
 extern HBRUSH		hListBkgBrush;
-extern HBRUSH		hListSelectedBkgBrush;
 extern HANDLE		hSendEvent;
 extern HINSTANCE	g_hInst;
 extern HICON		hIcons[30];
@@ -1037,20 +1036,6 @@ static LRESULT CALLBACK NicklistSubclassProc(HWND hwnd, UINT msg, WPARAM wParam,
 		SendMessage(hwnd, WM_LBUTTONUP, wParam, lParam);
 		break;
 
-	case WM_MEASUREITEM:
-		{
-			MEASUREITEMSTRUCT *mis = (MEASUREITEMSTRUCT *) lParam;
-			if (mis->CtlType == ODT_MENU)
-				return CallService(MS_CLIST_MENUMEASUREITEM, wParam, lParam);
-			return FALSE;
-		}
-	case WM_DRAWITEM:
-		{
-			DRAWITEMSTRUCT *dis = (DRAWITEMSTRUCT *) lParam;
-			if (dis->CtlType == ODT_MENU)
-				return CallService(MS_CLIST_MENUDRAWITEM, wParam, lParam);
-			return FALSE;
-		}
 	case WM_CONTEXTMENU:
 		{
 			TVHITTESTINFO hti;
@@ -1162,6 +1147,13 @@ int GetTextPixelSize( TCHAR* pszText, HFONT hFont, BOOL bWidth)
 	ReleaseDC(NULL,hdc);
 	return bWidth ? rc.right - rc.left : rc.bottom - rc.top;
 }
+
+struct FORK_ARG {
+	HANDLE hEvent;
+	void (__cdecl *threadcode)(void*);
+	unsigned (__stdcall *threadcodeex)(void*);
+	void *arg;
+};
 
 static void __cdecl phase2(void * lParam)
 {
@@ -1300,8 +1292,8 @@ BOOL CALLBACK RoomWndProc(HWND hwndDlg,UINT uMsg,WPARAM wParam,LPARAM lParam)
 				int font;
 				int height;
 
-				ih = GetTextPixelSize( _T("AQGglo"), g_Settings.UserListFont,FALSE);
-				ih2 = GetTextPixelSize( _T("AQGglo"), g_Settings.UserListHeadingsFont,FALSE);
+				ih = GetTextPixelSize( _T("AQGglö"), g_Settings.UserListFont,FALSE);
+				ih2 = GetTextPixelSize( _T("AQGglö"), g_Settings.UserListHeadingsFont,FALSE);
 				height = DBGetContactSettingByte(NULL, "Chat", "NicklistRowDist", 12);
 				font = ih > ih2?ih:ih2;
 
@@ -1830,32 +1822,22 @@ END_REMOVETAB:
 	case WM_MEASUREITEM:
 		{
 			MEASUREITEMSTRUCT *mis = (MEASUREITEMSTRUCT *) lParam;
-			if (mis->CtlType == ODT_MENU)
-			{
-				return CallService(MS_CLIST_MENUMEASUREITEM, wParam, lParam);
-			} else
-			{
-				int ih = GetTextPixelSize( _T("AQGgl'"), g_Settings.UserListFont,FALSE);
-				int ih2 = GetTextPixelSize( _T("AQGg'"), g_Settings.UserListHeadingsFont,FALSE);
-				int font = ih > ih2?ih:ih2;
-				int height = DBGetContactSettingByte(NULL, "Chat", "NicklistRowDist", 12);
+			int ih = GetTextPixelSize( _T("AQGgl'"), g_Settings.UserListFont,FALSE);
+			int ih2 = GetTextPixelSize( _T("AQGg'"), g_Settings.UserListHeadingsFont,FALSE);
+			int font = ih > ih2?ih:ih2;
+			int height = DBGetContactSettingByte(NULL, "Chat", "NicklistRowDist", 12);
 
-				// make sure we have space for icon!
-				if (g_Settings.ShowContactStatus)
-					font = font > 16 ? font : 16;
+			// make sure we have space for icon!
+			if (g_Settings.ShowContactStatus)
+				font = font > 16 ? font : 16;
 
-				mis->itemHeight = height > font?height:font;
-			}
+			mis->itemHeight = height > font?height:font;
 			return TRUE;
 		}
 
 	case WM_DRAWITEM:
 		{
 			DRAWITEMSTRUCT *dis = (DRAWITEMSTRUCT *) lParam;
-			if (dis->CtlType == ODT_MENU)
-			{
-				return CallService(MS_CLIST_MENUDRAWITEM, wParam, lParam);
-			} else
 			if (dis->CtlID == IDC_LIST) {
 				HFONT  hFont, hOldFont;
 				HICON  hIcon;
@@ -1880,7 +1862,7 @@ END_REMOVETAB:
 					SetBkMode(dis->hDC, TRANSPARENT);
 
 					if (dis->itemAction == ODA_FOCUS && dis->itemState & ODS_SELECTED)
-						FillRect(dis->hDC, &dis->rcItem, hListSelectedBkgBrush);
+						FillRect(dis->hDC, &dis->rcItem, GetSysColorBrush(COLOR_HIGHLIGHT));
 					else //if (dis->itemState & ODS_INACTIVE)
 						FillRect(dis->hDC, &dis->rcItem, hListBkgBrush);
 
@@ -2043,7 +2025,6 @@ LABEL_SHOWWINDOW:
 		{
 			RECT rc;
 			HWND hwnd = CreateDialogParam(g_hInst, MAKEINTRESOURCE(IDD_FILTER), hwndDlg, FilterWndProc, (LPARAM)si);
-			TranslateDialogDefault(hwnd);
 			GetWindowRect(GetDlgItem(hwndDlg, IDC_FILTER), &rc);
 			SetWindowPos(hwnd, HWND_TOP, rc.left-85, (IsWindowVisible(GetDlgItem(hwndDlg, IDC_FILTER))||IsWindowVisible(GetDlgItem(hwndDlg, IDC_BOLD)))?rc.top-206:rc.top-186, 0, 0, SWP_NOSIZE|SWP_SHOWWINDOW);
 		}
@@ -2502,12 +2483,12 @@ LABEL_SHOWWINDOW:
 
 		case IDC_SMILEY:
 			{
-				SMADD_SHOWSEL3 smaddInfo;
+				SMADD_SHOWSEL smaddInfo;
 				RECT rc;
 
 				GetWindowRect(GetDlgItem(hwndDlg, IDC_SMILEY), &rc);
 
-				smaddInfo.cbSize = sizeof(SMADD_SHOWSEL3);
+				smaddInfo.cbSize = sizeof(SMADD_SHOWSEL);
 				smaddInfo.hwndTarget = GetDlgItem(hwndDlg, IDC_MESSAGE);
 				smaddInfo.targetMessage = EM_REPLACESEL;
 				smaddInfo.targetWParam = TRUE;
@@ -2515,8 +2496,6 @@ LABEL_SHOWWINDOW:
 				smaddInfo.Direction = 3;
 				smaddInfo.xPosition = rc.left+3;
 				smaddInfo.yPosition = rc.top-1;
-				smaddInfo.hContact = si->hContact;
-				smaddInfo.hwndParent = hwndDlg;
 
 				if (SmileyAddInstalled)
 					CallService(MS_SMILEYADD_SHOWSELECTION, 0, (LPARAM) &smaddInfo);

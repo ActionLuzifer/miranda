@@ -19,7 +19,7 @@
         />
     </dependentAssembly>
 </dependency>
-  <dependency>
+<dependency>
     <dependentAssembly>
         <assemblyIdentity
             type="win32"

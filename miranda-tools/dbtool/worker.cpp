@@ -28,24 +28,21 @@ int WorkFinalTasks(int firstTime);
 
 extern HANDLE hEventRun,hEventAbort;
 extern int errorCount;
-time_t ts;
 DBHeader dbhdr;
 DWORD spaceProcessed,sourceFileSize;
-DWORD spaceUsed, sp;
-
+DWORD spaceUsed;
 static int (*Workers[6])(int)=
 	{WorkInitialChecks,WorkModuleChain,WorkUser,WorkContactChain,WorkAggressive,WorkFinalTasks};
 
 void __cdecl WorkerThread(void *unused)
 {
 	int task,ret,firstTime;
-	ts=time(NULL);
+	DWORD sp=0;
 
 	AddToStatus(STATUS_MESSAGE,TranslateT("Database worker thread activated"));
 	SetFilePointer(opts.hFile,0,NULL,FILE_BEGIN);
-	spaceUsed=1; spaceProcessed=0; sp=0;
+	spaceUsed=1; spaceProcessed=0;
 	firstTime=0;
-
 	for(task=0;;) {
 		if (spaceProcessed/(spaceUsed/1000+1) > sp) {
 			sp = spaceProcessed/(spaceUsed/1000+1);
@@ -60,11 +57,8 @@ void __cdecl WorkerThread(void *unused)
 		firstTime=0;
 		if(ret==ERROR_NO_MORE_ITEMS) {
 			if(++task==sizeof(Workers)/sizeof(Workers[0])) {
-				AddToStatus(STATUS_MESSAGE,TranslateT("Elapsed time: %d sec"), time(NULL)-ts);
-				if(errorCount) 
-					AddToStatus(STATUS_SUCCESS,TranslateT("All tasks completed but with errors (%d)"),errorCount);
-				else 
-					AddToStatus(STATUS_SUCCESS,TranslateT("All tasks completed successfully"));
+				if(errorCount) AddToStatus(STATUS_SUCCESS,TranslateT("All tasks completed but with %d error%s"),errorCount,errorCount==1?_T(""):TranslateT("s"));
+				else AddToStatus(STATUS_SUCCESS,TranslateT("All tasks completed successfully"));
 				break;
 			}
 			firstTime=1;
