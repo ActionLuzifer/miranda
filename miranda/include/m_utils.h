@@ -2,7 +2,7 @@
 
 Miranda IM: the free IM client for Microsoft* Windows*
 
-Copyright 2000-2008 Miranda ICQ/IM project,
+Copyright 2000-2007 Miranda ICQ/IM project,
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
 
@@ -23,8 +23,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #ifndef M_UTILS_H__
 #define M_UTILS_H__ 1
-
-#include <stdio.h>
 
 #if !defined(M_SYSTEM_H__)
 #include "m_system.h"
@@ -308,47 +306,10 @@ __inline static int Utils_RestoreWindowPositionNoMove(HWND hwnd,HANDLE hContact,
 //Always returns 0
 #define MS_UTILS_GETRANDOM "Utils/GetRandom"
 
-//Replace variables in text
-//wParam=(char*/TCHAR*/WCHAR*)string (depends on RVF_UNICODE/RVF_TCHAR flag)
-//lParam=(REPLACEVARSDATA *) data about variables, item with key=0 terminates the list
-//returns new string, use mir_free to destroy
-typedef struct
-{
-	union
-	{
-		TCHAR *lptzKey;
-		char *lpszKey;
-		WCHAR *lpwzKey;
-	};
-	union
-	{
-		TCHAR *lptzValue;
-		char *lpszValue;
-		WCHAR *lpwzValue;
-	};
-} REPLACEVARSARRAY;
-
-typedef struct
-{
-	int cbSize;
-	DWORD dwFlags;
-	HANDLE hContact;
-	REPLACEVARSARRAY *variables;
-} REPLACEVARSDATA;
-
-#define RVF_UNICODE	1
 #ifdef _UNICODE
-	#define RVF_TCHAR	RVF_UNICODE
-#else
-	#define RVF_TCHAR	0
-#endif
-
-#define MS_UTILS_REPLACEVARS "Utils/ReplaceVars"
-
-#ifdef _UNICODE
-	#define MS_UTILS_PATHTORELATIVEW  "Utils/PathToRelativeW"
-	#define MS_UTILS_PATHTOABSOLUTEW  "Utils/PathToAbsoluteW"
-	#define MS_UTILS_CREATEDIRTREEW   "Utils/CreateDirTreeW"
+	#define MS_UTILS_PATHTORELATIVEW "Utils/PathToRelativeW"
+	#define MS_UTILS_PATHTOABSOLUTEW "Utils/PathToAbsoluteW"
+	#define MS_UTILS_CREATEDIRTREEW "Utils/CreateDirTreeW"
 
 	#define MS_UTILS_PATHTORELATIVET MS_UTILS_PATHTORELATIVEW
 	#define MS_UTILS_PATHTOABSOLUTET MS_UTILS_PATHTOABSOLUTEW

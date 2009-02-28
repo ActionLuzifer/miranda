@@ -813,7 +813,7 @@ FreeImage_GetLockedPageNumbers(FIMULTIBITMAP *bitmap, int *pages, int *count) {
 		MULTIBITMAPHEADER *header = FreeImage_GetMultiBitmapHeader(bitmap);
 
 		if ((pages == NULL) || (*count == 0)) {
-			*count = (int)header->locked_pages.size();
+			*count = header->locked_pages.size();
 		} else {
 			int c = 0;
 

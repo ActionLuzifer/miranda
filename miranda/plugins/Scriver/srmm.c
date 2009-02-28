@@ -23,14 +23,17 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 #include "commonheaders.h"
 
-int OnLoadModule(void);
-int OnUnloadModule(void);
+int LoadSendRecvMessageModule(void);
+int SplitmsgShutdown(void);
+extern void Chat_Load(PLUGINLINK *link);
+extern void Chat_Unload();
 
-struct MM_INTERFACE mmi;
+struct MM_INTERFACE memoryManagerInterface;
 struct UTF8_INTERFACE utfi;
 
 PLUGINLINK *pluginLink;
 HINSTANCE g_hInst;
+int bNewDbApi = FALSE;
 
 PLUGININFOEX pluginInfo = {
 	sizeof(PLUGININFOEX),
@@ -39,14 +42,14 @@ PLUGININFOEX pluginInfo = {
 #else
 	"Scriver",
 #endif
-	PLUGIN_MAKE_VERSION(2, 8, 0, 27),
+	PLUGIN_MAKE_VERSION(2, 7, 4, 0),
 	"Scriver - send and receive instant messages",
 	"Miranda IM Development Team",
 	"the_leech@users.berlios.de",
 	"Copyright © 2000-2008 Miranda IM Project",
 	"http://www.miranda-im.org",
 	UNICODE_AWARE,
-	0,
+	DEFMOD_SRMESSAGE,            // replace internal version (if any)
 #ifdef _UNICODE
 	{0x84636f78, 0x2057, 0x4302, { 0x8a, 0x65, 0x23, 0xa1, 0x6d, 0x46, 0x84, 0x4c }} //{84636F78-2057-4302-8A65-23A16D46844C}
 #else
@@ -63,7 +66,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 __declspec(dllexport)
 	 PLUGININFOEX *MirandaPluginInfoEx(DWORD mirandaVersion)
 {
-	if (mirandaVersion < PLUGIN_MAKE_VERSION(0, 8, 0, 0))
+	if (mirandaVersion < PLUGIN_MAKE_VERSION(0, 7, 0, 40))
 		return NULL;
 	return &pluginInfo;
 }
@@ -83,12 +86,16 @@ int __declspec(dllexport) Load(PLUGINLINK * link)
 	mir_getMMI( &mmi );
 	mir_getUTFI( &utfi );
 
+	if ( ServiceExists( MS_DB_EVENT_GETTEXT ))
+		bNewDbApi = TRUE;
 	InitSendQueue();
-	return OnLoadModule();
+	Chat_Load(link);
+	return LoadSendRecvMessageModule();
 }
 
 int __declspec(dllexport) Unload(void)
 {
+	Chat_Unload();
 	DestroySendQueue();
-	return OnUnloadModule();
+	return SplitmsgShutdown();
 }

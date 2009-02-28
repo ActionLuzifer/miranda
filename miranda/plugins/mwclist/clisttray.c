@@ -86,8 +86,11 @@ static int BuildTrayMenu(WPARAM wParam,LPARAM lParam)
 {
 	int tick;
 	HMENU hMenu;
-	ListParam param = { 0 };
+	ListParam param;
+
+	memset(&param,0,sizeof(param));
 	param.MenuObjectHandle=(int)hTrayMenuObject;
+	param.rootlevel=-1;
 
 	//hMenu=hMainMenu;
 	hMenu=CreatePopupMenu();

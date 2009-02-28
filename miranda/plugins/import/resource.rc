@@ -357,12 +357,12 @@ BEGIN
             VALUE "Comments", "Licensed under the terms of the GNU General Public License"
             VALUE "CompanyName", " "
             VALUE "FileDescription", "Miranda IM Import Plugin"
-            VALUE "FileVersion", "0.8.0.0"
+            VALUE "FileVersion", "0.7.2.0"
             VALUE "InternalName", "import"
             VALUE "LegalCopyright", "Copyright © 2000-2007,  Martin Öberg, Richard Hughes, Dmitry Kuzkin, George Hazan"
             VALUE "OriginalFilename", "import.dll"
             VALUE "ProductName", "Miranda IM"
-            VALUE "ProductVersion", "0.8.0.0"
+            VALUE "ProductVersion", "0.7.2.0"
         END
     END
     BLOCK "VarFileInfo"

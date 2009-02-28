@@ -2,10 +2,10 @@
 //                ICQ plugin for Miranda Instant Messenger
 //                ________________________________________
 // 
-// Copyright © 2000-2001 Richard Hughes, Roland Rabien, Tristan Van de Vreede
-// Copyright © 2001-2002 Jon Keating, Richard Hughes
-// Copyright © 2002-2004 Martin Öberg, Sam Kothari, Robert Rainwater
-// Copyright © 2004-2009 Joe Kucera
+// Copyright © 2000,2001 Richard Hughes, Roland Rabien, Tristan Van de Vreede
+// Copyright © 2001,2002 Jon Keating, Richard Hughes
+// Copyright © 2002,2003,2004 Martin Öberg, Sam Kothari, Robert Rainwater
+// Copyright © 2004,2005,2006,2007 Joe Kucera
 // 
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -45,9 +45,26 @@ extern BYTE hashEmptyAvatar[9];
 #define AVATAR_HASH_FLASH   0x08
 #define AVATAR_HASH_PHOTO   0x0C
 
-int  DetectAvatarFormat(const char *szFile);
+void handleAvatarContactHash(DWORD dwUIN, char* szUID, HANDLE hContact, unsigned char* pHash, int nHashLen, WORD wOldStatus);
+
+char* loadMyAvatarFileName();
+void storeMyAvatarFileName(char* szFile);
+
+void GetFullAvatarFileName(int dwUin, char* szUid, int dwFormat, char* pszDest, int cbLen);
+void GetAvatarFileName(int dwUin, char* szUid, char* pszDest, int cbLen);
 void AddAvatarExt(int dwFormat, char* pszDest);
 
-BYTE* calcMD5HashOfFile(const char *szFile);
+int DetectAvatarFormat(char* szFile);
+
+int IsAvatarSaved(HANDLE hContact, char* pHash, int nHashLen);
+
+int GetAvatarData(HANDLE hContact, DWORD dwUin, char* szUid, char* hash, unsigned int hashlen, char* file);
+int SetAvatarData(HANDLE hContact, WORD wRef, char* data, unsigned int datalen);
+
+void StartAvatarThread(HANDLE hConn, char* cookie, WORD cookieLen);
+void StopAvatarThread();
+
+void InitAvatars();
+
 
 #endif /* __ICQ_AVATAR_H */

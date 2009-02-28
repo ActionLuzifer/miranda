@@ -120,7 +120,7 @@ typedef struct tagCLISTFrame {
 	HWND hWnd ;
 	HICON hIcon;
 	int align;	//al flags below
-	union {
+	union _tagMinSize{
 		int height;
 		int minSize;   //the actual meaning depends from type of frame
 	};
@@ -169,7 +169,7 @@ typedef struct tagCLISTFrame {
 #define FU_FMPOS			4 //update Frame position
 
 #define FO_FLAGS		0x0001 //return set of F_VISIBLE,F_SHOWTB,F_UNCOLLAPSED,F_LOCKED,F_NOBORDER,F_SHOWTBTIP
-#define FO_NAME			0x0002 //Change m_cacheTName
+#define FO_NAME			0x0002 //Change name
 #define FO_TBNAME		0x0003 //Change TB caption
 #define FO_TBSTYLE		0x0004 //Change TB style
 #define FO_TBEXSTYLE	0x0005 //Change TB exstyle
@@ -231,45 +231,39 @@ typedef struct tagCLISTFrame {
 //////////////////////////////////////////////////////////////////////////
 //shows the frame if it is hidden,
 //hides the frame if it is shown
-//wParam = FrameId
-//lParam = Frame number (can be shown in profile in CLUIFrames key)
+//wParam=FrameId
+//lParam=0
 //returns 0 on success, -1 on failure
-//note that Frame number will be taken only if wParam == 0 
 #define MS_CLIST_FRAMES_SHFRAME				"CListFrames/SHFrame"
 
 //////////////////////////////////////////////////////////////////////////
 //shows the frame titlebar if it is hidden,
 //hides the frame titlebar if it is shown
 //wParam=FrameId
-//lParam = Frame number (can be shown in profile in CLUIFrames key)
+//lParam=0
 //returns 0 on success, -1 on failure
-//note that Frame number will be taken only if wParam == 0 
 #define MS_CLIST_FRAMES_SHFRAMETITLEBAR		"CListFrame/SHFrameTitleBar"
 
 //////////////////////////////////////////////////////////////////////////
 //locks the frame if it is unlocked,
 //unlock the frame if it is locked
 //wParam=FrameId
-//lParam = Frame number (can be shown in profile in CLUIFrames key)
+//lParam=0
 //returns 0 on success, -1 on failure
-//note that Frame number will be taken only if wParam == 0 
 #define MS_CLIST_FRAMES_ULFRAME				"CListFrame/ULFrame"
 
 //////////////////////////////////////////////////////////////////////////
 //collapses the frame if it is uncollapsed,
 //uncollapses the frame if it is collapsed
 //wParam=FrameId
-//lParam = Frame number (can be shown in profile in CLUIFrames key)
+//lParam=0
 //returns 0 on success, -1 on failure
-//note that Frame number will be taken only if wParam == 0 
 #define MS_CLIST_FRAMES_UCOLLFRAME			"CListFrame/UCOLLFrame"
 
 //////////////////////////////////////////////////////////////////////////
 //trigger border flags
 //wparam=frameid
-//lParam = Frame number (can be shown in profile in CLUIFrames key)
-//returns 0 on success, -1 on failure
-//note that Frame number will be taken only if wParam == 0 
+//lparam=0
 #define MS_CLIST_FRAMES_SETUNBORDER			"CListFrame/SetUnBorder"
 
 //////////////////////////////////////////////////////////////////////////

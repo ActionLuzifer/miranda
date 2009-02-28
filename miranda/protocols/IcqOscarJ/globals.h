@@ -5,7 +5,7 @@
 // Copyright © 2000-2001 Richard Hughes, Roland Rabien, Tristan Van de Vreede
 // Copyright © 2001-2002 Jon Keating, Richard Hughes
 // Copyright © 2002-2004 Martin Öberg, Sam Kothari, Robert Rainwater
-// Copyright © 2004-2009 Joe Kucera
+// Copyright © 2004-2008 Joe Kucera
 // 
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -40,26 +40,48 @@
 
 typedef char uid_str[MAX_PATH];
 
-// from init.cpp
-extern HINSTANCE hInst;
-extern DWORD MIRANDA_VERSION;
-extern BYTE gbUnicodeCore;
+// from init.c
+HINSTANCE hInst;
+char gpszICQProtoName[MAX_PATH];
 
-extern IcqIconHandle hStaticIcons[];
+HANDLE ghServerNetlibUser;
+HANDLE ghDirectNetlibUser;
 
-extern const int moodXStatus[];
+// from init.h
+BYTE gbGatewayMode;
+BYTE gbSecureLogin;
+BYTE gbAimEnabled;
+BYTE gbUtfEnabled;
+WORD gwAnsiCodepage;
+BYTE gbDCMsgEnabled;
+BYTE gbTempVisListEnabled;
+BYTE gbSsiEnabled;
+BYTE gbAvatarsEnabled;
+BYTE gbXStatusEnabled;
+DWORD MIRANDA_VERSION;
 
-// from fam_04message.cpp
-struct icq_mode_messages
+// from icqosc_svcs.c
+int gnCurrentStatus;
+DWORD dwLocalUIN;
+
+char gpszPassword[16];
+BYTE gbRememberPwd;
+
+BYTE gbUnicodeAPI;
+BYTE gbUnicodeCore;
+
+// from fam_04message.c
+typedef struct icq_mode_messages_s
 {
-  char *szOffline;
-  char *szOnline;
-  char *szAway;
-  char *szNa;
-  char *szDnd;
-  char *szOccupied;
-  char *szFfc;
-};
+  char* szAway;
+  char* szNa;
+  char* szDnd;
+  char* szOccupied;
+  char* szFfc;
+} icq_mode_messages;
+
+icq_mode_messages modeMsgs;
+CRITICAL_SECTION modeMsgsMutex;
 
 
 #endif /* __GLOBALS_H */

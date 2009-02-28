@@ -18,7 +18,10 @@
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 ////////////////////////////////////////////////////////////////////////////////
 
+#include <sys/stat.h>
 #include "gg.h"
+
+int ggListRemove = FALSE;
 
 ////////////////////////////////////////////////////////////////////////////////
 // Checks if a group already exists in Miranda with
@@ -31,7 +34,7 @@ int GroupNameExists(const char *name)
 	int i;
 
 	for (i = 0; ; i++) {
-		_itoa(i, idstr, 10);
+		itoa(i, idstr, 10);
 		if (DBGetContactSettingString(NULL, "CListGroups", idstr, &dbv)) break;
 		if (!strcmp(dbv.pszVal + 1, name)) {
 			DBFreeVariant(&dbv);
@@ -82,7 +85,7 @@ char *CreateGroup(char *groupName)
 
 		// Find an unused id
 		for (groupId = 0; ; groupId++) {
-				_itoa(groupId, groupIdStr,10);
+				itoa(groupId, groupIdStr,10);
 				if (DBGetContactSettingString(NULL, "CListGroups", groupIdStr, &dbv))
 						break;
 				DBFreeVariant(&dbv);
@@ -94,7 +97,7 @@ char *CreateGroup(char *groupName)
 	return groupName;
 }
 
-char *gg_makecontacts(GGPROTO *gg, int cr)
+char *gg_makecontacts(int cr)
 {
 	string_t s = string_init(NULL);
 	char *contacts;
@@ -179,7 +182,7 @@ char *gg_makecontacts(GGPROTO *gg, int cr)
 	contacts = string_free(s, 0);
 
 #ifdef DEBUGMODE
-	gg_netlog(gg, "gg_makecontacts(): \n%s", contacts);
+	gg_netlog("gg_makecontacts(): \n%s", contacts);
 #endif
 
 	return contacts;
@@ -193,7 +196,7 @@ char *strndup(char *str, int c)
 	return ret;
 }
 
-void gg_parsecontacts(GGPROTO *gg, char *contacts)
+void gg_parsecontacts(char *contacts)
 {
 	char *p = strchr(contacts, ':'), *n;
 	char *strFirstName, *strLastName, *strNickname, *strNick, *strPhone, *strGroup, *strUin, *strMail;
@@ -280,9 +283,9 @@ void gg_parsecontacts(GGPROTO *gg, char *contacts)
 		// Loadup contact
 		if(uin && strNick)
 		{
-			HANDLE hContact = gg_getcontact(gg, uin, 1, 1, strNick);
+			HANDLE hContact = gg_getcontact(uin, 1, 1, strNick);
 #ifdef DEBUGMODE
-			gg_netlog(gg, "gg_parsecontacts(): Found contact %d with nickname \"%s\".", uin, strNick);
+			gg_netlog("gg_parsecontacts(): Found contact %d with nickname \"%s\".", uin, strNick);
 #endif
 
 			// Write group
@@ -310,14 +313,14 @@ void gg_parsecontacts(GGPROTO *gg, char *contacts)
 
 //////////////////////////////////////////////////////////
 // import from server
-static int gg_import_server(GGPROTO *gg, WPARAM wParam, LPARAM lParam)
+static int gg_import_server(WPARAM wParam, LPARAM lParam)
 {
 	char *password;
 	uin_t uin;
 	DBVARIANT dbv;
 
 	// Check if connected
-	if (!gg_isonline(gg))
+	if (!gg_isonline())
 	{
 		MessageBox(NULL,
 			Translate("You have to be connected before you can import/export contacts from/to server."),
@@ -330,7 +333,7 @@ static int gg_import_server(GGPROTO *gg, WPARAM wParam, LPARAM lParam)
 	if (!DBGetContactSettingString(NULL, GG_PROTO, GG_KEY_PASSWORD, &dbv))
 	{
 		CallService(MS_DB_CRYPT_DECODESTRING, strlen(dbv.pszVal) + 1, (LPARAM) dbv.pszVal);
-		password = _strdup(dbv.pszVal);
+		password = strdup(dbv.pszVal);
 		DBFreeVariant(&dbv);
 	}
 	else return 0;
@@ -339,7 +342,7 @@ static int gg_import_server(GGPROTO *gg, WPARAM wParam, LPARAM lParam)
 		return 0;
 
 	// Making contacts list
-	if (gg_userlist_request(gg->sess, GG_USERLIST_GET, NULL) == -1)
+	if (gg_userlist_request(ggThread->sess, GG_USERLIST_GET, NULL) == -1)
 	{
 		char error[128];
 		mir_snprintf(error, sizeof(error), Translate("List cannot be imported because of error:\n\t%s"), strerror(errno));
@@ -350,7 +353,7 @@ static int gg_import_server(GGPROTO *gg, WPARAM wParam, LPARAM lParam)
 			MB_OK | MB_ICONSTOP
 		);
 #ifdef DEBUGMODE
-		gg_netlog(gg, "gg_import_serverthread(): Cannot import list because of \"%s\".", strerror(errno));
+		gg_netlog("gg_import_serverthread(): Cannot import list because of \"%s\".", strerror(errno));
 #endif
 	}
 	free(password);
@@ -360,14 +363,14 @@ static int gg_import_server(GGPROTO *gg, WPARAM wParam, LPARAM lParam)
 
 //////////////////////////////////////////////////////////
 // remove from server
-static int gg_remove_server(GGPROTO *gg, WPARAM wParam, LPARAM lParam)
+static int gg_remove_server(WPARAM wParam, LPARAM lParam)
 {
 	char *password;
 	uin_t uin;
 	DBVARIANT dbv;
 
 	// Check if connected
-	if (!gg->sess)
+	if (!ggThread->sess)
 	{
 		MessageBox(NULL,
 			Translate("You have to be connected before you can import/export contacts from/to server."),
@@ -380,7 +383,7 @@ static int gg_remove_server(GGPROTO *gg, WPARAM wParam, LPARAM lParam)
 	if (!DBGetContactSettingString(NULL, GG_PROTO, GG_KEY_PASSWORD, &dbv))
 	{
 		CallService(MS_DB_CRYPT_DECODESTRING, strlen(dbv.pszVal) + 1, (LPARAM) dbv.pszVal);
-		password = _strdup(dbv.pszVal);
+		password = strdup(dbv.pszVal);
 		DBFreeVariant(&dbv);
 	}
 	else return 0;
@@ -389,7 +392,7 @@ static int gg_remove_server(GGPROTO *gg, WPARAM wParam, LPARAM lParam)
 		return 0;
 
 	// Making contacts list
-	if (gg_userlist_request(gg->sess, GG_USERLIST_PUT, NULL) == -1)
+	if (gg_userlist_request(ggThread->sess, GG_USERLIST_PUT, NULL) == -1)
 	{
 		char error[128];
 		mir_snprintf(error, sizeof(error), Translate("List cannot be removeed because of error:\n\t%s"), strerror(errno));
@@ -401,12 +404,12 @@ static int gg_remove_server(GGPROTO *gg, WPARAM wParam, LPARAM lParam)
 		);
 
 #ifdef DEBUGMODE
-		gg_netlog(gg, "gg_remove_serverthread(): Cannot remove list because of \"%s\".", strerror(errno));
+		gg_netlog("gg_remove_serverthread(): Cannot remove list because of \"%s\".", strerror(errno));
 #endif
 	}
 
 	// Set list removal
-	gg->list_remove = TRUE;
+	ggListRemove = TRUE;
 	free(password);
 
 	return 0;
@@ -426,12 +429,12 @@ static int gg_remove_server(GGPROTO *gg, WPARAM wParam, LPARAM lParam)
 #endif // !UNICODE
 #endif // (_WIN32_WINNT >= 0x0500) && !defined(OPENFILENAME_SIZE_VERSION_400)
 
-static int gg_import_text(GGPROTO *gg, WPARAM wParam, LPARAM lParam)
+static int gg_import_text(WPARAM wParam, LPARAM lParam)
 {
 	char str[MAX_PATH] = "\0";
 	OPENFILENAME ofn;
 	char filter[512], *pfilter;
-	struct _stat st;
+	struct stat st;
 	FILE *f;
 
 	ZeroMemory(&ofn, sizeof(ofn));
@@ -461,19 +464,19 @@ static int gg_import_text(GGPROTO *gg, WPARAM wParam, LPARAM lParam)
 	ofn.lpstrDefExt = "txt";
 
 #ifdef DEBUGMODE
-		gg_netlog(gg, "gg_import_text()");
+		gg_netlog("gg_import_text()");
 #endif
 	if(!GetOpenFileName(&ofn)) return 0;
 
 	f = fopen(str, "r");
-	_stat(str, &st);
+	stat(str, &st);
 
 	if(f && st.st_size)
 	{
 		char *contacts = malloc(st.st_size * sizeof(char));
 		fread(contacts, sizeof(char), st.st_size, f);
 		fclose(f);
-		gg_parsecontacts(gg, contacts);
+		gg_parsecontacts(contacts);
 		free(contacts);
 
 		MessageBox(
@@ -498,7 +501,7 @@ static int gg_import_text(GGPROTO *gg, WPARAM wParam, LPARAM lParam)
 	return 0;
 }
 
-static int gg_export_text(GGPROTO *gg, WPARAM wParam, LPARAM lParam)
+static int gg_export_text(WPARAM wParam, LPARAM lParam)
 {
 	char str[MAX_PATH];
 	OPENFILENAME ofn;
@@ -535,13 +538,13 @@ static int gg_export_text(GGPROTO *gg, WPARAM wParam, LPARAM lParam)
 	ofn.lpstrDefExt = "txt";
 
 #ifdef DEBUGMODE
-	gg_netlog(gg, "gg_export_text(%s).", str);
+	gg_netlog("gg_export_text(%s).", str);
 #endif
 	if(!GetSaveFileName(&ofn)) return 0;
 
 	if(f = fopen(str, "w"))
 	{
-		char *contacts = gg_makecontacts(gg, 0);
+		char *contacts = gg_makecontacts(0);
 		fwrite(contacts, sizeof(char), strlen(contacts), f);
 		fclose(f);
 		free(contacts);
@@ -570,14 +573,14 @@ static int gg_export_text(GGPROTO *gg, WPARAM wParam, LPARAM lParam)
 
 //////////////////////////////////////////////////////////
 // export to server
-static int gg_export_server(GGPROTO *gg, WPARAM wParam, LPARAM lParam)
+static int gg_export_server(WPARAM wParam, LPARAM lParam)
 {
 	char *password, *contacts;
 	uin_t uin;
 	DBVARIANT dbv;
 
 	// Check if connected
-	if (!gg->sess)
+	if (!ggThread->sess)
 	{
 		MessageBox(NULL,
 			Translate("You have to be connected before you can import/export contacts from/to server."),
@@ -590,7 +593,7 @@ static int gg_export_server(GGPROTO *gg, WPARAM wParam, LPARAM lParam)
 	if (!DBGetContactSettingString(NULL, GG_PROTO, GG_KEY_PASSWORD, &dbv))
 	{
 		CallService(MS_DB_CRYPT_DECODESTRING, strlen(dbv.pszVal) + 1, (LPARAM) dbv.pszVal);
-		password = _strdup(dbv.pszVal);
+		password = strdup(dbv.pszVal);
 		DBFreeVariant(&dbv);
 	}
 	else return 0;
@@ -599,13 +602,13 @@ static int gg_export_server(GGPROTO *gg, WPARAM wParam, LPARAM lParam)
 		return 0;
 
 	// Making contacts list
-	contacts = gg_makecontacts(gg, 1);
+	contacts = gg_makecontacts(1);
 
 #ifdef DEBUGMODE
-		gg_netlog(gg, "gg_userlist_request(%s).", contacts);
+		gg_netlog("gg_userlist_request(%s).", contacts);
 #endif
 
-	if (gg_userlist_request(gg->sess, GG_USERLIST_PUT, contacts) == -1)
+	if (gg_userlist_request(ggThread->sess, GG_USERLIST_PUT, contacts) == -1)
 	{
 		char error[128];
 		mir_snprintf(error, sizeof(error), Translate("List cannot be exported because of error:\n\t%s"), strerror(errno));
@@ -616,12 +619,12 @@ static int gg_export_server(GGPROTO *gg, WPARAM wParam, LPARAM lParam)
 			MB_OK | MB_ICONSTOP
 		);
 #ifdef DEBUGMODE
-		gg_netlog(gg, "gg_export_serverthread(): Cannot export list because of \"%s\".", strerror(errno));
+		gg_netlog("gg_export_serverthread(): Cannot export list because of \"%s\".", strerror(errno));
 #endif
 	}
 
 	// Set list removal
-	gg->list_remove = FALSE;
+	ggListRemove = FALSE;
 	free(contacts);
 	free(password);
 
@@ -630,7 +633,7 @@ static int gg_export_server(GGPROTO *gg, WPARAM wParam, LPARAM lParam)
 
 //////////////////////////////////////////////////////////
 // Import menus and stuff
-void gg_import_init(GGPROTO *gg)
+void gg_import_init()
 {
 	CLISTMENUITEM mi;
 	char service[64];
@@ -640,66 +643,57 @@ void gg_import_init(GGPROTO *gg)
 
 	// Import from server item
 	mir_snprintf(service, sizeof(service), GGS_IMPORT_SERVER, GG_PROTO);
-	CreateProtoServiceFunction(service, gg_import_server, gg);
+	CreateServiceFunction(service, gg_import_server);
 	mi.pszPopupName = GG_PROTONAME;
 	mi.popupPosition = 500090000;
 	mi.position = 600090000;
 	mi.hIcon = LoadIconEx(IDI_IMPORT_SERVER);
 	mi.pszName = LPGEN("Import List From &Server");
 	mi.pszService = service;
-	gg->hMainMenu[2] = CallService(MS_CLIST_ADDMAINMENUITEM, 0, (LPARAM) &mi);
+	CallService(MS_CLIST_ADDMAINMENUITEM, 0, (LPARAM) &mi);
 
 	// Import from textfile
 	mir_snprintf(service, sizeof(service), GGS_IMPORT_TEXT, GG_PROTO);
-	CreateProtoServiceFunction(service, gg_import_text, gg);
+	CreateServiceFunction(service, gg_import_text);
 	mi.pszPopupName = GG_PROTONAME;
 	mi.popupPosition = 500090000;
 	mi.position = 600090000;
 	mi.hIcon = LoadIconEx(IDI_IMPORT_TEXT);
 	mi.pszName = LPGEN("Import List From &Text File...");
 	mi.pszService = service;
-	gg->hMainMenu[3] = CallService(MS_CLIST_ADDMAINMENUITEM, 0, (LPARAM) &mi);
+	CallService(MS_CLIST_ADDMAINMENUITEM, 0, (LPARAM) &mi);
 
 
 	// Remove from server
 	mir_snprintf(service, sizeof(service), GGS_REMOVE_SERVER, GG_PROTO);
-	CreateProtoServiceFunction(service, gg_remove_server, gg);
+	CreateServiceFunction(service, gg_remove_server);
 	mi.pszPopupName = GG_PROTONAME;
 	mi.popupPosition = 500090000;
 	mi.position = 600090000;
 	mi.hIcon = LoadIconEx(IDI_REMOVE_SERVER);
 	mi.pszName = LPGEN("&Remove List From Server");
 	mi.pszService = service;
-	gg->hMainMenu[4] = CallService(MS_CLIST_ADDMAINMENUITEM, 0, (LPARAM) &mi);
+	CallService(MS_CLIST_ADDMAINMENUITEM, 0, (LPARAM) &mi);
 
 	// Export to server
 	mir_snprintf(service, sizeof(service), GGS_EXPORT_SERVER, GG_PROTO);
-	CreateProtoServiceFunction(service, gg_export_server, gg);
+	CreateServiceFunction(service, gg_export_server);
 	mi.pszPopupName = GG_PROTONAME;
 	mi.popupPosition = 500090000;
 	mi.position = 700090000;
 	mi.hIcon = LoadIconEx(IDI_EXPORT_SERVER);
 	mi.pszName = LPGEN("Export List To &Server");
 	mi.pszService = service;
-	gg->hMainMenu[5] = CallService(MS_CLIST_ADDMAINMENUITEM, 0, (LPARAM) &mi);
+	CallService(MS_CLIST_ADDMAINMENUITEM, 0, (LPARAM) &mi);
 
 	// Export to textfile
 	mir_snprintf(service, sizeof(service), GGS_EXPORT_TEXT, GG_PROTO);
-	CreateProtoServiceFunction(service, gg_export_text, gg);
+	CreateServiceFunction(service, gg_export_text);
 	mi.pszPopupName = GG_PROTONAME;
 	mi.popupPosition = 500090000;
 	mi.position = 700090000;
 	mi.hIcon = LoadIconEx(IDI_EXPORT_TEXT);
 	mi.pszName = LPGEN("Export List To &Text File...");
 	mi.pszService = service;
-	gg->hMainMenu[6] = CallService(MS_CLIST_ADDMAINMENUITEM, 0, (LPARAM) &mi);
-}
-
-void gg_import_shutdown(GGPROTO *gg) 
-{
-	CallService(MS_CLIST_REMOVECONTACTMENUITEM, (WPARAM)gg->hMainMenu[2], (LPARAM) 0);
-	CallService(MS_CLIST_REMOVECONTACTMENUITEM, (WPARAM)gg->hMainMenu[3], (LPARAM) 0);
-	CallService(MS_CLIST_REMOVECONTACTMENUITEM, (WPARAM)gg->hMainMenu[4], (LPARAM) 0);
-	CallService(MS_CLIST_REMOVECONTACTMENUITEM, (WPARAM)gg->hMainMenu[5], (LPARAM) 0);
-	CallService(MS_CLIST_REMOVECONTACTMENUITEM, (WPARAM)gg->hMainMenu[6], (LPARAM) 0);
+	CallService(MS_CLIST_ADDMAINMENUITEM, 0, (LPARAM) &mi);
 }

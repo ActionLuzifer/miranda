@@ -25,8 +25,8 @@ CFG=miranda32 - Win32 Debug Unicode
 
 # Begin Project
 # PROP AllowPerConfigDependencies 0
-# PROP Scc_ProjName ""
-# PROP Scc_LocalPath ""
+# PROP Scc_ProjName ""$/miranda32", UBAAAAAA"
+# PROP Scc_LocalPath "."
 CPP=cl.exe
 MTL=midl.exe
 RSC=rc.exe
@@ -45,8 +45,7 @@ RSC=rc.exe
 # PROP Ignore_Export_Lib 1
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /YX /FD /c
-# ADD CPP /nologo /MD /W3 /GX /Zi /O1 /I "../include" /D "NDEBUG" /D "WIN32" /D "_WINDOWS" /D "_NOSDK" /D "_STATIC" /Yu"commonheaders.h" /FD /c
-# SUBTRACT CPP /Fr
+# ADD CPP /nologo /MD /W3 /GX /Zi /O1 /I "../include" /D "NDEBUG" /D "WIN32" /D "_WINDOWS" /D "_NOSDK" /D "_STATIC" /Fr /Yu"commonheaders.h" /FD /c
 # ADD BASE MTL /nologo /D "NDEBUG" /mktyplib203 /o "NUL" /win32
 # ADD MTL /nologo /D "NDEBUG" /mktyplib203 /o "NUL" /win32
 # ADD BASE RSC /l 0x409 /d "NDEBUG"
@@ -56,7 +55,7 @@ BSC32=bscmake.exe
 # ADD BSC32 /nologo
 LINK32=link.exe
 # ADD BASE LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:windows /machine:I386
-# ADD LINK32 shlwapi32.lib wsock32.lib kernel32.lib user32.lib gdi32.lib shell32.lib winspool.lib comdlg32.lib advapi32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib comctl32.lib winmm.lib version.lib /nologo /subsystem:windows /map /debug /machine:I386 /out:"../bin/release/miranda32.exe" /fixed /ALIGN:4096 /ignore:4108
+# ADD LINK32 wsock32.lib comctl32.lib winmm.lib version.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:windows /map /debug /machine:I386 /out:"../bin/release/miranda32.exe" /fixed /ALIGN:4096 /ignore:4108
 # SUBTRACT LINK32 /pdb:none /incremental:yes
 
 !ELSEIF  "$(CFG)" == "miranda32 - Win32 Debug"
@@ -83,7 +82,7 @@ BSC32=bscmake.exe
 # ADD BSC32 /nologo
 LINK32=link.exe
 # ADD BASE LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:windows /debug /machine:I386 /pdbtype:sept
-# ADD LINK32 shlwapi32.lib wsock32.lib kernel32.lib user32.lib gdi32.lib shell32.lib winspool.lib comdlg32.lib advapi32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib comctl32.lib winmm.lib version.lib /nologo /subsystem:windows /map /debug /machine:I386 /out:"../bin/debug/miranda32.exe"
+# ADD LINK32 wsock32.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib comctl32.lib winmm.lib version.lib /nologo /subsystem:windows /map /debug /machine:I386 /out:"../bin/debug/miranda32.exe"
 # SUBTRACT LINK32 /profile /pdb:none /incremental:no
 
 !ELSEIF  "$(CFG)" == "miranda32 - Win32 Release Unicode"
@@ -113,7 +112,7 @@ BSC32=bscmake.exe
 LINK32=link.exe
 # ADD BASE LINK32 wsock32.lib comctl32.lib winmm.lib version.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:windows /map /machine:I386 /out:"../bin/release/miranda32.exe" /fixed /ALIGN:4096 /ignore:4108
 # SUBTRACT BASE LINK32 /pdb:none /debug
-# ADD LINK32 wsock32.lib kernel32.lib user32.lib gdi32.lib shell32.lib winspool.lib comdlg32.lib advapi32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib comctl32.lib winmm.lib version.lib /nologo /subsystem:windows /map /debug /machine:I386 /out:"../bin/Release Unicode/miranda32.exe" /fixed /ALIGN:4096 /ignore:4108
+# ADD LINK32 wsock32.lib comctl32.lib winmm.lib version.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:windows /map /debug /machine:I386 /out:"../bin/Release Unicode/miranda32.exe" /fixed /ALIGN:4096 /ignore:4108
 # SUBTRACT LINK32 /pdb:none /incremental:yes
 
 !ELSEIF  "$(CFG)" == "miranda32 - Win32 Debug Unicode"
@@ -143,7 +142,7 @@ BSC32=bscmake.exe
 LINK32=link.exe
 # ADD BASE LINK32 wsock32.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib comctl32.lib winmm.lib version.lib /nologo /subsystem:windows /map /debug /machine:I386 /out:"../bin/debug/miranda32.exe"
 # SUBTRACT BASE LINK32 /profile
-# ADD LINK32 shlwapi32.lib wsock32.lib kernel32.lib user32.lib gdi32.lib shell32.lib winspool.lib comdlg32.lib advapi32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib comctl32.lib winmm.lib version.lib /nologo /subsystem:windows /map /debug /machine:I386 /out:"../bin/Debug Unicode/miranda32.exe"
+# ADD LINK32 wsock32.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib comctl32.lib winmm.lib version.lib /nologo /subsystem:windows /map /debug /machine:I386 /out:"../bin/Debug Unicode/miranda32.exe"
 # SUBTRACT LINK32 /profile /pdb:none /incremental:no
 
 !ENDIF 
@@ -299,7 +298,7 @@ SOURCE=..\include\win2k.h
 # PROP Default_Filter ""
 # Begin Source File
 
-SOURCE=.\core\commonheaders.cpp
+SOURCE=.\core\commonheaders.c
 # ADD CPP /Yc"commonheaders.h"
 # End Source File
 # Begin Source File
@@ -312,11 +311,11 @@ SOURCE=.\core\forkthread.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\core\memory.cpp
+SOURCE=.\core\memory.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\core\miranda.cpp
+SOURCE=.\core\miranda.c
 
 !IF  "$(CFG)" == "miranda32 - Win32 Release"
 
@@ -340,7 +339,7 @@ SOURCE=.\core\miranda.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\core\modules.cpp
+SOURCE=.\core\modules.c
 
 !IF  "$(CFG)" == "miranda32 - Win32 Release"
 
@@ -371,7 +370,7 @@ SOURCE=.\core\modules.h
 # PROP Default_Filter ""
 # Begin Source File
 
-SOURCE=.\modules\addcontact\addcontact.cpp
+SOURCE=.\modules\addcontact\addcontact.c
 
 !IF  "$(CFG)" == "miranda32 - Win32 Release"
 
@@ -395,7 +394,7 @@ SOURCE=.\modules\addcontact\addcontact.cpp
 # PROP Default_Filter ""
 # Begin Source File
 
-SOURCE=.\modules\autoaway\autoaway.cpp
+SOURCE=.\modules\autoaway\autoaway.c
 # End Source File
 # End Group
 # Begin Group "button"
@@ -403,7 +402,7 @@ SOURCE=.\modules\autoaway\autoaway.cpp
 # PROP Default_Filter ""
 # Begin Source File
 
-SOURCE=.\modules\button\button.cpp
+SOURCE=.\modules\button\button.c
 # End Source File
 # End Group
 # Begin Group "contacts"
@@ -411,7 +410,7 @@ SOURCE=.\modules\button\button.cpp
 # PROP Default_Filter ""
 # Begin Source File
 
-SOURCE=.\modules\contacts\contacts.cpp
+SOURCE=.\modules\contacts\contacts.c
 # End Source File
 # End Group
 # Begin Group "database"
@@ -419,16 +418,16 @@ SOURCE=.\modules\contacts\contacts.cpp
 # PROP Default_Filter ""
 # Begin Source File
 
-SOURCE=.\modules\database\database.cpp
+SOURCE=.\modules\database\database.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\modules\database\dbini.cpp
+SOURCE=.\modules\database\dbini.c
 # ADD CPP /Yu"../../core/commonheaders.h"
 # End Source File
 # Begin Source File
 
-SOURCE=.\modules\database\dblists.cpp
+SOURCE=.\modules\database\dblists.c
 # End Source File
 # Begin Source File
 
@@ -436,15 +435,15 @@ SOURCE=.\modules\database\dblists.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\modules\database\dbtime.cpp
+SOURCE=.\modules\database\dbtime.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\modules\database\dbutils.cpp
+SOURCE=.\modules\database\dbutils.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\modules\database\profilemanager.cpp
+SOURCE=.\modules\database\profilemanager.c
 # End Source File
 # Begin Source File
 
@@ -456,7 +455,7 @@ SOURCE=.\modules\database\profilemanager.h
 # PROP Default_Filter ""
 # Begin Source File
 
-SOURCE=.\modules\findadd\findadd.cpp
+SOURCE=.\modules\findadd\findadd.c
 # End Source File
 # Begin Source File
 
@@ -464,7 +463,7 @@ SOURCE=.\modules\findadd\findadd.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\modules\findadd\searchresults.cpp
+SOURCE=.\modules\findadd\searchresults.c
 # End Source File
 # End Group
 # Begin Group "help"
@@ -472,11 +471,11 @@ SOURCE=.\modules\findadd\searchresults.cpp
 # PROP Default_Filter ""
 # Begin Source File
 
-SOURCE=.\modules\help\about.cpp
+SOURCE=.\modules\help\about.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\modules\help\help.cpp
+SOURCE=.\modules\help\help.c
 # End Source File
 # End Group
 # Begin Group "history"
@@ -484,7 +483,7 @@ SOURCE=.\modules\help\help.cpp
 # PROP Default_Filter ""
 # Begin Source File
 
-SOURCE=.\modules\history\history.cpp
+SOURCE=.\modules\history\history.c
 # End Source File
 # End Group
 # Begin Group "idle"
@@ -492,7 +491,7 @@ SOURCE=.\modules\history\history.cpp
 # PROP Default_Filter ""
 # Begin Source File
 
-SOURCE=.\modules\idle\idle.cpp
+SOURCE=.\modules\idle\idle.c
 # End Source File
 # End Group
 # Begin Group "ignore"
@@ -500,7 +499,7 @@ SOURCE=.\modules\idle\idle.cpp
 # PROP Default_Filter ""
 # Begin Source File
 
-SOURCE=.\modules\ignore\ignore.cpp
+SOURCE=.\modules\ignore\ignore.c
 # End Source File
 # End Group
 # Begin Group "langpack"
@@ -508,11 +507,11 @@ SOURCE=.\modules\ignore\ignore.cpp
 # PROP Default_Filter ""
 # Begin Source File
 
-SOURCE=.\modules\langpack\langpack.cpp
+SOURCE=.\modules\langpack\langpack.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\modules\langpack\lpservices.cpp
+SOURCE=.\modules\langpack\lpservices.c
 # End Source File
 # End Group
 # Begin Group "netlib"
@@ -520,7 +519,7 @@ SOURCE=.\modules\langpack\lpservices.cpp
 # PROP Default_Filter ""
 # Begin Source File
 
-SOURCE=.\modules\netlib\netlib.cpp
+SOURCE=.\modules\netlib\netlib.c
 # End Source File
 # Begin Source File
 
@@ -528,47 +527,43 @@ SOURCE=.\modules\netlib\netlib.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\modules\netlib\netlibbind.cpp
+SOURCE=.\modules\netlib\netlibbind.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\modules\netlib\netlibhttp.cpp
+SOURCE=.\modules\netlib\netlibhttp.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\modules\netlib\netlibhttpproxy.cpp
+SOURCE=.\modules\netlib\netlibhttpproxy.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\modules\netlib\netliblog.cpp
+SOURCE=.\modules\netlib\netliblog.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\modules\netlib\netlibopenconn.cpp
+SOURCE=.\modules\netlib\netlibopenconn.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\modules\netlib\netlibopts.cpp
+SOURCE=.\modules\netlib\netlibopts.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\modules\netlib\netlibpktrecver.cpp
+SOURCE=.\modules\netlib\netlibpktrecver.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\modules\netlib\netlibsecurity.cpp
+SOURCE=.\modules\netlib\netlibsecurity.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\modules\netlib\netlibsock.cpp
+SOURCE=.\modules\netlib\netlibsock.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\modules\netlib\netlibssl.cpp
-# End Source File
-# Begin Source File
-
-SOURCE=.\modules\netlib\netlibupnp.cpp
+SOURCE=.\modules\netlib\netlibupnp.c
 # End Source File
 # End Group
 # Begin Group "options"
@@ -576,15 +571,7 @@ SOURCE=.\modules\netlib\netlibupnp.cpp
 # PROP Default_Filter ""
 # Begin Source File
 
-SOURCE=.\modules\options\filter.cpp
-# End Source File
-# Begin Source File
-
-SOURCE=.\modules\options\filter.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\modules\options\options.cpp
+SOURCE=.\modules\options\options.c
 # End Source File
 # End Group
 # Begin Group "plugins"
@@ -592,7 +579,7 @@ SOURCE=.\modules\options\options.cpp
 # PROP Default_Filter ""
 # Begin Source File
 
-SOURCE=.\modules\plugins\newplugins.cpp
+SOURCE=.\modules\plugins\newplugins.c
 # End Source File
 # End Group
 # Begin Group "protocols"
@@ -600,23 +587,15 @@ SOURCE=.\modules\plugins\newplugins.cpp
 # PROP Default_Filter ""
 # Begin Source File
 
-SOURCE=.\modules\protocols\protoaccs.cpp
+SOURCE=.\modules\protocols\protochains.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\modules\protocols\protochains.cpp
+SOURCE=.\modules\protocols\protocols.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\modules\protocols\protocols.cpp
-# End Source File
-# Begin Source File
-
-SOURCE=.\modules\protocols\protoint.cpp
-# End Source File
-# Begin Source File
-
-SOURCE=.\modules\protocols\protoopts.cpp
+SOURCE=.\modules\protocols\protodir.c
 # End Source File
 # End Group
 # Begin Group "skin"
@@ -624,15 +603,15 @@ SOURCE=.\modules\protocols\protoopts.cpp
 # PROP Default_Filter ""
 # Begin Source File
 
-SOURCE=.\modules\skin\hotkeys.cpp
+SOURCE=.\modules\skin\skin.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\modules\skin\skinicons.cpp
+SOURCE=.\modules\skin\skinicons.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\modules\skin\sounds.cpp
+SOURCE=.\modules\skin\sounds.c
 # End Source File
 # End Group
 # Begin Group "srauth"
@@ -640,11 +619,11 @@ SOURCE=.\modules\skin\sounds.cpp
 # PROP Default_Filter ""
 # Begin Source File
 
-SOURCE=.\modules\srauth\auth.cpp
+SOURCE=.\modules\srauth\auth.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\modules\srauth\authdialogs.cpp
+SOURCE=.\modules\srauth\authdialogs.c
 # End Source File
 # End Group
 # Begin Group "srawaymsg"
@@ -652,11 +631,11 @@ SOURCE=.\modules\srauth\authdialogs.cpp
 # PROP Default_Filter ""
 # Begin Source File
 
-SOURCE=.\modules\srawaymsg\awaymsg.cpp
+SOURCE=.\modules\srawaymsg\awaymsg.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\modules\srawaymsg\sendmsg.cpp
+SOURCE=.\modules\srawaymsg\sendmsg.c
 # End Source File
 # End Group
 # Begin Group "sremail"
@@ -664,7 +643,7 @@ SOURCE=.\modules\srawaymsg\sendmsg.cpp
 # PROP Default_Filter ""
 # Begin Source File
 
-SOURCE=.\modules\sremail\email.cpp
+SOURCE=.\modules\sremail\email.c
 # End Source File
 # End Group
 # Begin Group "srfile"
@@ -672,7 +651,7 @@ SOURCE=.\modules\sremail\email.cpp
 # PROP Default_Filter ""
 # Begin Source File
 
-SOURCE=.\modules\srfile\file.cpp
+SOURCE=.\modules\srfile\file.c
 # End Source File
 # Begin Source File
 
@@ -680,27 +659,23 @@ SOURCE=.\modules\srfile\file.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\modules\srfile\fileexistsdlg.cpp
+SOURCE=.\modules\srfile\fileexistsdlg.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\modules\srfile\fileopts.cpp
+SOURCE=.\modules\srfile\fileopts.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\modules\srfile\filerecvdlg.cpp
+SOURCE=.\modules\srfile\filerecvdlg.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\modules\srfile\filesenddlg.cpp
+SOURCE=.\modules\srfile\filesenddlg.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\modules\srfile\filexferdlg.cpp
-# End Source File
-# Begin Source File
-
-SOURCE=.\modules\srfile\ftmanager.cpp
+SOURCE=.\modules\srfile\filexferdlg.c
 # End Source File
 # End Group
 # Begin Group "srurl"
@@ -708,7 +683,7 @@ SOURCE=.\modules\srfile\ftmanager.cpp
 # PROP Default_Filter ""
 # Begin Source File
 
-SOURCE=.\modules\srurl\url.cpp
+SOURCE=.\modules\srurl\url.c
 # End Source File
 # Begin Source File
 
@@ -716,7 +691,7 @@ SOURCE=.\modules\srurl\url.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\modules\srurl\urldialogs.cpp
+SOURCE=.\modules\srurl\urldialogs.c
 # End Source File
 # End Group
 # Begin Group "userinfo"
@@ -724,15 +699,15 @@ SOURCE=.\modules\srurl\urldialogs.cpp
 # PROP Default_Filter ""
 # Begin Source File
 
-SOURCE=.\modules\userinfo\contactinfo.cpp
+SOURCE=.\modules\userinfo\contactinfo.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\modules\userinfo\stdinfo.cpp
+SOURCE=.\modules\userinfo\stdinfo.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\modules\userinfo\userinfo.cpp
+SOURCE=.\modules\userinfo\userinfo.c
 # End Source File
 # End Group
 # Begin Group "useronline"
@@ -740,7 +715,7 @@ SOURCE=.\modules\userinfo\userinfo.cpp
 # PROP Default_Filter ""
 # Begin Source File
 
-SOURCE=.\modules\useronline\useronline.cpp
+SOURCE=.\modules\useronline\useronline.c
 # End Source File
 # End Group
 # Begin Group "utils"
@@ -748,47 +723,47 @@ SOURCE=.\modules\useronline\useronline.cpp
 # PROP Default_Filter ""
 # Begin Source File
 
-SOURCE=.\modules\utils\bmpfilter.cpp
+SOURCE=.\modules\utils\bmpfilter.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\modules\utils\colourpicker.cpp
+SOURCE=.\modules\utils\colourpicker.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\modules\utils\hyperlink.cpp
+SOURCE=.\modules\utils\hyperlink.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\modules\utils\md5.cpp
+SOURCE=.\modules\utils\md5.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\modules\utils\openurl.cpp
+SOURCE=.\modules\utils\openurl.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\modules\utils\path.cpp
+SOURCE=.\modules\utils\path.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\modules\utils\resizer.cpp
+SOURCE=.\modules\utils\resizer.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\modules\utils\sha1.cpp
+SOURCE=.\modules\utils\sha1.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\modules\utils\utf.cpp
+SOURCE=.\modules\utils\utf.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\modules\utils\utils.cpp
+SOURCE=.\modules\utils\utils.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\modules\utils\windowlist.cpp
+SOURCE=.\modules\utils\windowlist.c
 # End Source File
 # End Group
 # Begin Group "visibility"
@@ -796,7 +771,7 @@ SOURCE=.\modules\utils\windowlist.cpp
 # PROP Default_Filter ""
 # Begin Source File
 
-SOURCE=.\modules\visibility\visibility.cpp
+SOURCE=.\modules\visibility\visibility.c
 # End Source File
 # End Group
 # Begin Group "clist"
@@ -804,7 +779,7 @@ SOURCE=.\modules\visibility\visibility.cpp
 # PROP Default_Filter ""
 # Begin Source File
 
-SOURCE=.\modules\clist\clc.cpp
+SOURCE=.\modules\clist\clc.c
 # End Source File
 # Begin Source File
 
@@ -812,67 +787,67 @@ SOURCE=.\modules\clist\clc.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\modules\clist\clcfiledrop.cpp
+SOURCE=.\modules\clist\clcfiledrop.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\modules\clist\clcidents.cpp
+SOURCE=.\modules\clist\clcidents.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\modules\clist\clcitems.cpp
+SOURCE=.\modules\clist\clcitems.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\modules\clist\clcmsgs.cpp
+SOURCE=.\modules\clist\clcmsgs.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\modules\clist\clcutils.cpp
+SOURCE=.\modules\clist\clcutils.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\modules\clist\clistcore.cpp
+SOURCE=.\modules\clist\clistcore.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\modules\clist\clistevents.cpp
+SOURCE=.\modules\clist\clistevents.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\modules\clist\clistmenus.cpp
+SOURCE=.\modules\clist\clistmenus.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\modules\clist\clistmod.cpp
+SOURCE=.\modules\clist\clistmod.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\modules\clist\clistsettings.cpp
+SOURCE=.\modules\clist\clistsettings.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\modules\clist\clisttray.cpp
+SOURCE=.\modules\clist\clisttray.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\modules\clist\clui.cpp
+SOURCE=.\modules\clist\clui.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\modules\clist\cluiservices.cpp
+SOURCE=.\modules\clist\cluiservices.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\modules\clist\contact.cpp
+SOURCE=.\modules\clist\contact.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\modules\clist\Docking.cpp
+SOURCE=.\modules\clist\Docking.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\modules\clist\genmenu.cpp
+SOURCE=.\modules\clist\genmenu.c
 # End Source File
 # Begin Source File
 
@@ -880,23 +855,23 @@ SOURCE=.\modules\clist\genmenu.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\modules\clist\genmenuopt.cpp
+SOURCE=.\modules\clist\genmenuopt.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\modules\clist\groups.cpp
+SOURCE=.\modules\clist\groups.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\modules\clist\keyboard.cpp
+SOURCE=.\modules\clist\keyboard.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\modules\clist\movetogroup.cpp
+SOURCE=.\modules\clist\movetogroup.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\modules\clist\protocolorder.cpp
+SOURCE=.\modules\clist\protocolorder.c
 # End Source File
 # End Group
 # Begin Group "fontservice"
@@ -904,11 +879,11 @@ SOURCE=.\modules\clist\protocolorder.cpp
 # PROP Default_Filter ""
 # Begin Source File
 
-SOURCE=.\modules\fonts\FontOptions.cpp
+SOURCE=.\modules\fonts\FontOptions.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\modules\fonts\FontService.cpp
+SOURCE=.\modules\fonts\FontService.c
 # End Source File
 # Begin Source File
 
@@ -916,7 +891,15 @@ SOURCE=.\modules\fonts\FontService.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\modules\fonts\services.cpp
+SOURCE=.\modules\fonts\module_fonts.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\modules\fonts\module_fonts.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\modules\fonts\services.c
 # End Source File
 # End Group
 # Begin Group "icolib"
@@ -924,8 +907,12 @@ SOURCE=.\modules\fonts\services.cpp
 # PROP Default_Filter ""
 # Begin Source File
 
-SOURCE=.\modules\icolib\extracticon.cpp
-# ADD CPP /Yu
+SOURCE=.\modules\icolib\extracticon.c
+# SUBTRACT CPP /YX /Yc /Yu
+# End Source File
+# Begin Source File
+
+SOURCE=.\modules\icolib\IcoLib.c
 # End Source File
 # Begin Source File
 
@@ -933,7 +920,7 @@ SOURCE=.\modules\icolib\IcoLib.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\modules\icolib\skin2icons.cpp
+SOURCE=.\modules\icolib\skin2icons.c
 # End Source File
 # End Group
 # Begin Group "updatenotify"
@@ -941,23 +928,7 @@ SOURCE=.\modules\icolib\skin2icons.cpp
 # PROP Default_Filter ""
 # Begin Source File
 
-SOURCE=.\modules\updatenotify\updatenotify.cpp
-# End Source File
-# End Group
-# Begin Group "xml"
-
-# PROP Default_Filter ""
-# Begin Source File
-
-SOURCE=.\modules\xml\xmlApi.cpp
-# End Source File
-# Begin Source File
-
-SOURCE=.\modules\xml\xmlParser.cpp
-# End Source File
-# Begin Source File
-
-SOURCE=.\modules\xml\xmlParser.h
+SOURCE=.\modules\updatenotify\updatenotify.c
 # End Source File
 # End Group
 # End Group

@@ -2,8 +2,8 @@
 
 Miranda IM: the free IM client for Microsoft* Windows*
 
-Copyright 2000-2008 Miranda ICQ/IM project,
-all portions of this codebase are copyrighted to the people
+Copyright 2000-2007 Miranda ICQ/IM project, 
+all portions of this codebase are copyrighted to the people 
 listed in contributors.txt.
 
 This program is free software; you can redistribute it and/or
@@ -69,30 +69,21 @@ __inline static HANDLE LoadSkinnedIconHandle(int id) {return (HANDLE)CallService
 #define SKINICON_OTHER_ANSI         227     //v0.7.0.19+
 #define SKINICON_OTHER_LOADED       228     //v0.7.0.19+
 #define SKINICON_OTHER_NOTLOADED    229     //v0.7.0.19+
-#define SKINICON_OTHER_UNDO         230     //v0.8.0.4+
-#define SKINICON_OTHER_WINDOW       231     //v0.8.0.4+
-#define SKINICON_OTHER_WINDOWS      232     //v0.8.0.4+
-#define SKINICON_OTHER_ACCMGR       233     //v0.8.0.4+
-#define SKINICON_OTHER_MAINMENU     234     //v0.8.0.12+
-#define SKINICON_OTHER_STATUS       235     //v0.8.0.12+
-#define SKINICON_CHAT_JOIN          236     //v0.8.0.27+
-#define SKINICON_CHAT_LEAVE         237     //v0.8.0.27+
-#define SKINICON_OTHER_STATUS_LOCKED     238     //v0.8.0.28+
 
 //menu icons are owned by the module that uses them so are not and should not
 //be skinnable. Except exit and show/hide
 
 //status mode icons. NOTE: These are deprecated in favour of LoadSkinnedProtoIcon()
-#define SKINICON_STATUS_OFFLINE     0
-#define SKINICON_STATUS_ONLINE      1
-#define SKINICON_STATUS_AWAY        2
-#define SKINICON_STATUS_NA          3
-#define SKINICON_STATUS_OCCUPIED    4
-#define SKINICON_STATUS_DND         5
-#define SKINICON_STATUS_FREE4CHAT   6
-#define SKINICON_STATUS_INVISIBLE   7
-#define SKINICON_STATUS_ONTHEPHONE  8
-#define SKINICON_STATUS_OUTTOLUNCH  9
+#define SKINICON_STATUS_OFFLINE		0
+#define SKINICON_STATUS_ONLINE		1
+#define SKINICON_STATUS_AWAY		2
+#define SKINICON_STATUS_NA			3
+#define SKINICON_STATUS_OCCUPIED	4
+#define SKINICON_STATUS_DND			5
+#define SKINICON_STATUS_FREE4CHAT	6
+#define SKINICON_STATUS_INVISIBLE	7
+#define SKINICON_STATUS_ONTHEPHONE	8
+#define SKINICON_STATUS_OUTTOLUNCH	9
 
 //Loads an icon representing the status mode for a particular protocol.
 //wParam=(WPARAM)(const char*)szProto
@@ -176,3 +167,6 @@ __inline static int SkinPlaySound(const char *name) {return CallService(MS_SKIN_
 // Skin/LoadNetworkAnim - get some silly spinner thing when we want to be busy
 
 #endif //M_SKIN_H__
+
+
+

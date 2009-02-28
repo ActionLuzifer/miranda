@@ -123,7 +123,7 @@ static int Log_AppendRTF(LOGSTREAMDATA* streamData, BOOL simpleMode, char **buff
 	line[lineLen] = 0;
 	va_end(va);
 
-	lineLen = lineLen*20 + 8;
+	lineLen = lineLen*9 + 8;
 	if (*cbBufferEnd + lineLen > *cbBufferAlloced) {
 		cbBufferAlloced[0] += (lineLen + 1024 - lineLen % 1024);
 		*buffer = (char *) mir_realloc(*buffer, *cbBufferAlloced);
@@ -540,6 +540,7 @@ void Log_StreamInEvent(HWND hwndDlg,  LOGINFO* lin, SESSION_INFO* si, BOOL bRedr
 		SendMessage(hwndRich, EM_STREAMIN, wp, (LPARAM) & stream);
 
 		// do smileys
+		SendMessage(hwndRich, EM_EXGETSEL, (WPARAM)0, (LPARAM)&newsel);
 		if (SmileyAddInstalled && (bRedraw
 			|| (lin->ptszText
 			&& lin->iType != GC_EVENT_JOIN
@@ -547,9 +548,8 @@ void Log_StreamInEvent(HWND hwndDlg,  LOGINFO* lin, SESSION_INFO* si, BOOL bRedr
 			&& lin->iType != GC_EVENT_ADDSTATUS
 			&& lin->iType != GC_EVENT_REMOVESTATUS )))
 		{
-			SMADD_RICHEDIT3 sm = {0};
+			SMADD_RICHEDIT2 sm = {0};
 
-			newsel.cpMax = -1;
 			newsel.cpMin = sel.cpMin;
 			if (newsel.cpMin < 0)
 				newsel.cpMin = 0;
@@ -559,7 +559,6 @@ void Log_StreamInEvent(HWND hwndDlg,  LOGINFO* lin, SESSION_INFO* si, BOOL bRedr
 			sm.Protocolname = si->pszModule;
 			sm.rangeToReplace = bRedraw?NULL:&newsel;
 			sm.disableRedraw = TRUE;
-			sm.hContact = si->hContact;
 			CallService(MS_SMILEYADD_REPLACESMILEYS, 0, (LPARAM)&sm);
 		}
 

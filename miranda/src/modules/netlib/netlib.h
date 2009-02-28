@@ -2,8 +2,8 @@
 
 Miranda IM: the free IM client for Microsoft* Windows*
 
-Copyright 2000-2008 Miranda ICQ/IM project,
-all portions of this codebase are copyrighted to the people
+Copyright 2000-2007 Miranda ICQ/IM project, 
+all portions of this codebase are copyrighted to the people 
 listed in contributors.txt.
 
 This program is free software; you can redistribute it and/or
@@ -20,6 +20,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
+
 #define GetNetlibHandleType(h)  (h?*(int*)h:NLH_INVALID)
 #define NLH_INVALID      0
 #define NLH_USER         'USER'
@@ -32,9 +33,6 @@ struct NetlibUser {
 	NETLIBUSER user;
 	NETLIBUSERSETTINGS settings;
 	char * szStickyHeaders;
-	int toLog;
-    int inportnum;
-    int outportnum;
 };
 
 struct NetlibNestedCriticalSection {
@@ -46,7 +44,7 @@ struct NetlibNestedCriticalSection {
 struct NetlibHTTPProxyPacketQueue {
 	struct NetlibHTTPProxyPacketQueue *next;
 	PBYTE dataBuffer;
-	int dataBufferLen;
+	int dataBufferLen;        
 };
 
 struct NetlibConnection {
@@ -64,10 +62,8 @@ struct NetlibConnection {
 	LONG dontCloseNow;
 	struct NetlibNestedCriticalSection ncsSend,ncsRecv;
 	HANDLE hNtlmSecurity;
-	HSSL hSsl;
 	struct NetlibHTTPProxyPacketQueue * pHttpProxyPacketQueue;
 	int pollingTimeout;
-	char* szHost;
 };
 
 struct NetlibBoundPort {
@@ -103,7 +99,7 @@ int NetlibHttpUrlEncode(WPARAM wParam,LPARAM lParam);
 //netlibbind.c
 int NetlibFreeBoundPort(struct NetlibBoundPort *nlbp);
 int NetlibBindPort(WPARAM wParam,LPARAM lParam);
-bool BindSocketToPort(const char *szPorts, SOCKET s, int* portn);
+int StringToPortsMask(const char *szPorts,BYTE *mask);
 
 //netlibhttp.c
 int NetlibHttpSendRequest(WPARAM wParam,LPARAM lParam);
@@ -130,9 +126,7 @@ void NetlibLogShutdown(void);
 //netlibopenconn.c
 DWORD DnsLookup(struct NetlibUser *nlu,const char *szHost);
 int WaitUntilReadable(SOCKET s,DWORD dwTimeout);
-int WaitUntilWritable(SOCKET s,DWORD dwTimeout);
 int NetlibOpenConnection(WPARAM wParam,LPARAM lParam);
-int NetlibStartSsl(WPARAM wParam, LPARAM lParam);
 
 //netlibopts.c
 int NetlibOptInitialise(WPARAM wParam,LPARAM lParam);
@@ -143,21 +137,16 @@ int NetlibPacketRecverCreate(WPARAM wParam,LPARAM lParam);
 int NetlibPacketRecverGetMore(WPARAM wParam,LPARAM lParam);
 
 //netlibsock.c
-#define NL_SELECT_READ  0x0001
-#define NL_SELECT_WRITE 0x0002
-#define NL_SELECT_ALL   (NL_SELECT_READ+NL_SELECT_WRITE)
-
 int NetlibSend(WPARAM wParam,LPARAM lParam);
 int NetlibRecv(WPARAM wParam,LPARAM lParam);
 int NetlibSelect(WPARAM wParam,LPARAM lParam);
 int NetlibSelectEx(WPARAM wParam,LPARAM lParam);
-int NetlibShutdown(WPARAM wParam,LPARAM lParam);
 
 //netlibupnp.c
-BOOL NetlibUPnPAddPortMapping(WORD intport, char *proto,
+BOOL NetlibUPnPAddPortMapping(WORD intport, char *proto, 
 							  WORD *extport, DWORD *extip, BOOL search);
 void NetlibUPnPDeletePortMapping(WORD extport, char* proto);
-void NetlibUPnPCleanup(void*);
+void NetlibUPnPCleanup(void* extra);
 void NetlibUPnPInit(void);
 void NetlibUPnPDestroy(void);
 
@@ -177,3 +166,4 @@ static __inline int NLRecv(struct NetlibConnection *nlc,char *buf,int len,int fl
 	NETLIBBUFFER nlb={buf,len,flags};
 	return NetlibRecv((WPARAM)nlc,(LPARAM)&nlb);
 }
+

@@ -1,7 +1,7 @@
 # Microsoft Developer Studio Generated NMAKE File, Based on clist.dsp
 !IF "$(CFG)" == ""
-CFG=clist - Win32 Release Unicode
-!MESSAGE No configuration specified. Defaulting to clist - Win32 Release Unicode.
+CFG=clist - Win32 Debug Unicode
+!MESSAGE No configuration specified. Defaulting to clist - Win32 Debug Unicode.
 !ENDIF 
 
 !IF "$(CFG)" != "clist - Win32 Release" && "$(CFG)" != "clist - Win32 Debug" && "$(CFG)" != "clist - Win32 Release Unicode" && "$(CFG)" != "clist - Win32 Debug Unicode"
@@ -27,6 +27,10 @@ NULL=
 NULL=nul
 !ENDIF 
 
+CPP=cl.exe
+MTL=midl.exe
+RSC=rc.exe
+
 !IF  "$(CFG)" == "clist - Win32 Release"
 
 OUTDIR=.\Release
@@ -36,7 +40,6 @@ ALL : "..\..\bin\release\plugins\clist_classic.dll"
 
 
 CLEAN :
-	-@erase "$(INTDIR)\clcfonts.obj"
 	-@erase "$(INTDIR)\clcopts.obj"
 	-@erase "$(INTDIR)\clcpaint.obj"
 	-@erase "$(INTDIR)\clist.pch"
@@ -57,42 +60,8 @@ CLEAN :
 "$(OUTDIR)" :
     if not exist "$(OUTDIR)/$(NULL)" mkdir "$(OUTDIR)"
 
-CPP=cl.exe
 CPP_PROJ=/nologo /MD /W3 /Zi /O1 /I "../../include/" /I "../../include" /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "CLIST_EXPORTS" /Fp"$(INTDIR)\clist.pch" /Yu"commonheaders.h" /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /c 
-
-.c{$(INTDIR)}.obj::
-   $(CPP) @<<
-   $(CPP_PROJ) $< 
-<<
-
-.cpp{$(INTDIR)}.obj::
-   $(CPP) @<<
-   $(CPP_PROJ) $< 
-<<
-
-.cxx{$(INTDIR)}.obj::
-   $(CPP) @<<
-   $(CPP_PROJ) $< 
-<<
-
-.c{$(INTDIR)}.sbr::
-   $(CPP) @<<
-   $(CPP_PROJ) $< 
-<<
-
-.cpp{$(INTDIR)}.sbr::
-   $(CPP) @<<
-   $(CPP_PROJ) $< 
-<<
-
-.cxx{$(INTDIR)}.sbr::
-   $(CPP) @<<
-   $(CPP_PROJ) $< 
-<<
-
-MTL=midl.exe
 MTL_PROJ=/nologo /D "NDEBUG" /mktyplib203 /win32 
-RSC=rc.exe
 RSC_PROJ=/l 0x809 /fo"$(INTDIR)\resource.res" /i "../../include/" /d "NDEBUG" 
 BSC32=bscmake.exe
 BSC32_FLAGS=/nologo /o"$(OUTDIR)\clist.bsc" 
@@ -101,7 +70,6 @@ BSC32_SBRS= \
 LINK32=link.exe
 LINK32_FLAGS=kernel32.lib user32.lib gdi32.lib comctl32.lib shell32.lib ole32.lib comdlg32.lib /nologo /base:"0x6590000" /dll /incremental:no /pdb:"$(OUTDIR)\clist_classic.pdb" /map:"$(INTDIR)\clist_classic.map" /debug /machine:I386 /out:"../../bin/release/plugins/clist_classic.dll" /implib:"$(OUTDIR)\clist_classic.lib" 
 LINK32_OBJS= \
-	"$(INTDIR)\clcfonts.obj" \
 	"$(INTDIR)\clcopts.obj" \
 	"$(INTDIR)\clcpaint.obj" \
 	"$(INTDIR)\clistmenus.obj" \
@@ -126,7 +94,6 @@ ALL : "..\..\bin\debug\plugins\clist_classic.dll"
 
 
 CLEAN :
-	-@erase "$(INTDIR)\clcfonts.obj"
 	-@erase "$(INTDIR)\clcopts.obj"
 	-@erase "$(INTDIR)\clcpaint.obj"
 	-@erase "$(INTDIR)\clistmenus.obj"
@@ -146,42 +113,8 @@ CLEAN :
 "$(OUTDIR)" :
     if not exist "$(OUTDIR)/$(NULL)" mkdir "$(OUTDIR)"
 
-CPP=cl.exe
 CPP_PROJ=/nologo /MDd /W3 /Gm /GX /ZI /Od /I "../../include" /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "CLIST_EXPORTS" /Fp"$(INTDIR)\clist.pch" /YX /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /GZ /c 
-
-.c{$(INTDIR)}.obj::
-   $(CPP) @<<
-   $(CPP_PROJ) $< 
-<<
-
-.cpp{$(INTDIR)}.obj::
-   $(CPP) @<<
-   $(CPP_PROJ) $< 
-<<
-
-.cxx{$(INTDIR)}.obj::
-   $(CPP) @<<
-   $(CPP_PROJ) $< 
-<<
-
-.c{$(INTDIR)}.sbr::
-   $(CPP) @<<
-   $(CPP_PROJ) $< 
-<<
-
-.cpp{$(INTDIR)}.sbr::
-   $(CPP) @<<
-   $(CPP_PROJ) $< 
-<<
-
-.cxx{$(INTDIR)}.sbr::
-   $(CPP) @<<
-   $(CPP_PROJ) $< 
-<<
-
-MTL=midl.exe
 MTL_PROJ=/nologo /D "_DEBUG" /mktyplib203 /win32 
-RSC=rc.exe
 RSC_PROJ=/l 0x809 /fo"$(INTDIR)\resource.res" /i "../../include/" /d "_DEBUG" 
 BSC32=bscmake.exe
 BSC32_FLAGS=/nologo /o"$(OUTDIR)\clist.bsc" 
@@ -190,7 +123,6 @@ BSC32_SBRS= \
 LINK32=link.exe
 LINK32_FLAGS=kernel32.lib user32.lib gdi32.lib comctl32.lib shell32.lib ole32.lib comdlg32.lib /nologo /base:"0x6590000" /dll /incremental:yes /pdb:"$(OUTDIR)\clist_classic.pdb" /debug /machine:I386 /out:"../../bin/debug/plugins/clist_classic.dll" /implib:"$(OUTDIR)\clist_classic.lib" /pdbtype:sept 
 LINK32_OBJS= \
-	"$(INTDIR)\clcfonts.obj" \
 	"$(INTDIR)\clcopts.obj" \
 	"$(INTDIR)\clcpaint.obj" \
 	"$(INTDIR)\clistmenus.obj" \
@@ -215,7 +147,6 @@ ALL : "..\..\bin\Release Unicode\plugins\clist_classic.dll"
 
 
 CLEAN :
-	-@erase "$(INTDIR)\clcfonts.obj"
 	-@erase "$(INTDIR)\clcopts.obj"
 	-@erase "$(INTDIR)\clcpaint.obj"
 	-@erase "$(INTDIR)\clist.pch"
@@ -236,42 +167,8 @@ CLEAN :
 "$(OUTDIR)" :
     if not exist "$(OUTDIR)/$(NULL)" mkdir "$(OUTDIR)"
 
-CPP=cl.exe
 CPP_PROJ=/nologo /MD /W3 /Zi /O1 /I "../../include/" /I "../../include" /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "CLIST_EXPORTS" /D "UNICODE" /Fp"$(INTDIR)\clist.pch" /Yu"commonheaders.h" /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /c 
-
-.c{$(INTDIR)}.obj::
-   $(CPP) @<<
-   $(CPP_PROJ) $< 
-<<
-
-.cpp{$(INTDIR)}.obj::
-   $(CPP) @<<
-   $(CPP_PROJ) $< 
-<<
-
-.cxx{$(INTDIR)}.obj::
-   $(CPP) @<<
-   $(CPP_PROJ) $< 
-<<
-
-.c{$(INTDIR)}.sbr::
-   $(CPP) @<<
-   $(CPP_PROJ) $< 
-<<
-
-.cpp{$(INTDIR)}.sbr::
-   $(CPP) @<<
-   $(CPP_PROJ) $< 
-<<
-
-.cxx{$(INTDIR)}.sbr::
-   $(CPP) @<<
-   $(CPP_PROJ) $< 
-<<
-
-MTL=midl.exe
 MTL_PROJ=/nologo /D "NDEBUG" /mktyplib203 /win32 
-RSC=rc.exe
 RSC_PROJ=/l 0x809 /fo"$(INTDIR)\resource.res" /i "../../include/" /d "NDEBUG" 
 BSC32=bscmake.exe
 BSC32_FLAGS=/nologo /o"$(OUTDIR)\clist.bsc" 
@@ -280,7 +177,6 @@ BSC32_SBRS= \
 LINK32=link.exe
 LINK32_FLAGS=kernel32.lib user32.lib gdi32.lib comctl32.lib shell32.lib ole32.lib comdlg32.lib /nologo /base:"0x6590000" /dll /incremental:no /pdb:"$(OUTDIR)\clist_classic.pdb" /map:"$(INTDIR)\clist_classic.map" /debug /machine:I386 /out:"../../bin/Release Unicode/plugins/clist_classic.dll" /implib:"$(OUTDIR)\clist_classic.lib" 
 LINK32_OBJS= \
-	"$(INTDIR)\clcfonts.obj" \
 	"$(INTDIR)\clcopts.obj" \
 	"$(INTDIR)\clcpaint.obj" \
 	"$(INTDIR)\clistmenus.obj" \
@@ -305,7 +201,6 @@ ALL : "..\..\bin\Debug Unicode\plugins\clist_classic.dll"
 
 
 CLEAN :
-	-@erase "$(INTDIR)\clcfonts.obj"
 	-@erase "$(INTDIR)\clcopts.obj"
 	-@erase "$(INTDIR)\clcpaint.obj"
 	-@erase "$(INTDIR)\clistmenus.obj"
@@ -325,8 +220,32 @@ CLEAN :
 "$(OUTDIR)" :
     if not exist "$(OUTDIR)/$(NULL)" mkdir "$(OUTDIR)"
 
-CPP=cl.exe
 CPP_PROJ=/nologo /MDd /W3 /Gm /GX /ZI /Od /I "../../include" /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "CLIST_EXPORTS" /D "UNICODE" /Fp"$(INTDIR)\clist.pch" /YX /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /GZ /c 
+MTL_PROJ=/nologo /D "_DEBUG" /mktyplib203 /win32 
+RSC_PROJ=/l 0x809 /fo"$(INTDIR)\resource.res" /i "../../include/" /d "_DEBUG" 
+BSC32=bscmake.exe
+BSC32_FLAGS=/nologo /o"$(OUTDIR)\clist.bsc" 
+BSC32_SBRS= \
+	
+LINK32=link.exe
+LINK32_FLAGS=kernel32.lib user32.lib gdi32.lib comctl32.lib shell32.lib ole32.lib comdlg32.lib /nologo /base:"0x6590000" /dll /incremental:yes /pdb:"$(OUTDIR)\clist_classic.pdb" /debug /machine:I386 /out:"../../bin/Debug Unicode/plugins/clist_classic.dll" /implib:"$(OUTDIR)\clist_classic.lib" /pdbtype:sept 
+LINK32_OBJS= \
+	"$(INTDIR)\clcopts.obj" \
+	"$(INTDIR)\clcpaint.obj" \
+	"$(INTDIR)\clistmenus.obj" \
+	"$(INTDIR)\clistopts.obj" \
+	"$(INTDIR)\cluiopts.obj" \
+	"$(INTDIR)\commonheaders.obj" \
+	"$(INTDIR)\forkthread.obj" \
+	"$(INTDIR)\init.obj" \
+	"$(INTDIR)\resource.res"
+
+"..\..\bin\Debug Unicode\plugins\clist_classic.dll" : "$(OUTDIR)" $(DEF_FILE) $(LINK32_OBJS)
+    $(LINK32) @<<
+  $(LINK32_FLAGS) $(LINK32_OBJS)
+<<
+
+!ENDIF 
 
 .c{$(INTDIR)}.obj::
    $(CPP) @<<
@@ -358,35 +277,6 @@ CPP_PROJ=/nologo /MDd /W3 /Gm /GX /ZI /Od /I "../../include" /D "WIN32" /D "_DEB
    $(CPP_PROJ) $< 
 <<
 
-MTL=midl.exe
-MTL_PROJ=/nologo /D "_DEBUG" /mktyplib203 /win32 
-RSC=rc.exe
-RSC_PROJ=/l 0x809 /fo"$(INTDIR)\resource.res" /i "../../include/" /d "_DEBUG" 
-BSC32=bscmake.exe
-BSC32_FLAGS=/nologo /o"$(OUTDIR)\clist.bsc" 
-BSC32_SBRS= \
-	
-LINK32=link.exe
-LINK32_FLAGS=kernel32.lib user32.lib gdi32.lib comctl32.lib shell32.lib ole32.lib comdlg32.lib /nologo /base:"0x6590000" /dll /incremental:yes /pdb:"$(OUTDIR)\clist_classic.pdb" /debug /machine:I386 /out:"../../bin/Debug Unicode/plugins/clist_classic.dll" /implib:"$(OUTDIR)\clist_classic.lib" /pdbtype:sept 
-LINK32_OBJS= \
-	"$(INTDIR)\clcfonts.obj" \
-	"$(INTDIR)\clcopts.obj" \
-	"$(INTDIR)\clcpaint.obj" \
-	"$(INTDIR)\clistmenus.obj" \
-	"$(INTDIR)\clistopts.obj" \
-	"$(INTDIR)\cluiopts.obj" \
-	"$(INTDIR)\commonheaders.obj" \
-	"$(INTDIR)\forkthread.obj" \
-	"$(INTDIR)\init.obj" \
-	"$(INTDIR)\resource.res"
-
-"..\..\bin\Debug Unicode\plugins\clist_classic.dll" : "$(OUTDIR)" $(DEF_FILE) $(LINK32_OBJS)
-    $(LINK32) @<<
-  $(LINK32_FLAGS) $(LINK32_OBJS)
-<<
-
-!ENDIF 
-
 
 !IF "$(NO_EXTERNAL_DEPS)" != "1"
 !IF EXISTS("clist.dep")
@@ -398,11 +288,6 @@ LINK32_OBJS= \
 
 
 !IF "$(CFG)" == "clist - Win32 Release" || "$(CFG)" == "clist - Win32 Debug" || "$(CFG)" == "clist - Win32 Release Unicode" || "$(CFG)" == "clist - Win32 Debug Unicode"
-SOURCE=.\clcfonts.c
-
-"$(INTDIR)\clcfonts.obj" : $(SOURCE) "$(INTDIR)" "$(INTDIR)\clist.pch"
-
-
 SOURCE=.\clcopts.c
 
 !IF  "$(CFG)" == "clist - Win32 Release"

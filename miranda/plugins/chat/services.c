@@ -22,7 +22,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "m_fontservice.h"
 
 extern HANDLE		g_hInst;
-extern HICON      hIcons[30];
 extern HIMAGELIST	hImageList;
 extern HIMAGELIST	hIconsList;
 extern BOOL			SmileyAddInstalled;
@@ -33,8 +32,7 @@ HANDLE				hSendEvent;
 HANDLE				hBuildMenuEvent ;
 HANDLE				g_hModulesLoaded;
 HANDLE				g_hSystemPreShutdown;
-HANDLE            hJoinMenuItem, hLeaveMenuItem;
-HANDLE				g_hHookContactDblClick, g_hHookPrebuildMenu;
+HANDLE				g_hHookContactDblClick;
 HANDLE				g_hIconsChanged, g_hFontsChanged;
 HANDLE				g_hSmileyOptionsChanged = NULL;
 HANDLE				g_hIconsChanged2;
@@ -50,10 +48,7 @@ static HANDLE
    hServiceGetAddEventPtr = NULL,
    hServiceGetInfo = NULL,
    hServiceGetCount = NULL,
-	hEventPrebuildMenu = NULL,
-	hEventDoubleclicked = NULL,
-   hEventJoinChat = NULL,
-	hEventLeaveChat = NULL;
+   hEventDoubleclicked = NULL;
 
 #define SIZEOF_STRUCT_GCREGISTER_V1 28
 #define SIZEOF_STRUCT_GCWINDOW_V1	32
@@ -146,6 +141,22 @@ void ShowRoom(SESSION_INFO* si, WPARAM wp, BOOL bSetForeground)
 	SetFocus(GetDlgItem(si->hWnd, IDC_MESSAGE));
 }
 
+void TabsInit(void)
+{
+	ZeroMemory(&g_TabSession, sizeof(SESSION_INFO));
+
+	g_TabSession.iType = GCW_TABROOM;
+	g_TabSession.iSplitterX = g_Settings.iSplitterX;
+	g_TabSession.iSplitterY = g_Settings.iSplitterY;
+	g_TabSession.iLogFilterFlags = (int)DBGetContactSettingDword(NULL, "Chat", "FilterFlags", 0x03E0);
+	g_TabSession.bFilterEnabled = DBGetContactSettingByte(NULL, "Chat", "FilterEnabled", 0);
+	g_TabSession.bNicklistEnabled = DBGetContactSettingByte(NULL, "Chat", "ShowNicklist", 1);
+	g_TabSession.iFG = 4;
+	g_TabSession.bFGSet = TRUE;
+	g_TabSession.iBG = 2;
+	g_TabSession.bBGSet = TRUE;
+}
+
 /////////////////////////////////////////////////////////////////////////////////////////
 // Post-load event hooks
 
@@ -165,7 +176,7 @@ static int FontsChanged(WPARAM wParam,LPARAM lParam)
 		g_Settings.LogTextIndent = g_Settings.LogTextIndent*12/10;
 		g_Settings.LogIndentEnabled = (DBGetContactSettingByte(NULL, "Chat", "LogIndentEnabled", 1) != 0)?TRUE:FALSE;
 	}
-	MM_FontsChanged();
+	MM_FontsChanged();						
 	MM_FixColors();
 	SM_BroadcastMessage(NULL, GC_SETWNDPROPS, 0, 0, TRUE);
 	return 0;
@@ -206,23 +217,6 @@ static int ModulesLoaded(WPARAM wParam,LPARAM lParam)
 	RegisterFonts();
 	AddIcons();
 	LoadIcons();
-	{
-		CLISTMENUITEM mi = { 0 };
-		mi.cbSize = sizeof(mi);
-		mi.position = -2000090001;
-		mi.flags = CMIF_DEFAULT;
-		mi.hIcon = LoadSkinnedIcon( SKINICON_CHAT_JOIN );
-		mi.pszName = LPGEN("&Join");
-		mi.pszService = "GChat/JoinChat";
-		hJoinMenuItem = ( HANDLE )CallService(MS_CLIST_ADDCONTACTMENUITEM, 0, (LPARAM) & mi);
-
-		mi.position = -2000090000;
-		mi.hIcon = LoadSkinnedIcon( SKINICON_CHAT_LEAVE );
-		mi.flags = CMIF_NOTOFFLINE;
-		mi.pszName = LPGEN("&Leave");
-		mi.pszService = "GChat/LeaveChat";
-		hLeaveMenuItem = ( HANDLE )CallService(MS_CLIST_ADDCONTACTMENUITEM, 0, (LPARAM) & mi);
-	}
 
 	g_hFontsChanged  = HookEvent(ME_FONT_RELOAD, FontsChanged);
 	g_hIconsChanged2 = HookEvent(ME_SKIN2_ICONSCHANGED, IconsChanged);
@@ -237,7 +231,7 @@ static int ModulesLoaded(WPARAM wParam,LPARAM lParam)
 	if ( ServiceExists( MS_IEVIEW_WINDOW ))
 		IEviewInstalled = TRUE;
 
-	CList_SetAllOffline(TRUE, NULL);
+	CList_SetAllOffline(TRUE);
  	return 0;
 }
 
@@ -350,7 +344,7 @@ static int Service_Register(WPARAM wParam, LPARAM lParam)
 		mi->pszHeader = Log_CreateRtfHeader(mi);
 
 		CheckColorsInModule((char*)gcr->pszModule);
-		CList_SetAllOffline(TRUE, gcr->pszModule);
+		CList_SetAllOffline(TRUE);
 
 		LeaveCriticalSection(&cs);
 		return 0;
@@ -538,7 +532,7 @@ static int DoControl(GCEVENT * gce, WPARAM wp)
 		}
 		return 0;
 	}
-	else if (gce->pDest->iType == GC_EVENT_SETSBTEXT)
+	else if (gce->pDest->iType ==GC_EVENT_SETSBTEXT)
 	{
 		SESSION_INFO* si = SM_FindSession(gce->pDest->ptszID, gce->pDest->pszModule);
 		if (si) {
@@ -801,7 +795,6 @@ void HookEvents(void)
 {
 	InitializeCriticalSection(&cs);
 	g_hModulesLoaded =       HookEvent(ME_SYSTEM_MODULESLOADED, ModulesLoaded);
-	g_hHookPrebuildMenu =    HookEvent(ME_CLIST_PREBUILDCONTACTMENU, CList_PrebuildContactMenu);
 	g_hHookContactDblClick = HookEvent(ME_CLIST_DOUBLECLICKED, CList_RoomDoubleclicked);
 	g_hSystemPreShutdown =   HookEvent(ME_SYSTEM_PRESHUTDOWN, PreShutdown);
 	g_hIconsChanged =	       HookEvent(ME_SKIN_ICONSCHANGED, IconsChanged);
@@ -811,7 +804,6 @@ void UnhookEvents(void)
 {
 	UnhookEvent(g_hModulesLoaded);
 	UnhookEvent(g_hSystemPreShutdown);
-	UnhookEvent(g_hHookPrebuildMenu);
 	UnhookEvent(g_hHookContactDblClick);
 	UnhookEvent(g_hIconsChanged);
 	UnhookEvent(g_hIconsChanged2);
@@ -829,52 +821,22 @@ void CreateServiceFunctions(void)
 	hServiceGetAddEventPtr = CreateServiceFunction(MS_GC_GETEVENTPTR,     Service_GetAddEventPtr);
 	hServiceGetInfo        = CreateServiceFunction(MS_GC_GETINFO,         Service_GetInfo);
 	hServiceGetCount       = CreateServiceFunction(MS_GC_GETSESSIONCOUNT, Service_GetCount);
-
-	hEventDoubleclicked    = CreateServiceFunction("GChat/DblClickEvent",     CList_EventDoubleclicked);
-	hEventPrebuildMenu     = CreateServiceFunction("GChat/PrebuildMenuEvent", CList_PrebuildContactMenu);
-	hEventJoinChat         = CreateServiceFunction("GChat/JoinChat",          CList_JoinChat);
-	hEventLeaveChat        = CreateServiceFunction("GChat/LeaveChat",         CList_LeaveChat);
+	hEventDoubleclicked    = CreateServiceFunction("GChat/DblClickEvent", CList_EventDoubleclicked);
 }
 
 void DestroyServiceFunctions(void)
 {
-	DestroyServiceFunction( hServiceRegister       );
-	DestroyServiceFunction( hServiceNewChat        );
-	DestroyServiceFunction( hServiceAddEvent       );
-	DestroyServiceFunction( hServiceGetAddEventPtr );
-	DestroyServiceFunction( hServiceGetInfo        );
-	DestroyServiceFunction( hServiceGetCount       );
-
-	DestroyServiceFunction( hEventDoubleclicked    );
-	DestroyServiceFunction( hEventPrebuildMenu     );
-	DestroyServiceFunction( hEventJoinChat         );
-	DestroyServiceFunction( hEventLeaveChat        );
+	DestroyServiceFunction(hServiceRegister       );
+	DestroyServiceFunction(hServiceNewChat        );
+	DestroyServiceFunction(hServiceAddEvent       );
+	DestroyServiceFunction(hServiceGetAddEventPtr );
+	DestroyServiceFunction(hServiceGetInfo        );
+	DestroyServiceFunction(hServiceGetCount       );
+	DestroyServiceFunction(hEventDoubleclicked    );
 }
 
 void CreateHookableEvents(void)
 {
 	hSendEvent = CreateHookableEvent(ME_GC_EVENT);
 	hBuildMenuEvent = CreateHookableEvent(ME_GC_BUILDMENU);
-}
-
-void DestroyHookableEvents(void)
-{
-	DestroyHookableEvent(hSendEvent);
-	DestroyHookableEvent(hBuildMenuEvent);
-}
-
-void TabsInit(void)
-{
-	ZeroMemory(&g_TabSession, sizeof(SESSION_INFO));
-
-	g_TabSession.iType = GCW_TABROOM;
-	g_TabSession.iSplitterX = g_Settings.iSplitterX;
-	g_TabSession.iSplitterY = g_Settings.iSplitterY;
-	g_TabSession.iLogFilterFlags = (int)DBGetContactSettingDword(NULL, "Chat", "FilterFlags", 0x03E0);
-	g_TabSession.bFilterEnabled = DBGetContactSettingByte(NULL, "Chat", "FilterEnabled", 0);
-	g_TabSession.bNicklistEnabled = DBGetContactSettingByte(NULL, "Chat", "ShowNicklist", 1);
-	g_TabSession.iFG = 4;
-	g_TabSession.bFGSet = TRUE;
-	g_TabSession.iBG = 2;
-	g_TabSession.bBGSet = TRUE;
 }
