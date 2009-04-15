@@ -18,6 +18,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 #include "dbtool.h"
 
+BOOL CALLBACK WelcomeDlgProc(HWND hdlg,UINT message,WPARAM wParam,LPARAM lParam);
+
 static HFONT hBoldFont=NULL;
 static HENHMETAFILE hEmfHeaderLogo=NULL;
 
@@ -52,7 +54,7 @@ static BOOL CALLBACK MyControlsEnumChildren(HWND hwnd,LPARAM lParam)
 	return TRUE;
 }
 
-int DoMyControlProcessing(HWND hdlg,UINT message,WPARAM wParam,LPARAM lParam,INT_PTR *bReturn)
+int DoMyControlProcessing(HWND hdlg,UINT message,WPARAM wParam,LPARAM lParam,BOOL *bReturn)
 {
 	switch(message) {
 		case WM_INITDIALOG:
@@ -72,12 +74,12 @@ int DoMyControlProcessing(HWND hdlg,UINT message,WPARAM wParam,LPARAM lParam,INT
 					SetTextColor((HDC)wParam,RGB(255,255,255));
 					SetBkColor((HDC)wParam,RGB(255,255,255));
 					SetBkMode((HDC)wParam,OPAQUE);
-					*bReturn=(INT_PTR)GetStockObject(WHITE_BRUSH);
+					*bReturn=(BOOL)GetStockObject(WHITE_BRUSH);
 					return TRUE;
 				}
 				else {
 					SetBkMode((HDC)wParam,TRANSPARENT);
-					*bReturn=(INT_PTR)GetStockObject(NULL_BRUSH);
+					*bReturn=(BOOL)GetStockObject(NULL_BRUSH);
 					return TRUE;
 				}
 			}
@@ -86,7 +88,7 @@ int DoMyControlProcessing(HWND hdlg,UINT message,WPARAM wParam,LPARAM lParam,INT
 	return FALSE;
 }
 
-INT_PTR CALLBACK WizardDlgProc(HWND hdlg,UINT message,WPARAM wParam,LPARAM lParam)
+BOOL CALLBACK WizardDlgProc(HWND hdlg,UINT message,WPARAM wParam,LPARAM lParam)
 {
 	static HWND hdlgPage;
 
@@ -122,10 +124,6 @@ INT_PTR CALLBACK WizardDlgProc(HWND hdlg,UINT message,WPARAM wParam,LPARAM lPara
 			}
 			break;
 		case WM_DESTROY:
-			if (opts.hFile)
-				CloseHandle(opts.hFile);
-			if (opts.hOutFile)
-				CloseHandle(opts.hOutFile);
 			DestroyWindow(hdlgPage);
 			LangPackShutdown();
 			if(hBoldFont!=NULL) DeleteObject(hBoldFont);

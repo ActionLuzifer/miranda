@@ -1,7 +1,7 @@
 /*
 Scriver
 
-Copyright 2000-2008 Miranda ICQ/IM project,
+Copyright 2000-2007 Miranda ICQ/IM project,
 
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
@@ -24,9 +24,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "msgs.h"
 
 
-INT_PTR CALLBACK ErrorDlgProc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam)
+BOOL CALLBACK ErrorDlgProc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 {
-	ErrorWindowData *ewd = (ErrorWindowData *) GetWindowLongPtr(hwndDlg, GWLP_USERDATA);
+	ErrorWindowData *ewd = (ErrorWindowData *) GetWindowLong(hwndDlg, GWL_USERDATA);
 	//if (ewd==NULL && msg!=WM_INITDIALOG) return FALSE;
 	switch (msg) {
 		case WM_INITDIALOG:
@@ -34,7 +34,7 @@ INT_PTR CALLBACK ErrorDlgProc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lPar
 			RECT rc, rcParent;
 			TCHAR szText[2048];
 			ewd = (ErrorWindowData *) lParam;
-			SetWindowLongPtr(hwndDlg, GWLP_USERDATA, (LONG_PTR) ewd);
+			SetWindowLong(hwndDlg, GWL_USERDATA, (LONG) ewd);
 			TranslateDialogDefault(hwndDlg);
 			ShowWindow(GetParent(ewd->hwndParent), SW_RESTORE);
 			if (ewd != NULL) {
@@ -81,7 +81,7 @@ INT_PTR CALLBACK ErrorDlgProc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lPar
 			}
 			break;
 		case WM_DESTROY:
-			SetWindowLongPtr(hwndDlg, GWLP_USERDATA, 0);
+			SetWindowLong(hwndDlg, GWL_USERDATA, (LONG) NULL);
 			mir_free(ewd->szName);
 			mir_free(ewd->szDescription);
 			mir_free(ewd->szText);

@@ -2,7 +2,7 @@
 #include "cluiframes.h"
 
 //==========================Frames
-HANDLE hFrameMenuObject;
+int hFrameMenuObject;
 static HANDLE hPreBuildFrameMenuEvent;
 extern int InitCustomMenus(void);
 
@@ -11,7 +11,7 @@ extern int InitCustomMenus(void);
 typedef struct{
 	char *szServiceName;
 	int Frameid;
-	INT_PTR param1;
+	int param1;
 }FrameMenuExecParam,*lpFrameMenuExecParam;
 
 void FreeAndNil( void **p )
@@ -29,20 +29,20 @@ void FreeAndNil( void **p )
 	}
 }
 
-INT_PTR FreeOwnerDataFrameMenu (WPARAM wParam,LPARAM lParam)
+int FreeOwnerDataFrameMenu (WPARAM wParam,LPARAM lParam)
 {
 
 	lpFrameMenuExecParam cmep;
 
 	cmep=(lpFrameMenuExecParam)lParam;
 	if (cmep!=NULL){
-		FreeAndNil((void *)&cmep->szServiceName);
-		FreeAndNil((void *)&cmep);
+		FreeAndNil(&cmep->szServiceName);
+		FreeAndNil(&cmep);
 	}
 	return(0);
 }
 
-static INT_PTR AddContextFrameMenuItem(WPARAM wParam,LPARAM lParam)
+static int AddContextFrameMenuItem(WPARAM wParam,LPARAM lParam)
 {
 	CLISTMENUITEM *mi=(CLISTMENUITEM*)lParam;
 	TMO_MenuItem tmi;
@@ -58,15 +58,15 @@ static INT_PTR AddContextFrameMenuItem(WPARAM wParam,LPARAM lParam)
 	tmi.position=mi->position;
 	tmi.pszName=mi->pszName;
 
-	if( mi->flags & CMIF_ROOTHANDLE )
-		tmi.root = mi->hParentMenu;
+	if(mi->flags&CMIF_ROOTPOPUP||mi->flags&CMIF_CHILDPOPUP)
+		tmi.root=(int)mi->pszPopupName;
 	{
 		lpFrameMenuExecParam fmep;
 		fmep=(lpFrameMenuExecParam)mir_alloc(sizeof(FrameMenuExecParam));
 		if (fmep==NULL){return(0);};
 		fmep->szServiceName=mir_strdup(mi->pszService);
 		fmep->Frameid=mi->popupPosition;
-		fmep->param1=(INT_PTR)mi->pszContactOwner;
+		fmep->param1=(int)mi->pszContactOwner;
 
 		tmi.ownerdata=fmep;
 	}
@@ -74,7 +74,7 @@ static INT_PTR AddContextFrameMenuItem(WPARAM wParam,LPARAM lParam)
 	return(CallService(MO_ADDNEWMENUITEM,(WPARAM)hFrameMenuObject,(LPARAM)&tmi));
 }
 
-static INT_PTR RemoveContextFrameMenuItem(WPARAM wParam,LPARAM lParam)
+static int RemoveContextFrameMenuItem(WPARAM wParam,LPARAM lParam)
 {
 	/* this do by free service
 	lpFrameMenuExecParam fmep;
@@ -94,7 +94,7 @@ static INT_PTR RemoveContextFrameMenuItem(WPARAM wParam,LPARAM lParam)
 //called with:
 //wparam - ownerdata
 //lparam - lparam from winproc
-INT_PTR FrameMenuExecService(WPARAM wParam,LPARAM lParam) {
+int FrameMenuExecService(WPARAM wParam,LPARAM lParam) {
 	lpFrameMenuExecParam fmep=(lpFrameMenuExecParam)wParam;
 	if (fmep==NULL)
 		return(-1);
@@ -105,7 +105,7 @@ INT_PTR FrameMenuExecService(WPARAM wParam,LPARAM lParam) {
 }
 
 //true - ok,false ignore
-INT_PTR FrameMenuCheckService(WPARAM wParam,LPARAM lParam) {
+int FrameMenuCheckService(WPARAM wParam,LPARAM lParam) {
 
 	PCheckProcParam pcpp=(PCheckProcParam)wParam;
 	lpFrameMenuExecParam fmep;
@@ -124,32 +124,36 @@ INT_PTR FrameMenuCheckService(WPARAM wParam,LPARAM lParam) {
 	return(FALSE);
 }
 
-static INT_PTR ContextFrameMenuNotify(WPARAM wParam,LPARAM lParam)
+static int ContextFrameMenuNotify(WPARAM wParam,LPARAM lParam)
 {
 	NotifyEventHooks(hPreBuildFrameMenuEvent,wParam,lParam);
 	return(0);
 }
 
-static INT_PTR BuildContextFrameMenu(WPARAM wParam,LPARAM lParam)
+static int BuildContextFrameMenu(WPARAM wParam,LPARAM lParam)
 {
 	CLISTMENUITEM *mi=(CLISTMENUITEM*)lParam;
 	HMENU hMenu;
-	ListParam param = { 0 };
+	ListParam param;
+
+	memset(&param,0,sizeof(param));
+
 	param.MenuObjectHandle=hFrameMenuObject;
 	param.wParam=wParam;
 	param.lParam=lParam;
+	param.rootlevel=-1;
 
 	hMenu=CreatePopupMenu();
 	//NotifyEventHooks(hPreBuildFrameMenuEvent,wParam,-1);
 	ContextFrameMenuNotify(wParam,-1);
 	CallService(MO_BUILDMENU,(WPARAM)hMenu,(LPARAM)&param);
-	return (INT_PTR)hMenu;
+	return (int)hMenu;
 }
 
 //==========================Frames end
 boolean InternalGenMenuModule=FALSE;
 
-INT_PTR MeasureItemProxy(WPARAM wParam,LPARAM lParam)
+int MeasureItemProxy(WPARAM wParam,LPARAM lParam)
 {
 	int val;
 	if (InternalGenMenuModule) 
@@ -161,7 +165,7 @@ INT_PTR MeasureItemProxy(WPARAM wParam,LPARAM lParam)
 	return CallService(MS_CLIST_MENUMEASUREITEM,wParam,lParam);
 }
 
-INT_PTR DrawItemProxy(WPARAM wParam,LPARAM lParam)
+int DrawItemProxy(WPARAM wParam,LPARAM lParam)
 {
 	if (InternalGenMenuModule) 
 	{
@@ -183,7 +187,7 @@ int ProcessCommandProxy(WPARAM wParam,LPARAM lParam)
 	return CallService(MS_CLIST_MENUPROCESSCOMMAND,wParam,lParam);
 }
 
-INT_PTR ModifyMenuItemProxy(WPARAM wParam,LPARAM lParam)
+int ModifyMenuItemProxy(WPARAM wParam,LPARAM lParam)
 {
 	if (InternalGenMenuModule) 
 	{
@@ -221,12 +225,12 @@ int InitFramesMenus(void)
 		tmp.CheckService="FrameMenuCheckService";
 		tmp.ExecService="FrameMenuExecService";
 		tmp.name="Frames_Menu";
-		hFrameMenuObject=(HANDLE)CallService(MO_CREATENEWMENUOBJECT,0,(LPARAM)&tmp);
+		hFrameMenuObject=CallService(MO_CREATENEWMENUOBJECT,0,(LPARAM)&tmp);
 		{
 			OptParam op;
 			op.Handle=hFrameMenuObject;
 			op.Setting=OPT_MENUOBJECT_SET_FREE_SERVICE;
-			op.Value=(INT_PTR)"FrameMenuFreeService";
+			op.Value=(int)"FrameMenuFreeService";
 			CallService(MO_SETOPTIONSMENUOBJECT,(WPARAM)0,(LPARAM)&op);
 		}
 	}

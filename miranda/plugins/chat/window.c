@@ -22,7 +22,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 extern HBRUSH		hEditBkgBrush;
 extern HBRUSH		hListBkgBrush;
-extern HBRUSH		hListSelectedBkgBrush;
 extern HANDLE		hSendEvent;
 extern HINSTANCE	g_hInst;
 extern HICON		hIcons[30];
@@ -266,13 +265,13 @@ static LRESULT CALLBACK MessageSubclassProc(HWND hwnd, UINT msg, WPARAM wParam, 
 	MESSAGESUBDATA *dat;
 	SESSION_INFO* Parentsi;
 
-	Parentsi=(SESSION_INFO*)GetWindowLongPtr(GetParent(hwnd),GWLP_USERDATA);
-	dat = (MESSAGESUBDATA *) GetWindowLongPtr(hwnd, GWLP_USERDATA);
+	Parentsi=(SESSION_INFO*)GetWindowLong(GetParent(hwnd),GWL_USERDATA);
+	dat = (MESSAGESUBDATA *) GetWindowLong(hwnd, GWL_USERDATA);
 	switch (msg) {
 	case EM_SUBCLASSED:
 		dat = (MESSAGESUBDATA *) mir_alloc(sizeof(MESSAGESUBDATA));
 
-		SetWindowLongPtr(hwnd, GWLP_USERDATA, (LONG_PTR) dat);
+		SetWindowLong(hwnd, GWL_USERDATA, (LONG) dat);
 		dat->szTabSave[0] = '\0';
 		dat->lastEnterTime = 0;
 		return 0;
@@ -296,7 +295,7 @@ static LRESULT CALLBACK MessageSubclassProc(HWND hwnd, UINT msg, WPARAM wParam, 
 			BOOL isCtrl = GetKeyState(VK_CONTROL) & 0x8000;
 			BOOL isAlt = GetKeyState(VK_MENU) & 0x8000;
 
-			if (GetWindowLongPtr(hwnd, GWL_STYLE) & ES_READONLY)
+			if (GetWindowLong(hwnd, GWL_STYLE) & ES_READONLY)
 				break;
 
 			if (wParam == 9 && isCtrl && !isAlt) // ctrl-i (italics)
@@ -745,7 +744,7 @@ static LRESULT CALLBACK MessageSubclassProc(HWND hwnd, UINT msg, WPARAM wParam, 
 	return CallWindowProc(OldMessageProc, hwnd, msg, wParam, lParam);
 }
 
-static INT_PTR CALLBACK FilterWndProc(HWND hwndDlg,UINT uMsg,WPARAM wParam,LPARAM lParam)
+static BOOL CALLBACK FilterWndProc(HWND hwndDlg,UINT uMsg,WPARAM wParam,LPARAM lParam)
 {
 	static SESSION_INFO* si = NULL;
 	switch (uMsg) {
@@ -768,7 +767,7 @@ static INT_PTR CALLBACK FilterWndProc(HWND hwndDlg,UINT uMsg,WPARAM wParam,LPARA
 	case WM_CTLCOLORSTATIC:
 		SetTextColor((HDC)wParam,RGB(60,60,150));
 		SetBkColor((HDC)wParam,GetSysColor(COLOR_WINDOW));
-		return (INT_PTR)GetSysColorBrush(COLOR_WINDOW);
+		return (BOOL)GetSysColorBrush(COLOR_WINDOW);
 
 	case WM_ACTIVATE:
 		if (LOWORD(wParam) == WA_INACTIVE) {
@@ -1001,7 +1000,7 @@ static LRESULT CALLBACK NicklistSubclassProc(HWND hwnd, UINT msg, WPARAM wParam,
 	case WM_ERASEBKGND:
 		{
 			HDC dc = (HDC)wParam;
-			SESSION_INFO* parentdat =(SESSION_INFO*)GetWindowLongPtr(GetParent(hwnd),GWLP_USERDATA);
+			SESSION_INFO* parentdat =(SESSION_INFO*)GetWindowLong(GetParent(hwnd),GWL_USERDATA);
 			if (dc) {
 				int height, index, items = 0;
 
@@ -1037,27 +1036,13 @@ static LRESULT CALLBACK NicklistSubclassProc(HWND hwnd, UINT msg, WPARAM wParam,
 		SendMessage(hwnd, WM_LBUTTONUP, wParam, lParam);
 		break;
 
-	case WM_MEASUREITEM:
-		{
-			MEASUREITEMSTRUCT *mis = (MEASUREITEMSTRUCT *) lParam;
-			if (mis->CtlType == ODT_MENU)
-				return CallService(MS_CLIST_MENUMEASUREITEM, wParam, lParam);
-			return FALSE;
-		}
-	case WM_DRAWITEM:
-		{
-			DRAWITEMSTRUCT *dis = (DRAWITEMSTRUCT *) lParam;
-			if (dis->CtlType == ODT_MENU)
-				return CallService(MS_CLIST_MENUDRAWITEM, wParam, lParam);
-			return FALSE;
-		}
 	case WM_CONTEXTMENU:
 		{
 			TVHITTESTINFO hti;
 			int item;
 			int height;
 			USERINFO * ui;
-			SESSION_INFO* parentdat =(SESSION_INFO*)GetWindowLongPtr(GetParent(hwnd),GWLP_USERDATA);
+			SESSION_INFO* parentdat =(SESSION_INFO*)GetWindowLong(GetParent(hwnd),GWL_USERDATA);
 
 			hti.pt.x = (short) LOWORD(lParam);
 			hti.pt.y = (short) HIWORD(lParam);
@@ -1103,7 +1088,7 @@ static LRESULT CALLBACK NicklistSubclassProc(HWND hwnd, UINT msg, WPARAM wParam,
 
 	case WM_MOUSEMOVE:
 		{
-			SESSION_INFO* parentdat =(SESSION_INFO*)GetWindowLongPtr(GetParent(hwnd),GWLP_USERDATA);
+			SESSION_INFO* parentdat =(SESSION_INFO*)GetWindowLong(GetParent(hwnd),GWL_USERDATA);
 			if ( parentdat ) {
 				POINT p;
 				GetCursorPos(&p);
@@ -1163,6 +1148,13 @@ int GetTextPixelSize( TCHAR* pszText, HFONT hFont, BOOL bWidth)
 	return bWidth ? rc.right - rc.left : rc.bottom - rc.top;
 }
 
+struct FORK_ARG {
+	HANDLE hEvent;
+	void (__cdecl *threadcode)(void*);
+	unsigned (__stdcall *threadcodeex)(void*);
+	void *arg;
+};
+
 static void __cdecl phase2(void * lParam)
 {
 	SESSION_INFO* si = (SESSION_INFO*) lParam;
@@ -1171,10 +1163,10 @@ static void __cdecl phase2(void * lParam)
 		PostMessage(si->hWnd, GC_REDRAWLOG3, 0, 0);
 }
 
-INT_PTR CALLBACK RoomWndProc(HWND hwndDlg,UINT uMsg,WPARAM wParam,LPARAM lParam)
+BOOL CALLBACK RoomWndProc(HWND hwndDlg,UINT uMsg,WPARAM wParam,LPARAM lParam)
 {
 	SESSION_INFO* si;
-	si = (SESSION_INFO*)GetWindowLongPtr(hwndDlg,GWLP_USERDATA);
+	si = (SESSION_INFO*)GetWindowLong(hwndDlg,GWL_USERDATA);
 	switch (uMsg) {
 	case WM_INITDIALOG:
 		{
@@ -1183,16 +1175,16 @@ INT_PTR CALLBACK RoomWndProc(HWND hwndDlg,UINT uMsg,WPARAM wParam,LPARAM lParam)
 			HWND hNickList = GetDlgItem(hwndDlg,IDC_LIST);
 
 			TranslateDialogDefault(hwndDlg);
-			SetWindowLongPtr(hwndDlg,GWLP_USERDATA,(LONG_PTR)psi);
-			OldSplitterProc=(WNDPROC)SetWindowLongPtr(GetDlgItem(hwndDlg,IDC_SPLITTERX),GWLP_WNDPROC,(LONG_PTR)SplitterSubclassProc);
-			SetWindowLongPtr(GetDlgItem(hwndDlg,IDC_SPLITTERY),GWLP_WNDPROC,(LONG_PTR)SplitterSubclassProc);
-			OldNicklistProc=(WNDPROC)SetWindowLongPtr(hNickList,GWLP_WNDPROC,(LONG_PTR)NicklistSubclassProc);
-			OldTabProc=(WNDPROC)SetWindowLongPtr(GetDlgItem(hwndDlg,IDC_TAB),GWLP_WNDPROC,(LONG_PTR)TabSubclassProc);
-			OldLogProc=(WNDPROC)SetWindowLongPtr(GetDlgItem(hwndDlg,IDC_LOG),GWLP_WNDPROC,(LONG_PTR)LogSubclassProc);
-			OldFilterButtonProc=(WNDPROC)SetWindowLongPtr(GetDlgItem(hwndDlg,IDC_FILTER),GWLP_WNDPROC,(LONG_PTR)ButtonSubclassProc);
-			SetWindowLongPtr(GetDlgItem(hwndDlg,IDC_COLOR),GWLP_WNDPROC,(LONG_PTR)ButtonSubclassProc);
-			SetWindowLongPtr(GetDlgItem(hwndDlg,IDC_BKGCOLOR),GWLP_WNDPROC,(LONG_PTR)ButtonSubclassProc);
-			OldMessageProc = (WNDPROC)SetWindowLongPtr(GetDlgItem(hwndDlg, IDC_MESSAGE), GWLP_WNDPROC,(LONG_PTR)MessageSubclassProc);
+			SetWindowLong(hwndDlg,GWL_USERDATA,(LONG)psi);
+			OldSplitterProc=(WNDPROC)SetWindowLong(GetDlgItem(hwndDlg,IDC_SPLITTERX),GWL_WNDPROC,(LONG)SplitterSubclassProc);
+			SetWindowLong(GetDlgItem(hwndDlg,IDC_SPLITTERY),GWL_WNDPROC,(LONG)SplitterSubclassProc);
+			OldNicklistProc=(WNDPROC)SetWindowLong(hNickList,GWL_WNDPROC,(LONG)NicklistSubclassProc);
+			OldTabProc=(WNDPROC)SetWindowLong(GetDlgItem(hwndDlg,IDC_TAB),GWL_WNDPROC,(LONG)TabSubclassProc);
+			OldLogProc=(WNDPROC)SetWindowLong(GetDlgItem(hwndDlg,IDC_LOG),GWL_WNDPROC,(LONG)LogSubclassProc);
+			OldFilterButtonProc=(WNDPROC)SetWindowLong(GetDlgItem(hwndDlg,IDC_FILTER),GWL_WNDPROC,(LONG)ButtonSubclassProc);
+			SetWindowLong(GetDlgItem(hwndDlg,IDC_COLOR),GWL_WNDPROC,(LONG)ButtonSubclassProc);
+			SetWindowLong(GetDlgItem(hwndDlg,IDC_BKGCOLOR),GWL_WNDPROC,(LONG)ButtonSubclassProc);
+			OldMessageProc = (WNDPROC)SetWindowLong(GetDlgItem(hwndDlg, IDC_MESSAGE), GWL_WNDPROC,(LONG)MessageSubclassProc);
 			SendDlgItemMessage(hwndDlg, IDC_MESSAGE, EM_SUBCLASSED, 0, 0);
 			SendDlgItemMessage(hwndDlg, IDC_LOG, EM_AUTOURLDETECT, 1, 0);
 			mask = (int)SendDlgItemMessage(hwndDlg, IDC_LOG, EM_GETEVENTMASK, 0, 0);
@@ -1218,7 +1210,7 @@ INT_PTR CALLBACK RoomWndProc(HWND hwndDlg,UINT uMsg,WPARAM wParam,LPARAM lParam)
 				ti.uFlags = TTF_IDISHWND | TTF_SUBCLASS | TTF_TRANSPARENT;
 				ti.hwnd   = hwndDlg;
 				ti.hinst  = g_hInst;
-				ti.uId    = (UINT_PTR)hNickList;
+				ti.uId    = (UINT)hNickList;
 				ti.lpszText  = LPSTR_TEXTCALLBACK;
 				//GetClientRect( hNickList, &ti.rect );
 				SendMessage( psi->hwndTooltip, TTM_ADDTOOL, 0, ( LPARAM )&ti );
@@ -1272,12 +1264,12 @@ INT_PTR CALLBACK RoomWndProc(HWND hwndDlg,UINT uMsg,WPARAM wParam,LPARAM lParam)
 			SendMessage(GetDlgItem(hwndDlg, IDC_LOG), EM_SETBKGNDCOLOR , 0, g_Settings.crLogBackground);
 
 			if (g_Settings.TabsEnable) {
-				int mask = (int)GetWindowLongPtr(GetDlgItem(hwndDlg, IDC_TAB), GWL_STYLE);
+				int mask = (int)GetWindowLong(GetDlgItem(hwndDlg, IDC_TAB), GWL_STYLE);
 				if (g_Settings.TabsAtBottom)
 					mask |= TCS_BOTTOM;
 				else
 					mask &= ~TCS_BOTTOM;
-				SetWindowLongPtr(GetDlgItem(hwndDlg, IDC_TAB), GWL_STYLE, (LONG_PTR)mask);
+				SetWindowLong(GetDlgItem(hwndDlg, IDC_TAB), GWL_STYLE, (LONG)mask);
 			}
 
 			{ //messagebox
@@ -1300,8 +1292,8 @@ INT_PTR CALLBACK RoomWndProc(HWND hwndDlg,UINT uMsg,WPARAM wParam,LPARAM lParam)
 				int font;
 				int height;
 
-				ih = GetTextPixelSize( _T("AQGglo"), g_Settings.UserListFont,FALSE);
-				ih2 = GetTextPixelSize( _T("AQGglo"), g_Settings.UserListHeadingsFont,FALSE);
+				ih = GetTextPixelSize( _T("AQGglö"), g_Settings.UserListFont,FALSE);
+				ih2 = GetTextPixelSize( _T("AQGglö"), g_Settings.UserListHeadingsFont,FALSE);
 				height = DBGetContactSettingByte(NULL, "Chat", "NicklistRowDist", 12);
 				font = ih > ih2?ih:ih2;
 
@@ -1733,7 +1725,7 @@ END_REMOVETAB:
 		break;
 
 	case GC_TABCHANGE:
-		SetWindowLongPtr(hwndDlg,GWLP_USERDATA,(LONG_PTR)lParam);
+		SetWindowLong(hwndDlg,GWL_USERDATA,(LONG)lParam);
 		PostMessage(hwndDlg, GC_SCROLLTOBOTTOM, 0, 0);
 		break;
 
@@ -1825,37 +1817,27 @@ END_REMOVETAB:
 
 	case WM_CTLCOLORLISTBOX:
 		SetBkColor((HDC) wParam, g_Settings.crUserListBGColor);
-		return (INT_PTR) hListBkgBrush;
+		return (BOOL) hListBkgBrush;
 
 	case WM_MEASUREITEM:
 		{
 			MEASUREITEMSTRUCT *mis = (MEASUREITEMSTRUCT *) lParam;
-			if (mis->CtlType == ODT_MENU)
-			{
-				return CallService(MS_CLIST_MENUMEASUREITEM, wParam, lParam);
-			} else
-			{
-				int ih = GetTextPixelSize( _T("AQGgl'"), g_Settings.UserListFont,FALSE);
-				int ih2 = GetTextPixelSize( _T("AQGg'"), g_Settings.UserListHeadingsFont,FALSE);
-				int font = ih > ih2?ih:ih2;
-				int height = DBGetContactSettingByte(NULL, "Chat", "NicklistRowDist", 12);
+			int ih = GetTextPixelSize( _T("AQGgl'"), g_Settings.UserListFont,FALSE);
+			int ih2 = GetTextPixelSize( _T("AQGg'"), g_Settings.UserListHeadingsFont,FALSE);
+			int font = ih > ih2?ih:ih2;
+			int height = DBGetContactSettingByte(NULL, "Chat", "NicklistRowDist", 12);
 
-				// make sure we have space for icon!
-				if (g_Settings.ShowContactStatus)
-					font = font > 16 ? font : 16;
+			// make sure we have space for icon!
+			if (g_Settings.ShowContactStatus)
+				font = font > 16 ? font : 16;
 
-				mis->itemHeight = height > font?height:font;
-			}
+			mis->itemHeight = height > font?height:font;
 			return TRUE;
 		}
 
 	case WM_DRAWITEM:
 		{
 			DRAWITEMSTRUCT *dis = (DRAWITEMSTRUCT *) lParam;
-			if (dis->CtlType == ODT_MENU)
-			{
-				return CallService(MS_CLIST_MENUDRAWITEM, wParam, lParam);
-			} else
 			if (dis->CtlID == IDC_LIST) {
 				HFONT  hFont, hOldFont;
 				HICON  hIcon;
@@ -1880,7 +1862,7 @@ END_REMOVETAB:
 					SetBkMode(dis->hDC, TRANSPARENT);
 
 					if (dis->itemAction == ODA_FOCUS && dis->itemState & ODS_SELECTED)
-						FillRect(dis->hDC, &dis->rcItem, hListSelectedBkgBrush);
+						FillRect(dis->hDC, &dis->rcItem, GetSysColorBrush(COLOR_HIGHLIGHT));
 					else //if (dis->itemState & ODS_INACTIVE)
 						FillRect(dis->hDC, &dis->rcItem, hListBkgBrush);
 
@@ -2043,7 +2025,6 @@ LABEL_SHOWWINDOW:
 		{
 			RECT rc;
 			HWND hwnd = CreateDialogParam(g_hInst, MAKEINTRESOURCE(IDD_FILTER), hwndDlg, FilterWndProc, (LPARAM)si);
-			TranslateDialogDefault(hwnd);
 			GetWindowRect(GetDlgItem(hwndDlg, IDC_FILTER), &rc);
 			SetWindowPos(hwnd, HWND_TOP, rc.left-85, (IsWindowVisible(GetDlgItem(hwndDlg, IDC_FILTER))||IsWindowVisible(GetDlgItem(hwndDlg, IDC_BOLD)))?rc.top-206:rc.top-186, 0, 0, SWP_NOSIZE|SWP_SHOWWINDOW);
 		}
@@ -2071,7 +2052,7 @@ LABEL_SHOWWINDOW:
 	case GC_SCROLLTOBOTTOM:
 		{
 			SCROLLINFO si = { 0 };
-			if ((GetWindowLongPtr(GetDlgItem(hwndDlg, IDC_LOG), GWL_STYLE) & WS_VSCROLL) != 0) {
+			if ((GetWindowLong(GetDlgItem(hwndDlg, IDC_LOG), GWL_STYLE) & WS_VSCROLL) != 0) {
 				CHARRANGE sel;
 				si.cbSize = sizeof(si);
 				si.fMask = SIF_PAGE | SIF_RANGE;
@@ -2387,13 +2368,13 @@ LABEL_SHOWWINDOW:
 				break;
 
 			case TTN_NEEDTEXT:
-				if (pNmhdr->idFrom == (UINT_PTR)GetDlgItem(hwndDlg,IDC_LIST))
+				if (pNmhdr->idFrom == (UINT)GetDlgItem(hwndDlg,IDC_LIST))
 				{
 					LPNMTTDISPINFO lpttd = (LPNMTTDISPINFO)lParam;
 					POINT p;
 					int item;
 					USERINFO * ui;
-					SESSION_INFO* parentdat =(SESSION_INFO*)GetWindowLongPtr(hwndDlg,GWLP_USERDATA);
+					SESSION_INFO* parentdat =(SESSION_INFO*)GetWindowLong(hwndDlg,GWL_USERDATA);
 
 					GetCursorPos( &p );
 					ScreenToClient( hwndDlg, &p );
@@ -2502,12 +2483,12 @@ LABEL_SHOWWINDOW:
 
 		case IDC_SMILEY:
 			{
-				SMADD_SHOWSEL3 smaddInfo;
+				SMADD_SHOWSEL smaddInfo;
 				RECT rc;
 
 				GetWindowRect(GetDlgItem(hwndDlg, IDC_SMILEY), &rc);
 
-				smaddInfo.cbSize = sizeof(SMADD_SHOWSEL3);
+				smaddInfo.cbSize = sizeof(SMADD_SHOWSEL);
 				smaddInfo.hwndTarget = GetDlgItem(hwndDlg, IDC_MESSAGE);
 				smaddInfo.targetMessage = EM_REPLACESEL;
 				smaddInfo.targetWParam = TRUE;
@@ -2515,8 +2496,6 @@ LABEL_SHOWWINDOW:
 				smaddInfo.Direction = 3;
 				smaddInfo.xPosition = rc.left+3;
 				smaddInfo.yPosition = rc.top-1;
-				smaddInfo.hContact = si->hContact;
-				smaddInfo.hwndParent = hwndDlg;
 
 				if (SmileyAddInstalled)
 					CallService(MS_SMILEYADD_SHOWSELECTION, 0, (LPARAM) &smaddInfo);
@@ -2704,7 +2683,6 @@ LABEL_SHOWWINDOW:
 		SendMessage(hwndDlg,GC_SAVEWNDPOS,0,0);
 
 		si->hWnd = NULL;
-		si->wState &= ~STATE_TALK;
 		DestroyWindow(si->hwndStatus);
 		si->hwndStatus = NULL;
 
@@ -2712,24 +2690,24 @@ LABEL_SHOWWINDOW:
 			HWND hNickList = GetDlgItem(hwndDlg,IDC_LIST);
 			TOOLINFO ti = { 0 };
 			ti.cbSize = sizeof(TOOLINFO);
-			ti.uId = (UINT_PTR)hNickList;
+			ti.uId = (UINT)hNickList;
 			ti.hwnd = hNickList;
 			SendMessage( si->hwndTooltip, TTM_DELTOOL, 0, (LPARAM)(LPTOOLINFO)&ti );
 		}
 		DestroyWindow( si->hwndTooltip );
 		si->hwndTooltip = NULL;
 
-		SetWindowLongPtr(hwndDlg,GWLP_USERDATA,0);
-		SetWindowLongPtr(GetDlgItem(hwndDlg,IDC_SPLITTERX),GWLP_WNDPROC,(LONG_PTR)OldSplitterProc);
-		SetWindowLongPtr(GetDlgItem(hwndDlg,IDC_SPLITTERY),GWLP_WNDPROC,(LONG_PTR)OldSplitterProc);
-		SetWindowLongPtr(GetDlgItem(hwndDlg,IDC_LIST),GWLP_WNDPROC,(LONG_PTR)OldNicklistProc);
-		SetWindowLongPtr(GetDlgItem(hwndDlg,IDC_TAB),GWLP_WNDPROC,(LONG_PTR)OldTabProc);
+		SetWindowLong(hwndDlg,GWL_USERDATA,0);
+		SetWindowLong(GetDlgItem(hwndDlg,IDC_SPLITTERX),GWL_WNDPROC,(LONG)OldSplitterProc);
+		SetWindowLong(GetDlgItem(hwndDlg,IDC_SPLITTERY),GWL_WNDPROC,(LONG)OldSplitterProc);
+		SetWindowLong(GetDlgItem(hwndDlg,IDC_LIST),GWL_WNDPROC,(LONG)OldNicklistProc);
+		SetWindowLong(GetDlgItem(hwndDlg,IDC_TAB),GWL_WNDPROC,(LONG)OldTabProc);
 		SendDlgItemMessage(hwndDlg, IDC_MESSAGE, EM_UNSUBCLASSED, 0, 0);
-		SetWindowLongPtr(GetDlgItem(hwndDlg,IDC_MESSAGE),GWLP_WNDPROC,(LONG_PTR)OldMessageProc);
-		SetWindowLongPtr(GetDlgItem(hwndDlg,IDC_LOG),GWLP_WNDPROC,(LONG_PTR)OldLogProc);
-		SetWindowLongPtr(GetDlgItem(hwndDlg,IDC_FILTER),GWLP_WNDPROC,(LONG_PTR)OldFilterButtonProc);
-		SetWindowLongPtr(GetDlgItem(hwndDlg,IDC_COLOR),GWLP_WNDPROC,(LONG_PTR)OldFilterButtonProc);
-		SetWindowLongPtr(GetDlgItem(hwndDlg,IDC_BKGCOLOR),GWLP_WNDPROC,(LONG_PTR)OldFilterButtonProc);
+		SetWindowLong(GetDlgItem(hwndDlg,IDC_MESSAGE),GWL_WNDPROC,(LONG)OldMessageProc);
+		SetWindowLong(GetDlgItem(hwndDlg,IDC_LOG),GWL_WNDPROC,(LONG)OldLogProc);
+		SetWindowLong(GetDlgItem(hwndDlg,IDC_FILTER),GWL_WNDPROC,(LONG)OldFilterButtonProc);
+		SetWindowLong(GetDlgItem(hwndDlg,IDC_COLOR),GWL_WNDPROC,(LONG)OldFilterButtonProc);
+		SetWindowLong(GetDlgItem(hwndDlg,IDC_BKGCOLOR),GWL_WNDPROC,(LONG)OldFilterButtonProc);
 		break;
 	}
 	return(FALSE);

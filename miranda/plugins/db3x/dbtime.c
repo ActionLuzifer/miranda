@@ -69,7 +69,7 @@ static int CompareSystemTimes(SYSTEMTIME *st,SYSTEMTIME *switchDate)
 	return CompareFileTime(&ft1,&ft2);
 }
 
-static INT_PTR TimestampToLocal(WPARAM wParam,LPARAM lParam)
+static int TimestampToLocal(WPARAM wParam,LPARAM lParam)
 {
 	TIME_ZONE_INFORMATION tzInfo;
 	LARGE_INTEGER liFiletime;
@@ -104,7 +104,7 @@ static INT_PTR TimestampToLocal(WPARAM wParam,LPARAM lParam)
 	return 0;
 }
 
-static INT_PTR TimestampToString(WPARAM wParam,LPARAM lParam)
+static int TimestampToString(WPARAM wParam,LPARAM lParam)
 {
 	DBTIMETOSTRING *tts=(DBTIMETOSTRING*)lParam;
 	LARGE_INTEGER liFiletime;
@@ -144,7 +144,7 @@ static INT_PTR TimestampToString(WPARAM wParam,LPARAM lParam)
 				}
 				continue;
 		}
-		dateTimeStrLen=(int)strlen(dateTimeStr);
+		dateTimeStrLen=strlen(dateTimeStr);
 		if(destCharsLeft<dateTimeStrLen) dateTimeStrLen=destCharsLeft;
 		CopyMemory(pDest,dateTimeStr,dateTimeStrLen);
 		destCharsLeft-=dateTimeStrLen;

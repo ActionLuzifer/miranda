@@ -1,5 +1,9 @@
-
+#define _WIN32_IE 0x0560
+#define _WIN32_WINNT 0x0501
 #include "commonheaders.h"
+//#include "AggressiveOptimize.h"
+
+
 
 #define DEFAULT_BKCOLOUR      GetSysColor(COLOR_3DFACE)
 #define DEFAULT_USEBITMAP     0
@@ -49,9 +53,9 @@ struct BkgrData
 	int indx;
 	int count;
 };
-static INT_PTR CALLBACK DlgProcBkgOpts(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam)
+static BOOL CALLBACK DlgProcBkgOpts(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 {
-	struct BkgrData *dat = (struct BkgrData *)GetWindowLongPtr(hwndDlg, GWLP_USERDATA);
+	struct BkgrData *dat = (struct BkgrData *)GetWindowLong(hwndDlg, GWL_USERDATA);
 	switch (msg)
 	{
 		case WM_INITDIALOG:
@@ -61,7 +65,7 @@ static INT_PTR CALLBACK DlgProcBkgOpts(HWND hwndDlg, UINT msg, WPARAM wParam, LP
 			TranslateDialogDefault(hwndDlg);
 
 			dat=(struct BkgrData*)mir_alloc(sizeof(struct BkgrData));
-			SetWindowLongPtr(hwndDlg, GWLP_USERDATA, (LONG_PTR)dat);
+			SetWindowLong(hwndDlg, GWL_USERDATA, (LONG)dat);
 			dat->count = bkgrCount;
 			dat->item = (struct BkgrItem*)mir_alloc(sizeof(struct BkgrItem)*dat->count);
 			dat->indx = CB_ERR;
@@ -305,11 +309,11 @@ static INT_PTR CALLBACK DlgProcBkgOpts(HWND hwndDlg, UINT msg, WPARAM wParam, LP
 	return FALSE;
 }
 
-static INT_PTR BkgrCfg_Register(WPARAM wParam,LPARAM lParam)
+static int BkgrCfg_Register(WPARAM wParam,LPARAM lParam)
 {
 	char *szSetting = (char *)wParam;
 	char *value, *tok;
-	size_t len = strlen(szSetting) + 1;
+	int len = strlen(szSetting) + 1;
 
 	value = (char *)mir_alloc(len + 4); // add room for flags (DWORD)
 	memcpy(value, szSetting, len);

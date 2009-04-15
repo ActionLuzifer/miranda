@@ -40,12 +40,14 @@ HANDLE AddContact(HWND hdlgProgress, char* pszProtoName, char* pszUniqueSetting,
 
 BOOL IsProtocolLoaded(char* pszProtocolName);
 BOOL IsDuplicateEvent(HANDLE hContact, DBEVENTINFO dbei);
+int CreateGroup(HWND hdlgProgress, BYTE type, const char* name);
+void GetMirandaPath(char *szPath,int cbPath);
 
-INT_PTR CALLBACK ImportTypePageProc(HWND hdlg,UINT message,WPARAM wParam,LPARAM lParam);
-INT_PTR CALLBACK FinishedPageProc(HWND hdlg,UINT message,WPARAM wParam,LPARAM lParam);
-INT_PTR CALLBACK ProgressPageProc(HWND hdlg,UINT message,WPARAM wParam,LPARAM lParam);
-INT_PTR CALLBACK MirandaOptionsPageProc(HWND hdlg,UINT message,WPARAM wParam,LPARAM lParam);
-INT_PTR CALLBACK MirandaAdvOptionsPageProc(HWND hdlg,UINT message,WPARAM wParam,LPARAM lParam);
+BOOL CALLBACK ImportTypePageProc(HWND hdlg,UINT message,WPARAM wParam,LPARAM lParam);
+BOOL CALLBACK FinishedPageProc(HWND hdlg,UINT message,WPARAM wParam,LPARAM lParam);
+BOOL CALLBACK ProgressPageProc(HWND hdlg,UINT message,WPARAM wParam,LPARAM lParam);
+BOOL CALLBACK MirandaOptionsPageProc(HWND hdlg,UINT message,WPARAM wParam,LPARAM lParam);
+BOOL CALLBACK MirandaAdvOptionsPageProc(HWND hdlg,UINT message,WPARAM wParam,LPARAM lParam);
 
 // =====================
 // == LOCAL FUNCTIONS ==
@@ -98,6 +100,7 @@ extern int nCustomOptions;
 
 char importFile[MAX_PATH];
 HWND hdlgProgress;
+char str[512];
 DWORD dwFileSize;
 
 DWORD nDupes;
@@ -107,7 +110,7 @@ DWORD nGroupsCount;
 DWORD nSkippedEvents;
 DWORD nSkippedContacts;
 
-time_t dwSinceDate = 0;
+DWORD dwSinceDate = 0;
 
 // =============
 // == DEFINES ==
@@ -117,6 +120,13 @@ time_t dwSinceDate = 0;
 #define EVENTTYPE_URL       1
 #define EVENTTYPE_FILE      1002
 
+#define IOPT_FILESENT   32
+#define IOPT_FILERECV   64
+#define IOPT_OTHERSENT  128
+#define IOPT_OTHERRECV  256
+#define IOPT_SYSTEM     512
+#define IOPT_CONTACTS   1024
+#define IOPT_GROUPS     2048
 
 // Supported database versions
 #define DB_INVALID 0x00000000  // Unknown or corrupted DAT
@@ -135,15 +145,6 @@ static struct DBSignature dbSignature={"Miranda ICQ DB",0x1A};
 // == IMPLEMENTATION ==
 // ====================
 // ====================
-
-static void GetMirandaPath(char *szPath,int cbPath)
-{
-	char *str2;
-
-	GetModuleFileNameA( GetModuleHandle(NULL),szPath,cbPath);
-	str2=strrchr(szPath,'\\');
-	if(str2!=NULL) *str2=0;
-}
 
 static void SearchForLists(HWND hdlg,const char *mirandaPath,const char *pattern,const char *type)
 {
@@ -176,7 +177,7 @@ static void SearchForLists(HWND hdlg,const char *mirandaPath,const char *pattern
 	}
 }
 
-INT_PTR CALLBACK MirandaPageProc(HWND hdlg,UINT message,WPARAM wParam,LPARAM lParam)
+BOOL CALLBACK MirandaPageProc(HWND hdlg,UINT message,WPARAM wParam,LPARAM lParam)
 {
 	switch(message) {
 	case WM_INITDIALOG:
@@ -223,24 +224,14 @@ INT_PTR CALLBACK MirandaPageProc(HWND hdlg,UINT message,WPARAM wParam,LPARAM lPa
 		case IDC_OTHER:
 			{
 				OPENFILENAME ofn;
-				TCHAR str[MAX_PATH], text[256]={0};
-				size_t index = 0;
+				TCHAR str[MAX_PATH];
 
-				// TranslateTS doesnt translate \0 separated strings
-				mir_sntprintf(text + index, 64*sizeof(TCHAR), _T("%s (*.dat)"), TranslateT("Miranda IM database"));
-				index += _tcslen(text + index) + 1;
-				_tcscpy(text + index, _T("*.dat"));
-				index += _tcslen(text + index) + 1;
-				mir_sntprintf(text + index, 64*sizeof(TCHAR), _T("%s (*.*)"), TranslateT("All Files"));
-				index += _tcslen( text + index ) + 1;
-				_tcscpy(text + index, _T("*.*"));
-
-				GetDlgItemText(hdlg,IDC_FILENAME,str,SIZEOF(str));
+				GetDlgItemText(hdlg,IDC_FILENAME,str,sizeof(str));
 				ZeroMemory(&ofn, sizeof(ofn));
 				ofn.lStructSize = sizeof(ofn);
 				ofn.hwndOwner = hdlg;
 				ofn.hInstance = NULL;
-				ofn.lpstrFilter = text;
+				ofn.lpstrFilter = TranslateT("Miranda IM database (*.dat)\0*.DAT\0All Files (*)\0*\0");
 				ofn.lpstrDefExt = _T("dat");
 				ofn.lpstrFile = str;
 				ofn.Flags = OFN_FILEMUSTEXIST;
@@ -265,7 +256,7 @@ INT_PTR CALLBACK MirandaPageProc(HWND hdlg,UINT message,WPARAM wParam,LPARAM lPa
 }
 
 
-INT_PTR CALLBACK MirandaOptionsPageProc(HWND hdlg,UINT message,WPARAM wParam,LPARAM lParam)
+BOOL CALLBACK MirandaOptionsPageProc(HWND hdlg,UINT message,WPARAM wParam,LPARAM lParam)
 {
 	switch(message) {
 	case WM_INITDIALOG:
@@ -321,7 +312,7 @@ static const UINT InControls[]={IDC_IN_MSG,IDC_IN_URL,IDC_IN_FT,IDC_IN_OTHER};
 static const UINT OutControls[]={IDC_OUT_MSG,IDC_OUT_URL,IDC_OUT_FT,IDC_OUT_OTHER};
 static const UINT SysControls[]={IDC_CONTACTS, IDC_SYSTEM};
 
-INT_PTR CALLBACK MirandaAdvOptionsPageProc(HWND hdlg,UINT message,WPARAM wParam,LPARAM lParam)
+BOOL CALLBACK MirandaAdvOptionsPageProc(HWND hdlg,UINT message,WPARAM wParam,LPARAM lParam)
 {
 	switch(message) {
 	case WM_INITDIALOG:
@@ -474,7 +465,7 @@ struct DBHeader* GetHeader(HANDLE hDbFile)
 		return FALSE;
 
 	// Read header
-	if ( !ReadFile(hDbFile, pdbHeader, sizeof(struct DBHeader), &dwBytesRead, NULL ) ||
+	if ( !ReadFile(hDbFile, pdbHeader, sizeof(struct DBHeader), &dwBytesRead, NULL ) || 
 		  dwBytesRead != sizeof(struct DBHeader))
 		return NULL;
 
@@ -520,12 +511,12 @@ BOOL GetSetting(HANDLE hDbFile, struct DBContact* pDbContact, char* pszModuleNam
 			free(pDbSettings);
 			return TRUE;
 		}
-		#ifdef _LOGGING
+		#ifdef _DEBUG
 			AddMessage( LPGEN("Failed to find setting %s" ), pszSettingName );
 		#endif
 		free(pDbSettings);
 	}
-#ifdef _LOGGING
+#ifdef _DEBUG
 	else AddMessage( LPGEN("Failed to find module %s" ), pszModuleName );
 #endif
 
@@ -614,7 +605,6 @@ char* GetNextSetting(char* pDbSetting)
 		break;
 
 	case DBVT_ASCIIZ:
-	case DBVT_UTF8:
 	case DBVT_BLOB:
 	case DBVTF_VARIABLELENGTH:
 		pDbSetting = pDbSetting + 3 + *(WORD*)(pDbSetting+1);
@@ -642,7 +632,7 @@ char* GetNextSetting(char* pDbSetting)
 // Return the settings at offset 'dwOffset'
 BOOL GetSettingsGroup(HANDLE hDbFile, DWORD dwOffset, struct DBContactSettings** pDbSettings)
 {
-	DWORD dwBytesRead, dwBlobSize, dwHead;
+	DWORD dwBytesRead, dwBlobSize;
 	struct DBContactSettings pSettings;
 
 	// Early reject
@@ -653,9 +643,8 @@ BOOL GetSettingsGroup(HANDLE hDbFile, DWORD dwOffset, struct DBContactSettings**
 	if (SetFilePointer(hDbFile, dwOffset, NULL, FILE_BEGIN) == INVALID_SET_FILE_POINTER)
 		return FALSE;
 
-	dwHead = offsetof(struct DBContactSettings, blob);
-	if ((!ReadFile(hDbFile, &pSettings, dwHead, &dwBytesRead, NULL)) ||
-		(dwBytesRead != dwHead))
+	if ((!ReadFile(hDbFile, &pSettings, sizeof(struct DBContactSettings), &dwBytesRead, NULL)) ||
+		(dwBytesRead != sizeof(struct DBContactSettings)))
 		return FALSE;
 
 	if (pSettings.signature != DBCONTACTSETTINGS_SIGNATURE)
@@ -663,13 +652,14 @@ BOOL GetSettingsGroup(HANDLE hDbFile, DWORD dwOffset, struct DBContactSettings**
 
 	// ** Read the struct and the following blob
 	dwBlobSize = pSettings.cbBlob;
+	if (SetFilePointer(hDbFile, dwOffset, NULL, FILE_BEGIN) == INVALID_SET_FILE_POINTER)
+		return FALSE;
+
 	if (!(*pDbSettings = calloc(1, sizeof(struct DBContactSettings) + dwBlobSize)))
 		return FALSE;
 
-	memcpy(*pDbSettings, &pSettings, dwHead );
-
-	if ((!ReadFile(hDbFile, (*pDbSettings)->blob, sizeof(struct DBContactSettings) - dwHead + dwBlobSize, &dwBytesRead, NULL)) ||
-		(dwBytesRead != sizeof(struct DBContactSettings) - dwHead + dwBlobSize))
+	if ((!ReadFile(hDbFile, *pDbSettings, sizeof(struct DBContactSettings) + dwBlobSize, &dwBytesRead, NULL)) ||
+		(dwBytesRead != sizeof(struct DBContactSettings) + dwBlobSize))
 	{
 		free(*pDbSettings);
 		return FALSE;
@@ -703,14 +693,17 @@ struct DBContactSettings* GetSettingsGroupByModuleName(HANDLE hDbFile, struct DB
 
 			// Is it the right one?
 			if (strcmp(pszGroupName, pszName) == 0) {
-				#ifdef _LOGGING
+				#ifdef _DEBUG
 					AddMessage( LPGEN("Found module: %s"), pszGroupName );
 				#endif
+				free(pszGroupName);
 				return pSettingsGroup;
 			}
-			#ifdef _LOGGING
+			#ifdef _DEBUG
 			else AddMessage( LPGEN("Ignoring module: %s"), pszGroupName );
 			#endif
+			if (pszGroupName)
+				free(pszGroupName);
 		}
 		else AddMessage( LPGEN("Warning: Found module with no name"));
 
@@ -727,7 +720,6 @@ struct DBContactSettings* GetSettingsGroupByModuleName(HANDLE hDbFile, struct DB
 // pDbSettings must point to a complete DBContactSettings struct in memory
 int GetSettingByName(struct DBContactSettings* pDbSettings, char* pszSettingName, DBVARIANT* dbv)
 {
-	char pszName[256];
 	// We need at least one setting to start with
 	char* pDbSetting = pDbSettings->blob;
 	if ( !pDbSetting )
@@ -737,17 +729,19 @@ int GetSettingByName(struct DBContactSettings* pDbSettings, char* pszSettingName
 
 	// Loop over all settings
 	while (pDbSetting && *pDbSetting) {
+		char* pszName = calloc(*pDbSetting+1, 1);
 		memcpy(pszName, pDbSetting+1, *pDbSetting);
-		pszName[*pDbSetting] = 0;
 
 		// Is this the right one?
 		if (strcmp(pszSettingName, pszName) == 0) {
+			free(pszName);
 			return GetSettingValue(pDbSetting, dbv);
 		}
-
-		#ifdef _LOGGING
+		
+		#ifdef _DEBUG
 			AddMessage( LPGEN("Ignoring setting: %s"), pszName );
 		#endif
+		free(pszName);
 		pDbSetting = GetNextSetting(pDbSetting);
 	}
 
@@ -758,7 +752,7 @@ int GetSettingByName(struct DBContactSettings* pDbSettings, char* pszSettingName
 // dwSettingpointer points to a valid DBSettings struct
 int GetSettingValue(char* pBlob, DBVARIANT* dbv)
 {
-	#ifdef _LOGGING
+	#ifdef _DEBUG
 	{
 		char* pszName = calloc((*pBlob)+1, 1);
 		memcpy(pszName, pBlob+1, *pBlob);
@@ -845,7 +839,7 @@ BOOL GetEvent(HANDLE hDbFile, DWORD dwOffset, DBEVENTINFO* pDBEI)
 {
 	DWORD dwBytesRead;
 	struct DBEvent pEvent;
-	static char pBlob[65536];
+	char* pBlob;
 
 	// Early reject
 	if (dwOffset == 0 || dwOffset >= dwFileSize)
@@ -855,17 +849,21 @@ BOOL GetEvent(HANDLE hDbFile, DWORD dwOffset, DBEVENTINFO* pDBEI)
 	if (SetFilePointer(hDbFile, dwOffset, NULL, FILE_BEGIN) == INVALID_SET_FILE_POINTER)
 		return FALSE;
 
-	if (!ReadFile(hDbFile, &pEvent, offsetof(struct DBEvent, blob), &dwBytesRead, NULL) ||
-		(dwBytesRead != offsetof(struct DBEvent, blob)))
+	if (!ReadFile(hDbFile, &pEvent, sizeof(struct DBEvent), &dwBytesRead, NULL))
 		return FALSE;
 
 	if (pEvent.signature != DBEVENT_SIGNATURE)
 		return FALSE; // Event corrupted
 
 	// ** Read the blob
-	if ((!ReadFile(hDbFile, pBlob, pEvent.cbBlob, &dwBytesRead, NULL)) ||
-		(dwBytesRead != pEvent.cbBlob))
-	{
+	if (SetFilePointer(hDbFile, dwOffset+offsetof(struct DBEvent, blob), NULL, FILE_BEGIN) == INVALID_SET_FILE_POINTER)
+		return FALSE;
+
+	if (!(pBlob = calloc(pEvent.cbBlob, 1)))
+		return FALSE;
+
+	if ((!ReadFile(hDbFile, pBlob, pEvent.cbBlob, &dwBytesRead, NULL)) || (dwBytesRead != pEvent.cbBlob)) {
+		free(pBlob);
 		return FALSE;
 	}
 
@@ -879,6 +877,7 @@ BOOL GetEvent(HANDLE hDbFile, DWORD dwOffset, DBEVENTINFO* pDBEI)
 		((pEvent.flags & DBEF_SENT) ? DBEF_SENT : DBEF_READ ); // Imported events are always marked READ
 
 	if (!(pDBEI->szModule = GetName(hDbFile, pEvent.ofsModuleName))) {
+		free(pBlob);
 		return FALSE;
 	}
 
@@ -890,27 +889,20 @@ BOOL GetEvent(HANDLE hDbFile, DWORD dwOffset, DBEVENTINFO* pDBEI)
 // Returns NULL on failure
 char* GetName(HANDLE hDbFile, DWORD dwOffset)
 {
-    static DWORD dwLastOffset = 0;
-    static HANDLE hLastDbFile = NULL;
-    static char szName[256] = {0};
-
 	DWORD dwBytesRead;
+	char* pszName = 0;
 	struct DBModuleName pModule;
 
 	// Early reject
 	if (dwOffset == 0 || dwOffset >= dwFileSize)
 		return FALSE;
 
-	// Quick lookup
-	if (dwOffset == dwLastOffset && hDbFile == hLastDbFile)
-		return szName;
-
 	// ** Read and verify the name struct
 	if (SetFilePointer(hDbFile, dwOffset, NULL, FILE_BEGIN) == INVALID_SET_FILE_POINTER)
 		return NULL;
 
-	if ((!ReadFile(hDbFile, &pModule, offsetof(struct DBModuleName, name), &dwBytesRead, NULL)) ||
-		(dwBytesRead != offsetof(struct DBModuleName, name)))
+	if ((!ReadFile(hDbFile, &pModule, sizeof(struct DBModuleName), &dwBytesRead, NULL)) ||
+		(dwBytesRead != sizeof(struct DBModuleName)))
 		return NULL;
 
 	if (pModule.signature != DBMODULENAME_SIGNATURE) {
@@ -918,19 +910,22 @@ char* GetName(HANDLE hDbFile, DWORD dwOffset)
 		return NULL; // ModuleName corrupted
 	}
 
-	// ** Name struct OK, now read name into string buffer
-	if ((!ReadFile(hDbFile, szName, pModule.cbName, &dwBytesRead, NULL)) || (dwBytesRead != pModule.cbName)) {
+	// ** Name struct OK, now get the actual name
+	if (!(pszName = calloc(pModule.cbName+1, sizeof(char))))
+		return NULL;
+
+	if (SetFilePointer(hDbFile, dwOffset + offsetof(struct DBModuleName, name), NULL, FILE_BEGIN) == INVALID_SET_FILE_POINTER) {
+		free(pszName);
 		return NULL;
 	}
 
-	// terminate string
-	szName[pModule.cbName] = 0;
+	// Read name into string buffer
+	if ((!ReadFile(hDbFile, pszName, pModule.cbName, &dwBytesRead, NULL)) || (dwBytesRead != pModule.cbName)) {
+		free(pszName);
+		return NULL;
+	}
 
-	// update last offset
-	dwLastOffset = dwOffset;
-	hLastDbFile = hDbFile;
-
-	return szName;
+	return pszName;
 }
 
 DWORD FindNextEvent(HANDLE hDbFile, DWORD dwOffset)
@@ -977,7 +972,7 @@ int ImportGroups(HANDLE hDbFile, struct DBHeader* pdbHeader)
 		while ( pSetting && *pSetting ) {
 			DBVARIANT dbv;
 			if ( GetSettingValue( pSetting, &dbv )) {
-				if ( CreateGroup( dbv.type, dbv.pszVal+1, NULL ))
+				if ( CreateGroup( hdlgProgress, dbv.type, dbv.pszVal+1 ))
 					nGroups++;
 				FreeVariant( &dbv );
 			}
@@ -992,13 +987,14 @@ int ImportGroups(HANDLE hDbFile, struct DBHeader* pdbHeader)
 HANDLE ImportContact(HANDLE hDbFile, struct DBContact Contact)
 {
 	HANDLE hContact;
-	DBVARIANT group, nick, dbv;
+	DBVARIANT group, nick;
 	char* pszProtoName;
 	char* pszUniqueSetting;
 	char* pszUserName;
 	char id[ 40 ];
 
 	// Check what protocol this contact belongs to
+	DBVARIANT dbv;
 	if ( !GetSetting( hDbFile, &Contact, "Protocol", "p", &dbv )) {
 		AddMessage( LPGEN("Skipping contact with no protocol"));
 		return INVALID_HANDLE_VALUE;
@@ -1014,7 +1010,7 @@ HANDLE ImportContact(HANDLE hDbFile, struct DBContact Contact)
 
 	// Skip protocols with no unique id setting (some non IM protocols return NULL)
 	pszUniqueSetting = (char*)CallProtoService(pszProtoName, PS_GETCAPS, PFLAG_UNIQUEIDSETTING, 0);
-	if ( !pszUniqueSetting || (INT_PTR)pszUniqueSetting == CALLSERVICE_NOTFOUND ) {
+	if ( !pszUniqueSetting ) {
 		AddMessage( LPGEN("Skipping non-IM contact (%s)"), pszProtoName );
 		return INVALID_HANDLE_VALUE;
 	}
@@ -1026,7 +1022,7 @@ HANDLE ImportContact(HANDLE hDbFile, struct DBContact Contact)
 
 	// Does the contact already exist?
 	if ( dbv.type == DBVT_DWORD ) {
-		pszUserName = _ltoa( dbv.dVal, id, 10 );
+		pszUserName = ltoa( dbv.dVal, id, 10 );
 		hContact = HContactFromNumericID( pszProtoName, pszUniqueSetting, dbv.dVal );
 	}
 	else {
@@ -1036,9 +1032,9 @@ HANDLE ImportContact(HANDLE hDbFile, struct DBContact Contact)
 
 	if ( hContact != INVALID_HANDLE_VALUE ) {
 		AddMessage( LPGEN("Skipping duplicate %s contact %s"), pszProtoName, pszUserName );
-		FreeVariant( &dbv );
 		return INVALID_HANDLE_VALUE;
 	}
+	
 	// No, add contact and copy some important settings
 	GetSetting(hDbFile, &Contact, "CList", "Group", &group);
 
@@ -1046,7 +1042,7 @@ HANDLE ImportContact(HANDLE hDbFile, struct DBContact Contact)
 		GetSetting(hDbFile, &Contact, pszProtoName, "Nick", &nick );
 
 	hContact = AddContact( hdlgProgress, pszProtoName, pszUniqueSetting, &dbv, &nick, &group );
-
+	FreeVariant( &dbv );
 	if ( hContact != INVALID_HANDLE_VALUE) {
 
 		// Hidden?
@@ -1126,7 +1122,7 @@ static void ImportHistory(HANDLE hDbFile, struct DBContact Contact, PROTOCOLDESC
 				char* pszUniqueSetting = (char*)CallProtoService( proto.pszVal, PS_GETCAPS, PFLAG_UNIQUEIDSETTING, 0);
 
 				// Skip protocols with no unique id setting (some non IM protocols return NULL)
-				if ( pszUniqueSetting && ( INT_PTR )pszUniqueSetting != CALLSERVICE_NOTFOUND ) {
+				if ( pszUniqueSetting ) {
 					DBVARIANT dbv;
 					if ( GetSetting( hDbFile, &Contact, proto.pszVal, pszUniqueSetting, &dbv )) {
 						if ( dbv.type == DBVT_DWORD )
@@ -1134,7 +1130,7 @@ static void ImportHistory(HANDLE hDbFile, struct DBContact Contact, PROTOCOLDESC
 						else
 							hContact = HContactFromID( proto.pszVal, pszUniqueSetting, dbv.pszVal );
 						FreeVariant( &dbv );
-			}	}	}
+			}	}	}	
 			FreeVariant( &proto );
 		}
 	}
@@ -1216,6 +1212,9 @@ static void ImportHistory(HANDLE hDbFile, struct DBContact Contact, PROTOCOLDESC
 					else
 						nDupes++;
 				}
+
+				free(dbei.pBlob);
+				free(dbei.szModule);
 			}
 
 			if ( !( i%10 )) {
@@ -1382,7 +1381,7 @@ static void MirandaImport(HWND hdlg)
 		AddMessage( "" );
 
 		// Import other contact messages
-		if (nImportOption == IMPORT_ALL || (nCustomOptions & 2046)) { // 2 - 1024 types
+		if (nImportOption == IMPORT_ALL || (nCustomOptions & 510)) { // 2 - 256 types 
 			AddMessage( LPGEN("Importing history."));
 			dwOffset = FindFirstContact(pdbHeader);
 			for(i=1; i <= nNumberOfContacts; i++) {
@@ -1425,7 +1424,7 @@ static void MirandaImport(HWND hdlg)
 		if (nSkippedContacts)
 			AddMessage( LPGEN("Skipped %d contacts."), nSkippedContacts );
 
-		AddMessage((nImportOption == IMPORT_CUSTOM) ?
+		AddMessage((nImportOption == IMPORT_CUSTOM) ? 
 			LPGEN("Skipped %d duplicates and %d filtered events.") : LPGEN("Skipped %d duplicates."),
 			nDupes, nSkippedEvents);
 }	}

@@ -24,12 +24,12 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "commonheaders.h"
 #include "database.h"
 
-static INT_PTR GetContactCount(WPARAM wParam,LPARAM lParam);
-static INT_PTR FindFirstContact(WPARAM wParam,LPARAM lParam);
-static INT_PTR FindNextContact(WPARAM wParam,LPARAM lParam);
-static INT_PTR DeleteContact(WPARAM wParam,LPARAM lParam);
-static INT_PTR AddContact(WPARAM wParam,LPARAM lParam);
-static INT_PTR IsDbContact(WPARAM wParam,LPARAM lParam);
+static int GetContactCount(WPARAM wParam,LPARAM lParam);
+static int FindFirstContact(WPARAM wParam,LPARAM lParam);
+static int FindNextContact(WPARAM wParam,LPARAM lParam);
+static int DeleteContact(WPARAM wParam,LPARAM lParam);
+static int AddContact(WPARAM wParam,LPARAM lParam);
+static int IsDbContact(WPARAM wParam,LPARAM lParam);
 
 extern CRITICAL_SECTION csDbAccess;
 extern struct DBHeader dbHeader;
@@ -57,9 +57,9 @@ void UninitContacts(void)
 
 int GetContactSettingStatic(WPARAM wParam,LPARAM lParam);
 
-static INT_PTR GetContactCount(WPARAM wParam,LPARAM lParam)
+static int GetContactCount(WPARAM wParam,LPARAM lParam)
 {
-	INT_PTR ret;
+	int ret;
 
 	EnterCriticalSection(&csDbAccess);
 	ret=dbHeader.contactCount;
@@ -86,18 +86,18 @@ static int CheckProto(HANDLE hContact, const char *proto)
 	return !strcmp(protobuf,proto);
 }
 
-static INT_PTR FindFirstContact(WPARAM wParam,LPARAM lParam)
+static int FindFirstContact(WPARAM wParam,LPARAM lParam)
 {
-	INT_PTR ret = 0;
+	int ret = 0;
 	EnterCriticalSection(&csDbAccess);
-	ret = (INT_PTR)dbHeader.ofsFirstContact;
+	ret = (int)(HANDLE)dbHeader.ofsFirstContact;
 	if (lParam && !CheckProto((HANDLE)ret,(const char*)lParam))
 		ret = FindNextContact((WPARAM)ret,lParam);
 	LeaveCriticalSection(&csDbAccess);
 	return ret;
 }
 
-static INT_PTR FindNextContact(WPARAM wParam,LPARAM lParam)
+static int FindNextContact(WPARAM wParam,LPARAM lParam)
 {
 	int index;
 	struct DBContact *dbc;
@@ -110,7 +110,7 @@ static INT_PTR FindNextContact(WPARAM wParam,LPARAM lParam)
 			if (VL->hNext != NULL) {
 				if (!lParam || CheckProto(VL->hNext,(const char*)lParam)) {
 					LeaveCriticalSection(&csDbAccess);
-					return (INT_PTR)VL->hNext;
+					return (int)VL->hNext;
 				}
 
 				VLtemp.hContact = VL->hNext;
@@ -129,7 +129,7 @@ static INT_PTR FindNextContact(WPARAM wParam,LPARAM lParam)
 			VL->hNext = (HANDLE)dbc->ofsNext;
 			if (VL->hNext != NULL && (!lParam || CheckProto(VL->hNext,(const char*)lParam))) {
 				LeaveCriticalSection(&csDbAccess);
-				return (INT_PTR)VL->hNext;
+				return (int)VL->hNext;
 			}
 			VLtemp.hContact = VL->hNext;
 	}	}
@@ -137,7 +137,7 @@ static INT_PTR FindNextContact(WPARAM wParam,LPARAM lParam)
 	return 0;
 }
 
-static INT_PTR DeleteContact(WPARAM wParam,LPARAM lParam)
+static int DeleteContact(WPARAM wParam,LPARAM lParam)
 {
 	struct DBContact *dbc,*dbcPrev;
 	DWORD ofsThis,ofsNext,ofsFirstEvent;
@@ -237,7 +237,7 @@ static INT_PTR DeleteContact(WPARAM wParam,LPARAM lParam)
 	return 0;
 }
 
-static INT_PTR AddContact(WPARAM wParam,LPARAM lParam)
+static int AddContact(WPARAM wParam,LPARAM lParam)
 {
 	struct DBContact dbc;
 	DWORD ofsNew;
@@ -269,14 +269,14 @@ static INT_PTR AddContact(WPARAM wParam,LPARAM lParam)
 
 	LeaveCriticalSection(&csDbAccess);
 	NotifyEventHooks(hContactAddedEvent,(WPARAM)ofsNew,0);
-	return (INT_PTR)ofsNew;
+	return (int)ofsNew;
 }
 
-static INT_PTR IsDbContact(WPARAM wParam,LPARAM lParam)
+static int IsDbContact(WPARAM wParam,LPARAM lParam)
 {
 	struct DBContact dbc;
 	DWORD ofsContact=(DWORD)wParam;
-	INT_PTR ret;
+	int ret;
 
 	EnterCriticalSection(&csDbAccess);
 	{

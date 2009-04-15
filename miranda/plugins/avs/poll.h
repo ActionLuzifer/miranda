@@ -21,16 +21,32 @@ Boston, MA 02111-1307, USA.
 #ifndef __POLL_H__
 # define __POLL_H__
 
+#include <windows.h>
+
+struct ThreadQueue
+{
+	SortedList *queue;
+	CRITICAL_SECTION cs;
+	int waitTime;
+};
+
+extern ThreadQueue requestQueue;
+
 struct QueueItem
 {
 	HANDLE hContact;
 	DWORD check_time;
 };
 
+
 void InitPolls();
 void FreePolls();
 
 // Add an contact to a queue
-void QueueAdd(HANDLE hContact);
+void QueueAdd(ThreadQueue &queue, HANDLE hContact);
+
+
+
+
 
 #endif // __POLL_H__

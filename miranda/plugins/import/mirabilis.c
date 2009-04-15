@@ -33,6 +33,8 @@ BOOL IsProtocolLoaded(char* pszProtocolName);
 HANDLE HContactFromNumericID(char* pszProtoName, char* pszSetting, DWORD dwID);
 HANDLE AddContact(HWND hdlgProgress, char* pszProtoName, char* pszUniqueSetting, DBVARIANT* id, DBVARIANT* nick, DBVARIANT* group);
 
+char str[256];
+
 // ====================
 // ====================
 // == IMPLEMENTATION ==
@@ -69,7 +71,7 @@ static void SearchForDatabases(HWND hdlg,const char *dbPath,const char *type)
 	}
 }
 
-INT_PTR CALLBACK MirabilisPageProc(HWND hdlg,UINT message,WPARAM wParam,LPARAM lParam)
+BOOL CALLBACK MirabilisPageProc(HWND hdlg,UINT message,WPARAM wParam,LPARAM lParam)
 {
 	switch(message) {
 	case WM_INITDIALOG:
@@ -151,24 +153,13 @@ INT_PTR CALLBACK MirabilisPageProc(HWND hdlg,UINT message,WPARAM wParam,LPARAM l
 			break;
 		case IDC_OTHER:
 			{	OPENFILENAME ofn;
-				TCHAR str[MAX_PATH], text[256]={0};
-				size_t index = 0;
-
-				// TranslateTS doesnt translate \0 separated strings
-				mir_sntprintf(text + index, 64*sizeof(TCHAR), _T("%s (*.idx)"), TranslateT("Mirabilis ICQ database indexes"));
-				index += _tcslen(text + index) + 1;
-				_tcscpy(text + index, _T("*.idx"));
-				index += _tcslen(text + index) + 1;
-				mir_sntprintf(text + index, 64*sizeof(TCHAR), _T("%s (*.*)"), TranslateT("All Files"));
-				index += _tcslen( text + index ) + 1;
-				_tcscpy(text + index, _T("*.*"));
-
-				GetDlgItemText(hdlg,IDC_FILENAME,str,SIZEOF(str));
+				TCHAR str[MAX_PATH];
+				GetDlgItemText(hdlg,IDC_FILENAME,str,sizeof(str));
 				ZeroMemory(&ofn, sizeof(ofn));
 				ofn.lStructSize = sizeof(ofn);
 				ofn.hwndOwner = hdlg;
 				ofn.hInstance = NULL;
-				ofn.lpstrFilter = text;
+				ofn.lpstrFilter = TranslateT("Mirabilis ICQ database indexes (*.idx)\0*.IDX\0All Files (*)\0*\0");
 				ofn.lpstrFile = str;
 				ofn.Flags = OFN_FILEMUSTEXIST;
 				ofn.nMaxFile = SIZEOF(str);
@@ -192,7 +183,7 @@ INT_PTR CALLBACK MirabilisPageProc(HWND hdlg,UINT message,WPARAM wParam,LPARAM l
 }
 
 
-INT_PTR CALLBACK MirabilisOptionsPageProc(HWND hdlg,UINT message,WPARAM wParam,LPARAM lParam)
+BOOL CALLBACK MirabilisOptionsPageProc(HWND hdlg,UINT message,WPARAM wParam,LPARAM lParam)
 {
 	switch(message) {
 	case WM_INITDIALOG:
@@ -329,7 +320,7 @@ DWORD ReadSubList(DWORD dwOffset)
 {
 	DWORD dwSubType, dwProperties, n;
 
-	#ifdef _LOGGING
+	#ifdef _DEBUG
 		AddMessage( LPGEN("Attempting to parse sub list at offset %u."), dwOffset);
 	#endif
 
@@ -364,7 +355,7 @@ DWORD ReadPropertyBlock(DWORD dwOffset, char* SearchWord, int* nSearchResult)
 	DWORD n, dwProperties, nameOfs;
 	WORD nameLen;
 
-	#ifdef _LOGGING
+	#ifdef _DEBUG
 		AddMessage( LPGEN("Attempting to parse property block at offset %u."), dwOffset );
 	#endif
 
@@ -424,7 +415,7 @@ DWORD ReadPropertyBlockList(DWORD dwOffset, char* SearchWord, int* nSearchResult
 {
 	DWORD dwBlocks, n;
 
-	#ifdef _LOGGING
+	#ifdef _DEBUG
 		AddMessage( LPGEN("Attempting to parse property block list at offset %u."), dwOffset );
 	#endif
 
@@ -458,7 +449,7 @@ DWORD ReadWavList(DWORD dwOffset)
 	DWORD dwWavEntries, n;
 	WORD wNameLen;
 
-	#ifdef _LOGGING
+	#ifdef _DEBUG
 		AddMessage( LPGEN("Attempting to parse wav file list at offset %u."), dwOffset);
 	#endif
 
@@ -500,7 +491,7 @@ DWORD FindGroupList(DWORD dwOffset)
 	wSeparatorValue = *(PWORD)(pDat+dwOffset+0x1c);
 	nFormat = GetEntryVersion(wSeparatorValue);
 
-	#ifdef _LOGGING
+	#ifdef _DEBUG
 		AddMessage( LPGEN("Attempting to parse group list, type %d."), nFormat );
 	#endif
 
@@ -713,7 +704,7 @@ int ImportGroups()
 	dwGroupListOfs  = dwOffset = FindGroupList(dwOffset);
 	if (!dwOffset) {
 		AddMessage( LPGEN("ERROR: Failed to find contact list groups."));
-		#ifdef _LOGGING
+		#ifdef _DEBUG
 		{ // If this is a debug build, dump MyDetails block to disk
 			FILE *stream;
 			DWORD dwSize;
@@ -744,7 +735,7 @@ int ImportGroups()
 	case ENTRYV99B:
 		for (n = 0; n < dwGroups; n++){
 			if (*(PWORD)(pDat+dwOffset+4) > 1) {
-				if ( CreateGroup(DBVT_ASCIIZ, (char*)(pDat + dwOffset) + 6, NULL ))
+				if ( CreateGroup(hdlgProgress, DBVT_ASCIIZ, (char*)(pDat + dwOffset) + 6 ))
 					nImported++;
 				dwOffset += *(PWORD)(pDat + dwOffset + 4) + 12;
 		}	}
@@ -758,7 +749,7 @@ int ImportGroups()
 		for (n = 0; n < dwGroups; n++){
 			if (tmpOfs = ReadPropertyBlock(dwOffset, "GroupName", &nSearchResult)){
 				if (nSearchResult) {
-					if (CreateGroup( DBVT_ASCIIZ, (char*)(pDat + tmpOfs + 3), NULL ))
+					if (CreateGroup(hdlgProgress, DBVT_ASCIIZ, (char*)(pDat + tmpOfs + 3) ))
 						nImported++;
 			}	}
 
@@ -766,7 +757,7 @@ int ImportGroups()
 			if (!dwOffset) {
 				AddMessage( LPGEN("ERROR: An error occurred while importing groups."));
 				AddMessage( LPGEN("All groups may not have not been imported."));
-				#ifdef _LOGGING
+				#ifdef _DEBUG
 								{ // If this is a debug build, dump MyDetails block to disk
 									FILE *stream;
 									DWORD dwSize;
@@ -806,7 +797,7 @@ HANDLE ImportContact(DWORD dwOffset)
 	if (*(int*)(pDat + dwOffset + 0x1e) != 'USER')
 		return INVALID_HANDLE_VALUE;
 
-	#ifdef _LOGGING
+	#ifdef _DEBUG
 		{ // If this is a debug build, dump contact to disk
 			FILE *stream;
 			DWORD dwSize;
@@ -987,8 +978,8 @@ BOOL ImportExtendedMessage(DWORD dwOffset)
 	int nHistoryCount = 0;
 	char* pszText = 0;
 	DWORD dwRichTextOffset = 0;
-	DWORD wRichTextLength = 0;
-	DWORD wLength = 0;
+	WORD wRichTextLength = 0;
+	WORD wLength = 0;
 	BOOL bFreeMe = FALSE;
 
 	// Get timestamp offset. In ICQ, event timestamps are stored
@@ -1032,10 +1023,9 @@ BOOL ImportExtendedMessage(DWORD dwOffset)
 			AddMessage( LPGEN("Ignoring msg with no text from %d ofs %d."),  msg->uin, dwOffset );
 			return FALSE;
 		}
-		pszText = _strdup(pDat + dwRichTextOffset + wRichTextLength + 2);
+		pszText = calloc(wLength*2, 1);
 		bFreeMe = TRUE;
-		mir_utf8decode(pszText, NULL);
-		wLength = (DWORD)strlen(pszText)+1;
+		Utf8ToAnsi(pDat + dwRichTextOffset + wRichTextLength + 2, pszText, wLength*2);
 	}
 	else {
 		// Use the ANSI text segment
@@ -1169,79 +1159,79 @@ BOOL ImportEvent(DWORD dwOffset)
 			break;
 
 		case 6: // Request for authorization
-			#ifdef _LOGGING
+			#ifdef _DEBUG
 				AddMessage( LPGEN("Skipping 'Request for auth.' msg, ofs %d."), dwOffset );
 			#endif
 			break;
 
 		case 7: // Authorization request denied
-			#ifdef _LOGGING
+			#ifdef _DEBUG
 				AddMessage( LPGEN("Skipping 'Auth. denied' msg, ofs %d."), dwOffset );
 			#endif
 			break;
 
 		case 8: // Authorization request accepted
-			#ifdef _LOGGING
+			#ifdef _DEBUG
 				AddMessage( LPGEN("Skipping 'Auth. accepted' msg, ofs %d."), dwOffset );
 			#endif
 			break;
 
 		case 9: // System message
-			#ifdef _LOGGING
+			#ifdef _DEBUG
 				AddMessage( LPGEN("Skipping 'System message', ofs %d."), dwOffset );
 			#endif
 			break;
 
 		case 12: // You were added
-			#ifdef _LOGGING
+			#ifdef _DEBUG
 				AddMessage( LPGEN("Skipping 'You were added' msg, ofs %d."), dwOffset );
 			#endif
 			break;
 
 		case 13: // WWWPager ?
-			#ifdef _LOGGING
+			#ifdef _DEBUG
 				AddMessage( LPGEN("Skipping 'WWW Pager' msg, ofs %d."), dwOffset );
 			#endif
 			break;
 
 		case 14: // Email Express ?
-			#ifdef _LOGGING
+			#ifdef _DEBUG
 				AddMessage( LPGEN("Skipping 'Email Express' msg, ofs %d."), dwOffset );
 			#endif
 			break;
 
 		case 19: // Contact list
-			#ifdef _LOGGING
+			#ifdef _DEBUG
 				AddMessage( LPGEN("Skipping 'Contact' msg, ofs %d."), dwOffset );
 			#endif
 			break;
 
 		case 21: // Phonecall request?
-			#ifdef _LOGGING
+			#ifdef _DEBUG
 				AddMessage( LPGEN("Skipping 'Phonecall' msg (?), ofs %d."), dwOffset );
 			#endif
 			break;
 
 		case 26: // SMS request?
-			#ifdef _LOGGING
+			#ifdef _DEBUG
 				AddMessage( LPGEN("Skipping 'SMS' msg (?), ofs %d."), dwOffset );
 			#endif
 			break;
 
 		case 29: // Active list invitation ??
-			#ifdef _LOGGING
+			#ifdef _DEBUG
 				AddMessage( LPGEN("Skipping 29 msg, ofs %d."), dwOffset );
 			#endif
 			break;
 
 		case 30: // Birthday reminder
-			#ifdef _LOGGING
+			#ifdef _DEBUG
 				AddMessage( LPGEN("Skipping 'Birthday' msg (?), ofs %d."), dwOffset );
 			#endif
 			break;
 
 		case 32: // Unknown (Tomer)
-			#ifdef _LOGGING
+			#ifdef _DEBUG
 				AddMessage( LPGEN("Skipping 32 msg, ofs %d."), dwOffset );
 			#endif
 			break;
@@ -1249,7 +1239,7 @@ BOOL ImportEvent(DWORD dwOffset)
 		default:
 			AddMessage( LPGEN("Skipping unknown 0xE0 subtype (%d), ofs %d."), msg->type, dwOffset );
 
-			#ifdef _LOGGING
+			#ifdef _DEBUG
 			{ // If this is a debug build, dump entry to disk
 				FILE *stream;
 				DWORD dwSize = *(PDWORD)(pDat + dwOffset);
@@ -1265,21 +1255,21 @@ BOOL ImportEvent(DWORD dwOffset)
 		break;
 
 	case SUBTYPE_CHATREQUEST: // 0xE1
-		#ifdef _LOGGING
+		#ifdef _DEBUG
 			if (nImportOption != IMPORT_CONTACTS)
 				AddMessage( LPGEN("Skipping 'Chat request' msg, ofs %d."), dwOffset );
 		#endif
 		break;
 
 	case SUBTYPE_FILEREQUEST: // 0xE2
-		#ifdef _LOGGING
+		#ifdef _DEBUG
 			if (nImportOption != IMPORT_CONTACTS)
 				AddMessage( LPGEN("Skipping file message offset %d."), dwOffset );
 		#endif
 		break;
 
 	case 0xE3: // External (IPhone, Battlecom) Maybe general voice calls?
-		#ifdef _LOGGING
+		#ifdef _DEBUG
 			if (nImportOption != IMPORT_CONTACTS)
 				AddMessage( LPGEN("Skipping message type 0xE3 at offset %d."), dwOffset );
 		#endif
@@ -1337,7 +1327,7 @@ BOOL ImportEvent(DWORD dwOffset)
 		if (nImportOption != IMPORT_CONTACTS) {
 			AddMessage( LPGEN("Skipping unknown event type %d at offset %d."), msg->hdr.subType, dwOffset );
 
-#ifdef _LOGGING
+#ifdef _DEBUG
 			{ // If this is a debug build, dump entry to disk
 				FILE *stream;
 				DWORD dwSize;

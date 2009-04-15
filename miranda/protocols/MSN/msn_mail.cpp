@@ -1,6 +1,6 @@
 /*
 Plugin of Miranda IM for communicating with users of the MSN Messenger protocol.
-Copyright (c) 2007-2009 Boris Krasnovskiy.
+Copyright (c) 2007-2008 Boris Krasnovskiy.
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -17,13 +17,16 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include "msn_global.h"
-#include "msn_proto.h"
+
+// Global Email counters
+int  mUnreadMessages = 0, mUnreadJunkEmails = 0;
+
 
 static const char oimRecvUrl[] = "https://rsi.hotmail.com/rsi/rsi.asmx";
 static const char mailReqHdr[] = 
 	"SOAPAction: \"http://www.hotmail.msn.com/ws/2004/09/oim/rsi/%s\"\r\n";
 
-ezxml_t CMsnProto::oimRecvHdr(const char* service, ezxml_t& tbdy, char*& httphdr)
+static ezxml_t oimRecvHdr(const char* service, ezxml_t& tbdy, char*& httphdr)
 {
 	ezxml_t xmlp = ezxml_new("soap:Envelope");
 	ezxml_set_attr(xmlp, "xmlns:xsi",  "http://www.w3.org/2001/XMLSchema-instance");
@@ -34,9 +37,9 @@ ezxml_t CMsnProto::oimRecvHdr(const char* service, ezxml_t& tbdy, char*& httphdr
 	ezxml_t cook = ezxml_add_child(hdr, "PassportCookie", 0);
 	ezxml_set_attr(cook, "xmlns", "http://www.hotmail.msn.com/ws/2004/09/oim/rsi");
 	ezxml_t tcook = ezxml_add_child(cook, "t", 0);
-	ezxml_set_txt(tcook, tAuthToken ? tAuthToken : "");
+	ezxml_set_txt(tcook, tAuthToken);
 	ezxml_t pcook = ezxml_add_child(cook, "p", 0);
-	ezxml_set_txt(pcook, pAuthToken ? pAuthToken : "");
+	ezxml_set_txt(pcook, pAuthToken);
 
 	ezxml_t bdy = ezxml_add_child(xmlp, "soap:Body", 0);
 	
@@ -52,10 +55,12 @@ ezxml_t CMsnProto::oimRecvHdr(const char* service, ezxml_t& tbdy, char*& httphdr
 }
 
 
-void CMsnProto::getOIMs(ezxml_t xmli)
+void getOIMs(ezxml_t xmli)
 {
 	ezxml_t toki = ezxml_child(xmli, "M");
 	if (toki == NULL) return;
+
+	SSLAgent mAgent;
 
 	char* getReqHdr;
 	ezxml_t reqmsg;
@@ -79,20 +84,20 @@ void CMsnProto::getOIMs(ezxml_t xmli)
 		char* szData = ezxml_toxml(xmlreq, true);
 
 		unsigned status;
-		char* url = (char*)mir_strdup(oimRecvUrl);
+		MimeHeaders httpInfo;
+		char* htmlbody;
 
-		char* tResult = getSslResult(&url, szData, getReqHdr, status);
+		char* tResult = mAgent.getSslResult(oimRecvUrl, szData, getReqHdr, status, httpInfo, htmlbody);
 
 		free(szData);
-		mir_free(url);
 
 		if (tResult != NULL && status == 200)
 		{
-			ezxml_t xmlm = ezxml_parse_str(tResult, strlen(tResult));
-            ezxml_t body = getSoapResponse(xmlm, "GetMessage");
-
+			ezxml_t xmlm = ezxml_parse_str(htmlbody, strlen(htmlbody));
+			ezxml_t tokm = ezxml_get(xmlm, "soap:Body", 0, "GetMessageResponse", 0, "GetMessageResult", -1);
+			
 			MimeHeaders mailInfo;
-			const char* mailbody = mailInfo.readFromBuffer((char*)ezxml_txt(body));
+			const char* mailbody = mailInfo.readFromBuffer((char*)ezxml_txt(tokm));
 
 			time_t evtm = time( NULL );
 			const char* arrTime = mailInfo["X-OriginalArrivalTime"];
@@ -122,7 +127,7 @@ void CMsnProto::getOIMs(ezxml_t xmli)
 			pre.timestamp = evtm;
 
 			CCSDATA ccs = {0};
-			ccs.hContact = MSN_HContactFromEmail( szEmail, szEmail, false, false );
+			ccs.hContact = MSN_HContactFromEmail( szEmail, szEmail, 0, 0 );
 			ccs.szProtoService = PSR_MESSAGE;
 			ccs.lParam = ( LPARAM )&pre;
 			MSN_CallService( MS_PROTO_CHAINRECV, 0, ( LPARAM )&ccs );
@@ -131,7 +136,7 @@ void CMsnProto::getOIMs(ezxml_t xmli)
 			ezxml_t delmid = ezxml_add_child(delmids, "messageId", 0);
 			ezxml_set_txt(delmid, szId);
 			
-			ezxml_free(xmlm);
+			ezxml_free(tokm);
 		}
 		mir_free( tResult );
 		toki = ezxml_next(toki);
@@ -144,11 +149,10 @@ void CMsnProto::getOIMs(ezxml_t xmli)
 		char* szData = ezxml_toxml(xmldel, true);
 			
 		unsigned status;
-		char* url = (char*)mir_strdup(oimRecvUrl);
+		MimeHeaders httpInfo;
+		char* htmlbody;
 
-		char* tResult = getSslResult(&url, szData, delReqHdr, status);
-
-		mir_free(url);
+		char* tResult = mAgent.getSslResult(oimRecvUrl, szData, delReqHdr, status, httpInfo, htmlbody);
 		mir_free(tResult);
 		free(szData);
 	}
@@ -157,8 +161,10 @@ void CMsnProto::getOIMs(ezxml_t xmli)
 }
 
 
-void CMsnProto::getMetaData(void)
+void getMetaData(void)
 {
+	SSLAgent mAgent;
+
 	char* getReqHdr;
 	ezxml_t reqbdy;
 	ezxml_t xmlreq = oimRecvHdr("GetMetadata", reqbdy, getReqHdr);
@@ -167,17 +173,17 @@ void CMsnProto::getMetaData(void)
 	ezxml_free(xmlreq);
 
 	unsigned status;
-	char* url = (char*)mir_strdup(oimRecvUrl);
+	MimeHeaders httpInfo;
+	char* htmlbody;
 
-	char* tResult = getSslResult(&url, szData, getReqHdr, status);
+	char* tResult = mAgent.getSslResult(oimRecvUrl, szData, getReqHdr, status, httpInfo, htmlbody);
 
-	mir_free(url);
 	free(szData);
 	mir_free(getReqHdr);
 
 	if (tResult != NULL && status == 200)
 	{
-		ezxml_t xmlm = ezxml_parse_str(tResult, strlen(tResult));
+		ezxml_t xmlm = ezxml_parse_str(htmlbody, strlen(htmlbody));
 		ezxml_t xmli = ezxml_get(xmlm, "soap:Body", 0, "GetMetadataResponse", 0, "MD", -1);
 		getOIMs(xmli);
 		ezxml_free(xmlm);
@@ -186,7 +192,7 @@ void CMsnProto::getMetaData(void)
 }
 
 
-void CMsnProto::processMailData(char* mailData)
+void processMailData(char* mailData)
 {
 	if (strcmp(mailData, "too-large") == 0)
 	{
@@ -213,7 +219,7 @@ void CMsnProto::processMailData(char* mailData)
 /////////////////////////////////////////////////////////////////////////////////////////
 // Processes e-mail notification
 
-void CMsnProto::sttNotificationMessage( char* msgBody, bool isInitial )
+void sttNotificationMessage( char* msgBody, bool isInitial )
 {
 	TCHAR tBuffer[512];
 	TCHAR tBuffer2[512];
@@ -271,11 +277,12 @@ void CMsnProto::sttNotificationMessage( char* msgBody, bool isInitial )
 #ifdef _UNICODE
 		TCHAR* msgtxt = _stricmp( From, Fromaddr ) ?
 			TranslateT("Hotmail from %s (%S)") : TranslateT( "Hotmail from %s" );
-#else
-		TCHAR* msgtxt = _strcmpi( From, Fromaddr ) ?
-			TranslateT("Hotmail from %S (%s)") : TranslateT( "Hotmail from %S" );
-#endif
 		mir_sntprintf( tBuffer, SIZEOF( tBuffer ), msgtxt, mimeFromW, Fromaddr );
+#else
+		TCHAR* msgtxt = strcmpi( From, Fromaddr ) ?
+			TranslateT("Hotmail from %S (%s)") : TranslateT( "Hotmail from %S" );
+		mir_sntprintf( tBuffer, SIZEOF( tBuffer ), msgtxt, mimeFromW, Fromaddr );
+#endif
 		mir_free(mimeFromW);
 		mir_free(mimeSubjectW);
 		ShowPopUp = true;
@@ -285,20 +292,20 @@ void CMsnProto::sttNotificationMessage( char* msgBody, bool isInitial )
 		const char* MailData = tFileInfo[ "Mail-Data" ];
 		if ( MailData != NULL ) processMailData((char*)MailData);
 
-		mir_sntprintf( tBuffer, SIZEOF( tBuffer ), m_tszUserName);
-		mir_sntprintf( tBuffer2, SIZEOF( tBuffer2 ), TranslateT( "Unread mail is available: %d in Inbox and %d in other folders)." ),
+		mir_sntprintf( tBuffer, SIZEOF( tBuffer ), TranslateT( "Hotmail" ));
+		mir_sntprintf( tBuffer2, SIZEOF( tBuffer2 ), TranslateT( "Unread mail is available: %d messages (%d junk e-mails)." ),
 			mUnreadMessages, mUnreadJunkEmails );
 	}
 
 	if (UnreadMessages == mUnreadMessages && UnreadJunkEmails == mUnreadJunkEmails  && !isInitial)
 		return;
 
-	SendBroadcast( NULL, ACKTYPE_EMAIL, ACKRESULT_STATUS, NULL, 0 );
+	MSN_SendBroadcast( NULL, ACKTYPE_EMAIL, ACKRESULT_STATUS, NULL, 0 );
 
 	// Disable to notify receiving hotmail
-	if ( !getByte( "DisableHotmail", 1 ) &&  ShowPopUp && 
+	if ( !MSN_GetByte( "DisableHotmail", 1 ) && ShowPopUp && 
 		(mUnreadMessages != 0 || 
-		(mUnreadJunkEmails != 0 && !getByte( "DisableHotmailJunk", 0 ))))
+		(mUnreadJunkEmails != 0 && !MSN_GetByte( "DisableHotmailJunk", 0 ))))
 	{
 		SkinPlaySound( mailsoundname );
 		MSN_ShowPopup( tBuffer, tBuffer2, 
@@ -306,11 +313,11 @@ void CMsnProto::sttNotificationMessage( char* msgBody, bool isInitial )
 			tFileInfo[ "Message-URL" ]);
 	}
 
-	if ( !getByte( "RunMailerOnHotmail", 0 ) || !ShowPopUp || isInitial )
+	if ( !MSN_GetByte( "RunMailerOnHotmail", 0 ) || !ShowPopUp || isInitial )
 		return;
 
 	char mailerpath[MAX_PATH];
-	if ( !getStaticString( NULL, "MailerPath", mailerpath, sizeof( mailerpath ))) 
+	if ( !MSN_GetStaticString( "MailerPath", NULL, mailerpath, sizeof( mailerpath ))) 
 	{
 		if ( mailerpath[0] ) 
 		{
@@ -342,6 +349,11 @@ void CMsnProto::sttNotificationMessage( char* msgBody, bool isInitial )
 	}	
 }
 
+static char oimDigest[64] = "";
+static unsigned oimMsgNum = 0;
+static char oimUID[64] = "";
+
+
 static void TruncUtf8(char *str, size_t sz)
 {
 	size_t len = strlen(str);
@@ -363,8 +375,9 @@ static void TruncUtf8(char *str, size_t sz)
 	str[cntl] = 0;
 }
 
-int CMsnProto::MSN_SendOIM(const char* szEmail, const char* msg)
+int MSN_SendOIM(const char* szEmail, const char* msg)
 {
+	char szAuth[768];
 	char num[32];
 	mir_snprintf(num, sizeof(num), "%u", ++oimMsgNum);
 
@@ -387,7 +400,7 @@ int CMsnProto::MSN_SendOIM(const char* szEmail, const char* msg)
 	{
 		DBVARIANT dbv;
 		char *mynick, *mynickenc;
-		if (!getStringUtf("Nick", &dbv))
+		if (!DBGetContactSettingStringUtf( NULL, msnProtocolName, "Nick", &dbv ))
 			mynick = dbv.pszVal;
 		else 
 		{
@@ -400,7 +413,7 @@ int CMsnProto::MSN_SendOIM(const char* szEmail, const char* msg)
 		size_t emlen = Netlib_GetBase64EncodedBufferSize(omlen);
 		mynickenc =(char*)alloca(emlen + 20);
 		strcpy(mynickenc, "=?utf-8?B?");
-		NETLIBBASE64 nlb = { mynickenc+10, (int)emlen, (PBYTE)mynick, (int)omlen };
+		NETLIBBASE64 nlb = { mynickenc+10, emlen, (PBYTE)mynick, omlen };
 		MSN_CallService( MS_NETLIB_BASE64ENCODE, 0, LPARAM( &nlb ));
 		if (dbv.pszVal != NULL) MSN_FreeVariant( &dbv );
 		strcat(mynickenc, "?=");
@@ -416,15 +429,15 @@ int CMsnProto::MSN_SendOIM(const char* szEmail, const char* msg)
 	ezxml_set_attr(from, "xml:lang", langcd);
 	ezxml_set_attr(from, "proxy", "MSNMSGR");
 	ezxml_set_attr(from, "xmlns", "http://messenger.msn.com/ws/2004/09/oim/");
-	ezxml_set_attr(from, "msnpVer", msnProtID);
-	ezxml_set_attr(from, "buildVer", msnProductVer);
+	ezxml_set_attr(from, "msnpVer", "MSNP13");
+	ezxml_set_attr(from, "buildVer", "8.0.0812");
 
 	ezxml_t to = ezxml_add_child(hdr, "To", 0);
 	ezxml_set_attr(to, "memberName", szEmail);
 	ezxml_set_attr(to, "xmlns", "http://messenger.msn.com/ws/2004/09/oim/");
 
 	ezxml_t tick = ezxml_add_child(hdr, "Ticket", 0);
-	ezxml_set_attr(tick, "passport", oimSendToken ? oimSendToken : "");
+	ezxml_set_attr(tick, "passport", szAuth);
 	
 	ezxml_set_attr(tick, "appid", msnProductID);
 	ezxml_set_attr(tick, "lockkey", oimDigest);
@@ -463,7 +476,7 @@ int CMsnProto::MSN_SendOIM(const char* szEmail, const char* msg)
 		
 		strcpy(msgenc2, "\r\n"); msgenc2 += 2;
 
-		NETLIBBASE64 nlb = { msgenc2, (int)emlen, (PBYTE)msg, (int)omlen };
+		NETLIBBASE64 nlb = { msgenc2, emlen, (PBYTE)msg, omlen };
 		MSN_CallService( MS_NETLIB_BASE64ENCODE, 0, LPARAM( &nlb ));
 
 		char *pos = msgenc2;
@@ -477,41 +490,44 @@ int CMsnProto::MSN_SendOIM(const char* szEmail, const char* msg)
 		ezxml_set_txt(msgc, msgenc);
 	}
 
+	SSLAgent mAgent;
+
 	int success = -1;
 	bool retry = true;
 	for (unsigned i=0; i<3 && retry; ++i)
 	{
 		retry = false;
 
+		mir_snprintf(szAuth, sizeof(szAuth), "t=%s&p=%s", tAuthToken, pAuthToken);
 		char* szData = ezxml_toxml(xmlp, true);
 		
 		unsigned status;
-		char* url = (char*)mir_strdup("https://ows.messenger.msn.com/OimWS/oim.asmx");
+		MimeHeaders httpInfo;
+		char* htmlbody;
 
-		char* tResult = getSslResult(&url, szData,
-			"SOAPAction: \"http://messenger.live.com/ws/2006/09/oim/Store2\"\r\n",
-			status);
+		char* tResult = mAgent.getSslResult( "https://ows.messenger.msn.com/OimWS/oim.asmx", szData,
+			"SOAPAction: \"http://messenger.msn.com/ws/2004/09/oim/Store\"\r\n",
+			status, httpInfo, htmlbody);
 
-		mir_free(url);
 		free(szData);
 
 		if (tResult != NULL)
 		{
 			if (status == 500)
 			{
-				ezxml_t xmlm = ezxml_parse_str(tResult, strlen(tResult));
-				ezxml_t flt = getSoapFault(xmlm, false);
+				ezxml_t xmlm = ezxml_parse_str(htmlbody, strlen(htmlbody));
+				ezxml_t flt = ezxml_get(xmlm, "soap:Body", 0, "soap:Fault", -1);
 				const char* szFltCode = ezxml_txt(ezxml_child(flt, "faultcode"));
 				
 				if (strcmp(szFltCode, "q0:AuthenticationFailed") == 0)
 				{
 					ezxml_t det = ezxml_child(flt, "detail");
-					const char* szAuthChl = ezxml_txt(ezxml_child(det, "RequiredAuthPolicy"));
+					const char* szTwChl = ezxml_txt(ezxml_child(det, "TweenerChallenge"));
 					const char* szChl   = ezxml_txt(ezxml_child(det, "LockKeyChallenge"));
 
-					if (*szAuthChl)
+					if (*szTwChl) 
 					{
-						MSN_GetPassportAuth();
+						MSN_GetPassportAuth((char*)szTwChl);
 						retry = true;
 					}
 					if (*szChl)

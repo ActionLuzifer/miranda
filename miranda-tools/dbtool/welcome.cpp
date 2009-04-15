@@ -18,11 +18,13 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 #include "dbtool.h"
 
-INT_PTR CALLBACK WelcomeDlgProc(HWND hdlg,UINT message,WPARAM wParam,LPARAM lParam)
+BOOL CALLBACK SelectDbDlgProc(HWND hdlg,UINT message,WPARAM wParam,LPARAM lParam);
+
+BOOL CALLBACK WelcomeDlgProc(HWND hdlg,UINT message,WPARAM wParam,LPARAM lParam)
 {
 	static HENHMETAFILE hEmfWatermark;
 	static HFONT hTitleFont;
-	INT_PTR bReturn;
+	BOOL bReturn;
 
 	if(DoMyControlProcessing(hdlg,message,wParam,lParam,&bReturn)) return bReturn;
 	switch(message) {

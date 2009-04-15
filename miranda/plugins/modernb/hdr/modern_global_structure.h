@@ -1,5 +1,3 @@
-#pragma once
-
 #ifndef modern_global_structure_h__
 #define modern_global_structure_h__
 
@@ -10,7 +8,7 @@ typedef struct tagCLUIDATA
 	************************************/
 
 	/*         NotifyArea menu          */
-	HMENU		hMenuNotify;             
+	HANDLE		hMenuNotify;             
 	WORD		wNextMenuID;	
 	int			iIconNotify;
 	BOOL		bEventAreaEnabled;
@@ -27,7 +25,6 @@ typedef struct tagCLUIDATA
 	DWORD	lastMsgFilter;
 	char	current_viewmode[256], old_viewmode[256];
 	BYTE	boldHideOffline;
-	BYTE	bOldUseGroups;
 	DWORD	statusMaskFilter;
 	DWORD	stickyMaskFilter;
 	DWORD	filterFlags;
@@ -44,9 +41,7 @@ typedef struct tagCLUIDATA
 	BOOL	fDocked;
 	BOOL	fGDIPlusFail;
 	BOOL	fSortNoOfflineBottom;
-	BOOL	fAutoSize;
-	BOOL	fAeroGlass;
-	HRGN	hAeroGlassRgn;
+	BOOL    fAutoSize;
 
 	BOOL	mutexPreventDockMoving;
 	BOOL    mutexOnEdgeSizing;
@@ -71,24 +66,8 @@ typedef struct tagCLUIDATA
 	BOOL	bInternalAwayMsgDiscovery;
 	BOOL	bRemoveAwayMessageForOffline;
 
-	//hEventHandles
+} CluiData;
 
-	HANDLE hEventExtraImageListRebuilding;
-	HANDLE hEventExtraImageApplying;
-	HANDLE hEventExtraClick;
-	HANDLE hEventBkgrChanged;
-	HANDLE hEventPreBuildTrayMenu;
-	HANDLE hEventPreBuildFrameMenu;
-	HANDLE hEventPreBuildGroupMenu;
-	HANDLE hEventPreBuildSubGroupMenu;
-	HANDLE hEventStatusBarShowToolTip;
-	HANDLE hEventStatusBarHideToolTip;
-	HANDLE hEventToolBarModuleLoaded;
-	HANDLE hEventSkinServicesCreated;
-
-	int	   nGapBetweenTitlebar;
-} CLUIDATA;
-
-EXTERN_C CLUIDATA g_CluiData;
+EXTERN_C CluiData g_CluiData;
 
 #endif // modern_global_structure_h__

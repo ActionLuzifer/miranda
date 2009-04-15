@@ -2,7 +2,6 @@
 Chat module plugin for Miranda IM
 
 Copyright (C) 2003 Jörgen Persson
-Copyright 2003-2008 Miranda ICQ/IM project,
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -60,7 +59,7 @@ static RECT CalculateButtonToCoordinates(COLORCHOOSER * pCC, int buttonPosition)
 	return pt;
 }
 
-INT_PTR CALLBACK DlgProcColorToolWindow(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam)
+BOOL CALLBACK DlgProcColorToolWindow(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 {
 	static COLORCHOOSER* pCC = NULL;
 	static int iCurrentHotTrack;
@@ -111,7 +110,7 @@ INT_PTR CALLBACK DlgProcColorToolWindow(HWND hwndDlg, UINT msg, WPARAM wParam, L
 		if((HWND)lParam==GetDlgItem(hwndDlg,IDC_CHAT_COLORTEXT)) {
 			SetTextColor((HDC)wParam,RGB(60,60,150));
 			SetBkColor((HDC)wParam,GetSysColor(COLOR_WINDOW));
-			return (INT_PTR)GetSysColorBrush(COLOR_WINDOW);
+			return (BOOL)GetSysColorBrush(COLOR_WINDOW);
 		}
 		break;
 

@@ -129,7 +129,7 @@ int AddContactToGroup(struct ClcData *dat, struct ClcGroup *group, HANDLE hConta
     //p->iRowHeight = -1;
 
 	if (p->proto)
-		p->bIsMeta = !strcmp(p->proto, g_CluiData.szMetaName);
+		p->bIsMeta = !strcmp(p->proto, "MetaContacts");
 	else
 		p->bIsMeta = FALSE;
 	if (p->bIsMeta && g_CluiData.bMetaAvail && !(g_CluiData.dwFlags & CLUI_USEMETAICONS)) {
@@ -151,7 +151,7 @@ int AddContactToGroup(struct ClcData *dat, struct ClcGroup *group, HANDLE hConta
 		GetExtendedInfo( p, dat);
 		if(p->extraCacheEntry >= 0 && p->extraCacheEntry < g_nextExtraCacheEntry) {
 			g_ExtraCache[p->extraCacheEntry].proto_status_item = GetProtocolStatusItem(p->bIsMeta ? p->metaProto : p->proto);
-			if(DBGetContactSettingByte(p->hContact, "CList", "floating", 0) && g_floatoptions.enabled) {
+			if(DBGetContactSettingByte(p->hContact, "CList", "floating", 0)) {
 				if(g_ExtraCache[p->extraCacheEntry].floater == NULL)
 					FLT_Create(p->extraCacheEntry);
 				else {
@@ -304,7 +304,6 @@ BYTE GetCachedStatusMsg(int iExtraCacheEntry, char *szProto)
 		else {
 			ICQ_CUSTOM_STATUS cst = {0};
 			int xStatus;
-			WPARAM xStatus2;
 			TCHAR xStatusName[128];
 			char szServiceName[128];
 
@@ -315,7 +314,7 @@ BYTE GetCachedStatusMsg(int iExtraCacheEntry, char *szProto)
 			cst.status = &xStatus;
 			if(ServiceExists(szServiceName) && !CallService(szServiceName, (WPARAM)hContact, (LPARAM)&cst) && xStatus > 0) {
 				cst.flags = CSSF_MASK_NAME | CSSF_DEFAULT_NAME | CSSF_TCHAR;
- 				cst.wParam = &xStatus2;
+				cst.wParam = &xStatus;
 				cst.ptszName = xStatusName; 
 				if(!CallService(szServiceName, (WPARAM)hContact, (LPARAM)&cst)) {
 					TCHAR *szwXstatusName = TranslateTS(xStatusName);
@@ -468,13 +467,13 @@ void GetExtendedInfo(struct ClcContact *contact, struct ClcData *dat)
     
     g_ExtraCache[index].isChatRoom = DBGetContactSettingByte(contact->hContact, contact->proto, "ChatRoom", 0);
 
-    g_ExtraCache[index].iExtraValid &= ~(EIMG_SHOW_EMAIL | EIMG_SHOW_SMS | EIMG_SHOW_WEB);
-    g_ExtraCache[index].iExtraImage[EXTRA_ICON_EMAIL] = g_ExtraCache[index].iExtraImage[EXTRA_ICON_WEB] = g_ExtraCache[index].iExtraImage[EXTRA_ICON_SMS] = 0xff;
+    g_ExtraCache[index].iExtraValid &= ~(EIMG_SHOW_MAIL | EIMG_SHOW_SMS | EIMG_SHOW_URL);
+    g_ExtraCache[index].iExtraImage[EIMG_MAIL] = g_ExtraCache[index].iExtraImage[EIMG_URL] = g_ExtraCache[index].iExtraImage[EIMG_SMS] = 0xff;
 
     if(!DBGetContactSettingString(contact->hContact, contact->proto, "e-mail", &dbv) && lstrlenA(dbv.pszVal) > 1)
-        g_ExtraCache[index].iExtraImage[EXTRA_ICON_EMAIL] = 0;
+        g_ExtraCache[index].iExtraImage[EIMG_MAIL] = 0;
     else if(!DBGetContactSettingString(contact->hContact, "UserInfo", "Mye-mail0", &dbv) && lstrlenA(dbv.pszVal) > 1)
-        g_ExtraCache[index].iExtraImage[EXTRA_ICON_EMAIL] = 0;
+        g_ExtraCache[index].iExtraImage[EIMG_MAIL] = 0;
 
     if(dbv.pszVal) {
         mir_free(dbv.pszVal);
@@ -482,9 +481,9 @@ void GetExtendedInfo(struct ClcContact *contact, struct ClcData *dat)
     }
 
     if(!DBGetContactSettingString(contact->hContact, contact->proto, "Homepage", &dbv) && lstrlenA(dbv.pszVal) > 1)
-        g_ExtraCache[index].iExtraImage[EXTRA_ICON_WEB] = 1;
+        g_ExtraCache[index].iExtraImage[EIMG_URL] = 1;
     else if(!DBGetContactSettingString(contact->hContact, "UserInfo", "Homepage", &dbv) && lstrlenA(dbv.pszVal) > 1)
-        g_ExtraCache[index].iExtraImage[EXTRA_ICON_WEB] = 1;
+        g_ExtraCache[index].iExtraImage[EIMG_URL] = 1;
     
     if(dbv.pszVal) {
         mir_free(dbv.pszVal);
@@ -492,11 +491,11 @@ void GetExtendedInfo(struct ClcContact *contact, struct ClcData *dat)
     }
 
     if(!DBGetContactSettingString(contact->hContact, "UserInfoEx", "Cellular", &dbv) && lstrlenA(dbv.pszVal) > 1)
-        g_ExtraCache[index].iExtraImage[EXTRA_ICON_SMS] = 2;
+        g_ExtraCache[index].iExtraImage[EIMG_SMS] = 2;
     else if(!DBGetContactSettingString(contact->hContact, contact->proto, "Cellular", &dbv) && lstrlenA(dbv.pszVal) > 1)
-        g_ExtraCache[index].iExtraImage[EXTRA_ICON_SMS] = 2;
+        g_ExtraCache[index].iExtraImage[EIMG_SMS] = 2;
     else if(!DBGetContactSettingString(contact->hContact, "UserInfo", "MyPhone0", &dbv) && lstrlenA(dbv.pszVal) > 1)
-        g_ExtraCache[index].iExtraImage[EXTRA_ICON_SMS] = 2;
+        g_ExtraCache[index].iExtraImage[EIMG_SMS] = 2;
     
     if(dbv.pszVal) {
         mir_free(dbv.pszVal);
@@ -505,9 +504,9 @@ void GetExtendedInfo(struct ClcContact *contact, struct ClcData *dat)
 
     // set the mask for valid extra images...
     
-    g_ExtraCache[index].iExtraValid |= ((g_ExtraCache[index].iExtraImage[EXTRA_ICON_EMAIL] != 0xff ? EIMG_SHOW_EMAIL : 0) | 
-        (g_ExtraCache[index].iExtraImage[EXTRA_ICON_WEB] != 0xff ? EIMG_SHOW_WEB : 0) |
-        (g_ExtraCache[index].iExtraImage[EXTRA_ICON_SMS] != 0xff ? EIMG_SHOW_SMS : 0));
+    g_ExtraCache[index].iExtraValid |= ((g_ExtraCache[index].iExtraImage[EIMG_MAIL] != 0xff ? EIMG_SHOW_MAIL : 0) | 
+        (g_ExtraCache[index].iExtraImage[EIMG_URL] != 0xff ? EIMG_SHOW_URL : 0) |
+        (g_ExtraCache[index].iExtraImage[EIMG_SMS] != 0xff ? EIMG_SHOW_SMS : 0));
 
 
     g_ExtraCache[index].timezone = (DWORD)DBGetContactSettingByte(contact->hContact,"UserInfo","Timezone", DBGetContactSettingByte(contact->hContact, contact->proto,"Timezone",-1));
@@ -634,7 +633,7 @@ int __fastcall CLVM_GetContactHiddenStatus(HANDLE hContact, char *szProto, struc
     
     // always hide subcontacts (but show them on embedded contact lists)
     
-    if(g_CluiData.bMetaAvail && dat != NULL && dat->bHideSubcontacts && g_CluiData.bMetaEnabled && DBGetContactSettingByte(hContact, g_CluiData.szMetaName, "IsSubcontact", 0))
+    if(g_CluiData.bMetaAvail && dat != NULL && dat->bHideSubcontacts && g_CluiData.bMetaEnabled && DBGetContactSettingByte(hContact, "MetaContacts", "IsSubcontact", 0))
         return 1;
 
     if(g_CluiData.bFilterEffective) {

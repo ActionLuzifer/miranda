@@ -19,6 +19,7 @@ Boston, MA 02111-1307, USA.
 
 #include "commonheaders.h"
 
+
 /*
 It has 1 queue:
 A queue to request items. One request is done at a time, REQUEST_WAIT_TIME miliseconts after it has beeing fired
@@ -42,6 +43,8 @@ A queue to request items. One request is done at a time, REQUEST_WAIT_TIME milis
 
 // Prototypes ///////////////////////////////////////////////////////////////////////////
 
+ThreadQueue requestQueue = {0};
+
 static void RequestThread(void *vParam);
 
 extern HANDLE hShutdownEvent;
@@ -62,26 +65,28 @@ int _DebugTrace(const char *fmt, ...);
 int _DebugTrace(HANDLE hContact, const char *fmt, ...);
 #endif
 
+
 // Functions ////////////////////////////////////////////////////////////////////////////
 
-// Items with higher priority at end
-static int QueueSortItems( const QueueItem* i1, const QueueItem* i2)
+
+// Itens with higher priority at end
+static int QueueSortItems(void *i1, void *i2)
 {
-	return i2->check_time - i1->check_time;
+	return ((QueueItem*)i2)->check_time - ((QueueItem*)i1)->check_time;
 }
 
-static OBJLIST<QueueItem> queue( 20, QueueSortItems );
-static CRITICAL_SECTION cs;
-static int waitTime;
 
 void InitPolls() 
 {
-	waitTime = REQUEST_WAIT_TIME;
-	InitializeCriticalSection( &cs );
-
 	// Init request queue
+	ZeroMemory(&requestQueue, sizeof(requestQueue));
+	requestQueue.queue = List_Create(0, 20);
+	requestQueue.queue->sortFunc = QueueSortItems;
+	requestQueue.waitTime = REQUEST_WAIT_TIME;
+    InitializeCriticalSection(&requestQueue.cs);
 	mir_forkthread(RequestThread, NULL);
 }
+
 
 void FreePolls()
 {
@@ -120,52 +125,67 @@ static BOOL PollCheckContact(HANDLE hContact, const char *szProto)
             && FindAvatarInCache(hContact, FALSE, TRUE) != NULL;
 }
 
-static void QueueRemove(HANDLE hContact)
+static void QueueRemove(ThreadQueue &queue, HANDLE hContact)
 {
-	EnterCriticalSection(&cs);
+    EnterCriticalSection(&queue.cs);
 
-	for (int i = queue.getCount()-1 ; i >= 0 ; i-- ) {
-		QueueItem& item = queue[i];
-		if (item.hContact == hContact)
-			queue.remove(i);
+	if (queue.queue->items != NULL)
+	{
+		for (int i = queue.queue->realCount - 1 ; i >= 0 ; i-- )
+		{
+			QueueItem *item = (QueueItem*) queue.queue->items[i];
+			
+			if (item->hContact == hContact)
+			{
+				mir_free(item);
+				List_Remove(queue.queue, i);
+			}
+		}
 	}
 
-	LeaveCriticalSection(&cs);
+	LeaveCriticalSection(&queue.cs);
 }
 
-static void QueueAdd(HANDLE hContact, int waitTime)
+static void QueueAdd(ThreadQueue &queue, HANDLE hContact, int waitTime)
 {
-	if(fei == NULL)
-		return;
+    if(fei == NULL)
+        return;
 
-	EnterCriticalSection(&cs);
+    EnterCriticalSection(&queue.cs);
 
 	// Only add if not exists yet
 	int i;
-	for (i = queue.getCount()-1; i >= 0; i--)
-		if ( queue[i].hContact == hContact)
+	for (i = queue.queue->realCount - 1; i >= 0; i--)
+	{
+		if (((QueueItem *) queue.queue->items[i])->hContact == hContact)
 			break;
+	}
 
-	if (i < 0) {
-		QueueItem *item = new QueueItem;
-		if (item != NULL) {
+	if (i < 0)
+	{
+		QueueItem *item = (QueueItem *) mir_alloc0(sizeof(QueueItem));
+
+		if (item != NULL) 
+		{
 			item->hContact = hContact;
 			item->check_time = GetTickCount() + waitTime;
-			queue.insert(item);
-	}	}
 
-	LeaveCriticalSection(&cs);
+			List_InsertOrdered(queue.queue, item);
+		}
+	}
+
+	LeaveCriticalSection(&queue.cs);
 }
 
 // Add an contact to a queue
-void QueueAdd(HANDLE hContact)
+void QueueAdd(ThreadQueue &queue, HANDLE hContact)
 {
-	QueueAdd(hContact, waitTime);
+	QueueAdd(queue, hContact, queue.waitTime);
 }
 
 void ProcessAvatarInfo(HANDLE hContact, int type, PROTO_AVATAR_INFORMATION *pai, const char *szProto)
 {
-	QueueRemove(hContact);
+	QueueRemove(requestQueue, hContact);
 
 	if (type == GAIR_SUCCESS) 
 	{
@@ -190,7 +210,7 @@ void ProcessAvatarInfo(HANDLE hContact, int type, PROTO_AVATAR_INFORMATION *pai,
 		}
 		else
 		{
-			// As we can't load it, notify but don't load
+			// As we can't load it, notify as deleted
 			ChangeAvatar(hContact, FALSE, TRUE, pai->format);
 		}
 	}
@@ -217,10 +237,10 @@ void ProcessAvatarInfo(HANDLE hContact, int type, PROTO_AVATAR_INFORMATION *pai,
 		if (wait > 0)
 		{
 			// Reschedule to request after needed time (and avoid requests before that)
-			EnterCriticalSection(&cs);
-			QueueRemove(hContact);
-			QueueAdd(hContact, wait);
-			LeaveCriticalSection(&cs);
+			EnterCriticalSection(&requestQueue.cs);
+			QueueRemove(requestQueue, hContact);
+			QueueAdd(requestQueue, hContact, wait);
+			LeaveCriticalSection(&requestQueue.cs);
 		}
 	}
 }
@@ -259,43 +279,45 @@ static void RequestThread(void *vParam)
 {
 	while (!g_shutDown)
 	{
-		EnterCriticalSection(&cs);
+		EnterCriticalSection(&requestQueue.cs);
 
-		if ( queue.getCount() == 0 )
+		if (!List_HasItens(requestQueue.queue))
 		{
 			// No items, so supend thread
-			LeaveCriticalSection(&cs);
+			LeaveCriticalSection(&requestQueue.cs);
 
 			mir_sleep(POOL_DELAY);
 		}
 		else
 		{
 			// Take a look at first item
-			QueueItem& qi = queue[ queue.getCount()-1 ];
+			QueueItem *qi = (QueueItem *) List_Peek(requestQueue.queue);
 
-			if (qi.check_time > GetTickCount()) 
+			if (qi->check_time > GetTickCount()) 
 			{
-				// Not time to request yet, wait...
-				LeaveCriticalSection(&cs);
+				// Not time to request yeat, wait...
+				LeaveCriticalSection(&requestQueue.cs);
+
 				mir_sleep(POOL_DELAY);
 			}
 			else
 			{
 				// Will request this item
-				HANDLE hContact = qi.hContact;
-				queue.remove( queue.getCount()-1 );
+				qi = (QueueItem *) List_Pop(requestQueue.queue);
+				HANDLE hContact = qi->hContact;
+				mir_free(qi);
 
-				QueueRemove(hContact);
+				QueueRemove(requestQueue, hContact);
 
-				LeaveCriticalSection(&cs);
+                LeaveCriticalSection(&requestQueue.cs);
 
 				if (FetchAvatarFor(hContact) == GAIR_WAITFOR)
 				{
 					// Mark to not request this contact avatar for more 30 min
-					EnterCriticalSection(&cs);
-					QueueRemove(hContact);
-					QueueAdd(hContact, REQUEST_WAITFOR_WAIT_TIME);
-					LeaveCriticalSection(&cs);
+				    EnterCriticalSection(&requestQueue.cs);
+					QueueRemove(requestQueue, hContact);
+					QueueAdd(requestQueue, hContact, REQUEST_WAITFOR_WAIT_TIME);
+					LeaveCriticalSection(&requestQueue.cs);
 
 					// Wait a little until requesting again
 					mir_sleep(REQUEST_DELAY);
@@ -304,7 +326,7 @@ static void RequestThread(void *vParam)
 		}
 	}
 
-	DeleteCriticalSection(&cs);
-	queue.destroy();
+	DeleteCriticalSection(&requestQueue.cs);
+	List_DestroyFreeContents(requestQueue.queue);
+	mir_free(requestQueue.queue);
 }
-

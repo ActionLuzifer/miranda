@@ -25,17 +25,15 @@
  * \brief Obsługa katalogu publicznego od wersji Gadu-Gadu 5.x
  */
 
-#ifndef _WIN64
-#define _USE_32BIT_TIME_T
-#endif
+#include "libgadu-config.h"
 
 #include <errno.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
 
-#ifdef _WIN32
-#include "win32.h"
+#ifdef GG_CONFIG_MIRANDA
+#include <sys/socket.h>
 #undef small
 #endif
 

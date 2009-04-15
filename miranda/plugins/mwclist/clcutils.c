@@ -102,18 +102,7 @@ int HitTest(HWND hwnd,struct ClcData *dat,int testx,int testy,struct ClcContact 
 				if (i==dat->extraColumnsCount-1) {x=clRect.right-18;}
 			}else
 			{
-				int ir;
-				if (dat->MetaIgnoreEmptyExtra)
-				{
-					int j;
-					ir = 0;
-					for(j=i;j<dat->extraColumnsCount;j++) 
-						if(hitcontact->iExtraImage[j]!=0xFF)
-							ir++;
-				}else
-					ir = dat->extraColumnsCount-i;
-
-				x=clRect.right-dat->extraColumnSpacing*ir;
+				x=clRect.right-dat->extraColumnSpacing*(dat->extraColumnsCount-i);
 			}
 		ic++;
 

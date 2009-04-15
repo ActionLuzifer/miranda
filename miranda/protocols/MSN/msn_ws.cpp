@@ -1,8 +1,11 @@
 /*
 Plugin of Miranda IM for communicating with users of the MSN Messenger protocol.
-Copyright (c) 2006-2009 Boris Krasnovskiy.
-Copyright (c) 2003-2005 George Hazan.
-Copyright (c) 2002-2003 Richard Hughes (original version).
+Copyright (c) 2006-7 Boris Krasnovskiy.
+Copyright (c) 2003-5 George Hazan.
+Copyright (c) 2002-3 Richard Hughes (original version).
+
+Miranda IM: the free icq client for MS Windows
+Copyright (C) 2000-2002 Richard Hughes, Roland Rabien & Tristan Van de Vreede
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -15,13 +18,13 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with this program.  If not, see <http://www.gnu.org/licenses/>.
+along with this program; if not, write to the Free Software
+Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
 #include "msn_global.h"
-#include "msn_proto.h"
 
-static const char sttGatewayHeader[] =
+static char sttGatewayHeader[] =
 	"POST %s HTTP/1.1\r\n"
 	"Accept: */*\r\n"
 	"Content-Type: text/xml; charset=utf-8\r\n"
@@ -33,16 +36,16 @@ static const char sttGatewayHeader[] =
 
 //=======================================================================================
 
-int ThreadData::send( const char data[], size_t datalen )
+int ThreadData::send( const char data[], int datalen )
 {
-	NETLIBBUFFER nlb = { (char*)data, (int)datalen, 0 };
+	NETLIBBUFFER nlb = { (char*)data, datalen, 0 };
 
 	mWaitPeriod = 60;
 
-	if ( proto->MyOptions.UseGateway && !( mType == SERVER_FILETRANS || mType == SERVER_P2P_DIRECT )) {
+	if ( MyOptions.UseGateway && !( mType == SERVER_FILETRANS || mType == SERVER_P2P_DIRECT )) {
 		mGatewayTimeout = 2;
 
-		if ( !proto->MyOptions.UseProxy ) {
+		if ( !MyOptions.UseProxy ) {
 			TQueueItem* tNewItem = ( TQueueItem* )mir_alloc( datalen + sizeof( void* ) + sizeof( int ) + 1 );
 			tNewItem->datalen = datalen;
 			memcpy( tNewItem->data, data, datalen );
@@ -65,7 +68,7 @@ int ThreadData::send( const char data[], size_t datalen )
 	int rlen = MSN_CallService( MS_NETLIB_SEND, ( WPARAM )s, ( LPARAM )&nlb );
 	if ( rlen == SOCKET_ERROR ) {
 		// should really also check if sendlen is the same as datalen
-		proto->MSN_DebugLog( "Send failed: %d", WSAGetLastError() );
+		MSN_DebugLog( "Send failed: %d", WSAGetLastError() );
 		return FALSE;
 	}
 
@@ -81,7 +84,7 @@ bool ThreadData::isTimeout( void )
 	if ( !mIsMainThread && ( mJoinedCount <= 1 || mChatID[0] == 0 )) {
 		if ( mJoinedCount == 0 || termPending )
 			res = true;
-		else if ( proto->p2p_getThreadSession( mJoinedContacts[0], mType ) != NULL )
+		else if ( p2p_getThreadSession( mJoinedContacts[0], mType ) != NULL )
 			res = false;
 		else if ( mType == SERVER_SWITCHBOARD ) 
 		{
@@ -102,8 +105,9 @@ bool ThreadData::isTimeout( void )
 			}
 			if ( res ) 
 			{	
-				WORD status = proto->getWord(mJoinedContacts[0], "Status", ID_STATUS_OFFLINE);
-				if ((status == ID_STATUS_OFFLINE || status == ID_STATUS_INVISIBLE || proto->m_iStatus == ID_STATUS_INVISIBLE)) 
+				WORD status = MSN_GetWord(mJoinedContacts[0], "Status", ID_STATUS_OFFLINE);
+				if ((status == ID_STATUS_OFFLINE || status == ID_STATUS_INVISIBLE) && 
+					Lists_IsInList(LIST_FL, mJoinedContacts[0]))
 					res = false;
 			}
 		}
@@ -115,12 +119,12 @@ bool ThreadData::isTimeout( void )
 	{
 		bool sbsess = mType == SERVER_SWITCHBOARD;
 
-		proto->MSN_DebugLog( "Dropping the idle %s due to inactivity", sbsess ? "switchboard" : "p2p");
+		MSN_DebugLog( "Dropping the idle %s due to inactivity", sbsess ? "switchboard" : "p2p");
 		if (!sbsess || termPending) return true;
 
-		if ( proto->getByte( "EnableSessionPopup", 0 )) {
+		if ( MSN_GetByte( "EnableSessionPopup", 0 )) {
 			HANDLE hContact = mJoinedCount ? mJoinedContacts[0] : mInitialContact;
-			proto->MSN_ShowPopup( hContact, TranslateT( "Chat session dropped due to inactivity" ), 0 );
+			MSN_ShowPopup( hContact, TranslateT( "Chat session dropped due to inactivity" ), 0 );
 		}
 
 		sendPacket( "OUT", NULL );
@@ -161,16 +165,21 @@ char* ThreadData::httpTransact(char* szCommand, size_t cmdsz, size_t& ressz)
 			tConn.szHost = mGatewayIP;
 			tConn.wPort = MSN_DEFAULT_GATEWAY_PORT;
 			tConn.timeout = 5;
-			proto->MSN_DebugLog("Connecting to gateway: %s:%d", tConn.szHost, tConn.wPort);
-			s = ( HANDLE )MSN_CallService( MS_NETLIB_OPENCONNECTION, ( WPARAM )proto->hNetlibUser, ( LPARAM )&tConn );
+			MSN_DebugLog("Connecting to gateway: %s:%d", tConn.szHost, tConn.wPort);
+			s = ( HANDLE )MSN_CallService( MS_NETLIB_OPENCONNECTION, ( WPARAM )hNetlibUser, ( LPARAM )&tConn );
 			if (s == NULL) 
 			{
+				if (mType == SERVER_SWITCHBOARD && mCaller && mInitialContact)
+				{
+					msnNsThread->sendPacket( "XFR", "SB" );
+					break;
+				}
 				Sleep(3000);
 				continue;
 			}
 			tSelect.hReadConns[ 0 ] = s;
 		}
-		INT_PTR lstRes = Netlib_Send(s, szCommand, (int)cmdsz, 0);
+		int lstRes = Netlib_Send(s, szCommand, cmdsz, 0);
 		if (lstRes != SOCKET_ERROR)
 		{
 			size_t ackSize = 0;
@@ -179,21 +188,21 @@ char* ThreadData::httpTransact(char* szCommand, size_t cmdsz, size_t& ressz)
 				// Wait for the next packet
 				lstRes = MSN_CallService( MS_NETLIB_SELECT, 0, ( LPARAM )&tSelect );
 				if ( lstRes < 0 ) { 
-					proto->MSN_DebugLog( "Connection failed while waiting." );
+					MSN_DebugLog( "Connection failed while waiting." );
 					break; 
 				}
 				else if ( lstRes == 0 ) { 
-					proto->MSN_DebugLog( "Receive Timeout. Bytes received: %u %u", ackSize, ressz );
+					MSN_DebugLog( "Receive Timeout. Bytes received: %u %u", ackSize, ressz );
 					lstRes = SOCKET_ERROR; 
 					break; 
 				}
 
-				lstRes = Netlib_Recv(s, szResult + ackSize, (int)(bufSize - ackSize), 0);
+				lstRes = Netlib_Recv(s, szResult + ackSize, bufSize - ackSize, 0);
 				if ( lstRes == 0 ) 
-					proto->MSN_DebugLog( "Connection closed gracefully" );
+					MSN_DebugLog( "Connection closed gracefully" );
 
 				if ( lstRes < 0 )
-					proto->MSN_DebugLog( "Connection abortively closed, error %d", WSAGetLastError() );
+					MSN_DebugLog( "Connection abortively closed, error %d", WSAGetLastError() );
 				
 				// Connection closed or aborted, all data received
 				if ( lstRes <= 0 )break;
@@ -214,8 +223,8 @@ char* ThreadData::httpTransact(char* szCommand, size_t cmdsz, size_t& ressz)
 				{
 					unsigned status; 
 					MimeHeaders tHeaders;
-					char *tbuf = NULL, *hdrs = NULL;
-					size_t hdrSize = 0;
+					char *tbuf, *hdrs;
+					size_t hdrSize;
 
 					for (;;) 
 					{
@@ -234,7 +243,7 @@ char* ThreadData::httpTransact(char* szCommand, size_t cmdsz, size_t& ressz)
 						hdrs = httpParseHeader( tbuf, status );
 						if (status != 100) break;
 
-						proto->MSN_DebugLog( "Response 100 detected: %d", ackSize );
+						MSN_DebugLog( "Response 100 detected: %d", ackSize );
 						// Remove 100 status response from response buffer
 						ackSize -= hdrSize;
 						memmove(szResult, szResult + hdrSize, ackSize+1);
@@ -261,11 +270,11 @@ char* ThreadData::httpTransact(char* szCommand, size_t cmdsz, size_t& ressz)
 			}
 		}
 		else
-			proto->MSN_DebugLog( "Send failed: %d", WSAGetLastError() );
+			MSN_DebugLog( "Send failed: %d", WSAGetLastError() );
 
 		if (lstRes > 0) break;
 
-		proto->MSN_DebugLog( "Connection closed due to HTTP transaction failure" );
+		MSN_DebugLog( "Connection closed due to HTTP transaction failure" );
 		Netlib_CloseHandle(s);
 		s = NULL;
 
@@ -280,14 +289,14 @@ char* ThreadData::httpTransact(char* szCommand, size_t cmdsz, size_t& ressz)
 }
 
 
-int ThreadData::recv_dg( char* data, size_t datalen )
+int ThreadData::recv_dg( char* data, long datalen )
 {
 	time_t ts = time(NULL);
 	for(;;)
 	{
 		if ( mReadAheadBuffer != NULL ) {
-			size_t datasent = mEhoughData - (mReadAheadBufferPtr - mReadAheadBuffer);
-			size_t tBytesToCopy = ( datalen >= datasent ) ? datasent : datalen;
+			int datasent = mEhoughData - (mReadAheadBufferPtr - mReadAheadBuffer);
+			int tBytesToCopy = ( datalen >= datasent ) ? datasent : datalen;
 
 			if ( tBytesToCopy == 0 ) {
 				mir_free( mReadAheadBuffer );
@@ -299,7 +308,7 @@ int ThreadData::recv_dg( char* data, size_t datalen )
 			{
 				memcpy( data, mReadAheadBufferPtr, tBytesToCopy );
 				mReadAheadBufferPtr += tBytesToCopy;
-				return (int)tBytesToCopy;
+				return tBytesToCopy;
 			}
 		}
 
@@ -314,7 +323,7 @@ int ThreadData::recv_dg( char* data, size_t datalen )
 		}	
 		ts = time(NULL);
 
-		size_t np = 0, dlen = 0;
+		unsigned np = 0, dlen = 0;
 		
 		WaitForSingleObject( hQueueMutex, INFINITE );
 		TQueueItem* QI = mFirstQueueItem;
@@ -373,49 +382,37 @@ int ThreadData::recv_dg( char* data, size_t datalen )
 	}
 }
 
-int ThreadData::recv( char* data, size_t datalen )
+int ThreadData::recv( char* data, long datalen )
 {
-	if ( proto->MyOptions.UseGateway && !proto->MyOptions.UseProxy )
+	if ( MyOptions.UseGateway && !MyOptions.UseProxy )
 		if ( mType != SERVER_FILETRANS && mType != SERVER_P2P_DIRECT )
 			return recv_dg( data, datalen );
 
-	NETLIBBUFFER nlb = { data, (int)datalen, 0 };
+	NETLIBBUFFER nlb = { data, datalen, 0 };
 
 LBL_RecvAgain:
-	if ( !mIsMainThread && !proto->MyOptions.UseGateway && !proto->MyOptions.UseProxy ) {
+	if ( !mIsMainThread && !MyOptions.UseGateway && !MyOptions.UseProxy ) {
 		mWaitPeriod = 60;
 		NETLIBSELECT nls = { 0 };
 		nls.cbSize = sizeof( nls );
 		nls.dwTimeout = 1000;
 		nls.hReadConns[0] = s;
-
-        for (;;)
-        {
-            int ret = MSN_CallService( MS_NETLIB_SELECT, 0, ( LPARAM )&nls );
-	        if ( ret < 0 ) {
-		        proto->MSN_DebugLog( "Connection abortively closed, error %d", WSAGetLastError() );
-		        return ret;
-	        }
-	        else if ( ret == 0 ) {
-				if ( isTimeout()) return 0;
-			}
-            else
-                break;
-        }
+		while ( MSN_CallService( MS_NETLIB_SELECT, 0, ( LPARAM )&nls ) == 0 )
+			if ( isTimeout() ) return 0;
 	}
 
 	int ret = MSN_CallService( MS_NETLIB_RECV, ( WPARAM )s, ( LPARAM )&nlb );
 	if ( ret == 0 ) {
-		proto->MSN_DebugLog( "Connection closed gracefully" );
+		MSN_DebugLog( "Connection closed gracefully" );
 		return 0;
 	}
 
 	if ( ret < 0 ) {
-		proto->MSN_DebugLog( "Connection abortively closed, error %d", WSAGetLastError() );
+		MSN_DebugLog( "Connection abortively closed, error %d", WSAGetLastError() );
 		return ret;
 	}
 
-	if ( proto->MyOptions.UseGateway)
+	if ( MyOptions.UseGateway)
 	{
 		if ( ret == 1 && *data == 0 ) 
 		{

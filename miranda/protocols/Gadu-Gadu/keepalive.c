@@ -20,71 +20,38 @@
 
 #include "gg.h"
 
-/* NOTE: Eventhough SetTimer seems to support UINT_PTR for idEvent, it seems that TimerProc
- * does not get full pointer but just 2 byte lower bytes.
- */
-#define MAX_TIMERS 8
-GGPROTO *g_timers[MAX_TIMERS] = {NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL};
+static int hTimer = 0;
 
-static void CALLBACK gg_keepalive(HWND hwnd, UINT message, UINT_PTR idEvent, DWORD dwTime)
+static void CALLBACK gg_keepalive(HWND hwnd, UINT message, UINT idEvent, DWORD dwTime)
 {
-	int i;
-	
-	//Search for GGPROTO* context
-	for(i = 0; i < MAX_TIMERS; i++)
-		if(g_timers[i]->timer == idEvent)
-			break;
-
-	if(i < MAX_TIMERS)
+	if (gg_isonline())
 	{
-		GGPROTO *gg = g_timers[i];
-		if (gg_isonline(gg))
-		{
-	#ifdef DEBUGMODE
-			gg_netlog(gg, "Sending keep-alive");
-	#endif
-			gg_ping(gg->sess);
-		}
+#ifdef DEBUGMODE
+		gg_netlog("Sending keep-alive");
+#endif
+		gg_ping(ggThread->sess);
 	}
 }
 
-void gg_keepalive_init(GGPROTO *gg)
+void gg_keepalive_init()
 {
-	if (DBGetContactSettingByte(NULL, GG_PROTO, GG_KEY_KEEPALIVE, GG_KEYDEF_KEEPALIVE))
-	{
-		int i;
-		for(i = 0; i < MAX_TIMERS && g_timers[i] != NULL; i++);
-		if(i < MAX_TIMERS)
-		{
-	#ifdef DEBUGMODE
-			gg_netlog(gg, "gg_keepalive_init(): Initializing Timer %d", i);
-	#endif
-			gg->timer = SetTimer(NULL, 0, 1000 * 30, gg_keepalive);
-			g_timers[i] = gg;
-		}
+	if (DBGetContactSettingByte(NULL, GG_PROTO, GG_KEY_KEEPALIVE, GG_KEYDEF_KEEPALIVE)) {
+		hTimer = SetTimer(NULL, 0, 1000 * 60, gg_keepalive);
 	}
 }
 
-void gg_keepalive_destroy(GGPROTO *gg)
+void gg_keepalive_destroy()
 {
 #ifdef DEBUGMODE
-	gg_netlog(gg, "gg_destroykeepalive(): Killing Timer");
+	gg_netlog("gg_destroykeepalive(): Killing Timer");
 #endif
-	if (gg->timer)
-	{
-		int i;
-		KillTimer(NULL, gg->timer);
-		for(i = 0; i < MAX_TIMERS; i++)
-			if(g_timers[i] == gg) {
-				g_timers[i] = NULL;
-				break;
-			}
-		gg->timer = 0;
+	if (hTimer) {
+		KillTimer(NULL, hTimer);
 #ifdef DEBUGMODE
-		gg_netlog(gg, "gg_destroykeepalive(): Killed Timer %d", i);
+		gg_netlog("gg_destroykeepalive(): Killed Timer");
 #endif
 	}
 #ifdef DEBUGMODE
-	gg_netlog(gg, "gg_destroykeepalive(): End");
+	gg_netlog("gg_destroykeepalive(): End");
 #endif
 }

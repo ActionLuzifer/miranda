@@ -124,17 +124,17 @@ You may pass additional creation flags via lParam:
 #define APF_CUSTOM_POPUP 0x2
 
 #define MS_POPUP_ADDPOPUP "PopUp/AddPopUp"
-static INT_PTR __inline PUAddPopUp(POPUPDATA* ppdp) {
+static int __inline PUAddPopUp(POPUPDATA* ppdp) {
 	return CallService(MS_POPUP_ADDPOPUP, (WPARAM)ppdp,0);
 }
 
 #define MS_POPUP_ADDPOPUPEX "PopUp/AddPopUpEx"
-static INT_PTR __inline PUAddPopUpEx(POPUPDATAEX* ppdp) {
+static int __inline PUAddPopUpEx(POPUPDATAEX* ppdp) {
 	return CallService(MS_POPUP_ADDPOPUPEX, (WPARAM)ppdp,0);
 }
 
 #define MS_POPUP_ADDPOPUPW "PopUp/AddPopUpW"
-static INT_PTR __inline PUAddPopUpW(POPUPDATAW* ppdp) {
+static int __inline PUAddPopUpW(POPUPDATAW* ppdp) {
 	return CallService(MS_POPUP_ADDPOPUPW, (WPARAM)ppdp,0);
 }
 
@@ -401,14 +401,14 @@ typedef struct {
 // lParam = (POPUPDATACLASS *)&pdc
 #define MS_POPUP_ADDPOPUPCLASS	"PopUp/AddPopupClass"
 
-static INT_PTR __inline ShowClassPopup(char *name, char *title, char *text) {
+static int __inline ShowClassPopup(char *name, char *title, char *text) {
 	POPUPDATACLASS d = {sizeof(d), name};
 	d.pszTitle = title;
 	d.pszText = text;
 	return CallService(MS_POPUP_ADDPOPUPCLASS, 0, (LPARAM)&d);
 }
 
-static INT_PTR __inline ShowClassPopupW(char *name, wchar_t *title, wchar_t *text) {
+static int __inline ShowClassPopupW(char *name, wchar_t *title, wchar_t *text) {
 	POPUPDATACLASS d = {sizeof(d), name};
 	d.pwszTitle = title;
 	d.pwszText = text;
