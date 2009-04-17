@@ -2,7 +2,6 @@
 Chat module plugin for Miranda IM
 
 Copyright (C) 2003 Jörgen Persson
-Copyright 2003-2008 Miranda ICQ/IM project,
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -24,26 +23,90 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "../msgwindow.h"
 
 extern HANDLE		g_hInst;
+extern BOOL			SmileyAddInstalled;
+extern BOOL			PopUpInstalled;
+extern BOOL			IEviewInstalled;
 extern HICON      hIcons[30];
 
 HANDLE				hSendEvent;
 HANDLE				hBuildMenuEvent ;
-HANDLE				g_hHookContactDblClick, g_hHookPrebuildMenu;
+HANDLE				g_hHookContactDblClick;
 CRITICAL_SECTION	cs;
 
 void RegisterFonts( void );
+
+static HANDLE     hServiceRegister = NULL,
+                  hServiceNewChat = NULL,
+                  hServiceAddEvent = NULL,
+                  hServiceGetAddEventPtr = NULL,
+                  hServiceGetInfo = NULL,
+                  hServiceGetCount = NULL,
+                  hEventDoubleclicked = NULL;
 
 #define SIZEOF_STRUCT_GCREGISTER_V1 28
 #define SIZEOF_STRUCT_GCWINDOW_V1	32
 #define SIZEOF_STRUCT_GCEVENT_V1	44
 #define SIZEOF_STRUCT_GCEVENT_V2	48
 
+void HookEvents(void)
+{
+	InitializeCriticalSection(&cs);
+	g_hHookContactDblClick=		HookEvent(ME_CLIST_DOUBLECLICKED, CList_RoomDoubleclicked);
+	return;
+}
+
+void UnhookEvents(void)
+{
+	UnhookEvent(g_hHookContactDblClick);
+	DeleteCriticalSection(&cs);
+}
+
+void CreateServiceFunctions(void)
+{
+	hServiceRegister       = CreateServiceFunction(MS_GC_REGISTER,        Service_Register);
+	hServiceNewChat        = CreateServiceFunction(MS_GC_NEWSESSION,      Service_NewChat);
+	hServiceAddEvent       = CreateServiceFunction(MS_GC_EVENT,           Service_AddEvent);
+	hServiceGetAddEventPtr = CreateServiceFunction(MS_GC_GETEVENTPTR,     Service_GetAddEventPtr);
+	hServiceGetInfo        = CreateServiceFunction(MS_GC_GETINFO,         Service_GetInfo);
+	hServiceGetCount       = CreateServiceFunction(MS_GC_GETSESSIONCOUNT, Service_GetCount);
+	hEventDoubleclicked    = CreateServiceFunction("GChat/DblClickEvent", CList_EventDoubleclicked);
+}
+
+void DestroyServiceFunctions(void)
+{
+	DestroyServiceFunction(hServiceRegister       );
+	DestroyServiceFunction(hServiceNewChat        );
+	DestroyServiceFunction(hServiceAddEvent       );
+	DestroyServiceFunction(hServiceGetAddEventPtr );
+	DestroyServiceFunction(hServiceGetInfo        );
+	DestroyServiceFunction(hServiceGetCount       );
+	DestroyServiceFunction(hEventDoubleclicked    );
+}
+
+void CreateHookableEvents(void)
+{
+	hSendEvent = CreateHookableEvent(ME_GC_EVENT);
+	hBuildMenuEvent = CreateHookableEvent(ME_GC_BUILDMENU);
+}
+
+
 int Chat_ModulesLoaded(WPARAM wParam,LPARAM lParam)
 {
 	char* mods[3] = { "Chat", "ChatFonts" };
 	CallService( "DBEditorpp/RegisterModule", (WPARAM)mods, 2 );
+
+
+	if ( ServiceExists( MS_SMILEYADD_SHOWSELECTION )) {
+		SmileyAddInstalled = TRUE;
+	}
+	if ( ServiceExists( MS_POPUP_ADDPOPUPEX ))
+		PopUpInstalled = TRUE;
+
+	if ( ServiceExists( MS_IEVIEW_WINDOW ))
+		IEviewInstalled = TRUE;
+
 	RegisterFonts();
-	CList_SetAllOffline(TRUE, NULL);
+	CList_SetAllOffline(TRUE);
  	return 0;
 }
 
@@ -66,7 +129,6 @@ int Chat_PreShutdown(WPARAM wParam,LPARAM lParam)
 int Chat_FontsChanged(WPARAM wParam,LPARAM lParam)
 {
 	LoadLogFonts();
-	LoadMsgLogBitmaps();
 	{
 		LOGFONT lf;
 		HFONT hFont;
@@ -97,7 +159,7 @@ int Chat_IconsChanged(WPARAM wParam,LPARAM lParam)
 	return 0;
 }
 
-static INT_PTR Service_GetCount(WPARAM wParam,LPARAM lParam)
+int Service_GetCount(WPARAM wParam,LPARAM lParam)
 {
 	int i;
 
@@ -112,7 +174,7 @@ static INT_PTR Service_GetCount(WPARAM wParam,LPARAM lParam)
 	return i;
 }
 
-static INT_PTR Service_GetInfo(WPARAM wParam,LPARAM lParam)
+int Service_GetInfo(WPARAM wParam,LPARAM lParam)
 {
 	GC_INFO * gci = (GC_INFO *) lParam;
 	SESSION_INFO * si = NULL;
@@ -129,7 +191,7 @@ static INT_PTR Service_GetInfo(WPARAM wParam,LPARAM lParam)
 
 	if ( si ) {
 		if ( gci->Flags & DATA )     gci->dwItemData = si->dwItemData;
-		if ( gci->Flags & HCONTACT ) gci->hContact = si->windowData.hContact;
+		if ( gci->Flags & HCONTACT ) gci->hContact = si->hContact;
 		if ( gci->Flags & TYPE )     gci->iType = si->iType;
 		if ( gci->Flags & COUNT )    gci->iCount = si->nUsersInNicklist;
 		if ( gci->Flags & USERS )    gci->pszUsers = SM_GetUsers(si);
@@ -157,8 +219,8 @@ static INT_PTR Service_GetInfo(WPARAM wParam,LPARAM lParam)
 }
 
 void LoadModuleIcons(MODULEINFO * mi) {
-	int index;
-	HIMAGELIST hList = ImageList_Create(16, 16, IsWinVerXPPlus() ? ILC_COLOR32 | ILC_MASK : ILC_COLOR8 | ILC_MASK, 0, 0);
+    int index;
+    HIMAGELIST hList = ImageList_Create(16, 16, IsWinVerXPPlus() ? ILC_COLOR32 | ILC_MASK : ILC_COLOR8 | ILC_MASK, 0, 0);
 	int overlayIcon = ImageList_AddIcon(hList, hIcons[ICON_OVERLAY]);
 	ImageList_SetOverlayImage(hList, overlayIcon, 1);
 	index = ImageList_AddIcon_ProtoEx(hList, mi->pszModule, ID_STATUS_ONLINE);
@@ -167,11 +229,12 @@ void LoadModuleIcons(MODULEINFO * mi) {
 	index = ImageList_AddIcon_ProtoEx(hList, mi->pszModule, ID_STATUS_OFFLINE);
 	mi->hOfflineIcon = ImageList_GetIcon(hList, index, ILD_TRANSPARENT);
 	mi->hOfflineTalkIcon = ImageList_GetIcon(hList, index, ILD_TRANSPARENT|INDEXTOOVERLAYMASK(1));
-	ImageList_Destroy(hList);
+    ImageList_Destroy(hList);
 }
 
-static INT_PTR Service_Register(WPARAM wParam, LPARAM lParam)
+int Service_Register(WPARAM wParam, LPARAM lParam)
 {
+
 	GCREGISTER *gcr = (GCREGISTER *)lParam;
 	MODULEINFO * mi = NULL;
 	if (gcr== NULL)
@@ -195,7 +258,6 @@ static INT_PTR Service_Register(WPARAM wParam, LPARAM lParam)
 		mi->bItalics = gcr->dwFlags&GC_ITALICS ;
 		mi->bColor = gcr->dwFlags&GC_COLOR ;
 		mi->bBkgColor = gcr->dwFlags&GC_BKGCOLOR ;
-		mi->bFontSize = gcr->dwFlags&GC_FONTSIZE;
 		mi->bAckMsg = gcr->dwFlags&GC_ACKMSG ;
 		mi->bChanMgr = gcr->dwFlags&GC_CHANMGR ;
 		mi->bSingleFormat = gcr->dwFlags&GC_SINGLEFORMAT;
@@ -212,7 +274,7 @@ static INT_PTR Service_Register(WPARAM wParam, LPARAM lParam)
 		mi->hOfflineTalkIcon = NULL;
 
 		CheckColorsInModule((char*)gcr->pszModule);
-		CList_SetAllOffline(TRUE, gcr->pszModule);
+		CList_SetAllOffline(TRUE);
 
 		LeaveCriticalSection(&cs);
 		return 0;
@@ -222,7 +284,7 @@ static INT_PTR Service_Register(WPARAM wParam, LPARAM lParam)
 	return GC_REGISTER_ERROR;
 }
 
-static INT_PTR Service_NewChat(WPARAM wParam, LPARAM lParam)
+int Service_NewChat(WPARAM wParam, LPARAM lParam)
 {
 	MODULEINFO* mi;
 	GCSESSION *gcw =(GCSESSION *)lParam;
@@ -276,15 +338,15 @@ static INT_PTR Service_NewChat(WPARAM wParam, LPARAM lParam)
 				mir_sntprintf(szTemp, SIZEOF(szTemp), _T("Server: %s"), si->ptszName);
 			else
 				mir_sntprintf(szTemp, SIZEOF(szTemp), _T("%s"), si->ptszName);
-			si->windowData.hContact = CList_AddRoom( gcw->pszModule, ptszID, szTemp, si->iType);
-			si->windowData.codePage = DBGetContactSettingWord(si->windowData.hContact, si->pszModule, "CodePage", (WORD) CP_ACP);
+			si->hContact = CList_AddRoom( gcw->pszModule, ptszID, szTemp, si->iType);
+			si->codePage = DBGetContactSettingWord(si->hContact, si->pszModule, "CodePage", (WORD) CP_ACP);
 			si->pszHeader = Log_CreateRtfHeader(mi, si);
-			DBWriteContactSettingString(si->windowData.hContact, si->pszModule , "Topic", "");
-			DBDeleteContactSetting(si->windowData.hContact, "CList", "StatusMsg");
+			DBWriteContactSettingString(si->hContact, si->pszModule , "Topic", "");
+			DBDeleteContactSetting(si->hContact, "CList", "StatusMsg");
 			if (si->ptszStatusbarText)
-				DBWriteContactSettingTString(si->windowData.hContact, si->pszModule, "StatusBar", si->ptszStatusbarText);
+				DBWriteContactSettingTString(si->hContact, si->pszModule, "StatusBar", si->ptszStatusbarText);
 			else
-				DBWriteContactSettingString(si->windowData.hContact, si->pszModule, "StatusBar", "");
+				DBWriteContactSettingString(si->hContact, si->pszModule, "StatusBar", "");
 		}
 		else {
 			SESSION_INFO* si2 = SM_FindSession( ptszID, gcw->pszModule );
@@ -311,7 +373,7 @@ static INT_PTR Service_NewChat(WPARAM wParam, LPARAM lParam)
 	return GC_NEWSESSION_ERROR;
 }
 
-static INT_PTR DoControl(GCEVENT * gce, WPARAM wp)
+static int DoControl(GCEVENT * gce, WPARAM wp)
 {
 	if ( gce->pDest->iType == GC_EVENT_CONTROL ) {
 		switch (wp) {
@@ -401,9 +463,9 @@ static INT_PTR DoControl(GCEVENT * gce, WPARAM wp)
 		if (si) {
 			replaceStr( &si->ptszStatusbarText, gce->ptszText );
 			if ( si->ptszStatusbarText )
-				DBWriteContactSettingTString(si->windowData.hContact, si->pszModule, "StatusBar", si->ptszStatusbarText);
+				DBWriteContactSettingTString(si->hContact, si->pszModule, "StatusBar", si->ptszStatusbarText);
 			else
-				DBWriteContactSettingString(si->windowData.hContact, si->pszModule, "StatusBar", "");
+				DBWriteContactSettingString(si->hContact, si->pszModule, "StatusBar", "");
 			if (si->hWnd)
 			{
 				SendMessage(si->hWnd, DM_UPDATESTATUSBAR, 0, 0);
@@ -432,7 +494,7 @@ static void AddUser(GCEVENT * gce)
 	SESSION_INFO* si = SM_FindSession( gce->pDest->ptszID, gce->pDest->pszModule);
 	if ( si ) {
 		WORD status = TM_StringToWord( si->pStatuses, gce->ptszStatus );
-		USERINFO * ui = SM_AddUser( si, gce->ptszUID, gce->ptszNick, status);
+		USERINFO * ui = SM_AddUser( gce->pDest->ptszID, gce->pDest->pszModule, gce->ptszUID, gce->ptszNick, status);
 		if (ui) {
 			ui->pszNick = mir_tstrdup( gce->ptszNick );
 
@@ -459,7 +521,7 @@ void ShowRoom(SESSION_INFO * si, WPARAM wp, BOOL bSetForeground)
 	//Do we need to create a window?
 	if (si->hWnd == NULL)
 	{
-	    hParent = GetParentWindow(si->windowData.hContact, TRUE);
+	    hParent = GetParentWindow(si->hContact, TRUE);
 	    si->hWnd = CreateDialogParam(g_hInst, MAKEINTRESOURCE(IDD_CHANNEL), hParent, RoomWndProc, (LPARAM)si);
 	}
 	SendMessage(si->hWnd, DM_UPDATETABCONTROL, -1, (LPARAM)si);
@@ -469,7 +531,7 @@ void ShowRoom(SESSION_INFO * si, WPARAM wp, BOOL bSetForeground)
 	SetFocus(GetDlgItem(si->hWnd, IDC_CHAT_MESSAGE));
 }
 
-static INT_PTR Service_AddEvent(WPARAM wParam, LPARAM lParam)
+int Service_AddEvent(WPARAM wParam, LPARAM lParam)
 {
 	GCEVENT *gce = (GCEVENT*)lParam, save_gce;
 	GCDEST *gcd = NULL, save_gcd;
@@ -540,9 +602,9 @@ static INT_PTR Service_AddEvent(WPARAM wParam, LPARAM lParam)
 		if ( si ) {
 			if ( gce->pszText ) {
 				replaceStr( &si->ptszTopic, gce->ptszText);
-				DBWriteContactSettingTString( si->windowData.hContact, si->pszModule , "Topic", RemoveFormatting( si->ptszTopic ));
+				DBWriteContactSettingTString( si->hContact, si->pszModule , "Topic", RemoveFormatting( si->ptszTopic ));
 				if ( DBGetContactSettingByte( NULL, "Chat", "TopicOnClist", 0 ))
-					DBWriteContactSettingTString( si->windowData.hContact, "CList" , "StatusMsg", RemoveFormatting( si->ptszTopic ));
+					DBWriteContactSettingTString( si->hContact, "CList" , "StatusMsg", RemoveFormatting( si->ptszTopic ));
 		}	}
 		break;
 	}
@@ -657,7 +719,7 @@ LBL_Exit:
 	return iRetVal;
 }
 
-static INT_PTR Service_GetAddEventPtr(WPARAM wParam, LPARAM lParam)
+int Service_GetAddEventPtr(WPARAM wParam, LPARAM lParam)
 {
 	GCPTRS * gp = (GCPTRS *) lParam;
 
@@ -666,39 +728,4 @@ static INT_PTR Service_GetAddEventPtr(WPARAM wParam, LPARAM lParam)
 	gp->pfnAddEvent = Service_AddEvent;
 	LeaveCriticalSection(&cs);
 	return 0;
-}
-
-/////////////////////////////////////////////////////////////////////////////////////////
-// Service creation
-
-void HookEvents(void)
-{
-	HookEvent_Ex(ME_CLIST_PREBUILDCONTACTMENU, CList_PrebuildContactMenu);
-}
-
-void CreateServiceFunctions(void)
-{
-	CreateServiceFunction_Ex(MS_GC_REGISTER,        Service_Register);
-	CreateServiceFunction_Ex(MS_GC_NEWSESSION,      Service_NewChat);
-	CreateServiceFunction_Ex(MS_GC_EVENT,           Service_AddEvent);
-	CreateServiceFunction_Ex(MS_GC_GETEVENTPTR,     Service_GetAddEventPtr);
-	CreateServiceFunction_Ex(MS_GC_GETINFO,         Service_GetInfo);
-	CreateServiceFunction_Ex(MS_GC_GETSESSIONCOUNT, Service_GetCount);
-
-	CreateServiceFunction_Ex("GChat/DblClickEvent",     CList_EventDoubleclickedSvc);
-	CreateServiceFunction_Ex("GChat/PrebuildMenuEvent", CList_PrebuildContactMenuSvc);
-	CreateServiceFunction_Ex("GChat/JoinChat",          CList_JoinChat);
-	CreateServiceFunction_Ex("GChat/LeaveChat",         CList_LeaveChat);
-}
-
-void CreateHookableEvents(void)
-{
-	hSendEvent = CreateHookableEvent(ME_GC_EVENT);
-	hBuildMenuEvent = CreateHookableEvent(ME_GC_BUILDMENU);
-}
-
-void DestroyHookableEvents(void)
-{
-	DestroyHookableEvent(hSendEvent);
-	DestroyHookableEvent(hBuildMenuEvent);
 }

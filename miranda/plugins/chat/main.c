@@ -36,7 +36,6 @@ HBRUSH      hListBkgBrush = NULL;
 BOOL        SmileyAddInstalled = FALSE;
 BOOL        PopUpInstalled = FALSE;
 HBRUSH      hEditBkgBrush = NULL;
-HBRUSH      hListSelectedBkgBrush = NULL;
 
 HIMAGELIST  hImageList = NULL;
 
@@ -45,12 +44,6 @@ HIMAGELIST  hIconsList = NULL;
 TCHAR*      pszActiveWndID = 0;
 char*       pszActiveWndModule = 0;
 
-/* Missing MinGW GUIDs */
-#ifdef __MINGW32__
-const CLSID IID_IRichEditOle = { 0x00020D00, 0x00, 0x00, { 0xC0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x46 } };
-const CLSID IID_IRichEditOleCallback = { 0x00020D03, 0x00, 0x00, { 0xC0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x46 } };
-#endif
-
 struct GlobalLogSettings_t g_Settings;
 
 static void InitREOleCallback(void);
@@ -58,11 +51,11 @@ static void InitREOleCallback(void);
 PLUGININFOEX pluginInfo = {
 	sizeof(PLUGININFOEX),
 	"Chat",
-	PLUGIN_MAKE_VERSION(0,8,0,0),
+	PLUGIN_MAKE_VERSION(0,7,6,0),
 	"Provides chat rooms for protocols supporting it",
 	"Miranda team",
 	"project-info@miranda-im.org",
-	"© 2003-2006 Miranda team",
+	"© 2003-2009 Miranda IM",
 	"http://miranda-im.org/",
 	UNICODE_AWARE,
 	0,
@@ -155,14 +148,13 @@ int __declspec(dllexport) Unload(void)
 	DBWriteContactSettingDword(NULL, "Chat", "roomwidth" , g_Settings.iWidth);
 	DBWriteContactSettingDword(NULL, "Chat", "roomheight", g_Settings.iHeight);
 
-	CList_SetAllOffline(TRUE, NULL);
+	CList_SetAllOffline(TRUE);
 
 	mir_free( pszActiveWndID );
 	mir_free( pszActiveWndModule );
 
 	DestroyMenu(g_hMenu);
 	DestroyServiceFunctions();
-	DestroyHookableEvents();
 	FreeIcons();
 	OptionsUnInit();
 	FreeLibrary(GetModuleHandleA("riched20.dll"));

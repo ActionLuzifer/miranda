@@ -27,7 +27,7 @@ UNICODE done
 
 extern int g_shutDown;
 
-INT_PTR GetContactStatusMessage(WPARAM wParam, LPARAM lParam)
+int GetContactStatusMessage(WPARAM wParam, LPARAM lParam)
 {
 	if(!g_shutDown)
 		return((int)SendMessage(pcli->hwndContactTree, CLM_GETSTATUSMSG, wParam, lParam));

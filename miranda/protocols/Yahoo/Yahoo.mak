@@ -1,31 +1,29 @@
 # Microsoft Developer Studio Generated NMAKE File, Based on Yahoo.dsp
 !IF "$(CFG)" == ""
-CFG=Yahoo - Win32 Debug Unicode
-!MESSAGE No configuration specified. Defaulting to Yahoo - Win32 Debug Unicode.
-!ENDIF 
+CFG=Yahoo - Win32 Release
+!MESSAGE No configuration specified. Defaulting to Yahoo - Win32 Release.
+!ENDIF
 
-!IF "$(CFG)" != "Yahoo - Win32 Release" && "$(CFG)" != "Yahoo - Win32 Debug" && "$(CFG)" != "Yahoo - Win32 Debug Unicode" && "$(CFG)" != "Yahoo - Win32 Release Unicode"
+!IF "$(CFG)" != "Yahoo - Win32 Release" && "$(CFG)" != "Yahoo - Win32 Debug"
 !MESSAGE Invalid configuration "$(CFG)" specified.
 !MESSAGE You can specify a configuration when running NMAKE
 !MESSAGE by defining the macro CFG on the command line. For example:
-!MESSAGE 
-!MESSAGE NMAKE /f "Yahoo.mak" CFG="Yahoo - Win32 Debug Unicode"
-!MESSAGE 
+!MESSAGE
+!MESSAGE NMAKE /f "Yahoo.mak" CFG="Yahoo - Win32 Debug"
+!MESSAGE
 !MESSAGE Possible choices for configuration are:
-!MESSAGE 
+!MESSAGE
 !MESSAGE "Yahoo - Win32 Release" (based on "Win32 (x86) Dynamic-Link Library")
 !MESSAGE "Yahoo - Win32 Debug" (based on "Win32 (x86) Dynamic-Link Library")
-!MESSAGE "Yahoo - Win32 Debug Unicode" (based on "Win32 (x86) Dynamic-Link Library")
-!MESSAGE "Yahoo - Win32 Release Unicode" (based on "Win32 (x86) Dynamic-Link Library")
-!MESSAGE 
+!MESSAGE
 !ERROR An invalid configuration is specified.
-!ENDIF 
+!ENDIF
 
 !IF "$(OS)" == "Windows_NT"
 NULL=
-!ELSE 
+!ELSE
 NULL=nul
-!ENDIF 
+!ENDIF
 
 CPP=cl.exe
 MTL=midl.exe
@@ -51,16 +49,15 @@ CLEAN :
 	-@erase "$(INTDIR)\libyahoo2.obj"
 	-@erase "$(INTDIR)\main.obj"
 	-@erase "$(INTDIR)\options.obj"
-	-@erase "$(INTDIR)\proto.obj"
 	-@erase "$(INTDIR)\search.obj"
 	-@erase "$(INTDIR)\server.obj"
 	-@erase "$(INTDIR)\services.obj"
+	-@erase "$(INTDIR)\sha.obj"
 	-@erase "$(INTDIR)\util.obj"
 	-@erase "$(INTDIR)\vc60.idb"
 	-@erase "$(INTDIR)\vc60.pdb"
 	-@erase "$(INTDIR)\webcam.obj"
 	-@erase "$(INTDIR)\yahoo.obj"
-	-@erase "$(INTDIR)\Yahoo.pch"
 	-@erase "$(INTDIR)\Yahoo.res"
 	-@erase "$(INTDIR)\yahoo_auth.obj"
 	-@erase "$(INTDIR)\yahoo_httplib.obj"
@@ -75,18 +72,19 @@ CLEAN :
 "$(OUTDIR)" :
     if not exist "$(OUTDIR)/$(NULL)" mkdir "$(OUTDIR)"
 
-CPP_PROJ=/nologo /MD /W3 /Zi /O1 /I "../../include" /D "NDEBUG" /D "WIN32" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "YAHOO_EXPORTS" /D "HAVE_CONFIG_H" /Fp"$(INTDIR)\Yahoo.pch" /Yu"yahoo.h" /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /c 
-MTL_PROJ=/nologo /D "NDEBUG" /mktyplib203 /win32 
-RSC_PROJ=/l 0x419 /fo"$(INTDIR)\Yahoo.res" /d "NDEBUG" 
+CPP_PROJ=/nologo /MD /W3 /Zi /O1 /I "../../include" /D "NDEBUG" /D "WIN32" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "YAHOO_EXPORTS" /D "HAVE_CONFIG_H" /Fp"$(INTDIR)\Yahoo.pch" /YX /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /c
+MTL_PROJ=/nologo /D "NDEBUG" /mktyplib203 /win32
+RSC_PROJ=/l 0x419 /fo"$(INTDIR)\Yahoo.res" /d "NDEBUG"
 BSC32=bscmake.exe
-BSC32_FLAGS=/nologo /o"$(OUTDIR)\Yahoo.bsc" 
+BSC32_FLAGS=/nologo /o"$(OUTDIR)\Yahoo.bsc"
 BSC32_SBRS= \
-	
+
 LINK32=link.exe
-LINK32_FLAGS=kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /dll /incremental:no /pdb:"$(OUTDIR)\Yahoo.pdb" /map:"$(INTDIR)\Yahoo.map" /debug /machine:I386 /out:"../../Bin/Release/Plugins/Yahoo.dll" /implib:"$(OUTDIR)\Yahoo.lib" 
+LINK32_FLAGS=kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /dll /incremental:no /pdb:"$(OUTDIR)\Yahoo.pdb" /map:"$(INTDIR)\Yahoo.map" /debug /machine:I386 /out:"../../Bin/Release/Plugins/Yahoo.dll" /implib:"$(OUTDIR)\Yahoo.lib"
 LINK32_OBJS= \
 	"$(INTDIR)\crypt.obj" \
 	"$(INTDIR)\libyahoo2.obj" \
+	"$(INTDIR)\sha.obj" \
 	"$(INTDIR)\yahoo_auth.obj" \
 	"$(INTDIR)\yahoo_httplib.obj" \
 	"$(INTDIR)\yahoo_list.obj" \
@@ -96,18 +94,17 @@ LINK32_OBJS= \
 	"$(INTDIR)\file_transfer.obj" \
 	"$(INTDIR)\http_gateway.obj" \
 	"$(INTDIR)\icolib.obj" \
-	"$(INTDIR)\ignore.obj" \
 	"$(INTDIR)\im.obj" \
 	"$(INTDIR)\main.obj" \
 	"$(INTDIR)\options.obj" \
-	"$(INTDIR)\proto.obj" \
 	"$(INTDIR)\search.obj" \
 	"$(INTDIR)\server.obj" \
 	"$(INTDIR)\services.obj" \
 	"$(INTDIR)\util.obj" \
 	"$(INTDIR)\webcam.obj" \
 	"$(INTDIR)\yahoo.obj" \
-	"$(INTDIR)\Yahoo.res"
+	"$(INTDIR)\Yahoo.res" \
+	"$(INTDIR)\ignore.obj"
 
 "..\..\Bin\Release\Plugins\Yahoo.dll" : "$(OUTDIR)" $(DEF_FILE) $(LINK32_OBJS)
     $(LINK32) @<<
@@ -134,16 +131,15 @@ CLEAN :
 	-@erase "$(INTDIR)\libyahoo2.obj"
 	-@erase "$(INTDIR)\main.obj"
 	-@erase "$(INTDIR)\options.obj"
-	-@erase "$(INTDIR)\proto.obj"
 	-@erase "$(INTDIR)\search.obj"
 	-@erase "$(INTDIR)\server.obj"
 	-@erase "$(INTDIR)\services.obj"
+	-@erase "$(INTDIR)\sha.obj"
 	-@erase "$(INTDIR)\util.obj"
 	-@erase "$(INTDIR)\vc60.idb"
 	-@erase "$(INTDIR)\vc60.pdb"
 	-@erase "$(INTDIR)\webcam.obj"
 	-@erase "$(INTDIR)\yahoo.obj"
-	-@erase "$(INTDIR)\Yahoo.pch"
 	-@erase "$(INTDIR)\Yahoo.res"
 	-@erase "$(INTDIR)\yahoo_auth.obj"
 	-@erase "$(INTDIR)\yahoo_httplib.obj"
@@ -158,18 +154,19 @@ CLEAN :
 "$(OUTDIR)" :
     if not exist "$(OUTDIR)/$(NULL)" mkdir "$(OUTDIR)"
 
-CPP_PROJ=/nologo /MDd /W3 /Gm /ZI /Od /I "../../include" /D "_DEBUG" /D "WIN32" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "YAHOO_EXPORTS" /D "HAVE_CONFIG_H" /Fp"$(INTDIR)\Yahoo.pch" /Yu"yahoo.h" /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /GZ /c 
-MTL_PROJ=/nologo /D "_DEBUG" /mktyplib203 /win32 
-RSC_PROJ=/l 0x419 /fo"$(INTDIR)\Yahoo.res" /d "_DEBUG" 
+CPP_PROJ=/nologo /MDd /W3 /Gm /ZI /Od /I "../../include" /D "_DEBUG" /D "WIN32" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "YAHOO_EXPORTS" /D "HAVE_CONFIG_H" /Fp"$(INTDIR)\Yahoo.pch" /YX /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /GZ /c
+MTL_PROJ=/nologo /D "_DEBUG" /mktyplib203 /win32
+RSC_PROJ=/l 0x419 /fo"$(INTDIR)\Yahoo.res" /d "_DEBUG"
 BSC32=bscmake.exe
-BSC32_FLAGS=/nologo /o"$(OUTDIR)\Yahoo.bsc" 
+BSC32_FLAGS=/nologo /o"$(OUTDIR)\Yahoo.bsc"
 BSC32_SBRS= \
-	
+
 LINK32=link.exe
-LINK32_FLAGS=kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /dll /incremental:yes /pdb:"$(OUTDIR)\Yahoo.pdb" /debug /machine:I386 /out:"../../Bin/Debug/Plugins/Yahoo.dll" /implib:"$(OUTDIR)\Yahoo.lib" /pdbtype:sept 
+LINK32_FLAGS=kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /dll /incremental:yes /pdb:"$(OUTDIR)\Yahoo.pdb" /debug /machine:I386 /out:"../../Bin/Debug/Plugins/Yahoo.dll" /implib:"$(OUTDIR)\Yahoo.lib" /pdbtype:sept
 LINK32_OBJS= \
 	"$(INTDIR)\crypt.obj" \
 	"$(INTDIR)\libyahoo2.obj" \
+	"$(INTDIR)\sha.obj" \
 	"$(INTDIR)\yahoo_auth.obj" \
 	"$(INTDIR)\yahoo_httplib.obj" \
 	"$(INTDIR)\yahoo_list.obj" \
@@ -179,654 +176,182 @@ LINK32_OBJS= \
 	"$(INTDIR)\file_transfer.obj" \
 	"$(INTDIR)\http_gateway.obj" \
 	"$(INTDIR)\icolib.obj" \
-	"$(INTDIR)\ignore.obj" \
 	"$(INTDIR)\im.obj" \
 	"$(INTDIR)\main.obj" \
 	"$(INTDIR)\options.obj" \
-	"$(INTDIR)\proto.obj" \
 	"$(INTDIR)\search.obj" \
 	"$(INTDIR)\server.obj" \
 	"$(INTDIR)\services.obj" \
 	"$(INTDIR)\util.obj" \
 	"$(INTDIR)\webcam.obj" \
 	"$(INTDIR)\yahoo.obj" \
-	"$(INTDIR)\Yahoo.res"
+	"$(INTDIR)\Yahoo.res" \
+	"$(INTDIR)\ignore.obj"
 
 "..\..\Bin\Debug\Plugins\Yahoo.dll" : "$(OUTDIR)" $(DEF_FILE) $(LINK32_OBJS)
     $(LINK32) @<<
   $(LINK32_FLAGS) $(LINK32_OBJS)
 <<
 
-!ELSEIF  "$(CFG)" == "Yahoo - Win32 Debug Unicode"
-
-OUTDIR=.\Debug_Unicode
-INTDIR=.\Debug_Unicode
-
-ALL : "..\..\Bin\Debug Unicode\Plugins\Yahoo.dll"
-
-
-CLEAN :
-	-@erase "$(INTDIR)\avatar.obj"
-	-@erase "$(INTDIR)\chat.obj"
-	-@erase "$(INTDIR)\crypt.obj"
-	-@erase "$(INTDIR)\file_transfer.obj"
-	-@erase "$(INTDIR)\http_gateway.obj"
-	-@erase "$(INTDIR)\icolib.obj"
-	-@erase "$(INTDIR)\ignore.obj"
-	-@erase "$(INTDIR)\im.obj"
-	-@erase "$(INTDIR)\libyahoo2.obj"
-	-@erase "$(INTDIR)\main.obj"
-	-@erase "$(INTDIR)\options.obj"
-	-@erase "$(INTDIR)\proto.obj"
-	-@erase "$(INTDIR)\search.obj"
-	-@erase "$(INTDIR)\server.obj"
-	-@erase "$(INTDIR)\services.obj"
-	-@erase "$(INTDIR)\util.obj"
-	-@erase "$(INTDIR)\vc60.idb"
-	-@erase "$(INTDIR)\vc60.pdb"
-	-@erase "$(INTDIR)\webcam.obj"
-	-@erase "$(INTDIR)\yahoo.obj"
-	-@erase "$(INTDIR)\Yahoo.pch"
-	-@erase "$(INTDIR)\Yahoo.res"
-	-@erase "$(INTDIR)\yahoo_auth.obj"
-	-@erase "$(INTDIR)\yahoo_httplib.obj"
-	-@erase "$(INTDIR)\yahoo_list.obj"
-	-@erase "$(INTDIR)\yahoo_util.obj"
-	-@erase "$(OUTDIR)\Yahoo.exp"
-	-@erase "$(OUTDIR)\Yahoo.lib"
-	-@erase "$(OUTDIR)\Yahoo.pdb"
-	-@erase "..\..\Bin\Debug Unicode\Plugins\Yahoo.dll"
-	-@erase "..\..\Bin\Debug Unicode\Plugins\Yahoo.ilk"
-
-"$(OUTDIR)" :
-    if not exist "$(OUTDIR)/$(NULL)" mkdir "$(OUTDIR)"
-
-CPP_PROJ=/nologo /MDd /W3 /Gm /ZI /Od /I "../../include" /D "_DEBUG" /D "WIN32" /D "_WINDOWS" /D "UNICODE" /D "_USRDLL" /D "YAHOO_EXPORTS" /D "HAVE_CONFIG_H" /Fp"$(INTDIR)\Yahoo.pch" /Yu"yahoo.h" /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /GZ /c 
-MTL_PROJ=/nologo /D "_DEBUG" /mktyplib203 /win32 
-RSC_PROJ=/l 0x419 /fo"$(INTDIR)\Yahoo.res" /d "_DEBUG" 
-BSC32=bscmake.exe
-BSC32_FLAGS=/nologo /o"$(OUTDIR)\Yahoo.bsc" 
-BSC32_SBRS= \
-	
-LINK32=link.exe
-LINK32_FLAGS=kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /dll /incremental:yes /pdb:"$(OUTDIR)\Yahoo.pdb" /debug /machine:I386 /out:"../../Bin/Debug Unicode/Plugins/Yahoo.dll" /implib:"$(OUTDIR)\Yahoo.lib" /pdbtype:sept 
-LINK32_OBJS= \
-	"$(INTDIR)\crypt.obj" \
-	"$(INTDIR)\libyahoo2.obj" \
-	"$(INTDIR)\yahoo_auth.obj" \
-	"$(INTDIR)\yahoo_httplib.obj" \
-	"$(INTDIR)\yahoo_list.obj" \
-	"$(INTDIR)\yahoo_util.obj" \
-	"$(INTDIR)\avatar.obj" \
-	"$(INTDIR)\chat.obj" \
-	"$(INTDIR)\file_transfer.obj" \
-	"$(INTDIR)\http_gateway.obj" \
-	"$(INTDIR)\icolib.obj" \
-	"$(INTDIR)\ignore.obj" \
-	"$(INTDIR)\im.obj" \
-	"$(INTDIR)\main.obj" \
-	"$(INTDIR)\options.obj" \
-	"$(INTDIR)\proto.obj" \
-	"$(INTDIR)\search.obj" \
-	"$(INTDIR)\server.obj" \
-	"$(INTDIR)\services.obj" \
-	"$(INTDIR)\util.obj" \
-	"$(INTDIR)\webcam.obj" \
-	"$(INTDIR)\yahoo.obj" \
-	"$(INTDIR)\Yahoo.res"
-
-"..\..\Bin\Debug Unicode\Plugins\Yahoo.dll" : "$(OUTDIR)" $(DEF_FILE) $(LINK32_OBJS)
-    $(LINK32) @<<
-  $(LINK32_FLAGS) $(LINK32_OBJS)
-<<
-
-!ELSEIF  "$(CFG)" == "Yahoo - Win32 Release Unicode"
-
-OUTDIR=.\Release_Unicode
-INTDIR=.\Release_Unicode
-
-ALL : "..\..\Bin\Release Unicode\Plugins\Yahoo.dll"
-
-
-CLEAN :
-	-@erase "$(INTDIR)\avatar.obj"
-	-@erase "$(INTDIR)\chat.obj"
-	-@erase "$(INTDIR)\crypt.obj"
-	-@erase "$(INTDIR)\file_transfer.obj"
-	-@erase "$(INTDIR)\http_gateway.obj"
-	-@erase "$(INTDIR)\icolib.obj"
-	-@erase "$(INTDIR)\ignore.obj"
-	-@erase "$(INTDIR)\im.obj"
-	-@erase "$(INTDIR)\libyahoo2.obj"
-	-@erase "$(INTDIR)\main.obj"
-	-@erase "$(INTDIR)\options.obj"
-	-@erase "$(INTDIR)\proto.obj"
-	-@erase "$(INTDIR)\search.obj"
-	-@erase "$(INTDIR)\server.obj"
-	-@erase "$(INTDIR)\services.obj"
-	-@erase "$(INTDIR)\util.obj"
-	-@erase "$(INTDIR)\vc60.idb"
-	-@erase "$(INTDIR)\vc60.pdb"
-	-@erase "$(INTDIR)\webcam.obj"
-	-@erase "$(INTDIR)\yahoo.obj"
-	-@erase "$(INTDIR)\Yahoo.pch"
-	-@erase "$(INTDIR)\Yahoo.res"
-	-@erase "$(INTDIR)\yahoo_auth.obj"
-	-@erase "$(INTDIR)\yahoo_httplib.obj"
-	-@erase "$(INTDIR)\yahoo_list.obj"
-	-@erase "$(INTDIR)\yahoo_util.obj"
-	-@erase "$(OUTDIR)\Yahoo.exp"
-	-@erase "$(OUTDIR)\Yahoo.lib"
-	-@erase "$(OUTDIR)\Yahoo.map"
-	-@erase "$(OUTDIR)\Yahoo.pdb"
-	-@erase "..\..\Bin\Release Unicode\Plugins\Yahoo.dll"
-
-"$(OUTDIR)" :
-    if not exist "$(OUTDIR)/$(NULL)" mkdir "$(OUTDIR)"
-
-CPP_PROJ=/nologo /MD /W3 /Zi /O1 /I "../../include" /D "NDEBUG" /D "WIN32" /D "_WINDOWS" /D "UNICODE" /D "_USRDLL" /D "YAHOO_EXPORTS" /D "HAVE_CONFIG_H" /Fp"$(INTDIR)\Yahoo.pch" /Yu"yahoo.h" /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /c 
-MTL_PROJ=/nologo /D "NDEBUG" /mktyplib203 /win32 
-RSC_PROJ=/l 0x419 /fo"$(INTDIR)\Yahoo.res" /d "NDEBUG" 
-BSC32=bscmake.exe
-BSC32_FLAGS=/nologo /o"$(OUTDIR)\Yahoo.bsc" 
-BSC32_SBRS= \
-	
-LINK32=link.exe
-LINK32_FLAGS=kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /dll /incremental:no /pdb:"$(OUTDIR)\Yahoo.pdb" /map:"$(INTDIR)\Yahoo.map" /debug /machine:I386 /out:"../../Bin/Release Unicode/Plugins/Yahoo.dll" /implib:"$(OUTDIR)\Yahoo.lib" 
-LINK32_OBJS= \
-	"$(INTDIR)\crypt.obj" \
-	"$(INTDIR)\libyahoo2.obj" \
-	"$(INTDIR)\yahoo_auth.obj" \
-	"$(INTDIR)\yahoo_httplib.obj" \
-	"$(INTDIR)\yahoo_list.obj" \
-	"$(INTDIR)\yahoo_util.obj" \
-	"$(INTDIR)\avatar.obj" \
-	"$(INTDIR)\chat.obj" \
-	"$(INTDIR)\file_transfer.obj" \
-	"$(INTDIR)\http_gateway.obj" \
-	"$(INTDIR)\icolib.obj" \
-	"$(INTDIR)\ignore.obj" \
-	"$(INTDIR)\im.obj" \
-	"$(INTDIR)\main.obj" \
-	"$(INTDIR)\options.obj" \
-	"$(INTDIR)\proto.obj" \
-	"$(INTDIR)\search.obj" \
-	"$(INTDIR)\server.obj" \
-	"$(INTDIR)\services.obj" \
-	"$(INTDIR)\util.obj" \
-	"$(INTDIR)\webcam.obj" \
-	"$(INTDIR)\yahoo.obj" \
-	"$(INTDIR)\Yahoo.res"
-
-"..\..\Bin\Release Unicode\Plugins\Yahoo.dll" : "$(OUTDIR)" $(DEF_FILE) $(LINK32_OBJS)
-    $(LINK32) @<<
-  $(LINK32_FLAGS) $(LINK32_OBJS)
-<<
-
-!ENDIF 
+!ENDIF
 
 .c{$(INTDIR)}.obj::
    $(CPP) @<<
-   $(CPP_PROJ) $< 
+   $(CPP_PROJ) $<
 <<
 
 .cpp{$(INTDIR)}.obj::
    $(CPP) @<<
-   $(CPP_PROJ) $< 
+   $(CPP_PROJ) $<
 <<
 
 .cxx{$(INTDIR)}.obj::
    $(CPP) @<<
-   $(CPP_PROJ) $< 
+   $(CPP_PROJ) $<
 <<
 
 .c{$(INTDIR)}.sbr::
    $(CPP) @<<
-   $(CPP_PROJ) $< 
+   $(CPP_PROJ) $<
 <<
 
 .cpp{$(INTDIR)}.sbr::
    $(CPP) @<<
-   $(CPP_PROJ) $< 
+   $(CPP_PROJ) $<
 <<
 
 .cxx{$(INTDIR)}.sbr::
    $(CPP) @<<
-   $(CPP_PROJ) $< 
+   $(CPP_PROJ) $<
 <<
 
 
 !IF "$(NO_EXTERNAL_DEPS)" != "1"
 !IF EXISTS("Yahoo.dep")
 !INCLUDE "Yahoo.dep"
-!ELSE 
+!ELSE
 !MESSAGE Warning: cannot find "Yahoo.dep"
-!ENDIF 
-!ENDIF 
+!ENDIF
+!ENDIF
 
 
-!IF "$(CFG)" == "Yahoo - Win32 Release" || "$(CFG)" == "Yahoo - Win32 Debug" || "$(CFG)" == "Yahoo - Win32 Debug Unicode" || "$(CFG)" == "Yahoo - Win32 Release Unicode"
+!IF "$(CFG)" == "Yahoo - Win32 Release" || "$(CFG)" == "Yahoo - Win32 Debug"
 SOURCE=.\libyahoo2\crypt.c
 
-!IF  "$(CFG)" == "Yahoo - Win32 Release"
-
-CPP_SWITCHES=/nologo /MD /W3 /Zi /O1 /I "../../include" /D "NDEBUG" /D "WIN32" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "YAHOO_EXPORTS" /D "HAVE_CONFIG_H" /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /c 
-
 "$(INTDIR)\crypt.obj" : $(SOURCE) "$(INTDIR)"
-	$(CPP) @<<
-  $(CPP_SWITCHES) $(SOURCE)
-<<
+	$(CPP) $(CPP_PROJ) $(SOURCE)
 
-
-!ELSEIF  "$(CFG)" == "Yahoo - Win32 Debug"
-
-CPP_SWITCHES=/nologo /MDd /W3 /Gm /ZI /Od /I "../../include" /D "_DEBUG" /D "WIN32" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "YAHOO_EXPORTS" /D "HAVE_CONFIG_H" /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /GZ /c 
-
-"$(INTDIR)\crypt.obj" : $(SOURCE) "$(INTDIR)"
-	$(CPP) @<<
-  $(CPP_SWITCHES) $(SOURCE)
-<<
-
-
-!ELSEIF  "$(CFG)" == "Yahoo - Win32 Debug Unicode"
-
-CPP_SWITCHES=/nologo /MDd /W3 /Gm /ZI /Od /I "../../include" /D "_DEBUG" /D "WIN32" /D "_WINDOWS" /D "UNICODE" /D "_USRDLL" /D "YAHOO_EXPORTS" /D "HAVE_CONFIG_H" /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /GZ /c 
-
-"$(INTDIR)\crypt.obj" : $(SOURCE) "$(INTDIR)"
-	$(CPP) @<<
-  $(CPP_SWITCHES) $(SOURCE)
-<<
-
-
-!ELSEIF  "$(CFG)" == "Yahoo - Win32 Release Unicode"
-
-CPP_SWITCHES=/nologo /MD /W3 /Zi /O1 /I "../../include" /D "NDEBUG" /D "WIN32" /D "_WINDOWS" /D "UNICODE" /D "_USRDLL" /D "YAHOO_EXPORTS" /D "HAVE_CONFIG_H" /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /c 
-
-"$(INTDIR)\crypt.obj" : $(SOURCE) "$(INTDIR)"
-	$(CPP) @<<
-  $(CPP_SWITCHES) $(SOURCE)
-<<
-
-
-!ENDIF 
 
 SOURCE=.\libyahoo2\libyahoo2.c
 
-!IF  "$(CFG)" == "Yahoo - Win32 Release"
-
-CPP_SWITCHES=/nologo /MD /W3 /Zi /O1 /I "../../include" /D "NDEBUG" /D "WIN32" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "YAHOO_EXPORTS" /D "HAVE_CONFIG_H" /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /c 
-
 "$(INTDIR)\libyahoo2.obj" : $(SOURCE) "$(INTDIR)"
-	$(CPP) @<<
-  $(CPP_SWITCHES) $(SOURCE)
-<<
+	$(CPP) $(CPP_PROJ) $(SOURCE)
 
 
-!ELSEIF  "$(CFG)" == "Yahoo - Win32 Debug"
+SOURCE=.\libyahoo2\sha.c
 
-CPP_SWITCHES=/nologo /MDd /W3 /Gm /ZI /Od /I "../../include" /D "_DEBUG" /D "WIN32" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "YAHOO_EXPORTS" /D "HAVE_CONFIG_H" /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /GZ /c 
+"$(INTDIR)\sha.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
 
-"$(INTDIR)\libyahoo2.obj" : $(SOURCE) "$(INTDIR)"
-	$(CPP) @<<
-  $(CPP_SWITCHES) $(SOURCE)
-<<
-
-
-!ELSEIF  "$(CFG)" == "Yahoo - Win32 Debug Unicode"
-
-CPP_SWITCHES=/nologo /MDd /W3 /Gm /ZI /Od /I "../../include" /D "_DEBUG" /D "WIN32" /D "_WINDOWS" /D "UNICODE" /D "_USRDLL" /D "YAHOO_EXPORTS" /D "HAVE_CONFIG_H" /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /GZ /c 
-
-"$(INTDIR)\libyahoo2.obj" : $(SOURCE) "$(INTDIR)"
-	$(CPP) @<<
-  $(CPP_SWITCHES) $(SOURCE)
-<<
-
-
-!ELSEIF  "$(CFG)" == "Yahoo - Win32 Release Unicode"
-
-CPP_SWITCHES=/nologo /MD /W3 /Zi /O1 /I "../../include" /D "NDEBUG" /D "WIN32" /D "_WINDOWS" /D "UNICODE" /D "_USRDLL" /D "YAHOO_EXPORTS" /D "HAVE_CONFIG_H" /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /c 
-
-"$(INTDIR)\libyahoo2.obj" : $(SOURCE) "$(INTDIR)"
-	$(CPP) @<<
-  $(CPP_SWITCHES) $(SOURCE)
-<<
-
-
-!ENDIF 
 
 SOURCE=.\libyahoo2\yahoo_auth.c
 
-!IF  "$(CFG)" == "Yahoo - Win32 Release"
-
-CPP_SWITCHES=/nologo /MD /W3 /Zi /O1 /I "../../include" /D "NDEBUG" /D "WIN32" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "YAHOO_EXPORTS" /D "HAVE_CONFIG_H" /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /c 
-
 "$(INTDIR)\yahoo_auth.obj" : $(SOURCE) "$(INTDIR)"
-	$(CPP) @<<
-  $(CPP_SWITCHES) $(SOURCE)
-<<
+	$(CPP) $(CPP_PROJ) $(SOURCE)
 
-
-!ELSEIF  "$(CFG)" == "Yahoo - Win32 Debug"
-
-CPP_SWITCHES=/nologo /MDd /W3 /Gm /ZI /Od /I "../../include" /D "_DEBUG" /D "WIN32" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "YAHOO_EXPORTS" /D "HAVE_CONFIG_H" /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /GZ /c 
-
-"$(INTDIR)\yahoo_auth.obj" : $(SOURCE) "$(INTDIR)"
-	$(CPP) @<<
-  $(CPP_SWITCHES) $(SOURCE)
-<<
-
-
-!ELSEIF  "$(CFG)" == "Yahoo - Win32 Debug Unicode"
-
-CPP_SWITCHES=/nologo /MDd /W3 /Gm /ZI /Od /I "../../include" /D "_DEBUG" /D "WIN32" /D "_WINDOWS" /D "UNICODE" /D "_USRDLL" /D "YAHOO_EXPORTS" /D "HAVE_CONFIG_H" /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /GZ /c 
-
-"$(INTDIR)\yahoo_auth.obj" : $(SOURCE) "$(INTDIR)"
-	$(CPP) @<<
-  $(CPP_SWITCHES) $(SOURCE)
-<<
-
-
-!ELSEIF  "$(CFG)" == "Yahoo - Win32 Release Unicode"
-
-CPP_SWITCHES=/nologo /MD /W3 /Zi /O1 /I "../../include" /D "NDEBUG" /D "WIN32" /D "_WINDOWS" /D "UNICODE" /D "_USRDLL" /D "YAHOO_EXPORTS" /D "HAVE_CONFIG_H" /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /c 
-
-"$(INTDIR)\yahoo_auth.obj" : $(SOURCE) "$(INTDIR)"
-	$(CPP) @<<
-  $(CPP_SWITCHES) $(SOURCE)
-<<
-
-
-!ENDIF 
 
 SOURCE=.\libyahoo2\yahoo_httplib.c
 
-!IF  "$(CFG)" == "Yahoo - Win32 Release"
-
-CPP_SWITCHES=/nologo /MD /W3 /Zi /O1 /I "../../include" /D "NDEBUG" /D "WIN32" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "YAHOO_EXPORTS" /D "HAVE_CONFIG_H" /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /c 
-
 "$(INTDIR)\yahoo_httplib.obj" : $(SOURCE) "$(INTDIR)"
-	$(CPP) @<<
-  $(CPP_SWITCHES) $(SOURCE)
-<<
+	$(CPP) $(CPP_PROJ) $(SOURCE)
 
-
-!ELSEIF  "$(CFG)" == "Yahoo - Win32 Debug"
-
-CPP_SWITCHES=/nologo /MDd /W3 /Gm /ZI /Od /I "../../include" /D "_DEBUG" /D "WIN32" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "YAHOO_EXPORTS" /D "HAVE_CONFIG_H" /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /GZ /c 
-
-"$(INTDIR)\yahoo_httplib.obj" : $(SOURCE) "$(INTDIR)"
-	$(CPP) @<<
-  $(CPP_SWITCHES) $(SOURCE)
-<<
-
-
-!ELSEIF  "$(CFG)" == "Yahoo - Win32 Debug Unicode"
-
-CPP_SWITCHES=/nologo /MDd /W3 /Gm /ZI /Od /I "../../include" /D "_DEBUG" /D "WIN32" /D "_WINDOWS" /D "UNICODE" /D "_USRDLL" /D "YAHOO_EXPORTS" /D "HAVE_CONFIG_H" /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /GZ /c 
-
-"$(INTDIR)\yahoo_httplib.obj" : $(SOURCE) "$(INTDIR)"
-	$(CPP) @<<
-  $(CPP_SWITCHES) $(SOURCE)
-<<
-
-
-!ELSEIF  "$(CFG)" == "Yahoo - Win32 Release Unicode"
-
-CPP_SWITCHES=/nologo /MD /W3 /Zi /O1 /I "../../include" /D "NDEBUG" /D "WIN32" /D "_WINDOWS" /D "UNICODE" /D "_USRDLL" /D "YAHOO_EXPORTS" /D "HAVE_CONFIG_H" /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /c 
-
-"$(INTDIR)\yahoo_httplib.obj" : $(SOURCE) "$(INTDIR)"
-	$(CPP) @<<
-  $(CPP_SWITCHES) $(SOURCE)
-<<
-
-
-!ENDIF 
 
 SOURCE=.\libyahoo2\yahoo_list.c
 
-!IF  "$(CFG)" == "Yahoo - Win32 Release"
-
-CPP_SWITCHES=/nologo /MD /W3 /Zi /O1 /I "../../include" /D "NDEBUG" /D "WIN32" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "YAHOO_EXPORTS" /D "HAVE_CONFIG_H" /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /c 
-
 "$(INTDIR)\yahoo_list.obj" : $(SOURCE) "$(INTDIR)"
-	$(CPP) @<<
-  $(CPP_SWITCHES) $(SOURCE)
-<<
+	$(CPP) $(CPP_PROJ) $(SOURCE)
 
-
-!ELSEIF  "$(CFG)" == "Yahoo - Win32 Debug"
-
-CPP_SWITCHES=/nologo /MDd /W3 /Gm /ZI /Od /I "../../include" /D "_DEBUG" /D "WIN32" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "YAHOO_EXPORTS" /D "HAVE_CONFIG_H" /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /GZ /c 
-
-"$(INTDIR)\yahoo_list.obj" : $(SOURCE) "$(INTDIR)"
-	$(CPP) @<<
-  $(CPP_SWITCHES) $(SOURCE)
-<<
-
-
-!ELSEIF  "$(CFG)" == "Yahoo - Win32 Debug Unicode"
-
-CPP_SWITCHES=/nologo /MDd /W3 /Gm /ZI /Od /I "../../include" /D "_DEBUG" /D "WIN32" /D "_WINDOWS" /D "UNICODE" /D "_USRDLL" /D "YAHOO_EXPORTS" /D "HAVE_CONFIG_H" /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /GZ /c 
-
-"$(INTDIR)\yahoo_list.obj" : $(SOURCE) "$(INTDIR)"
-	$(CPP) @<<
-  $(CPP_SWITCHES) $(SOURCE)
-<<
-
-
-!ELSEIF  "$(CFG)" == "Yahoo - Win32 Release Unicode"
-
-CPP_SWITCHES=/nologo /MD /W3 /Zi /O1 /I "../../include" /D "NDEBUG" /D "WIN32" /D "_WINDOWS" /D "UNICODE" /D "_USRDLL" /D "YAHOO_EXPORTS" /D "HAVE_CONFIG_H" /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /c 
-
-"$(INTDIR)\yahoo_list.obj" : $(SOURCE) "$(INTDIR)"
-	$(CPP) @<<
-  $(CPP_SWITCHES) $(SOURCE)
-<<
-
-
-!ENDIF 
 
 SOURCE=.\libyahoo2\yahoo_util.c
 
-!IF  "$(CFG)" == "Yahoo - Win32 Release"
-
-CPP_SWITCHES=/nologo /MD /W3 /Zi /O1 /I "../../include" /D "NDEBUG" /D "WIN32" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "YAHOO_EXPORTS" /D "HAVE_CONFIG_H" /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /c 
-
 "$(INTDIR)\yahoo_util.obj" : $(SOURCE) "$(INTDIR)"
-	$(CPP) @<<
-  $(CPP_SWITCHES) $(SOURCE)
-<<
+	$(CPP) $(CPP_PROJ) $(SOURCE)
 
 
-!ELSEIF  "$(CFG)" == "Yahoo - Win32 Debug"
+SOURCE=.\avatar.c
 
-CPP_SWITCHES=/nologo /MDd /W3 /Gm /ZI /Od /I "../../include" /D "_DEBUG" /D "WIN32" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "YAHOO_EXPORTS" /D "HAVE_CONFIG_H" /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /GZ /c 
+"$(INTDIR)\avatar.obj" : $(SOURCE) "$(INTDIR)"
 
-"$(INTDIR)\yahoo_util.obj" : $(SOURCE) "$(INTDIR)"
-	$(CPP) @<<
-  $(CPP_SWITCHES) $(SOURCE)
-<<
 
+SOURCE=.\chat.c
 
-!ELSEIF  "$(CFG)" == "Yahoo - Win32 Debug Unicode"
+"$(INTDIR)\chat.obj" : $(SOURCE) "$(INTDIR)"
 
-CPP_SWITCHES=/nologo /MDd /W3 /Gm /ZI /Od /I "../../include" /D "_DEBUG" /D "WIN32" /D "_WINDOWS" /D "UNICODE" /D "_USRDLL" /D "YAHOO_EXPORTS" /D "HAVE_CONFIG_H" /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /GZ /c 
 
-"$(INTDIR)\yahoo_util.obj" : $(SOURCE) "$(INTDIR)"
-	$(CPP) @<<
-  $(CPP_SWITCHES) $(SOURCE)
-<<
+SOURCE=.\file_transfer.c
 
+"$(INTDIR)\file_transfer.obj" : $(SOURCE) "$(INTDIR)"
 
-!ELSEIF  "$(CFG)" == "Yahoo - Win32 Release Unicode"
 
-CPP_SWITCHES=/nologo /MD /W3 /Zi /O1 /I "../../include" /D "NDEBUG" /D "WIN32" /D "_WINDOWS" /D "UNICODE" /D "_USRDLL" /D "YAHOO_EXPORTS" /D "HAVE_CONFIG_H" /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /c 
+SOURCE=.\http_gateway.c
 
-"$(INTDIR)\yahoo_util.obj" : $(SOURCE) "$(INTDIR)"
-	$(CPP) @<<
-  $(CPP_SWITCHES) $(SOURCE)
-<<
+"$(INTDIR)\http_gateway.obj" : $(SOURCE) "$(INTDIR)"
 
 
-!ENDIF 
+SOURCE=.\icolib.c
 
-SOURCE=.\avatar.cpp
+"$(INTDIR)\icolib.obj" : $(SOURCE) "$(INTDIR)"
 
-"$(INTDIR)\avatar.obj" : $(SOURCE) "$(INTDIR)" "$(INTDIR)\Yahoo.pch"
 
+SOURCE=.\ignore.c
 
-SOURCE=.\chat.cpp
+"$(INTDIR)\ignore.obj" : $(SOURCE) "$(INTDIR)"
 
-"$(INTDIR)\chat.obj" : $(SOURCE) "$(INTDIR)" "$(INTDIR)\Yahoo.pch"
 
+SOURCE=.\im.c
 
-SOURCE=.\file_transfer.cpp
+"$(INTDIR)\im.obj" : $(SOURCE) "$(INTDIR)"
 
-"$(INTDIR)\file_transfer.obj" : $(SOURCE) "$(INTDIR)" "$(INTDIR)\Yahoo.pch"
 
+SOURCE=.\main.c
 
-SOURCE=.\http_gateway.cpp
+"$(INTDIR)\main.obj" : $(SOURCE) "$(INTDIR)"
 
-"$(INTDIR)\http_gateway.obj" : $(SOURCE) "$(INTDIR)" "$(INTDIR)\Yahoo.pch"
 
+SOURCE=.\options.c
 
-SOURCE=.\icolib.cpp
+"$(INTDIR)\options.obj" : $(SOURCE) "$(INTDIR)"
 
-"$(INTDIR)\icolib.obj" : $(SOURCE) "$(INTDIR)" "$(INTDIR)\Yahoo.pch"
 
+SOURCE=.\search.c
 
-SOURCE=.\ignore.cpp
+"$(INTDIR)\search.obj" : $(SOURCE) "$(INTDIR)"
 
-"$(INTDIR)\ignore.obj" : $(SOURCE) "$(INTDIR)" "$(INTDIR)\Yahoo.pch"
 
+SOURCE=.\server.c
 
-SOURCE=.\im.cpp
+"$(INTDIR)\server.obj" : $(SOURCE) "$(INTDIR)"
 
-"$(INTDIR)\im.obj" : $(SOURCE) "$(INTDIR)" "$(INTDIR)\Yahoo.pch"
 
+SOURCE=.\services.c
 
-SOURCE=.\main.cpp
+"$(INTDIR)\services.obj" : $(SOURCE) "$(INTDIR)"
 
-!IF  "$(CFG)" == "Yahoo - Win32 Release"
 
-CPP_SWITCHES=/nologo /MD /W3 /Zi /O1 /I "../../include" /D "NDEBUG" /D "WIN32" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "YAHOO_EXPORTS" /D "HAVE_CONFIG_H" /Fp"$(INTDIR)\Yahoo.pch" /Yu"yahoo.h" /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /c 
+SOURCE=.\util.c
 
-"$(INTDIR)\main.obj" : $(SOURCE) "$(INTDIR)" "$(INTDIR)\Yahoo.pch"
-	$(CPP) @<<
-  $(CPP_SWITCHES) $(SOURCE)
-<<
+"$(INTDIR)\util.obj" : $(SOURCE) "$(INTDIR)"
 
 
-!ELSEIF  "$(CFG)" == "Yahoo - Win32 Debug"
+SOURCE=.\webcam.c
 
-CPP_SWITCHES=/nologo /MDd /W3 /Gm /ZI /Od /I "../../include" /D "_DEBUG" /D "WIN32" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "YAHOO_EXPORTS" /D "HAVE_CONFIG_H" /Fp"$(INTDIR)\Yahoo.pch" /Yu"yahoo.h" /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /GZ /c 
+"$(INTDIR)\webcam.obj" : $(SOURCE) "$(INTDIR)"
 
-"$(INTDIR)\main.obj" : $(SOURCE) "$(INTDIR)" "$(INTDIR)\Yahoo.pch"
-	$(CPP) @<<
-  $(CPP_SWITCHES) $(SOURCE)
-<<
 
+SOURCE=.\yahoo.c
 
-!ELSEIF  "$(CFG)" == "Yahoo - Win32 Debug Unicode"
+"$(INTDIR)\yahoo.obj" : $(SOURCE) "$(INTDIR)"
 
-CPP_SWITCHES=/nologo /MDd /W3 /Gm /ZI /Od /I "../../include" /D "_DEBUG" /D "WIN32" /D "_WINDOWS" /D "UNICODE" /D "_USRDLL" /D "YAHOO_EXPORTS" /D "HAVE_CONFIG_H" /Fp"$(INTDIR)\Yahoo.pch" /Yu"yahoo.h" /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /GZ /c 
-
-"$(INTDIR)\main.obj" : $(SOURCE) "$(INTDIR)" "$(INTDIR)\Yahoo.pch"
-	$(CPP) @<<
-  $(CPP_SWITCHES) $(SOURCE)
-<<
-
-
-!ELSEIF  "$(CFG)" == "Yahoo - Win32 Release Unicode"
-
-CPP_SWITCHES=/nologo /MD /W3 /Zi /O1 /I "../../include" /D "NDEBUG" /D "WIN32" /D "_WINDOWS" /D "UNICODE" /D "_USRDLL" /D "YAHOO_EXPORTS" /D "HAVE_CONFIG_H" /Fp"$(INTDIR)\Yahoo.pch" /Yu"yahoo.h" /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /c 
-
-"$(INTDIR)\main.obj" : $(SOURCE) "$(INTDIR)" "$(INTDIR)\Yahoo.pch"
-	$(CPP) @<<
-  $(CPP_SWITCHES) $(SOURCE)
-<<
-
-
-!ENDIF 
-
-SOURCE=.\options.cpp
-
-"$(INTDIR)\options.obj" : $(SOURCE) "$(INTDIR)" "$(INTDIR)\Yahoo.pch"
-
-
-SOURCE=.\proto.cpp
-
-"$(INTDIR)\proto.obj" : $(SOURCE) "$(INTDIR)" "$(INTDIR)\Yahoo.pch"
-
-
-SOURCE=.\search.cpp
-
-"$(INTDIR)\search.obj" : $(SOURCE) "$(INTDIR)" "$(INTDIR)\Yahoo.pch"
-
-
-SOURCE=.\server.cpp
-
-"$(INTDIR)\server.obj" : $(SOURCE) "$(INTDIR)" "$(INTDIR)\Yahoo.pch"
-
-
-SOURCE=.\services.cpp
-
-"$(INTDIR)\services.obj" : $(SOURCE) "$(INTDIR)" "$(INTDIR)\Yahoo.pch"
-
-
-SOURCE=.\util.cpp
-
-"$(INTDIR)\util.obj" : $(SOURCE) "$(INTDIR)" "$(INTDIR)\Yahoo.pch"
-
-
-SOURCE=.\webcam.cpp
-
-"$(INTDIR)\webcam.obj" : $(SOURCE) "$(INTDIR)" "$(INTDIR)\Yahoo.pch"
-
-
-SOURCE=.\yahoo.cpp
-
-!IF  "$(CFG)" == "Yahoo - Win32 Release"
-
-CPP_SWITCHES=/nologo /MD /W3 /Zi /O1 /I "../../include" /D "NDEBUG" /D "WIN32" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "YAHOO_EXPORTS" /D "HAVE_CONFIG_H" /Fp"$(INTDIR)\Yahoo.pch" /Yc"yahoo.h" /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /c 
-
-"$(INTDIR)\yahoo.obj"	"$(INTDIR)\Yahoo.pch" : $(SOURCE) "$(INTDIR)"
-	$(CPP) @<<
-  $(CPP_SWITCHES) $(SOURCE)
-<<
-
-
-!ELSEIF  "$(CFG)" == "Yahoo - Win32 Debug"
-
-CPP_SWITCHES=/nologo /MDd /W3 /Gm /ZI /Od /I "../../include" /D "_DEBUG" /D "WIN32" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "YAHOO_EXPORTS" /D "HAVE_CONFIG_H" /Fp"$(INTDIR)\Yahoo.pch" /Yc"yahoo.h" /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /GZ /c 
-
-"$(INTDIR)\yahoo.obj"	"$(INTDIR)\Yahoo.pch" : $(SOURCE) "$(INTDIR)"
-	$(CPP) @<<
-  $(CPP_SWITCHES) $(SOURCE)
-<<
-
-
-!ELSEIF  "$(CFG)" == "Yahoo - Win32 Debug Unicode"
-
-CPP_SWITCHES=/nologo /MDd /W3 /Gm /ZI /Od /I "../../include" /D "_DEBUG" /D "WIN32" /D "_WINDOWS" /D "UNICODE" /D "_USRDLL" /D "YAHOO_EXPORTS" /D "HAVE_CONFIG_H" /Fp"$(INTDIR)\Yahoo.pch" /Yc"yahoo.h" /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /GZ /c 
-
-"$(INTDIR)\yahoo.obj"	"$(INTDIR)\Yahoo.pch" : $(SOURCE) "$(INTDIR)"
-	$(CPP) @<<
-  $(CPP_SWITCHES) $(SOURCE)
-<<
-
-
-!ELSEIF  "$(CFG)" == "Yahoo - Win32 Release Unicode"
-
-CPP_SWITCHES=/nologo /MD /W3 /Zi /O1 /I "../../include" /D "NDEBUG" /D "WIN32" /D "_WINDOWS" /D "UNICODE" /D "_USRDLL" /D "YAHOO_EXPORTS" /D "HAVE_CONFIG_H" /Fp"$(INTDIR)\Yahoo.pch" /Yc"yahoo.h" /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /c 
-
-"$(INTDIR)\yahoo.obj"	"$(INTDIR)\Yahoo.pch" : $(SOURCE) "$(INTDIR)"
-	$(CPP) @<<
-  $(CPP_SWITCHES) $(SOURCE)
-<<
-
-
-!ENDIF 
 
 SOURCE=.\Yahoo.rc
 
@@ -835,5 +360,4 @@ SOURCE=.\Yahoo.rc
 
 
 
-!ENDIF 
-
+!ENDIF

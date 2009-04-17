@@ -4,8 +4,10 @@
 	Version="7.10"
 	Name="chat"
 	ProjectGUID="{268BD296-8DD3-4715-A386-CF120398EC98}"
-	SccProjectName=""
-	SccLocalPath="">
+	SccProjectName="SAK"
+	SccAuxPath="SAK"
+	SccLocalPath="SAK"
+	SccProvider="SAK">
 	<Platforms>
 		<Platform
 			Name="Win32"/>
@@ -164,9 +166,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				IgnoreImportLibrary="TRUE"
-				AdditionalDependencies="vc7to6.lib shlwapi.lib Version.lib comctl32.lib"
-				AdditionalLibraryDirectories="../../lib"
-				IgnoreAllDefaultLibraries="TRUE"
+				AdditionalDependencies="shlwapi.lib Version.lib"
 				GenerateDebugInformation="TRUE"
 				GenerateMapFile="TRUE"
 				OptimizeReferences="2"
@@ -235,11 +235,9 @@
 			<Tool
 				Name="VCLinkerTool"
 				IgnoreImportLibrary="TRUE"
-				AdditionalDependencies="vc7to6.lib shlwapi.lib Version.lib comctl32.lib"
+				AdditionalDependencies="shlwapi.lib Version.lib"
 				LinkIncremental="1"
 				SuppressStartupBanner="TRUE"
-				AdditionalLibraryDirectories="../../lib"
-				IgnoreAllDefaultLibraries="TRUE"
 				GenerateDebugInformation="TRUE"
 				GenerateMapFile="TRUE"
 				OptimizeReferences="2"

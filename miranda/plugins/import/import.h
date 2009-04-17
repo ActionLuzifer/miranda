@@ -20,24 +20,23 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 */
 
+#define MIRANDA_VER 0x0700
 
-//#define _LOGGING   1
+#if !defined( _UNICODE ) && defined( UNICODE )
+	#define _UNICODE
+#endif
 
-#define MIRANDA_VER 0x0800
-
-#define _WIN32_WINNT 0x0501
-#define _WIN32_IE 0x0501
-
-#include <m_stdhdr.h>
+#include <tchar.h>
 
 #include <windows.h>
 #include <commctrl.h> // datetimepicker
 
+#include <malloc.h>
+#include <stdio.h>
 #include <stddef.h>
 #include <time.h>
 #include <io.h>
 
-#include <win2k.h>
 #include <newpluginapi.h>
 #include <m_langpack.h>
 #include <m_system.h>
@@ -48,6 +47,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <m_utils.h>
 #include <m_findadd.h>
 #include <m_clist.h>
+#include <win2k.h>
 
 // ** Global constants
 
@@ -85,23 +85,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define IOPT_MSGRECV    4
 #define IOPT_URLSENT    8
 #define IOPT_URLRECV    16
-#define IOPT_AUTHREQ    32
-#define IOPT_ADDED      64
-#define IOPT_FILESENT   128
-#define IOPT_FILERECV   256
-#define IOPT_OTHERSENT  512
-#define IOPT_OTHERRECV  1024
-#define IOPT_SYSTEM     2048
-#define IOPT_CONTACTS   4096
-#define IOPT_GROUPS     8192
-
-
-struct MM_INTERFACE mmi;
-struct UTF8_INTERFACE utfi;
 
 void AddMessage( const char* fmt, ... );
-
-int CreateGroup(BYTE type, const char* name, HANDLE hContact);
 
 extern HWND hdlgProgress;
 

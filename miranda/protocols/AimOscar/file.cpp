@@ -1,48 +1,28 @@
-/*
-Plugin of Miranda IM for communicating with users of the AIM protocol.
-Copyright (c) 2008-2009 Boris Krasnovskiy
-Copyright (C) 2005-2006 Aaron Myles Landwehr
-
-This program is free software; you can redistribute it and/or
-modify it under the terms of the GNU General Public License
-as published by the Free Software Foundation; either version 2
-of the License, or (at your option) any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
-#include "aim.h"
 #include "file.h"
-
 #if _MSC_VER
-	#pragma warning( disable: 4706 )
+#pragma warning( disable: 4706 )
 #endif
-
-void CAimProto::sending_file(HANDLE hContact, HANDLE hNewConnection)
+void sending_file(HANDLE hContact, HANDLE hNewConnection)
 {
 	LOG("P2P: Entered file sending thread.");
 	DBVARIANT dbv;
-	char *file, *wd;
+	char* file;
+	char* wd;
 	int file_start_point=0;
 	unsigned long size;
-	if (!getString(hContact, AIM_KEY_FN, &dbv))
+	if (!DBGetContactSettingString(hContact, AIM_PROTOCOL_NAME, AIM_KEY_FN, &dbv))
 	{
-		file = mir_strdup(dbv.pszVal);
+		file=strldup(dbv.pszVal,lstrlen(dbv.pszVal));
 		DBFreeVariant(&dbv);
-		wd = mir_strdup(file);
-		char* swd = strrchr(wd,'\\');
-		*swd = '\0';
-		size = getDword(hContact, AIM_KEY_FS, 0);
-		if (!size) return;
+		wd=strldup(file,lstrlen(file));
+		char* swd=strrchr(wd,'\\');
+		*swd='\0';
+		size=DBGetContactSettingDword(hContact, AIM_PROTOCOL_NAME, AIM_KEY_FS, 0);
+		if(!size)
+			return;
 	}
 	else 
 		return;
-
 	char cookie[8];
 	read_cookie(hContact,cookie);
 	oft2 ft;
@@ -68,11 +48,11 @@ void CAimProto::sending_file(HANDLE hContact, HANDLE hNewConnection)
 	ft.list_size_offset=0x11;
 	char* pszFile = strrchr(file, '\\');
 	pszFile++;
-	memcpy(ft.filename,pszFile,lstrlenA(pszFile));
+	memcpy(ft.filename,pszFile,lstrlen(pszFile));
 	char* buf = (char*)&ft;
 	if(Netlib_Send(hNewConnection,buf,sizeof(oft2),0)==SOCKET_ERROR)
 	{
-		sendBroadcast(hContact, ACKTYPE_FILE, ACKRESULT_FAILED,hContact,0);
+		ProtoBroadcastAck(AIM_PROTOCOL_NAME,hContact, ACKTYPE_FILE, ACKRESULT_FAILED,hContact,0);
 		Netlib_CloseHandle(hNewConnection);
 		return;
 	}
@@ -81,26 +61,30 @@ void CAimProto::sending_file(HANDLE hContact, HANDLE hNewConnection)
 	int recvResult=0;
 	NETLIBPACKETRECVER packetRecv;
 	ZeroMemory(&packetRecv, sizeof(packetRecv));
-	HANDLE hServerPacketRecver;
+	HANDLE hServerPacketRecver=NULL;
 	hServerPacketRecver = (HANDLE) CallService(MS_NETLIB_CREATEPACKETRECVER, (WPARAM)hNewConnection, 2048 * 4);
 	packetRecv.cbSize = sizeof(packetRecv);
-	packetRecv.dwTimeout = 100*getWord( AIM_KEY_GP, DEFAULT_GRACE_PERIOD);
-	for(;;)
+	packetRecv.dwTimeout = 100*DBGetContactSettingWord(NULL, AIM_PROTOCOL_NAME, AIM_KEY_GP, DEFAULT_GRACE_PERIOD);
+	#if _MSC_VER
+	#pragma warning( disable: 4127)
+	#endif
+	while(1)
 	{
+		#if _MSC_VER
+		#pragma warning( default: 4127)
+		#endif
 		recvResult = CallService(MS_NETLIB_GETMOREPACKETS, (WPARAM) hServerPacketRecver, (LPARAM) & packetRecv);
 		if (recvResult == 0)
 			{
 				LOG("P2P: File transfer connection Error: 0");
-				sendBroadcast(hContact, ACKTYPE_FILE, ACKRESULT_FAILED,hContact,0);
-                Netlib_CloseHandle(hServerPacketRecver);
+				ProtoBroadcastAck(AIM_PROTOCOL_NAME, hContact, ACKTYPE_FILE, ACKRESULT_FAILED,hContact,0);
                 Netlib_CloseHandle(hNewConnection);
 				break;
             }
         if (recvResult == SOCKET_ERROR)
 			{
 				LOG("P2P: File transfer connection Error: -1");
-				sendBroadcast(hContact, ACKTYPE_FILE, ACKRESULT_FAILED,hContact,0);
-                Netlib_CloseHandle(hServerPacketRecver);
+				ProtoBroadcastAck(AIM_PROTOCOL_NAME, hContact, ACKTYPE_FILE, ACKRESULT_FAILED,hContact,0);
 				Netlib_CloseHandle(hNewConnection);
                 break;
             }
@@ -133,39 +117,35 @@ void CAimProto::sending_file(HANDLE hContact, HANDLE hNewConnection)
 						pfts.totalFiles=1;
 						pfts.totalProgress=0;
 						pfts.workingDir=wd;
-						sendBroadcast(hContact, ACKTYPE_FILE, ACKRESULT_DATA,hContact, (LPARAM) & pfts);
-						unsigned int bytes;
-						char buffer[1024*4];
+						ProtoBroadcastAck(AIM_PROTOCOL_NAME, hContact, ACKTYPE_FILE, ACKRESULT_DATA,hContact, (LPARAM) & pfts);
+						int bytes;
+						unsigned char buffer[1024*4];
 						unsigned int lNotify=GetTickCount()-500;
-						while ((bytes = (unsigned)fread(buffer, 1, 1024*4, fd)))
+						while ((bytes = fread(buffer, 1, 1024*4, fd)))
 						{
-							Netlib_Send(hNewConnection,buffer,bytes,MSG_NODUMP);
-							pfts.currentFileProgress += bytes;
-							pfts.totalProgress += bytes;
+							Netlib_Send(hNewConnection,(char*)&buffer,bytes,MSG_NODUMP);
+							pfts.currentFileProgress+=bytes;
+							pfts.totalProgress+=bytes;
 							if(GetTickCount()>lNotify+500)
 							{
-								sendBroadcast(hContact, ACKTYPE_FILE, ACKRESULT_DATA,hContact, (LPARAM) & pfts);
+								ProtoBroadcastAck(AIM_PROTOCOL_NAME, hContact, ACKTYPE_FILE, ACKRESULT_DATA,hContact, (LPARAM) & pfts);
 								lNotify=GetTickCount();
 							}
 						}
-						sendBroadcast(hContact, ACKTYPE_FILE, ACKRESULT_DATA,hContact, (LPARAM) & pfts);
+						ProtoBroadcastAck(AIM_PROTOCOL_NAME, hContact, ACKTYPE_FILE, ACKRESULT_DATA,hContact, (LPARAM) & pfts);
 						LOG("P2P: Finished sending file bytes.");
 						fclose(fd);
 					}
-					sendBroadcast(hContact, ACKTYPE_FILE, ACKRESULT_SUCCESS,hContact,0);
-                    mir_free(wd);
-					mir_free(file);
-                    Netlib_CloseHandle(hServerPacketRecver);
+					ProtoBroadcastAck(AIM_PROTOCOL_NAME, hContact, ACKTYPE_FILE, ACKRESULT_SUCCESS,hContact,0);
+					delete[] file;
 					return;
 				}
 				else if(type==0x0204)
 				{
 					LOG("P2P: Buddy says they got the file successfully");
-					sendBroadcast(hContact, ACKTYPE_FILE, ACKRESULT_SUCCESS,hContact,0);
-                    mir_free(wd);
-					mir_free(file);
-                    Netlib_CloseHandle(hServerPacketRecver);
-                    return;
+					ProtoBroadcastAck(AIM_PROTOCOL_NAME, hContact, ACKTYPE_FILE, ACKRESULT_SUCCESS,hContact,0);
+					delete[] file;
+					return;
 				}
 				else if(type==0x0205)
 				{
@@ -176,11 +156,8 @@ void CAimProto::sending_file(HANDLE hContact, HANDLE hNewConnection)
 					char* buf = (char*)recv_ft;
 					if(Netlib_Send(hNewConnection,buf,sizeof(oft2),0)==SOCKET_ERROR)
 					{
-						sendBroadcast(hContact, ACKTYPE_FILE, ACKRESULT_FAILED,hContact,0);
-                        Netlib_CloseHandle(hServerPacketRecver);
+						ProtoBroadcastAck(AIM_PROTOCOL_NAME,hContact, ACKTYPE_FILE, ACKRESULT_FAILED,hContact,0);
 						Netlib_CloseHandle(hNewConnection);
-                        mir_free(wd);
-					    mir_free(file);
 						return;
 					}
 				}
@@ -188,12 +165,10 @@ void CAimProto::sending_file(HANDLE hContact, HANDLE hNewConnection)
 		}
 	}
 }
-
 #if _MSC_VER
-	#pragma warning( default: 4706 )
+#pragma warning( default: 4706 )
 #endif
-
-void CAimProto::receiving_file(HANDLE hContact, HANDLE hNewConnection)
+void receiving_file(HANDLE hContact, HANDLE hNewConnection)
 {
 	LOG("P2P: Entered file receiving thread.");
 	bool accepted_file=0;
@@ -201,17 +176,21 @@ void CAimProto::receiving_file(HANDLE hContact, HANDLE hNewConnection)
 	char* file=0;
 	FILE *fd=0;
 	oft2 ft;
-
 	PROTOFILETRANSFERSTATUS pfts;
 	memset(&pfts, 0, sizeof(PROTOFILETRANSFERSTATUS));
+	pfts.currentFileNumber=0;
+	pfts.currentFileProgress=0;
+	pfts.currentFileTime=0;
+	pfts.files=NULL;
 	pfts.hContact=hContact;
+	pfts.sending=0;
 	pfts.totalFiles=1;
-
-    unsigned long size;
-	if (!getString(hContact, AIM_KEY_FN, &dbv))
+	pfts.totalProgress=0;
+	unsigned long size;
+	if (!DBGetContactSettingString(hContact, AIM_PROTOCOL_NAME, AIM_KEY_FN, &dbv))
 	{
-		file=mir_strdup(dbv.pszVal);
-		pfts.workingDir=mir_strdup(file);
+		file=strldup(dbv.pszVal,lstrlen(dbv.pszVal));
+		pfts.workingDir=strldup(file,lstrlen(file));
 		DBFreeVariant(&dbv);
 	}
 	//start listen for packets stuff
@@ -221,23 +200,27 @@ void CAimProto::receiving_file(HANDLE hContact, HANDLE hNewConnection)
 	HANDLE hServerPacketRecver=NULL;
 	hServerPacketRecver = (HANDLE) CallService(MS_NETLIB_CREATEPACKETRECVER, (WPARAM)hNewConnection, 2048 * 4);
 	packetRecv.cbSize = sizeof(packetRecv);
-	packetRecv.dwTimeout = 100*getWord( AIM_KEY_GP, DEFAULT_GRACE_PERIOD);
-	for(;;)
+	packetRecv.dwTimeout = 100*DBGetContactSettingWord(NULL, AIM_PROTOCOL_NAME, AIM_KEY_GP, DEFAULT_GRACE_PERIOD);
+	#if _MSC_VER
+	#pragma warning( disable: 4127)
+	#endif
+	while(1)
 	{
+		#if _MSC_VER
+		#pragma warning( default: 4127)
+		#endif
 		recvResult = CallService(MS_NETLIB_GETMOREPACKETS, (WPARAM) hServerPacketRecver, (LPARAM) & packetRecv);
 		if (recvResult == 0)
 			{
 				LOG("P2P: File transfer connection Error: 0");
-				sendBroadcast(hContact, ACKTYPE_FILE, ACKRESULT_FAILED,hContact,0);
-                Netlib_CloseHandle(hServerPacketRecver);
+				ProtoBroadcastAck(AIM_PROTOCOL_NAME, hContact, ACKTYPE_FILE, ACKRESULT_FAILED,hContact,0);
 				Netlib_CloseHandle(hNewConnection);
                 break;
             }
         if (recvResult == SOCKET_ERROR)
 			{
 				LOG("P2P: File transfer connection Error: -1");
-				sendBroadcast(hContact, ACKTYPE_FILE, ACKRESULT_FAILED,hContact,0);
-                Netlib_CloseHandle(hServerPacketRecver);
+				ProtoBroadcastAck(AIM_PROTOCOL_NAME, hContact, ACKTYPE_FILE, ACKRESULT_FAILED,hContact,0);
 				Netlib_CloseHandle(hNewConnection);
                 break;
             }
@@ -263,15 +246,13 @@ void CAimProto::receiving_file(HANDLE hContact, HANDLE hNewConnection)
 						pfts.totalBytes=size;
 						char* buf = (char*)&ft;
 						Netlib_Send(hNewConnection,buf,sizeof(oft2),0);
-						file = (char*)mir_realloc(file,lstrlenA(file)+1+lstrlenA((char*)&ft.filename)+1);
-						lstrcatA(file,(char*)&ft.filename);
+						file=renew(file,lstrlen(file)+1,lstrlen((char*)&ft.filename)+1);
+						lstrcat(file,(char*)&ft.filename);
 						pfts.currentFile=file;
 						fd = fopen(file, "wb");
 						if(!fd)
 						{
-                            mir_free(pfts.workingDir);
-							mir_free(file);
-                            Netlib_CloseHandle(hServerPacketRecver);
+							delete[] file;
 							return;
 						}
 						else
@@ -287,7 +268,7 @@ void CAimProto::receiving_file(HANDLE hContact, HANDLE hNewConnection)
 				fwrite(packetRecv.buffer,1,packetRecv.bytesAvailable,fd);
 				pfts.currentFileProgress+=packetRecv.bytesAvailable;
 				pfts.totalProgress+=packetRecv.bytesAvailable;
-				sendBroadcast(hContact, ACKTYPE_FILE, ACKRESULT_DATA,hContact, (LPARAM) & pfts);
+				ProtoBroadcastAck(AIM_PROTOCOL_NAME, hContact, ACKTYPE_FILE, ACKRESULT_DATA,hContact, (LPARAM) & pfts);
 				if(pfts.totalBytes==pfts.currentFileProgress)
 				{
 
@@ -298,8 +279,7 @@ void CAimProto::receiving_file(HANDLE hContact, HANDLE hNewConnection)
 					ft.recv_checksum=_htonl(aim_oft_checksum_file(file));
 					LOG("P2P: We got the file successfully");
 					Netlib_Send(hNewConnection,(char*)&ft,sizeof(oft2),0);
-					sendBroadcast(hContact, ACKTYPE_FILE, ACKRESULT_SUCCESS,hContact,0);
-                    Netlib_CloseHandle(hServerPacketRecver);
+					ProtoBroadcastAck(AIM_PROTOCOL_NAME, hContact, ACKTYPE_FILE, ACKRESULT_SUCCESS,hContact,0);
 					break;
 				}
 			}
@@ -307,6 +287,5 @@ void CAimProto::receiving_file(HANDLE hContact, HANDLE hNewConnection)
 	}
 	if(accepted_file&&fd)
 		fclose(fd);
-	mir_free(file);
-    mir_free(pfts.workingDir);
+	delete[] file;
 }

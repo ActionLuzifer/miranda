@@ -5,7 +5,9 @@
 	Name="Yahoo"
 	ProjectGUID="{E42870DB-9FED-44E7-9C93-4E64D0C87F51}"
 	SccProjectName=""
-	SccLocalPath="">
+	SccAuxPath=""
+	SccLocalPath=""
+	SccProvider="">
 	<Platforms>
 		<Platform
 			Name="Win32"/>
@@ -26,7 +28,7 @@
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;YAHOO_EXPORTS;HAVE_CONFIG_H"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
-				UsePrecompiledHeader="3"
+				UsePrecompiledHeader="2"
 				PrecompiledHeaderThrough="yahoo.h"
 				WarningLevel="3"
 				SuppressStartupBanner="TRUE"
@@ -87,11 +89,10 @@
 				AdditionalIncludeDirectories="../../include"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;YAHOO_EXPORTS;HAVE_CONFIG_H"
 				StringPooling="TRUE"
-				ExceptionHandling="FALSE"
 				RuntimeLibrary="2"
 				EnableFunctionLevelLinking="TRUE"
-				UsePrecompiledHeader="3"
-				PrecompiledHeaderThrough="yahoo.h"
+				UsePrecompiledHeader="2"
+				PrecompiledHeaderThrough=""
 				WarningLevel="3"
 				SuppressStartupBanner="TRUE"
 				DebugInformationFormat="3"/>
@@ -99,12 +100,8 @@
 				Name="VCCustomBuildTool"/>
 			<Tool
 				Name="VCLinkerTool"
-				IgnoreImportLibrary="TRUE"
-				AdditionalDependencies="vc7to6.lib oldnames.lib"
 				LinkIncremental="1"
 				SuppressStartupBanner="TRUE"
-				AdditionalLibraryDirectories="../../lib"
-				IgnoreAllDefaultLibraries="TRUE"
 				GenerateDebugInformation="TRUE"
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"
@@ -147,7 +144,7 @@
 			ConfigurationType="2"
 			UseOfMFC="0"
 			ATLMinimizesCRunTimeLibraryUsage="FALSE"
-			CharacterSet="1">
+			CharacterSet="2">
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
@@ -156,7 +153,7 @@
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
 				BufferSecurityCheck="TRUE"
-				UsePrecompiledHeader="3"
+				UsePrecompiledHeader="2"
 				PrecompiledHeaderThrough="yahoo.h"
 				WarningLevel="3"
 				SuppressStartupBanner="TRUE"
@@ -206,7 +203,7 @@
 			ConfigurationType="2"
 			UseOfMFC="0"
 			ATLMinimizesCRunTimeLibraryUsage="FALSE"
-			CharacterSet="1"
+			CharacterSet="2"
 			WholeProgramOptimization="FALSE">
 			<Tool
 				Name="VCCLCompilerTool"
@@ -218,11 +215,10 @@
 				AdditionalIncludeDirectories="../../include"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;YAHOO_EXPORTS;HAVE_CONFIG_H"
 				StringPooling="TRUE"
-				ExceptionHandling="FALSE"
 				RuntimeLibrary="2"
 				BufferSecurityCheck="TRUE"
-				UsePrecompiledHeader="3"
-				PrecompiledHeaderThrough="yahoo.h"
+				UsePrecompiledHeader="2"
+				PrecompiledHeaderThrough=""
 				WarningLevel="3"
 				SuppressStartupBanner="TRUE"
 				DebugInformationFormat="3"/>
@@ -231,9 +227,6 @@
 			<Tool
 				Name="VCLinkerTool"
 				IgnoreImportLibrary="TRUE"
-				AdditionalDependencies="vc7to6.lib oldnames.lib"
-				AdditionalLibraryDirectories="../../lib"
-				IgnoreAllDefaultLibraries="TRUE"
 				GenerateDebugInformation="TRUE"
 				GenerateMapFile="TRUE"
 				OptimizeReferences="2"
@@ -278,76 +271,49 @@
 			Name="Source Files"
 			Filter="cpp;c;cxx;rc;def;r;odl;idl;hpj;bat">
 			<File
-				RelativePath=".\avatar.cpp">
+				RelativePath=".\avatar.c">
 			</File>
 			<File
-				RelativePath=".\chat.cpp">
+				RelativePath=".\chat.c">
 			</File>
 			<File
-				RelativePath=".\file_transfer.cpp">
+				RelativePath=".\file_transfer.c">
 			</File>
 			<File
-				RelativePath=".\http_gateway.cpp">
+				RelativePath=".\http_gateway.c">
 			</File>
 			<File
-				RelativePath=".\icolib.cpp">
+				RelativePath=".\icolib.c">
 			</File>
 			<File
-				RelativePath=".\ignore.cpp">
+				RelativePath=".\ignore.c">
 			</File>
 			<File
-				RelativePath=".\im.cpp">
+				RelativePath=".\im.c">
 			</File>
 			<File
-				RelativePath=".\main.cpp">
+				RelativePath=".\main.c">
 			</File>
 			<File
-				RelativePath=".\options.cpp">
+				RelativePath=".\options.c">
 			</File>
 			<File
-				RelativePath=".\proto.cpp">
+				RelativePath=".\search.c">
 			</File>
 			<File
-				RelativePath=".\search.cpp">
+				RelativePath=".\server.c">
 			</File>
 			<File
-				RelativePath=".\server.cpp">
+				RelativePath=".\services.c">
 			</File>
 			<File
-				RelativePath=".\services.cpp">
+				RelativePath=".\util.c">
 			</File>
 			<File
-				RelativePath=".\util.cpp">
+				RelativePath=".\webcam.c">
 			</File>
 			<File
-				RelativePath=".\webcam.cpp">
-			</File>
-			<File
-				RelativePath=".\yahoo.cpp">
-				<FileConfiguration
-					Name="Debug|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="1"/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="1"/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug Unicode|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="1"/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release Unicode|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="1"/>
-				</FileConfiguration>
+				RelativePath=".\yahoo.c">
 			</File>
 			<Filter
 				Name="libyahoo2"
@@ -357,57 +323,15 @@
 				</File>
 				<File
 					RelativePath=".\libyahoo2\crypt.c">
-					<FileConfiguration
-						Name="Debug|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Debug Unicode|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release Unicode|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"/>
-					</FileConfiguration>
 				</File>
 				<File
 					RelativePath=".\libyahoo2\libyahoo2.c">
-					<FileConfiguration
-						Name="Debug|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Debug Unicode|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release Unicode|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"/>
-					</FileConfiguration>
+				</File>
+				<File
+					RelativePath=".\libyahoo2\sha.c">
+				</File>
+				<File
+					RelativePath=".\libyahoo2\sha.h">
 				</File>
 				<File
 					RelativePath=".\libyahoo2\yahoo2.h">
@@ -420,30 +344,6 @@
 				</File>
 				<File
 					RelativePath=".\libyahoo2\yahoo_auth.c">
-					<FileConfiguration
-						Name="Debug|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Debug Unicode|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release Unicode|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"/>
-					</FileConfiguration>
 				</File>
 				<File
 					RelativePath=".\libyahoo2\yahoo_auth.h">
@@ -453,90 +353,18 @@
 				</File>
 				<File
 					RelativePath=".\libyahoo2\yahoo_httplib.c">
-					<FileConfiguration
-						Name="Debug|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Debug Unicode|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release Unicode|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"/>
-					</FileConfiguration>
 				</File>
 				<File
 					RelativePath=".\libyahoo2\yahoo_httplib.h">
 				</File>
 				<File
 					RelativePath=".\libyahoo2\yahoo_list.c">
-					<FileConfiguration
-						Name="Debug|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Debug Unicode|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release Unicode|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"/>
-					</FileConfiguration>
 				</File>
 				<File
 					RelativePath=".\libyahoo2\yahoo_list.h">
 				</File>
 				<File
 					RelativePath=".\libyahoo2\yahoo_util.c">
-					<FileConfiguration
-						Name="Debug|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Debug Unicode|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release Unicode|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"/>
-					</FileConfiguration>
 				</File>
 				<File
 					RelativePath=".\libyahoo2\yahoo_util.h">
@@ -551,9 +379,6 @@
 			</File>
 			<File
 				RelativePath=".\ignore.h">
-			</File>
-			<File
-				RelativePath=".\proto.h">
 			</File>
 			<File
 				RelativePath=".\pthread.h">

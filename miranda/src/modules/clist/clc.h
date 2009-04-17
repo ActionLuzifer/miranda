@@ -2,7 +2,7 @@
 
 Miranda IM: the free IM client for Microsoft* Windows*
 
-Copyright 2000-2009 Miranda ICQ/IM project,
+Copyright 2000-2007 Miranda ICQ/IM project,
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
 
@@ -163,15 +163,12 @@ DWORD GetDefaultExStyle(void);
 void GetFontSetting(int i,LOGFONTA *lf,COLORREF *colour);
 
 /* clistmenus.c */
-HGENMENU fnGetProtocolMenu( const char* );
-int      fnGetProtocolVisibility( const char* accName );
+int    fnGetProtocolVisibility( const char* proto );
 
-int      fnGetAccountIndexByPos(int Pos);
-int      fnGetProtoIndexByPos(PROTOCOLDESCRIPTOR ** proto, int protoCnt, int Pos);
-void     RebuildMenuOrder( void );
-void     SetClistGlobalStatus(int status);
-
-INT_PTR  MenuProcessCommand(WPARAM wParam, LPARAM lParam);
+int    GetProtoIndexByPos(PROTOCOLDESCRIPTOR ** proto, int protoCnt, int Pos);
+char * GetUniqueProtoName(char * proto);
+void   RebuildMenuOrder( void );
+int    MenuProcessCommand(WPARAM wParam,LPARAM lParam);
 
 /* clistsettings.c */
 TCHAR* fnGetContactDisplayName( HANDLE hContact, int mode );
@@ -221,7 +218,7 @@ void   fnTrayIconIconsChanged ( void );
 int    fnTrayIconInit( HWND hwnd );
 TCHAR* fnTrayIconMakeTooltip( const TCHAR *szPrefix, const char *szProto );
 int    fnTrayIconPauseAutoHide ( WPARAM wParam, LPARAM lParam );
-INT_PTR    fnTrayIconProcessMessage ( WPARAM wParam, LPARAM lParam );
+int    fnTrayIconProcessMessage ( WPARAM wParam, LPARAM lParam );
 void   fnTrayIconRemove(HWND hwnd, const char *szProto);
 int    fnTrayIconSetBaseInfo(HICON hIcon, const char *szPreferredProto);
 void   fnTrayIconSetToBase ( char *szPreferredProto );
@@ -230,12 +227,12 @@ int    fnTrayIconUpdate( HICON hNewIcon, const TCHAR *szNewTip, const char *szPr
 void   fnTrayIconUpdateBase ( const char *szChangedProto );
 void   fnTrayIconUpdateWithImageList ( int iImage, const TCHAR *szNewTip, char *szPreferredProto );
 
-VOID CALLBACK fnTrayCycleTimerProc(HWND hwnd, UINT message, UINT_PTR idEvent, DWORD dwTime);
+VOID CALLBACK fnTrayCycleTimerProc(HWND hwnd, UINT message, UINT idEvent, DWORD dwTime);
 
 /* clui.c */
 LRESULT CALLBACK fnContactListWndProc ( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam );
 void fnLoadCluiGlobalOpts( void );
-void fnCluiProtocolStatusChanged(int,const char*);
+int  fnCluiProtocolStatusChanged(int,const char*);
 void fnDrawMenuItem(DRAWITEMSTRUCT *dis, HICON hIcon, HICON eventIcon);
 
 /* contact.c */

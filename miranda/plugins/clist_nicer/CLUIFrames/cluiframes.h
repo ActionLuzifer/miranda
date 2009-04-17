@@ -26,7 +26,8 @@ int CLUIFramesResizeFrames(RECT *rc);
 
 typedef struct tagProtocolData {
 	char *RealName;
-	int statusbarpos;
+	int protopos;
+    int statusbarpos;
 	boolean show;
 } ProtocolData;
 

@@ -9,26 +9,28 @@
 	".\icos\srvlist_add.ico"\
 	
 
-.\icq_proto.cpp : \
-	"..\..\include\m_icolib.h"\
+.\init.c : \
 	".\m_updater.h"\
 	
 
-.\iconlib.cpp : \
+.\iconlib.c : \
 	"..\..\include\m_icolib.h"\
 	
 
-.\icq_avatar.cpp : \
+.\icq_avatar.c : \
 	".\m_folders.h"\
 	
 
-.\icqoscar.cpp : \
+.\icq_xstatus.c : \
+	".\m_cluiframes.h"\
+	
+
+.\icqoscar.c : \
 	"..\..\include\m_avatars.h"\
 	"..\..\include\m_clc.h"\
 	"..\..\include\m_clist.h"\
 	"..\..\include\m_clistint.h"\
 	"..\..\include\m_clui.h"\
-	"..\..\include\m_cluiframes.h"\
 	"..\..\include\m_database.h"\
 	"..\..\include\m_genmenu.h"\
 	"..\..\include\m_icq.h"\
@@ -41,12 +43,9 @@
 	"..\..\include\m_plugins.h"\
 	"..\..\include\m_popup.h"\
 	"..\..\include\m_protocols.h"\
-	"..\..\include\m_protoint.h"\
 	"..\..\include\m_protomod.h"\
 	"..\..\include\m_protosvc.h"\
-	"..\..\include\m_stdhdr.h"\
 	"..\..\include\m_system.h"\
-	"..\..\include\m_system_cpp.h"\
 	"..\..\include\m_userinfo.h"\
 	"..\..\include\m_utils.h"\
 	"..\..\include\newpluginapi.h"\
@@ -73,7 +72,6 @@
 	".\icq_opts.h"\
 	".\icq_packet.h"\
 	".\icq_popups.h"\
-	".\icq_proto.h"\
 	".\icq_rates.h"\
 	".\icq_server.h"\
 	".\icq_servlist.h"\

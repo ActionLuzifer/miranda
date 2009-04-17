@@ -21,6 +21,15 @@
 
 #include "gg.h"
 
+pthread_mutex_t modeMsgsMutex;
+pthread_mutex_t threadMutex;
+
+uin_t nextUIN = 0;
+unsigned long lastCRC = 0;
+
+GGTHREAD *ggThread = NULL;
+list_t ggThreadList = NULL;
+
 //////////////////////////////////////////////////////////
 // Status mode -> DB
 char *gg_status2db(int status, const char *suffix)
@@ -48,13 +57,14 @@ char *gg_status2db(int status, const char *suffix)
 
 //////////////////////////////////////////////////////////
 // checks proto capabilities
-DWORD_PTR gg_getcaps(PROTO_INTERFACE *proto, int type, HANDLE hContact)
+static int gg_getcaps(WPARAM wParam, LPARAM lParam)
 {
 	int ret = 0;
-	switch (type) {
+	switch (wParam) {
 		case PFLAGNUM_1:
-			return PF1_IM | PF1_BASICSEARCH | PF1_EXTSEARCH | PF1_EXTSEARCHUI | PF1_SEARCHBYNAME |
-			       PF1_SEARCHBYNAME | PF1_MODEMSG | PF1_NUMERICUSERID | PF1_VISLIST | PF1_FILE;
+			ret = PF1_IM | PF1_BASICSEARCH | PF1_EXTSEARCH | PF1_EXTSEARCHUI | PF1_SEARCHBYNAME |
+				  PF1_SEARCHBYNAME | PF1_MODEMSG | PF1_NUMERICUSERID | PF1_VISLIST | PF1_FILE;
+			return ret;
 		case PFLAGNUM_2:
 			return PF2_ONLINE | PF2_SHORTAWAY | PF2_INVISIBLE;
 		case PFLAGNUM_3:
@@ -62,79 +72,99 @@ DWORD_PTR gg_getcaps(PROTO_INTERFACE *proto, int type, HANDLE hContact)
 		case PFLAGNUM_4:
 			return PF4_NOCUSTOMAUTH;
 		case PFLAG_UNIQUEIDTEXT:
-			return (DWORD_PTR) Translate("Gadu-Gadu Number");
+			return (int) Translate("Gadu-Gadu Number");
 		case PFLAG_UNIQUEIDSETTING:
-			return (DWORD_PTR) GG_KEY_UIN;
+			return (int) GG_KEY_UIN;
 			break;
 	}
 	return 0;
 }
 
 //////////////////////////////////////////////////////////
-// loads protocol icon
-HICON gg_loadicon(PROTO_INTERFACE *proto, int iconIndex)
+// gets protocol name
+static int gg_getname(WPARAM wParam, LPARAM lParam)
 {
-	if((iconIndex & 0xffff) == PLI_PROTOCOL)
-		return CopyIcon(LoadIconEx(IDI_GG));
+	lstrcpyn((char *) lParam, GG_PROTONAME, wParam);
+	return 0;
+}
 
-	return (HICON) NULL;
+//////////////////////////////////////////////////////////
+// loads protocol icon
+static int gg_loadicon(WPARAM wParam, LPARAM lParam)
+{
+	if((wParam & 0xffff) == PLI_PROTOCOL)
+		return (int) CopyIcon(LoadIconEx(IDI_GG));
+
+	return (int) (HICON) NULL;
 }
 
 //////////////////////////////////////////////////////////
 // gets protocol status
-GGINLINE char *gg_getstatusmsg(GGPROTO *gg, int status)
+int gg_getstatus(WPARAM wParam, LPARAM lParam)
+{
+	return ggStatus;
+}
+
+//////////////////////////////////////////////////////////
+// gets protocol status
+GGINLINE char *gg_getstatusmsg(int status)
 {
 	switch(status)
 	{
 		case ID_STATUS_ONLINE:
 		case ID_STATUS_FREECHAT:
-			return gg->modemsg.online;
+			return ggModeMsg.szOnline;
 			break;
 		case ID_STATUS_INVISIBLE:
-			return gg->modemsg.invisible;
+			return ggModeMsg.szInvisible;
 			break;
 		case ID_STATUS_AWAY:
 		default:
-			return gg->modemsg.away;
+			return ggModeMsg.szAway;
 	}
 }
 
 //////////////////////////////////////////////////////////
 // sets specified protocol status
-int gg_refreshstatus(GGPROTO *gg, int status)
+int gg_refreshstatus(int status)
 {
+	// Create main loop thread and connect when not connecting
+	pthread_mutex_lock(&threadMutex);
 	if(status == ID_STATUS_OFFLINE)
+		gg_disconnect(FALSE);
+	else if (!ggThread)
 	{
-		gg_disconnect(gg);
-		return TRUE;
+		if(ggThread = (GGTHREAD *) malloc(sizeof(GGTHREAD)))
+		{
+			list_add(&ggThreadList, ggThread, 0);
+			ZeroMemory(ggThread, sizeof(GGTHREAD));
+			// We control this thread ourselves (bypassing Miranda safe threads)
+			ggThread->id.hThread = (HANDLE) _beginthreadex(NULL, 0, (unsigned (__stdcall *) (void *)) gg_mainthread,
+												(void *)ggThread, 0, (unsigned *) &ggThread->id.dwThreadId);
+			// pthread_create(&ggThread->id, NULL, gg_mainthread, ggThread);
+		}
 	}
-	pthread_mutex_lock(&gg->sess_mutex);
-	if(!gg_isonline(gg))
-	{
-		if(!gg->pth_sess.dwThreadId)
-			pthread_create(&gg->pth_sess, NULL, gg_mainthread, gg);
-	}
-	else
+	else if(gg_isonline())
 	{
 		// Select proper msg
-		char *szMsg = gg_getstatusmsg(gg, status);
+		char *szMsg = gg_getstatusmsg(status);
 		if(szMsg)
 		{
 #ifdef DEBUGMODE
-			gg_netlog(gg, "gg_refreshstatus(): Setting status and away message \"%s\".", szMsg);
+			gg_netlog("gg_refreshstatus(): Setting status and away message \"%s\".", szMsg);
 #endif
-			gg_change_status_descr(gg->sess, status_m2gg(gg, status, szMsg != NULL), szMsg);
+			gg_change_status_descr(ggThread->sess, status_m2gg(status, szMsg != NULL), szMsg);
 		}
 		else
 		{
 #ifdef DEBUGMODE
-			gg_netlog(gg, "gg_refreshstatus(): Setting just status.");
+			gg_netlog("gg_refreshstatus(): Setting just status.");
 #endif
-			gg_change_status(gg->sess, status_m2gg(gg, status, 0));
+			gg_change_status(ggThread->sess, status_m2gg(status, 0));
 		}
-		gg_broadcastnewstatus(gg, status);
+		gg_broadcastnewstatus(status);
 	}
-	pthread_mutex_unlock(&gg->sess_mutex);
+	pthread_mutex_unlock(&threadMutex);
 
 	return TRUE;
 }
@@ -159,36 +189,35 @@ int gg_normalizestatus(int status)
 
 //////////////////////////////////////////////////////////
 // sets protocol status
-int gg_setstatus(PROTO_INTERFACE *proto, int iNewStatus)
+int gg_setstatus(WPARAM wParam, LPARAM lParam)
 {
-	proto->m_iDesiredStatus = gg_normalizestatus(iNewStatus);
+	ggDesiredStatus = gg_normalizestatus((int) wParam);
 
 	// Depreciated due status description changing
-	// if (gg->proto.m_iStatus == status) return 0;
+	// if (ggStatus == status) return 0;
 #ifdef DEBUGMODE
-	gg_netlog((GGPROTO *)proto, "gg_setstatus(): PS_SETSTATUS(%s) normalized to %s",
-		(char *) CallService(MS_CLIST_GETSTATUSMODEDESCRIPTION, iNewStatus, 0),
-		(char *) CallService(MS_CLIST_GETSTATUSMODEDESCRIPTION, proto->m_iDesiredStatus, 0));
+	gg_netlog("gg_setstatus(): PS_SETSTATUS(%s) normalized to %s",
+		(char *) CallService(MS_CLIST_GETSTATUSMODEDESCRIPTION, wParam, 0),
+		(char *) CallService(MS_CLIST_GETSTATUSMODEDESCRIPTION, ggDesiredStatus, 0));
 #endif
 	// Status wicked code due Miranda incompatibility with status+descr changing in one shot
 	// Status request is offline / just request disconnect
-	if(proto->m_iDesiredStatus == ID_STATUS_OFFLINE)
+	if(ggDesiredStatus == ID_STATUS_OFFLINE)
 		// Go offline
-		gg_refreshstatus((GGPROTO *)proto, proto->m_iDesiredStatus);
+		gg_refreshstatus(ggDesiredStatus);
 	// Miranda will always ask for a new status message
 #ifdef DEBUGMODE
 	else
-		gg_netlog((GGPROTO *)proto, "gg_setstatus(): Postponed to gg_setawaymsg().");
+		gg_netlog("gg_setstatus(): Postponed to gg_setawaymsg().");
 #endif
 	return 0;
 }
 
 //////////////////////////////////////////////////////////
 // when messsage received
-int gg_recvmessage(PROTO_INTERFACE *proto, HANDLE hContact, PROTORECVEVENT *pre)
+int gg_recvmessage(WPARAM wParam, LPARAM lParam)
 {
-	CCSDATA ccs = { hContact, PSR_MESSAGE, 0, ( LPARAM )pre };
-	return CallService(MS_PROTO_RECVMSG, 0, ( LPARAM )&ccs);
+	return CallService(MS_PROTO_RECVMSG, wParam, lParam);
 }
 
 //////////////////////////////////////////////////////////
@@ -197,223 +226,211 @@ typedef struct
 {
 	HANDLE hContact;
 	int seq;
-	GGPROTO *gg;
 } GG_SEQ_ACK;
 static void *__stdcall gg_sendackthread(void *ack)
 {
 	SleepEx(100, FALSE);
-	ProtoBroadcastAck(((GG_SEQ_ACK *)ack)->gg->proto.m_szModuleName, ((GG_SEQ_ACK *)ack)->hContact,
+	ProtoBroadcastAck(GG_PROTO, ((GG_SEQ_ACK *)ack)->hContact,
 		ACKTYPE_MESSAGE, ACKRESULT_SUCCESS, (HANDLE) ((GG_SEQ_ACK *)ack)->seq, 0);
 	free(ack);
 	return NULL;
 }
-int gg_sendmessage(PROTO_INTERFACE *proto, HANDLE hContact, int flags, const char *msg)
+int gg_sendmessage(WPARAM wParam, LPARAM lParam)
 {
-	GGPROTO *gg = (GGPROTO *)proto;
+	CCSDATA *ccs = (CCSDATA *) lParam;
 	pthread_t tid;
 	uin_t uin;
 
-	pthread_mutex_lock(&gg->sess_mutex);
-	if(gg_isonline(gg) && (uin = (uin_t)DBGetContactSettingDword(hContact, GG_PROTO, GG_KEY_UIN, 0)))
+	pthread_mutex_lock(&threadMutex);
+	if(gg_isonline() && (uin = (uin_t)DBGetContactSettingDword(ccs->hContact, GG_PROTO, GG_KEY_UIN, 0)))
 	{
 		if(DBGetContactSettingByte(NULL, GG_PROTO, GG_KEY_MSGACK, GG_KEYDEF_MSGACK))
 		{
 			// Return normally
-			HANDLE hRetVal = (HANDLE) gg_send_message(gg->sess, GG_CLASS_CHAT, uin, msg);
-			pthread_mutex_unlock(&gg->sess_mutex);
+			HANDLE hRetVal = (HANDLE) gg_send_message(ggThread->sess, GG_CLASS_CHAT, uin, (char *) ccs->lParam);
+			pthread_mutex_unlock(&threadMutex);
 			return (int) hRetVal;
 		}
 		else
 		{
 			// Auto-ack message without waiting for server ack
-			int seq = gg_send_message(gg->sess, GG_CLASS_CHAT, uin, msg);
+			int seq = gg_send_message(ggThread->sess, GG_CLASS_CHAT, uin, (char *) ccs->lParam);
 			GG_SEQ_ACK *ack = malloc(sizeof(GG_SEQ_ACK));
 			if(ack)
 			{
-				ack->gg = gg;
-				ack->seq = seq;
-				ack->hContact = hContact;
 				pthread_create(&tid, NULL, gg_sendackthread, (void *) ack);
 				pthread_detach(&tid);
 			}
-			pthread_mutex_unlock(&gg->sess_mutex);
+			pthread_mutex_unlock(&threadMutex);
 			return seq;
 		}
 	}
-	pthread_mutex_unlock(&gg->sess_mutex);
+	pthread_mutex_unlock(&threadMutex);
 	return 0;
 }
 
 //////////////////////////////////////////////////////////
 // when basic search
-static void *__stdcall gg_searchthread(void *empty)
+static void *__stdcall gg_searchthread(HANDLE hContact)
 {
-	GGPROTO *gg = (GGPROTO *)empty;
 	SleepEx(100, FALSE);
 #ifdef DEBUGMODE
-	gg_netlog(gg, "gg_searchthread(): Failed search.");
+	gg_netlog("gg_searchthread(): Failed search.");
 #endif
-	ProtoBroadcastAck(GG_PROTO, NULL, ACKTYPE_SEARCH, ACKRESULT_FAILED, (HANDLE)1, 0);
+	ProtoBroadcastAck(GG_PROTO, NULL, ACKTYPE_SEARCH, ACKRESULT_FAILED, (HANDLE) 1, 0);
 	return NULL;
 }
-HANDLE gg_basicsearch(PROTO_INTERFACE *proto, const char *id)
+int gg_basicsearch(WPARAM wParam, LPARAM lParam)
 {
-	GGPROTO *gg = (GGPROTO *)proto;
 	pthread_t tid;
 	gg_pubdir50_t req;
 
-	pthread_mutex_lock(&gg->sess_mutex);
-	if(!gg_isonline(gg))
+	pthread_mutex_lock(&threadMutex);
+	if(!gg_isonline())
 	{
-		pthread_mutex_unlock(&gg->sess_mutex);
-		return (HANDLE)0;
+		pthread_mutex_unlock(&threadMutex);
+		return 0;
 	}
 
 	if (!(req = gg_pubdir50_new(GG_PUBDIR50_SEARCH)))
-	{ pthread_create(&tid, NULL, gg_searchthread, gg); pthread_detach(&tid); return (HANDLE)1; }
+	{ pthread_create(&tid, NULL, gg_searchthread, NULL); pthread_detach(&tid); return 1; }
 
 	// Add uin and search it
-	gg_pubdir50_add(req, GG_PUBDIR50_UIN, id);
+	gg_pubdir50_add(req, GG_PUBDIR50_UIN, (char *) lParam);
 	gg_pubdir50_seq_set(req, GG_SEQ_SEARCH);
 
-	if(!gg_pubdir50(gg->sess, req))
-	{ pthread_create(&tid, NULL, gg_searchthread, gg); pthread_detach(&tid); return (HANDLE)1; }
+	if(!gg_pubdir50(ggThread->sess, req))
+	{ pthread_create(&tid, NULL, gg_searchthread, NULL); pthread_detach(&tid); return 1; }
 #ifdef DEBUGMODE
-	gg_netlog(gg, "gg_basicsearch(): Seq %d.", req->seq);
+	gg_netlog("gg_basicsearch(): Seq %d.", req->seq);
 #endif
 	gg_pubdir50_free(req);
 
-	pthread_mutex_unlock(&gg->sess_mutex);
-	return (HANDLE)1;
+	pthread_mutex_unlock(&threadMutex);
+	return 1;
 }
-static HANDLE gg_searchbydetails(PROTO_INTERFACE *proto, const char *nick, const char *firstName, const char *lastName)
+static int gg_searchbydetails(WPARAM wParam, LPARAM lParam)
 {
-	GGPROTO *gg = (GGPROTO *)proto;
+	PROTOSEARCHBYNAME *psbn = (PROTOSEARCHBYNAME *) lParam;
 	pthread_t tid;
 	gg_pubdir50_t req;
 	unsigned long crc;
 	char data[512] = "\0";
 
 	// Check if connected and if there's a search data
-	pthread_mutex_lock(&gg->sess_mutex);
-	if(!gg_isonline(gg))
+	pthread_mutex_lock(&threadMutex);
+	if(!gg_isonline())
 	{
-		pthread_mutex_unlock(&gg->sess_mutex);
+		pthread_mutex_unlock(&threadMutex);
 		return 0;
 	}
-	if(!nick && !firstName && !lastName)
+	if(!psbn->pszNick && !psbn->pszFirstName && !psbn->pszLastName)
 		return 0;
 
 	if (!(req = gg_pubdir50_new(GG_PUBDIR50_SEARCH)))
-	{ pthread_create(&tid, NULL, gg_searchthread, gg); pthread_detach(&tid); return (HANDLE)1; }
+	{ pthread_create(&tid, NULL, gg_searchthread, NULL); pthread_detach(&tid); return 1; }
 
 	// Add uin and search it
-	if(nick)
+	if(psbn->pszNick)
 	{
-		gg_pubdir50_add(req, GG_PUBDIR50_NICKNAME, nick);
-		strncat(data, nick, sizeof(data) - strlen(data));
+		gg_pubdir50_add(req, GG_PUBDIR50_NICKNAME, psbn->pszNick);
+		strncat(data, psbn->pszNick, sizeof(data) - strlen(data));
 	}
 	strncat(data, ".", sizeof(data) - strlen(data));
 
-	if(firstName)
+	if(psbn->pszFirstName)
 	{
-		gg_pubdir50_add(req, GG_PUBDIR50_FIRSTNAME, firstName);
-		strncat(data, firstName, sizeof(data) - strlen(data));
+		gg_pubdir50_add(req, GG_PUBDIR50_FIRSTNAME, psbn->pszFirstName);
+		strncat(data, psbn->pszFirstName, sizeof(data) - strlen(data));
 	}
 	strncat(data, ".", sizeof(data) - strlen(data));
 
-	if(lastName)
+	if(psbn->pszLastName)
 	{
-		gg_pubdir50_add(req, GG_PUBDIR50_LASTNAME, lastName);
-		strncat(data, lastName, sizeof(data) - strlen(data));
+		gg_pubdir50_add(req, GG_PUBDIR50_LASTNAME, psbn->pszLastName);
+		strncat(data, psbn->pszLastName, sizeof(data) - strlen(data));
 	}
 	strncat(data, ".", sizeof(data) - strlen(data));
 
 	// Count crc & check if the data was equal if yes do same search with shift
 	crc = crc_get(data);
 
-	if(crc == gg->last_crc && gg->next_uin)
-		gg_pubdir50_add(req, GG_PUBDIR50_START, ditoa(gg->next_uin));
+	if(crc == lastCRC && nextUIN)
+		gg_pubdir50_add(req, GG_PUBDIR50_START, ditoa(nextUIN));
 	else
-		gg->last_crc = crc;
+		lastCRC = crc;
 
 	gg_pubdir50_seq_set(req, GG_SEQ_SEARCH);
 
-	if(!gg_pubdir50(gg->sess, req))
-	{ pthread_create(&tid, NULL, gg_searchthread, gg); pthread_detach(&tid); return (HANDLE)1; }
+	if(!gg_pubdir50(ggThread->sess, req))
+	{ pthread_create(&tid, NULL, gg_searchthread, NULL); pthread_detach(&tid); return 1; }
 #ifdef DEBUGMODE
-	gg_netlog(gg, "gg_searchbyname(): Seq %d.", req->seq);
+	gg_netlog("gg_searchbyname(): Seq %d.", req->seq);
 #endif
 	gg_pubdir50_free(req);
 
-	pthread_mutex_unlock(&gg->sess_mutex);
-	return (HANDLE)1;
+	pthread_mutex_unlock(&threadMutex);
+	return 1;
 }
 
 //////////////////////////////////////////////////////////
 // when contact is added to list
-HANDLE gg_addtolist(PROTO_INTERFACE *proto, int flags, PROTOSEARCHRESULT *psr)
+int gg_addtolist(WPARAM wParam, LPARAM lParam)
 {
-	GGPROTO *gg = (GGPROTO *)proto;
-	GGSEARCHRESULT *sr = (GGSEARCHRESULT *)psr;
-	return gg_getcontact(gg, sr->uin, 1, flags & PALF_TEMPORARY ? 0 : 1, sr->hdr.nick);
+	GGSEARCHRESULT *sr = (GGSEARCHRESULT *) lParam;
+	return (int) gg_getcontact(sr->uin, 1, wParam & PALF_TEMPORARY ? 0 : 1, sr->hdr.nick);
 }
 
 //////////////////////////////////////////////////////////
-// user info request
-static void *__stdcall gg_cmdgetinfothread(void *empty)
+// THREAD: info thread
+static void *__stdcall gg_cmdgetinfothread(HANDLE hContact)
 {
-	GGCONTEXT *ctx = (GGCONTEXT *)empty;
 	SleepEx(100, FALSE);
 #ifdef DEBUGMODE
-	gg_netlog(ctx->gg, "gg_cmdgetinfothread(): Failed info retreival.");
+	gg_netlog("gg_cmdgetinfothread(): Failed info retreival.");
 #endif
-	ProtoBroadcastAck(ctx->gg->proto.m_szModuleName, ctx->hContact, ACKTYPE_GETINFO, ACKRESULT_FAILED, (HANDLE) 1, 0);
+	ProtoBroadcastAck(GG_PROTO, hContact, ACKTYPE_GETINFO, ACKRESULT_FAILED, (HANDLE) 1, 0);
 	return NULL;
 }
-int gg_getinfo(PROTO_INTERFACE *proto, HANDLE hContact, int infoType)
+int gg_getinfo(WPARAM wParam, LPARAM lParam)
 {
-	GGPROTO *gg = (GGPROTO *)proto;
+	CCSDATA *ccs = (CCSDATA *) lParam;
 	pthread_t tid;
 	gg_pubdir50_t req;
 
 	// Custom contact info
-	if(hContact)
+	if(ccs->hContact)
 	{
 		if (!(req = gg_pubdir50_new(GG_PUBDIR50_SEARCH)))
 		{
-			GGCONTEXT *ctx = (GGCONTEXT *)malloc(sizeof(GGCONTEXT));
-			ctx->hContact = hContact; ctx->gg = gg;
-			pthread_create(&tid, NULL, gg_cmdgetinfothread, ctx);
+			pthread_create(&tid, NULL, gg_cmdgetinfothread, ccs->hContact);
 			pthread_detach(&tid);
 			return 1;
 		}
 
 		// Add uin and search it
-		gg_pubdir50_add(req, GG_PUBDIR50_UIN, ditoa((uin_t)DBGetContactSettingDword(hContact, GG_PROTO, GG_KEY_UIN, 0)));
+		gg_pubdir50_add(req, GG_PUBDIR50_UIN, ditoa((uin_t)DBGetContactSettingDword(ccs->hContact, GG_PROTO, GG_KEY_UIN, 0)));
 		gg_pubdir50_seq_set(req, GG_SEQ_INFO);
 
 #ifdef DEBUGMODE
-		gg_netlog(gg, "gg_getinfo(): Requesting user info.", req->seq);
+		gg_netlog("gg_getinfo(): Requesting user info.", req->seq);
 #endif
-		pthread_mutex_lock(&gg->sess_mutex);
-		if(gg_isonline(gg) && !gg_pubdir50(gg->sess, req))
+		pthread_mutex_lock(&threadMutex);
+		if(gg_isonline() && !gg_pubdir50(ggThread->sess, req))
 		{
-			GGCONTEXT *ctx = (GGCONTEXT *)malloc(sizeof(GGCONTEXT));
-			ctx->hContact = hContact; ctx->gg = gg;
-			pthread_create(&tid, NULL, gg_cmdgetinfothread, ctx);
+			pthread_create(&tid, NULL, gg_cmdgetinfothread, ccs->hContact);
 			pthread_detach(&tid);
-			pthread_mutex_unlock(&gg->sess_mutex);
+			pthread_mutex_unlock(&threadMutex);
 			return 1;
 		}
-		pthread_mutex_unlock(&gg->sess_mutex);
+		pthread_mutex_unlock(&threadMutex);
 	}
 	// Own contact info
 	else
 	{
 		if (!(req = gg_pubdir50_new(GG_PUBDIR50_READ)))
 		{
-			pthread_create(&tid, NULL, gg_cmdgetinfothread, hContact);
+			pthread_create(&tid, NULL, gg_cmdgetinfothread, ccs->hContact);
 			pthread_detach(&tid);
 			return 1;
 		}
@@ -422,22 +439,20 @@ int gg_getinfo(PROTO_INTERFACE *proto, HANDLE hContact, int infoType)
 		gg_pubdir50_seq_set(req, GG_SEQ_CHINFO);
 
 #ifdef DEBUGMODE
-		gg_netlog(gg, "gg_getinfo(): Requesting owner info.", req->seq);
+		gg_netlog("gg_getinfo(): Requesting owner info.", req->seq);
 #endif
-		pthread_mutex_lock(&gg->sess_mutex);
-		if(gg_isonline(gg) && !gg_pubdir50(gg->sess, req))
+		pthread_mutex_lock(&threadMutex);
+		if(gg_isonline() && !gg_pubdir50(ggThread->sess, req))
 		{
-			GGCONTEXT *ctx = (GGCONTEXT *)malloc(sizeof(GGCONTEXT));
-			ctx->hContact = hContact; ctx->gg = gg;
-			pthread_create(&tid, NULL, gg_cmdgetinfothread, ctx);
+			pthread_create(&tid, NULL, gg_cmdgetinfothread, ccs->hContact);
 			pthread_detach(&tid);
-			pthread_mutex_unlock(&gg->sess_mutex);
+			pthread_mutex_unlock(&threadMutex);
 			return 1;
 		}
-		pthread_mutex_unlock(&gg->sess_mutex);
+		pthread_mutex_unlock(&threadMutex);
 	}
 #ifdef DEBUGMODE
-	gg_netlog(gg, "gg_getinfo(): Seq %d.", req->seq);
+	gg_netlog("gg_getinfo(): Seq %d.", req->seq);
 #endif
 	gg_pubdir50_free(req);
 
@@ -446,78 +461,74 @@ int gg_getinfo(PROTO_INTERFACE *proto, HANDLE hContact, int infoType)
 
 //////////////////////////////////////////////////////////
 // when away message is requested
-static void *__stdcall gg_getawaymsgthread(void *empty)
+static void *__stdcall gg_getawaymsgthread(HANDLE hContact)
 {
-	GGCONTEXT *ctx = (GGCONTEXT *)empty;
 	DBVARIANT dbv;
 
 	SleepEx(100, FALSE);
-	if (!DBGetContactSettingString(ctx->hContact, "CList", GG_KEY_STATUSDESCR, &dbv))
+	if (!DBGetContactSettingString(hContact, "CList", GG_KEY_STATUSDESCR, &dbv))
 	{
-		ProtoBroadcastAck(ctx->gg->proto.m_szModuleName, ctx->hContact, ACKTYPE_AWAYMSG, ACKRESULT_SUCCESS, (HANDLE) 1, (LPARAM) dbv.pszVal);
+		ProtoBroadcastAck(GG_PROTO, hContact, ACKTYPE_AWAYMSG, ACKRESULT_SUCCESS, (HANDLE) 1, (LPARAM) dbv.pszVal);
 
 #ifdef DEBUGMODE
-		gg_netlog(ctx->gg, "gg_getawaymsg(): Reading away msg \"%s\".", dbv.pszVal);
+		gg_netlog("gg_getawaymsg(): Reading away msg \"%s\".", dbv.pszVal);
 #endif
 		DBFreeVariant(&dbv);
 	}
 	else
-		ProtoBroadcastAck(ctx->gg->proto.m_szModuleName, ctx->hContact, ACKTYPE_AWAYMSG, ACKRESULT_SUCCESS, (HANDLE) 1, (LPARAM) NULL);
-	free(ctx);
+		ProtoBroadcastAck(GG_PROTO, hContact, ACKTYPE_AWAYMSG, ACKRESULT_SUCCESS, (HANDLE) 1, (LPARAM) NULL);
 	return NULL;
 }
-HANDLE gg_getawaymsg(PROTO_INTERFACE *proto, HANDLE hContact)
+int gg_getawaymsg(WPARAM wParam, LPARAM lParam)
 {
+	CCSDATA *ccs = (CCSDATA *) lParam;
 	pthread_t tid;
 
-	GGCONTEXT *ctx = malloc(sizeof(GGCONTEXT));
-	ctx->hContact = hContact; ctx->gg = (GGPROTO *)proto;
-	pthread_create(&tid, NULL, gg_getawaymsgthread, ctx);
+	pthread_create(&tid, NULL, gg_getawaymsgthread, ccs->hContact);
 	pthread_detach(&tid);
 
-	return (HANDLE)1;
+	return 1;
 }
 
 //////////////////////////////////////////////////////////
 // when away message is beging set
-int gg_setawaymsg(PROTO_INTERFACE *proto, int iStatus, const char *msg)
+int gg_setawaymsg(WPARAM wParam, LPARAM lParam)
 {
-	GGPROTO *gg = (GGPROTO *)proto;
-	int status = gg_normalizestatus(iStatus);
+	int status = gg_normalizestatus((int) wParam);
 	char **szMsg;
 
 #ifdef DEBUGMODE
-	gg_netlog(gg, "gg_setawaymsg(): Requesting away message set to \"%s\".", msg);
+	gg_netlog("gg_setawaymsg(): Requesting away message set to \"%s\".", (char *) lParam);
 #endif
-	pthread_mutex_lock(&gg->sess_mutex);
+	pthread_mutex_lock(&modeMsgsMutex);
 
 	// Select proper msg
 	switch(status)
 	{
 		case ID_STATUS_ONLINE:
-			szMsg = &gg->modemsg.online;
+			szMsg = &ggModeMsg.szOnline;
 			break;
 		case ID_STATUS_AWAY:
-			szMsg = &gg->modemsg.away;
+			szMsg = &ggModeMsg.szAway;
 			break;
 		case ID_STATUS_INVISIBLE:
-			szMsg = &gg->modemsg.invisible;
+			szMsg = &ggModeMsg.szInvisible;
 			break;
 		default:
-			pthread_mutex_unlock(&gg->sess_mutex);
+			pthread_mutex_unlock(&modeMsgsMutex);
 			return 1;
 	}
 
 	// Check if we change status here somehow
-	if(*szMsg && msg && !strcmp(*szMsg, msg)
-		|| !*szMsg && (!msg || !*msg))	
+	if(*szMsg && (char *) lParam && !strcmp(*szMsg, (char *) lParam)
+		|| !*szMsg && (!(char *)lParam || !*((char *) lParam)))
 	{
-		if(status == gg->proto.m_iDesiredStatus && gg->proto.m_iDesiredStatus == gg->proto.m_iStatus)
+		if(status == ggDesiredStatus && ggDesiredStatus == ggStatus)
 		{
 #ifdef DEBUGMODE
-			gg_netlog(gg, "gg_setawaymsg(): Message hasn't been changed, return.");
+			gg_netlog("gg_setawaymsg(): Message hasn't been changed, return.");
 #endif
-			pthread_mutex_unlock(&gg->sess_mutex);
+			pthread_mutex_unlock(&modeMsgsMutex);
 			return 0;
 		}
 	}
@@ -525,44 +536,42 @@ int gg_setawaymsg(PROTO_INTERFACE *proto, int iStatus, const char *msg)
 	{
 		if(*szMsg)
 			free(*szMsg);
-		*szMsg = msg && *msg ? _strdup(msg) : NULL;
+		*szMsg = (char *) lParam && *((char *) lParam) ? _strdup((char *) lParam) : NULL;
 #ifdef DEBUGMODE
-		gg_netlog(gg, "gg_setawaymsg(): Message changed.");
+		gg_netlog("gg_setawaymsg(): Message changed.");
 #endif
 	}
-	pthread_mutex_unlock(&gg->sess_mutex);
 
 	// Change the status only if it was desired by PS_SETSTATUS
-	if(status == gg->proto.m_iDesiredStatus)
-		gg_refreshstatus(gg, status);
+	if(status == ggDesiredStatus)
+		gg_refreshstatus(status);
 #ifdef DEBUGMODE
 	else
 	{
 		char error[128];
 		mir_snprintf(error, sizeof(error), Translate("GG: PS_AWAYMSG was called without previous PS_SETSTATUS for status %d, desired %d, current %d."),
-			status, gg->proto.m_iDesiredStatus, gg->proto.m_iStatus);
+			status, ggDesiredStatus, ggStatus);
 		PUShowMessage(error, SM_WARNING);
 	}
 #endif
+	pthread_mutex_unlock(&modeMsgsMutex);
 
 	return 0;
 }
 
 //////////////////////////////////////////////////////////
 // visible lists
-int gg_setapparentmode(PROTO_INTERFACE *proto, HANDLE hContact, int mode)
+static int gg_setapparentmode(WPARAM wParam, LPARAM lParam)
 {
-	GGPROTO *gg = (GGPROTO *)proto;
-	DBWriteContactSettingWord(hContact, proto->m_szModuleName, GG_KEY_APPARENT, (WORD)mode);
-	pthread_mutex_lock(&gg->sess_mutex);
-	if(gg_isonline(gg)) gg_notifyuser(gg, hContact, 1);
-	pthread_mutex_unlock(&gg->sess_mutex);
+	CCSDATA *ccs=(CCSDATA*)lParam;
+	DBWriteContactSettingWord(ccs->hContact, GG_PROTO, GG_KEY_APPARENT, (WORD)ccs->wParam);
+	if(gg_isonline()) gg_notifyuser(ccs->hContact, 1);
 	return 0;
 }
 
 //////////////////////////////////////////////////////////
 // create adv search dialog proc
-INT_PTR CALLBACK gg_advancedsearchdlgproc(HWND hwndDlg,UINT message,WPARAM wParam,LPARAM lParam)
+BOOL CALLBACK gg_advancedsearchdlgproc(HWND hwndDlg,UINT message,WPARAM wParam,LPARAM lParam)
 {
 	switch(message)
 	{
@@ -589,27 +598,27 @@ INT_PTR CALLBACK gg_advancedsearchdlgproc(HWND hwndDlg,UINT message,WPARAM wPara
 
 //////////////////////////////////////////////////////////
 // create adv search dialog
-HWND gg_createadvsearchui(PROTO_INTERFACE *proto, HWND owner)
+int gg_createadvsearchui(WPARAM wParam, LPARAM lParam)
 {
-	return CreateDialogParam(hInstance,
-		MAKEINTRESOURCE(IDD_GGADVANCEDSEARCH), owner, gg_advancedsearchdlgproc, (LPARAM)(GGPROTO *)proto);
+	return (int)CreateDialog(hInstance,
+		MAKEINTRESOURCE(IDD_GGADVANCEDSEARCH), (HWND)lParam, gg_advancedsearchdlgproc);
 }
 
 //////////////////////////////////////////////////////////
 // search by advanced
-HWND gg_searchbyadvanced(PROTO_INTERFACE *proto, HWND hwndDlg)
+int gg_searchbyadvanced(WPARAM wParam, LPARAM lParam)
 {
-	GGPROTO *gg = (GGPROTO *)proto;
 	pthread_t tid;
 	gg_pubdir50_t req;
+	HWND hwndDlg = (HWND)lParam;
 	char text[64], data[512] = "\0";
 	unsigned long crc;
 
 	// Check if connected
-	if(!gg_isonline(gg)) return (HWND)0;
+	if(!gg_isonline()) return 0;
 
 	if (!(req = gg_pubdir50_new(GG_PUBDIR50_SEARCH)))
-	{ pthread_create(&tid, NULL, gg_searchthread, gg); pthread_detach(&tid); return (HWND)1; }
+	{ pthread_create(&tid, NULL, gg_searchthread, NULL); pthread_detach(&tid); return 1; }
 
 	// Fetch search data
 	GetDlgItemText(hwndDlg, IDC_FIRSTNAME, text, sizeof(text));
@@ -694,113 +703,105 @@ HWND gg_searchbyadvanced(PROTO_INTERFACE *proto, HWND hwndDlg)
 	/* 7 */ strncat(data, ".", sizeof(data) - strlen(data));
 
 	// No data entered
-	if(strlen(data) <= 7 || (strlen(data) == 8 && IsDlgButtonChecked(hwndDlg, IDC_ONLYCONNECTED))) return (HWND)0;
+	if(strlen(data) <= 7 || (strlen(data) == 8 && IsDlgButtonChecked(hwndDlg, IDC_ONLYCONNECTED))) return 0;
 
 	// Count crc & check if the data was equal if yes do same search with shift
 	crc = crc_get(data);
 
-	if(crc == gg->last_crc && gg->next_uin)
-		gg_pubdir50_add(req, GG_PUBDIR50_START, ditoa(gg->next_uin));
+	if(crc == lastCRC && nextUIN)
+		gg_pubdir50_add(req, GG_PUBDIR50_START, ditoa(nextUIN));
 	else
-		gg->last_crc = crc;
+		lastCRC = crc;
 
 	gg_pubdir50_seq_set(req, GG_SEQ_SEARCH);
 
-	pthread_mutex_lock(&gg->sess_mutex);
-	if(gg_isonline(gg) && !gg_pubdir50(gg->sess, req))
+	pthread_mutex_lock(&threadMutex);
+	if(gg_isonline() && !gg_pubdir50(ggThread->sess, req))
 	{
-		pthread_create(&tid, NULL, gg_searchthread, gg);
+		pthread_create(&tid, NULL, gg_searchthread, NULL);
 		pthread_detach(&tid);
-		pthread_mutex_unlock(&gg->sess_mutex);
-		return (HWND)1;
+		pthread_mutex_unlock(&threadMutex);
+		return 1;
 	}
-	pthread_mutex_unlock(&gg->sess_mutex);
+	pthread_mutex_unlock(&threadMutex);
 #ifdef DEBUGMODE
-	gg_netlog(gg, "gg_searchbyadvanced(): Seq %d.", req->seq);
+	gg_netlog("gg_searchbyadvanced(): Seq %d.", req->seq);
 #endif
 	gg_pubdir50_free(req);
 
-	return (HWND)1;
+	return 1;
 }
-
-//////////////////////////////////////////////////////////
-// gets caccount manager GUI
-extern INT_PTR CALLBACK gg_acc_mgr_guidlgproc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
-
-static int gg_get_acc_mgr_gui(GGPROTO *gg, WPARAM wParam, LPARAM lParam)
-{
-	return (int) CreateDialogParam(hInstance, MAKEINTRESOURCE(IDD_ACCMGRUI), (HWND)lParam, gg_acc_mgr_guidlgproc, (LPARAM) gg);
-}
-
-//////////////////////////////////////////////////////////
-// Dummies for function that have to be implemented
-
-HANDLE gg_dummy_addtolistbyevent(PROTO_INTERFACE *proto, int flags, int iContact, HANDLE hDbEvent) { return NULL; }
-int    gg_dummy_authorize(PROTO_INTERFACE *proto, HANDLE hContact) { return 0; }
-int    gg_dummy_authdeny(PROTO_INTERFACE *proto, HANDLE hContact, const char *szReason) { return 0; }
-int    gg_dummy_authrecv(PROTO_INTERFACE *proto, HANDLE hContact, PROTORECVEVENT *pre) { return 0; }
-int    gg_dummy_authrequest(PROTO_INTERFACE *proto, HANDLE hContact, const char *szMessage) { return 0; }
-HANDLE gg_dummy_changeinfo(PROTO_INTERFACE *proto, int iInfoType, void *pInfoData) { return NULL; }
-int    gg_dummy_fileresume(PROTO_INTERFACE *proto, HANDLE hTransfer, int *action, const char **szFilename) { return 0; }
-HANDLE gg_dummy_searchbyemail(PROTO_INTERFACE *proto, const char *email) { return NULL; }
-int    gg_dummy_recvcontacts(PROTO_INTERFACE *proto, HANDLE hContact, PROTORECVEVENT *pre) { return 0; }
-int    gg_dummy_recvurl(PROTO_INTERFACE *proto, HANDLE hContact, PROTORECVEVENT *pre) { return 0; }
-int    gg_dummy_sendcontacts(PROTO_INTERFACE *proto, HANDLE hContact, int flags, int nContacts, HANDLE *hContactsList) { return 0; }
-int    gg_dummy_sendurl(PROTO_INTERFACE *proto, HANDLE hContact, int flags, const char *url) { return 0; }
-int    gg_dummy_recvawaymsg(PROTO_INTERFACE *proto, HANDLE hContact, int mode, PROTORECVEVENT *evt) { return 0; }
-int    gg_dummy_sendawaymsg(PROTO_INTERFACE *proto, HANDLE hContact, HANDLE hProcess, const char *msg) { return 0; }
-int    gg_dummy_useristyping(PROTO_INTERFACE *proto, HANDLE hContact, int type) { return 0; }
 
 //////////////////////////////////////////////////////////
 // Register services
-void gg_registerservices(GGPROTO *gg)
+void gg_registerservices()
 {
-	gg->proto.vtbl->AddToList              = gg_addtolist;
-	gg->proto.vtbl->AddToListByEvent       = gg_dummy_addtolistbyevent;
+	// Bind table
+	char service[128];
 
-	gg->proto.vtbl->Authorize              = gg_dummy_authorize;
-	gg->proto.vtbl->AuthDeny               = gg_dummy_authdeny;
-	gg->proto.vtbl->AuthRecv               = gg_dummy_authrecv;
-	gg->proto.vtbl->AuthRequest            = gg_dummy_authrequest;
+	mir_snprintf(service, sizeof(service), "%s%s", GG_PROTO, PS_GETCAPS);
+	CreateServiceFunction(service, gg_getcaps);
 
-	gg->proto.vtbl->ChangeInfo             = gg_dummy_changeinfo;
+	mir_snprintf(service, sizeof(service), "%s%s", GG_PROTO, PS_GETNAME);
+	CreateServiceFunction(service, gg_getname);
 
-	gg->proto.vtbl->FileAllow              = gg_fileallow;
-	gg->proto.vtbl->FileCancel             = gg_filecancel;
-	gg->proto.vtbl->FileDeny               = gg_filedeny;
-	gg->proto.vtbl->FileResume             = gg_dummy_fileresume;
+	mir_snprintf(service, sizeof(service), "%s%s", GG_PROTO, PS_LOADICON);
+	CreateServiceFunction(service, gg_loadicon);
 
-	gg->proto.vtbl->GetCaps                = gg_getcaps;
-	gg->proto.vtbl->GetIcon                = gg_loadicon;
-	gg->proto.vtbl->GetInfo                = gg_getinfo;
+	mir_snprintf(service, sizeof(service), "%s%s", GG_PROTO, PS_GETSTATUS);
+	CreateServiceFunction(service, gg_getstatus);
 
-	gg->proto.vtbl->SearchBasic            = gg_basicsearch;
-	gg->proto.vtbl->SearchByEmail          = gg_dummy_searchbyemail;
-	gg->proto.vtbl->SearchByName           = gg_searchbydetails;
-	gg->proto.vtbl->SearchAdvanced         = gg_searchbyadvanced;
-	gg->proto.vtbl->CreateExtendedSearchUI = gg_createadvsearchui;
+	mir_snprintf(service, sizeof(service), "%s%s", GG_PROTO, PS_SETSTATUS);
+	CreateServiceFunction(service, gg_setstatus);
 
-	gg->proto.vtbl->RecvContacts           = gg_dummy_recvcontacts;
-	gg->proto.vtbl->RecvFile               = gg_recvfile;
-	gg->proto.vtbl->RecvMsg                = gg_recvmessage;
-	gg->proto.vtbl->RecvUrl                = gg_dummy_recvurl;
+	mir_snprintf(service, sizeof(service), "%s%s", GG_PROTO, PSR_MESSAGE);
+	CreateServiceFunction(service, gg_recvmessage);
 
-	gg->proto.vtbl->SendContacts           = gg_dummy_sendcontacts;
-	gg->proto.vtbl->SendFile               = gg_sendfile;
-	gg->proto.vtbl->SendMsg                = gg_sendmessage;
-	gg->proto.vtbl->SendUrl                = gg_dummy_sendurl;
+	mir_snprintf(service, sizeof(service), "%s%s", GG_PROTO, PSS_MESSAGE);
+	CreateServiceFunction(service, gg_sendmessage);
 
-	gg->proto.vtbl->SetApparentMode        = gg_setapparentmode;
-	gg->proto.vtbl->SetStatus              = gg_setstatus;
+	mir_snprintf(service, sizeof(service), "%s%s", GG_PROTO, PS_BASICSEARCH);
+	CreateServiceFunction(service, gg_basicsearch);
 
-	gg->proto.vtbl->GetAwayMsg             = gg_getawaymsg;
-	gg->proto.vtbl->RecvAwayMsg            = gg_dummy_recvawaymsg;
-	gg->proto.vtbl->SendAwayMsg            = gg_dummy_sendawaymsg;
-	gg->proto.vtbl->SetAwayMsg             = gg_setawaymsg;
+	mir_snprintf(service, sizeof(service), "%s%s", GG_PROTO, PS_SEARCHBYNAME);
+	CreateServiceFunction(service, gg_searchbydetails);
 
-	gg->proto.vtbl->UserIsTyping           = gg_dummy_useristyping;
-                                            
-	gg->proto.vtbl->OnEvent                = gg_event;
-	
-	CreateProtoService(PS_CREATEACCMGRUI, gg_get_acc_mgr_gui, gg);
+	mir_snprintf(service, sizeof(service), "%s%s", GG_PROTO, PS_ADDTOLIST);
+	CreateServiceFunction(service, gg_addtolist);
+
+	mir_snprintf(service, sizeof(service), "%s%s", GG_PROTO, PSS_GETINFO);
+	CreateServiceFunction(service, gg_getinfo);
+
+	mir_snprintf(service, sizeof(service), "%s%s", GG_PROTO, PS_SETAWAYMSG);
+	CreateServiceFunction(service, gg_setawaymsg);
+
+	mir_snprintf(service, sizeof(service), "%s%s", GG_PROTO, PSS_GETAWAYMSG);
+	CreateServiceFunction(service, gg_getawaymsg);
+
+	mir_snprintf(service, sizeof(service), "%s%s", GG_PROTO, PSS_SETAPPARENTMODE);
+	CreateServiceFunction(service, gg_setapparentmode);
+
+	mir_snprintf(service, sizeof(service), "%s%s", GG_PROTO, PS_CREATEADVSEARCHUI);
+	CreateServiceFunction(service, gg_createadvsearchui);
+
+	mir_snprintf(service, sizeof(service), "%s%s", GG_PROTO, PS_SEARCHBYADVANCED);
+	CreateServiceFunction(service, gg_searchbyadvanced);
+
+	mir_snprintf(service, sizeof(service), "%s%s", GG_PROTO, PSS_FILEALLOW);
+	CreateServiceFunction(service, gg_fileallow);
+
+	mir_snprintf(service, sizeof(service), "%s%s", GG_PROTO, PSS_FILEDENY);
+	CreateServiceFunction(service, gg_filedeny);
+
+	mir_snprintf(service, sizeof(service), "%s%s", GG_PROTO, PSS_FILECANCEL);
+	CreateServiceFunction(service, gg_filecancel);
+
+	mir_snprintf(service, sizeof(service), "%s%s", GG_PROTO, PSS_FILE);
+	CreateServiceFunction(service, gg_sendfile);
+
+	mir_snprintf(service, sizeof(service), "%s%s", GG_PROTO, PSR_FILE);
+	CreateServiceFunction(service, gg_recvfile);
+
+	mir_snprintf(service, sizeof(service), GGS_RECVIMAGE, GG_PROTO);
+	CreateServiceFunction(service, gg_img_recvimage);
 }

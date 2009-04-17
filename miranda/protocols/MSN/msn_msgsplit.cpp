@@ -1,6 +1,6 @@
 /*
 Plugin of Miranda IM for communicating with users of the MSN Messenger protocol.
-Copyright (c) 2007-2009 Boris Krasnovskiy.
+Copyright (c) 2007 Boris Krasnovskiy.
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -13,21 +13,40 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with this program.  If not, see <http://www.gnu.org/licenses/>.
+along with this program; if not, write to the Free Software
+Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
 #include "msn_global.h"
-#include "msn_proto.h"
 
 
-chunkedmsg::chunkedmsg(const char* tid, const size_t totsz, const bool tbychunk)
+class chunkedmsg
+{
+private:
+	char* id;
+	char* msg;
+	size_t size;
+	size_t recvsz;
+	bool bychunk;
+
+public:
+	chunkedmsg(const char* tid, const size_t totsz, const bool bychunk);
+	~chunkedmsg();
+
+	void add(const char* msg, const size_t offset, const size_t portion);
+	bool compare(const char* tid);
+	bool get(char*& tmsg, size_t& tsize);
+};
+
+
+inline chunkedmsg::chunkedmsg(const char* tid, const size_t totsz, const bool tbychunk)
 	: size(totsz), recvsz(0), bychunk(tbychunk)
 {
 	id = mir_strdup(tid);
 	msg = tbychunk ? NULL : (char*)mir_alloc(totsz + 1); 
 }
 
-chunkedmsg::~chunkedmsg()
+inline chunkedmsg::~chunkedmsg()
 {
 	mir_free(id);
 	mir_free(msg);
@@ -50,6 +69,11 @@ void chunkedmsg::add( const char* tmsg, const size_t offset, const size_t portio
 	}
 }
 
+bool chunkedmsg::compare(const char* tid)
+{ 
+	return strcmp(id, tid) == 0;
+}
+
 bool chunkedmsg::get(char*& tmsg, size_t& tsize)
 {
 	bool alldata = bychunk ? size == 0 : recvsz == size;
@@ -64,47 +88,82 @@ bool chunkedmsg::get(char*& tmsg, size_t& tsize)
 	return alldata;
 }
 
+static int CompareID(const chunkedmsg* p1, const chunkedmsg* p2)
+{
+	return p2 - p1;
+}
 
-int CMsnProto::addCachedMsg(const char* id, const char* msg, const size_t offset,
+static LIST<chunkedmsg> msgCache(10, CompareID);
+
+
+int findChunky(const char* id)
+{
+	int res = -1;
+	for ( int i = 0; i < msgCache.getCount(); ++i )
+		if ( msgCache[i]->compare( id )) 
+		{
+			res = i; 
+			break;
+		}
+	return res;
+}
+
+int addCachedMsg(const char* id, const char* msg, const size_t offset,
 				 const size_t portion, const size_t totsz, const bool bychunk)
 {
-	int idx = msgCache.getIndex((chunkedmsg*)&id);
+	chunkedmsg* chunky;
+
+	int idx = findChunky(id);
 	if ( idx == -1 ) 
 	{
-		msgCache.insert(new chunkedmsg(id, totsz, bychunk));
-		idx = msgCache.getIndex((chunkedmsg*)&id);
+		chunky = new chunkedmsg(id, totsz, bychunk);
+		msgCache.insert(chunky);
+		idx = findChunky(id);
 	}
+	else
+		chunky = msgCache[idx];
 
-	msgCache[idx].add(msg, offset, portion);
+	chunky->add(msg, offset, portion);
 
 	return idx;
 }
 
-bool CMsnProto::getCachedMsg(int idx, char*& msg, size_t& size)
+bool getCachedMsg(int idx, char*& msg, size_t& size)
 {
-	bool res = msgCache[idx].get(msg, size);
+	bool res = msgCache[idx]->get(msg, size);
 	if (res)
+	{
+		delete msgCache[idx]; 
 		msgCache.remove(idx);
+	}
 
 	return res;
 }
 
-bool CMsnProto::getCachedMsg(const char* id, char*& msg, size_t& size)
+bool getCachedMsg(const char* id, char*& msg, size_t& size)
 {
-	int idx = msgCache.getIndex((chunkedmsg*)&id);
+	int idx = findChunky(id);
 	return idx != -1 && getCachedMsg(idx, msg, size);
 }
 
 
-void CMsnProto::clearCachedMsg(int idx)
+void clearCachedMsg(int idx)
 {
 	if (idx != -1)
+	{
+		delete msgCache[idx]; 
 		msgCache.remove(idx);
+	}
 	else
-		msgCache.destroy();
+		for ( int i=0; i < msgCache.getCount(); i++ ) 
+		{
+			delete msgCache[i]; 
+			msgCache.remove(i);
+		}
 }
 
-void CMsnProto::CachedMsg_Uninit(void)
+void CachedMsg_Uninit(void)
 {
 	clearCachedMsg();
+	msgCache.destroy();
 }

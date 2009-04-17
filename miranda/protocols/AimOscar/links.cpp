@@ -1,6 +1,7 @@
 /*
-Plugin of Miranda IM for communicating with users of the AIM protocol.
-Copyright (c) 2008-2009 Boris Krasnovskiy
+AOL Instant Messenger Plugin for Miranda IM
+
+Copyright © 2003 Robert Rainwater
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -13,134 +14,283 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with this program.  If not, see <http://www.gnu.org/licenses/>.
+along with this program; if not, write to the Free Software
+Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
-
-#include "aim.h"
 #include "links.h"
-#include "m_assocmgr.h"
 
-static HANDLE hServiceParseLink;
+#define AIMWATCHERCLASS "__AIMWatcherClass__"
 
-extern OBJLIST<CAimProto> g_Instances;
+static ATOM aWatcherClass = 0;
+static HWND hWatcher = NULL;
 
-static INT_PTR ServiceParseAimLink(WPARAM /*wParam*/,LPARAM lParam)
+static void aim_links_normalize(char *szMsg)
 {
-	if (lParam == 0) return 1; /* sanity check */
-
-	char *arg = (char*)lParam;
-
-	/* skip leading prefix */
-	arg = strchr(arg, ':');
-	if (arg == NULL) return 1; /* parse failed */
-
-	for (++arg; *arg == '/'; ++arg);
-
-	arg = NEWSTR_ALLOCA(arg);
-
-	if (g_Instances.getCount() == 0) return 0;
-
-	CAimProto *proto = &g_Instances[0];
-	for (int i = 0; i < g_Instances.getCount(); ++i)
-	{
-		if ( g_Instances[i].m_iStatus != ID_STATUS_OFFLINE && g_Instances[i].m_iStatus != ID_STATUS_CONNECTING)
-		{
-			proto = &g_Instances[i];
-			break;
-		}
-	}
-	if (proto==NULL) return 1;
-
-	/*
-        add user:      aim:addbuddy?screenname=NICK&groupname=GROUP
-        send message:  aim:goim?screenname=NICK&message=MSG
-        open chatroom: aim:gochat?roomname=ROOM&exchange=NUM
-    */
-    /* add a contact to the list */
-    if(!_strnicmp(arg,"addbuddy?",9)) 
-	{
-        char *tok,*tok2,*sn=NULL,*group=NULL;
-        ADDCONTACTSTRUCT acs;
-        PROTOSEARCHRESULT psr;
-		
-        for(tok=arg+8;tok!=NULL;tok=tok2) {
-			tok2=strchr(++tok,'&'); /* first token */
-			if (tok2) *tok2=0;
-            if(!_strnicmp(tok,"screenname=",11) && *(tok+11)!=0)
-                sn=Netlib_UrlDecode(tok+11);
-            if(!_strnicmp(tok,"groupname=",10) && *(tok+10)!=0)
-                group=Netlib_UrlDecode(tok+10);  /* group is currently ignored */
-        }
-        if(sn==NULL) return 1; /* parse failed */
-        if(proto->contact_from_sn(sn)==NULL) { /* does not yet check if sn is current user */
-            acs.handleType=HANDLE_SEARCHRESULT;
-			acs.szProto=proto->m_szModuleName;
-            acs.psr=&psr;
-            ZeroMemory(&psr,sizeof(PROTOSEARCHRESULT));
-            psr.cbSize=sizeof(PROTOSEARCHRESULT);
-            psr.nick=sn;
-            CallService(MS_ADDCONTACT_SHOW,(WPARAM)NULL,(LPARAM)&acs);
-        }
-        return 0;
+    char *s = szMsg;
+    while (*s) {
+        if (*s == '+')
+            *s = ' ';
+        s++;
     }
-    /* send a message to a contact */
-    else if(!_strnicmp(arg,"goim?",5)) {
-        char *tok,*tok2,*sn=NULL,*msg=NULL;
-        HANDLE hContact;
+}
 
-        for(tok=arg+4;tok!=NULL;tok=tok2) {
-			tok2=strchr(++tok,'&'); /* first token */
-			if (tok2) *tok2=0;
-            if(!_strnicmp(tok,"screenname=",11) && *(tok+11)!=0)
-                sn=Netlib_UrlDecode(tok+11);
-            if(!_strnicmp(tok,"message=",8) && *(tok+8)!=0)
-                msg=Netlib_UrlDecode(tok+8);
-        }
-        if (sn==NULL) return 1; /* parse failed */
-        if (ServiceExists(MS_MSG_SENDMESSAGE)) 
+static LRESULT CALLBACK aim_links_watcherwndproc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
+{
+    switch (msg) {
+        case WM_COPYDATA:
         {
-		    hContact = proto->contact_from_sn(sn, true, true);
-            if (hContact)
-                CallService(MS_MSG_SENDMESSAGE, (WPARAM)hContact, (LPARAM)msg);
-        }
-        return 0;
-    }
-    /* open a chatroom */
-    else if(!_strnicmp(arg,"gochat?",7)) {
-        char *tok,*tok2,*rm=NULL;
-        int exchange=0;
+            char *szData=NULL, *s;
+            COPYDATASTRUCT *cds = (COPYDATASTRUCT *) lParam;
 
-        for(tok=arg+6;tok!=NULL;tok=tok2) {
-			tok2=strchr(++tok,'&'); /* first token */
-			if (tok2) *tok2=0;
-            if (!_strnicmp(tok,"roomname=",9) && *(tok+9)!=0)
-            {
-                rm=Netlib_UrlDecode(tok+9);
-                for (char *ch=rm; *ch; ++ch)
-                    if (*ch == '+') *ch = ' ';
+            //LOG(LOG_DEBUG, "Links: WM_COPYDATA");
+            // Check to see if link support is enabled
+            // We shouldn't need this check since the class instance shouldn't be running
+            // but lets be safe
+            if (!DBGetContactSettingByte(NULL, AIM_PROTOCOL_NAME, AIM_KEY_AL, 0))
+                break;
+            if (!(char *) cds->lpData)
+                break;
+            s = szData = strldup((char *) cds->lpData,lstrlen((char*)cds->lpData));
+            aim_links_normalize(szData);
+            s += 4;
+			if (!_strnicmp(s, "addbuddy?", 9)) { // group is current ignored
+				char *tok, *sn = NULL, *group = NULL;
+				ADDCONTACTSTRUCT acs;
+				PROTOSEARCHRESULT psr;
+				
+				//LOG(LOG_DEBUG, "Links: WM_COPYDATA - addbuddy?");
+				s += 9;
+				tok = strtok(s, "&");
+                while (tok != NULL)
+				{
+                    if (!_strnicmp(tok, "screenname=", 11))
+					{
+                        sn = tok + 11;
+                    }
+                    if (!_strnicmp(tok, "groupname=", 10))
+					{
+                        group = tok + 10;
+                    }
+                    tok = strtok(NULL, "&");
+                }
+				if (sn&&lstrlen(sn)&&!find_contact(sn))
+				{
+					acs.handleType=HANDLE_SEARCHRESULT;
+					acs.szProto=AIM_PROTOCOL_NAME;
+					acs.psr=&psr;
+					memset(&psr,0,sizeof(PROTOSEARCHRESULT));
+					psr.cbSize=sizeof(PROTOSEARCHRESULT);
+					psr.nick=sn;
+					CallService(MS_ADDCONTACT_SHOW,(WPARAM)NULL,(LPARAM)&acs);
+				}
+			}
+            else if (!_strnicmp(s, "goim?", 5))
+			{
+                char *tok, *sn = NULL, *msg = NULL;
+
+                //LOG(LOG_DEBUG, "Links: WM_COPYDATA - goim");
+                s += 5;
+                if (!(*s))
+				{
+					delete[] szData;
+                    break;
+				}
+                tok = strtok(s, "&");
+                while (tok != NULL)
+				{
+                    if (!_strnicmp(tok, "screenname=", 11))
+					{
+                        sn = tok + 11;
+                    }
+                    if (!_strnicmp(tok, "message=", 8))
+					{
+                        msg = tok + 8;
+                    }
+                    tok = strtok(NULL, "&");
+                }
+                if (sn && ServiceExists(MS_MSG_SENDMESSAGE))
+				{
+					HANDLE hContact = find_contact(sn);
+					if(!hContact)
+					{
+						hContact=add_contact(sn);
+						DBWriteContactSettingByte(hContact,MOD_KEY_CL,AIM_KEY_NL,1);
+					}
+                    if (hContact)
+                        CallService(MS_MSG_SENDMESSAGE, (WPARAM) hContact, (LPARAM) msg);
+                }
             }
-            if (!_strnicmp(tok,"exchange=",9))
-                exchange=atoi(Netlib_UrlDecode(tok+9)); 
+            /*else if (!_strnicmp(s, "gochat?", 7))
+			{
+                char *tok, *rm = NULL, *ex;
+                int exchange = 0;
+
+                //LOG(LOG_DEBUG, "Links: WM_COPYDATA - gochat");
+                s += 7;
+                if (!(*s))
+                    break;
+                tok = strtok(s, "&");
+                while (tok != NULL) {
+                    if (!_strnicmp(tok, "roomname=", 9)) {
+                        rm = tok + 9;
+                    }
+                    if (!_strnicmp(tok, "exchange=", 9)) {
+                        ex = tok + 9;
+                        exchange = atoi(ex);
+                    }
+                    tok = strtok(NULL, "&");
+                }
+                if (rm && exchange > 0) {
+                    aim_gchat_joinrequest(rm, exchange);
+                }
+            }*/
+			delete[] szData;
+            break;
         }
-        if (rm==NULL || exchange<=0) return 1; /* parse failed */
-
-        chatnav_param* par = new chatnav_param(rm, (unsigned short)exchange);
-        proto->ForkThread(&CAimProto::chatnav_request_thread, par);
-
-        return 0;
     }
-    return 1; /* parse failed */
+    return DefWindowProc(hwnd, msg, wParam, lParam);
 }
 
-void aim_links_init(void)
+static void aim_links_regwatcher()
 {
-	static const char szService[] = "AIM/ParseAimLink";
+    WNDCLASS wc;
 
-	hServiceParseLink = CreateServiceFunction(szService, ServiceParseAimLink);
-	AssocMgr_AddNewUrlType("aim:", Translate("AIM Link Protocol"), hInstance, IDI_AOL, szService, 0);
+    //LOG(LOG_DEBUG, "Links: regwatcher");
+    if (hWatcher || aWatcherClass) {
+        return;
+    }
+    memset(&wc, 0, sizeof(WNDCLASS));
+    wc.lpfnWndProc = aim_links_watcherwndproc;
+    wc.hInstance = conn.hInstance;
+    wc.lpszClassName = AIMWATCHERCLASS;
+    aWatcherClass = RegisterClass(&wc);
+    hWatcher = CreateWindowEx(0, AIMWATCHERCLASS, "", 0, 0, 0, 0, 0, NULL, NULL, conn.hInstance, NULL);
+    return;
 }
 
-void aim_links_destroy(void)
+static void aim_links_unregwatcher()
 {
-    DestroyServiceFunction(hServiceParseLink);
+    //LOG(LOG_DEBUG, "Links: unregwatcher");
+    if (hWatcher) {
+        DestroyWindow(hWatcher);
+        hWatcher = NULL;
+    }
+    if (aWatcherClass) {
+        UnregisterClass(AIMWATCHERCLASS, conn.hInstance);
+        aWatcherClass = 0;
+    }
+    return;
+}
+
+static BOOL CALLBACK aim_linsk_enumthreadwindowsproc(HWND hwnd, LPARAM lParam)
+{
+    char szBuf[64];
+
+    if (GetClassName(hwnd, szBuf, sizeof(szBuf))) {
+        if (lstrcmp(szBuf, AIMWATCHERCLASS)) {
+            COPYDATASTRUCT cds;
+
+            //LOG(LOG_DEBUG, "Links: enumthreadwindowsproc - found AIMWATCHERCLASS");
+            cds.dwData = 1;
+            cds.cbData = lstrlen((char *) lParam) + 1;
+            cds.lpData = (char *) lParam;
+            SendMessageTimeout(hwnd, WM_COPYDATA, (WPARAM) hwnd, (LPARAM) & cds, SMTO_ABORTIFHUNG | SMTO_BLOCK, 150, NULL);
+        }
+    };
+    return TRUE;
+}
+
+static BOOL CALLBACK aim_links_enumwindowsproc(HWND hwnd, LPARAM lParam)
+{
+    char szBuf[32];
+
+    //LOG(LOG_DEBUG, "Links: enumwindowsproc");
+    if (GetClassName(hwnd, szBuf, sizeof(szBuf)))
+	{
+        if (!lstrcmp(szBuf, MIRANDACLASS)) {
+            //LOG(LOG_DEBUG, "Links: enumwindowsproc - found Miranda window");
+            EnumThreadWindows(GetWindowThreadProcessId(hwnd, NULL), aim_linsk_enumthreadwindowsproc, lParam);
+        }
+    }
+    return TRUE;
+}
+
+static void aim_links_register()
+{
+    HKEY hkey;
+    char szBuf[MAX_PATH], szExe[MAX_PATH * 2], szShort[MAX_PATH];
+
+
+    GetModuleFileName(conn.hInstance, szBuf, sizeof(szBuf));
+    GetShortPathName(szBuf, szShort, sizeof(szShort));
+    //LOG(LOG_DEBUG, "Links: register");
+    if (RegCreateKey(HKEY_CLASSES_ROOT, "aim", &hkey) == ERROR_SUCCESS) {
+        RegSetValue(hkey, NULL, REG_SZ, "URL:AIM Protocol", lstrlen("URL:AIM Protocol"));
+        RegSetValueEx(hkey, "URL Protocol", 0, REG_SZ, (PBYTE) "", 1);
+        RegCloseKey(hkey);
+    }
+    else {
+        //LOG(LOG_ERROR, "Links: register - unable to create registry key (root)");
+        return;
+    }
+    if (RegCreateKey(HKEY_CLASSES_ROOT, "aim\\DefaultIcon", &hkey) == ERROR_SUCCESS) {
+        char szIcon[MAX_PATH];
+
+        mir_snprintf(szIcon, sizeof(szIcon), "%s,0", szShort);
+        RegSetValue(hkey, NULL, REG_SZ, szIcon, lstrlen(szIcon));
+        RegCloseKey(hkey);
+    }
+    else {
+        //LOG(LOG_ERROR, "Links: register - unable to create registry key (DefaultIcon)");
+        return;
+    }
+    if (RegCreateKey(HKEY_CLASSES_ROOT, "aim\\shell\\open\\command", &hkey) == ERROR_SUCCESS) {
+        // MSVC exports differently than gcc/mingw
+#ifdef _MSC_VER
+        mir_snprintf(szExe, sizeof(szExe), "RUNDLL32.EXE %s,_aim_links_exec@16 %%1", szShort);
+        //LOG(LOG_INFO, "Links: registering (%s)", szExe);
+#else
+        mir_snprintf(szExe, sizeof(szExe), "RUNDLL32.EXE %s,aim_links_exec@16 %%1", szShort);
+        //LOG(LOG_INFO, "Links: registering (%s)", szExe);
+#endif
+        RegSetValue(hkey, NULL, REG_SZ, szExe, lstrlen(szExe));
+        RegCloseKey(hkey);
+    }
+    else {
+        //LOG(LOG_ERROR, "Links: register - unable to create registry key (command)");
+        return;
+    }
+
+}
+
+void aim_links_unregister()
+{
+    //LOG(LOG_DEBUG, "Links: unregister");
+    RegDeleteKey(HKEY_CLASSES_ROOT, "aim\\shell\\open\\command");
+    RegDeleteKey(HKEY_CLASSES_ROOT, "aim\\shell\\open");
+    RegDeleteKey(HKEY_CLASSES_ROOT, "aim\\shell");
+    RegDeleteKey(HKEY_CLASSES_ROOT, "aim\\DefaultIcon");
+    RegDeleteKey(HKEY_CLASSES_ROOT, "aim");
+}
+
+void aim_links_init()
+{
+    //LOG(LOG_DEBUG, "Links: init");
+    if (DBGetContactSettingByte(NULL, AIM_PROTOCOL_NAME, AIM_KEY_AL, 0)) {
+        //LOG(LOG_DEBUG, "Links: init - links support is on");
+        aim_links_register();
+        aim_links_regwatcher();
+    }
+}
+
+void aim_links_destroy()
+{
+   // LOG(LOG_DEBUG, "Links: destroy");
+    aim_links_unregwatcher();
+}
+
+extern "C" void __declspec(dllexport)
+     CALLBACK aim_links_exec(HWND /*hwnd*/, HINSTANCE /*hInst*/, char *lpszCmdLine, int /*nCmdShow*/)
+{
+    EnumWindows(aim_links_enumwindowsproc, (LPARAM) lpszCmdLine);
 }

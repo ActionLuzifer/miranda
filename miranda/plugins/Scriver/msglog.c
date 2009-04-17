@@ -66,22 +66,18 @@ struct EventData {
 	union {
 		char *pszNick;		// Nick, usage depends on type of event
 		wchar_t *pszNickW;    // Nick - Unicode
-		TCHAR *pszNickT;
 	};
 	union {
 		char *pszText;			// Text, usage depends on type of event
 		wchar_t *pszTextW;			// Text - Unicode
-		TCHAR *pszTextT;
 	};
 	union {
 		char *pszText2;			// Text, usage depends on type of event
 		wchar_t *pszText2W;			// Text - Unicode
-		TCHAR *pszText2T;
 	};
 	DWORD	time;
 	DWORD	eventType;
 	HANDLE	hContact;
-	int		codePage;
 };
 
 TCHAR *GetNickname(HANDLE hContact, const char* szProto) {
@@ -128,7 +124,7 @@ TCHAR *GetNickname(HANDLE hContact, const char* szProto) {
 	if (szBaseNick != NULL) {
 #if defined ( _UNICODE )
 		int len;
-		len = (int)strlen(szBaseNick) + 1;
+		len = strlen(szBaseNick) + 1;
 		szName = (TCHAR *) mir_alloc(len * 2);
 	    MultiByteToWideChar(CP_ACP, 0, szBaseNick, -1, szName, len);
 		szName[len - 1] = 0;
@@ -142,14 +138,11 @@ TCHAR *GetNickname(HANDLE hContact, const char* szProto) {
 
 int DbEventIsShown(DBEVENTINFO * dbei, struct MessageWindowData *dat)
 {
-	int heFlags;
-
 	switch (dbei->eventType) {
 		case EVENTTYPE_MESSAGE:
 			return 1;
 		case EVENTTYPE_STATUSCHANGE:
 		case EVENTTYPE_JABBER_CHATSTATES:
-		case EVENTTYPE_JABBER_PRESENCE:
 			if (!DBGetContactSettingByte(NULL, SRMMMOD, SRMSGSET_SHOWSTATUSCH, SRMSGDEFSET_SHOWSTATUSCH)) {
 //			if (dbei->flags & DBEF_READ)
 				return 0;
@@ -160,11 +153,6 @@ int DbEventIsShown(DBEVENTINFO * dbei, struct MessageWindowData *dat)
 //			if (dat->hwndLog != NULL)
 				return 1;
 	}
-
-	heFlags = HistoryEvents_GetFlags(dbei->eventType);
-	if (heFlags != -1)
-		return (heFlags & HISTORYEVENTS_FLAG_SHOW_IM_SRMM) == HISTORYEVENTS_FLAG_SHOW_IM_SRMM;
-
 	return 0;
 }
 
@@ -185,8 +173,7 @@ struct EventData *getEventFromDB(struct MessageWindowData *dat, HANDLE hContact,
 		CallService(MS_DB_EVENT_MARKREAD, (WPARAM) hContact, (LPARAM) hDbEvent);
 		CallService(MS_CLIST_REMOVEEVENT, (WPARAM) hContact, (LPARAM) hDbEvent);
 	}
-	else if (dbei.eventType == EVENTTYPE_STATUSCHANGE || dbei.eventType == EVENTTYPE_JABBER_CHATSTATES ||
-		dbei.eventType == EVENTTYPE_JABBER_PRESENCE) {
+	else if (dbei.eventType == EVENTTYPE_STATUSCHANGE || dbei.eventType == EVENTTYPE_JABBER_CHATSTATES) {
 		CallService(MS_DB_EVENT_MARKREAD, (WPARAM) hContact, (LPARAM) hDbEvent);
 	}
 	event = (struct EventData *) mir_alloc(sizeof(struct EventData));
@@ -196,51 +183,64 @@ struct EventData *getEventFromDB(struct MessageWindowData *dat, HANDLE hContact,
 	event->dwFlags = (dbei.flags & DBEF_READ ? IEEDF_READ : 0) | (dbei.flags & DBEF_SENT ? IEEDF_SENT : 0) | (dbei.flags & DBEF_RTL ? IEEDF_RTL : 0);
 	event->time = dbei.timestamp;
 	event->pszNick = NULL;
-	event->codePage = dat->windowData.codePage;
 #if defined( _UNICODE )
 	event->dwFlags |= IEEDF_UNICODE_TEXT | IEEDF_UNICODE_NICK | IEEDF_UNICODE_TEXT2;
-#endif
-
 	if (event->dwFlags & IEEDF_SENT) {
-		event->pszNickT = GetNickname(NULL, dat->szProto);
+		event->pszNickW = GetNickname(NULL, dat->szProto);
 	} else {
-		event->pszNickT = GetNickname(event->hContact, dat->szProto);
+		event->pszNickW = GetNickname(event->hContact, dat->szProto);
+	}
+	if (event->eventType == EVENTTYPE_FILE) {
+		char* filename = ((char *)dbei.pBlob) + sizeof(DWORD);
+		char* descr = filename + lstrlenA( filename ) + 1;
+		event->pszTextW = a2tcp(filename, dat->codePage);
+		if ( *descr != 0 ) {
+			event->pszText2W = a2tcp(descr, dat->codePage);
+		}
+	} else if ( bNewDbApi ) {
+		event->pszTextW = DbGetEventTextW( &dbei, dat->codePage );
+		if (dat->flags & SMF_DISABLE_UNICODE) {
+			char * tmpStr = t2acp(event->pszTextW, dat->codePage);
+			mir_free(event->pszTextW);
+			event->pszTextW = a2tcp(tmpStr, dat->codePage);
+			mir_free(tmpStr);
+		}
+	} else {
+		int msglen = strlen((char *) dbei.pBlob) + 1;
+		if (msglen != (int) dbei.cbBlob && !(dat->flags & SMF_DISABLE_UNICODE)) {
+			int wlen;
+			wlen = safe_wcslen((wchar_t*) &dbei.pBlob[msglen], (dbei.cbBlob - msglen) / 2);
+			if (wlen > 0 && wlen < msglen) {
+				event->pszTextW = mir_wstrdup((wchar_t*) &dbei.pBlob[msglen]);
+			} else {
+				event->pszTextW = a2tcp((char *) dbei.pBlob, dat->codePage);
+			}
+		} else {
+			event->pszTextW = a2tcp((char *) dbei.pBlob, dat->codePage);
+		}
 	}
 	if ( dat->flags & SMF_RTL) {
 		event->dwFlags |= IEEDF_RTL;
-	}
-#if defined( _UNICODE )
-	if (event->eventType == EVENTTYPE_FILE) {
-		char* filename = ((char *)dbei.pBlob) + sizeof(DWORD);
-		char* descr = filename + lstrlenA( filename ) + 1;
-		event->pszTextT = a2tcp(filename, dat->windowData.codePage);
-		if ( *descr != 0 ) {
-			event->pszText2T = a2tcp(descr, dat->windowData.codePage);
-		}
-	} else {
-		event->pszTextT = DbGetEventTextT( &dbei, dat->windowData.codePage );
-		if (dat->flags & SMF_DISABLE_UNICODE) {
-			char * tmpStr = t2acp(event->pszTextT, dat->windowData.codePage);
-			mir_free(event->pszTextT);
-			event->pszTextT = a2tcp(tmpStr, dat->windowData.codePage);
-			mir_free(tmpStr);
-		}
-	}
-	if ( !(dat->flags & SMF_RTL)) {
-		if ( RTL_Detect(event->pszTextT)) {
-			event->dwFlags |= IEEDF_RTL;
-		}
+	} else if ( RTL_Detect(event->pszTextW)) {
+		event->dwFlags |= IEEDF_RTL;
 	}
 #else
+	if (event->dwFlags & IEEDF_SENT) {
+		event->pszNick = GetNickname(NULL, dat->szProto);
+	} else {
+		event->pszNick = GetNickname(event->hContact, dat->szProto);
+	}
 	if (event->eventType == EVENTTYPE_FILE) {
 		char* filename = ((char *)dbei.pBlob) + sizeof(DWORD);
 		char* descr = filename + lstrlenA( filename ) + 1;
-		event->pszTextT = mir_strdup(filename);
+		event->pszText = mir_strdup(filename);
 		if ( *descr != 0 ) {
-			event->pszText2T = mir_strdup(descr);
+			event->pszText2 = mir_strdup(descr);
 		}
+	} else if ( bNewDbApi ) {
+		event->pszText = DbGetEventTextA( &dbei, dat->codePage );
 	} else {
-		event->pszTextT = DbGetEventTextT( &dbei, dat->windowData.codePage );
+		event->pszText = mir_strdup((char *) dbei.pBlob);
 	}
 #endif
 	mir_free(dbei.pBlob);
@@ -248,32 +248,50 @@ struct EventData *getEventFromDB(struct MessageWindowData *dat, HANDLE hContact,
 }
 
 static void freeEvent(struct EventData *event) {
-	if (event->pszNickT != NULL) mir_free (event->pszNickT);
-	if (event->pszTextT != NULL) mir_free (event->pszTextT);
-	if (event->pszText2T != NULL) mir_free (event->pszText2T);
+#if defined( _UNICODE )
+	if (event->pszNickW != NULL) mir_free (event->pszNickW);
+	if (event->pszTextW != NULL) mir_free (event->pszTextW);
+	if (event->pszText2W != NULL) mir_free (event->pszText2W);
+#else
+	if (event->pszNick != NULL) mir_free (event->pszNick);
+	if (event->pszText != NULL) mir_free (event->pszText);
+	if (event->pszText2 != NULL) mir_free (event->pszText2);
+#endif
 	mir_free(event);
 }
 
-static int AppendUnicodeOrAnsiiToBufferL(char **buffer, int *cbBufferEnd, int *cbBufferAlloced, WCHAR * line, int maxLen, BOOL isAnsii)
+static void AppendToBuffer(char **buffer, int *cbBufferEnd, int *cbBufferAlloced, const char *fmt, ...)
+{
+	va_list va;
+	int charsDone;
+
+	va_start(va, fmt);
+	for (;;) {
+		charsDone = _vsnprintf(*buffer + *cbBufferEnd, *cbBufferAlloced - *cbBufferEnd, fmt, va);
+		if (charsDone >= 0)
+			break;
+		*cbBufferAlloced += 1024;
+		*buffer = (char *) mir_realloc(*buffer, *cbBufferAlloced);
+	}
+	va_end(va);
+	*cbBufferEnd += charsDone;
+}
+
+static int AppendAnsiToBufferL(char **buffer, int *cbBufferEnd, int *cbBufferAlloced, unsigned char * line, int maxLen)
 {
 	int textCharsCount = 0;
 	char *d;
 	int wasEOL = 0;
-	WCHAR *maxLine = line + maxLen;
-	int lineLen = (int)wcslen(line) * 9 + 8;
+	unsigned char *maxLine = line + maxLen;
+	int lineLen = strlen(line) * 9 + 8;
 	if (*cbBufferEnd + lineLen > *cbBufferAlloced) {
 		cbBufferAlloced[0] += (lineLen + 1024 - lineLen % 1024);
 		*buffer = (char *) mir_realloc(*buffer, *cbBufferAlloced);
 	}
 
 	d = *buffer + *cbBufferEnd;
-	if (isAnsii) {
-		strcpy(d, "{");
-		d++;
-	} else {
-		strcpy(d, "{\\uc1 ");
-		d += 6;
-	}
+	strcpy(d, "{");
+	d += 1;
 
 	for (; *line && (maxLen < 0 || line < maxLine); line++, textCharsCount++) {
 		wasEOL = 0;
@@ -299,12 +317,8 @@ static int AppendUnicodeOrAnsiiToBufferL(char **buffer, int *cbBufferEnd, int *c
 		else if (*line < 128) {
 			*d++ = (char) *line;
 		}
-		else if (isAnsii) {
-			d += sprintf(d, "\\'%02x", (*line) & 0xFF);
-		}
-		else {
-			d += sprintf(d, "\\u%d ?", *line);
-		}
+		else
+			d += sprintf(d, "\\'%x", *line);
 	}
 	if (wasEOL) {
 		CopyMemory(d, " ", 1);
@@ -317,17 +331,59 @@ static int AppendUnicodeOrAnsiiToBufferL(char **buffer, int *cbBufferEnd, int *c
 	return textCharsCount;
 }
 
-static int AppendAnsiToBufferL(char **buffer, int *cbBufferEnd, int *cbBufferAlloced, unsigned char * line, int maxLen)
-{
-	WCHAR *wline = a2w(line, maxLen);
-	int i = AppendUnicodeOrAnsiiToBufferL(buffer, cbBufferEnd, cbBufferAlloced, wline, maxLen, TRUE);
-	mir_free(wline);
-	return i;
-}
 
 static int AppendUnicodeToBufferL(char **buffer, int *cbBufferEnd, int *cbBufferAlloced, WCHAR * line, int maxLen)
 {
-	return AppendUnicodeOrAnsiiToBufferL(buffer, cbBufferEnd, cbBufferAlloced, line, maxLen, FALSE);
+	int textCharsCount = 0;
+	char *d;
+	int wasEOL = 0;
+	WCHAR *maxLine = line + maxLen;
+	int lineLen = wcslen(line) * 9 + 8;
+	if (*cbBufferEnd + lineLen > *cbBufferAlloced) {
+		cbBufferAlloced[0] += (lineLen + 1024 - lineLen % 1024);
+		*buffer = (char *) mir_realloc(*buffer, *cbBufferAlloced);
+	}
+
+	d = *buffer + *cbBufferEnd;
+	strcpy(d, "{\\uc1 ");
+	d += 6;
+
+	for (; *line && (maxLen < 0 || line < maxLine); line++, textCharsCount++) {
+		wasEOL = 0;
+		if (*line == '\r' && line[1] == '\n') {
+			CopyMemory(d, "\\line ", 6);
+			wasEOL = 1;
+			d += 6;
+			line++;
+		}
+		else if (*line == '\n') {
+			CopyMemory(d, "\\line ", 6);
+			wasEOL = 1;
+			d += 6;
+		}
+		else if (*line == '\t') {
+			CopyMemory(d, "\\tab ", 5);
+			d += 5;
+		}
+		else if (*line == '\\' || *line == '{' || *line == '}') {
+			*d++ = '\\';
+			*d++ = (char) *line;
+		}
+		else if (*line < 128) {
+			*d++ = (char) *line;
+		}
+		else
+			d += sprintf(d, "\\u%d ?", *line);
+	}
+	if (wasEOL) {
+		CopyMemory(d, " ", 1);
+		d++;
+	}
+	strcpy(d, "}");
+	d++;
+
+	*cbBufferEnd = (int) (d - *buffer);
+	return textCharsCount;
 }
 
 static int AppendAnsiToBuffer(char **buffer, int *cbBufferEnd, int *cbBufferAlloced, unsigned char * line)
@@ -361,9 +417,9 @@ static char *CreateRTFHeader(struct MessageWindowData *dat)
 	int charset = 0;
 	BOOL forceCharset = FALSE;
 #if !defined ( _UNICODE )
-		if (dat->windowData.codePage != CP_ACP) {
+		if (dat->codePage != CP_ACP) {
 			CHARSETINFO csi;
- 			if(TranslateCharsetInfo((DWORD*)dat->windowData.codePage, &csi, TCI_SRCCODEPAGE)) {
+ 			if(TranslateCharsetInfo((DWORD*)dat->codePage, &csi, TCI_SRCCODEPAGE)) {
 				forceCharset = TRUE;
 				charset = csi.ciCharset;
 			}
@@ -378,7 +434,7 @@ static char *CreateRTFHeader(struct MessageWindowData *dat)
 	buffer = (char *) mir_alloc(bufferAlloced);
 	buffer[0] = '\0';
 	if (dat->flags & SMF_RTL)
-		AppendToBuffer(&buffer, &bufferEnd, &bufferAlloced,"{\\rtf1\\ansi\\deff0{\\fonttbl");
+		AppendToBuffer(&buffer,&bufferEnd,&bufferAlloced,"{\\rtf1\\ansi\\deff0{\\fonttbl");
 	else
 		AppendToBuffer(&buffer, &bufferEnd, &bufferAlloced, "{\\rtf1\\ansi\\deff0{\\fonttbl");
 	for (i = 0; i < fontOptionsListSize; i++) {
@@ -396,13 +452,13 @@ static char *CreateRTFHeader(struct MessageWindowData *dat)
 	else
 		colour = GetSysColor(COLOR_HOTLIGHT);
 	AppendToBuffer(&buffer, &bufferEnd, &bufferAlloced, "\\red%u\\green%u\\blue%u;", GetRValue(colour), GetGValue(colour), GetBValue(colour));
-	colour = DBGetContactSettingDword(NULL, SRMMMOD, SRMSGSET_BKGCOLOUR, SRMSGDEFSET_BKGCOLOUR);
+	colour = DBGetContactSettingDword(NULL, SRMMMOD, SRMSGSET_BKGCOLOUR, RGB(224,224,224));
 	AppendToBuffer(&buffer, &bufferEnd, &bufferAlloced, "\\red%u\\green%u\\blue%u;", GetRValue(colour), GetGValue(colour), GetBValue(colour));
-	colour = DBGetContactSettingDword(NULL, SRMMMOD, SRMSGSET_INCOMINGBKGCOLOUR, SRMSGDEFSET_INCOMINGBKGCOLOUR);
+	colour = DBGetContactSettingDword(NULL, SRMMMOD, SRMSGSET_INCOMINGBKGCOLOUR, RGB(224,224,224));
 	AppendToBuffer(&buffer, &bufferEnd, &bufferAlloced, "\\red%u\\green%u\\blue%u;", GetRValue(colour), GetGValue(colour), GetBValue(colour));
-	colour = DBGetContactSettingDword(NULL, SRMMMOD, SRMSGSET_OUTGOINGBKGCOLOUR, SRMSGDEFSET_OUTGOINGBKGCOLOUR);
+	colour = DBGetContactSettingDword(NULL, SRMMMOD, SRMSGSET_OUTGOINGBKGCOLOUR, RGB(224,224,224));
 	AppendToBuffer(&buffer, &bufferEnd, &bufferAlloced, "\\red%u\\green%u\\blue%u;", GetRValue(colour), GetGValue(colour), GetBValue(colour));
-	colour = DBGetContactSettingDword(NULL, SRMMMOD, SRMSGSET_LINECOLOUR, SRMSGDEFSET_LINECOLOUR);
+	colour = DBGetContactSettingDword(NULL, SRMMMOD, SRMSGSET_LINECOLOUR, RGB(224,224,224));
 	AppendToBuffer(&buffer, &bufferEnd, &bufferAlloced, "\\red%u\\green%u\\blue%u;", GetRValue(colour), GetGValue(colour), GetBValue(colour));
 	AppendToBuffer(&buffer, &bufferEnd, &bufferAlloced, "}");
 //	AppendToBuffer(&buffer, &bufferEnd, &bufferAlloced, "\\li30\\ri30\\fi0\\tx0");
@@ -505,7 +561,7 @@ int isSameDate(time_t time1, time_t time2)
 	return 0;
 }
 
-static int DetectURL(wchar_t *text, BOOL firstChar) {
+static int DetectURLW(wchar_t *text, BOOL firstChar) {
 	wchar_t c;
 	struct prefix_s {
 		wchar_t *text;
@@ -539,7 +595,7 @@ static int DetectURL(wchar_t *text, BOOL firstChar) {
 		if (found) {
 			for (; text[len]!='\n' && text[len]!='\r' && text[len]!='\t' && text[len]!=' ' && text[len]!='\0';  len++);
 			for (; len > 0; len --) {
-				if ((text[len-1] >= '0' && text[len-1]<='9') || iswalpha(text[len-1])) {
+				if ((text[len-1] >= '0' && text[len-1]<='9') || (text[len-1] >= 'A' && text[len-1]<='Z') || (text[len-1] >= 'a' && text[len-1]<='z')) {
 					break;
 				}
 			}
@@ -549,32 +605,71 @@ static int DetectURL(wchar_t *text, BOOL firstChar) {
 	return 0;
 }
 
-static void ChangeLinksAndBBCodes() {
-
+static int DetectURL(const char* text, BOOL firstChar) {
+	char c;
+	struct prefix_s {
+		char *text;
+		int length;
+	} prefixes[12] = {
+		{"http:", 5},
+		{"file:", 5},
+		{"mailto:", 7},
+		{"ftp:", 4},
+		{"https:", 6},
+		{"gopher:", 7},
+		{"nntp:", 5},
+		{"prospero:", 9},
+		{"telnet:", 7},
+		{"news:", 5},
+		{"wais:", 5},
+		{"www.", 4}
+	};
+	c = firstChar ? ' ' : text[-1];
+	if (!((c >= '0' && c<='9') || (c >= 'A' && c<='Z') || (c >= 'a' && c<='z'))) {
+		int found = 0;
+		int i, len = 0;
+		int prefixlen = SIZEOF(prefixes);
+		for (i = 0; i < prefixlen; i++) {
+			if (!strncmp(text, prefixes[i].text, prefixes[i].length)) {
+				len = prefixes[i].length;
+				found = 1;
+				break;
+			}
+		}
+		if (found) {
+			for (; text[len]!='\n' && text[len]!='\r' && text[len]!='\t' && text[len]!=' ' && text[len]!='\0';  len++);
+			for (; len > 0; len --) {
+				if ((text[len-1] >= '0' && text[len-1]<='9') || (text[len-1] >= 'A' && text[len-1]<='Z') || (text[len-1] >= 'a' && text[len-1]<='z')) {
+					break;
+				}
+			}
+			return len;
+		}
+	}
+	return 0;
 }
 
 static void AppendWithCustomLinks(struct EventData *event, int style, char **buffer, int *bufferEnd, int *bufferAlloced) {
-	int lasttoken = 0;
-	int laststart = 0;
+	int lasttoken = 0, newtoken = 0;
+	int laststart = 0, newlen = 0;
 	int j, len;
-	WCHAR *wText;
-	BOOL isAnsii = (event->dwFlags & IEEDF_UNICODE_TEXT) == 0;
-
-	if ( event->pszText == NULL )
-		return;
-
-	if (isAnsii) {
-		len = (int)strlen(event->pszText);
-		wText = a2w(event->pszText, len);
+	if (event->dwFlags & IEEDF_UNICODE_TEXT) {
+		len = wcslen(event->pszTextW);
 	} else {
-		wText = event->pszTextW;
-		len = (int)wcslen(event->pszTextW);
+		len = strlen(event->pszText);
 	}
-	for (j = 0; j < len ; j++) {
-		int newtoken = 0;
-		int l = DetectURL(wText + j, j==0);
+	for (j = 0; j < len ; j+=newlen) {
+		int l;
+		newtoken = 0;
+		newlen = 1;
+		if (event->dwFlags & IEEDF_UNICODE_TEXT) {
+			l = DetectURLW(event->pszTextW+j, j==0);
+		} else {
+			l = DetectURL(event->pszText+j, j==0);
+		}
 		if (l > 0) {
 			newtoken = 1;
+			newlen = l;
 		}
 		if (j == 0) {
 			lasttoken = newtoken;
@@ -585,7 +680,11 @@ static void AppendWithCustomLinks(struct EventData *event, int style, char **buf
 			} else {
 				AppendToBuffer(buffer, bufferEnd, bufferAlloced, "%s ", SetToStyle(event->dwFlags & IEEDF_SENT ? MSGFONTID_MYURL : MSGFONTID_YOURURL));
 			}
-			AppendUnicodeOrAnsiiToBufferL(buffer, bufferEnd, bufferAlloced, wText + laststart, j - laststart, isAnsii);
+			if (event->dwFlags & IEEDF_UNICODE_TEXT) {
+				AppendUnicodeToBufferL(buffer, bufferEnd, bufferAlloced, event->pszTextW + laststart, j - laststart);
+			} else {
+				AppendAnsiToBufferL(buffer, bufferEnd, bufferAlloced, event->pszText + laststart, j - laststart);
+			}
 			laststart = j;
 			lasttoken = newtoken;
 		}
@@ -596,10 +695,11 @@ static void AppendWithCustomLinks(struct EventData *event, int style, char **buf
 		} else {
 			AppendToBuffer(buffer, bufferEnd, bufferAlloced, "%s ", SetToStyle(event->dwFlags & IEEDF_SENT ? MSGFONTID_MYURL : MSGFONTID_YOURURL));
 		}
-		AppendUnicodeOrAnsiiToBufferL(buffer, bufferEnd, bufferAlloced, wText + laststart, len - laststart, isAnsii);
-	}
-	if (isAnsii) {
-		mir_free(wText);
+		if (event->dwFlags & IEEDF_UNICODE_TEXT) {
+			AppendUnicodeToBufferL(buffer, bufferEnd, bufferAlloced, event->pszTextW + laststart, len - laststart);
+		} else {
+			AppendAnsiToBufferL(buffer, bufferEnd, bufferAlloced, event->pszText + laststart, len - laststart);
+		}
 	}
 }
 
@@ -611,15 +711,11 @@ static char *CreateRTFFromDbEvent2(struct MessageWindowData *dat, struct EventDa
 	int style, showColon = 0;
 	int isGroupBreak = TRUE;
 	int highlight = 0;
-	int heFlags = -1;
 	bufferEnd = 0;
 	bufferAlloced = 1024;
 	buffer = (char *) mir_alloc(bufferAlloced);
 	buffer[0] = '\0';
 
-	heFlags = HistoryEvents_GetFlags((WORD) event->eventType);
-	if (heFlags != -1 && (heFlags & HISTORYEVENTS_FLAG_DEFAULT))
-		heFlags = -1;
 
  	if ((g_dat->flags & SMF_GROUPMESSAGES) && event->dwFlags == LOWORD(dat->lastEventType)
 	  && event->eventType == EVENTTYPE_MESSAGE && HIWORD(dat->lastEventType) == EVENTTYPE_MESSAGE
@@ -689,7 +785,6 @@ static char *CreateRTFFromDbEvent2(struct MessageWindowData *dat, struct EventDa
 				}
 				break;
 			case EVENTTYPE_JABBER_CHATSTATES:
-			case EVENTTYPE_JABBER_PRESENCE:
 			case EVENTTYPE_STATUSCHANGE:
 			case EVENTTYPE_URL:
 			case EVENTTYPE_FILE:
@@ -727,7 +822,7 @@ static char *CreateRTFFromDbEvent2(struct MessageWindowData *dat, struct EventDa
 		}
 		showColon = 1;
 	}
-	if ((!(g_dat->flags&SMF_HIDENAMES) && event->eventType == EVENTTYPE_MESSAGE && isGroupBreak) || event->eventType == EVENTTYPE_STATUSCHANGE || event->eventType == EVENTTYPE_JABBER_CHATSTATES || event->eventType == EVENTTYPE_JABBER_PRESENCE || (heFlags != -1 && (heFlags & HISTORYEVENTS_FLAG_EXPECT_CONTACT_NAME_BEFORE))) {
+	if ((!(g_dat->flags&SMF_HIDENAMES) && event->eventType == EVENTTYPE_MESSAGE && isGroupBreak) || event->eventType == EVENTTYPE_STATUSCHANGE || event->eventType == EVENTTYPE_JABBER_CHATSTATES) {
 		if (event->eventType == EVENTTYPE_MESSAGE) {
 			if (showColon) {
 				AppendToBuffer(&buffer, &bufferEnd, &bufferAlloced, " %s ", SetToStyle(event->dwFlags & IEEDF_SENT ? MSGFONTID_MYNAME : MSGFONTID_YOURNAME));
@@ -787,7 +882,6 @@ static char *CreateRTFFromDbEvent2(struct MessageWindowData *dat, struct EventDa
 		*/
 		break;
 		case EVENTTYPE_JABBER_CHATSTATES:
-		case EVENTTYPE_JABBER_PRESENCE:
 		case EVENTTYPE_STATUSCHANGE:
 		case EVENTTYPE_URL:
 		case EVENTTYPE_FILE:
@@ -827,31 +921,6 @@ static char *CreateRTFFromDbEvent2(struct MessageWindowData *dat, struct EventDa
 			}
 			break;
 		}
-		default:
-		{
-			char *rtfMessage;
-
-			if (heFlags == -1)
-				break;
-
-			if (heFlags & HISTORYEVENTS_FLAG_EXPECT_CONTACT_NAME_BEFORE)
-				AppendTToBuffer(&buffer, &bufferEnd, &bufferAlloced, _T(" "));
-
-			style = MSGFONTID_NOTICE;
-			AppendToBuffer(&buffer, &bufferEnd, &bufferAlloced, "%s ", SetToStyle(style));
-
-			rtfMessage = HistoryEvents_GetRichText(streamData->hDbEvent, NULL);
-			if (rtfMessage != NULL) {
-				AppendToBuffer(&buffer, &bufferEnd, &bufferAlloced, rtfMessage);
-			} else if (event->dwFlags & IEEDF_UNICODE_TEXT) {
-				AppendUnicodeToBuffer(&buffer, &bufferEnd, &bufferAlloced, event->pszTextW);
-			} else {
-				AppendAnsiToBuffer(&buffer, &bufferEnd, &bufferAlloced, event->pszText);
-			}
-			HistoryEvents_ReleaseText(rtfMessage);
-
-			break;
-		}
 	}
 	if (dat->isMixed) {
 		AppendToBuffer(&buffer, &bufferEnd, &bufferAlloced, "\\par");
@@ -876,12 +945,16 @@ static DWORD CALLBACK LogStreamInEvents(DWORD_PTR dwCookie, LPBYTE pbBuff, LONG 
 			case STREAMSTAGE_EVENTS:
 				if (dat->eventsToInsert) {
 					do {
+#ifdef MIRANDA_0_5
 						struct EventData *event = getEventFromDB(dat->dlgDat, dat->hContact, dat->hDbEvent);
 						dat->buffer = NULL;
 						if (event != NULL) {
 							dat->buffer = CreateRTFFromDbEvent2(dat->dlgDat, event, dat);
 							freeEvent(event);
 						}
+#else
+						dat->buffer = CreateRTFFromDbEvent(dat->dlgDat, dat->hContact, dat->hDbEvent, !dat->isFirst, dat);
+#endif
 						if (dat->buffer)
 							dat->hDbEventLast = dat->hDbEvent;
 						dat->hDbEvent = (HANDLE) CallService(MS_DB_EVENT_FINDNEXT, (WPARAM) dat->hDbEvent, 0);
@@ -1007,19 +1080,19 @@ void StreamInEvents(HWND hwndDlg, HANDLE hDbEventFirst, int count, int fAppend)
 	FINDTEXTEXA fi;
 	EDITSTREAM stream = { 0 };
 	struct LogStreamData streamData = { 0 };
-	struct MessageWindowData *dat = (struct MessageWindowData *) GetWindowLongPtr(hwndDlg, GWLP_USERDATA);
+	struct MessageWindowData *dat = (struct MessageWindowData *) GetWindowLong(hwndDlg, GWL_USERDATA);
 	CHARRANGE oldSel, sel;
 
 // IEVIew MOD Begin
-	if (dat->windowData.hwndLog != NULL) {
+	if (dat->hwndLog != NULL) {
 		IEVIEWEVENT event;
 		IEVIEWWINDOW ieWindow;
 		ZeroMemory(&event, sizeof(event));
 		event.cbSize = sizeof(event);
 		event.dwFlags = ((dat->flags & SMF_RTL) ? IEEF_RTL : 0) | ((dat->flags & SMF_DISABLE_UNICODE) ? IEEF_NO_UNICODE : 0);
-		event.hwnd = dat->windowData.hwndLog;
-		event.hContact = dat->windowData.hContact;
-		event.codepage = dat->windowData.codePage;
+		event.hwnd = dat->hwndLog;
+		event.hContact = dat->hContact;
+		event.codepage = dat->codePage;
 		event.pszProto = dat->szProto;
 		if (!fAppend) {
 			event.iType = IEE_CLEAR_LOG;
@@ -1034,7 +1107,7 @@ void StreamInEvents(HWND hwndDlg, HANDLE hDbEventFirst, int count, int fAppend)
 		ZeroMemory(&ieWindow, sizeof(ieWindow));
 		ieWindow.cbSize = sizeof(ieWindow);
 		ieWindow.iType = IEW_SCROLLBOTTOM;
-		ieWindow.hwnd = dat->windowData.hwndLog;
+		ieWindow.hwnd = dat->hwndLog;
 		CallService(MS_IEVIEW_WINDOW, 0, (LPARAM)&ieWindow);
 		return;
 	}
@@ -1042,12 +1115,12 @@ void StreamInEvents(HWND hwndDlg, HANDLE hDbEventFirst, int count, int fAppend)
 
 	SendDlgItemMessage(hwndDlg, IDC_LOG, EM_HIDESELECTION, TRUE, 0);
 	SendDlgItemMessage(hwndDlg, IDC_LOG, EM_EXGETSEL, 0, (LPARAM) & oldSel);
-	streamData.hContact = dat->windowData.hContact;
+	streamData.hContact = dat->hContact;
 	streamData.hDbEvent = hDbEventFirst;
 	streamData.hDbEventLast = dat->hDbEventLast;
 	streamData.dlgDat = dat;
 	streamData.eventsToInsert = count;
-	streamData.isFirst = fAppend ? GetRichTextLength(GetDlgItem(hwndDlg, IDC_LOG), dat->windowData.codePage, FALSE) == 0 : 1;
+	streamData.isFirst = fAppend ? GetRichTextLength(GetDlgItem(hwndDlg, IDC_LOG), dat->codePage, FALSE) == 0 : 1;
 	stream.pfnCallback = LogStreamInEvents;
 	stream.dwCookie = (DWORD_PTR) & streamData;
 	sel.cpMin = 0;
@@ -1061,13 +1134,12 @@ void StreamInEvents(HWND hwndDlg, HANDLE hDbEventFirst, int count, int fAppend)
 #endif
         gtxl.codepage = 1200;
         fi.chrg.cpMin = SendDlgItemMessage(hwndDlg, IDC_LOG, EM_GETTEXTLENGTHEX, (WPARAM)&gtxl, 0);
-        sel.cpMin = sel.cpMax = GetRichTextLength(GetDlgItem(hwndDlg, IDC_LOG), dat->windowData.codePage, FALSE);
+        sel.cpMin = sel.cpMax = GetRichTextLength(GetDlgItem(hwndDlg, IDC_LOG), dat->codePage, FALSE);
         SendDlgItemMessage(hwndDlg, IDC_LOG, EM_EXSETSEL, 0, (LPARAM) & sel);
     } else {
-		SendDlgItemMessage(hwndDlg, IDC_LOG, WM_SETREDRAW, FALSE, 0);
 		SetDlgItemText(hwndDlg, IDC_LOG, _T(""));
         sel.cpMin = 0;
-		sel.cpMax = GetRichTextLength(GetDlgItem(hwndDlg, IDC_LOG), dat->windowData.codePage, FALSE);
+		sel.cpMax = GetRichTextLength(GetDlgItem(hwndDlg, IDC_LOG), dat->codePage, FALSE);
         SendDlgItemMessage(hwndDlg, IDC_LOG, EM_EXSETSEL, 0, (LPARAM) & sel);
         fi.chrg.cpMin = 0;
 		dat->isMixed = 0;
@@ -1082,7 +1154,7 @@ void StreamInEvents(HWND hwndDlg, HANDLE hDbEventFirst, int count, int fAppend)
 		smre.hwndRichEditControl = GetDlgItem(hwndDlg, IDC_LOG);
 		smre.Protocolname = dat->szProto;
         if (dat->szProto!=NULL && strcmp(dat->szProto,"MetaContacts")==0) {
-            HANDLE hContact = (HANDLE) CallService(MS_MC_GETMOSTONLINECONTACT, (WPARAM) dat->windowData.hContact, 0);
+            HANDLE hContact = (HANDLE) CallService(MS_MC_GETMOSTONLINECONTACT, (WPARAM) dat->hContact, 0);
             if (hContact!=NULL) {
                 smre.Protocolname = (char*) CallService(MS_PROTO_GETCONTACTBASEPROTO, (WPARAM)hContact, 0);
             }
@@ -1096,18 +1168,15 @@ void StreamInEvents(HWND hwndDlg, HANDLE hDbEventFirst, int count, int fAppend)
 		}
 		//smre.rangeToReplace = NULL;
 		smre.disableRedraw = TRUE;
-		smre.hContact = dat->windowData.hContact;
+		smre.hContact = dat->hContact;
 		smre.flags = 0;
 		CallService(MS_SMILEYADD_REPLACESMILEYS, 0, (LPARAM) &smre);
 	}
 //	if (GetWindowLong(GetDlgItem(hwndDlg, IDC_LOG), GWL_STYLE) & WS_VSCROLL)
 	{
 		int len;
-		len = GetRichTextLength(GetDlgItem(hwndDlg, IDC_LOG), dat->windowData.codePage, FALSE);
+		len = GetRichTextLength(GetDlgItem(hwndDlg, IDC_LOG), dat->codePage, FALSE);
 		SendDlgItemMessage(hwndDlg, IDC_LOG, EM_SETSEL, len - 1, len - 1);
-	}
-	if (!fAppend) {
-		SendDlgItemMessage(hwndDlg, IDC_LOG, WM_SETREDRAW, TRUE, 0);
 	}
 	dat->hDbEventLast = streamData.hDbEventLast;
 	PostMessage(hwndDlg, DM_SCROLLLOGTOBOTTOM, 0, 0);
