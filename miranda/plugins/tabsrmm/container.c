@@ -78,7 +78,7 @@ extern BOOL CALLBACK TabControlSubclassProc(HWND hwnd, UINT msg, WPARAM wParam, 
 extern INT_PTR CALLBACK DlgProcAbout(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam);
 extern INT_PTR CALLBACK DlgProcTemplateHelp(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam);
 
-extern TCHAR *NewTitle(HANDLE hContact, const TCHAR *szFormat, const TCHAR *szNickname, const TCHAR *szStatus, const TCHAR *szContainer, const char *szUin, const char *szProto, DWORD idle, UINT codePage, BYTE xStatus, WORD wStatus, TCHAR *szAcc);
+extern TCHAR *NewTitle(HANDLE hContact, const TCHAR *szFormat, const TCHAR *szNickname, const TCHAR *szStatus, const TCHAR *szContainer, const char *szUin, const char *szProto, DWORD idle, UINT codePage, BYTE xStatus, WORD wStatus);
 
 extern void	 ViewReleaseNotes();
 
@@ -1873,7 +1873,7 @@ buttons_done:
 			if (dat) {
 				SendMessage(hwndDlg, DM_SETICON, (WPARAM) ICON_BIG, (LPARAM)(dat->hXStatusIcon ? dat->hXStatusIcon : dat->hTabStatusIcon));
 				m_LangPackCP = myGlobals.m_LangPackCP;
-				szNewTitle = NewTitle(dat->hContact, pContainer->szTitleFormat, dat->szNickname, dat->szStatus, pContainer->szName, dat->uin, dat->bIsMeta ? dat->szMetaProto : dat->szProto, dat->idle, dat->codePage, dat->xStatus, dat->wStatus, dat->szAccount);
+				szNewTitle = NewTitle(dat->hContact, pContainer->szTitleFormat, dat->szNickname, dat->szStatus, pContainer->szName, dat->uin, dat->bIsMeta ? dat->szMetaProto : dat->szProto, dat->idle, dat->codePage, dat->xStatus, dat->wStatus);
 				if (szNewTitle) {
 					SetWindowText(hwndDlg, szNewTitle);
 					free(szNewTitle);
@@ -1943,12 +1943,12 @@ buttons_done:
 					break;
 				case SC_RESTORE:
 					pContainer->oldSize.cx = pContainer->oldSize.cy = 0;
-					if (0) {
+					if (bSkinned) {
 						ShowWindow(hwndDlg, SW_RESTORE);
 						return 0;
 					}
  					//MAD: to fix rare (windows?) bug...
- 					// ShowWindow(hwndDlg, SW_RESTORE);
+ 					ShowWindow(hwndDlg, SW_RESTORE);
  					//
 					break;
 				case SC_MINIMIZE:
@@ -2521,9 +2521,7 @@ panel_found:
 				DWORD exold;
 
 				ex = exold = GetWindowLongPtr(hwndDlg, GWL_EXSTYLE);
-				ex =  (pContainer->dwFlags & CNT_TRANSPARENCY && (!g_skinnedContainers || fTransAllowed)) ? ex | WS_EX_LAYERED : ex & ~(WS_EX_LAYERED);
-				//if(myGlobals.m_WinVerMajor >= 6)
-				//	ex = ex | (WS_EX_COMPOSITED); // | WS_EX_COMPOSITED);			// faster/smoother redrawing on Vista+, especially with skins
+				ex = (pContainer->dwFlags & CNT_TRANSPARENCY && (!g_skinnedContainers || fTransAllowed)) ? ex | WS_EX_LAYERED : ex & ~(WS_EX_LAYERED);
 
 				SetWindowLongPtr(hwndDlg, GWL_EXSTYLE, ex);
 				if (pContainer->dwFlags & CNT_TRANSPARENCY && fTransAllowed) {

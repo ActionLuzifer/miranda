@@ -375,7 +375,6 @@ struct MessageWindowData {
 	HICON   hSmileyIcon;
 	char    *szProto;
 	char    *szMetaProto;
-	TCHAR	szAccount[128];
 	TCHAR   szNickname[130], szMyNickname[130];
 	TCHAR	szStatus[50];
 	WORD    wStatus, wMetaStatus;
