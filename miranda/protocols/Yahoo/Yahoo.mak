@@ -1,7 +1,7 @@
 # Microsoft Developer Studio Generated NMAKE File, Based on Yahoo.dsp
 !IF "$(CFG)" == ""
-CFG=Yahoo - Win32 Release Unicode
-!MESSAGE No configuration specified. Defaulting to Yahoo - Win32 Release Unicode.
+CFG=Yahoo - Win32 Debug Unicode
+!MESSAGE No configuration specified. Defaulting to Yahoo - Win32 Debug Unicode.
 !ENDIF 
 
 !IF "$(CFG)" != "Yahoo - Win32 Release" && "$(CFG)" != "Yahoo - Win32 Debug" && "$(CFG)" != "Yahoo - Win32 Debug Unicode" && "$(CFG)" != "Yahoo - Win32 Release Unicode"
@@ -55,7 +55,6 @@ CLEAN :
 	-@erase "$(INTDIR)\search.obj"
 	-@erase "$(INTDIR)\server.obj"
 	-@erase "$(INTDIR)\services.obj"
-	-@erase "$(INTDIR)\user_info.obj"
 	-@erase "$(INTDIR)\util.obj"
 	-@erase "$(INTDIR)\vc60.idb"
 	-@erase "$(INTDIR)\vc60.pdb"
@@ -108,8 +107,7 @@ LINK32_OBJS= \
 	"$(INTDIR)\util.obj" \
 	"$(INTDIR)\webcam.obj" \
 	"$(INTDIR)\yahoo.obj" \
-	"$(INTDIR)\Yahoo.res" \
-	"$(INTDIR)\user_info.obj"
+	"$(INTDIR)\Yahoo.res"
 
 "..\..\Bin\Release\Plugins\Yahoo.dll" : "$(OUTDIR)" $(DEF_FILE) $(LINK32_OBJS)
     $(LINK32) @<<
@@ -140,7 +138,6 @@ CLEAN :
 	-@erase "$(INTDIR)\search.obj"
 	-@erase "$(INTDIR)\server.obj"
 	-@erase "$(INTDIR)\services.obj"
-	-@erase "$(INTDIR)\user_info.obj"
 	-@erase "$(INTDIR)\util.obj"
 	-@erase "$(INTDIR)\vc60.idb"
 	-@erase "$(INTDIR)\vc60.pdb"
@@ -193,8 +190,7 @@ LINK32_OBJS= \
 	"$(INTDIR)\util.obj" \
 	"$(INTDIR)\webcam.obj" \
 	"$(INTDIR)\yahoo.obj" \
-	"$(INTDIR)\Yahoo.res" \
-	"$(INTDIR)\user_info.obj"
+	"$(INTDIR)\Yahoo.res"
 
 "..\..\Bin\Debug\Plugins\Yahoo.dll" : "$(OUTDIR)" $(DEF_FILE) $(LINK32_OBJS)
     $(LINK32) @<<
@@ -225,7 +221,6 @@ CLEAN :
 	-@erase "$(INTDIR)\search.obj"
 	-@erase "$(INTDIR)\server.obj"
 	-@erase "$(INTDIR)\services.obj"
-	-@erase "$(INTDIR)\user_info.obj"
 	-@erase "$(INTDIR)\util.obj"
 	-@erase "$(INTDIR)\vc60.idb"
 	-@erase "$(INTDIR)\vc60.pdb"
@@ -278,8 +273,7 @@ LINK32_OBJS= \
 	"$(INTDIR)\util.obj" \
 	"$(INTDIR)\webcam.obj" \
 	"$(INTDIR)\yahoo.obj" \
-	"$(INTDIR)\Yahoo.res" \
-	"$(INTDIR)\user_info.obj"
+	"$(INTDIR)\Yahoo.res"
 
 "..\..\Bin\Debug Unicode\Plugins\Yahoo.dll" : "$(OUTDIR)" $(DEF_FILE) $(LINK32_OBJS)
     $(LINK32) @<<
@@ -310,7 +304,6 @@ CLEAN :
 	-@erase "$(INTDIR)\search.obj"
 	-@erase "$(INTDIR)\server.obj"
 	-@erase "$(INTDIR)\services.obj"
-	-@erase "$(INTDIR)\user_info.obj"
 	-@erase "$(INTDIR)\util.obj"
 	-@erase "$(INTDIR)\vc60.idb"
 	-@erase "$(INTDIR)\vc60.pdb"
@@ -363,8 +356,7 @@ LINK32_OBJS= \
 	"$(INTDIR)\util.obj" \
 	"$(INTDIR)\webcam.obj" \
 	"$(INTDIR)\yahoo.obj" \
-	"$(INTDIR)\Yahoo.res" \
-	"$(INTDIR)\user_info.obj"
+	"$(INTDIR)\Yahoo.res"
 
 "..\..\Bin\Release Unicode\Plugins\Yahoo.dll" : "$(OUTDIR)" $(DEF_FILE) $(LINK32_OBJS)
     $(LINK32) @<<
@@ -780,11 +772,6 @@ SOURCE=.\server.cpp
 SOURCE=.\services.cpp
 
 "$(INTDIR)\services.obj" : $(SOURCE) "$(INTDIR)" "$(INTDIR)\Yahoo.pch"
-
-
-SOURCE=.\user_info.cpp
-
-"$(INTDIR)\user_info.obj" : $(SOURCE) "$(INTDIR)" "$(INTDIR)\Yahoo.pch"
 
 
 SOURCE=.\util.cpp

@@ -21,9 +21,31 @@ Contents
 1. Changes in this version
 --------------------------
 * New in 0.8.1
+Enhancements:
+ - Improve account renaming inside of the account manager
+ - Notification if missing messaging plugin
+ 
 Bugfixes:
+ - Improved upgrade procedure when using older contact list and messaging plugins
+ - Network list in options wasn’t sorted
+ - Fixed missing icon/menu issues
+ - Fixed crash in options on XP pre SP2
+ - Fixed errors loading dlls on wrong OS
+ - Fixed drawing background in options search
+ - Fixed account removal handling
+ - Fixed hotkey issue with some MS keyboards
+ - Fixed possible crash with event data
+ - AIM: Fixed issue with multiple connection requests
+ - AIM: Fixed issue setting AIM profile
  - ICQ: Fixed AIM away message handling (caused online status to be seen as away in some clients)
+ - IRC: Possible crash on specific alias
+ - MSN: Fixed renaming nickname from options
+ - MSN: Fixed Offline messaging reception from Beejive client
+ - Yahoo: Show download progress properly
+ - Yahoo: Cancel out in the middle of file receive.
+ - Yahoo: Main menu fixes
 
+ 
 * New in 0.8.0
 Enhancements:
  - Support for multiple accounts (without dll renaming) for all protocols
@@ -31,7 +53,7 @@ Enhancements:
  - Support for compressed HTTP transactions
  - AIM: Unicode messaging, status messages, profiles
  - AIM: Offline messaging
- - AIM: Set/retrive status message for any status
+ - AIM: Set/retrieve status message for any status
  - AIM: Ability to set your own avatar
  - AIM: Privacy settings & lists support
  - AIM: Server groups support
@@ -47,7 +69,7 @@ Enhancements:
  - ICQ: Server-list support now groups requests
  - IRC: IRC servers now stored in the database
  - IRC: Filter for IRC channel list
- - IRC: Ehanced identd processing
+ - IRC: Enhanced identd processing
  - IRC: Added menu item for nickserv commands
  - IRC: Auto request client info on adding to contacts or private message
  - IRC: Enhanced WhoIs request
@@ -63,7 +85,7 @@ Enhancements:
  - Jabber: Directed presences, ability to change connection priority
  - Jabber: Display active resource of user in message window
  - Jabber: Jabber VCard moved integrated with user details
- - Jabber: Redesigned almost all dialogs (roster editor, bookmarks, privacty lists, groupchat join, user info and other)
+ - Jabber: Redesigned almost all dialogs (roster editor, bookmarks, privacy lists, groupchat join, user info and other)
  - Jabber: Redesigned menus (main menu in status bar, privacy lists menu, custom status, priority menu, groupchat menus and other)
  - Jabber: Added new and updated old icons, improvements in UI
  - Jabber: Added hotkeys and toolbar buttons
@@ -78,15 +100,22 @@ Enhancements:
  - MSN: Rewritten to support WLM 8.5 protocol (and all it features)
  - MSN: Offline messaging
  - MSN: Added Hotmail Notifier functionality 
+ - Yahoo: Added Yahoo 9.x protocol support
+ - Yahoo: File transfer overhauled with support for batches of files
+ - Yahoo: Added user info dialog for Yahoo that shows more detailed information
+ - Yahoo: Improved support for HTTP proxies
+ - Yahoo: Yahoo Japan support
+ - Yahoo: Yahoo now provides a Unicode version
 
 Bugfixes:
  - ICQ: Fixed receiving of multi-part messages (only first part was received)
  - ICQ: Fixed processing of UTF-8 encoded status messages from QIP
- - Jabber: Fixed varions serious bugs (accidental account unregister, message sender spoofing, roster access by remote users)
+ - Jabber: Fixed various serious bugs (accidental account unregister, message sender spoofing, roster access by remote users)
  - Jabber: Fixed wrong timestamps in offline and forwarded messages, fixed xmpp time answers
  - Jabber: Various connection stability fixes (XMPP ping, ZLib keepalive and other)
  - Jabber: Fixed chat issues with autojoin and unstable connection
  - Jabber: Fixed displaying of active resource (including software info) in contact list
+ - Yahoo: Tons of bug fixes
 
 
 * New in 0.7.19
