@@ -85,7 +85,7 @@ void CJabberProto::FtCancel( filetransfer* ft )
 void CJabberProto::FtInitiate( TCHAR* jid, filetransfer* ft )
 {
 	TCHAR *rs;
-	TCHAR *filename, *p;
+	char *filename, *p;
 	int i;
 	TCHAR sid[9];
 
@@ -102,8 +102,8 @@ void CJabberProto::FtInitiate( TCHAR* jid, filetransfer* ft )
 	sid[8] = '\0';
 	if ( ft->sid != NULL ) mir_free( ft->sid );
 	ft->sid = mir_tstrdup( sid );
-	filename = ft->std.ptszFiles[ ft->std.currentFileNumber ];
-	if (( p = _tcsrchr( filename, '\\' )) != NULL )
+	filename = ft->std.files[ ft->std.currentFileNumber ];
+	if (( p=strrchr( filename, '\\' )) != NULL )
 		filename = p+1;
 
 	TCHAR tszJid[ 512 ];
@@ -112,8 +112,8 @@ void CJabberProto::FtInitiate( TCHAR* jid, filetransfer* ft )
 	XmlNodeIq iq( m_iqManager.AddHandler( &CJabberProto::OnFtSiResult, JABBER_IQ_TYPE_SET, tszJid, JABBER_IQ_PARSE_FROM | JABBER_IQ_PARSE_TO, -1, ft ));
 	HXML si = iq << XCHILDNS( _T("si"), _T(JABBER_FEAT_SI)) << XATTR( _T("id"), sid ) 
 						<< XATTR( _T("mime-type"), _T("binary/octet-stream")) << XATTR( _T("profile"), _T(JABBER_FEAT_SI_FT));
-	si << XCHILDNS( _T("file"), _T(JABBER_FEAT_SI_FT)) << XATTR( _T("name"), filename) 
-		<< XATTRI( _T("size"), ft->fileSize[ ft->std.currentFileNumber ] ) << XCHILD( _T("desc"), ft->szDescription);
+	si << XCHILDNS( _T("file"), _T(JABBER_FEAT_SI_FT)) << XATTR( _T("name"), _A2T(filename)) 
+		<< XATTRI( _T("size"), ft->fileSize[ ft->std.currentFileNumber ] ) << XCHILD( _T("desc"), _A2T(ft->szDescription));
 	
 	HXML field = si << XCHILDNS( _T("feature"), _T(JABBER_FEAT_FEATURE_NEG))
 							<< XCHILDNS( _T("x"), _T(JABBER_FEAT_DATA_FORMS)) << XATTR( _T("type"), _T("form"))
@@ -187,14 +187,14 @@ BOOL CJabberProto::FtSend( HANDLE hConn, filetransfer* ft )
 	char* buffer;
 	int numRead;
 
-	Log( "Sending [%s]", ft->std.ptszFiles[ ft->std.currentFileNumber ] );
-	_tstat( ft->std.ptszFiles[ ft->std.currentFileNumber ], &statbuf );	// file size in statbuf.st_size
-	if (( fd = _topen( ft->std.ptszFiles[ ft->std.currentFileNumber ], _O_BINARY|_O_RDONLY )) < 0 ) {
+	Log( "Sending [%s]", ft->std.files[ ft->std.currentFileNumber ] );
+	_stat( ft->std.files[ ft->std.currentFileNumber ], &statbuf );	// file size in statbuf.st_size
+	if (( fd=_open( ft->std.files[ ft->std.currentFileNumber ], _O_BINARY|_O_RDONLY )) < 0 ) {
 		Log( "File cannot be opened" );
 		return FALSE;
 	}
 
-	ft->std.flags |= PFTS_SENDING;
+	ft->std.sending = TRUE;
 	ft->std.currentFileSize = statbuf.st_size;
 	ft->std.currentFileProgress = 0;
 
@@ -222,14 +222,14 @@ BOOL CJabberProto::FtIbbSend( int blocksize, filetransfer* ft )
 	char* buffer;
 	int numRead;
 
-	Log( "Sending [%s]", ft->std.ptszFiles[ ft->std.currentFileNumber ] );
-	_tstat( ft->std.ptszFiles[ ft->std.currentFileNumber ], &statbuf );	// file size in statbuf.st_size
-	if (( fd = _topen( ft->std.ptszFiles[ ft->std.currentFileNumber ], _O_BINARY|_O_RDONLY )) < 0 ) {
+	Log( "Sending [%s]", ft->std.files[ ft->std.currentFileNumber ] );
+	_stat( ft->std.files[ ft->std.currentFileNumber ], &statbuf );	// file size in statbuf.st_size
+	if (( fd=_open( ft->std.files[ ft->std.currentFileNumber ], _O_BINARY|_O_RDONLY )) < 0 ) {
 		Log( "File cannot be opened" );
 		return FALSE;
 	}
 
-	ft->std.flags |= PFTS_SENDING;
+	ft->std.sending = TRUE;
 	ft->std.currentFileSize = statbuf.st_size;
 	ft->std.currentFileProgress = 0;
 
@@ -285,7 +285,7 @@ void CJabberProto::FtSendFinal( BOOL success, filetransfer* ft )
 	else {
 		if ( ft->std.currentFileNumber < ft->std.totalFiles-1 ) {
 			ft->std.currentFileNumber++;
-			replaceStr( ft->std.tszCurrentFile, ft->std.ptszFiles[ ft->std.currentFileNumber ] );
+			replaceStr( ft->std.currentFile, ft->std.files[ ft->std.currentFileNumber ] );
 			JSendBroadcast( ft->std.hContact, ACKTYPE_FILE, ACKRESULT_NEXTFILE, ft, 0 );
 			FtInitiate( ft->jid, ft );
 			return;
@@ -355,6 +355,9 @@ void CJabberProto::FtHandleSiRequest( HXML iqNode )
 
 			if ( optionNode != NULL ) {
 				// Found known stream mechanism
+				char *localFilename = mir_t2a( filename );
+				char *desc = (( n = xmlGetChild( fileNode , "desc" )) != NULL && xmlGetText( n )!=NULL ) ? mir_t2a( xmlGetText( n ) ) : mir_strdup( "" );
+
 				filetransfer* ft = new filetransfer( this );
 				ft->dwExpectedRecvFileSize = (DWORD)filesize;
 				ft->jid = mir_tstrdup( from );
@@ -363,20 +366,26 @@ void CJabberProto::FtHandleSiRequest( HXML iqNode )
 				ft->iqId = mir_tstrdup( szId );
 				ft->type = ftType;
 				ft->std.totalFiles = 1;
-				ft->std.tszCurrentFile = mir_tstrdup( filename );
+				ft->std.currentFile = localFilename;
 				ft->std.totalBytes = ft->std.currentFileSize = filesize;
+				char* szBlob = ( char* )alloca( sizeof( DWORD )+ strlen( localFilename ) + strlen( desc ) + 2 );
+				*(( PDWORD ) szBlob ) = 0;
+				strcpy( szBlob + sizeof( DWORD ), localFilename );
+				strcpy( szBlob + sizeof( DWORD )+ strlen( localFilename ) + 1, desc );
 
-				PROTORECVFILET pre = { 0 };
-				pre.flags = PREF_TCHAR;
-				pre.fileCount = 1;
+				PROTORECVEVENT pre;
+				pre.flags = 0;
 				pre.timestamp = time( NULL );
-				pre.ptszFiles = ( TCHAR** )&filename;
+				pre.szMessage = szBlob;
 				pre.lParam = ( LPARAM )ft;
-				if (( n = xmlGetChild( fileNode , "desc" )) != NULL )
-					pre.tszDescription = ( TCHAR* )xmlGetText( n );
 
-				CCSDATA ccs = { ft->std.hContact, PSR_FILE, 0, ( LPARAM )&pre };
+				CCSDATA ccs;
+				ccs.szProtoService = PSR_FILE;
+				ccs.hContact = ft->std.hContact;
+				ccs.wParam = 0;
+				ccs.lParam = ( LPARAM )&pre;
 				JCallService( MS_PROTO_CHAINRECV, 0, ( LPARAM )&ccs );
+				mir_free( desc );
 				return;
 			}
 			else {

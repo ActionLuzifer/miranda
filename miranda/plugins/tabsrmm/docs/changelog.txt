@@ -23,20 +23,15 @@ It NEEDS Miranda 0.7.x and will not work on older versions.
 
 Version 2.2.1.x is for Miranda 0.8 and was released in June 2009
 
-Version 3.x is for Miranda 0.9 and incompatible with older Miranda cores. There
-are currently no downloads for it, you'll have to compile it from source.
-
 -----------------
 
 			Detailed change log
 			===================
 
-Version 3.0.0.0  - 2009/07/20
+Version 2.2.1.20  - 2009/07/20
 
 	! various visual glitches fixed.
 	! fixed problem with private container theme (using relative pathnames)
-	! plugin version updated and restricted to Miranda 0.9.x development
-	  branch.
 
 Version 2.2.1.19  - 2009/07/08
 

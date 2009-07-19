@@ -151,9 +151,7 @@ typedef   signed int    int32_t;
 #  ifdef _MSC_VER
 #    define vsnprintf	_vsnprintf
 #    define stat		_stat
-#    ifndef strdup
-#      define strdup	_strdup
-#    endif
+#    define strdup		_strdup
 #    define strncasecmp _strnicmp
 #    define vsnprintf	_vsnprintf
 #    define snprintf	_snprintf

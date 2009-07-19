@@ -259,7 +259,6 @@ static INT_PTR CALLBACK gg_genoptsdlgproc(HWND hwndDlg, UINT msg, WPARAM wParam,
 
 			SendDlgItemMessage(hwndDlg, IDC_IMGMETHOD, CB_ADDSTRING, 0, (LPARAM)Translate("System tray icon"));
 			SendDlgItemMessage(hwndDlg, IDC_IMGMETHOD, CB_ADDSTRING, 0, (LPARAM)Translate("Popup window"));
-			SendDlgItemMessage(hwndDlg, IDC_IMGMETHOD, CB_ADDSTRING, 0, (LPARAM)Translate("Message with [img] BBCode"));
 			SendDlgItemMessage(hwndDlg, IDC_IMGMETHOD, CB_SETCURSEL,
 				DBGetContactSettingByte(NULL, GG_PROTO, GG_KEY_IMGMETHOD, GG_KEYDEF_IMGMETHOD), 0);
 			break;
@@ -319,7 +318,7 @@ static INT_PTR CALLBACK gg_genoptsdlgproc(HWND hwndDlg, UINT msg, WPARAM wParam,
 							MB_OKCANCEL | MB_ICONEXCLAMATION) == IDCANCEL)
 							break;
 						else
-							gg_disconnect((GGPROTO *)GetWindowLongPtr(hwndDlg, GWLP_USERDATA));
+							gg_disconnect(FALSE);
 					}
 				case IDC_CHPASS:
 				case IDC_CHEMAIL:
@@ -529,9 +528,9 @@ static INT_PTR CALLBACK gg_confoptsdlgproc(HWND hwndDlg, UINT msg, WPARAM wParam
 						(WORD)SendDlgItemMessage(hwndDlg, IDC_GC_POLICY_DEFAULT, CB_GETCURSEL, 0, 0));
 
 					GetDlgItemText(hwndDlg, IDC_GC_COUNT_TOTAL, str, sizeof(str));
-					DBWriteContactSettingWord(NULL, GG_PROTO, GG_KEY_GC_COUNT_TOTAL, (WORD)atoi(str));
+					DBWriteContactSettingWord(NULL, GG_PROTO, GG_KEY_GC_COUNT_TOTAL, atoi(str));
 					GetDlgItemText(hwndDlg, IDC_GC_COUNT_UNKNOWN, str, sizeof(str));
-					DBWriteContactSettingWord(NULL, GG_PROTO, GG_KEY_GC_COUNT_UNKNOWN, (WORD)atoi(str));
+					DBWriteContactSettingWord(NULL, GG_PROTO, GG_KEY_GC_COUNT_UNKNOWN, atoi(str));
 
 					break;
 				}
@@ -647,12 +646,12 @@ static INT_PTR CALLBACK gg_advoptsdlgproc(HWND hwndDlg, UINT msg, WPARAM wParam,
 
 					// Write direct port
 					GetDlgItemText(hwndDlg, IDC_DIRECTPORT, str, sizeof(str));
-					DBWriteContactSettingWord(NULL, GG_PROTO, GG_KEY_DIRECTPORT, (WORD)atoi(str));
+					DBWriteContactSettingWord(NULL, GG_PROTO, GG_KEY_DIRECTPORT, atoi(str));
 					// Write forwarding host
 					GetDlgItemText(hwndDlg, IDC_FORWARDHOST, str, sizeof(str));
 					DBWriteContactSettingString(NULL, GG_PROTO, GG_KEY_FORWARDHOST, str);
 					GetDlgItemText(hwndDlg, IDC_FORWARDPORT, str, sizeof(str));
-					DBWriteContactSettingWord(NULL, GG_PROTO, GG_KEY_FORWARDPORT, (WORD)atoi(str));
+					DBWriteContactSettingWord(NULL, GG_PROTO, GG_KEY_FORWARDPORT, atoi(str));
 					break;
 				}
 			}
@@ -782,7 +781,6 @@ static INT_PTR CALLBACK gg_detailsdlgproc(HWND hwndDlg, UINT msg, WPARAM wParam,
 				// Save user data
 				char text[256];
 				gg_pubdir50_t req;
-				GGPROTO *gg = dat->gg;
 
 				EnableWindow(GetDlgItem(hwndDlg, IDC_SAVE), FALSE);
 
@@ -824,9 +822,7 @@ static INT_PTR CALLBACK gg_detailsdlgproc(HWND hwndDlg, UINT msg, WPARAM wParam,
 
 				// Run update
 				gg_pubdir50_seq_set(req, GG_SEQ_CHINFO);
-				pthread_mutex_lock(&gg->sess_mutex);
-				gg_pubdir50(gg->sess, req);
-				pthread_mutex_unlock(&gg->sess_mutex);
+				gg_pubdir50(dat->gg->sess, req);
 				dat->updating = TRUE;
 
 				gg_pubdir50_free(req);
@@ -871,9 +867,10 @@ int gg_details_init(GGPROTO *gg, WPARAM wParam, LPARAM lParam)
 		odp.pfnDlgProc = gg_detailsdlgproc;
 		odp.position = -1900000000;
 		odp.pszTemplate = ((HANDLE)lParam != NULL) ? MAKEINTRESOURCE(IDD_INFO_GG) : MAKEINTRESOURCE(IDD_CHINFO_GG);
-		odp.ptszTitle = GG_PROTONAME;
+		odp.ptszTitle = gg->unicode_core ? mir_u2a((wchar_t *)gg->proto.m_tszUserName) : mir_strdup(gg->proto.m_tszUserName);
 		odp.dwInitParam = (LPARAM)gg;
 		CallService(MS_USERINFO_ADDPAGE, wParam, (LPARAM)&odp);
+		mir_free(odp.ptszTitle);
 	}
 
 	// Start search for my data

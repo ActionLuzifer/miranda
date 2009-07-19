@@ -104,9 +104,9 @@ void RecalcScrollBar(HWND hwnd, struct ClcData *dat);
 
 PLUGININFOEX pluginInfo = {
 #if defined(_UNICODE)
-		sizeof(PLUGININFOEX), "CList Nicer+ (Unicode)", PLUGIN_MAKE_VERSION(0, 8, 1, 2),
+		sizeof(PLUGININFOEX), "CList Nicer+ (Unicode)", PLUGIN_MAKE_VERSION(0, 8, 1, 3),
 #else
-		sizeof(PLUGININFOEX), "CList Nicer+", PLUGIN_MAKE_VERSION(0, 8, 1, 2),
+		sizeof(PLUGININFOEX), "CList Nicer+", PLUGIN_MAKE_VERSION(0, 8, 1, 3),
 #endif
 		"Display contacts, event notifications, protocol status",
 		"Pixel, egoDust, cyreve, Nightwish", "", "Copyright 2000-2008 Miranda-IM project", "http://www.miranda-im.org",
@@ -173,8 +173,10 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD dwReason, LPVOID reserved)
 
 __declspec(dllexport) PLUGININFOEX * MirandaPluginInfoEx(DWORD mirandaVersion)
 {
-	if (mirandaVersion < PLUGIN_MAKE_VERSION(0, 8, 0, 9))
+	if (mirandaVersion < PLUGIN_MAKE_VERSION(0, 8, 1, 0) || mirandaVersion >= PLUGIN_MAKE_VERSION(0, 9, 0, 0)) {
+		MessageBox(0, _T("The installed version of the Clist Nicer+ plugin is not compatible with this Miranda installation. It requires Miranda core 0.8.1.0 or later"), _T("Clist Nicer+ error"), MB_OK);
 		return NULL;
+	}
 	return &pluginInfo;
 }
 
@@ -433,5 +435,4 @@ int __declspec(dllexport) Unload(void)
 	UnLoadCLUIFramesModule();
 	return 0;
 }
-
 

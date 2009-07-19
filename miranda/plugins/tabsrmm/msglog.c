@@ -1138,30 +1138,10 @@ static char *Template_CreateRTFFromDbEvent(struct MessageWindowData *dat, HANDLE
 						case EVENTTYPE_FILE:
 							if (!skipFont)
 								AppendToBuffer(&buffer, &bufferEnd, &bufferAlloced, "%s ", GetRTFFont(isSent ? MSGFONTID_MYMISC + iFontIDOffset : MSGFONTID_YOURMISC + iFontIDOffset));
-							{
-								char* szFileName = (char *)dbei.pBlob + sizeof(DWORD);
-								char* szDescr = szFileName + lstrlenA(szFileName) + 1;
-								TCHAR* tszFileName = DbGetEventStringT( &dbei, szFileName );
-								if ( *szDescr != 0 ) {
-									TCHAR* tszDescr = DbGetEventStringT( &dbei, szDescr );
-#if defined( _UNICODE )
-									TCHAR buf[1000];
-									mir_sntprintf( buf, SIZEOF(buf), _T("%s (%s)"), tszFileName, tszDescr );
-									AppendUnicodeToBuffer(&buffer, &bufferEnd, &bufferAlloced, buf, 0 );
-#else   // unicode
-									AppendToBufferWithRTF(0, &buffer, &bufferEnd, &bufferAlloced, "%s (%s)", tszFileName, tszDescr );
-#endif      // unicode
-									mir_free( tszDescr );
-								}
-								else {
-#if defined( _UNICODE )
-									AppendUnicodeToBuffer(&buffer, &bufferEnd, &bufferAlloced, tszFileName, 0 );
-#else   // unicode
-									AppendToBufferWithRTF(0, &buffer, &bufferEnd, &bufferAlloced, "%s", tszFileName );
-#endif      // unicode
-								}
-								mir_free( tszFileName );
-							}
+							if ((dbei.pBlob + sizeof(DWORD) + lstrlenA((char *)(dbei.pBlob + sizeof(DWORD))) + 1) != NULL && lstrlenA((char *)(dbei.pBlob + sizeof(DWORD) + lstrlenA((char *)(dbei.pBlob + sizeof(DWORD))) + 1)))
+								AppendToBufferWithRTF(0, &buffer, &bufferEnd, &bufferAlloced, "%s (%s)", dbei.pBlob + sizeof(DWORD), dbei.pBlob + sizeof(DWORD) + lstrlenA((char *)(dbei.pBlob + sizeof(DWORD))) + 1);
+							else
+								AppendToBufferWithRTF(0, &buffer, &bufferEnd, &bufferAlloced, "%s", dbei.pBlob + sizeof(DWORD));
 							break;
 					}
 					break;

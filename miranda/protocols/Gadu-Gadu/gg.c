@@ -133,18 +133,16 @@ const char *http_error_string(int h)
 //////////////////////////////////////////////////////////
 // Gets plugin info
 DWORD gMirandaVersion = 0;
+// For compatibility with old versions
+__declspec(dllexport) PLUGININFO *MirandaPluginInfo(DWORD mirandaVersion)
+{
+	pluginInfo.cbSize = sizeof(PLUGININFO);
+	gMirandaVersion = mirandaVersion;
+	return (PLUGININFO *)&pluginInfo;
+}
 __declspec(dllexport) PLUGININFOEX *MirandaPluginInfoEx(DWORD mirandaVersion)
 {
-	if (mirandaVersion < PLUGIN_MAKE_VERSION(0, 8, 0, 29))
-	{
-		MessageBox(
-			NULL,
-			"The Gadu-Gadu protocol plugin cannot be loaded. It requires Miranda IM 0.8.0.29 or later.",
-			"Gadu-Gadu Protocol Plugin",
-			MB_OK | MB_ICONWARNING | MB_SETFOREGROUND | MB_TOPMOST
-		);
-		return NULL;
-	}
+	pluginInfo.cbSize = sizeof(PLUGININFOEX);
 	gMirandaVersion = mirandaVersion;
 	return &pluginInfo;
 }
@@ -241,12 +239,10 @@ void gg_menus_init(GGPROTO *gg)
 	mi.ptszPopupName = NULL;
 	mi.position = 500090000;
 	mi.hIcon = LoadIconEx(IDI_GG);
-	mi.ptszName = GG_PROTONAME;
+	mi.ptszName = gg->unicode_core ? mir_u2a((wchar_t *)gg->proto.m_tszUserName) : mir_strdup(gg->proto.m_tszUserName);
 	mi.pszService = service;
-	gg->hMenuRoot = (HANDLE)CallService(MS_CLIST_ADDMAINMENUITEM, 0, (LPARAM) &mi);
-
-	gg_gc_menus_init(gg);
-	gg_import_init(gg);
+	gg->hMainMenu[0] = (HANDLE)CallService(MS_CLIST_ADDMAINMENUITEM, 0, (LPARAM) &mi);
+	mir_free(mi.ptszName);
 }
 
 //////////////////////////////////////////////////////////
@@ -286,9 +282,10 @@ int gg_event(PROTO_INTERFACE *proto, PROTOEVENTTYPE eventType, WPARAM wParam, LP
 
 			// Init misc thingies
 			gg_icolib_init(gg);
-			gg_gc_init(gg);
 			gg_menus_init(gg);
+			gg_gc_init(gg);
 			gg_keepalive_init(gg);
+			gg_import_init(gg);
 			gg_img_init(gg);
 
 			break;
@@ -310,13 +307,10 @@ int gg_event(PROTO_INTERFACE *proto, PROTOEVENTTYPE eventType, WPARAM wParam, LP
 #ifdef DEBUGMODE
 			gg_netlog(gg, "gg_event(EV_PROTO_ONRENAME): renaming account...");
 #endif
-			mir_free(gg->name);
-			gg->name = gg->unicode_core ? mir_u2a((wchar_t *)gg->proto.m_tszUserName) : mir_strdup(gg->proto.m_tszUserName);
-
 			mi.cbSize = sizeof(mi);
 			mi.flags = CMIM_NAME | CMIF_TCHAR;
-			mi.ptszName = GG_PROTONAME;
-			CallService(MS_CLIST_MODIFYMENUITEM, (WPARAM)gg->hMenuRoot, (LPARAM)&mi);
+			mi.ptszName = gg->unicode_core ? mir_u2a((wchar_t *)gg->proto.m_tszUserName) : mir_strdup(gg->proto.m_tszUserName);
+			CallService(MS_CLIST_MODIFYMENUITEM, (WPARAM)gg->hMainMenu[0], (LPARAM)&mi);
 
 			break;
 		}
@@ -329,10 +323,10 @@ int gg_event(PROTO_INTERFACE *proto, PROTOEVENTTYPE eventType, WPARAM wParam, LP
 static GGPROTO *gg_proto_init(const char* pszProtoName, const TCHAR* tszUserName)
 {
 	DWORD dwVersion;
-	GGPROTO *gg = (GGPROTO *)mir_alloc(sizeof(GGPROTO));
+	GGPROTO *gg = malloc(sizeof(GGPROTO));
 	char szVer[MAX_PATH];
 	ZeroMemory(gg, sizeof(GGPROTO));
-	gg->proto.vtbl = (PROTO_INTERFACE_VTBL*)mir_alloc(sizeof(PROTO_INTERFACE_VTBL));
+	gg->proto.vtbl = malloc(sizeof(PROTO_INTERFACE_VTBL));
 	// Are we running under unicode Miranda core ?
 	CallService(MS_SYSTEM_GETVERSIONTEXT, MAX_PATH, (LPARAM)szVer);
 	_strlwr(szVer); // make sure it is lowercase
@@ -342,7 +336,6 @@ static GGPROTO *gg_proto_init(const char* pszProtoName, const TCHAR* tszUserName
 	pthread_mutex_init(&gg->sess_mutex, NULL);
 	pthread_mutex_init(&gg->ft_mutex, NULL);
 	pthread_mutex_init(&gg->img_mutex, NULL);
-	pthread_mutex_init(&gg->modemsg_mutex, NULL);
 
 	// Init instance names
 	gg->proto.m_szModuleName = mir_strdup(pszProtoName);
@@ -380,7 +373,7 @@ static int gg_proto_uninit(PROTO_INTERFACE *proto)
 	gg_keepalive_destroy(gg);
 	gg_gc_destroy(gg);
 	gg_import_shutdown(gg);
-	CallService(MS_CLIST_REMOVEMAINMENUITEM, (WPARAM)gg->hMenuRoot, 0);
+	CallService(MS_CLIST_REMOVEMAINMENUITEM, (WPARAM)gg->hMainMenu[0], 0);
 
 	// Close handles
 	LocalEventUnhook(gg->hookOptsInit);
@@ -393,7 +386,6 @@ static int gg_proto_uninit(PROTO_INTERFACE *proto)
 	pthread_mutex_destroy(&gg->sess_mutex);
 	pthread_mutex_destroy(&gg->ft_mutex);
 	pthread_mutex_destroy(&gg->img_mutex);
-	pthread_mutex_destroy(&gg->modemsg_mutex);
 
 	// Free status messages
 	if(gg->modemsg.online)    free(gg->modemsg.online);
@@ -404,8 +396,8 @@ static int gg_proto_uninit(PROTO_INTERFACE *proto)
 	mir_free(gg->proto.m_szModuleName);
 	mir_free(gg->proto.m_tszUserName);
 	mir_free(gg->name);
-	mir_free(gg->proto.vtbl);
-	mir_free(gg);
+	free(gg->proto.vtbl);
+	free(gg);
 	return 0;
 }
 

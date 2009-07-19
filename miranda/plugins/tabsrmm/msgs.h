@@ -436,11 +436,6 @@ struct MessageWindowData {
 	LPARAM  lParam;
 	int     iHaveRTLLang;
 	BOOL    fInsertMode;
-
-	// debug
-
-	DWORD   tick_now, tick_last;
-	UINT	last_message;
 };
 
 typedef struct _recentinfo {

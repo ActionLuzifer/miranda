@@ -164,18 +164,18 @@ bool CAimProto::sending_file(file_transfer *ft, HANDLE hServerPacketRecver, NETL
                 pfts.currentFileProgress    = file_start_point;
                 pfts.currentFileSize        = ft->total_size;
                 pfts.currentFileTime        = 0;
-                pfts.ptszFiles              = NULL;
+                pfts.files                  = NULL;
                 pfts.hContact               = ft->hContact;
-                pfts.flags                  = PFTS_SENDING | PFTS_TCHAR;
+                pfts.sending                = 1;
                 pfts.totalBytes             = ft->total_size;
                 pfts.totalFiles             = 1;
                 pfts.totalProgress          = file_start_point;
 
-                pfts.tszCurrentFile         = mir_utf8decodeT(get_fname(ft->file));
-                pfts.tszWorkingDir          = mir_utf8decodeT(ft->file);
-
-                TCHAR* swd = _tcsrchr(pfts.tszWorkingDir, '\\'); 
-                if (swd) *(swd + 1) = '\0'; else pfts.tszWorkingDir[0] = 0;
+                pfts.currentFile        	= mir_utf8decodeA(get_fname(ft->file));
+                pfts.workingDir          	= mir_utf8decodeA(ft->file);
+                
+                char* swd = strrchr(pfts.workingDir, '\\'); 
+                if (swd) *(swd + 1) = '\0'; else pfts.workingDir[0] = 0;
 
                 sendBroadcast(ft->hContact, ACKTYPE_FILE, ACKRESULT_DATA, ft, (LPARAM)&pfts);
 
@@ -201,8 +201,8 @@ bool CAimProto::sending_file(file_transfer *ft, HANDLE hServerPacketRecver, NETL
                 sendBroadcast(ft->hContact, ACKTYPE_FILE, ACKRESULT_DATA, ft, (LPARAM)&pfts);
                 LOG("P2P: Finished sending file bytes.");
                 _close(fid);
-                mir_free(pfts.tszWorkingDir);
-                mir_free(pfts.tszCurrentFile);
+                mir_free(pfts.workingDir);
+                mir_free(pfts.currentFile);
             }
             else if (type == 0x0204)
             {
@@ -235,12 +235,12 @@ bool CAimProto::receiving_file(file_transfer *ft, HANDLE hServerPacketRecver, NE
 
     oft2 *oft = NULL;
 
+    TCHAR fname[256];
     PROTOFILETRANSFERSTATUS pfts;
     memset(&pfts, 0, sizeof(PROTOFILETRANSFERSTATUS));
     pfts.hContact   = ft->hContact;
-    pfts.flags      = PFTS_TCHAR;
     pfts.totalFiles = 1;
-    pfts.tszWorkingDir = mir_utf8decodeT(ft->file);
+    pfts.workingDir = mir_utf8decodeA(ft->file);
 
     //start listen for packets stuff
     for (;;)
@@ -300,10 +300,11 @@ bool CAimProto::receiving_file(file_transfer *ft, HANDLE hServerPacketRecver, NE
 
                     mir_free(buf);
 
-                    TCHAR fname[256];
-                    mir_sntprintf(fname, SIZEOF(fname), _T("%s%s"), pfts.tszWorkingDir, name);
+                    TCHAR* dir = mir_utf8decodeT(ft->file);
+                    mir_sntprintf(fname, SIZEOF(fname), _T("%s%s"), dir, name);
+                    mir_free(dir);
                     mir_free(name);
-                    pfts.tszCurrentFile = mir_tstrdup(fname);
+                    pfts.currentFile = mir_t2a(fname);
                     ft->pfts = &pfts;
 //                  sendBroadcast(ft->hContact, ACKTYPE_FILE, ACKRESULT_FILERESUME, ft, (LPARAM)&pfts);
 
@@ -343,7 +344,7 @@ bool CAimProto::receiving_file(file_transfer *ft, HANDLE hServerPacketRecver, NE
                 {
                     oft->type = _htons(0x0204);
                     oft->recv_bytes = _htonl(pfts.totalBytes);
-                    oft->recv_checksum = _htonl(aim_oft_checksum_file(pfts.tszCurrentFile));
+                    oft->recv_checksum = _htonl(aim_oft_checksum_file(fname));
                     oft->flags = 0x24;
 
                     LOG("P2P: We got the file successfully");
@@ -356,8 +357,8 @@ bool CAimProto::receiving_file(file_transfer *ft, HANDLE hServerPacketRecver, NE
     }
 
     if (accepted_file) _close(fid);
-    mir_free(pfts.tszWorkingDir);
-    mir_free(pfts.tszCurrentFile);
+    mir_free(pfts.workingDir);
+    mir_free(pfts.currentFile);
     mir_free(oft);
 
     return !failed;

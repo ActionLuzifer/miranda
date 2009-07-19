@@ -3459,7 +3459,8 @@ static void yahoo_process_picture_upload(struct yahoo_input_data *yid, struct ya
 				break;
 		}
 	}
-	NOTICE(("got picture_upload packet"));
+	NOTICE(("[yahoo_process_picture_upload]"));
+	
 	YAHOO_CALLBACK(ext_yahoo_got_picture_upload)(yid->yd->client_id, me, url, ts);
 }
 
@@ -3527,7 +3528,7 @@ static void yahoo_process_audible(struct yahoo_input_data *yid, struct yahoo_pac
 				break;
 		}
 	}
-	NOTICE(("got picture_upload packet"));
+	NOTICE(("[yahoo_process_audible]"));
 	if (who) // sometimes we just get a confirmation without the WHO.(ack on our send/update)
 		YAHOO_CALLBACK(ext_yahoo_got_audible)(yid->yd->client_id, me, who, aud, msg, aud_hash);
 }

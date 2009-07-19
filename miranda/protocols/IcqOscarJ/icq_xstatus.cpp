@@ -338,7 +338,9 @@ void CIcqProto::handleXStatusCaps(HANDLE hContact, BYTE *caps, int capsize, char
 
 	if (caps)
 	{ // detect custom status capabilities
-		for (int i = 0; i < XSTATUS_COUNT; i++)
+		int i;
+
+		for (i = 0; i < XSTATUS_COUNT; i++)
 		{
 			if (MatchCap(caps, capsize, (const capstr*)capXStatus[i], 0x10))
 			{
@@ -367,7 +369,9 @@ void CIcqProto::handleXStatusCaps(HANDLE hContact, BYTE *caps, int capsize, char
 	}
 	if (xstatus == 0 && moods && moodsize < 32)
 	{ // process custom statuses (moods) from ICQ6
-		for (int i = 0; i < XSTATUS_COUNT; i++)
+		int i;
+
+		for (i = 0; i < XSTATUS_COUNT; i++)
 		{
 			char szMoodId[32], szMoodData[32];
 
@@ -460,7 +464,7 @@ void CIcqProto::updateServerCustomStatus(int fullUpdate)
     if (szStatusNote)
       SetStatusNote(szStatusNote, 1500, FALSE);
 
-    SAFE_FREE(&szStatusNote);
+    SAFE_FREE((void**)&szStatusNote);
   }
 }
 
@@ -748,8 +752,8 @@ void CIcqProto::setXStatusEx(BYTE bXStatus, BYTE bQuiet)
 
 			updateServerCustomStatus(TRUE);
 		}
-		SAFE_FREE(&szName);
-		SAFE_FREE(&szMsg);
+		SAFE_FREE((void**)&szName);
+		SAFE_FREE((void**)&szMsg);
 	}
 	else
 	{

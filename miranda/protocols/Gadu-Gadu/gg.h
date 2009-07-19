@@ -76,7 +76,6 @@ extern "C" {
 #include <m_icolib.h>
 #include <m_imgsrvc.h>
 #include <m_genmenu.h>
-#include <m_file.h>
 #ifdef DEBUGMODE
 #include <m_popup.h>
 #endif
@@ -113,7 +112,7 @@ typedef struct
 {
 	PROTO_INTERFACE proto;
 	LPTSTR name;
-	pthread_mutex_t ft_mutex, sess_mutex, img_mutex, modemsg_mutex;
+	pthread_mutex_t ft_mutex, sess_mutex, img_mutex;
 	list_t watches, transfers, requests, chats, imagedlgs;
 	int gc_enabled, gc_id, list_remove, unicode_core;
 	uin_t next_uin;
@@ -141,9 +140,8 @@ typedef struct
 		hookIconsChanged,
 		hookGCUserEvent,
 		hookGCMenuBuild;
-	HANDLE hMenuRoot;
-	HANDLE hMainMenu[7];
-	HANDLE hContactMenu;
+	HANDLE hMainMenu[8];
+	HANDLE hContactMenu[1];
 } GGPROTO;
 
 typedef struct
@@ -361,6 +359,7 @@ void gg_refreshblockedicon();
 void gg_notifyuser(GGPROTO *gg, HANDLE hContact, int refresh);
 void gg_setalloffline(GGPROTO *gg);
 void gg_disconnect(GGPROTO *gg);
+int gg_refreshstatus(GGPROTO *gg, int status);
 HANDLE gg_getcontact(GGPROTO *gg, uin_t uin, int create, int inlist, char *nick);
 void gg_registerservices(GGPROTO *gg);
 void gg_threadwait(GGPROTO *gg, pthread_t *thread);
@@ -371,7 +370,7 @@ int gg_isonline(GGPROTO *gg);
 int gg_netlog(const GGPROTO *gg, const char *fmt, ...);
 #endif
 
-void gg_broadcastnewstatus(GGPROTO *gg, int newStatus);
+void gg_broadcastnewstatus(GGPROTO *gg, int s);
 int gg_userdeleted(GGPROTO *gg, WPARAM wParam, LPARAM lParam);
 int gg_dbsettingchanged(GGPROTO *gg, WPARAM wParam, LPARAM lParam);
 void gg_notifyall(GGPROTO *gg);
@@ -386,9 +385,7 @@ void gg_remindpassword(GGPROTO *gg, uin_t uin, const char *email);
 void *gg_img_loadpicture(GGPROTO *gg, struct gg_event* e, char *szFileName);
 int gg_img_releasepicture(void *img);
 int gg_img_display(GGPROTO *gg, HANDLE hContact, void *img);
-int gg_img_displayasmsg(GGPROTO *gg, HANDLE hContact, void *img);
 int gg_event(PROTO_INTERFACE *proto, PROTOEVENTTYPE eventType, WPARAM wParam, LPARAM lParam);
-int gg_recvmessage(PROTO_INTERFACE *proto, HANDLE hContact, PROTORECVEVENT *pre);
 
 /* File transfer functions */
 HANDLE gg_fileallow(PROTO_INTERFACE *proto, HANDLE hContact, HANDLE hTransfer, const char* szPath);
@@ -430,7 +427,6 @@ int gg_details_init(GGPROTO *gg, WPARAM wParam, LPARAM lParam);
 
 /* Groupchat functions */
 int gg_gc_init(GGPROTO *gg);
-void gg_gc_menus_init(GGPROTO *gg);
 int gg_gc_destroy(GGPROTO *gg);
 char * gg_gc_getchat(GGPROTO *gg, uin_t sender, uin_t *recipients, int recipients_count);
 GGGC *gg_gc_lookup(GGPROTO *gg, char *id);

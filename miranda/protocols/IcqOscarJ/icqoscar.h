@@ -34,7 +34,7 @@
 //
 // -----------------------------------------------------------------------------
 
-#define MIRANDA_VER 0x0900
+#define MIRANDA_VER 0x0800
 
 #define _WIN32_WINNT 0x0501
 #define _WIN32_IE 0x0501
@@ -104,9 +104,8 @@
 #include "cookies.h"
 #include "capabilities.h"
 #include "icq_packet.h"
-#include "utilities.h"
-#include "oscar_filetransfer.h"
 #include "icq_direct.h"
+#include "oscar_filetransfer.h"
 #include "icq_server.h"
 #include "icqosc_svcs.h"
 #include "icq_xtraz.h"
@@ -123,6 +122,7 @@
 #include "directpackets.h"
 #include "tlv.h"
 #include "families.h"
+#include "utilities.h"
 #include "m_icq.h"
 #include "icq_advsearch.h"
 #include "icq_uploadui.h"

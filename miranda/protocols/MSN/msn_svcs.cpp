@@ -186,7 +186,7 @@ INT_PTR CMsnProto::GetAvatarInfo(WPARAM wParam,LPARAM lParam)
 				filetransfer* ft = new filetransfer(this);
 				ft->std.hContact = AI->hContact;
 				ft->p2p_object = mir_strdup(szContext);
-				ft->std.tszCurrentFile = mir_a2t(AI->filename);
+				ft->std.currentFile = mir_strdup(AI->filename);
 
 				p2p_invite(AI->hContact, MSN_APPID_AVATAR, ft);
 			}
@@ -246,24 +246,24 @@ INT_PTR CMsnProto::SetAvatar(WPARAM wParam, LPARAM lParam)
 	else
 	{
 		int fileId = _open(szFileName, _O_RDONLY | _O_BINARY, _S_IREAD);
-		if (fileId < 0) return 1;
+		if (fileId == -1)
+			return 1;
 
-		long  dwPngSize = _filelengthi64(fileId);
+		long  dwPngSize = _filelength(fileId);
 		BYTE* pResult = (BYTE*)mir_alloc(dwPngSize);
-		if (pResult == NULL) return 2;
+		if (pResult == NULL)
+			return 2;
 
 		_read(fileId, pResult, dwPngSize);
 		_close(fileId);
 
 		mir_sha1_ctx sha1ctx;
-		BYTE sha1c[MIR_SHA1_HASH_SIZE], sha1d[MIR_SHA1_HASH_SIZE];
-		char szSha1c[40], szSha1d[40];
-
+		BYTE sha1c[ MIR_SHA1_HASH_SIZE ], sha1d[ MIR_SHA1_HASH_SIZE ];
+		char szSha1c[ 40 ], szSha1d[ 40 ];
 		mir_sha1_init(&sha1ctx);
 		mir_sha1_append(&sha1ctx, pResult, dwPngSize);
 		mir_sha1_finish(&sha1ctx, sha1d);
-		{	
-            NETLIBBASE64 nlb = { szSha1d, sizeof(szSha1d), (PBYTE)sha1d, sizeof(sha1d) };
+		{	NETLIBBASE64 nlb = { szSha1d, sizeof(szSha1d), (PBYTE)sha1d, sizeof(sha1d) };
 			MSN_CallService(MS_NETLIB_BASE64ENCODE, 0, LPARAM(&nlb));
 		}
 		char drive[_MAX_DRIVE];
@@ -302,8 +302,7 @@ INT_PTR CMsnProto::SetAvatar(WPARAM wParam, LPARAM lParam)
 		
 		mir_sha1_finish(&sha1ctx, sha1c);
 
-		{	
-            NETLIBBASE64 nlb = { szSha1c, sizeof(szSha1c), (PBYTE)sha1c, sizeof(sha1c) };
+		{	NETLIBBASE64 nlb = { szSha1c, sizeof(szSha1c), (PBYTE)sha1c, sizeof(sha1c) };
 			MSN_CallService(MS_NETLIB_BASE64ENCODE, 0, LPARAM(&nlb));
 			ezxml_set_attr(xmlp, "SHA1C", szSha1c);
 		}
@@ -316,22 +315,18 @@ INT_PTR CMsnProto::SetAvatar(WPARAM wParam, LPARAM lParam)
 
 			setString(NULL, "PictObject", szEncodedBuffer);
 		}
-		{	
-            char tFileName[MAX_PATH];
-			MSN_GetAvatarFileName(NULL, tFileName, SIZEOF(tFileName));
+		{	char tFileName[ MAX_PATH ];
+			MSN_GetAvatarFileName(NULL, tFileName, sizeof(tFileName));
 			int fileId = _open(tFileName, _O_CREAT | _O_TRUNC | _O_WRONLY | O_BINARY,  _S_IREAD | _S_IWRITE);
-			if (fileId >= 0) 
-            {
+			if (fileId > -1) {
 				_write(fileId, pResult, dwPngSize);
 				_close(fileId);
 			}
 			else
-            {
-                TCHAR *fname = mir_a2t(tFileName);
-				MSN_ShowError("Cannot set avatar. File '%s' could not be created/overwritten", fname);
-                mir_free(fname);
-            }
+				MSN_ShowError("Cannot set avatar. File '%s' could not be created/overwritten", tFileName);
+
 		}
+
 		mir_free(pResult);
 	}
 
