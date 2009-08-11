@@ -33,8 +33,8 @@ Last change by : $Author$
 	#pragma warning(disable:4706 4121 4127)
 #endif
 
-// this plugin is for Miranda 0.9 only
-#define MIRANDA_VER 0x0900
+// this plugin is for Miranda 0.8 only
+#define MIRANDA_VER 0x0800
 
 #include "m_stdhdr.h"
 
@@ -427,6 +427,7 @@ struct filetransfer
 	TCHAR* sid;
 	int    bCompleted;
 	HANDLE hWaitEvent;
+	WCHAR* wszFileName;
 
 	// For type == FT_BYTESTREAM
 	JABBER_BYTE_TRANSFER *jbt;
@@ -436,13 +437,13 @@ struct filetransfer
 	// Used by file receiving only
 	char* httpHostName;
 	WORD httpPort;
-	TCHAR* httpPath;
+	char* httpPath;
 	DWORD dwExpectedRecvFileSize;
 
 	// Used by file sending only
 	HANDLE hFileEvent;
 	long *fileSize;
-	TCHAR* szDescription;
+	char* szDescription;
 	
 	CJabberProto* ppro;
 };
@@ -753,8 +754,8 @@ char*         __stdcall JabberUrlEncode( const char* str );
 char*         __stdcall JabberSha1( char* str );
 char*         __stdcall JabberUnixToDos( const char* str );
 WCHAR*        __stdcall JabberUnixToDosW( const WCHAR* str );
-void          __stdcall JabberHttpUrlDecode( TCHAR* str );
-TCHAR*        __stdcall JabberHttpUrlEncode( const TCHAR* str );
+void          __stdcall JabberHttpUrlDecode( char* str );
+char*         __stdcall JabberHttpUrlEncode( const char* str );
 int           __stdcall JabberCombineStatus( int status1, int status2 );
 TCHAR*        __stdcall JabberErrorStr( int errorCode );
 TCHAR*        __stdcall JabberErrorMsg( HXML errorNode );
