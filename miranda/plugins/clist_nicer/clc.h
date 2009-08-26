@@ -84,7 +84,6 @@ struct ClcGroup;
 #define ECF_HIDELOCALTIME 128
 #define ECF_FORCEVISIBILITY 256
 #define ECF_HIDEVISIBILITY  512
-#define ECF_HASREALTIMEZONE 1024
 
 // other contact flags (struct ClCContact;
 
@@ -161,7 +160,7 @@ struct ExtraCache {
 	TCHAR *statusMsg;
 	BYTE bStatusMsgValid;
 	DWORD timezone;
-	int	  timediff;
+	DWORD timediff;
 	DWORD dwCFlags;
     DWORD dwDFlags;     // display flags for caching only
     DWORD dwXMask;      // local extra icon mask, calculated from CLN_xmask
@@ -435,8 +434,6 @@ struct CluiData {
     BYTE exIconOrder[EXICON_COUNT];
     BOOL realTimeSaving;
 	TCHAR tszProfilePath[MAX_PATH];
-	FILETIME ft;
-	SYSTEMTIME st;
 };
 
 #define SORTBY_NAME 1

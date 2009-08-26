@@ -70,14 +70,14 @@ struct JabberPasswordDlgParam
 
 static INT_PTR CALLBACK JabberPasswordDlgProc( HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam )
 {
-	JabberPasswordDlgParam* param = (JabberPasswordDlgParam*)GetWindowLongPtr( hwndDlg, GWLP_USERDATA );
+	JabberPasswordDlgParam* param = (JabberPasswordDlgParam*)GetWindowLong( hwndDlg, GWL_USERDATA );
 
 	switch ( msg ) {
 	case WM_INITDIALOG:
 		TranslateDialogDefault( hwndDlg );
 		{	
 			param = (JabberPasswordDlgParam*)lParam;
-			SetWindowLongPtr( hwndDlg, GWLP_USERDATA, lParam );
+			SetWindowLong( hwndDlg, GWL_USERDATA, lParam );
 
 			TCHAR text[128];
 			mir_sntprintf( text, SIZEOF(text), _T("%s %s"), TranslateT( "Enter password for" ), ( TCHAR* )param->ptszJid );
@@ -193,9 +193,11 @@ void CJabberProto::xmlStreamInitializeNow(ThreadData* info)
 	HXML stream = n << XCHILDNS( _T("stream:stream" ), _T("jabber:client")) << XATTR( _T("to"), _A2T(info->server))
 		<< XATTR( _T("xmlns:stream"), _T("http://etherx.jabber.org/streams"));
 
-	if ( m_tszSelectedLang )
-		xmlAddAttr( stream, _T("xml:lang"), m_tszSelectedLang );
-
+	TCHAR *szXmlLang = GetXmlLang();
+	if ( szXmlLang ) {
+		xmlAddAttr( stream, _T("xml:lang"), szXmlLang );
+		mir_free( szXmlLang );
+	}
 	if ( !m_options.Disable3920auth )
 		xmlAddAttr( stream, _T("version"), _T("1.0"));
 
@@ -1114,9 +1116,7 @@ void CJabberProto::OnProcessMessage( HXML node, ThreadData* info )
 	}
 
 	const TCHAR* szMessage = NULL;
-	HXML bodyNode = xmlGetChildByTag( node , "body", "xml:lang", m_tszSelectedLang );
-	if ( bodyNode == NULL )
-		bodyNode = xmlGetChild( node , "body" );
+	HXML bodyNode = xmlGetChild( node , "body" );
 	if ( bodyNode != NULL && xmlGetText( bodyNode ) )
 		szMessage = xmlGetText( bodyNode );
 	if (( subjectNode = xmlGetChild( node , "subject" )) && xmlGetText( subjectNode ) && xmlGetText( subjectNode )[0] != _T('\0')) {

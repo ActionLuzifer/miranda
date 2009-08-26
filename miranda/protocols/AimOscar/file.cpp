@@ -55,9 +55,9 @@ struct oft2//oscar file transfer 2 class- See On_Sending_Files_via_OSCAR.pdf
 
 #pragma pack(pop)
 
-bool send_init_oft2(file_transfer *ft, TCHAR* file)
+bool send_init_oft2(file_transfer *ft,  char* file)
 {
-    char* fname = mir_utf8encodeT(file);
+    char* fname = mir_utf8encode(file);
     aimString astr(get_fname(fname));
     mir_free(fname);
 
@@ -90,22 +90,20 @@ bool send_init_oft2(file_transfer *ft, TCHAR* file)
     return Netlib_Send(ft->hConn, (char*)oft, len, 0) > 0;
 }
 
-void CAimProto::report_file_error(TCHAR *fname)
+void CAimProto::report_file_error(char *fname)
 {
-    TCHAR errmsg[512];
-    TCHAR* error = mir_a2t(_strerror(NULL));
-    mir_sntprintf(errmsg, SIZEOF(errmsg), TranslateT("Failed to open file: %s : %s"), fname, error);
-    mir_free(error);
-    ShowPopup((char*)errmsg, ERROR_POPUP | TCHAR_POPUP);
+    char errmsg[512];
+    mir_snprintf(errmsg, SIZEOF(errmsg), Translate("Failed to open file: %s : %s"), fname, _strerror(NULL));
+    ShowPopup(errmsg, ERROR_POPUP);
 }
 
 bool setup_next_file_send(file_transfer *ft)
 {
     ft->pfts.currentFileProgress = 0;
-    ft->pfts.tszCurrentFile = ft->pfts.ptszFiles[ft->pfts.currentFileNumber];
+    ft->pfts.currentFile = ft->pfts.files[ft->pfts.currentFileNumber];
 
-    struct _stati64 statbuf;
-    if (_tstati64(ft->pfts.tszCurrentFile, &statbuf))
+    struct _stat statbuf;
+    if (_stat(ft->pfts.currentFile, &statbuf))
     {
         return false;
     }
@@ -113,7 +111,7 @@ bool setup_next_file_send(file_transfer *ft)
     ft->pfts.currentFileSize = statbuf.st_size;
     ft->pfts.currentFileTime = statbuf.st_mtime;
 
-    send_init_oft2(ft, ft->pfts.tszCurrentFile);
+    send_init_oft2(ft, ft->pfts.currentFile);
 
     return true;
 }
@@ -159,14 +157,14 @@ int CAimProto::sending_file(file_transfer *ft, HANDLE hServerPacketRecver, NETLI
             {
                 LOG("P2P: Buddy Accepts our file transfer.");
 
-                int fid = _topen(ft->pfts.tszCurrentFile, _O_RDONLY | _O_BINARY, _S_IREAD);
+                int fid = _open(ft->pfts.currentFile, _O_RDONLY | _O_BINARY, _S_IREAD);
                 if (fid < 0)
                 {
-                    report_file_error(ft->pfts.tszCurrentFile);
+                    report_file_error(ft->pfts.currentFile);
                     return 2;
                 }
 
-                if (ft->pfts.currentFileProgress) _lseeki64(fid, ft->pfts.currentFileProgress, SEEK_SET);
+                if (ft->pfts.currentFileProgress) _lseek(fid, ft->pfts.currentFileProgress, SEEK_SET);
 
                 NETLIBSELECT tSelect = {0};
                 tSelect.cbSize = sizeof(tSelect);
@@ -207,15 +205,15 @@ int CAimProto::sending_file(file_transfer *ft, HANDLE hServerPacketRecver, NETLI
 
 		            if (!setup_next_file_send(ft))
                     {
-                        report_file_error(ft->pfts.tszCurrentFile);
+                        report_file_error(ft->pfts.currentFile);
                         return 2;
                     }
                 }
                 else
                 {
                     failed = _htonl(recv_ft->recv_bytes) != ft->pfts.currentFileSize;
-                    break;
-                }
+                break;
+            }
             }
             else if (type == 0x0205)
             {
@@ -223,7 +221,7 @@ int CAimProto::sending_file(file_transfer *ft, HANDLE hServerPacketRecver, NETLI
                 recv_ft->type = _htons(0x0106);
                 
                 ft->pfts.currentFileProgress = _htonl(recv_ft->recv_bytes);
-                if (aim_oft_checksum_file(ft->pfts.tszCurrentFile, ft->pfts.currentFileProgress) != _htonl(recv_ft->recv_checksum))
+                if (aim_oft_checksum_file(ft->pfts.currentFile, ft->pfts.currentFileProgress) != _htonl(recv_ft->recv_checksum))
                 {
                     ft->pfts.currentFileProgress = 0;
                     recv_ft->recv_bytes = 0;
@@ -251,7 +249,7 @@ int CAimProto::receiving_file(file_transfer *ft, HANDLE hServerPacketRecver, NET
 
     oft2 *oft = NULL;
 
-    ft->pfts.tszWorkingDir = mir_utf8decodeT(ft->file);
+    ft->pfts.workingDir = mir_utf8decodeA(ft->file);
 
     //start listen for packets stuff
     for (;;)
@@ -299,55 +297,55 @@ int CAimProto::receiving_file(file_transfer *ft, HANDLE hServerPacketRecver, NET
                     memcpy(buf, recv_ft->filename, buflen);
                     enc = _htons(recv_ft->encoding);
 
-                    TCHAR *name;
+                    char *name;
                     if (enc == 2)
                     {
                         wchar_t* wbuf = (wchar_t*)buf;
                         wcs_htons(wbuf);
                         for (wchar_t *p = wbuf; *p; ++p) { if (*p == 1) *p = '\\'; }
-                        name = mir_u2t(wbuf);
+                        name = mir_u2a(wbuf);
                     }
                     else
                     {
                         for (char *p = buf; *p; ++p) { if (*p == 1) *p = '\\'; }
-                        name = mir_a2t(buf);
+                        name = mir_strdup(buf);
                     }
 
                     mir_free(buf);
 
-                    TCHAR fname[256];
-                    mir_sntprintf(fname, SIZEOF(fname), _T("%s%s"), ft->pfts.tszWorkingDir, name);
+                    char fname[256];
+                    mir_snprintf(fname, SIZEOF(fname), "%s%s", ft->pfts.workingDir, name);
                     mir_free(name);
-                    mir_free(ft->pfts.tszCurrentFile);
-                    ft->pfts.tszCurrentFile = mir_tstrdup(fname);
+                    mir_free(ft->pfts.currentFile);
+                    ft->pfts.currentFile = mir_strdup(fname);
 
                     ResetEvent(ft->hResumeEvent);
                     if (sendBroadcast(ft->hContact, ACKTYPE_FILE, ACKRESULT_FILERESUME, ft, (LPARAM)&ft->pfts))
                         WaitForSingleObject(ft->hResumeEvent, INFINITE);
 
-                    if (ft->pfts.tszCurrentFile)
+                    if (ft->pfts.currentFile)
                     {
-                        TCHAR* dir = get_dir(ft->pfts.tszCurrentFile);
-                        CallService(MS_UTILS_CREATEDIRTREET, 0, (LPARAM)dir);
+                        char* dir = get_dir(ft->pfts.currentFile);
+                        CallService(MS_UTILS_CREATEDIRTREE, 0, (LPARAM)dir);
                         mir_free(dir);
 
                         oft->type = _htons(ft->pfts.currentFileProgress ? 0x0205 : 0x0202);
 
                         const int flag = ft->pfts.currentFileProgress ? 0 : _O_TRUNC;
-					    fid = _topen(ft->pfts.tszCurrentFile, _O_CREAT | _O_WRONLY | _O_BINARY | flag, _S_IREAD | _S_IWRITE);
+					    fid = _open(ft->pfts.currentFile, _O_CREAT | _O_WRONLY | _O_BINARY | flag, _S_IREAD | _S_IWRITE);
 
                         if (fid < 0)	
-                        {
-                            report_file_error(fname);
-                            break;
-                        }
+                    {
+                        report_file_error(fname);
+                        break;
+                    }
 
                         accepted_file = ft->pfts.currentFileProgress == 0;
 
                         if (ft->pfts.currentFileProgress)
                         {
                             oft->recv_bytes = _htonl(ft->pfts.currentFileProgress);
-                            oft->recv_checksum = _htonl(aim_oft_checksum_file(ft->pfts.tszCurrentFile));
+                            oft->recv_checksum = _htonl(aim_oft_checksum_file(ft->pfts.currentFile));
                         }
                     }
                     else
@@ -370,7 +368,7 @@ int CAimProto::receiving_file(file_transfer *ft, HANDLE hServerPacketRecver, NET
                     ft->pfts.currentFileProgress = _htonl(oft->recv_bytes);
                     ft->pfts.totalProgress += ft->pfts.currentFileProgress;
 
-                    _lseeki64(fid, ft->pfts.currentFileProgress, SEEK_SET);
+                    _lseek(fid, ft->pfts.currentFileProgress, SEEK_SET);
                     accepted_file = true;
 
                     oft->type = _htons(0x0207);
@@ -391,7 +389,7 @@ int CAimProto::receiving_file(file_transfer *ft, HANDLE hServerPacketRecver, NET
                 {
                     oft->type = _htons(0x0204);
                     oft->recv_bytes = _htonl(ft->pfts.totalBytes);
-                    oft->recv_checksum = _htonl(aim_oft_checksum_file(ft->pfts.tszCurrentFile));
+                    oft->recv_checksum = _htonl(aim_oft_checksum_file(ft->pfts.currentFile));
 
                     LOG("P2P: We got the file successfully");
                     Netlib_Send(ft->hConn, (char*)oft, _htons(oft->length), 0);
@@ -483,7 +481,6 @@ file_transfer::file_transfer(HANDLE hCont, char* nick, char* cookie)
     memset(this, 0, sizeof(*this)); 
 
     pfts.cbSize = sizeof(pfts);
-    pfts.flags = PFTS_TCHAR;
     pfts.hContact = hCont;
 
     hContact = hCont;
@@ -503,15 +500,15 @@ file_transfer::~file_transfer()
     mir_free(message); 
     mir_free(sn); 
 
-    mir_free(pfts.tszWorkingDir);
-    if (!sending) mir_free(pfts.tszCurrentFile);
+    mir_free(pfts.workingDir);
+    if (!sending) mir_free(pfts.currentFile);
 
-    if (success && pfts.ptszFiles)
+    if (success && pfts.files)
     {
         for (int i = 0; i < pfts.totalFiles; i++)
-            mir_free(pfts.ptszFiles[i]);
+            mir_free(pfts.files[i]);
 
-        mir_free(pfts.ptszFiles);
+        mir_free(pfts.files);
     }
     CloseHandle(hResumeEvent);
 }

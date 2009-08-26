@@ -430,7 +430,7 @@ typedef struct {
 #define FILERESUME_SKIP       4
 typedef struct {
 	int action;    //a FILERESUME_ flag
-	const FNAMECHAR *szFilename;  //full path. Only valid if action==FILERESUME_RENAME
+	const char *szFilename;  //full path. Only valid if action==FILERESUME_RENAME
 } PROTOFILERESUME;
 #define PS_FILERESUME     "/FileResume"
 
@@ -684,24 +684,9 @@ zero-terminated, binary data should be converted to text.
 Use PS_ADDTOLISTBYEVENT to add the contacts from one of these to the list.
 */
 
-//File(s) have been received (0.9.x)
+//File(s) have been received
 //wParam=0
 //lParam=(LPARAM)(PROTORECVFILE*)&prf
-typedef struct {
-	DWORD flags;
-	DWORD timestamp;   //unix time
-	TCHAR *tszDescription;
-	int   fileCount;
-	TCHAR **ptszFiles;
-	LPARAM lParam;     //extra space for the network level protocol module
-} PROTORECVFILET;
-
-#define MS_PROTO_RECVFILET "Proto/RecvFileT"
-
-#define PSR_FILE       "/RecvFile"
-
-// left for compatibility with the old Miranda versions.
-
 typedef struct {
 	DWORD flags;
 	DWORD timestamp;   //unix time
@@ -709,6 +694,8 @@ typedef struct {
 	char **pFiles;
 	LPARAM lParam;     //extra space for the network level protocol module
 } PROTORECVFILE;
+#define PSR_FILE       "/RecvFile"
+
 #define MS_PROTO_RECVFILE "Proto/RecvFile"
 
 //An away message reply has been received

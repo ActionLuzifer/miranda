@@ -466,8 +466,8 @@ INT_PTR CIcqProto::GetMyAvatar(WPARAM wParam, LPARAM lParam)
 	if (!wParam) return -3;
 
 	char* file = loadMyAvatarFileName();
-	if (file) strncpy((char*)wParam, file, (int)lParam);
-	SAFE_FREE((void**)&file);
+	null_strcpy((char*)wParam, file, (int)lParam - 1);
+	SAFE_FREE(&file);
 	if (!_access((char*)wParam, 0)) return 0;
 	return -1;
 }
@@ -701,8 +701,7 @@ void CIcqProto::ICQAddRecvEvent(HANDLE hContact, WORD wType, PROTORECVEVENT* pre
 		DWORD dwUin;
 		uid_str szUid;
 
-		//setContactHidden(hContact, 0);
-
+		setContactHidden(hContact, 0);
 		// if the contact was hidden, add to client-list if not in server-list authed
 		if (!getSettingWord(hContact, DBSETTING_SERVLIST_ID, 0) || getSettingByte(hContact, "Auth", 0))
 		{

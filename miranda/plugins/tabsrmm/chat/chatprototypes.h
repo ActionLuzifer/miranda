@@ -1,26 +1,4 @@
-/*
-Chat module plugin for Miranda IM
-
-Copyright (C) 2003-2009 Joergen Persson and others
-
-This program is free software; you can redistribute it and/or
-modify it under the terms of the GNU General Public License
-as published by the Free Software Foundation; either version 2
-of the License, or (at your option) any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program; if not, write to the Free Software
-Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
-
-$Id$
-
-*/
-
+//main.c
 void LoadIcons(void);
 void LoadLogIcons(void);
 void FreeIcons(void);
@@ -33,7 +11,7 @@ INT_PTR CALLBACK DlgProcColorToolWindow(HWND hwndDlg, UINT msg, WPARAM wParam, L
 void   Log_StreamInEvent(HWND hwndDlg, LOGINFO* lin, SESSION_INFO* si, BOOL bRedraw, BOOL bPhaseTwo);
 void   LoadMsgLogBitmaps(void);
 void   FreeMsgLogBitmaps(void);
-TCHAR* GetChatLogsFilename(SESSION_INFO *si, time_t tTime);
+TCHAR* GetChatLogsFilename (HANDLE  hContact, time_t tTime);
 TCHAR* MakeTimeStamp(TCHAR* pszStamp, time_t time);
 char*  Log_CreateRtfHeader(MODULEINFO * mi);
 
@@ -79,11 +57,11 @@ SESSION_INFO* SM_AddSession(const TCHAR* pszID, const char* pszModule);
 int           SM_RemoveSession(const TCHAR* pszID, const char* pszModule);
 SESSION_INFO* SM_FindSession(const TCHAR* pszID, const char* pszModule);
 USERINFO*     SM_AddUser(const TCHAR* pszID, const char* pszModule, const TCHAR* pszUID, const TCHAR* pszNick, WORD wStatus);
-SESSION_INFO* SM_FindSessionAutoComplete(const char* pszModule, SESSION_INFO* currSession, SESSION_INFO* prevSession, const TCHAR* pszOriginal, const TCHAR* pszCurrent);
 BOOL          SM_ChangeUID(const TCHAR* pszID, const char* pszModule, const TCHAR* pszUID, const TCHAR* pszNewUID);
 BOOL          SM_ChangeNick(const TCHAR* pszID, const char* pszModule, GCEVENT * gce);
 BOOL          SM_RemoveUser(const TCHAR* pszID, const char* pszModule, const TCHAR* pszUID);
 BOOL          SM_SetOffline(const TCHAR* pszID, const char* pszModule);
+BOOL          SM_SetTabbedWindowHwnd(SESSION_INFO* si, HWND hwnd);
 HICON         SM_GetStatusIcon(SESSION_INFO* si, USERINFO* ui, char* szIndicator);
 BOOL          SM_SetStatus(const TCHAR* pszID, const char* pszModule, int wStatus);
 BOOL          SM_SetStatusEx(const TCHAR* pszID, const char* pszModule, const TCHAR* pszText, int flags );
@@ -111,6 +89,7 @@ SESSION_INFO* SM_FindSessionByIndex(const char* pszModule, int iItem);
 char*         SM_GetUsers(SESSION_INFO* si);
 USERINFO*     SM_GetUserFromIndex(const TCHAR* pszID, const char* pszModule, int index);
 BOOL		  SM_ReconfigureFilters();
+SESSION_INFO* SM_FindSessionAutoComplete(const char* pszModule, SESSION_INFO* currSession, SESSION_INFO* prevSession, const TCHAR* pszOriginal, const TCHAR* pszCurrent);
 MODULEINFO*   MM_AddModule(const char* pszModule);
 MODULEINFO*   MM_FindModule(const char* pszModule);
 void          MM_FixColors();

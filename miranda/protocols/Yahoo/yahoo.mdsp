@@ -137,9 +137,10 @@ extraResourceOptions=
 6=libyahoo2\Docs\TODO
 7=libyahoo2\Docs\ymsg-9.txt
 [History]
-yahoo.cpp,40909
-avatar.cpp,181
-..\MSN\msn_proto.cpp,6288
-..\MSN\msn_misc.cpp,7236
-file_transfer.cpp,1125
-libyahoo2\libyahoo2.c,82003
+util.cpp,2038
+main.cpp,493
+server.cpp,1143
+yahoo.cpp,44796
+proto.h,0
+libyahoo2\libyahoo2.c,171616
+proto.cpp,7271

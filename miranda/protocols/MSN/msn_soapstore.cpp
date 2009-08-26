@@ -241,8 +241,8 @@ bool CMsnProto::MSN_StoreUpdateNick(const char* szNick)
 
 	ezxml_free(xmlp);
 
-	unsigned status = 0;
-	char *storeUrl = NULL, *tResult = NULL;
+	unsigned status;
+	char *storeUrl = NULL, *tResult;
 
     for (int k = 4; --k;)
     {

@@ -1,6 +1,6 @@
 # Microsoft Developer Studio Generated Dependency File, included by tabsrmm.mak
 
-.\chat\clist.cpp : \
+.\chat\clist.c : \
 	"..\..\include\m_acc.h"\
 	"..\..\include\m_addcontact.h"\
 	"..\..\include\m_avatars.h"\
@@ -13,10 +13,8 @@
 	"..\..\include\m_database.h"\
 	"..\..\include\m_file.h"\
 	"..\..\include\m_fontservice.h"\
-	"..\..\include\m_freeimage.h"\
 	"..\..\include\m_history.h"\
 	"..\..\include\m_icolib.h"\
-	"..\..\include\m_imgsrvc.h"\
 	"..\..\include\m_langpack.h"\
 	"..\..\include\m_message.h"\
 	"..\..\include\m_options.h"\
@@ -46,642 +44,20 @@
 	".\API\m_popup.h"\
 	".\API\m_smileyadd.h"\
 	".\API\m_spellchecker.h"\
-	".\API\m_toptoolbar.h"\
-	".\API\m_updater.h"\
 	".\chat\chat.h"\
-	".\chat\chat_resource.h"\
 	".\chat\chatprototypes.h"\
-	".\src\commonheaders.h"\
-	".\src\controls.h"\
-	".\src\functions.h"\
-	".\src\generic_msghandlers.h"\
-	".\src\globals.h"\
-	".\src\mim.h"\
-	".\src\msgdlgutils.h"\
-	".\src\msgs.h"\
-	".\src\nen.h"\
-	".\src\resource.h"\
-	".\src\sendqueue.h"\
-	".\src\taskbar.h"\
-	".\src\templates.h"\
-	".\src\themes.h"\
-	".\src\typingnotify.h"\
-	
-
-.\chat\colorchooser.cpp : \
-	"..\..\include\m_acc.h"\
-	"..\..\include\m_addcontact.h"\
-	"..\..\include\m_avatars.h"\
-	"..\..\include\m_button.h"\
-	"..\..\include\m_chat.h"\
-	"..\..\include\m_clc.h"\
-	"..\..\include\m_clist.h"\
-	"..\..\include\m_clui.h"\
-	"..\..\include\m_contacts.h"\
-	"..\..\include\m_database.h"\
-	"..\..\include\m_file.h"\
-	"..\..\include\m_fontservice.h"\
-	"..\..\include\m_freeimage.h"\
-	"..\..\include\m_history.h"\
-	"..\..\include\m_icolib.h"\
-	"..\..\include\m_imgsrvc.h"\
-	"..\..\include\m_langpack.h"\
-	"..\..\include\m_message.h"\
-	"..\..\include\m_options.h"\
-	"..\..\include\m_plugins.h"\
-	"..\..\include\m_protocols.h"\
-	"..\..\include\m_protomod.h"\
-	"..\..\include\m_protosvc.h"\
-	"..\..\include\m_skin.h"\
-	"..\..\include\m_stdhdr.h"\
-	"..\..\include\m_system.h"\
-	"..\..\include\m_userinfo.h"\
-	"..\..\include\m_utils.h"\
-	"..\..\include\newpluginapi.h"\
-	"..\..\include\statusmodes.h"\
-	"..\..\include\win2k.h"\
-	".\API\m_buttonbar.h"\
-	".\API\m_cln_skinedit.h"\
-	".\API\m_fingerprint.h"\
-	".\API\m_flash.h"\
-	".\API\m_folders.h"\
-	".\API\m_historyevents.h"\
-	".\API\m_ieview.h"\
-	".\API\m_mathmodule.h"\
-	".\API\m_metacontacts.h"\
-	".\API\m_msg_buttonsbar.h"\
-	".\API\m_nudge.h"\
-	".\API\m_popup.h"\
-	".\API\m_smileyadd.h"\
-	".\API\m_spellchecker.h"\
-	".\API\m_toptoolbar.h"\
-	".\API\m_updater.h"\
-	".\chat\chat.h"\
-	".\chat\chat_resource.h"\
-	".\chat\chatprototypes.h"\
-	".\src\commonheaders.h"\
-	".\src\controls.h"\
-	".\src\functions.h"\
-	".\src\generic_msghandlers.h"\
-	".\src\globals.h"\
-	".\src\mim.h"\
-	".\src\msgdlgutils.h"\
-	".\src\msgs.h"\
-	".\src\nen.h"\
-	".\src\resource.h"\
-	".\src\sendqueue.h"\
-	".\src\taskbar.h"\
-	".\src\templates.h"\
-	".\src\themes.h"\
-	".\src\typingnotify.h"\
-	
-
-.\chat\log.cpp : \
-	"..\..\include\m_acc.h"\
-	"..\..\include\m_addcontact.h"\
-	"..\..\include\m_avatars.h"\
-	"..\..\include\m_button.h"\
-	"..\..\include\m_chat.h"\
-	"..\..\include\m_clc.h"\
-	"..\..\include\m_clist.h"\
-	"..\..\include\m_clui.h"\
-	"..\..\include\m_contacts.h"\
-	"..\..\include\m_database.h"\
-	"..\..\include\m_file.h"\
-	"..\..\include\m_fontservice.h"\
-	"..\..\include\m_freeimage.h"\
-	"..\..\include\m_history.h"\
-	"..\..\include\m_icolib.h"\
-	"..\..\include\m_imgsrvc.h"\
-	"..\..\include\m_langpack.h"\
-	"..\..\include\m_message.h"\
-	"..\..\include\m_options.h"\
-	"..\..\include\m_plugins.h"\
-	"..\..\include\m_protocols.h"\
-	"..\..\include\m_protomod.h"\
-	"..\..\include\m_protosvc.h"\
-	"..\..\include\m_skin.h"\
-	"..\..\include\m_stdhdr.h"\
-	"..\..\include\m_system.h"\
-	"..\..\include\m_userinfo.h"\
-	"..\..\include\m_utils.h"\
-	"..\..\include\newpluginapi.h"\
-	"..\..\include\statusmodes.h"\
-	"..\..\include\win2k.h"\
-	".\API\m_buttonbar.h"\
-	".\API\m_cln_skinedit.h"\
-	".\API\m_fingerprint.h"\
-	".\API\m_flash.h"\
-	".\API\m_folders.h"\
-	".\API\m_historyevents.h"\
-	".\API\m_ieview.h"\
-	".\API\m_mathmodule.h"\
-	".\API\m_metacontacts.h"\
-	".\API\m_msg_buttonsbar.h"\
-	".\API\m_nudge.h"\
-	".\API\m_popup.h"\
-	".\API\m_smileyadd.h"\
-	".\API\m_spellchecker.h"\
-	".\API\m_toptoolbar.h"\
-	".\API\m_updater.h"\
-	".\chat\chat.h"\
-	".\chat\chat_resource.h"\
-	".\chat\chatprototypes.h"\
-	".\src\commonheaders.h"\
-	".\src\controls.h"\
-	".\src\functions.h"\
-	".\src\generic_msghandlers.h"\
-	".\src\globals.h"\
-	".\src\mim.h"\
-	".\src\msgdlgutils.h"\
-	".\src\msgs.h"\
-	".\src\nen.h"\
-	".\src\resource.h"\
-	".\src\sendqueue.h"\
-	".\src\taskbar.h"\
-	".\src\templates.h"\
-	".\src\themes.h"\
-	".\src\typingnotify.h"\
-	
-
-.\chat\main.cpp : \
-	"..\..\include\m_acc.h"\
-	"..\..\include\m_addcontact.h"\
-	"..\..\include\m_avatars.h"\
-	"..\..\include\m_button.h"\
-	"..\..\include\m_chat.h"\
-	"..\..\include\m_clc.h"\
-	"..\..\include\m_clist.h"\
-	"..\..\include\m_clui.h"\
-	"..\..\include\m_contacts.h"\
-	"..\..\include\m_database.h"\
-	"..\..\include\m_file.h"\
-	"..\..\include\m_fontservice.h"\
-	"..\..\include\m_freeimage.h"\
-	"..\..\include\m_history.h"\
-	"..\..\include\m_icolib.h"\
-	"..\..\include\m_imgsrvc.h"\
-	"..\..\include\m_langpack.h"\
-	"..\..\include\m_message.h"\
-	"..\..\include\m_options.h"\
-	"..\..\include\m_plugins.h"\
-	"..\..\include\m_protocols.h"\
-	"..\..\include\m_protomod.h"\
-	"..\..\include\m_protosvc.h"\
-	"..\..\include\m_skin.h"\
-	"..\..\include\m_stdhdr.h"\
-	"..\..\include\m_system.h"\
-	"..\..\include\m_userinfo.h"\
-	"..\..\include\m_utils.h"\
-	"..\..\include\newpluginapi.h"\
-	"..\..\include\statusmodes.h"\
-	"..\..\include\win2k.h"\
-	".\API\m_buttonbar.h"\
-	".\API\m_cln_skinedit.h"\
-	".\API\m_fingerprint.h"\
-	".\API\m_flash.h"\
-	".\API\m_folders.h"\
-	".\API\m_historyevents.h"\
-	".\API\m_ieview.h"\
-	".\API\m_mathmodule.h"\
-	".\API\m_metacontacts.h"\
-	".\API\m_msg_buttonsbar.h"\
-	".\API\m_nudge.h"\
-	".\API\m_popup.h"\
-	".\API\m_smileyadd.h"\
-	".\API\m_spellchecker.h"\
-	".\API\m_toptoolbar.h"\
-	".\API\m_updater.h"\
-	".\chat\chat.h"\
-	".\chat\chat_resource.h"\
-	".\chat\chatprototypes.h"\
-	".\src\commonheaders.h"\
-	".\src\controls.h"\
-	".\src\functions.h"\
-	".\src\generic_msghandlers.h"\
-	".\src\globals.h"\
-	".\src\mim.h"\
-	".\src\msgdlgutils.h"\
-	".\src\msgs.h"\
-	".\src\nen.h"\
-	".\src\resource.h"\
-	".\src\sendqueue.h"\
-	".\src\taskbar.h"\
-	".\src\templates.h"\
-	".\src\themes.h"\
-	".\src\typingnotify.h"\
-	
-
-.\chat\manager.cpp : \
-	"..\..\include\m_acc.h"\
-	"..\..\include\m_addcontact.h"\
-	"..\..\include\m_avatars.h"\
-	"..\..\include\m_button.h"\
-	"..\..\include\m_chat.h"\
-	"..\..\include\m_clc.h"\
-	"..\..\include\m_clist.h"\
-	"..\..\include\m_clui.h"\
-	"..\..\include\m_contacts.h"\
-	"..\..\include\m_database.h"\
-	"..\..\include\m_file.h"\
-	"..\..\include\m_fontservice.h"\
-	"..\..\include\m_freeimage.h"\
-	"..\..\include\m_history.h"\
-	"..\..\include\m_icolib.h"\
-	"..\..\include\m_imgsrvc.h"\
-	"..\..\include\m_langpack.h"\
-	"..\..\include\m_message.h"\
-	"..\..\include\m_options.h"\
-	"..\..\include\m_plugins.h"\
-	"..\..\include\m_protocols.h"\
-	"..\..\include\m_protomod.h"\
-	"..\..\include\m_protosvc.h"\
-	"..\..\include\m_skin.h"\
-	"..\..\include\m_stdhdr.h"\
-	"..\..\include\m_system.h"\
-	"..\..\include\m_userinfo.h"\
-	"..\..\include\m_utils.h"\
-	"..\..\include\newpluginapi.h"\
-	"..\..\include\statusmodes.h"\
-	"..\..\include\win2k.h"\
-	".\API\m_buttonbar.h"\
-	".\API\m_cln_skinedit.h"\
-	".\API\m_fingerprint.h"\
-	".\API\m_flash.h"\
-	".\API\m_folders.h"\
-	".\API\m_historyevents.h"\
-	".\API\m_ieview.h"\
-	".\API\m_mathmodule.h"\
-	".\API\m_metacontacts.h"\
-	".\API\m_msg_buttonsbar.h"\
-	".\API\m_nudge.h"\
-	".\API\m_popup.h"\
-	".\API\m_smileyadd.h"\
-	".\API\m_spellchecker.h"\
-	".\API\m_toptoolbar.h"\
-	".\API\m_updater.h"\
-	".\chat\chat.h"\
-	".\chat\chat_resource.h"\
-	".\chat\chatprototypes.h"\
-	".\src\commonheaders.h"\
-	".\src\controls.h"\
-	".\src\functions.h"\
-	".\src\generic_msghandlers.h"\
-	".\src\globals.h"\
-	".\src\mim.h"\
-	".\src\msgdlgutils.h"\
-	".\src\msgs.h"\
-	".\src\nen.h"\
-	".\src\resource.h"\
-	".\src\sendqueue.h"\
-	".\src\taskbar.h"\
-	".\src\templates.h"\
-	".\src\themes.h"\
-	".\src\typingnotify.h"\
-	
-
-.\chat\message.cpp : \
-	"..\..\include\m_acc.h"\
-	"..\..\include\m_addcontact.h"\
-	"..\..\include\m_avatars.h"\
-	"..\..\include\m_button.h"\
-	"..\..\include\m_chat.h"\
-	"..\..\include\m_clc.h"\
-	"..\..\include\m_clist.h"\
-	"..\..\include\m_clui.h"\
-	"..\..\include\m_contacts.h"\
-	"..\..\include\m_database.h"\
-	"..\..\include\m_file.h"\
-	"..\..\include\m_fontservice.h"\
-	"..\..\include\m_freeimage.h"\
-	"..\..\include\m_history.h"\
-	"..\..\include\m_icolib.h"\
-	"..\..\include\m_imgsrvc.h"\
-	"..\..\include\m_langpack.h"\
-	"..\..\include\m_message.h"\
-	"..\..\include\m_options.h"\
-	"..\..\include\m_plugins.h"\
-	"..\..\include\m_protocols.h"\
-	"..\..\include\m_protomod.h"\
-	"..\..\include\m_protosvc.h"\
-	"..\..\include\m_skin.h"\
-	"..\..\include\m_stdhdr.h"\
-	"..\..\include\m_system.h"\
-	"..\..\include\m_userinfo.h"\
-	"..\..\include\m_utils.h"\
-	"..\..\include\newpluginapi.h"\
-	"..\..\include\statusmodes.h"\
-	"..\..\include\win2k.h"\
-	".\API\m_buttonbar.h"\
-	".\API\m_cln_skinedit.h"\
-	".\API\m_fingerprint.h"\
-	".\API\m_flash.h"\
-	".\API\m_folders.h"\
-	".\API\m_historyevents.h"\
-	".\API\m_ieview.h"\
-	".\API\m_mathmodule.h"\
-	".\API\m_metacontacts.h"\
-	".\API\m_msg_buttonsbar.h"\
-	".\API\m_nudge.h"\
-	".\API\m_popup.h"\
-	".\API\m_smileyadd.h"\
-	".\API\m_spellchecker.h"\
-	".\API\m_toptoolbar.h"\
-	".\API\m_updater.h"\
-	".\chat\chat.h"\
-	".\chat\chat_resource.h"\
-	".\chat\chatprototypes.h"\
-	".\src\commonheaders.h"\
-	".\src\controls.h"\
-	".\src\functions.h"\
-	".\src\generic_msghandlers.h"\
-	".\src\globals.h"\
-	".\src\mim.h"\
-	".\src\msgdlgutils.h"\
-	".\src\msgs.h"\
-	".\src\nen.h"\
-	".\src\resource.h"\
-	".\src\sendqueue.h"\
-	".\src\taskbar.h"\
-	".\src\templates.h"\
-	".\src\themes.h"\
-	".\src\typingnotify.h"\
-	
-
-.\chat\options.cpp : \
-	"..\..\include\m_acc.h"\
-	"..\..\include\m_addcontact.h"\
-	"..\..\include\m_avatars.h"\
-	"..\..\include\m_button.h"\
-	"..\..\include\m_chat.h"\
-	"..\..\include\m_clc.h"\
-	"..\..\include\m_clist.h"\
-	"..\..\include\m_clui.h"\
-	"..\..\include\m_contacts.h"\
-	"..\..\include\m_database.h"\
-	"..\..\include\m_file.h"\
-	"..\..\include\m_fontservice.h"\
-	"..\..\include\m_freeimage.h"\
-	"..\..\include\m_history.h"\
-	"..\..\include\m_icolib.h"\
-	"..\..\include\m_imgsrvc.h"\
-	"..\..\include\m_langpack.h"\
-	"..\..\include\m_message.h"\
-	"..\..\include\m_options.h"\
-	"..\..\include\m_plugins.h"\
-	"..\..\include\m_protocols.h"\
-	"..\..\include\m_protomod.h"\
-	"..\..\include\m_protosvc.h"\
-	"..\..\include\m_skin.h"\
-	"..\..\include\m_stdhdr.h"\
-	"..\..\include\m_system.h"\
-	"..\..\include\m_userinfo.h"\
-	"..\..\include\m_utils.h"\
-	"..\..\include\newpluginapi.h"\
-	"..\..\include\statusmodes.h"\
-	"..\..\include\win2k.h"\
-	".\API\m_buttonbar.h"\
-	".\API\m_cln_skinedit.h"\
-	".\API\m_fingerprint.h"\
-	".\API\m_flash.h"\
-	".\API\m_folders.h"\
-	".\API\m_historyevents.h"\
-	".\API\m_ieview.h"\
-	".\API\m_mathmodule.h"\
-	".\API\m_metacontacts.h"\
-	".\API\m_msg_buttonsbar.h"\
-	".\API\m_nudge.h"\
-	".\API\m_popup.h"\
-	".\API\m_smileyadd.h"\
-	".\API\m_spellchecker.h"\
-	".\API\m_toptoolbar.h"\
-	".\API\m_updater.h"\
-	".\chat\chat.h"\
-	".\chat\chat_resource.h"\
-	".\chat\chatprototypes.h"\
-	".\src\commonheaders.h"\
-	".\src\controls.h"\
-	".\src\functions.h"\
-	".\src\generic_msghandlers.h"\
-	".\src\globals.h"\
-	".\src\mim.h"\
-	".\src\msgdlgutils.h"\
-	".\src\msgs.h"\
-	".\src\nen.h"\
-	".\src\resource.h"\
-	".\src\sendqueue.h"\
-	".\src\taskbar.h"\
-	".\src\templates.h"\
-	".\src\themes.h"\
-	".\src\typingnotify.h"\
-	
-
-.\chat\services.cpp : \
-	"..\..\include\m_acc.h"\
-	"..\..\include\m_addcontact.h"\
-	"..\..\include\m_avatars.h"\
-	"..\..\include\m_button.h"\
-	"..\..\include\m_chat.h"\
-	"..\..\include\m_clc.h"\
-	"..\..\include\m_clist.h"\
-	"..\..\include\m_clui.h"\
-	"..\..\include\m_contacts.h"\
-	"..\..\include\m_database.h"\
-	"..\..\include\m_file.h"\
-	"..\..\include\m_fontservice.h"\
-	"..\..\include\m_freeimage.h"\
-	"..\..\include\m_history.h"\
-	"..\..\include\m_icolib.h"\
-	"..\..\include\m_imgsrvc.h"\
-	"..\..\include\m_langpack.h"\
-	"..\..\include\m_message.h"\
-	"..\..\include\m_options.h"\
-	"..\..\include\m_plugins.h"\
-	"..\..\include\m_protocols.h"\
-	"..\..\include\m_protomod.h"\
-	"..\..\include\m_protosvc.h"\
-	"..\..\include\m_skin.h"\
-	"..\..\include\m_stdhdr.h"\
-	"..\..\include\m_system.h"\
-	"..\..\include\m_userinfo.h"\
-	"..\..\include\m_utils.h"\
-	"..\..\include\newpluginapi.h"\
-	"..\..\include\statusmodes.h"\
-	"..\..\include\win2k.h"\
-	".\API\m_buttonbar.h"\
-	".\API\m_cln_skinedit.h"\
-	".\API\m_fingerprint.h"\
-	".\API\m_flash.h"\
-	".\API\m_folders.h"\
-	".\API\m_historyevents.h"\
-	".\API\m_ieview.h"\
-	".\API\m_mathmodule.h"\
-	".\API\m_metacontacts.h"\
-	".\API\m_msg_buttonsbar.h"\
-	".\API\m_nudge.h"\
-	".\API\m_popup.h"\
-	".\API\m_smileyadd.h"\
-	".\API\m_spellchecker.h"\
-	".\API\m_toptoolbar.h"\
-	".\API\m_updater.h"\
-	".\chat\chat.h"\
-	".\chat\chat_resource.h"\
-	".\chat\chatprototypes.h"\
-	".\src\commonheaders.h"\
-	".\src\controls.h"\
-	".\src\functions.h"\
-	".\src\generic_msghandlers.h"\
-	".\src\globals.h"\
-	".\src\mim.h"\
-	".\src\msgdlgutils.h"\
-	".\src\msgs.h"\
-	".\src\nen.h"\
-	".\src\resource.h"\
-	".\src\sendqueue.h"\
-	".\src\taskbar.h"\
-	".\src\templates.h"\
-	".\src\themes.h"\
-	".\src\typingnotify.h"\
-	
-
-.\chat\tools.cpp : \
-	"..\..\include\m_acc.h"\
-	"..\..\include\m_addcontact.h"\
-	"..\..\include\m_avatars.h"\
-	"..\..\include\m_button.h"\
-	"..\..\include\m_chat.h"\
-	"..\..\include\m_clc.h"\
-	"..\..\include\m_clist.h"\
-	"..\..\include\m_clui.h"\
-	"..\..\include\m_contacts.h"\
-	"..\..\include\m_database.h"\
-	"..\..\include\m_file.h"\
-	"..\..\include\m_fontservice.h"\
-	"..\..\include\m_freeimage.h"\
-	"..\..\include\m_history.h"\
-	"..\..\include\m_icolib.h"\
-	"..\..\include\m_imgsrvc.h"\
-	"..\..\include\m_langpack.h"\
-	"..\..\include\m_message.h"\
-	"..\..\include\m_options.h"\
-	"..\..\include\m_plugins.h"\
-	"..\..\include\m_protocols.h"\
-	"..\..\include\m_protomod.h"\
-	"..\..\include\m_protosvc.h"\
-	"..\..\include\m_skin.h"\
-	"..\..\include\m_stdhdr.h"\
-	"..\..\include\m_system.h"\
-	"..\..\include\m_userinfo.h"\
-	"..\..\include\m_utils.h"\
-	"..\..\include\newpluginapi.h"\
-	"..\..\include\statusmodes.h"\
-	"..\..\include\win2k.h"\
-	".\API\m_buttonbar.h"\
-	".\API\m_cln_skinedit.h"\
-	".\API\m_fingerprint.h"\
-	".\API\m_flash.h"\
-	".\API\m_folders.h"\
-	".\API\m_historyevents.h"\
-	".\API\m_ieview.h"\
-	".\API\m_mathmodule.h"\
-	".\API\m_metacontacts.h"\
-	".\API\m_msg_buttonsbar.h"\
-	".\API\m_nudge.h"\
-	".\API\m_popup.h"\
-	".\API\m_smileyadd.h"\
-	".\API\m_spellchecker.h"\
-	".\API\m_toptoolbar.h"\
-	".\API\m_updater.h"\
-	".\chat\chat.h"\
-	".\chat\chat_resource.h"\
-	".\chat\chatprototypes.h"\
-	".\src\commonheaders.h"\
-	".\src\controls.h"\
-	".\src\functions.h"\
-	".\src\generic_msghandlers.h"\
-	".\src\globals.h"\
-	".\src\mim.h"\
-	".\src\msgdlgutils.h"\
-	".\src\msgs.h"\
-	".\src\nen.h"\
-	".\src\resource.h"\
-	".\src\sendqueue.h"\
-	".\src\taskbar.h"\
-	".\src\templates.h"\
-	".\src\themes.h"\
-	".\src\typingnotify.h"\
-	
-
-.\chat\window.cpp : \
-	"..\..\include\m_acc.h"\
-	"..\..\include\m_addcontact.h"\
-	"..\..\include\m_avatars.h"\
-	"..\..\include\m_button.h"\
-	"..\..\include\m_chat.h"\
-	"..\..\include\m_clc.h"\
-	"..\..\include\m_clist.h"\
-	"..\..\include\m_clui.h"\
-	"..\..\include\m_contacts.h"\
-	"..\..\include\m_database.h"\
-	"..\..\include\m_file.h"\
-	"..\..\include\m_fontservice.h"\
-	"..\..\include\m_freeimage.h"\
-	"..\..\include\m_history.h"\
-	"..\..\include\m_icolib.h"\
-	"..\..\include\m_imgsrvc.h"\
-	"..\..\include\m_langpack.h"\
-	"..\..\include\m_message.h"\
-	"..\..\include\m_options.h"\
-	"..\..\include\m_plugins.h"\
-	"..\..\include\m_protocols.h"\
-	"..\..\include\m_protomod.h"\
-	"..\..\include\m_protosvc.h"\
-	"..\..\include\m_skin.h"\
-	"..\..\include\m_stdhdr.h"\
-	"..\..\include\m_system.h"\
-	"..\..\include\m_userinfo.h"\
-	"..\..\include\m_utils.h"\
-	"..\..\include\newpluginapi.h"\
-	"..\..\include\statusmodes.h"\
-	"..\..\include\win2k.h"\
-	".\API\m_buttonbar.h"\
-	".\API\m_cln_skinedit.h"\
-	".\API\m_fingerprint.h"\
-	".\API\m_flash.h"\
-	".\API\m_folders.h"\
-	".\API\m_historyevents.h"\
-	".\API\m_ieview.h"\
-	".\API\m_mathmodule.h"\
-	".\API\m_metacontacts.h"\
-	".\API\m_msg_buttonsbar.h"\
-	".\API\m_nudge.h"\
-	".\API\m_popup.h"\
-	".\API\m_smileyadd.h"\
-	".\API\m_spellchecker.h"\
-	".\API\m_toptoolbar.h"\
-	".\API\m_updater.h"\
-	".\chat\chat.h"\
-	".\chat\chat_resource.h"\
-	".\chat\chatprototypes.h"\
-	".\src\commonheaders.h"\
-	".\src\controls.h"\
-	".\src\functions.h"\
-	".\src\generic_msghandlers.h"\
-	".\src\globals.h"\
-	".\src\mim.h"\
-	".\src\msgdlgutils.h"\
-	".\src\msgs.h"\
-	".\src\nen.h"\
-	".\src\resource.h"\
-	".\src\sendqueue.h"\
-	".\src\taskbar.h"\
-	".\src\templates.h"\
-	".\src\themes.h"\
-	".\src\typingnotify.h"\
+	".\commonheaders.h"\
+	".\functions.h"\
+	".\generic_msghandlers.h"\
+	".\msgdlgutils.h"\
+	".\msgs.h"\
+	".\nen.h"\
+	".\templates.h"\
+	".\typingnotify.h"\
 	{$(INCLUDE)}"tom.h"\
 	
 
-.\src\buttonsbar.cpp : \
+.\chat\colorchooser.c : \
 	"..\..\include\m_acc.h"\
 	"..\..\include\m_addcontact.h"\
 	"..\..\include\m_avatars.h"\
@@ -694,10 +70,8 @@
 	"..\..\include\m_database.h"\
 	"..\..\include\m_file.h"\
 	"..\..\include\m_fontservice.h"\
-	"..\..\include\m_freeimage.h"\
 	"..\..\include\m_history.h"\
 	"..\..\include\m_icolib.h"\
-	"..\..\include\m_imgsrvc.h"\
 	"..\..\include\m_langpack.h"\
 	"..\..\include\m_message.h"\
 	"..\..\include\m_options.h"\
@@ -727,29 +101,20 @@
 	".\API\m_popup.h"\
 	".\API\m_smileyadd.h"\
 	".\API\m_spellchecker.h"\
-	".\API\m_toptoolbar.h"\
-	".\API\m_updater.h"\
 	".\chat\chat.h"\
-	".\chat\chat_resource.h"\
 	".\chat\chatprototypes.h"\
-	".\src\commonheaders.h"\
-	".\src\controls.h"\
-	".\src\functions.h"\
-	".\src\generic_msghandlers.h"\
-	".\src\globals.h"\
-	".\src\mim.h"\
-	".\src\msgdlgutils.h"\
-	".\src\msgs.h"\
-	".\src\nen.h"\
-	".\src\resource.h"\
-	".\src\sendqueue.h"\
-	".\src\taskbar.h"\
-	".\src\templates.h"\
-	".\src\themes.h"\
-	".\src\typingnotify.h"\
+	".\commonheaders.h"\
+	".\functions.h"\
+	".\generic_msghandlers.h"\
+	".\msgdlgutils.h"\
+	".\msgs.h"\
+	".\nen.h"\
+	".\templates.h"\
+	".\typingnotify.h"\
+	{$(INCLUDE)}"tom.h"\
 	
 
-.\src\container.cpp : \
+.\chat\log.c : \
 	"..\..\include\m_acc.h"\
 	"..\..\include\m_addcontact.h"\
 	"..\..\include\m_avatars.h"\
@@ -762,10 +127,8 @@
 	"..\..\include\m_database.h"\
 	"..\..\include\m_file.h"\
 	"..\..\include\m_fontservice.h"\
-	"..\..\include\m_freeimage.h"\
 	"..\..\include\m_history.h"\
 	"..\..\include\m_icolib.h"\
-	"..\..\include\m_imgsrvc.h"\
 	"..\..\include\m_langpack.h"\
 	"..\..\include\m_message.h"\
 	"..\..\include\m_options.h"\
@@ -795,29 +158,20 @@
 	".\API\m_popup.h"\
 	".\API\m_smileyadd.h"\
 	".\API\m_spellchecker.h"\
-	".\API\m_toptoolbar.h"\
-	".\API\m_updater.h"\
 	".\chat\chat.h"\
-	".\chat\chat_resource.h"\
 	".\chat\chatprototypes.h"\
-	".\src\commonheaders.h"\
-	".\src\controls.h"\
-	".\src\functions.h"\
-	".\src\generic_msghandlers.h"\
-	".\src\globals.h"\
-	".\src\mim.h"\
-	".\src\msgdlgutils.h"\
-	".\src\msgs.h"\
-	".\src\nen.h"\
-	".\src\resource.h"\
-	".\src\sendqueue.h"\
-	".\src\taskbar.h"\
-	".\src\templates.h"\
-	".\src\themes.h"\
-	".\src\typingnotify.h"\
+	".\commonheaders.h"\
+	".\functions.h"\
+	".\generic_msghandlers.h"\
+	".\msgdlgutils.h"\
+	".\msgs.h"\
+	".\nen.h"\
+	".\templates.h"\
+	".\typingnotify.h"\
+	{$(INCLUDE)}"tom.h"\
 	
 
-.\src\containeroptions.cpp : \
+.\chat\main.c : \
 	"..\..\include\m_acc.h"\
 	"..\..\include\m_addcontact.h"\
 	"..\..\include\m_avatars.h"\
@@ -830,10 +184,8 @@
 	"..\..\include\m_database.h"\
 	"..\..\include\m_file.h"\
 	"..\..\include\m_fontservice.h"\
-	"..\..\include\m_freeimage.h"\
 	"..\..\include\m_history.h"\
 	"..\..\include\m_icolib.h"\
-	"..\..\include\m_imgsrvc.h"\
 	"..\..\include\m_langpack.h"\
 	"..\..\include\m_message.h"\
 	"..\..\include\m_options.h"\
@@ -863,29 +215,20 @@
 	".\API\m_popup.h"\
 	".\API\m_smileyadd.h"\
 	".\API\m_spellchecker.h"\
-	".\API\m_toptoolbar.h"\
-	".\API\m_updater.h"\
 	".\chat\chat.h"\
-	".\chat\chat_resource.h"\
 	".\chat\chatprototypes.h"\
-	".\src\commonheaders.h"\
-	".\src\controls.h"\
-	".\src\functions.h"\
-	".\src\generic_msghandlers.h"\
-	".\src\globals.h"\
-	".\src\mim.h"\
-	".\src\msgdlgutils.h"\
-	".\src\msgs.h"\
-	".\src\nen.h"\
-	".\src\resource.h"\
-	".\src\sendqueue.h"\
-	".\src\taskbar.h"\
-	".\src\templates.h"\
-	".\src\themes.h"\
-	".\src\typingnotify.h"\
+	".\commonheaders.h"\
+	".\functions.h"\
+	".\generic_msghandlers.h"\
+	".\msgdlgutils.h"\
+	".\msgs.h"\
+	".\nen.h"\
+	".\templates.h"\
+	".\typingnotify.h"\
+	{$(INCLUDE)}"tom.h"\
 	
 
-.\src\controls.cpp : \
+.\chat\manager.c : \
 	"..\..\include\m_acc.h"\
 	"..\..\include\m_addcontact.h"\
 	"..\..\include\m_avatars.h"\
@@ -898,10 +241,8 @@
 	"..\..\include\m_database.h"\
 	"..\..\include\m_file.h"\
 	"..\..\include\m_fontservice.h"\
-	"..\..\include\m_freeimage.h"\
 	"..\..\include\m_history.h"\
 	"..\..\include\m_icolib.h"\
-	"..\..\include\m_imgsrvc.h"\
 	"..\..\include\m_langpack.h"\
 	"..\..\include\m_message.h"\
 	"..\..\include\m_options.h"\
@@ -931,29 +272,20 @@
 	".\API\m_popup.h"\
 	".\API\m_smileyadd.h"\
 	".\API\m_spellchecker.h"\
-	".\API\m_toptoolbar.h"\
-	".\API\m_updater.h"\
 	".\chat\chat.h"\
-	".\chat\chat_resource.h"\
 	".\chat\chatprototypes.h"\
-	".\src\commonheaders.h"\
-	".\src\controls.h"\
-	".\src\functions.h"\
-	".\src\generic_msghandlers.h"\
-	".\src\globals.h"\
-	".\src\mim.h"\
-	".\src\msgdlgutils.h"\
-	".\src\msgs.h"\
-	".\src\nen.h"\
-	".\src\resource.h"\
-	".\src\sendqueue.h"\
-	".\src\taskbar.h"\
-	".\src\templates.h"\
-	".\src\themes.h"\
-	".\src\typingnotify.h"\
+	".\commonheaders.h"\
+	".\functions.h"\
+	".\generic_msghandlers.h"\
+	".\msgdlgutils.h"\
+	".\msgs.h"\
+	".\nen.h"\
+	".\templates.h"\
+	".\typingnotify.h"\
+	{$(INCLUDE)}"tom.h"\
 	
 
-.\src\eventpopups.cpp : \
+.\chat\message.c : \
 	"..\..\include\m_acc.h"\
 	"..\..\include\m_addcontact.h"\
 	"..\..\include\m_avatars.h"\
@@ -966,11 +298,466 @@
 	"..\..\include\m_database.h"\
 	"..\..\include\m_file.h"\
 	"..\..\include\m_fontservice.h"\
-	"..\..\include\m_freeimage.h"\
+	"..\..\include\m_history.h"\
+	"..\..\include\m_icolib.h"\
+	"..\..\include\m_langpack.h"\
+	"..\..\include\m_message.h"\
+	"..\..\include\m_options.h"\
+	"..\..\include\m_plugins.h"\
+	"..\..\include\m_protocols.h"\
+	"..\..\include\m_protomod.h"\
+	"..\..\include\m_protosvc.h"\
+	"..\..\include\m_skin.h"\
+	"..\..\include\m_stdhdr.h"\
+	"..\..\include\m_system.h"\
+	"..\..\include\m_userinfo.h"\
+	"..\..\include\m_utils.h"\
+	"..\..\include\newpluginapi.h"\
+	"..\..\include\statusmodes.h"\
+	"..\..\include\win2k.h"\
+	".\API\m_buttonbar.h"\
+	".\API\m_cln_skinedit.h"\
+	".\API\m_fingerprint.h"\
+	".\API\m_flash.h"\
+	".\API\m_folders.h"\
+	".\API\m_historyevents.h"\
+	".\API\m_ieview.h"\
+	".\API\m_mathmodule.h"\
+	".\API\m_metacontacts.h"\
+	".\API\m_msg_buttonsbar.h"\
+	".\API\m_nudge.h"\
+	".\API\m_popup.h"\
+	".\API\m_smileyadd.h"\
+	".\API\m_spellchecker.h"\
+	".\chat\chat.h"\
+	".\chat\chatprototypes.h"\
+	".\commonheaders.h"\
+	".\functions.h"\
+	".\generic_msghandlers.h"\
+	".\msgdlgutils.h"\
+	".\msgs.h"\
+	".\nen.h"\
+	".\templates.h"\
+	".\typingnotify.h"\
+	{$(INCLUDE)}"tom.h"\
+	
+
+.\chat\options.c : \
+	"..\..\include\m_acc.h"\
+	"..\..\include\m_addcontact.h"\
+	"..\..\include\m_avatars.h"\
+	"..\..\include\m_button.h"\
+	"..\..\include\m_chat.h"\
+	"..\..\include\m_clc.h"\
+	"..\..\include\m_clist.h"\
+	"..\..\include\m_clui.h"\
+	"..\..\include\m_contacts.h"\
+	"..\..\include\m_database.h"\
+	"..\..\include\m_file.h"\
+	"..\..\include\m_fontservice.h"\
+	"..\..\include\m_history.h"\
+	"..\..\include\m_icolib.h"\
+	"..\..\include\m_langpack.h"\
+	"..\..\include\m_message.h"\
+	"..\..\include\m_options.h"\
+	"..\..\include\m_plugins.h"\
+	"..\..\include\m_protocols.h"\
+	"..\..\include\m_protomod.h"\
+	"..\..\include\m_protosvc.h"\
+	"..\..\include\m_skin.h"\
+	"..\..\include\m_stdhdr.h"\
+	"..\..\include\m_system.h"\
+	"..\..\include\m_userinfo.h"\
+	"..\..\include\m_utils.h"\
+	"..\..\include\newpluginapi.h"\
+	"..\..\include\statusmodes.h"\
+	"..\..\include\win2k.h"\
+	".\API\m_buttonbar.h"\
+	".\API\m_cln_skinedit.h"\
+	".\API\m_fingerprint.h"\
+	".\API\m_flash.h"\
+	".\API\m_folders.h"\
+	".\API\m_historyevents.h"\
+	".\API\m_ieview.h"\
+	".\API\m_mathmodule.h"\
+	".\API\m_metacontacts.h"\
+	".\API\m_msg_buttonsbar.h"\
+	".\API\m_nudge.h"\
+	".\API\m_popup.h"\
+	".\API\m_smileyadd.h"\
+	".\API\m_spellchecker.h"\
+	".\chat\chat.h"\
+	".\chat\chatprototypes.h"\
+	".\commonheaders.h"\
+	".\functions.h"\
+	".\generic_msghandlers.h"\
+	".\msgdlgutils.h"\
+	".\msgs.h"\
+	".\nen.h"\
+	".\templates.h"\
+	".\typingnotify.h"\
+	{$(INCLUDE)}"tom.h"\
+	
+
+.\chat\services.c : \
+	"..\..\include\m_acc.h"\
+	"..\..\include\m_addcontact.h"\
+	"..\..\include\m_avatars.h"\
+	"..\..\include\m_button.h"\
+	"..\..\include\m_chat.h"\
+	"..\..\include\m_clc.h"\
+	"..\..\include\m_clist.h"\
+	"..\..\include\m_clui.h"\
+	"..\..\include\m_contacts.h"\
+	"..\..\include\m_database.h"\
+	"..\..\include\m_file.h"\
+	"..\..\include\m_fontservice.h"\
+	"..\..\include\m_history.h"\
+	"..\..\include\m_icolib.h"\
+	"..\..\include\m_langpack.h"\
+	"..\..\include\m_message.h"\
+	"..\..\include\m_options.h"\
+	"..\..\include\m_plugins.h"\
+	"..\..\include\m_protocols.h"\
+	"..\..\include\m_protomod.h"\
+	"..\..\include\m_protosvc.h"\
+	"..\..\include\m_skin.h"\
+	"..\..\include\m_stdhdr.h"\
+	"..\..\include\m_system.h"\
+	"..\..\include\m_userinfo.h"\
+	"..\..\include\m_utils.h"\
+	"..\..\include\newpluginapi.h"\
+	"..\..\include\statusmodes.h"\
+	"..\..\include\win2k.h"\
+	".\API\m_buttonbar.h"\
+	".\API\m_cln_skinedit.h"\
+	".\API\m_fingerprint.h"\
+	".\API\m_flash.h"\
+	".\API\m_folders.h"\
+	".\API\m_historyevents.h"\
+	".\API\m_ieview.h"\
+	".\API\m_mathmodule.h"\
+	".\API\m_metacontacts.h"\
+	".\API\m_msg_buttonsbar.h"\
+	".\API\m_nudge.h"\
+	".\API\m_popup.h"\
+	".\API\m_smileyadd.h"\
+	".\API\m_spellchecker.h"\
+	".\chat\chat.h"\
+	".\chat\chatprototypes.h"\
+	".\commonheaders.h"\
+	".\functions.h"\
+	".\generic_msghandlers.h"\
+	".\msgdlgutils.h"\
+	".\msgs.h"\
+	".\nen.h"\
+	".\templates.h"\
+	".\typingnotify.h"\
+	{$(INCLUDE)}"tom.h"\
+	
+
+.\chat\tools.c : \
+	"..\..\include\m_acc.h"\
+	"..\..\include\m_addcontact.h"\
+	"..\..\include\m_avatars.h"\
+	"..\..\include\m_button.h"\
+	"..\..\include\m_chat.h"\
+	"..\..\include\m_clc.h"\
+	"..\..\include\m_clist.h"\
+	"..\..\include\m_clui.h"\
+	"..\..\include\m_contacts.h"\
+	"..\..\include\m_database.h"\
+	"..\..\include\m_file.h"\
+	"..\..\include\m_fontservice.h"\
+	"..\..\include\m_history.h"\
+	"..\..\include\m_icolib.h"\
+	"..\..\include\m_langpack.h"\
+	"..\..\include\m_message.h"\
+	"..\..\include\m_options.h"\
+	"..\..\include\m_plugins.h"\
+	"..\..\include\m_protocols.h"\
+	"..\..\include\m_protomod.h"\
+	"..\..\include\m_protosvc.h"\
+	"..\..\include\m_skin.h"\
+	"..\..\include\m_stdhdr.h"\
+	"..\..\include\m_system.h"\
+	"..\..\include\m_userinfo.h"\
+	"..\..\include\m_utils.h"\
+	"..\..\include\newpluginapi.h"\
+	"..\..\include\statusmodes.h"\
+	"..\..\include\win2k.h"\
+	".\API\m_buttonbar.h"\
+	".\API\m_cln_skinedit.h"\
+	".\API\m_fingerprint.h"\
+	".\API\m_flash.h"\
+	".\API\m_folders.h"\
+	".\API\m_historyevents.h"\
+	".\API\m_ieview.h"\
+	".\API\m_mathmodule.h"\
+	".\API\m_metacontacts.h"\
+	".\API\m_msg_buttonsbar.h"\
+	".\API\m_nudge.h"\
+	".\API\m_popup.h"\
+	".\API\m_smileyadd.h"\
+	".\API\m_spellchecker.h"\
+	".\chat\chat.h"\
+	".\chat\chatprototypes.h"\
+	".\commonheaders.h"\
+	".\functions.h"\
+	".\generic_msghandlers.h"\
+	".\msgdlgutils.h"\
+	".\msgs.h"\
+	".\nen.h"\
+	".\templates.h"\
+	".\typingnotify.h"\
+	{$(INCLUDE)}"tom.h"\
+	
+
+.\chat\window.c : \
+	"..\..\include\m_acc.h"\
+	"..\..\include\m_addcontact.h"\
+	"..\..\include\m_avatars.h"\
+	"..\..\include\m_button.h"\
+	"..\..\include\m_chat.h"\
+	"..\..\include\m_clc.h"\
+	"..\..\include\m_clist.h"\
+	"..\..\include\m_clui.h"\
+	"..\..\include\m_contacts.h"\
+	"..\..\include\m_database.h"\
+	"..\..\include\m_file.h"\
+	"..\..\include\m_fontservice.h"\
+	"..\..\include\m_history.h"\
+	"..\..\include\m_icolib.h"\
+	"..\..\include\m_langpack.h"\
+	"..\..\include\m_message.h"\
+	"..\..\include\m_options.h"\
+	"..\..\include\m_plugins.h"\
+	"..\..\include\m_protocols.h"\
+	"..\..\include\m_protomod.h"\
+	"..\..\include\m_protosvc.h"\
+	"..\..\include\m_skin.h"\
+	"..\..\include\m_stdhdr.h"\
+	"..\..\include\m_system.h"\
+	"..\..\include\m_userinfo.h"\
+	"..\..\include\m_utils.h"\
+	"..\..\include\newpluginapi.h"\
+	"..\..\include\statusmodes.h"\
+	"..\..\include\win2k.h"\
+	".\API\m_buttonbar.h"\
+	".\API\m_cln_skinedit.h"\
+	".\API\m_fingerprint.h"\
+	".\API\m_flash.h"\
+	".\API\m_folders.h"\
+	".\API\m_historyevents.h"\
+	".\API\m_ieview.h"\
+	".\API\m_mathmodule.h"\
+	".\API\m_metacontacts.h"\
+	".\API\m_msg_buttonsbar.h"\
+	".\API\m_nudge.h"\
+	".\API\m_popup.h"\
+	".\API\m_smileyadd.h"\
+	".\API\m_spellchecker.h"\
+	".\chat\chat.h"\
+	".\chat\chatprototypes.h"\
+	".\commonheaders.h"\
+	".\functions.h"\
+	".\generic_msghandlers.h"\
+	".\msgdlgutils.h"\
+	".\msgs.h"\
+	".\nen.h"\
+	".\templates.h"\
+	".\typingnotify.h"\
+	{$(INCLUDE)}"tom.h"\
+	
+
+.\buttonsbar.c : \
+	"..\..\include\m_acc.h"\
+	"..\..\include\m_addcontact.h"\
+	"..\..\include\m_avatars.h"\
+	"..\..\include\m_button.h"\
+	"..\..\include\m_chat.h"\
+	"..\..\include\m_clc.h"\
+	"..\..\include\m_clist.h"\
+	"..\..\include\m_clui.h"\
+	"..\..\include\m_contacts.h"\
+	"..\..\include\m_database.h"\
+	"..\..\include\m_file.h"\
+	"..\..\include\m_fontservice.h"\
+	"..\..\include\m_history.h"\
+	"..\..\include\m_icolib.h"\
+	"..\..\include\m_langpack.h"\
+	"..\..\include\m_message.h"\
+	"..\..\include\m_options.h"\
+	"..\..\include\m_plugins.h"\
+	"..\..\include\m_protocols.h"\
+	"..\..\include\m_protomod.h"\
+	"..\..\include\m_protosvc.h"\
+	"..\..\include\m_skin.h"\
+	"..\..\include\m_stdhdr.h"\
+	"..\..\include\m_system.h"\
+	"..\..\include\m_userinfo.h"\
+	"..\..\include\m_utils.h"\
+	"..\..\include\newpluginapi.h"\
+	"..\..\include\statusmodes.h"\
+	"..\..\include\win2k.h"\
+	".\API\m_buttonbar.h"\
+	".\API\m_cln_skinedit.h"\
+	".\API\m_fingerprint.h"\
+	".\API\m_flash.h"\
+	".\API\m_folders.h"\
+	".\API\m_historyevents.h"\
+	".\API\m_ieview.h"\
+	".\API\m_mathmodule.h"\
+	".\API\m_metacontacts.h"\
+	".\API\m_msg_buttonsbar.h"\
+	".\API\m_nudge.h"\
+	".\API\m_popup.h"\
+	".\API\m_smileyadd.h"\
+	".\API\m_spellchecker.h"\
+	".\chat\chat.h"\
+	".\chat\chatprototypes.h"\
+	".\commonheaders.h"\
+	".\functions.h"\
+	".\generic_msghandlers.h"\
+	".\msgdlgutils.h"\
+	".\msgs.h"\
+	".\nen.h"\
+	".\templates.h"\
+	".\typingnotify.h"\
+	{$(INCLUDE)}"tom.h"\
+	
+
+.\container.c : \
+	"..\..\include\m_acc.h"\
+	"..\..\include\m_addcontact.h"\
+	"..\..\include\m_avatars.h"\
+	"..\..\include\m_button.h"\
+	"..\..\include\m_chat.h"\
+	"..\..\include\m_clc.h"\
+	"..\..\include\m_clist.h"\
+	"..\..\include\m_clui.h"\
+	"..\..\include\m_contacts.h"\
+	"..\..\include\m_database.h"\
+	"..\..\include\m_file.h"\
+	"..\..\include\m_fontservice.h"\
+	"..\..\include\m_history.h"\
+	"..\..\include\m_icolib.h"\
+	"..\..\include\m_langpack.h"\
+	"..\..\include\m_message.h"\
+	"..\..\include\m_options.h"\
+	"..\..\include\m_plugins.h"\
+	"..\..\include\m_protocols.h"\
+	"..\..\include\m_protomod.h"\
+	"..\..\include\m_protosvc.h"\
+	"..\..\include\m_skin.h"\
+	"..\..\include\m_stdhdr.h"\
+	"..\..\include\m_system.h"\
+	"..\..\include\m_userinfo.h"\
+	"..\..\include\m_utils.h"\
+	"..\..\include\newpluginapi.h"\
+	"..\..\include\statusmodes.h"\
+	"..\..\include\win2k.h"\
+	".\API\m_buttonbar.h"\
+	".\API\m_cln_skinedit.h"\
+	".\API\m_fingerprint.h"\
+	".\API\m_flash.h"\
+	".\API\m_folders.h"\
+	".\API\m_historyevents.h"\
+	".\API\m_ieview.h"\
+	".\API\m_mathmodule.h"\
+	".\API\m_metacontacts.h"\
+	".\API\m_msg_buttonsbar.h"\
+	".\API\m_nudge.h"\
+	".\API\m_popup.h"\
+	".\API\m_smileyadd.h"\
+	".\API\m_spellchecker.h"\
+	".\chat\chat.h"\
+	".\chat\chatprototypes.h"\
+	".\commonheaders.h"\
+	".\functions.h"\
+	".\generic_msghandlers.h"\
+	".\msgdlgutils.h"\
+	".\msgs.h"\
+	".\nen.h"\
+	".\sendqueue.h"\
+	".\templates.h"\
+	".\typingnotify.h"\
+	{$(INCLUDE)}"tom.h"\
+	
+
+.\containeroptions.c : \
+	"..\..\include\m_acc.h"\
+	"..\..\include\m_addcontact.h"\
+	"..\..\include\m_avatars.h"\
+	"..\..\include\m_button.h"\
+	"..\..\include\m_chat.h"\
+	"..\..\include\m_clc.h"\
+	"..\..\include\m_clist.h"\
+	"..\..\include\m_clui.h"\
+	"..\..\include\m_contacts.h"\
+	"..\..\include\m_database.h"\
+	"..\..\include\m_file.h"\
+	"..\..\include\m_fontservice.h"\
+	"..\..\include\m_history.h"\
+	"..\..\include\m_icolib.h"\
+	"..\..\include\m_langpack.h"\
+	"..\..\include\m_message.h"\
+	"..\..\include\m_options.h"\
+	"..\..\include\m_plugins.h"\
+	"..\..\include\m_protocols.h"\
+	"..\..\include\m_protomod.h"\
+	"..\..\include\m_protosvc.h"\
+	"..\..\include\m_skin.h"\
+	"..\..\include\m_stdhdr.h"\
+	"..\..\include\m_system.h"\
+	"..\..\include\m_userinfo.h"\
+	"..\..\include\m_utils.h"\
+	"..\..\include\newpluginapi.h"\
+	"..\..\include\statusmodes.h"\
+	"..\..\include\win2k.h"\
+	".\API\m_buttonbar.h"\
+	".\API\m_cln_skinedit.h"\
+	".\API\m_fingerprint.h"\
+	".\API\m_flash.h"\
+	".\API\m_folders.h"\
+	".\API\m_historyevents.h"\
+	".\API\m_ieview.h"\
+	".\API\m_mathmodule.h"\
+	".\API\m_metacontacts.h"\
+	".\API\m_msg_buttonsbar.h"\
+	".\API\m_nudge.h"\
+	".\API\m_popup.h"\
+	".\API\m_smileyadd.h"\
+	".\API\m_spellchecker.h"\
+	".\chat\chat.h"\
+	".\chat\chatprototypes.h"\
+	".\commonheaders.h"\
+	".\functions.h"\
+	".\generic_msghandlers.h"\
+	".\msgdlgutils.h"\
+	".\msgs.h"\
+	".\nen.h"\
+	".\templates.h"\
+	".\typingnotify.h"\
+	{$(INCLUDE)}"tom.h"\
+	
+
+eventpopups.c : \
+	"..\..\include\m_acc.h"\
+	"..\..\include\m_addcontact.h"\
+	"..\..\include\m_avatars.h"\
+	"..\..\include\m_button.h"\
+	"..\..\include\m_chat.h"\
+	"..\..\include\m_clc.h"\
+	"..\..\include\m_clist.h"\
+	"..\..\include\m_clui.h"\
+	"..\..\include\m_contacts.h"\
+	"..\..\include\m_database.h"\
+	"..\..\include\m_file.h"\
+	"..\..\include\m_fontservice.h"\
 	"..\..\include\m_history.h"\
 	"..\..\include\m_icolib.h"\
 	"..\..\include\m_icq.h"\
-	"..\..\include\m_imgsrvc.h"\
 	"..\..\include\m_langpack.h"\
 	"..\..\include\m_message.h"\
 	"..\..\include\m_options.h"\
@@ -1000,29 +787,20 @@
 	".\API\m_popup.h"\
 	".\API\m_smileyadd.h"\
 	".\API\m_spellchecker.h"\
-	".\API\m_toptoolbar.h"\
-	".\API\m_updater.h"\
 	".\chat\chat.h"\
-	".\chat\chat_resource.h"\
 	".\chat\chatprototypes.h"\
-	".\src\commonheaders.h"\
-	".\src\controls.h"\
-	".\src\functions.h"\
-	".\src\generic_msghandlers.h"\
-	".\src\globals.h"\
-	".\src\mim.h"\
-	".\src\msgdlgutils.h"\
-	".\src\msgs.h"\
-	".\src\nen.h"\
-	".\src\resource.h"\
-	".\src\sendqueue.h"\
-	".\src\taskbar.h"\
-	".\src\templates.h"\
-	".\src\themes.h"\
-	".\src\typingnotify.h"\
+	".\commonheaders.h"\
+	".\functions.h"\
+	".\generic_msghandlers.h"\
+	".\msgdlgutils.h"\
+	".\msgs.h"\
+	".\nen.h"\
+	".\templates.h"\
+	".\typingnotify.h"\
+	{$(INCLUDE)}"tom.h"\
 	
 
-.\src\formatting.cpp : \
+.\formatting.cpp : \
 	"..\..\include\m_acc.h"\
 	"..\..\include\m_addcontact.h"\
 	"..\..\include\m_avatars.h"\
@@ -1035,10 +813,8 @@
 	"..\..\include\m_database.h"\
 	"..\..\include\m_file.h"\
 	"..\..\include\m_fontservice.h"\
-	"..\..\include\m_freeimage.h"\
 	"..\..\include\m_history.h"\
 	"..\..\include\m_icolib.h"\
-	"..\..\include\m_imgsrvc.h"\
 	"..\..\include\m_langpack.h"\
 	"..\..\include\m_message.h"\
 	"..\..\include\m_options.h"\
@@ -1068,29 +844,20 @@
 	".\API\m_popup.h"\
 	".\API\m_smileyadd.h"\
 	".\API\m_spellchecker.h"\
-	".\API\m_toptoolbar.h"\
-	".\API\m_updater.h"\
 	".\chat\chat.h"\
-	".\chat\chat_resource.h"\
 	".\chat\chatprototypes.h"\
-	".\src\commonheaders.h"\
-	".\src\controls.h"\
-	".\src\functions.h"\
-	".\src\generic_msghandlers.h"\
-	".\src\globals.h"\
-	".\src\mim.h"\
-	".\src\msgdlgutils.h"\
-	".\src\msgs.h"\
-	".\src\nen.h"\
-	".\src\resource.h"\
-	".\src\sendqueue.h"\
-	".\src\taskbar.h"\
-	".\src\templates.h"\
-	".\src\themes.h"\
-	".\src\typingnotify.h"\
+	".\commonheaders.h"\
+	".\functions.h"\
+	".\generic_msghandlers.h"\
+	".\msgdlgutils.h"\
+	".\msgs.h"\
+	".\nen.h"\
+	".\templates.h"\
+	".\typingnotify.h"\
+	{$(INCLUDE)}"tom.h"\
 	
 
-.\src\generic_msghandlers.cpp : \
+.\generic_msghandlers.c : \
 	"..\..\include\m_acc.h"\
 	"..\..\include\m_addcontact.h"\
 	"..\..\include\m_avatars.h"\
@@ -1103,10 +870,8 @@
 	"..\..\include\m_database.h"\
 	"..\..\include\m_file.h"\
 	"..\..\include\m_fontservice.h"\
-	"..\..\include\m_freeimage.h"\
 	"..\..\include\m_history.h"\
 	"..\..\include\m_icolib.h"\
-	"..\..\include\m_imgsrvc.h"\
 	"..\..\include\m_langpack.h"\
 	"..\..\include\m_message.h"\
 	"..\..\include\m_options.h"\
@@ -1136,29 +901,20 @@
 	".\API\m_popup.h"\
 	".\API\m_smileyadd.h"\
 	".\API\m_spellchecker.h"\
-	".\API\m_toptoolbar.h"\
-	".\API\m_updater.h"\
 	".\chat\chat.h"\
-	".\chat\chat_resource.h"\
 	".\chat\chatprototypes.h"\
-	".\src\commonheaders.h"\
-	".\src\controls.h"\
-	".\src\functions.h"\
-	".\src\generic_msghandlers.h"\
-	".\src\globals.h"\
-	".\src\mim.h"\
-	".\src\msgdlgutils.h"\
-	".\src\msgs.h"\
-	".\src\nen.h"\
-	".\src\resource.h"\
-	".\src\sendqueue.h"\
-	".\src\taskbar.h"\
-	".\src\templates.h"\
-	".\src\themes.h"\
-	".\src\typingnotify.h"\
+	".\commonheaders.h"\
+	".\functions.h"\
+	".\generic_msghandlers.h"\
+	".\msgdlgutils.h"\
+	".\msgs.h"\
+	".\nen.h"\
+	".\templates.h"\
+	".\typingnotify.h"\
+	{$(INCLUDE)}"tom.h"\
 	
 
-.\src\globals.cpp : \
+.\hotkeyhandler.c : \
 	"..\..\include\m_acc.h"\
 	"..\..\include\m_addcontact.h"\
 	"..\..\include\m_avatars.h"\
@@ -1171,10 +927,8 @@
 	"..\..\include\m_database.h"\
 	"..\..\include\m_file.h"\
 	"..\..\include\m_fontservice.h"\
-	"..\..\include\m_freeimage.h"\
 	"..\..\include\m_history.h"\
 	"..\..\include\m_icolib.h"\
-	"..\..\include\m_imgsrvc.h"\
 	"..\..\include\m_langpack.h"\
 	"..\..\include\m_message.h"\
 	"..\..\include\m_options.h"\
@@ -1204,29 +958,21 @@
 	".\API\m_popup.h"\
 	".\API\m_smileyadd.h"\
 	".\API\m_spellchecker.h"\
-	".\API\m_toptoolbar.h"\
-	".\API\m_updater.h"\
 	".\chat\chat.h"\
-	".\chat\chat_resource.h"\
 	".\chat\chatprototypes.h"\
-	".\src\commonheaders.h"\
-	".\src\controls.h"\
-	".\src\functions.h"\
-	".\src\generic_msghandlers.h"\
-	".\src\globals.h"\
-	".\src\mim.h"\
-	".\src\msgdlgutils.h"\
-	".\src\msgs.h"\
-	".\src\nen.h"\
-	".\src\resource.h"\
-	".\src\sendqueue.h"\
-	".\src\taskbar.h"\
-	".\src\templates.h"\
-	".\src\themes.h"\
-	".\src\typingnotify.h"\
+	".\commonheaders.h"\
+	".\functions.h"\
+	".\generic_msghandlers.h"\
+	".\msgdlgutils.h"\
+	".\msgs.h"\
+	".\nen.h"\
+	".\sendqueue.h"\
+	".\templates.h"\
+	".\typingnotify.h"\
+	{$(INCLUDE)}"tom.h"\
 	
 
-.\src\hotkeyhandler.cpp : \
+ImageDataObject.cpp : \
 	"..\..\include\m_acc.h"\
 	"..\..\include\m_addcontact.h"\
 	"..\..\include\m_avatars.h"\
@@ -1239,10 +985,8 @@
 	"..\..\include\m_database.h"\
 	"..\..\include\m_file.h"\
 	"..\..\include\m_fontservice.h"\
-	"..\..\include\m_freeimage.h"\
 	"..\..\include\m_history.h"\
 	"..\..\include\m_icolib.h"\
-	"..\..\include\m_imgsrvc.h"\
 	"..\..\include\m_langpack.h"\
 	"..\..\include\m_message.h"\
 	"..\..\include\m_options.h"\
@@ -1272,29 +1016,21 @@
 	".\API\m_popup.h"\
 	".\API\m_smileyadd.h"\
 	".\API\m_spellchecker.h"\
-	".\API\m_toptoolbar.h"\
-	".\API\m_updater.h"\
 	".\chat\chat.h"\
-	".\chat\chat_resource.h"\
 	".\chat\chatprototypes.h"\
-	".\src\commonheaders.h"\
-	".\src\controls.h"\
-	".\src\functions.h"\
-	".\src\generic_msghandlers.h"\
-	".\src\globals.h"\
-	".\src\mim.h"\
-	".\src\msgdlgutils.h"\
-	".\src\msgs.h"\
-	".\src\nen.h"\
-	".\src\resource.h"\
-	".\src\sendqueue.h"\
-	".\src\taskbar.h"\
-	".\src\templates.h"\
-	".\src\themes.h"\
-	".\src\typingnotify.h"\
+	".\commonheaders.h"\
+	".\functions.h"\
+	".\generic_msghandlers.h"\
+	".\ImageDataObject.h"\
+	".\msgdlgutils.h"\
+	".\msgs.h"\
+	".\nen.h"\
+	".\templates.h"\
+	".\typingnotify.h"\
+	{$(INCLUDE)}"tom.h"\
 	
 
-.\src\ImageDataObject.cpp : \
+.\tabmodplus\modplus.c : \
 	"..\..\include\m_acc.h"\
 	"..\..\include\m_addcontact.h"\
 	"..\..\include\m_avatars.h"\
@@ -1307,10 +1043,8 @@
 	"..\..\include\m_database.h"\
 	"..\..\include\m_file.h"\
 	"..\..\include\m_fontservice.h"\
-	"..\..\include\m_freeimage.h"\
 	"..\..\include\m_history.h"\
 	"..\..\include\m_icolib.h"\
-	"..\..\include\m_imgsrvc.h"\
 	"..\..\include\m_langpack.h"\
 	"..\..\include\m_message.h"\
 	"..\..\include\m_options.h"\
@@ -1340,30 +1074,21 @@
 	".\API\m_popup.h"\
 	".\API\m_smileyadd.h"\
 	".\API\m_spellchecker.h"\
-	".\API\m_toptoolbar.h"\
-	".\API\m_updater.h"\
 	".\chat\chat.h"\
-	".\chat\chat_resource.h"\
 	".\chat\chatprototypes.h"\
-	".\src\commonheaders.h"\
-	".\src\controls.h"\
-	".\src\functions.h"\
-	".\src\generic_msghandlers.h"\
-	".\src\globals.h"\
-	".\src\ImageDataObject.h"\
-	".\src\mim.h"\
-	".\src\msgdlgutils.h"\
-	".\src\msgs.h"\
-	".\src\nen.h"\
-	".\src\resource.h"\
-	".\src\sendqueue.h"\
-	".\src\taskbar.h"\
-	".\src\templates.h"\
-	".\src\themes.h"\
-	".\src\typingnotify.h"\
+	".\commonheaders.h"\
+	".\functions.h"\
+	".\generic_msghandlers.h"\
+	".\msgdlgutils.h"\
+	".\msgs.h"\
+	".\nen.h"\
+	".\tabmodplus\commonheaders.h"\
+	".\templates.h"\
+	".\typingnotify.h"\
+	{$(INCLUDE)}"tom.h"\
 	
 
-.\src\mim.cpp : \
+msgdialog.c : \
 	"..\..\include\m_acc.h"\
 	"..\..\include\m_addcontact.h"\
 	"..\..\include\m_avatars.h"\
@@ -1376,10 +1101,8 @@
 	"..\..\include\m_database.h"\
 	"..\..\include\m_file.h"\
 	"..\..\include\m_fontservice.h"\
-	"..\..\include\m_freeimage.h"\
 	"..\..\include\m_history.h"\
 	"..\..\include\m_icolib.h"\
-	"..\..\include\m_imgsrvc.h"\
 	"..\..\include\m_langpack.h"\
 	"..\..\include\m_message.h"\
 	"..\..\include\m_options.h"\
@@ -1409,29 +1132,21 @@
 	".\API\m_popup.h"\
 	".\API\m_smileyadd.h"\
 	".\API\m_spellchecker.h"\
-	".\API\m_toptoolbar.h"\
-	".\API\m_updater.h"\
 	".\chat\chat.h"\
-	".\chat\chat_resource.h"\
 	".\chat\chatprototypes.h"\
-	".\src\commonheaders.h"\
-	".\src\controls.h"\
-	".\src\functions.h"\
-	".\src\generic_msghandlers.h"\
-	".\src\globals.h"\
-	".\src\mim.h"\
-	".\src\msgdlgutils.h"\
-	".\src\msgs.h"\
-	".\src\nen.h"\
-	".\src\resource.h"\
-	".\src\sendqueue.h"\
-	".\src\taskbar.h"\
-	".\src\templates.h"\
-	".\src\themes.h"\
-	".\src\typingnotify.h"\
+	".\commonheaders.h"\
+	".\functions.h"\
+	".\generic_msghandlers.h"\
+	".\msgdlgutils.h"\
+	".\msgs.h"\
+	".\nen.h"\
+	".\sendqueue.h"\
+	".\templates.h"\
+	".\typingnotify.h"\
+	{$(INCLUDE)}"tom.h"\
 	
 
-.\tabmodplus\modplus.cpp : \
+msgdlgutils.c : \
 	"..\..\include\m_acc.h"\
 	"..\..\include\m_addcontact.h"\
 	"..\..\include\m_avatars.h"\
@@ -1444,10 +1159,8 @@
 	"..\..\include\m_database.h"\
 	"..\..\include\m_file.h"\
 	"..\..\include\m_fontservice.h"\
-	"..\..\include\m_freeimage.h"\
 	"..\..\include\m_history.h"\
 	"..\..\include\m_icolib.h"\
-	"..\..\include\m_imgsrvc.h"\
 	"..\..\include\m_langpack.h"\
 	"..\..\include\m_message.h"\
 	"..\..\include\m_options.h"\
@@ -1477,29 +1190,20 @@
 	".\API\m_popup.h"\
 	".\API\m_smileyadd.h"\
 	".\API\m_spellchecker.h"\
-	".\API\m_toptoolbar.h"\
-	".\API\m_updater.h"\
 	".\chat\chat.h"\
-	".\chat\chat_resource.h"\
 	".\chat\chatprototypes.h"\
-	".\src\commonheaders.h"\
-	".\src\controls.h"\
-	".\src\functions.h"\
-	".\src\generic_msghandlers.h"\
-	".\src\globals.h"\
-	".\src\mim.h"\
-	".\src\msgdlgutils.h"\
-	".\src\msgs.h"\
-	".\src\nen.h"\
-	".\src\resource.h"\
-	".\src\sendqueue.h"\
-	".\src\taskbar.h"\
-	".\src\templates.h"\
-	".\src\themes.h"\
-	".\src\typingnotify.h"\
+	".\commonheaders.h"\
+	".\functions.h"\
+	".\generic_msghandlers.h"\
+	".\msgdlgutils.h"\
+	".\msgs.h"\
+	".\nen.h"\
+	".\templates.h"\
+	".\typingnotify.h"\
+	{$(INCLUDE)}"tom.h"\
 	
 
-.\src\msgdialog.cpp : \
+msglog.c : \
 	"..\..\include\m_acc.h"\
 	"..\..\include\m_addcontact.h"\
 	"..\..\include\m_avatars.h"\
@@ -1512,10 +1216,8 @@
 	"..\..\include\m_database.h"\
 	"..\..\include\m_file.h"\
 	"..\..\include\m_fontservice.h"\
-	"..\..\include\m_freeimage.h"\
 	"..\..\include\m_history.h"\
 	"..\..\include\m_icolib.h"\
-	"..\..\include\m_imgsrvc.h"\
 	"..\..\include\m_langpack.h"\
 	"..\..\include\m_message.h"\
 	"..\..\include\m_options.h"\
@@ -1545,29 +1247,20 @@
 	".\API\m_popup.h"\
 	".\API\m_smileyadd.h"\
 	".\API\m_spellchecker.h"\
-	".\API\m_toptoolbar.h"\
-	".\API\m_updater.h"\
 	".\chat\chat.h"\
-	".\chat\chat_resource.h"\
 	".\chat\chatprototypes.h"\
-	".\src\commonheaders.h"\
-	".\src\controls.h"\
-	".\src\functions.h"\
-	".\src\generic_msghandlers.h"\
-	".\src\globals.h"\
-	".\src\mim.h"\
-	".\src\msgdlgutils.h"\
-	".\src\msgs.h"\
-	".\src\nen.h"\
-	".\src\resource.h"\
-	".\src\sendqueue.h"\
-	".\src\taskbar.h"\
-	".\src\templates.h"\
-	".\src\themes.h"\
-	".\src\typingnotify.h"\
+	".\commonheaders.h"\
+	".\functions.h"\
+	".\generic_msghandlers.h"\
+	".\msgdlgutils.h"\
+	".\msgs.h"\
+	".\nen.h"\
+	".\templates.h"\
+	".\typingnotify.h"\
+	{$(INCLUDE)}"tom.h"\
 	
 
-.\src\msgdlgutils.cpp : \
+msgoptions.c : \
 	"..\..\include\m_acc.h"\
 	"..\..\include\m_addcontact.h"\
 	"..\..\include\m_avatars.h"\
@@ -1580,146 +1273,8 @@
 	"..\..\include\m_database.h"\
 	"..\..\include\m_file.h"\
 	"..\..\include\m_fontservice.h"\
-	"..\..\include\m_freeimage.h"\
 	"..\..\include\m_history.h"\
 	"..\..\include\m_icolib.h"\
-	"..\..\include\m_imgsrvc.h"\
-	"..\..\include\m_langpack.h"\
-	"..\..\include\m_message.h"\
-	"..\..\include\m_options.h"\
-	"..\..\include\m_plugins.h"\
-	"..\..\include\m_protocols.h"\
-	"..\..\include\m_protomod.h"\
-	"..\..\include\m_protosvc.h"\
-	"..\..\include\m_skin.h"\
-	"..\..\include\m_stdhdr.h"\
-	"..\..\include\m_system.h"\
-	"..\..\include\m_userinfo.h"\
-	"..\..\include\m_utils.h"\
-	"..\..\include\newpluginapi.h"\
-	"..\..\include\statusmodes.h"\
-	"..\..\include\win2k.h"\
-	".\API\m_buttonbar.h"\
-	".\API\m_cln_skinedit.h"\
-	".\API\m_fingerprint.h"\
-	".\API\m_flash.h"\
-	".\API\m_folders.h"\
-	".\API\m_historyevents.h"\
-	".\API\m_ieview.h"\
-	".\API\m_mathmodule.h"\
-	".\API\m_metacontacts.h"\
-	".\API\m_msg_buttonsbar.h"\
-	".\API\m_nudge.h"\
-	".\API\m_popup.h"\
-	".\API\m_smileyadd.h"\
-	".\API\m_spellchecker.h"\
-	".\API\m_toptoolbar.h"\
-	".\API\m_updater.h"\
-	".\chat\chat.h"\
-	".\chat\chat_resource.h"\
-	".\chat\chatprototypes.h"\
-	".\src\commonheaders.h"\
-	".\src\controls.h"\
-	".\src\functions.h"\
-	".\src\generic_msghandlers.h"\
-	".\src\globals.h"\
-	".\src\mim.h"\
-	".\src\msgdlgutils.h"\
-	".\src\msgs.h"\
-	".\src\nen.h"\
-	".\src\resource.h"\
-	".\src\sendqueue.h"\
-	".\src\taskbar.h"\
-	".\src\templates.h"\
-	".\src\themes.h"\
-	".\src\typingnotify.h"\
-	
-
-.\src\msglog.cpp : \
-	"..\..\include\m_acc.h"\
-	"..\..\include\m_addcontact.h"\
-	"..\..\include\m_avatars.h"\
-	"..\..\include\m_button.h"\
-	"..\..\include\m_chat.h"\
-	"..\..\include\m_clc.h"\
-	"..\..\include\m_clist.h"\
-	"..\..\include\m_clui.h"\
-	"..\..\include\m_contacts.h"\
-	"..\..\include\m_database.h"\
-	"..\..\include\m_file.h"\
-	"..\..\include\m_fontservice.h"\
-	"..\..\include\m_freeimage.h"\
-	"..\..\include\m_history.h"\
-	"..\..\include\m_icolib.h"\
-	"..\..\include\m_imgsrvc.h"\
-	"..\..\include\m_langpack.h"\
-	"..\..\include\m_message.h"\
-	"..\..\include\m_options.h"\
-	"..\..\include\m_plugins.h"\
-	"..\..\include\m_protocols.h"\
-	"..\..\include\m_protomod.h"\
-	"..\..\include\m_protosvc.h"\
-	"..\..\include\m_skin.h"\
-	"..\..\include\m_stdhdr.h"\
-	"..\..\include\m_system.h"\
-	"..\..\include\m_userinfo.h"\
-	"..\..\include\m_utils.h"\
-	"..\..\include\newpluginapi.h"\
-	"..\..\include\statusmodes.h"\
-	"..\..\include\win2k.h"\
-	".\API\m_buttonbar.h"\
-	".\API\m_cln_skinedit.h"\
-	".\API\m_fingerprint.h"\
-	".\API\m_flash.h"\
-	".\API\m_folders.h"\
-	".\API\m_historyevents.h"\
-	".\API\m_ieview.h"\
-	".\API\m_mathmodule.h"\
-	".\API\m_metacontacts.h"\
-	".\API\m_msg_buttonsbar.h"\
-	".\API\m_nudge.h"\
-	".\API\m_popup.h"\
-	".\API\m_smileyadd.h"\
-	".\API\m_spellchecker.h"\
-	".\API\m_toptoolbar.h"\
-	".\API\m_updater.h"\
-	".\chat\chat.h"\
-	".\chat\chat_resource.h"\
-	".\chat\chatprototypes.h"\
-	".\src\commonheaders.h"\
-	".\src\controls.h"\
-	".\src\functions.h"\
-	".\src\generic_msghandlers.h"\
-	".\src\globals.h"\
-	".\src\mim.h"\
-	".\src\msgdlgutils.h"\
-	".\src\msgs.h"\
-	".\src\nen.h"\
-	".\src\resource.h"\
-	".\src\sendqueue.h"\
-	".\src\taskbar.h"\
-	".\src\templates.h"\
-	".\src\themes.h"\
-	".\src\typingnotify.h"\
-	
-
-.\src\msgoptions.cpp : \
-	"..\..\include\m_acc.h"\
-	"..\..\include\m_addcontact.h"\
-	"..\..\include\m_avatars.h"\
-	"..\..\include\m_button.h"\
-	"..\..\include\m_chat.h"\
-	"..\..\include\m_clc.h"\
-	"..\..\include\m_clist.h"\
-	"..\..\include\m_clui.h"\
-	"..\..\include\m_contacts.h"\
-	"..\..\include\m_database.h"\
-	"..\..\include\m_file.h"\
-	"..\..\include\m_fontservice.h"\
-	"..\..\include\m_freeimage.h"\
-	"..\..\include\m_history.h"\
-	"..\..\include\m_icolib.h"\
-	"..\..\include\m_imgsrvc.h"\
 	"..\..\include\m_langpack.h"\
 	"..\..\include\m_message.h"\
 	"..\..\include\m_modernopt.h"\
@@ -1750,29 +1305,20 @@
 	".\API\m_popup.h"\
 	".\API\m_smileyadd.h"\
 	".\API\m_spellchecker.h"\
-	".\API\m_toptoolbar.h"\
-	".\API\m_updater.h"\
 	".\chat\chat.h"\
-	".\chat\chat_resource.h"\
 	".\chat\chatprototypes.h"\
-	".\src\commonheaders.h"\
-	".\src\controls.h"\
-	".\src\functions.h"\
-	".\src\generic_msghandlers.h"\
-	".\src\globals.h"\
-	".\src\mim.h"\
-	".\src\msgdlgutils.h"\
-	".\src\msgs.h"\
-	".\src\nen.h"\
-	".\src\resource.h"\
-	".\src\sendqueue.h"\
-	".\src\taskbar.h"\
-	".\src\templates.h"\
-	".\src\themes.h"\
-	".\src\typingnotify.h"\
+	".\commonheaders.h"\
+	".\functions.h"\
+	".\generic_msghandlers.h"\
+	".\msgdlgutils.h"\
+	".\msgs.h"\
+	".\nen.h"\
+	".\templates.h"\
+	".\typingnotify.h"\
+	{$(INCLUDE)}"tom.h"\
 	
 
-.\tabmodplus\msgoptions_plus.cpp : \
+.\tabmodplus\msgoptions_plus.c : \
 	"..\..\include\m_acc.h"\
 	"..\..\include\m_addcontact.h"\
 	"..\..\include\m_avatars.h"\
@@ -1785,10 +1331,66 @@
 	"..\..\include\m_database.h"\
 	"..\..\include\m_file.h"\
 	"..\..\include\m_fontservice.h"\
-	"..\..\include\m_freeimage.h"\
 	"..\..\include\m_history.h"\
 	"..\..\include\m_icolib.h"\
-	"..\..\include\m_imgsrvc.h"\
+	"..\..\include\m_langpack.h"\
+	"..\..\include\m_message.h"\
+	"..\..\include\m_options.h"\
+	"..\..\include\m_plugins.h"\
+	"..\..\include\m_protocols.h"\
+	"..\..\include\m_protomod.h"\
+	"..\..\include\m_protosvc.h"\
+	"..\..\include\m_skin.h"\
+	"..\..\include\m_stdhdr.h"\
+	"..\..\include\m_system.h"\
+	"..\..\include\m_userinfo.h"\
+	"..\..\include\m_utils.h"\
+	"..\..\include\newpluginapi.h"\
+	"..\..\include\statusmodes.h"\
+	"..\..\include\win2k.h"\
+	".\API\m_buttonbar.h"\
+	".\API\m_cln_skinedit.h"\
+	".\API\m_fingerprint.h"\
+	".\API\m_flash.h"\
+	".\API\m_folders.h"\
+	".\API\m_historyevents.h"\
+	".\API\m_ieview.h"\
+	".\API\m_mathmodule.h"\
+	".\API\m_metacontacts.h"\
+	".\API\m_msg_buttonsbar.h"\
+	".\API\m_nudge.h"\
+	".\API\m_popup.h"\
+	".\API\m_smileyadd.h"\
+	".\API\m_spellchecker.h"\
+	".\chat\chat.h"\
+	".\chat\chatprototypes.h"\
+	".\commonheaders.h"\
+	".\functions.h"\
+	".\generic_msghandlers.h"\
+	".\msgdlgutils.h"\
+	".\msgs.h"\
+	".\nen.h"\
+	".\tabmodplus\commonheaders.h"\
+	".\templates.h"\
+	".\typingnotify.h"\
+	{$(INCLUDE)}"tom.h"\
+	
+
+msgs.c : \
+	"..\..\include\m_acc.h"\
+	"..\..\include\m_addcontact.h"\
+	"..\..\include\m_avatars.h"\
+	"..\..\include\m_button.h"\
+	"..\..\include\m_chat.h"\
+	"..\..\include\m_clc.h"\
+	"..\..\include\m_clist.h"\
+	"..\..\include\m_clui.h"\
+	"..\..\include\m_contacts.h"\
+	"..\..\include\m_database.h"\
+	"..\..\include\m_file.h"\
+	"..\..\include\m_fontservice.h"\
+	"..\..\include\m_history.h"\
+	"..\..\include\m_icolib.h"\
 	"..\..\include\m_langpack.h"\
 	"..\..\include\m_message.h"\
 	"..\..\include\m_options.h"\
@@ -1821,26 +1423,20 @@
 	".\API\m_toptoolbar.h"\
 	".\API\m_updater.h"\
 	".\chat\chat.h"\
-	".\chat\chat_resource.h"\
 	".\chat\chatprototypes.h"\
-	".\src\commonheaders.h"\
-	".\src\controls.h"\
-	".\src\functions.h"\
-	".\src\generic_msghandlers.h"\
-	".\src\globals.h"\
-	".\src\mim.h"\
-	".\src\msgdlgutils.h"\
-	".\src\msgs.h"\
-	".\src\nen.h"\
-	".\src\resource.h"\
-	".\src\sendqueue.h"\
-	".\src\taskbar.h"\
-	".\src\templates.h"\
-	".\src\themes.h"\
-	".\src\typingnotify.h"\
+	".\commonheaders.h"\
+	".\functions.h"\
+	".\generic_msghandlers.h"\
+	".\msgdlgutils.h"\
+	".\msgs.h"\
+	".\nen.h"\
+	".\sendqueue.h"\
+	".\templates.h"\
+	".\typingnotify.h"\
+	{$(INCLUDE)}"tom.h"\
 	
 
-.\src\msgs.cpp : \
+.\selectcontainer.c : \
 	"..\..\include\m_acc.h"\
 	"..\..\include\m_addcontact.h"\
 	"..\..\include\m_avatars.h"\
@@ -1853,10 +1449,8 @@
 	"..\..\include\m_database.h"\
 	"..\..\include\m_file.h"\
 	"..\..\include\m_fontservice.h"\
-	"..\..\include\m_freeimage.h"\
 	"..\..\include\m_history.h"\
 	"..\..\include\m_icolib.h"\
-	"..\..\include\m_imgsrvc.h"\
 	"..\..\include\m_langpack.h"\
 	"..\..\include\m_message.h"\
 	"..\..\include\m_options.h"\
@@ -1886,29 +1480,20 @@
 	".\API\m_popup.h"\
 	".\API\m_smileyadd.h"\
 	".\API\m_spellchecker.h"\
-	".\API\m_toptoolbar.h"\
-	".\API\m_updater.h"\
 	".\chat\chat.h"\
-	".\chat\chat_resource.h"\
 	".\chat\chatprototypes.h"\
-	".\src\commonheaders.h"\
-	".\src\controls.h"\
-	".\src\functions.h"\
-	".\src\generic_msghandlers.h"\
-	".\src\globals.h"\
-	".\src\mim.h"\
-	".\src\msgdlgutils.h"\
-	".\src\msgs.h"\
-	".\src\nen.h"\
-	".\src\resource.h"\
-	".\src\sendqueue.h"\
-	".\src\taskbar.h"\
-	".\src\templates.h"\
-	".\src\themes.h"\
-	".\src\typingnotify.h"\
+	".\commonheaders.h"\
+	".\functions.h"\
+	".\generic_msghandlers.h"\
+	".\msgdlgutils.h"\
+	".\msgs.h"\
+	".\nen.h"\
+	".\templates.h"\
+	".\typingnotify.h"\
+	{$(INCLUDE)}"tom.h"\
 	
 
-.\src\selectcontainer.cpp : \
+sendqueue.c : \
 	"..\..\include\m_acc.h"\
 	"..\..\include\m_addcontact.h"\
 	"..\..\include\m_avatars.h"\
@@ -1921,10 +1506,8 @@
 	"..\..\include\m_database.h"\
 	"..\..\include\m_file.h"\
 	"..\..\include\m_fontservice.h"\
-	"..\..\include\m_freeimage.h"\
 	"..\..\include\m_history.h"\
 	"..\..\include\m_icolib.h"\
-	"..\..\include\m_imgsrvc.h"\
 	"..\..\include\m_langpack.h"\
 	"..\..\include\m_message.h"\
 	"..\..\include\m_options.h"\
@@ -1954,29 +1537,21 @@
 	".\API\m_popup.h"\
 	".\API\m_smileyadd.h"\
 	".\API\m_spellchecker.h"\
-	".\API\m_toptoolbar.h"\
-	".\API\m_updater.h"\
 	".\chat\chat.h"\
-	".\chat\chat_resource.h"\
 	".\chat\chatprototypes.h"\
-	".\src\commonheaders.h"\
-	".\src\controls.h"\
-	".\src\functions.h"\
-	".\src\generic_msghandlers.h"\
-	".\src\globals.h"\
-	".\src\mim.h"\
-	".\src\msgdlgutils.h"\
-	".\src\msgs.h"\
-	".\src\nen.h"\
-	".\src\resource.h"\
-	".\src\sendqueue.h"\
-	".\src\taskbar.h"\
-	".\src\templates.h"\
-	".\src\themes.h"\
-	".\src\typingnotify.h"\
+	".\commonheaders.h"\
+	".\functions.h"\
+	".\generic_msghandlers.h"\
+	".\msgdlgutils.h"\
+	".\msgs.h"\
+	".\nen.h"\
+	".\sendqueue.h"\
+	".\templates.h"\
+	".\typingnotify.h"\
+	{$(INCLUDE)}"tom.h"\
 	
 
-.\src\sendqueue.cpp : \
+srmm.c : \
 	"..\..\include\m_acc.h"\
 	"..\..\include\m_addcontact.h"\
 	"..\..\include\m_avatars.h"\
@@ -1989,10 +1564,8 @@
 	"..\..\include\m_database.h"\
 	"..\..\include\m_file.h"\
 	"..\..\include\m_fontservice.h"\
-	"..\..\include\m_freeimage.h"\
 	"..\..\include\m_history.h"\
 	"..\..\include\m_icolib.h"\
-	"..\..\include\m_imgsrvc.h"\
 	"..\..\include\m_langpack.h"\
 	"..\..\include\m_message.h"\
 	"..\..\include\m_options.h"\
@@ -2022,29 +1595,20 @@
 	".\API\m_popup.h"\
 	".\API\m_smileyadd.h"\
 	".\API\m_spellchecker.h"\
-	".\API\m_toptoolbar.h"\
-	".\API\m_updater.h"\
 	".\chat\chat.h"\
-	".\chat\chat_resource.h"\
 	".\chat\chatprototypes.h"\
-	".\src\commonheaders.h"\
-	".\src\controls.h"\
-	".\src\functions.h"\
-	".\src\generic_msghandlers.h"\
-	".\src\globals.h"\
-	".\src\mim.h"\
-	".\src\msgdlgutils.h"\
-	".\src\msgs.h"\
-	".\src\nen.h"\
-	".\src\resource.h"\
-	".\src\sendqueue.h"\
-	".\src\taskbar.h"\
-	".\src\templates.h"\
-	".\src\themes.h"\
-	".\src\typingnotify.h"\
+	".\commonheaders.h"\
+	".\functions.h"\
+	".\generic_msghandlers.h"\
+	".\msgdlgutils.h"\
+	".\msgs.h"\
+	".\nen.h"\
+	".\templates.h"\
+	".\typingnotify.h"\
+	{$(INCLUDE)}"tom.h"\
 	
 
-.\src\srmm.cpp : \
+.\tabctrl.c : \
 	"..\..\include\m_acc.h"\
 	"..\..\include\m_addcontact.h"\
 	"..\..\include\m_avatars.h"\
@@ -2057,10 +1621,8 @@
 	"..\..\include\m_database.h"\
 	"..\..\include\m_file.h"\
 	"..\..\include\m_fontservice.h"\
-	"..\..\include\m_freeimage.h"\
 	"..\..\include\m_history.h"\
 	"..\..\include\m_icolib.h"\
-	"..\..\include\m_imgsrvc.h"\
 	"..\..\include\m_langpack.h"\
 	"..\..\include\m_message.h"\
 	"..\..\include\m_options.h"\
@@ -2090,29 +1652,20 @@
 	".\API\m_popup.h"\
 	".\API\m_smileyadd.h"\
 	".\API\m_spellchecker.h"\
-	".\API\m_toptoolbar.h"\
-	".\API\m_updater.h"\
 	".\chat\chat.h"\
-	".\chat\chat_resource.h"\
 	".\chat\chatprototypes.h"\
-	".\src\commonheaders.h"\
-	".\src\controls.h"\
-	".\src\functions.h"\
-	".\src\generic_msghandlers.h"\
-	".\src\globals.h"\
-	".\src\mim.h"\
-	".\src\msgdlgutils.h"\
-	".\src\msgs.h"\
-	".\src\nen.h"\
-	".\src\resource.h"\
-	".\src\sendqueue.h"\
-	".\src\taskbar.h"\
-	".\src\templates.h"\
-	".\src\themes.h"\
-	".\src\typingnotify.h"\
+	".\commonheaders.h"\
+	".\functions.h"\
+	".\generic_msghandlers.h"\
+	".\msgdlgutils.h"\
+	".\msgs.h"\
+	".\nen.h"\
+	".\templates.h"\
+	".\typingnotify.h"\
+	{$(INCLUDE)}"tom.h"\
 	
 
-.\src\tabctrl.cpp : \
+templates.c : \
 	"..\..\include\m_acc.h"\
 	"..\..\include\m_addcontact.h"\
 	"..\..\include\m_avatars.h"\
@@ -2125,10 +1678,8 @@
 	"..\..\include\m_database.h"\
 	"..\..\include\m_file.h"\
 	"..\..\include\m_fontservice.h"\
-	"..\..\include\m_freeimage.h"\
 	"..\..\include\m_history.h"\
 	"..\..\include\m_icolib.h"\
-	"..\..\include\m_imgsrvc.h"\
 	"..\..\include\m_langpack.h"\
 	"..\..\include\m_message.h"\
 	"..\..\include\m_options.h"\
@@ -2158,29 +1709,20 @@
 	".\API\m_popup.h"\
 	".\API\m_smileyadd.h"\
 	".\API\m_spellchecker.h"\
-	".\API\m_toptoolbar.h"\
-	".\API\m_updater.h"\
 	".\chat\chat.h"\
-	".\chat\chat_resource.h"\
 	".\chat\chatprototypes.h"\
-	".\src\commonheaders.h"\
-	".\src\controls.h"\
-	".\src\functions.h"\
-	".\src\generic_msghandlers.h"\
-	".\src\globals.h"\
-	".\src\mim.h"\
-	".\src\msgdlgutils.h"\
-	".\src\msgs.h"\
-	".\src\nen.h"\
-	".\src\resource.h"\
-	".\src\sendqueue.h"\
-	".\src\taskbar.h"\
-	".\src\templates.h"\
-	".\src\themes.h"\
-	".\src\typingnotify.h"\
+	".\commonheaders.h"\
+	".\functions.h"\
+	".\generic_msghandlers.h"\
+	".\msgdlgutils.h"\
+	".\msgs.h"\
+	".\nen.h"\
+	".\templates.h"\
+	".\typingnotify.h"\
+	{$(INCLUDE)}"tom.h"\
 	
 
-.\src\taskbar.cpp : \
+.\themes.c : \
 	"..\..\include\m_acc.h"\
 	"..\..\include\m_addcontact.h"\
 	"..\..\include\m_avatars.h"\
@@ -2193,10 +1735,8 @@
 	"..\..\include\m_database.h"\
 	"..\..\include\m_file.h"\
 	"..\..\include\m_fontservice.h"\
-	"..\..\include\m_freeimage.h"\
 	"..\..\include\m_history.h"\
 	"..\..\include\m_icolib.h"\
-	"..\..\include\m_imgsrvc.h"\
 	"..\..\include\m_langpack.h"\
 	"..\..\include\m_message.h"\
 	"..\..\include\m_options.h"\
@@ -2226,29 +1766,20 @@
 	".\API\m_popup.h"\
 	".\API\m_smileyadd.h"\
 	".\API\m_spellchecker.h"\
-	".\API\m_toptoolbar.h"\
-	".\API\m_updater.h"\
 	".\chat\chat.h"\
-	".\chat\chat_resource.h"\
 	".\chat\chatprototypes.h"\
-	".\src\commonheaders.h"\
-	".\src\controls.h"\
-	".\src\functions.h"\
-	".\src\generic_msghandlers.h"\
-	".\src\globals.h"\
-	".\src\mim.h"\
-	".\src\msgdlgutils.h"\
-	".\src\msgs.h"\
-	".\src\nen.h"\
-	".\src\resource.h"\
-	".\src\sendqueue.h"\
-	".\src\taskbar.h"\
-	".\src\templates.h"\
-	".\src\themes.h"\
-	".\src\typingnotify.h"\
+	".\commonheaders.h"\
+	".\functions.h"\
+	".\generic_msghandlers.h"\
+	".\msgdlgutils.h"\
+	".\msgs.h"\
+	".\nen.h"\
+	".\templates.h"\
+	".\typingnotify.h"\
+	{$(INCLUDE)}"tom.h"\
 	
 
-.\src\templates.cpp : \
+trayicon.c : \
 	"..\..\include\m_acc.h"\
 	"..\..\include\m_addcontact.h"\
 	"..\..\include\m_avatars.h"\
@@ -2261,10 +1792,8 @@
 	"..\..\include\m_database.h"\
 	"..\..\include\m_file.h"\
 	"..\..\include\m_fontservice.h"\
-	"..\..\include\m_freeimage.h"\
 	"..\..\include\m_history.h"\
 	"..\..\include\m_icolib.h"\
-	"..\..\include\m_imgsrvc.h"\
 	"..\..\include\m_langpack.h"\
 	"..\..\include\m_message.h"\
 	"..\..\include\m_options.h"\
@@ -2294,29 +1823,20 @@
 	".\API\m_popup.h"\
 	".\API\m_smileyadd.h"\
 	".\API\m_spellchecker.h"\
-	".\API\m_toptoolbar.h"\
-	".\API\m_updater.h"\
 	".\chat\chat.h"\
-	".\chat\chat_resource.h"\
 	".\chat\chatprototypes.h"\
-	".\src\commonheaders.h"\
-	".\src\controls.h"\
-	".\src\functions.h"\
-	".\src\generic_msghandlers.h"\
-	".\src\globals.h"\
-	".\src\mim.h"\
-	".\src\msgdlgutils.h"\
-	".\src\msgs.h"\
-	".\src\nen.h"\
-	".\src\resource.h"\
-	".\src\sendqueue.h"\
-	".\src\taskbar.h"\
-	".\src\templates.h"\
-	".\src\themes.h"\
-	".\src\typingnotify.h"\
+	".\commonheaders.h"\
+	".\functions.h"\
+	".\generic_msghandlers.h"\
+	".\msgdlgutils.h"\
+	".\msgs.h"\
+	".\nen.h"\
+	".\templates.h"\
+	".\typingnotify.h"\
+	{$(INCLUDE)}"tom.h"\
 	
 
-.\src\themeio.cpp : \
+TSButton.c : \
 	"..\..\include\m_acc.h"\
 	"..\..\include\m_addcontact.h"\
 	"..\..\include\m_avatars.h"\
@@ -2329,10 +1849,8 @@
 	"..\..\include\m_database.h"\
 	"..\..\include\m_file.h"\
 	"..\..\include\m_fontservice.h"\
-	"..\..\include\m_freeimage.h"\
 	"..\..\include\m_history.h"\
 	"..\..\include\m_icolib.h"\
-	"..\..\include\m_imgsrvc.h"\
 	"..\..\include\m_langpack.h"\
 	"..\..\include\m_message.h"\
 	"..\..\include\m_options.h"\
@@ -2362,29 +1880,20 @@
 	".\API\m_popup.h"\
 	".\API\m_smileyadd.h"\
 	".\API\m_spellchecker.h"\
-	".\API\m_toptoolbar.h"\
-	".\API\m_updater.h"\
 	".\chat\chat.h"\
-	".\chat\chat_resource.h"\
 	".\chat\chatprototypes.h"\
-	".\src\commonheaders.h"\
-	".\src\controls.h"\
-	".\src\functions.h"\
-	".\src\generic_msghandlers.h"\
-	".\src\globals.h"\
-	".\src\mim.h"\
-	".\src\msgdlgutils.h"\
-	".\src\msgs.h"\
-	".\src\nen.h"\
-	".\src\resource.h"\
-	".\src\sendqueue.h"\
-	".\src\taskbar.h"\
-	".\src\templates.h"\
-	".\src\themes.h"\
-	".\src\typingnotify.h"\
+	".\commonheaders.h"\
+	".\functions.h"\
+	".\generic_msghandlers.h"\
+	".\msgdlgutils.h"\
+	".\msgs.h"\
+	".\nen.h"\
+	".\templates.h"\
+	".\typingnotify.h"\
+	{$(INCLUDE)}"tom.h"\
 	
 
-.\src\themes.cpp : \
+.\typingnotify.c : \
 	"..\..\include\m_acc.h"\
 	"..\..\include\m_addcontact.h"\
 	"..\..\include\m_avatars.h"\
@@ -2397,10 +1906,8 @@
 	"..\..\include\m_database.h"\
 	"..\..\include\m_file.h"\
 	"..\..\include\m_fontservice.h"\
-	"..\..\include\m_freeimage.h"\
 	"..\..\include\m_history.h"\
 	"..\..\include\m_icolib.h"\
-	"..\..\include\m_imgsrvc.h"\
 	"..\..\include\m_langpack.h"\
 	"..\..\include\m_message.h"\
 	"..\..\include\m_options.h"\
@@ -2430,29 +1937,20 @@
 	".\API\m_popup.h"\
 	".\API\m_smileyadd.h"\
 	".\API\m_spellchecker.h"\
-	".\API\m_toptoolbar.h"\
-	".\API\m_updater.h"\
 	".\chat\chat.h"\
-	".\chat\chat_resource.h"\
 	".\chat\chatprototypes.h"\
-	".\src\commonheaders.h"\
-	".\src\controls.h"\
-	".\src\functions.h"\
-	".\src\generic_msghandlers.h"\
-	".\src\globals.h"\
-	".\src\mim.h"\
-	".\src\msgdlgutils.h"\
-	".\src\msgs.h"\
-	".\src\nen.h"\
-	".\src\resource.h"\
-	".\src\sendqueue.h"\
-	".\src\taskbar.h"\
-	".\src\templates.h"\
-	".\src\themes.h"\
-	".\src\typingnotify.h"\
+	".\commonheaders.h"\
+	".\functions.h"\
+	".\generic_msghandlers.h"\
+	".\msgdlgutils.h"\
+	".\msgs.h"\
+	".\nen.h"\
+	".\templates.h"\
+	".\typingnotify.h"\
+	{$(INCLUDE)}"tom.h"\
 	
 
-.\src\trayicon.cpp : \
+userprefs.c : \
 	"..\..\include\m_acc.h"\
 	"..\..\include\m_addcontact.h"\
 	"..\..\include\m_avatars.h"\
@@ -2465,10 +1963,8 @@
 	"..\..\include\m_database.h"\
 	"..\..\include\m_file.h"\
 	"..\..\include\m_fontservice.h"\
-	"..\..\include\m_freeimage.h"\
 	"..\..\include\m_history.h"\
 	"..\..\include\m_icolib.h"\
-	"..\..\include\m_imgsrvc.h"\
 	"..\..\include\m_langpack.h"\
 	"..\..\include\m_message.h"\
 	"..\..\include\m_options.h"\
@@ -2498,230 +1994,17 @@
 	".\API\m_popup.h"\
 	".\API\m_smileyadd.h"\
 	".\API\m_spellchecker.h"\
-	".\API\m_toptoolbar.h"\
-	".\API\m_updater.h"\
 	".\chat\chat.h"\
-	".\chat\chat_resource.h"\
 	".\chat\chatprototypes.h"\
-	".\src\commonheaders.h"\
-	".\src\controls.h"\
-	".\src\functions.h"\
-	".\src\generic_msghandlers.h"\
-	".\src\globals.h"\
-	".\src\mim.h"\
-	".\src\msgdlgutils.h"\
-	".\src\msgs.h"\
-	".\src\nen.h"\
-	".\src\resource.h"\
-	".\src\sendqueue.h"\
-	".\src\taskbar.h"\
-	".\src\templates.h"\
-	".\src\themes.h"\
-	".\src\typingnotify.h"\
-	
-
-.\src\TSButton.cpp : \
-	"..\..\include\m_acc.h"\
-	"..\..\include\m_addcontact.h"\
-	"..\..\include\m_avatars.h"\
-	"..\..\include\m_button.h"\
-	"..\..\include\m_chat.h"\
-	"..\..\include\m_clc.h"\
-	"..\..\include\m_clist.h"\
-	"..\..\include\m_clui.h"\
-	"..\..\include\m_contacts.h"\
-	"..\..\include\m_database.h"\
-	"..\..\include\m_file.h"\
-	"..\..\include\m_fontservice.h"\
-	"..\..\include\m_freeimage.h"\
-	"..\..\include\m_history.h"\
-	"..\..\include\m_icolib.h"\
-	"..\..\include\m_imgsrvc.h"\
-	"..\..\include\m_langpack.h"\
-	"..\..\include\m_message.h"\
-	"..\..\include\m_options.h"\
-	"..\..\include\m_plugins.h"\
-	"..\..\include\m_protocols.h"\
-	"..\..\include\m_protomod.h"\
-	"..\..\include\m_protosvc.h"\
-	"..\..\include\m_skin.h"\
-	"..\..\include\m_stdhdr.h"\
-	"..\..\include\m_system.h"\
-	"..\..\include\m_userinfo.h"\
-	"..\..\include\m_utils.h"\
-	"..\..\include\newpluginapi.h"\
-	"..\..\include\statusmodes.h"\
-	"..\..\include\win2k.h"\
-	".\API\m_buttonbar.h"\
-	".\API\m_cln_skinedit.h"\
-	".\API\m_fingerprint.h"\
-	".\API\m_flash.h"\
-	".\API\m_folders.h"\
-	".\API\m_historyevents.h"\
-	".\API\m_ieview.h"\
-	".\API\m_mathmodule.h"\
-	".\API\m_metacontacts.h"\
-	".\API\m_msg_buttonsbar.h"\
-	".\API\m_nudge.h"\
-	".\API\m_popup.h"\
-	".\API\m_smileyadd.h"\
-	".\API\m_spellchecker.h"\
-	".\API\m_toptoolbar.h"\
-	".\API\m_updater.h"\
-	".\chat\chat.h"\
-	".\chat\chat_resource.h"\
-	".\chat\chatprototypes.h"\
-	".\src\commonheaders.h"\
-	".\src\controls.h"\
-	".\src\functions.h"\
-	".\src\generic_msghandlers.h"\
-	".\src\globals.h"\
-	".\src\mim.h"\
-	".\src\msgdlgutils.h"\
-	".\src\msgs.h"\
-	".\src\nen.h"\
-	".\src\resource.h"\
-	".\src\sendqueue.h"\
-	".\src\taskbar.h"\
-	".\src\templates.h"\
-	".\src\themes.h"\
-	".\src\typingnotify.h"\
-	
-
-.\src\typingnotify.cpp : \
-	"..\..\include\m_acc.h"\
-	"..\..\include\m_addcontact.h"\
-	"..\..\include\m_avatars.h"\
-	"..\..\include\m_button.h"\
-	"..\..\include\m_chat.h"\
-	"..\..\include\m_clc.h"\
-	"..\..\include\m_clist.h"\
-	"..\..\include\m_clui.h"\
-	"..\..\include\m_contacts.h"\
-	"..\..\include\m_database.h"\
-	"..\..\include\m_file.h"\
-	"..\..\include\m_fontservice.h"\
-	"..\..\include\m_freeimage.h"\
-	"..\..\include\m_history.h"\
-	"..\..\include\m_icolib.h"\
-	"..\..\include\m_imgsrvc.h"\
-	"..\..\include\m_langpack.h"\
-	"..\..\include\m_message.h"\
-	"..\..\include\m_options.h"\
-	"..\..\include\m_plugins.h"\
-	"..\..\include\m_protocols.h"\
-	"..\..\include\m_protomod.h"\
-	"..\..\include\m_protosvc.h"\
-	"..\..\include\m_skin.h"\
-	"..\..\include\m_stdhdr.h"\
-	"..\..\include\m_system.h"\
-	"..\..\include\m_userinfo.h"\
-	"..\..\include\m_utils.h"\
-	"..\..\include\newpluginapi.h"\
-	"..\..\include\statusmodes.h"\
-	"..\..\include\win2k.h"\
-	".\API\m_buttonbar.h"\
-	".\API\m_cln_skinedit.h"\
-	".\API\m_fingerprint.h"\
-	".\API\m_flash.h"\
-	".\API\m_folders.h"\
-	".\API\m_historyevents.h"\
-	".\API\m_ieview.h"\
-	".\API\m_mathmodule.h"\
-	".\API\m_metacontacts.h"\
-	".\API\m_msg_buttonsbar.h"\
-	".\API\m_nudge.h"\
-	".\API\m_popup.h"\
-	".\API\m_smileyadd.h"\
-	".\API\m_spellchecker.h"\
-	".\API\m_toptoolbar.h"\
-	".\API\m_updater.h"\
-	".\chat\chat.h"\
-	".\chat\chat_resource.h"\
-	".\chat\chatprototypes.h"\
-	".\src\commonheaders.h"\
-	".\src\controls.h"\
-	".\src\functions.h"\
-	".\src\generic_msghandlers.h"\
-	".\src\globals.h"\
-	".\src\mim.h"\
-	".\src\msgdlgutils.h"\
-	".\src\msgs.h"\
-	".\src\nen.h"\
-	".\src\resource.h"\
-	".\src\sendqueue.h"\
-	".\src\taskbar.h"\
-	".\src\templates.h"\
-	".\src\themes.h"\
-	".\src\typingnotify.h"\
-	
-
-.\src\userprefs.cpp : \
-	"..\..\include\m_acc.h"\
-	"..\..\include\m_addcontact.h"\
-	"..\..\include\m_avatars.h"\
-	"..\..\include\m_button.h"\
-	"..\..\include\m_chat.h"\
-	"..\..\include\m_clc.h"\
-	"..\..\include\m_clist.h"\
-	"..\..\include\m_clui.h"\
-	"..\..\include\m_contacts.h"\
-	"..\..\include\m_database.h"\
-	"..\..\include\m_file.h"\
-	"..\..\include\m_fontservice.h"\
-	"..\..\include\m_freeimage.h"\
-	"..\..\include\m_history.h"\
-	"..\..\include\m_icolib.h"\
-	"..\..\include\m_imgsrvc.h"\
-	"..\..\include\m_langpack.h"\
-	"..\..\include\m_message.h"\
-	"..\..\include\m_options.h"\
-	"..\..\include\m_plugins.h"\
-	"..\..\include\m_protocols.h"\
-	"..\..\include\m_protomod.h"\
-	"..\..\include\m_protosvc.h"\
-	"..\..\include\m_skin.h"\
-	"..\..\include\m_stdhdr.h"\
-	"..\..\include\m_system.h"\
-	"..\..\include\m_userinfo.h"\
-	"..\..\include\m_utils.h"\
-	"..\..\include\newpluginapi.h"\
-	"..\..\include\statusmodes.h"\
-	"..\..\include\win2k.h"\
-	".\API\m_buttonbar.h"\
-	".\API\m_cln_skinedit.h"\
-	".\API\m_fingerprint.h"\
-	".\API\m_flash.h"\
-	".\API\m_folders.h"\
-	".\API\m_historyevents.h"\
-	".\API\m_ieview.h"\
-	".\API\m_mathmodule.h"\
-	".\API\m_metacontacts.h"\
-	".\API\m_msg_buttonsbar.h"\
-	".\API\m_nudge.h"\
-	".\API\m_popup.h"\
-	".\API\m_smileyadd.h"\
-	".\API\m_spellchecker.h"\
-	".\API\m_toptoolbar.h"\
-	".\API\m_updater.h"\
-	".\chat\chat.h"\
-	".\chat\chat_resource.h"\
-	".\chat\chatprototypes.h"\
-	".\src\commonheaders.h"\
-	".\src\controls.h"\
-	".\src\functions.h"\
-	".\src\generic_msghandlers.h"\
-	".\src\globals.h"\
-	".\src\mim.h"\
-	".\src\msgdlgutils.h"\
-	".\src\msgs.h"\
-	".\src\nen.h"\
-	".\src\resource.h"\
-	".\src\sendqueue.h"\
-	".\src\taskbar.h"\
-	".\src\templates.h"\
-	".\src\themes.h"\
-	".\src\typingnotify.h"\
+	".\commonheaders.h"\
+	".\functions.h"\
+	".\generic_msghandlers.h"\
+	".\msgdlgutils.h"\
+	".\msgs.h"\
+	".\nen.h"\
+	".\templates.h"\
+	".\typingnotify.h"\
+	{$(INCLUDE)}"tom.h"\
 	
 
 .\tabsrmm_private.rc : \
@@ -2730,17 +2013,14 @@
 	"..\..\src\res\cursor_drop_user.cur"\
 	"..\..\src\res\cursor_hyperlink.cur"\
 	".\chat\chat.rc"\
-	".\chat\chat_resource.h"\
 	".\res\checked.ico"\
 	".\res\expand.ico"\
 	".\res\LOGO.bmp"\
 	".\res\res_TN\popup.ico"\
 	".\res\res_TN\popup_no.ico"\
-	".\res\SKIN\logo.png"\
 	".\res\unchecked.ico"\
 	".\resource.rc"\
-	".\src\resource.h"\
-	".\src\version.h"\
 	".\tabmodplus\icons\imgclose.ico"\
 	".\tabmodplus\icons\imgopen.ico"\
+	".\version.h"\
 	
