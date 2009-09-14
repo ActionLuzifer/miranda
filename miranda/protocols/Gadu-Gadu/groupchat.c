@@ -40,11 +40,11 @@ int gg_gc_init(GGPROTO *gg)
 
 		// Register Gadu-Gadu proto
 		gcr.cbSize = sizeof(GCREGISTER);
-		gcr.dwFlags = GC_TCHAR;
+		gcr.dwFlags = 0;
 		gcr.iMaxText = 0;
 		gcr.nColors = 0;
 		gcr.pColors = 0;
-		gcr.ptszModuleDispName = gg->proto.m_tszUserName;
+		gcr.pszModuleDispName = GG_PROTONAME;
 		gcr.pszModule = GG_PROTO;
 #ifdef DEBUGMODE
 		gg_netlog(gg, "gg_gc_init(): Trying to register groupchat plugin...");

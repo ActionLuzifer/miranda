@@ -1,7 +1,7 @@
 /*
 Chat module plugin for Miranda IM
 
-Copyright (C) 2003 Jï¿½rgen Persson
+Copyright (C) 2003 Jörgen Persson
 Copyright 2003-2008 Miranda ICQ/IM project,
 
 This program is free software; you can redistribute it and/or
@@ -944,8 +944,8 @@ BOOL CALLBACK DlgProcOptions2(HWND hwndDlg,UINT uMsg,WPARAM wParam,LPARAM lParam
 				}
 			}
 		} else if (((LPNMHDR)lParam)->idFrom == 0 && ((LPNMHDR)lParam)->code == PSN_APPLY ) {
-			char *pszText = NULL;
 			int iLen;
+            char *pszText = NULL;
 
 			iLen = GetWindowTextLength(GetDlgItem(hwndDlg, IDC_CHAT_HIGHLIGHTWORDS));
 			if ( iLen > 0 ) {
@@ -974,9 +974,9 @@ BOOL CALLBACK DlgProcOptions2(HWND hwndDlg,UINT uMsg,WPARAM wParam,LPARAM lParam
 				free(pszText1);
 			}
 			else {
-				lstrcpyn(g_Settings.pszLogDir, DEFLOGFILENAME, MAX_PATH);
-				DBDeleteContactSetting(NULL, "Chat", "LogDirectory");
-			}
+                lstrcpyn(g_Settings.pszLogDir, DEFLOGFILENAME, MAX_PATH);
+                DBDeleteContactSetting(NULL, "Chat", "LogDirectory");
+            }
 
 			iLen = GetWindowTextLength(GetDlgItem(hwndDlg, IDC_CHAT_LOGTIMESTAMP));
 			if ( iLen > 0 ) {

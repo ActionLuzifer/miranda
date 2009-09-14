@@ -436,32 +436,32 @@ WCHAR* __stdcall JabberUnixToDosW( const WCHAR* str )
 	return res;
 }
 
-TCHAR* __stdcall JabberHttpUrlEncode( const TCHAR* str )
+char* __stdcall JabberHttpUrlEncode( const char* str )
 {
-	TCHAR* p, *q, *res;
+	unsigned char* p, *q, *res;
 
 	if ( str == NULL ) return NULL;
-	res = ( TCHAR* ) mir_alloc( 3*_tcslen( str ) + 1 );
-	for ( p = ( TCHAR* )str, q = res; *p!='\0'; p++,q++ ) {
+	res = ( BYTE* ) mir_alloc( 3*strlen( str ) + 1 );
+	for ( p=( BYTE* )str,q=res; *p!='\0'; p++,q++ ) {
 		if (( *p>='A' && *p<='Z' ) || ( *p>='a' && *p<='z' ) || ( *p>='0' && *p<='9' ) || strchr( "$-_.+!*'(),", *p )!=NULL ) {
 			*q = *p;
 		}
 		else {
-			wsprintf( q, _T("%%%02X"), *p );
+			sprintf(( char* )q, "%%%02X", *p );
 			q += 2;
 		}
 	}
 	*q = '\0';
-	return res;
+	return ( char* )res;
 }
 
-void __stdcall JabberHttpUrlDecode( TCHAR* str )
+void __stdcall JabberHttpUrlDecode( char* str )
 {
-	TCHAR* p, *q;
+	unsigned char* p, *q;
 	unsigned int code;
 
 	if ( str == NULL ) return;
-	for ( p = q = ( TCHAR* )str; *p!='\0'; p++,q++ ) {
+	for ( p=q=( BYTE* )str; *p!='\0'; p++,q++ ) {
 		if ( *p=='%' && *( p+1 )!='\0' && isxdigit( *( p+1 )) && *( p+2 )!='\0' && isxdigit( *( p+2 )) ) {
 			sscanf(( char* )p+1, "%2x", &code );
 			*q = ( unsigned char ) code;
@@ -1003,6 +1003,22 @@ TCHAR* __stdcall JabberStripJid( const TCHAR* jid, TCHAR* dest, size_t destLen )
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////
+// JabberGetXmlLang() - returns language code for xml:lang attribute, caller must free return value
+
+TCHAR* CJabberProto::GetXmlLang()
+{
+	DBVARIANT dbv;
+	TCHAR *szSelectedLang = NULL;
+	if ( !JGetStringT( NULL, "XmlLang", &dbv )) {
+		szSelectedLang = mir_tstrdup( dbv.ptszVal );
+		JFreeVariant( &dbv );
+	}
+	else
+		szSelectedLang = mir_tstrdup( _T( "en" ));
+	return szSelectedLang;
+}
+
+/////////////////////////////////////////////////////////////////////////////////////////
 // JabberGetPictureType - tries to autodetect the picture type from the buffer
 
 int __stdcall JabberGetPictureType( const char* buf )
@@ -1031,9 +1047,6 @@ TStringPairs::TStringPairs( char* buffer ) :
 		char* p = strchr( token, '=' ), *p1;
 		if ( p == NULL )
 			break;
-
-		while( isspace( *token ))
-			token++;
 
 		tempElem[ numElems ].name = rtrim( token );
 		*p++ = 0;

@@ -83,6 +83,7 @@ int __fastcall stricmpnull(const char *str1, const char *str2);
 char* __fastcall strstrnull(const char *str, const char *substr);
 int null_snprintf(char *buffer, size_t count, const char *fmt, ...);
 char* __fastcall null_strdup(const char *string);
+char* __fastcall null_strcpy(char *dest, const char *src, size_t maxlen);
 size_t __fastcall null_strcut(char *string, size_t maxlen);
 
 size_t __fastcall strlennull(const WCHAR *string);
@@ -127,7 +128,7 @@ WORD GetMyStatusFlags();
 
 int IsValidRelativePath(const char *filename);
 char *ExtractFileName(const char *fullname);
-char *FileNameToUtf(const TCHAR *filename);
+char *FileNameToUtf(const char *filename);
 
 int FileStatUtf(const char *path, struct _stati64 *buffer);
 int MakeDirUtf(const char *dir);

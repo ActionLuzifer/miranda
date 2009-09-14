@@ -65,13 +65,12 @@ extern "C"
 // Build is a cvs build
 //
 // If defined, the build will add cvs info to the plugin info
-#define YAHOO_CVSBUILD
+//#define YAHOO_CVSBUILD
 
 #define YAHOO_LOGINSERVER					"LoginServer"
 #define YAHOO_LOGINPORT						"LoginPort"
 #define YAHOO_LOGINID						"yahoo_id"
 #define YAHOO_PASSWORD						"Password"
-#define YAHOO_PWTOKEN						"PWToken"
 #define YAHOO_CHECKMAIL						"CheckMail"
 #define YAHOO_CUSTSTATDB					"CustomStat"
 #define YAHOO_DEFAULT_PORT					5050

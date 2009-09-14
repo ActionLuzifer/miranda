@@ -33,21 +33,10 @@ CRITICAL_SECTION	cs;
 
 void RegisterFonts( void );
 
-#ifdef _WIN64 
-
-#define SIZEOF_STRUCT_GCREGISTER_V1 40
-#define SIZEOF_STRUCT_GCWINDOW_V1	48
-#define SIZEOF_STRUCT_GCEVENT_V1	76
-#define SIZEOF_STRUCT_GCEVENT_V2	80
-
-#else
-
 #define SIZEOF_STRUCT_GCREGISTER_V1 28
 #define SIZEOF_STRUCT_GCWINDOW_V1	32
 #define SIZEOF_STRUCT_GCEVENT_V1	44
 #define SIZEOF_STRUCT_GCEVENT_V2	48
-
-#endif
 
 int Chat_ModulesLoaded(WPARAM wParam,LPARAM lParam)
 {
@@ -200,7 +189,7 @@ static INT_PTR Service_Register(WPARAM wParam, LPARAM lParam)
 
 	mi = MM_AddModule( gcr->pszModule );
 	if ( mi ) {
-		mi->ptszModDispName = a2tf( gcr->ptszModuleDispName, gcr->dwFlags );
+		mi->pszModDispName = mir_strdup( gcr->pszModuleDispName );
 		mi->bBold = gcr->dwFlags&GC_BOLD;
 		mi->bUnderline = gcr->dwFlags&GC_UNDERLINE ;
 		mi->bItalics = gcr->dwFlags&GC_ITALICS ;

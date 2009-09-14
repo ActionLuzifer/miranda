@@ -84,8 +84,8 @@ BSC32=bscmake.exe
 # ADD BSC32 /nologo
 LINK32=link.exe
 # ADD BASE LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib comctl32.lib /nologo /base:"0x6a540000" /subsystem:windows /dll /machine:IX86 /out:"..\..\Bin\Release\Plugins\tabsrmm_unicode.dll" /implib:".\Release_Unicode/srmm.lib" /pdbtype:sept
-# ADD LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib comctl32.lib msimg32.lib shlwapi.lib /nologo /base:"0x6a540000" /subsystem:windows /dll /map /machine:IX86 /out:"..\..\Bin\Release Unicode\Plugins\tabsrmm.dll" /implib:".\Release_Unicode/srmm.lib" /opt:NOWIN98
-# SUBTRACT LINK32 /pdb:none /incremental:yes /debug
+# ADD LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib comctl32.lib msimg32.lib shlwapi.lib /nologo /base:"0x6a540000" /subsystem:windows /dll /map /debug /machine:IX86 /out:"..\..\Bin\Release Unicode\Plugins\tabsrmm.dll" /implib:".\Release_Unicode/srmm.lib" /opt:NOWIN98
+# SUBTRACT LINK32 /pdb:none
 
 !ELSEIF  "$(CFG)" == "tabSRMM - Win32 Release"
 
@@ -111,8 +111,8 @@ BSC32=bscmake.exe
 # ADD BSC32 /nologo
 LINK32=link.exe
 # ADD BASE LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib comctl32.lib /nologo /base:"0x6a540000" /subsystem:windows /dll /machine:IX86 /out:"..\..\Bin\Release\Plugins\tabsrmm.dll" /implib:".\Release/srmm.lib" /pdbtype:sept
-# ADD LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib comctl32.lib msimg32.lib shlwapi.lib /nologo /base:"0x6a540000" /subsystem:windows /dll /map /machine:IX86 /out:"..\..\Bin\Release\Plugins\tabsrmm.dll" /implib:".\Release/srmm.lib" /opt:NOWIN98
-# SUBTRACT LINK32 /pdb:none /debug
+# ADD LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib comctl32.lib msimg32.lib shlwapi.lib /nologo /base:"0x6a540000" /subsystem:windows /dll /map /debug /machine:IX86 /out:"..\..\Bin\Release\Plugins\tabsrmm.dll" /implib:".\Release/srmm.lib" /opt:NOWIN98
+# SUBTRACT LINK32 /pdb:none
 
 !ELSEIF  "$(CFG)" == "tabSRMM - Win32 Debug Unicode"
 
@@ -125,11 +125,10 @@ LINK32=link.exe
 # PROP Use_Debug_Libraries 1
 # PROP Output_Dir ".\Debug_Unicode"
 # PROP Intermediate_Dir ".\Debug_Unicode"
-# PROP Ignore_Export_Lib 0
+# PROP Ignore_Export_Lib 1
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /MDd /W3 /GX /ZI /Od /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "_USRDLL" /D "SRMM_EXPORTS" /D "UNICODE" /D "_MBCS" /FR /Fp".\Debug_Unicode/srmm.pch" /YX /GZ /c
-# ADD CPP /nologo /MDd /W3 /GX /Zi /Od /I "../" /I "../../include" /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "_USRDLL" /D "SRMM_EXPORTS" /D "UNICODE" /GZ /c
-# SUBTRACT CPP /Fr /YX /Yc /Yu
+# ADD CPP /nologo /MDd /W3 /GX /ZI /Od /I "../" /I "../../include" /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "_USRDLL" /D "SRMM_EXPORTS" /D "UNICODE" /D "_MBCS" /FR /Fp".\Debug_Unicode/srmm.pch" /Yu"commonheaders.h" /GZ /c
 # ADD BASE MTL /nologo /D "_DEBUG" /mktyplib203 /win32
 # ADD MTL /nologo /D "_DEBUG" /mktyplib203 /win32
 # ADD BASE RSC /l 0x809 /d "_DEBUG"
@@ -140,8 +139,8 @@ BSC32=bscmake.exe
 LINK32=link.exe
 # ADD BASE LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib comctl32.lib /nologo /subsystem:windows /dll /incremental:no /pdb:".\Debug_Unicode\srmm.pdb" /debug /machine:IX86 /out:"..\..\Bin\Debug\Plugins\tabsrmm_unicode.dll" /implib:".\Debug_Unicode/srmm.lib" /pdbtype:sept
 # SUBTRACT BASE LINK32 /pdb:none
-# ADD LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib comctl32.lib msimg32.lib shlwapi.lib /nologo /base:"0x6a540000" /stack:0xfa00 /subsystem:windows /dll /incremental:no /map /debug /machine:IX86 /out:"..\..\Bin\Debug Unicode\Plugins\tabsrmm.dll" /implib:".\Debug_Unicode/srmm.lib" /pdbtype:sept
-# SUBTRACT LINK32 /pdb:none
+# ADD LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib comctl32.lib msimg32.lib shlwapi.lib /nologo /subsystem:windows /dll /pdb:".\Debug_Unicode\srmm.pdb" /debug /machine:IX86 /out:"..\..\Bin\Debug Unicode\Plugins\tabsrmm.dll" /implib:".\Debug_Unicode/srmm.lib" /pdbtype:sept
+# SUBTRACT LINK32 /pdb:none /incremental:no
 
 !ENDIF 
 
@@ -171,7 +170,7 @@ SOURCE=.\chat\chatprototypes.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\chat\clist.cpp
+SOURCE=.\chat\clist.c
 DEP_CPP_CLIST=\
 	"..\..\include\m_acc.h"\
 	"..\..\include\m_addcontact.h"\
@@ -185,11 +184,8 @@ DEP_CPP_CLIST=\
 	"..\..\include\m_database.h"\
 	"..\..\include\m_file.h"\
 	"..\..\include\m_fontservice.h"\
-	"..\..\include\m_freeimage.h"\
 	"..\..\include\m_history.h"\
-	"..\..\include\m_hotkeys.h"\
 	"..\..\include\m_icolib.h"\
-	"..\..\include\m_imgsrvc.h"\
 	"..\..\include\m_langpack.h"\
 	"..\..\include\m_message.h"\
 	"..\..\include\m_options.h"\
@@ -205,7 +201,6 @@ DEP_CPP_CLIST=\
 	"..\..\include\newpluginapi.h"\
 	"..\..\include\statusmodes.h"\
 	"..\..\include\win2k.h"\
-	".\API\m_buttonbar.h"\
 	".\API\m_cln_skinedit.h"\
 	".\API\m_fingerprint.h"\
 	".\API\m_flash.h"\
@@ -219,34 +214,25 @@ DEP_CPP_CLIST=\
 	".\API\m_popup.h"\
 	".\API\m_smileyadd.h"\
 	".\API\m_spellchecker.h"\
-	".\API\m_toptoolbar.h"\
-	".\API\m_updater.h"\
+	".\buttonsbar.h"\
 	".\chat\chat.h"\
 	".\chat\chatprototypes.h"\
-	".\src\commonheaders.h"\
-	".\src\controls.h"\
-	".\src\functions.h"\
-	".\src\generic_msghandlers.h"\
-	".\src\globals.h"\
-	".\src\mim.h"\
-	".\src\msgdlgutils.h"\
-	".\src\msgs.h"\
-	".\src\nen.h"\
-	".\src\resource.h"\
-	".\src\sendqueue.h"\
-	".\src\taskbar.h"\
-	".\src\templates.h"\
-	".\src\themes.h"\
-	".\src\typingnotify.h"\
+	".\commonheaders.h"\
+	".\functions.h"\
+	".\generic_msghandlers.h"\
+	".\msgdlgutils.h"\
+	".\msgs.h"\
+	".\nen.h"\
+	".\templates.h"\
+	".\typingnotify.h"\
+	{$(INCLUDE)}"tom.h"\
+	{$(INCLUDE)}"uxtheme.h"\
 	
-NODEP_CPP_CLIST=\
-	".\xtheme.h"\
-	
-# ADD CPP /Yu"../src/commonheaders.h"
+# ADD CPP /Yu"../commonheaders.h"
 # End Source File
 # Begin Source File
 
-SOURCE=.\chat\colorchooser.cpp
+SOURCE=.\chat\colorchooser.c
 DEP_CPP_COLOR=\
 	"..\..\include\m_acc.h"\
 	"..\..\include\m_addcontact.h"\
@@ -260,11 +246,8 @@ DEP_CPP_COLOR=\
 	"..\..\include\m_database.h"\
 	"..\..\include\m_file.h"\
 	"..\..\include\m_fontservice.h"\
-	"..\..\include\m_freeimage.h"\
 	"..\..\include\m_history.h"\
-	"..\..\include\m_hotkeys.h"\
 	"..\..\include\m_icolib.h"\
-	"..\..\include\m_imgsrvc.h"\
 	"..\..\include\m_langpack.h"\
 	"..\..\include\m_message.h"\
 	"..\..\include\m_options.h"\
@@ -280,7 +263,6 @@ DEP_CPP_COLOR=\
 	"..\..\include\newpluginapi.h"\
 	"..\..\include\statusmodes.h"\
 	"..\..\include\win2k.h"\
-	".\API\m_buttonbar.h"\
 	".\API\m_cln_skinedit.h"\
 	".\API\m_fingerprint.h"\
 	".\API\m_flash.h"\
@@ -294,34 +276,25 @@ DEP_CPP_COLOR=\
 	".\API\m_popup.h"\
 	".\API\m_smileyadd.h"\
 	".\API\m_spellchecker.h"\
-	".\API\m_toptoolbar.h"\
-	".\API\m_updater.h"\
+	".\buttonsbar.h"\
 	".\chat\chat.h"\
 	".\chat\chatprototypes.h"\
-	".\src\commonheaders.h"\
-	".\src\controls.h"\
-	".\src\functions.h"\
-	".\src\generic_msghandlers.h"\
-	".\src\globals.h"\
-	".\src\mim.h"\
-	".\src\msgdlgutils.h"\
-	".\src\msgs.h"\
-	".\src\nen.h"\
-	".\src\resource.h"\
-	".\src\sendqueue.h"\
-	".\src\taskbar.h"\
-	".\src\templates.h"\
-	".\src\themes.h"\
-	".\src\typingnotify.h"\
+	".\commonheaders.h"\
+	".\functions.h"\
+	".\generic_msghandlers.h"\
+	".\msgdlgutils.h"\
+	".\msgs.h"\
+	".\nen.h"\
+	".\templates.h"\
+	".\typingnotify.h"\
+	{$(INCLUDE)}"tom.h"\
+	{$(INCLUDE)}"uxtheme.h"\
 	
-NODEP_CPP_COLOR=\
-	".\xtheme.h"\
-	
-# ADD CPP /Yu"../src/commonheaders.h"
+# ADD CPP /Yu"../commonheaders.h"
 # End Source File
 # Begin Source File
 
-SOURCE=.\chat\log.cpp
+SOURCE=.\chat\log.c
 DEP_CPP_LOG_C=\
 	"..\..\include\m_acc.h"\
 	"..\..\include\m_addcontact.h"\
@@ -335,11 +308,8 @@ DEP_CPP_LOG_C=\
 	"..\..\include\m_database.h"\
 	"..\..\include\m_file.h"\
 	"..\..\include\m_fontservice.h"\
-	"..\..\include\m_freeimage.h"\
 	"..\..\include\m_history.h"\
-	"..\..\include\m_hotkeys.h"\
 	"..\..\include\m_icolib.h"\
-	"..\..\include\m_imgsrvc.h"\
 	"..\..\include\m_langpack.h"\
 	"..\..\include\m_message.h"\
 	"..\..\include\m_options.h"\
@@ -355,7 +325,6 @@ DEP_CPP_LOG_C=\
 	"..\..\include\newpluginapi.h"\
 	"..\..\include\statusmodes.h"\
 	"..\..\include\win2k.h"\
-	".\API\m_buttonbar.h"\
 	".\API\m_cln_skinedit.h"\
 	".\API\m_fingerprint.h"\
 	".\API\m_flash.h"\
@@ -369,34 +338,29 @@ DEP_CPP_LOG_C=\
 	".\API\m_popup.h"\
 	".\API\m_smileyadd.h"\
 	".\API\m_spellchecker.h"\
-	".\API\m_toptoolbar.h"\
-	".\API\m_updater.h"\
+	".\buttonsbar.h"\
 	".\chat\chat.h"\
 	".\chat\chatprototypes.h"\
-	".\src\commonheaders.h"\
-	".\src\controls.h"\
-	".\src\functions.h"\
-	".\src\generic_msghandlers.h"\
-	".\src\globals.h"\
-	".\src\mim.h"\
-	".\src\msgdlgutils.h"\
-	".\src\msgs.h"\
-	".\src\nen.h"\
-	".\src\resource.h"\
-	".\src\sendqueue.h"\
-	".\src\taskbar.h"\
-	".\src\templates.h"\
-	".\src\themes.h"\
-	".\src\typingnotify.h"\
+	".\commonheaders.h"\
+	".\functions.h"\
+	".\generic_msghandlers.h"\
+	".\msgdlgutils.h"\
+	".\msgs.h"\
+	".\nen.h"\
+	".\templates.h"\
+	".\typingnotify.h"\
+	{$(INCLUDE)}"tom.h"\
+	{$(INCLUDE)}"uxtheme.h"\
 	
-NODEP_CPP_LOG_C=\
-	".\xtheme.h"\
-	
-# ADD CPP /Yu"../src/commonheaders.h"
+# ADD CPP /Yu"../commonheaders.h"
 # End Source File
 # Begin Source File
 
-SOURCE=.\chat\main.cpp
+SOURCE=.\chat\m_chat.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\chat\main.c
 DEP_CPP_MAIN_=\
 	"..\..\include\m_acc.h"\
 	"..\..\include\m_addcontact.h"\
@@ -410,11 +374,8 @@ DEP_CPP_MAIN_=\
 	"..\..\include\m_database.h"\
 	"..\..\include\m_file.h"\
 	"..\..\include\m_fontservice.h"\
-	"..\..\include\m_freeimage.h"\
 	"..\..\include\m_history.h"\
-	"..\..\include\m_hotkeys.h"\
 	"..\..\include\m_icolib.h"\
-	"..\..\include\m_imgsrvc.h"\
 	"..\..\include\m_langpack.h"\
 	"..\..\include\m_message.h"\
 	"..\..\include\m_options.h"\
@@ -430,7 +391,6 @@ DEP_CPP_MAIN_=\
 	"..\..\include\newpluginapi.h"\
 	"..\..\include\statusmodes.h"\
 	"..\..\include\win2k.h"\
-	".\API\m_buttonbar.h"\
 	".\API\m_cln_skinedit.h"\
 	".\API\m_fingerprint.h"\
 	".\API\m_flash.h"\
@@ -444,34 +404,25 @@ DEP_CPP_MAIN_=\
 	".\API\m_popup.h"\
 	".\API\m_smileyadd.h"\
 	".\API\m_spellchecker.h"\
-	".\API\m_toptoolbar.h"\
-	".\API\m_updater.h"\
+	".\buttonsbar.h"\
 	".\chat\chat.h"\
 	".\chat\chatprototypes.h"\
-	".\src\commonheaders.h"\
-	".\src\controls.h"\
-	".\src\functions.h"\
-	".\src\generic_msghandlers.h"\
-	".\src\globals.h"\
-	".\src\mim.h"\
-	".\src\msgdlgutils.h"\
-	".\src\msgs.h"\
-	".\src\nen.h"\
-	".\src\resource.h"\
-	".\src\sendqueue.h"\
-	".\src\taskbar.h"\
-	".\src\templates.h"\
-	".\src\themes.h"\
-	".\src\typingnotify.h"\
+	".\commonheaders.h"\
+	".\functions.h"\
+	".\generic_msghandlers.h"\
+	".\msgdlgutils.h"\
+	".\msgs.h"\
+	".\nen.h"\
+	".\templates.h"\
+	".\typingnotify.h"\
+	{$(INCLUDE)}"tom.h"\
+	{$(INCLUDE)}"uxtheme.h"\
 	
-NODEP_CPP_MAIN_=\
-	".\xtheme.h"\
-	
-# ADD CPP /Yu"../src/commonheaders.h"
+# ADD CPP /Yu"../commonheaders.h"
 # End Source File
 # Begin Source File
 
-SOURCE=.\chat\manager.cpp
+SOURCE=.\chat\manager.c
 DEP_CPP_MANAG=\
 	"..\..\include\m_acc.h"\
 	"..\..\include\m_addcontact.h"\
@@ -485,11 +436,8 @@ DEP_CPP_MANAG=\
 	"..\..\include\m_database.h"\
 	"..\..\include\m_file.h"\
 	"..\..\include\m_fontservice.h"\
-	"..\..\include\m_freeimage.h"\
 	"..\..\include\m_history.h"\
-	"..\..\include\m_hotkeys.h"\
 	"..\..\include\m_icolib.h"\
-	"..\..\include\m_imgsrvc.h"\
 	"..\..\include\m_langpack.h"\
 	"..\..\include\m_message.h"\
 	"..\..\include\m_options.h"\
@@ -505,7 +453,6 @@ DEP_CPP_MANAG=\
 	"..\..\include\newpluginapi.h"\
 	"..\..\include\statusmodes.h"\
 	"..\..\include\win2k.h"\
-	".\API\m_buttonbar.h"\
 	".\API\m_cln_skinedit.h"\
 	".\API\m_fingerprint.h"\
 	".\API\m_flash.h"\
@@ -519,34 +466,25 @@ DEP_CPP_MANAG=\
 	".\API\m_popup.h"\
 	".\API\m_smileyadd.h"\
 	".\API\m_spellchecker.h"\
-	".\API\m_toptoolbar.h"\
-	".\API\m_updater.h"\
+	".\buttonsbar.h"\
 	".\chat\chat.h"\
 	".\chat\chatprototypes.h"\
-	".\src\commonheaders.h"\
-	".\src\controls.h"\
-	".\src\functions.h"\
-	".\src\generic_msghandlers.h"\
-	".\src\globals.h"\
-	".\src\mim.h"\
-	".\src\msgdlgutils.h"\
-	".\src\msgs.h"\
-	".\src\nen.h"\
-	".\src\resource.h"\
-	".\src\sendqueue.h"\
-	".\src\taskbar.h"\
-	".\src\templates.h"\
-	".\src\themes.h"\
-	".\src\typingnotify.h"\
+	".\commonheaders.h"\
+	".\functions.h"\
+	".\generic_msghandlers.h"\
+	".\msgdlgutils.h"\
+	".\msgs.h"\
+	".\nen.h"\
+	".\templates.h"\
+	".\typingnotify.h"\
+	{$(INCLUDE)}"tom.h"\
+	{$(INCLUDE)}"uxtheme.h"\
 	
-NODEP_CPP_MANAG=\
-	".\xtheme.h"\
-	
-# ADD CPP /Yu"../src/commonheaders.h"
+# ADD CPP /Yu"../commonheaders.h"
 # End Source File
 # Begin Source File
 
-SOURCE=.\chat\message.cpp
+SOURCE=.\chat\message.c
 DEP_CPP_MESSA=\
 	"..\..\include\m_acc.h"\
 	"..\..\include\m_addcontact.h"\
@@ -560,11 +498,8 @@ DEP_CPP_MESSA=\
 	"..\..\include\m_database.h"\
 	"..\..\include\m_file.h"\
 	"..\..\include\m_fontservice.h"\
-	"..\..\include\m_freeimage.h"\
 	"..\..\include\m_history.h"\
-	"..\..\include\m_hotkeys.h"\
 	"..\..\include\m_icolib.h"\
-	"..\..\include\m_imgsrvc.h"\
 	"..\..\include\m_langpack.h"\
 	"..\..\include\m_message.h"\
 	"..\..\include\m_options.h"\
@@ -580,7 +515,6 @@ DEP_CPP_MESSA=\
 	"..\..\include\newpluginapi.h"\
 	"..\..\include\statusmodes.h"\
 	"..\..\include\win2k.h"\
-	".\API\m_buttonbar.h"\
 	".\API\m_cln_skinedit.h"\
 	".\API\m_fingerprint.h"\
 	".\API\m_flash.h"\
@@ -594,34 +528,25 @@ DEP_CPP_MESSA=\
 	".\API\m_popup.h"\
 	".\API\m_smileyadd.h"\
 	".\API\m_spellchecker.h"\
-	".\API\m_toptoolbar.h"\
-	".\API\m_updater.h"\
+	".\buttonsbar.h"\
 	".\chat\chat.h"\
 	".\chat\chatprototypes.h"\
-	".\src\commonheaders.h"\
-	".\src\controls.h"\
-	".\src\functions.h"\
-	".\src\generic_msghandlers.h"\
-	".\src\globals.h"\
-	".\src\mim.h"\
-	".\src\msgdlgutils.h"\
-	".\src\msgs.h"\
-	".\src\nen.h"\
-	".\src\resource.h"\
-	".\src\sendqueue.h"\
-	".\src\taskbar.h"\
-	".\src\templates.h"\
-	".\src\themes.h"\
-	".\src\typingnotify.h"\
+	".\commonheaders.h"\
+	".\functions.h"\
+	".\generic_msghandlers.h"\
+	".\msgdlgutils.h"\
+	".\msgs.h"\
+	".\nen.h"\
+	".\templates.h"\
+	".\typingnotify.h"\
+	{$(INCLUDE)}"tom.h"\
+	{$(INCLUDE)}"uxtheme.h"\
 	
-NODEP_CPP_MESSA=\
-	".\xtheme.h"\
-	
-# ADD CPP /Yu"../src/commonheaders.h"
+# ADD CPP /Yu"../commonheaders.h"
 # End Source File
 # Begin Source File
 
-SOURCE=.\chat\options.cpp
+SOURCE=.\chat\options.c
 DEP_CPP_OPTIO=\
 	"..\..\include\m_acc.h"\
 	"..\..\include\m_addcontact.h"\
@@ -635,11 +560,8 @@ DEP_CPP_OPTIO=\
 	"..\..\include\m_database.h"\
 	"..\..\include\m_file.h"\
 	"..\..\include\m_fontservice.h"\
-	"..\..\include\m_freeimage.h"\
 	"..\..\include\m_history.h"\
-	"..\..\include\m_hotkeys.h"\
 	"..\..\include\m_icolib.h"\
-	"..\..\include\m_imgsrvc.h"\
 	"..\..\include\m_langpack.h"\
 	"..\..\include\m_message.h"\
 	"..\..\include\m_options.h"\
@@ -655,7 +577,6 @@ DEP_CPP_OPTIO=\
 	"..\..\include\newpluginapi.h"\
 	"..\..\include\statusmodes.h"\
 	"..\..\include\win2k.h"\
-	".\API\m_buttonbar.h"\
 	".\API\m_cln_skinedit.h"\
 	".\API\m_fingerprint.h"\
 	".\API\m_flash.h"\
@@ -669,34 +590,25 @@ DEP_CPP_OPTIO=\
 	".\API\m_popup.h"\
 	".\API\m_smileyadd.h"\
 	".\API\m_spellchecker.h"\
-	".\API\m_toptoolbar.h"\
-	".\API\m_updater.h"\
+	".\buttonsbar.h"\
 	".\chat\chat.h"\
 	".\chat\chatprototypes.h"\
-	".\src\commonheaders.h"\
-	".\src\controls.h"\
-	".\src\functions.h"\
-	".\src\generic_msghandlers.h"\
-	".\src\globals.h"\
-	".\src\mim.h"\
-	".\src\msgdlgutils.h"\
-	".\src\msgs.h"\
-	".\src\nen.h"\
-	".\src\resource.h"\
-	".\src\sendqueue.h"\
-	".\src\taskbar.h"\
-	".\src\templates.h"\
-	".\src\themes.h"\
-	".\src\typingnotify.h"\
+	".\commonheaders.h"\
+	".\functions.h"\
+	".\generic_msghandlers.h"\
+	".\msgdlgutils.h"\
+	".\msgs.h"\
+	".\nen.h"\
+	".\templates.h"\
+	".\typingnotify.h"\
+	{$(INCLUDE)}"tom.h"\
+	{$(INCLUDE)}"uxtheme.h"\
 	
-NODEP_CPP_OPTIO=\
-	".\xtheme.h"\
-	
-# ADD CPP /Yu"../src/commonheaders.h"
+# ADD CPP /Yu"../commonheaders.h"
 # End Source File
 # Begin Source File
 
-SOURCE=.\chat\services.cpp
+SOURCE=.\chat\services.c
 DEP_CPP_SERVI=\
 	"..\..\include\m_acc.h"\
 	"..\..\include\m_addcontact.h"\
@@ -710,11 +622,8 @@ DEP_CPP_SERVI=\
 	"..\..\include\m_database.h"\
 	"..\..\include\m_file.h"\
 	"..\..\include\m_fontservice.h"\
-	"..\..\include\m_freeimage.h"\
 	"..\..\include\m_history.h"\
-	"..\..\include\m_hotkeys.h"\
 	"..\..\include\m_icolib.h"\
-	"..\..\include\m_imgsrvc.h"\
 	"..\..\include\m_langpack.h"\
 	"..\..\include\m_message.h"\
 	"..\..\include\m_options.h"\
@@ -730,7 +639,6 @@ DEP_CPP_SERVI=\
 	"..\..\include\newpluginapi.h"\
 	"..\..\include\statusmodes.h"\
 	"..\..\include\win2k.h"\
-	".\API\m_buttonbar.h"\
 	".\API\m_cln_skinedit.h"\
 	".\API\m_fingerprint.h"\
 	".\API\m_flash.h"\
@@ -744,34 +652,25 @@ DEP_CPP_SERVI=\
 	".\API\m_popup.h"\
 	".\API\m_smileyadd.h"\
 	".\API\m_spellchecker.h"\
-	".\API\m_toptoolbar.h"\
-	".\API\m_updater.h"\
+	".\buttonsbar.h"\
 	".\chat\chat.h"\
 	".\chat\chatprototypes.h"\
-	".\src\commonheaders.h"\
-	".\src\controls.h"\
-	".\src\functions.h"\
-	".\src\generic_msghandlers.h"\
-	".\src\globals.h"\
-	".\src\mim.h"\
-	".\src\msgdlgutils.h"\
-	".\src\msgs.h"\
-	".\src\nen.h"\
-	".\src\resource.h"\
-	".\src\sendqueue.h"\
-	".\src\taskbar.h"\
-	".\src\templates.h"\
-	".\src\themes.h"\
-	".\src\typingnotify.h"\
+	".\commonheaders.h"\
+	".\functions.h"\
+	".\generic_msghandlers.h"\
+	".\msgdlgutils.h"\
+	".\msgs.h"\
+	".\nen.h"\
+	".\templates.h"\
+	".\typingnotify.h"\
+	{$(INCLUDE)}"tom.h"\
+	{$(INCLUDE)}"uxtheme.h"\
 	
-NODEP_CPP_SERVI=\
-	".\xtheme.h"\
-	
-# ADD CPP /Yu"../src/commonheaders.h"
+# ADD CPP /Yu"../commonheaders.h"
 # End Source File
 # Begin Source File
 
-SOURCE=.\chat\tools.cpp
+SOURCE=.\chat\tools.c
 DEP_CPP_TOOLS=\
 	"..\..\include\m_acc.h"\
 	"..\..\include\m_addcontact.h"\
@@ -785,11 +684,8 @@ DEP_CPP_TOOLS=\
 	"..\..\include\m_database.h"\
 	"..\..\include\m_file.h"\
 	"..\..\include\m_fontservice.h"\
-	"..\..\include\m_freeimage.h"\
 	"..\..\include\m_history.h"\
-	"..\..\include\m_hotkeys.h"\
 	"..\..\include\m_icolib.h"\
-	"..\..\include\m_imgsrvc.h"\
 	"..\..\include\m_langpack.h"\
 	"..\..\include\m_message.h"\
 	"..\..\include\m_options.h"\
@@ -805,7 +701,6 @@ DEP_CPP_TOOLS=\
 	"..\..\include\newpluginapi.h"\
 	"..\..\include\statusmodes.h"\
 	"..\..\include\win2k.h"\
-	".\API\m_buttonbar.h"\
 	".\API\m_cln_skinedit.h"\
 	".\API\m_fingerprint.h"\
 	".\API\m_flash.h"\
@@ -819,34 +714,25 @@ DEP_CPP_TOOLS=\
 	".\API\m_popup.h"\
 	".\API\m_smileyadd.h"\
 	".\API\m_spellchecker.h"\
-	".\API\m_toptoolbar.h"\
-	".\API\m_updater.h"\
+	".\buttonsbar.h"\
 	".\chat\chat.h"\
 	".\chat\chatprototypes.h"\
-	".\src\commonheaders.h"\
-	".\src\controls.h"\
-	".\src\functions.h"\
-	".\src\generic_msghandlers.h"\
-	".\src\globals.h"\
-	".\src\mim.h"\
-	".\src\msgdlgutils.h"\
-	".\src\msgs.h"\
-	".\src\nen.h"\
-	".\src\resource.h"\
-	".\src\sendqueue.h"\
-	".\src\taskbar.h"\
-	".\src\templates.h"\
-	".\src\themes.h"\
-	".\src\typingnotify.h"\
+	".\commonheaders.h"\
+	".\functions.h"\
+	".\generic_msghandlers.h"\
+	".\msgdlgutils.h"\
+	".\msgs.h"\
+	".\nen.h"\
+	".\templates.h"\
+	".\typingnotify.h"\
+	{$(INCLUDE)}"tom.h"\
+	{$(INCLUDE)}"uxtheme.h"\
 	
-NODEP_CPP_TOOLS=\
-	".\xtheme.h"\
-	
-# ADD CPP /Yu"../src/commonheaders.h"
+# ADD CPP /Yu"../commonheaders.h"
 # End Source File
 # Begin Source File
 
-SOURCE=.\chat\window.cpp
+SOURCE=.\chat\window.c
 DEP_CPP_WINDO=\
 	"..\..\include\m_acc.h"\
 	"..\..\include\m_addcontact.h"\
@@ -860,11 +746,8 @@ DEP_CPP_WINDO=\
 	"..\..\include\m_database.h"\
 	"..\..\include\m_file.h"\
 	"..\..\include\m_fontservice.h"\
-	"..\..\include\m_freeimage.h"\
 	"..\..\include\m_history.h"\
-	"..\..\include\m_hotkeys.h"\
 	"..\..\include\m_icolib.h"\
-	"..\..\include\m_imgsrvc.h"\
 	"..\..\include\m_langpack.h"\
 	"..\..\include\m_message.h"\
 	"..\..\include\m_options.h"\
@@ -880,7 +763,6 @@ DEP_CPP_WINDO=\
 	"..\..\include\newpluginapi.h"\
 	"..\..\include\statusmodes.h"\
 	"..\..\include\win2k.h"\
-	".\API\m_buttonbar.h"\
 	".\API\m_cln_skinedit.h"\
 	".\API\m_fingerprint.h"\
 	".\API\m_flash.h"\
@@ -894,40 +776,26 @@ DEP_CPP_WINDO=\
 	".\API\m_popup.h"\
 	".\API\m_smileyadd.h"\
 	".\API\m_spellchecker.h"\
-	".\API\m_toptoolbar.h"\
-	".\API\m_updater.h"\
+	".\buttonsbar.h"\
 	".\chat\chat.h"\
 	".\chat\chatprototypes.h"\
-	".\src\commonheaders.h"\
-	".\src\controls.h"\
-	".\src\functions.h"\
-	".\src\generic_msghandlers.h"\
-	".\src\globals.h"\
-	".\src\mim.h"\
-	".\src\msgdlgutils.h"\
-	".\src\msgs.h"\
-	".\src\nen.h"\
-	".\src\resource.h"\
-	".\src\sendqueue.h"\
-	".\src\taskbar.h"\
-	".\src\templates.h"\
-	".\src\themes.h"\
-	".\src\typingnotify.h"\
+	".\commonheaders.h"\
+	".\functions.h"\
+	".\generic_msghandlers.h"\
+	".\msgdlgutils.h"\
+	".\msgs.h"\
+	".\nen.h"\
+	".\templates.h"\
+	".\typingnotify.h"\
+	{$(INCLUDE)}"tom.h"\
+	{$(INCLUDE)}"uxtheme.h"\
 	
-NODEP_CPP_WINDO=\
-	".\om.h"\
-	".\xtheme.h"\
-	
-# ADD CPP /Yu"../src/commonheaders.h"
+# ADD CPP /Yu"../commonheaders.h"
 # End Source File
 # End Group
 # Begin Group "API"
 
 # PROP Default_Filter ""
-# Begin Source File
-
-SOURCE=.\API\m_buttonbar.h
-# End Source File
 # Begin Source File
 
 SOURCE=.\API\m_cln_skinedit.h
@@ -978,7 +846,15 @@ SOURCE=.\API\m_smileyadd.h
 # End Source File
 # Begin Source File
 
+SOURCE=.\API\m_Snapping_windows.h
+# End Source File
+# Begin Source File
+
 SOURCE=.\API\m_spellchecker.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\API\m_toptoolbar.h
 # End Source File
 # Begin Source File
 
@@ -987,7 +863,7 @@ SOURCE=.\API\m_updater.h
 # End Group
 # Begin Source File
 
-SOURCE=.\src\buttonsbar.cpp
+SOURCE=.\buttonsbar.c
 DEP_CPP_BUTTO=\
 	"..\..\include\m_acc.h"\
 	"..\..\include\m_addcontact.h"\
@@ -1001,11 +877,8 @@ DEP_CPP_BUTTO=\
 	"..\..\include\m_database.h"\
 	"..\..\include\m_file.h"\
 	"..\..\include\m_fontservice.h"\
-	"..\..\include\m_freeimage.h"\
 	"..\..\include\m_history.h"\
-	"..\..\include\m_hotkeys.h"\
 	"..\..\include\m_icolib.h"\
-	"..\..\include\m_imgsrvc.h"\
 	"..\..\include\m_langpack.h"\
 	"..\..\include\m_message.h"\
 	"..\..\include\m_options.h"\
@@ -1021,7 +894,6 @@ DEP_CPP_BUTTO=\
 	"..\..\include\newpluginapi.h"\
 	"..\..\include\statusmodes.h"\
 	"..\..\include\win2k.h"\
-	".\API\m_buttonbar.h"\
 	".\API\m_cln_skinedit.h"\
 	".\API\m_fingerprint.h"\
 	".\API\m_flash.h"\
@@ -1035,33 +907,24 @@ DEP_CPP_BUTTO=\
 	".\API\m_popup.h"\
 	".\API\m_smileyadd.h"\
 	".\API\m_spellchecker.h"\
-	".\API\m_toptoolbar.h"\
-	".\API\m_updater.h"\
+	".\buttonsbar.h"\
 	".\chat\chat.h"\
 	".\chat\chatprototypes.h"\
-	".\src\commonheaders.h"\
-	".\src\controls.h"\
-	".\src\functions.h"\
-	".\src\generic_msghandlers.h"\
-	".\src\globals.h"\
-	".\src\mim.h"\
-	".\src\msgdlgutils.h"\
-	".\src\msgs.h"\
-	".\src\nen.h"\
-	".\src\resource.h"\
-	".\src\sendqueue.h"\
-	".\src\taskbar.h"\
-	".\src\templates.h"\
-	".\src\themes.h"\
-	".\src\typingnotify.h"\
-	
-NODEP_CPP_BUTTO=\
-	".\xtheme.h"\
+	".\commonheaders.h"\
+	".\functions.h"\
+	".\generic_msghandlers.h"\
+	".\msgdlgutils.h"\
+	".\msgs.h"\
+	".\nen.h"\
+	".\templates.h"\
+	".\typingnotify.h"\
+	{$(INCLUDE)}"tom.h"\
+	{$(INCLUDE)}"uxtheme.h"\
 	
 # End Source File
 # Begin Source File
 
-SOURCE=.\src\container.cpp
+SOURCE=.\container.c
 DEP_CPP_CONTA=\
 	"..\..\include\m_acc.h"\
 	"..\..\include\m_addcontact.h"\
@@ -1075,11 +938,8 @@ DEP_CPP_CONTA=\
 	"..\..\include\m_database.h"\
 	"..\..\include\m_file.h"\
 	"..\..\include\m_fontservice.h"\
-	"..\..\include\m_freeimage.h"\
 	"..\..\include\m_history.h"\
-	"..\..\include\m_hotkeys.h"\
 	"..\..\include\m_icolib.h"\
-	"..\..\include\m_imgsrvc.h"\
 	"..\..\include\m_langpack.h"\
 	"..\..\include\m_message.h"\
 	"..\..\include\m_options.h"\
@@ -1095,7 +955,6 @@ DEP_CPP_CONTA=\
 	"..\..\include\newpluginapi.h"\
 	"..\..\include\statusmodes.h"\
 	"..\..\include\win2k.h"\
-	".\API\m_buttonbar.h"\
 	".\API\m_cln_skinedit.h"\
 	".\API\m_fingerprint.h"\
 	".\API\m_flash.h"\
@@ -1109,33 +968,38 @@ DEP_CPP_CONTA=\
 	".\API\m_popup.h"\
 	".\API\m_smileyadd.h"\
 	".\API\m_spellchecker.h"\
-	".\API\m_toptoolbar.h"\
-	".\API\m_updater.h"\
+	".\buttonsbar.h"\
 	".\chat\chat.h"\
 	".\chat\chatprototypes.h"\
-	".\src\commonheaders.h"\
-	".\src\controls.h"\
-	".\src\functions.h"\
-	".\src\generic_msghandlers.h"\
-	".\src\globals.h"\
-	".\src\mim.h"\
-	".\src\msgdlgutils.h"\
-	".\src\msgs.h"\
-	".\src\nen.h"\
-	".\src\resource.h"\
-	".\src\sendqueue.h"\
-	".\src\taskbar.h"\
-	".\src\templates.h"\
-	".\src\themes.h"\
-	".\src\typingnotify.h"\
+	".\commonheaders.h"\
+	".\functions.h"\
+	".\generic_msghandlers.h"\
+	".\msgdlgutils.h"\
+	".\msgs.h"\
+	".\nen.h"\
+	".\sendqueue.h"\
+	".\templates.h"\
+	".\typingnotify.h"\
+	{$(INCLUDE)}"tom.h"\
+	{$(INCLUDE)}"uxtheme.h"\
 	
-NODEP_CPP_CONTA=\
-	".\xtheme.h"\
-	
+
+!IF  "$(CFG)" == "tabSRMM - Win32 Debug"
+
+!ELSEIF  "$(CFG)" == "tabSRMM - Win32 Release Unicode"
+
+# ADD CPP /Zi
+
+!ELSEIF  "$(CFG)" == "tabSRMM - Win32 Release"
+
+!ELSEIF  "$(CFG)" == "tabSRMM - Win32 Debug Unicode"
+
+!ENDIF 
+
 # End Source File
 # Begin Source File
 
-SOURCE=.\src\containeroptions.cpp
+SOURCE=.\containeroptions.c
 DEP_CPP_CONTAI=\
 	"..\..\include\m_acc.h"\
 	"..\..\include\m_addcontact.h"\
@@ -1149,11 +1013,8 @@ DEP_CPP_CONTAI=\
 	"..\..\include\m_database.h"\
 	"..\..\include\m_file.h"\
 	"..\..\include\m_fontservice.h"\
-	"..\..\include\m_freeimage.h"\
 	"..\..\include\m_history.h"\
-	"..\..\include\m_hotkeys.h"\
 	"..\..\include\m_icolib.h"\
-	"..\..\include\m_imgsrvc.h"\
 	"..\..\include\m_langpack.h"\
 	"..\..\include\m_message.h"\
 	"..\..\include\m_options.h"\
@@ -1169,7 +1030,6 @@ DEP_CPP_CONTAI=\
 	"..\..\include\newpluginapi.h"\
 	"..\..\include\statusmodes.h"\
 	"..\..\include\win2k.h"\
-	".\API\m_buttonbar.h"\
 	".\API\m_cln_skinedit.h"\
 	".\API\m_fingerprint.h"\
 	".\API\m_flash.h"\
@@ -1183,107 +1043,37 @@ DEP_CPP_CONTAI=\
 	".\API\m_popup.h"\
 	".\API\m_smileyadd.h"\
 	".\API\m_spellchecker.h"\
-	".\API\m_toptoolbar.h"\
-	".\API\m_updater.h"\
+	".\buttonsbar.h"\
 	".\chat\chat.h"\
 	".\chat\chatprototypes.h"\
-	".\src\commonheaders.h"\
-	".\src\controls.h"\
-	".\src\functions.h"\
-	".\src\generic_msghandlers.h"\
-	".\src\globals.h"\
-	".\src\mim.h"\
-	".\src\msgdlgutils.h"\
-	".\src\msgs.h"\
-	".\src\nen.h"\
-	".\src\resource.h"\
-	".\src\sendqueue.h"\
-	".\src\taskbar.h"\
-	".\src\templates.h"\
-	".\src\themes.h"\
-	".\src\typingnotify.h"\
+	".\commonheaders.h"\
+	".\functions.h"\
+	".\generic_msghandlers.h"\
+	".\msgdlgutils.h"\
+	".\msgs.h"\
+	".\nen.h"\
+	".\templates.h"\
+	".\typingnotify.h"\
+	{$(INCLUDE)}"tom.h"\
+	{$(INCLUDE)}"uxtheme.h"\
 	
-NODEP_CPP_CONTAI=\
-	".\xtheme.h"\
-	
+
+!IF  "$(CFG)" == "tabSRMM - Win32 Debug"
+
+!ELSEIF  "$(CFG)" == "tabSRMM - Win32 Release Unicode"
+
+# ADD CPP /Zi
+
+!ELSEIF  "$(CFG)" == "tabSRMM - Win32 Release"
+
+!ELSEIF  "$(CFG)" == "tabSRMM - Win32 Debug Unicode"
+
+!ENDIF 
+
 # End Source File
 # Begin Source File
 
-SOURCE=.\src\controls.cpp
-DEP_CPP_CONTR=\
-	"..\..\include\m_acc.h"\
-	"..\..\include\m_addcontact.h"\
-	"..\..\include\m_avatars.h"\
-	"..\..\include\m_button.h"\
-	"..\..\include\m_chat.h"\
-	"..\..\include\m_clc.h"\
-	"..\..\include\m_clist.h"\
-	"..\..\include\m_clui.h"\
-	"..\..\include\m_contacts.h"\
-	"..\..\include\m_database.h"\
-	"..\..\include\m_file.h"\
-	"..\..\include\m_fontservice.h"\
-	"..\..\include\m_freeimage.h"\
-	"..\..\include\m_history.h"\
-	"..\..\include\m_hotkeys.h"\
-	"..\..\include\m_icolib.h"\
-	"..\..\include\m_imgsrvc.h"\
-	"..\..\include\m_langpack.h"\
-	"..\..\include\m_message.h"\
-	"..\..\include\m_options.h"\
-	"..\..\include\m_plugins.h"\
-	"..\..\include\m_protocols.h"\
-	"..\..\include\m_protomod.h"\
-	"..\..\include\m_protosvc.h"\
-	"..\..\include\m_skin.h"\
-	"..\..\include\m_stdhdr.h"\
-	"..\..\include\m_system.h"\
-	"..\..\include\m_userinfo.h"\
-	"..\..\include\m_utils.h"\
-	"..\..\include\newpluginapi.h"\
-	"..\..\include\statusmodes.h"\
-	"..\..\include\win2k.h"\
-	".\API\m_buttonbar.h"\
-	".\API\m_cln_skinedit.h"\
-	".\API\m_fingerprint.h"\
-	".\API\m_flash.h"\
-	".\API\m_folders.h"\
-	".\API\m_historyevents.h"\
-	".\API\m_ieview.h"\
-	".\API\m_mathmodule.h"\
-	".\API\m_metacontacts.h"\
-	".\API\m_msg_buttonsbar.h"\
-	".\API\m_nudge.h"\
-	".\API\m_popup.h"\
-	".\API\m_smileyadd.h"\
-	".\API\m_spellchecker.h"\
-	".\API\m_toptoolbar.h"\
-	".\API\m_updater.h"\
-	".\chat\chat.h"\
-	".\chat\chatprototypes.h"\
-	".\src\commonheaders.h"\
-	".\src\controls.h"\
-	".\src\functions.h"\
-	".\src\generic_msghandlers.h"\
-	".\src\globals.h"\
-	".\src\mim.h"\
-	".\src\msgdlgutils.h"\
-	".\src\msgs.h"\
-	".\src\nen.h"\
-	".\src\resource.h"\
-	".\src\sendqueue.h"\
-	".\src\taskbar.h"\
-	".\src\templates.h"\
-	".\src\themes.h"\
-	".\src\typingnotify.h"\
-	
-NODEP_CPP_CONTR=\
-	".\xtheme.h"\
-	
-# End Source File
-# Begin Source File
-
-SOURCE=.\src\eventpopups.cpp
+SOURCE=eventpopups.c
 DEP_CPP_EVENT=\
 	"..\..\include\m_acc.h"\
 	"..\..\include\m_addcontact.h"\
@@ -1297,12 +1087,9 @@ DEP_CPP_EVENT=\
 	"..\..\include\m_database.h"\
 	"..\..\include\m_file.h"\
 	"..\..\include\m_fontservice.h"\
-	"..\..\include\m_freeimage.h"\
 	"..\..\include\m_history.h"\
-	"..\..\include\m_hotkeys.h"\
 	"..\..\include\m_icolib.h"\
 	"..\..\include\m_icq.h"\
-	"..\..\include\m_imgsrvc.h"\
 	"..\..\include\m_langpack.h"\
 	"..\..\include\m_message.h"\
 	"..\..\include\m_options.h"\
@@ -1318,7 +1105,6 @@ DEP_CPP_EVENT=\
 	"..\..\include\newpluginapi.h"\
 	"..\..\include\statusmodes.h"\
 	"..\..\include\win2k.h"\
-	".\API\m_buttonbar.h"\
 	".\API\m_cln_skinedit.h"\
 	".\API\m_fingerprint.h"\
 	".\API\m_flash.h"\
@@ -1332,33 +1118,37 @@ DEP_CPP_EVENT=\
 	".\API\m_popup.h"\
 	".\API\m_smileyadd.h"\
 	".\API\m_spellchecker.h"\
-	".\API\m_toptoolbar.h"\
-	".\API\m_updater.h"\
+	".\buttonsbar.h"\
 	".\chat\chat.h"\
 	".\chat\chatprototypes.h"\
-	".\src\commonheaders.h"\
-	".\src\controls.h"\
-	".\src\functions.h"\
-	".\src\generic_msghandlers.h"\
-	".\src\globals.h"\
-	".\src\mim.h"\
-	".\src\msgdlgutils.h"\
-	".\src\msgs.h"\
-	".\src\nen.h"\
-	".\src\resource.h"\
-	".\src\sendqueue.h"\
-	".\src\taskbar.h"\
-	".\src\templates.h"\
-	".\src\themes.h"\
-	".\src\typingnotify.h"\
+	".\commonheaders.h"\
+	".\functions.h"\
+	".\generic_msghandlers.h"\
+	".\msgdlgutils.h"\
+	".\msgs.h"\
+	".\nen.h"\
+	".\templates.h"\
+	".\typingnotify.h"\
+	{$(INCLUDE)}"tom.h"\
+	{$(INCLUDE)}"uxtheme.h"\
 	
-NODEP_CPP_EVENT=\
-	".\xtheme.h"\
-	
+
+!IF  "$(CFG)" == "tabSRMM - Win32 Debug"
+
+!ELSEIF  "$(CFG)" == "tabSRMM - Win32 Release Unicode"
+
+# ADD CPP /Zi
+
+!ELSEIF  "$(CFG)" == "tabSRMM - Win32 Release"
+
+!ELSEIF  "$(CFG)" == "tabSRMM - Win32 Debug Unicode"
+
+!ENDIF 
+
 # End Source File
 # Begin Source File
 
-SOURCE=.\src\formatting.cpp
+SOURCE=.\formatting.cpp
 DEP_CPP_FORMA=\
 	"..\..\include\m_acc.h"\
 	"..\..\include\m_addcontact.h"\
@@ -1372,11 +1162,8 @@ DEP_CPP_FORMA=\
 	"..\..\include\m_database.h"\
 	"..\..\include\m_file.h"\
 	"..\..\include\m_fontservice.h"\
-	"..\..\include\m_freeimage.h"\
 	"..\..\include\m_history.h"\
-	"..\..\include\m_hotkeys.h"\
 	"..\..\include\m_icolib.h"\
-	"..\..\include\m_imgsrvc.h"\
 	"..\..\include\m_langpack.h"\
 	"..\..\include\m_message.h"\
 	"..\..\include\m_options.h"\
@@ -1392,7 +1179,6 @@ DEP_CPP_FORMA=\
 	"..\..\include\newpluginapi.h"\
 	"..\..\include\statusmodes.h"\
 	"..\..\include\win2k.h"\
-	".\API\m_buttonbar.h"\
 	".\API\m_cln_skinedit.h"\
 	".\API\m_fingerprint.h"\
 	".\API\m_flash.h"\
@@ -1406,34 +1192,45 @@ DEP_CPP_FORMA=\
 	".\API\m_popup.h"\
 	".\API\m_smileyadd.h"\
 	".\API\m_spellchecker.h"\
-	".\API\m_toptoolbar.h"\
-	".\API\m_updater.h"\
+	".\buttonsbar.h"\
 	".\chat\chat.h"\
 	".\chat\chatprototypes.h"\
-	".\src\commonheaders.h"\
-	".\src\controls.h"\
-	".\src\functions.h"\
-	".\src\generic_msghandlers.h"\
-	".\src\globals.h"\
-	".\src\mim.h"\
-	".\src\msgdlgutils.h"\
-	".\src\msgs.h"\
-	".\src\nen.h"\
-	".\src\resource.h"\
-	".\src\sendqueue.h"\
-	".\src\taskbar.h"\
-	".\src\templates.h"\
-	".\src\themes.h"\
-	".\src\typingnotify.h"\
+	".\commonheaders.h"\
+	".\functions.h"\
+	".\generic_msghandlers.h"\
+	".\msgdlgutils.h"\
+	".\msgs.h"\
+	".\nen.h"\
+	".\templates.h"\
+	".\typingnotify.h"\
+	{$(INCLUDE)}"tom.h"\
+	{$(INCLUDE)}"uxtheme.h"\
 	
-NODEP_CPP_FORMA=\
-	".\xtheme.h"\
-	
+
+!IF  "$(CFG)" == "tabSRMM - Win32 Debug"
+
 # SUBTRACT CPP /YX /Yc /Yu
+
+!ELSEIF  "$(CFG)" == "tabSRMM - Win32 Release Unicode"
+
+# ADD CPP /nologo /GX /Zi /EHsc
+# SUBTRACT CPP /YX /Yc /Yu
+
+!ELSEIF  "$(CFG)" == "tabSRMM - Win32 Release"
+
+# ADD CPP /nologo /GX /EHsc
+# SUBTRACT CPP /YX /Yc /Yu
+
+!ELSEIF  "$(CFG)" == "tabSRMM - Win32 Debug Unicode"
+
+# SUBTRACT CPP /YX /Yc /Yu
+
+!ENDIF 
+
 # End Source File
 # Begin Source File
 
-SOURCE=.\src\generic_msghandlers.cpp
+SOURCE=.\generic_msghandlers.c
 DEP_CPP_GENER=\
 	"..\..\include\m_acc.h"\
 	"..\..\include\m_addcontact.h"\
@@ -1447,11 +1244,8 @@ DEP_CPP_GENER=\
 	"..\..\include\m_database.h"\
 	"..\..\include\m_file.h"\
 	"..\..\include\m_fontservice.h"\
-	"..\..\include\m_freeimage.h"\
 	"..\..\include\m_history.h"\
-	"..\..\include\m_hotkeys.h"\
 	"..\..\include\m_icolib.h"\
-	"..\..\include\m_imgsrvc.h"\
 	"..\..\include\m_langpack.h"\
 	"..\..\include\m_message.h"\
 	"..\..\include\m_options.h"\
@@ -1467,7 +1261,6 @@ DEP_CPP_GENER=\
 	"..\..\include\newpluginapi.h"\
 	"..\..\include\statusmodes.h"\
 	"..\..\include\win2k.h"\
-	".\API\m_buttonbar.h"\
 	".\API\m_cln_skinedit.h"\
 	".\API\m_fingerprint.h"\
 	".\API\m_flash.h"\
@@ -1481,107 +1274,37 @@ DEP_CPP_GENER=\
 	".\API\m_popup.h"\
 	".\API\m_smileyadd.h"\
 	".\API\m_spellchecker.h"\
-	".\API\m_toptoolbar.h"\
-	".\API\m_updater.h"\
+	".\buttonsbar.h"\
 	".\chat\chat.h"\
 	".\chat\chatprototypes.h"\
-	".\src\commonheaders.h"\
-	".\src\controls.h"\
-	".\src\functions.h"\
-	".\src\generic_msghandlers.h"\
-	".\src\globals.h"\
-	".\src\mim.h"\
-	".\src\msgdlgutils.h"\
-	".\src\msgs.h"\
-	".\src\nen.h"\
-	".\src\resource.h"\
-	".\src\sendqueue.h"\
-	".\src\taskbar.h"\
-	".\src\templates.h"\
-	".\src\themes.h"\
-	".\src\typingnotify.h"\
+	".\commonheaders.h"\
+	".\functions.h"\
+	".\generic_msghandlers.h"\
+	".\msgdlgutils.h"\
+	".\msgs.h"\
+	".\nen.h"\
+	".\templates.h"\
+	".\typingnotify.h"\
+	{$(INCLUDE)}"tom.h"\
+	{$(INCLUDE)}"uxtheme.h"\
 	
-NODEP_CPP_GENER=\
-	".\xtheme.h"\
-	
+
+!IF  "$(CFG)" == "tabSRMM - Win32 Debug"
+
+!ELSEIF  "$(CFG)" == "tabSRMM - Win32 Release Unicode"
+
+# ADD CPP /Zi
+
+!ELSEIF  "$(CFG)" == "tabSRMM - Win32 Release"
+
+!ELSEIF  "$(CFG)" == "tabSRMM - Win32 Debug Unicode"
+
+!ENDIF 
+
 # End Source File
 # Begin Source File
 
-SOURCE=.\src\globals.cpp
-DEP_CPP_GLOBA=\
-	"..\..\include\m_acc.h"\
-	"..\..\include\m_addcontact.h"\
-	"..\..\include\m_avatars.h"\
-	"..\..\include\m_button.h"\
-	"..\..\include\m_chat.h"\
-	"..\..\include\m_clc.h"\
-	"..\..\include\m_clist.h"\
-	"..\..\include\m_clui.h"\
-	"..\..\include\m_contacts.h"\
-	"..\..\include\m_database.h"\
-	"..\..\include\m_file.h"\
-	"..\..\include\m_fontservice.h"\
-	"..\..\include\m_freeimage.h"\
-	"..\..\include\m_history.h"\
-	"..\..\include\m_hotkeys.h"\
-	"..\..\include\m_icolib.h"\
-	"..\..\include\m_imgsrvc.h"\
-	"..\..\include\m_langpack.h"\
-	"..\..\include\m_message.h"\
-	"..\..\include\m_options.h"\
-	"..\..\include\m_plugins.h"\
-	"..\..\include\m_protocols.h"\
-	"..\..\include\m_protomod.h"\
-	"..\..\include\m_protosvc.h"\
-	"..\..\include\m_skin.h"\
-	"..\..\include\m_stdhdr.h"\
-	"..\..\include\m_system.h"\
-	"..\..\include\m_userinfo.h"\
-	"..\..\include\m_utils.h"\
-	"..\..\include\newpluginapi.h"\
-	"..\..\include\statusmodes.h"\
-	"..\..\include\win2k.h"\
-	".\API\m_buttonbar.h"\
-	".\API\m_cln_skinedit.h"\
-	".\API\m_fingerprint.h"\
-	".\API\m_flash.h"\
-	".\API\m_folders.h"\
-	".\API\m_historyevents.h"\
-	".\API\m_ieview.h"\
-	".\API\m_mathmodule.h"\
-	".\API\m_metacontacts.h"\
-	".\API\m_msg_buttonsbar.h"\
-	".\API\m_nudge.h"\
-	".\API\m_popup.h"\
-	".\API\m_smileyadd.h"\
-	".\API\m_spellchecker.h"\
-	".\API\m_toptoolbar.h"\
-	".\API\m_updater.h"\
-	".\chat\chat.h"\
-	".\chat\chatprototypes.h"\
-	".\src\commonheaders.h"\
-	".\src\controls.h"\
-	".\src\functions.h"\
-	".\src\generic_msghandlers.h"\
-	".\src\globals.h"\
-	".\src\mim.h"\
-	".\src\msgdlgutils.h"\
-	".\src\msgs.h"\
-	".\src\nen.h"\
-	".\src\resource.h"\
-	".\src\sendqueue.h"\
-	".\src\taskbar.h"\
-	".\src\templates.h"\
-	".\src\themes.h"\
-	".\src\typingnotify.h"\
-	
-NODEP_CPP_GLOBA=\
-	".\xtheme.h"\
-	
-# End Source File
-# Begin Source File
-
-SOURCE=.\src\hotkeyhandler.cpp
+SOURCE=.\hotkeyhandler.c
 DEP_CPP_HOTKE=\
 	"..\..\include\m_acc.h"\
 	"..\..\include\m_addcontact.h"\
@@ -1595,11 +1318,8 @@ DEP_CPP_HOTKE=\
 	"..\..\include\m_database.h"\
 	"..\..\include\m_file.h"\
 	"..\..\include\m_fontservice.h"\
-	"..\..\include\m_freeimage.h"\
 	"..\..\include\m_history.h"\
-	"..\..\include\m_hotkeys.h"\
 	"..\..\include\m_icolib.h"\
-	"..\..\include\m_imgsrvc.h"\
 	"..\..\include\m_langpack.h"\
 	"..\..\include\m_message.h"\
 	"..\..\include\m_options.h"\
@@ -1615,7 +1335,6 @@ DEP_CPP_HOTKE=\
 	"..\..\include\newpluginapi.h"\
 	"..\..\include\statusmodes.h"\
 	"..\..\include\win2k.h"\
-	".\API\m_buttonbar.h"\
 	".\API\m_cln_skinedit.h"\
 	".\API\m_fingerprint.h"\
 	".\API\m_flash.h"\
@@ -1629,33 +1348,38 @@ DEP_CPP_HOTKE=\
 	".\API\m_popup.h"\
 	".\API\m_smileyadd.h"\
 	".\API\m_spellchecker.h"\
-	".\API\m_toptoolbar.h"\
-	".\API\m_updater.h"\
+	".\buttonsbar.h"\
 	".\chat\chat.h"\
 	".\chat\chatprototypes.h"\
-	".\src\commonheaders.h"\
-	".\src\controls.h"\
-	".\src\functions.h"\
-	".\src\generic_msghandlers.h"\
-	".\src\globals.h"\
-	".\src\mim.h"\
-	".\src\msgdlgutils.h"\
-	".\src\msgs.h"\
-	".\src\nen.h"\
-	".\src\resource.h"\
-	".\src\sendqueue.h"\
-	".\src\taskbar.h"\
-	".\src\templates.h"\
-	".\src\themes.h"\
-	".\src\typingnotify.h"\
+	".\commonheaders.h"\
+	".\functions.h"\
+	".\generic_msghandlers.h"\
+	".\msgdlgutils.h"\
+	".\msgs.h"\
+	".\nen.h"\
+	".\sendqueue.h"\
+	".\templates.h"\
+	".\typingnotify.h"\
+	{$(INCLUDE)}"tom.h"\
+	{$(INCLUDE)}"uxtheme.h"\
 	
-NODEP_CPP_HOTKE=\
-	".\xtheme.h"\
-	
+
+!IF  "$(CFG)" == "tabSRMM - Win32 Debug"
+
+!ELSEIF  "$(CFG)" == "tabSRMM - Win32 Release Unicode"
+
+# ADD CPP /Zi
+
+!ELSEIF  "$(CFG)" == "tabSRMM - Win32 Release"
+
+!ELSEIF  "$(CFG)" == "tabSRMM - Win32 Debug Unicode"
+
+!ENDIF 
+
 # End Source File
 # Begin Source File
 
-SOURCE=.\src\ImageDataObject.cpp
+SOURCE=ImageDataObject.cpp
 DEP_CPP_IMAGE=\
 	"..\..\include\m_acc.h"\
 	"..\..\include\m_addcontact.h"\
@@ -1669,11 +1393,8 @@ DEP_CPP_IMAGE=\
 	"..\..\include\m_database.h"\
 	"..\..\include\m_file.h"\
 	"..\..\include\m_fontservice.h"\
-	"..\..\include\m_freeimage.h"\
 	"..\..\include\m_history.h"\
-	"..\..\include\m_hotkeys.h"\
 	"..\..\include\m_icolib.h"\
-	"..\..\include\m_imgsrvc.h"\
 	"..\..\include\m_langpack.h"\
 	"..\..\include\m_message.h"\
 	"..\..\include\m_options.h"\
@@ -1689,7 +1410,6 @@ DEP_CPP_IMAGE=\
 	"..\..\include\newpluginapi.h"\
 	"..\..\include\statusmodes.h"\
 	"..\..\include\win2k.h"\
-	".\API\m_buttonbar.h"\
 	".\API\m_cln_skinedit.h"\
 	".\API\m_fingerprint.h"\
 	".\API\m_flash.h"\
@@ -1703,113 +1423,45 @@ DEP_CPP_IMAGE=\
 	".\API\m_popup.h"\
 	".\API\m_smileyadd.h"\
 	".\API\m_spellchecker.h"\
-	".\API\m_toptoolbar.h"\
-	".\API\m_updater.h"\
+	".\buttonsbar.h"\
 	".\chat\chat.h"\
 	".\chat\chatprototypes.h"\
-	".\src\commonheaders.h"\
-	".\src\controls.h"\
-	".\src\functions.h"\
-	".\src\generic_msghandlers.h"\
-	".\src\globals.h"\
-	".\src\ImageDataObject.h"\
-	".\src\mim.h"\
-	".\src\msgdlgutils.h"\
-	".\src\msgs.h"\
-	".\src\nen.h"\
-	".\src\resource.h"\
-	".\src\sendqueue.h"\
-	".\src\taskbar.h"\
-	".\src\templates.h"\
-	".\src\themes.h"\
-	".\src\typingnotify.h"\
+	".\commonheaders.h"\
+	".\functions.h"\
+	".\generic_msghandlers.h"\
+	".\ImageDataObject.h"\
+	".\msgdlgutils.h"\
+	".\msgs.h"\
+	".\nen.h"\
+	".\templates.h"\
+	".\typingnotify.h"\
+	{$(INCLUDE)}"tom.h"\
+	{$(INCLUDE)}"uxtheme.h"\
 	
-NODEP_CPP_IMAGE=\
-	".\xtheme.h"\
-	
+
+!IF  "$(CFG)" == "tabSRMM - Win32 Debug"
+
 # SUBTRACT CPP /YX /Yc /Yu
+
+!ELSEIF  "$(CFG)" == "tabSRMM - Win32 Release Unicode"
+
+# ADD CPP /Zi
+# SUBTRACT CPP /YX /Yc /Yu
+
+!ELSEIF  "$(CFG)" == "tabSRMM - Win32 Release"
+
+# SUBTRACT CPP /YX /Yc /Yu
+
+!ELSEIF  "$(CFG)" == "tabSRMM - Win32 Debug Unicode"
+
+# SUBTRACT CPP /YX /Yc /Yu
+
+!ENDIF 
+
 # End Source File
 # Begin Source File
 
-SOURCE=.\src\infopanel.cpp
-# End Source File
-# Begin Source File
-
-SOURCE=.\src\mim.cpp
-DEP_CPP_MIM_C=\
-	"..\..\include\m_acc.h"\
-	"..\..\include\m_addcontact.h"\
-	"..\..\include\m_avatars.h"\
-	"..\..\include\m_button.h"\
-	"..\..\include\m_chat.h"\
-	"..\..\include\m_clc.h"\
-	"..\..\include\m_clist.h"\
-	"..\..\include\m_clui.h"\
-	"..\..\include\m_contacts.h"\
-	"..\..\include\m_database.h"\
-	"..\..\include\m_file.h"\
-	"..\..\include\m_fontservice.h"\
-	"..\..\include\m_freeimage.h"\
-	"..\..\include\m_history.h"\
-	"..\..\include\m_hotkeys.h"\
-	"..\..\include\m_icolib.h"\
-	"..\..\include\m_imgsrvc.h"\
-	"..\..\include\m_langpack.h"\
-	"..\..\include\m_message.h"\
-	"..\..\include\m_options.h"\
-	"..\..\include\m_plugins.h"\
-	"..\..\include\m_protocols.h"\
-	"..\..\include\m_protomod.h"\
-	"..\..\include\m_protosvc.h"\
-	"..\..\include\m_skin.h"\
-	"..\..\include\m_stdhdr.h"\
-	"..\..\include\m_system.h"\
-	"..\..\include\m_userinfo.h"\
-	"..\..\include\m_utils.h"\
-	"..\..\include\newpluginapi.h"\
-	"..\..\include\statusmodes.h"\
-	"..\..\include\win2k.h"\
-	".\API\m_buttonbar.h"\
-	".\API\m_cln_skinedit.h"\
-	".\API\m_fingerprint.h"\
-	".\API\m_flash.h"\
-	".\API\m_folders.h"\
-	".\API\m_historyevents.h"\
-	".\API\m_ieview.h"\
-	".\API\m_mathmodule.h"\
-	".\API\m_metacontacts.h"\
-	".\API\m_msg_buttonsbar.h"\
-	".\API\m_nudge.h"\
-	".\API\m_popup.h"\
-	".\API\m_smileyadd.h"\
-	".\API\m_spellchecker.h"\
-	".\API\m_toptoolbar.h"\
-	".\API\m_updater.h"\
-	".\chat\chat.h"\
-	".\chat\chatprototypes.h"\
-	".\src\commonheaders.h"\
-	".\src\controls.h"\
-	".\src\functions.h"\
-	".\src\generic_msghandlers.h"\
-	".\src\globals.h"\
-	".\src\mim.h"\
-	".\src\msgdlgutils.h"\
-	".\src\msgs.h"\
-	".\src\nen.h"\
-	".\src\resource.h"\
-	".\src\sendqueue.h"\
-	".\src\taskbar.h"\
-	".\src\templates.h"\
-	".\src\themes.h"\
-	".\src\typingnotify.h"\
-	
-NODEP_CPP_MIM_C=\
-	".\xtheme.h"\
-	
-# End Source File
-# Begin Source File
-
-SOURCE=.\tabmodplus\modplus.cpp
+SOURCE=.\tabmodplus\modplus.c
 DEP_CPP_MODPL=\
 	"..\..\include\m_acc.h"\
 	"..\..\include\m_addcontact.h"\
@@ -1823,11 +1475,8 @@ DEP_CPP_MODPL=\
 	"..\..\include\m_database.h"\
 	"..\..\include\m_file.h"\
 	"..\..\include\m_fontservice.h"\
-	"..\..\include\m_freeimage.h"\
 	"..\..\include\m_history.h"\
-	"..\..\include\m_hotkeys.h"\
 	"..\..\include\m_icolib.h"\
-	"..\..\include\m_imgsrvc.h"\
 	"..\..\include\m_langpack.h"\
 	"..\..\include\m_message.h"\
 	"..\..\include\m_options.h"\
@@ -1843,7 +1492,6 @@ DEP_CPP_MODPL=\
 	"..\..\include\newpluginapi.h"\
 	"..\..\include\statusmodes.h"\
 	"..\..\include\win2k.h"\
-	".\API\m_buttonbar.h"\
 	".\API\m_cln_skinedit.h"\
 	".\API\m_fingerprint.h"\
 	".\API\m_flash.h"\
@@ -1857,34 +1505,25 @@ DEP_CPP_MODPL=\
 	".\API\m_popup.h"\
 	".\API\m_smileyadd.h"\
 	".\API\m_spellchecker.h"\
-	".\API\m_toptoolbar.h"\
-	".\API\m_updater.h"\
+	".\buttonsbar.h"\
 	".\chat\chat.h"\
 	".\chat\chatprototypes.h"\
-	".\src\commonheaders.h"\
-	".\src\controls.h"\
-	".\src\functions.h"\
-	".\src\generic_msghandlers.h"\
-	".\src\globals.h"\
-	".\src\mim.h"\
-	".\src\msgdlgutils.h"\
-	".\src\msgs.h"\
-	".\src\nen.h"\
-	".\src\resource.h"\
-	".\src\sendqueue.h"\
-	".\src\taskbar.h"\
-	".\src\templates.h"\
-	".\src\themes.h"\
-	".\src\typingnotify.h"\
+	".\commonheaders.h"\
+	".\functions.h"\
+	".\generic_msghandlers.h"\
+	".\msgdlgutils.h"\
+	".\msgs.h"\
+	".\nen.h"\
+	".\tabmodplus\commonheaders.h"\
+	".\templates.h"\
+	".\typingnotify.h"\
+	{$(INCLUDE)}"tom.h"\
+	{$(INCLUDE)}"uxtheme.h"\
 	
-NODEP_CPP_MODPL=\
-	".\xtheme.h"\
-	
-# ADD CPP /Yu"../src/commonheaders.h"
 # End Source File
 # Begin Source File
 
-SOURCE=.\src\msgdialog.cpp
+SOURCE=msgdialog.c
 DEP_CPP_MSGDI=\
 	"..\..\include\m_acc.h"\
 	"..\..\include\m_addcontact.h"\
@@ -1898,11 +1537,8 @@ DEP_CPP_MSGDI=\
 	"..\..\include\m_database.h"\
 	"..\..\include\m_file.h"\
 	"..\..\include\m_fontservice.h"\
-	"..\..\include\m_freeimage.h"\
 	"..\..\include\m_history.h"\
-	"..\..\include\m_hotkeys.h"\
 	"..\..\include\m_icolib.h"\
-	"..\..\include\m_imgsrvc.h"\
 	"..\..\include\m_langpack.h"\
 	"..\..\include\m_message.h"\
 	"..\..\include\m_options.h"\
@@ -1918,7 +1554,6 @@ DEP_CPP_MSGDI=\
 	"..\..\include\newpluginapi.h"\
 	"..\..\include\statusmodes.h"\
 	"..\..\include\win2k.h"\
-	".\API\m_buttonbar.h"\
 	".\API\m_cln_skinedit.h"\
 	".\API\m_fingerprint.h"\
 	".\API\m_flash.h"\
@@ -1932,33 +1567,44 @@ DEP_CPP_MSGDI=\
 	".\API\m_popup.h"\
 	".\API\m_smileyadd.h"\
 	".\API\m_spellchecker.h"\
-	".\API\m_toptoolbar.h"\
-	".\API\m_updater.h"\
+	".\buttonsbar.h"\
 	".\chat\chat.h"\
 	".\chat\chatprototypes.h"\
-	".\src\commonheaders.h"\
-	".\src\controls.h"\
-	".\src\functions.h"\
-	".\src\generic_msghandlers.h"\
-	".\src\globals.h"\
-	".\src\mim.h"\
-	".\src\msgdlgutils.h"\
-	".\src\msgs.h"\
-	".\src\nen.h"\
-	".\src\resource.h"\
-	".\src\sendqueue.h"\
-	".\src\taskbar.h"\
-	".\src\templates.h"\
-	".\src\themes.h"\
-	".\src\typingnotify.h"\
+	".\commonheaders.h"\
+	".\functions.h"\
+	".\generic_msghandlers.h"\
+	".\msgdlgutils.h"\
+	".\msgs.h"\
+	".\nen.h"\
+	".\sendqueue.h"\
+	".\templates.h"\
+	".\typingnotify.h"\
+	{$(INCLUDE)}"tom.h"\
+	{$(INCLUDE)}"uxtheme.h"\
 	
-NODEP_CPP_MSGDI=\
-	".\xtheme.h"\
-	
+
+!IF  "$(CFG)" == "tabSRMM - Win32 Debug"
+
+# ADD CPP /nologo /GX /Od /GZ
+
+!ELSEIF  "$(CFG)" == "tabSRMM - Win32 Release Unicode"
+
+# ADD CPP /nologo /GX /Zi /O1
+
+!ELSEIF  "$(CFG)" == "tabSRMM - Win32 Release"
+
+# ADD CPP /nologo /GX /O1
+
+!ELSEIF  "$(CFG)" == "tabSRMM - Win32 Debug Unicode"
+
+# ADD CPP /nologo /GX /Od /FR /GZ
+
+!ENDIF 
+
 # End Source File
 # Begin Source File
 
-SOURCE=.\src\msgdlgutils.cpp
+SOURCE=msgdlgutils.c
 DEP_CPP_MSGDL=\
 	"..\..\include\m_acc.h"\
 	"..\..\include\m_addcontact.h"\
@@ -1972,11 +1618,8 @@ DEP_CPP_MSGDL=\
 	"..\..\include\m_database.h"\
 	"..\..\include\m_file.h"\
 	"..\..\include\m_fontservice.h"\
-	"..\..\include\m_freeimage.h"\
 	"..\..\include\m_history.h"\
-	"..\..\include\m_hotkeys.h"\
 	"..\..\include\m_icolib.h"\
-	"..\..\include\m_imgsrvc.h"\
 	"..\..\include\m_langpack.h"\
 	"..\..\include\m_message.h"\
 	"..\..\include\m_options.h"\
@@ -1992,7 +1635,6 @@ DEP_CPP_MSGDL=\
 	"..\..\include\newpluginapi.h"\
 	"..\..\include\statusmodes.h"\
 	"..\..\include\win2k.h"\
-	".\API\m_buttonbar.h"\
 	".\API\m_cln_skinedit.h"\
 	".\API\m_fingerprint.h"\
 	".\API\m_flash.h"\
@@ -2006,33 +1648,37 @@ DEP_CPP_MSGDL=\
 	".\API\m_popup.h"\
 	".\API\m_smileyadd.h"\
 	".\API\m_spellchecker.h"\
-	".\API\m_toptoolbar.h"\
-	".\API\m_updater.h"\
+	".\buttonsbar.h"\
 	".\chat\chat.h"\
 	".\chat\chatprototypes.h"\
-	".\src\commonheaders.h"\
-	".\src\controls.h"\
-	".\src\functions.h"\
-	".\src\generic_msghandlers.h"\
-	".\src\globals.h"\
-	".\src\mim.h"\
-	".\src\msgdlgutils.h"\
-	".\src\msgs.h"\
-	".\src\nen.h"\
-	".\src\resource.h"\
-	".\src\sendqueue.h"\
-	".\src\taskbar.h"\
-	".\src\templates.h"\
-	".\src\themes.h"\
-	".\src\typingnotify.h"\
+	".\commonheaders.h"\
+	".\functions.h"\
+	".\generic_msghandlers.h"\
+	".\msgdlgutils.h"\
+	".\msgs.h"\
+	".\nen.h"\
+	".\templates.h"\
+	".\typingnotify.h"\
+	{$(INCLUDE)}"tom.h"\
+	{$(INCLUDE)}"uxtheme.h"\
 	
-NODEP_CPP_MSGDL=\
-	".\xtheme.h"\
-	
+
+!IF  "$(CFG)" == "tabSRMM - Win32 Debug"
+
+!ELSEIF  "$(CFG)" == "tabSRMM - Win32 Release Unicode"
+
+# ADD CPP /Zi
+
+!ELSEIF  "$(CFG)" == "tabSRMM - Win32 Release"
+
+!ELSEIF  "$(CFG)" == "tabSRMM - Win32 Debug Unicode"
+
+!ENDIF 
+
 # End Source File
 # Begin Source File
 
-SOURCE=.\src\msglog.cpp
+SOURCE=msglog.c
 DEP_CPP_MSGLO=\
 	"..\..\include\m_acc.h"\
 	"..\..\include\m_addcontact.h"\
@@ -2046,11 +1692,8 @@ DEP_CPP_MSGLO=\
 	"..\..\include\m_database.h"\
 	"..\..\include\m_file.h"\
 	"..\..\include\m_fontservice.h"\
-	"..\..\include\m_freeimage.h"\
 	"..\..\include\m_history.h"\
-	"..\..\include\m_hotkeys.h"\
 	"..\..\include\m_icolib.h"\
-	"..\..\include\m_imgsrvc.h"\
 	"..\..\include\m_langpack.h"\
 	"..\..\include\m_message.h"\
 	"..\..\include\m_options.h"\
@@ -2066,7 +1709,6 @@ DEP_CPP_MSGLO=\
 	"..\..\include\newpluginapi.h"\
 	"..\..\include\statusmodes.h"\
 	"..\..\include\win2k.h"\
-	".\API\m_buttonbar.h"\
 	".\API\m_cln_skinedit.h"\
 	".\API\m_fingerprint.h"\
 	".\API\m_flash.h"\
@@ -2080,33 +1722,43 @@ DEP_CPP_MSGLO=\
 	".\API\m_popup.h"\
 	".\API\m_smileyadd.h"\
 	".\API\m_spellchecker.h"\
-	".\API\m_toptoolbar.h"\
-	".\API\m_updater.h"\
+	".\buttonsbar.h"\
 	".\chat\chat.h"\
 	".\chat\chatprototypes.h"\
-	".\src\commonheaders.h"\
-	".\src\controls.h"\
-	".\src\functions.h"\
-	".\src\generic_msghandlers.h"\
-	".\src\globals.h"\
-	".\src\mim.h"\
-	".\src\msgdlgutils.h"\
-	".\src\msgs.h"\
-	".\src\nen.h"\
-	".\src\resource.h"\
-	".\src\sendqueue.h"\
-	".\src\taskbar.h"\
-	".\src\templates.h"\
-	".\src\themes.h"\
-	".\src\typingnotify.h"\
+	".\commonheaders.h"\
+	".\functions.h"\
+	".\generic_msghandlers.h"\
+	".\msgdlgutils.h"\
+	".\msgs.h"\
+	".\nen.h"\
+	".\templates.h"\
+	".\typingnotify.h"\
+	{$(INCLUDE)}"tom.h"\
+	{$(INCLUDE)}"uxtheme.h"\
 	
-NODEP_CPP_MSGLO=\
-	".\xtheme.h"\
-	
+
+!IF  "$(CFG)" == "tabSRMM - Win32 Debug"
+
+# ADD CPP /nologo /GX /Od /GZ
+
+!ELSEIF  "$(CFG)" == "tabSRMM - Win32 Release Unicode"
+
+# ADD CPP /nologo /GX /Zi /O1
+
+!ELSEIF  "$(CFG)" == "tabSRMM - Win32 Release"
+
+# ADD CPP /nologo /GX /O1
+
+!ELSEIF  "$(CFG)" == "tabSRMM - Win32 Debug Unicode"
+
+# ADD CPP /nologo /GX /Od /FR /GZ
+
+!ENDIF 
+
 # End Source File
 # Begin Source File
 
-SOURCE=.\src\msgoptions.cpp
+SOURCE=msgoptions.c
 DEP_CPP_MSGOP=\
 	"..\..\include\m_acc.h"\
 	"..\..\include\m_addcontact.h"\
@@ -2120,11 +1772,8 @@ DEP_CPP_MSGOP=\
 	"..\..\include\m_database.h"\
 	"..\..\include\m_file.h"\
 	"..\..\include\m_fontservice.h"\
-	"..\..\include\m_freeimage.h"\
 	"..\..\include\m_history.h"\
-	"..\..\include\m_hotkeys.h"\
 	"..\..\include\m_icolib.h"\
-	"..\..\include\m_imgsrvc.h"\
 	"..\..\include\m_langpack.h"\
 	"..\..\include\m_message.h"\
 	"..\..\include\m_modernopt.h"\
@@ -2141,7 +1790,6 @@ DEP_CPP_MSGOP=\
 	"..\..\include\newpluginapi.h"\
 	"..\..\include\statusmodes.h"\
 	"..\..\include\win2k.h"\
-	".\API\m_buttonbar.h"\
 	".\API\m_cln_skinedit.h"\
 	".\API\m_fingerprint.h"\
 	".\API\m_flash.h"\
@@ -2155,33 +1803,43 @@ DEP_CPP_MSGOP=\
 	".\API\m_popup.h"\
 	".\API\m_smileyadd.h"\
 	".\API\m_spellchecker.h"\
-	".\API\m_toptoolbar.h"\
-	".\API\m_updater.h"\
+	".\buttonsbar.h"\
 	".\chat\chat.h"\
 	".\chat\chatprototypes.h"\
-	".\src\commonheaders.h"\
-	".\src\controls.h"\
-	".\src\functions.h"\
-	".\src\generic_msghandlers.h"\
-	".\src\globals.h"\
-	".\src\mim.h"\
-	".\src\msgdlgutils.h"\
-	".\src\msgs.h"\
-	".\src\nen.h"\
-	".\src\resource.h"\
-	".\src\sendqueue.h"\
-	".\src\taskbar.h"\
-	".\src\templates.h"\
-	".\src\themes.h"\
-	".\src\typingnotify.h"\
+	".\commonheaders.h"\
+	".\functions.h"\
+	".\generic_msghandlers.h"\
+	".\msgdlgutils.h"\
+	".\msgs.h"\
+	".\nen.h"\
+	".\templates.h"\
+	".\typingnotify.h"\
+	{$(INCLUDE)}"tom.h"\
+	{$(INCLUDE)}"uxtheme.h"\
 	
-NODEP_CPP_MSGOP=\
-	".\xtheme.h"\
-	
+
+!IF  "$(CFG)" == "tabSRMM - Win32 Debug"
+
+# ADD CPP /nologo /GX /Od /GZ
+
+!ELSEIF  "$(CFG)" == "tabSRMM - Win32 Release Unicode"
+
+# ADD CPP /nologo /GX /Zi /O1
+
+!ELSEIF  "$(CFG)" == "tabSRMM - Win32 Release"
+
+# ADD CPP /nologo /GX /O1
+
+!ELSEIF  "$(CFG)" == "tabSRMM - Win32 Debug Unicode"
+
+# ADD CPP /nologo /GX /Od /FR /GZ
+
+!ENDIF 
+
 # End Source File
 # Begin Source File
 
-SOURCE=.\tabmodplus\msgoptions_plus.cpp
+SOURCE=.\tabmodplus\msgoptions_plus.c
 DEP_CPP_MSGOPT=\
 	"..\..\include\m_acc.h"\
 	"..\..\include\m_addcontact.h"\
@@ -2195,11 +1853,8 @@ DEP_CPP_MSGOPT=\
 	"..\..\include\m_database.h"\
 	"..\..\include\m_file.h"\
 	"..\..\include\m_fontservice.h"\
-	"..\..\include\m_freeimage.h"\
 	"..\..\include\m_history.h"\
-	"..\..\include\m_hotkeys.h"\
 	"..\..\include\m_icolib.h"\
-	"..\..\include\m_imgsrvc.h"\
 	"..\..\include\m_langpack.h"\
 	"..\..\include\m_message.h"\
 	"..\..\include\m_options.h"\
@@ -2215,7 +1870,6 @@ DEP_CPP_MSGOPT=\
 	"..\..\include\newpluginapi.h"\
 	"..\..\include\statusmodes.h"\
 	"..\..\include\win2k.h"\
-	".\API\m_buttonbar.h"\
 	".\API\m_cln_skinedit.h"\
 	".\API\m_fingerprint.h"\
 	".\API\m_flash.h"\
@@ -2229,34 +1883,25 @@ DEP_CPP_MSGOPT=\
 	".\API\m_popup.h"\
 	".\API\m_smileyadd.h"\
 	".\API\m_spellchecker.h"\
-	".\API\m_toptoolbar.h"\
-	".\API\m_updater.h"\
+	".\buttonsbar.h"\
 	".\chat\chat.h"\
 	".\chat\chatprototypes.h"\
-	".\src\commonheaders.h"\
-	".\src\controls.h"\
-	".\src\functions.h"\
-	".\src\generic_msghandlers.h"\
-	".\src\globals.h"\
-	".\src\mim.h"\
-	".\src\msgdlgutils.h"\
-	".\src\msgs.h"\
-	".\src\nen.h"\
-	".\src\resource.h"\
-	".\src\sendqueue.h"\
-	".\src\taskbar.h"\
-	".\src\templates.h"\
-	".\src\themes.h"\
-	".\src\typingnotify.h"\
+	".\commonheaders.h"\
+	".\functions.h"\
+	".\generic_msghandlers.h"\
+	".\msgdlgutils.h"\
+	".\msgs.h"\
+	".\nen.h"\
+	".\tabmodplus\commonheaders.h"\
+	".\templates.h"\
+	".\typingnotify.h"\
+	{$(INCLUDE)}"tom.h"\
+	{$(INCLUDE)}"uxtheme.h"\
 	
-NODEP_CPP_MSGOPT=\
-	".\xtheme.h"\
-	
-# ADD CPP /Yu"../src/commonheaders.h"
 # End Source File
 # Begin Source File
 
-SOURCE=.\src\msgs.cpp
+SOURCE=msgs.c
 DEP_CPP_MSGS_=\
 	"..\..\include\m_acc.h"\
 	"..\..\include\m_addcontact.h"\
@@ -2270,11 +1915,8 @@ DEP_CPP_MSGS_=\
 	"..\..\include\m_database.h"\
 	"..\..\include\m_file.h"\
 	"..\..\include\m_fontservice.h"\
-	"..\..\include\m_freeimage.h"\
 	"..\..\include\m_history.h"\
-	"..\..\include\m_hotkeys.h"\
 	"..\..\include\m_icolib.h"\
-	"..\..\include\m_imgsrvc.h"\
 	"..\..\include\m_langpack.h"\
 	"..\..\include\m_message.h"\
 	"..\..\include\m_options.h"\
@@ -2290,7 +1932,6 @@ DEP_CPP_MSGS_=\
 	"..\..\include\newpluginapi.h"\
 	"..\..\include\statusmodes.h"\
 	"..\..\include\win2k.h"\
-	".\API\m_buttonbar.h"\
 	".\API\m_cln_skinedit.h"\
 	".\API\m_fingerprint.h"\
 	".\API\m_flash.h"\
@@ -2306,31 +1947,44 @@ DEP_CPP_MSGS_=\
 	".\API\m_spellchecker.h"\
 	".\API\m_toptoolbar.h"\
 	".\API\m_updater.h"\
+	".\buttonsbar.h"\
 	".\chat\chat.h"\
 	".\chat\chatprototypes.h"\
-	".\src\commonheaders.h"\
-	".\src\controls.h"\
-	".\src\functions.h"\
-	".\src\generic_msghandlers.h"\
-	".\src\globals.h"\
-	".\src\mim.h"\
-	".\src\msgdlgutils.h"\
-	".\src\msgs.h"\
-	".\src\nen.h"\
-	".\src\resource.h"\
-	".\src\sendqueue.h"\
-	".\src\taskbar.h"\
-	".\src\templates.h"\
-	".\src\themes.h"\
-	".\src\typingnotify.h"\
+	".\commonheaders.h"\
+	".\functions.h"\
+	".\generic_msghandlers.h"\
+	".\msgdlgutils.h"\
+	".\msgs.h"\
+	".\nen.h"\
+	".\sendqueue.h"\
+	".\templates.h"\
+	".\typingnotify.h"\
+	{$(INCLUDE)}"tom.h"\
+	{$(INCLUDE)}"uxtheme.h"\
 	
-NODEP_CPP_MSGS_=\
-	".\xtheme.h"\
-	
+
+!IF  "$(CFG)" == "tabSRMM - Win32 Debug"
+
+# ADD CPP /nologo /GX /Od /GZ
+
+!ELSEIF  "$(CFG)" == "tabSRMM - Win32 Release Unicode"
+
+# ADD CPP /nologo /GX /Zi /O1
+
+!ELSEIF  "$(CFG)" == "tabSRMM - Win32 Release"
+
+# ADD CPP /nologo /GX /O1
+
+!ELSEIF  "$(CFG)" == "tabSRMM - Win32 Debug Unicode"
+
+# ADD CPP /nologo /GX /Od /FR /GZ
+
+!ENDIF 
+
 # End Source File
 # Begin Source File
 
-SOURCE=.\src\selectcontainer.cpp
+SOURCE=.\selectcontainer.c
 DEP_CPP_SELEC=\
 	"..\..\include\m_acc.h"\
 	"..\..\include\m_addcontact.h"\
@@ -2344,11 +1998,8 @@ DEP_CPP_SELEC=\
 	"..\..\include\m_database.h"\
 	"..\..\include\m_file.h"\
 	"..\..\include\m_fontservice.h"\
-	"..\..\include\m_freeimage.h"\
 	"..\..\include\m_history.h"\
-	"..\..\include\m_hotkeys.h"\
 	"..\..\include\m_icolib.h"\
-	"..\..\include\m_imgsrvc.h"\
 	"..\..\include\m_langpack.h"\
 	"..\..\include\m_message.h"\
 	"..\..\include\m_options.h"\
@@ -2364,7 +2015,6 @@ DEP_CPP_SELEC=\
 	"..\..\include\newpluginapi.h"\
 	"..\..\include\statusmodes.h"\
 	"..\..\include\win2k.h"\
-	".\API\m_buttonbar.h"\
 	".\API\m_cln_skinedit.h"\
 	".\API\m_fingerprint.h"\
 	".\API\m_flash.h"\
@@ -2378,33 +2028,37 @@ DEP_CPP_SELEC=\
 	".\API\m_popup.h"\
 	".\API\m_smileyadd.h"\
 	".\API\m_spellchecker.h"\
-	".\API\m_toptoolbar.h"\
-	".\API\m_updater.h"\
+	".\buttonsbar.h"\
 	".\chat\chat.h"\
 	".\chat\chatprototypes.h"\
-	".\src\commonheaders.h"\
-	".\src\controls.h"\
-	".\src\functions.h"\
-	".\src\generic_msghandlers.h"\
-	".\src\globals.h"\
-	".\src\mim.h"\
-	".\src\msgdlgutils.h"\
-	".\src\msgs.h"\
-	".\src\nen.h"\
-	".\src\resource.h"\
-	".\src\sendqueue.h"\
-	".\src\taskbar.h"\
-	".\src\templates.h"\
-	".\src\themes.h"\
-	".\src\typingnotify.h"\
+	".\commonheaders.h"\
+	".\functions.h"\
+	".\generic_msghandlers.h"\
+	".\msgdlgutils.h"\
+	".\msgs.h"\
+	".\nen.h"\
+	".\templates.h"\
+	".\typingnotify.h"\
+	{$(INCLUDE)}"tom.h"\
+	{$(INCLUDE)}"uxtheme.h"\
 	
-NODEP_CPP_SELEC=\
-	".\xtheme.h"\
-	
+
+!IF  "$(CFG)" == "tabSRMM - Win32 Debug"
+
+!ELSEIF  "$(CFG)" == "tabSRMM - Win32 Release Unicode"
+
+# ADD CPP /Zi
+
+!ELSEIF  "$(CFG)" == "tabSRMM - Win32 Release"
+
+!ELSEIF  "$(CFG)" == "tabSRMM - Win32 Debug Unicode"
+
+!ENDIF 
+
 # End Source File
 # Begin Source File
 
-SOURCE=.\src\sendqueue.cpp
+SOURCE=sendqueue.c
 DEP_CPP_SENDQ=\
 	"..\..\include\m_acc.h"\
 	"..\..\include\m_addcontact.h"\
@@ -2418,11 +2072,8 @@ DEP_CPP_SENDQ=\
 	"..\..\include\m_database.h"\
 	"..\..\include\m_file.h"\
 	"..\..\include\m_fontservice.h"\
-	"..\..\include\m_freeimage.h"\
 	"..\..\include\m_history.h"\
-	"..\..\include\m_hotkeys.h"\
 	"..\..\include\m_icolib.h"\
-	"..\..\include\m_imgsrvc.h"\
 	"..\..\include\m_langpack.h"\
 	"..\..\include\m_message.h"\
 	"..\..\include\m_options.h"\
@@ -2438,7 +2089,6 @@ DEP_CPP_SENDQ=\
 	"..\..\include\newpluginapi.h"\
 	"..\..\include\statusmodes.h"\
 	"..\..\include\win2k.h"\
-	".\API\m_buttonbar.h"\
 	".\API\m_cln_skinedit.h"\
 	".\API\m_fingerprint.h"\
 	".\API\m_flash.h"\
@@ -2452,37 +2102,38 @@ DEP_CPP_SENDQ=\
 	".\API\m_popup.h"\
 	".\API\m_smileyadd.h"\
 	".\API\m_spellchecker.h"\
-	".\API\m_toptoolbar.h"\
-	".\API\m_updater.h"\
+	".\buttonsbar.h"\
 	".\chat\chat.h"\
 	".\chat\chatprototypes.h"\
-	".\src\commonheaders.h"\
-	".\src\controls.h"\
-	".\src\functions.h"\
-	".\src\generic_msghandlers.h"\
-	".\src\globals.h"\
-	".\src\mim.h"\
-	".\src\msgdlgutils.h"\
-	".\src\msgs.h"\
-	".\src\nen.h"\
-	".\src\resource.h"\
-	".\src\sendqueue.h"\
-	".\src\taskbar.h"\
-	".\src\templates.h"\
-	".\src\themes.h"\
-	".\src\typingnotify.h"\
+	".\commonheaders.h"\
+	".\functions.h"\
+	".\generic_msghandlers.h"\
+	".\msgdlgutils.h"\
+	".\msgs.h"\
+	".\nen.h"\
+	".\sendqueue.h"\
+	".\templates.h"\
+	".\typingnotify.h"\
+	{$(INCLUDE)}"tom.h"\
+	{$(INCLUDE)}"uxtheme.h"\
 	
-NODEP_CPP_SENDQ=\
-	".\xtheme.h"\
-	
+
+!IF  "$(CFG)" == "tabSRMM - Win32 Debug"
+
+!ELSEIF  "$(CFG)" == "tabSRMM - Win32 Release Unicode"
+
+# ADD CPP /Zi
+
+!ELSEIF  "$(CFG)" == "tabSRMM - Win32 Release"
+
+!ELSEIF  "$(CFG)" == "tabSRMM - Win32 Debug Unicode"
+
+!ENDIF 
+
 # End Source File
 # Begin Source File
 
-SOURCE=.\src\sidebar.cpp
-# End Source File
-# Begin Source File
-
-SOURCE=.\src\srmm.cpp
+SOURCE=srmm.c
 DEP_CPP_SRMM_=\
 	"..\..\include\m_acc.h"\
 	"..\..\include\m_addcontact.h"\
@@ -2496,11 +2147,8 @@ DEP_CPP_SRMM_=\
 	"..\..\include\m_database.h"\
 	"..\..\include\m_file.h"\
 	"..\..\include\m_fontservice.h"\
-	"..\..\include\m_freeimage.h"\
 	"..\..\include\m_history.h"\
-	"..\..\include\m_hotkeys.h"\
 	"..\..\include\m_icolib.h"\
-	"..\..\include\m_imgsrvc.h"\
 	"..\..\include\m_langpack.h"\
 	"..\..\include\m_message.h"\
 	"..\..\include\m_options.h"\
@@ -2516,7 +2164,6 @@ DEP_CPP_SRMM_=\
 	"..\..\include\newpluginapi.h"\
 	"..\..\include\statusmodes.h"\
 	"..\..\include\win2k.h"\
-	".\API\m_buttonbar.h"\
 	".\API\m_cln_skinedit.h"\
 	".\API\m_fingerprint.h"\
 	".\API\m_flash.h"\
@@ -2530,34 +2177,43 @@ DEP_CPP_SRMM_=\
 	".\API\m_popup.h"\
 	".\API\m_smileyadd.h"\
 	".\API\m_spellchecker.h"\
-	".\API\m_toptoolbar.h"\
-	".\API\m_updater.h"\
+	".\buttonsbar.h"\
 	".\chat\chat.h"\
 	".\chat\chatprototypes.h"\
-	".\src\commonheaders.h"\
-	".\src\controls.h"\
-	".\src\functions.h"\
-	".\src\generic_msghandlers.h"\
-	".\src\globals.h"\
-	".\src\mim.h"\
-	".\src\msgdlgutils.h"\
-	".\src\msgs.h"\
-	".\src\nen.h"\
-	".\src\resource.h"\
-	".\src\sendqueue.h"\
-	".\src\taskbar.h"\
-	".\src\templates.h"\
-	".\src\themes.h"\
-	".\src\typingnotify.h"\
+	".\commonheaders.h"\
+	".\functions.h"\
+	".\generic_msghandlers.h"\
+	".\msgdlgutils.h"\
+	".\msgs.h"\
+	".\nen.h"\
+	".\templates.h"\
+	".\typingnotify.h"\
+	{$(INCLUDE)}"tom.h"\
+	{$(INCLUDE)}"uxtheme.h"\
 	
-NODEP_CPP_SRMM_=\
-	".\xtheme.h"\
-	
-# ADD CPP /Yc"commonheaders.h"
+
+!IF  "$(CFG)" == "tabSRMM - Win32 Debug"
+
+# ADD CPP /nologo /GX /Od /Yc"commonheaders.h" /GZ
+
+!ELSEIF  "$(CFG)" == "tabSRMM - Win32 Release Unicode"
+
+# ADD CPP /nologo /GX /Zi /O1 /Yc"commonheaders.h"
+
+!ELSEIF  "$(CFG)" == "tabSRMM - Win32 Release"
+
+# ADD CPP /nologo /GX /O1 /Yc"commonheaders.h"
+
+!ELSEIF  "$(CFG)" == "tabSRMM - Win32 Debug Unicode"
+
+# ADD CPP /nologo /GX /Od /FR /Yc"commonheaders.h" /GZ
+
+!ENDIF 
+
 # End Source File
 # Begin Source File
 
-SOURCE=.\src\tabctrl.cpp
+SOURCE=.\tabctrl.c
 DEP_CPP_TABCT=\
 	"..\..\include\m_acc.h"\
 	"..\..\include\m_addcontact.h"\
@@ -2571,11 +2227,8 @@ DEP_CPP_TABCT=\
 	"..\..\include\m_database.h"\
 	"..\..\include\m_file.h"\
 	"..\..\include\m_fontservice.h"\
-	"..\..\include\m_freeimage.h"\
 	"..\..\include\m_history.h"\
-	"..\..\include\m_hotkeys.h"\
 	"..\..\include\m_icolib.h"\
-	"..\..\include\m_imgsrvc.h"\
 	"..\..\include\m_langpack.h"\
 	"..\..\include\m_message.h"\
 	"..\..\include\m_options.h"\
@@ -2591,7 +2244,6 @@ DEP_CPP_TABCT=\
 	"..\..\include\newpluginapi.h"\
 	"..\..\include\statusmodes.h"\
 	"..\..\include\win2k.h"\
-	".\API\m_buttonbar.h"\
 	".\API\m_cln_skinedit.h"\
 	".\API\m_fingerprint.h"\
 	".\API\m_flash.h"\
@@ -2605,107 +2257,37 @@ DEP_CPP_TABCT=\
 	".\API\m_popup.h"\
 	".\API\m_smileyadd.h"\
 	".\API\m_spellchecker.h"\
-	".\API\m_toptoolbar.h"\
-	".\API\m_updater.h"\
+	".\buttonsbar.h"\
 	".\chat\chat.h"\
 	".\chat\chatprototypes.h"\
-	".\src\commonheaders.h"\
-	".\src\controls.h"\
-	".\src\functions.h"\
-	".\src\generic_msghandlers.h"\
-	".\src\globals.h"\
-	".\src\mim.h"\
-	".\src\msgdlgutils.h"\
-	".\src\msgs.h"\
-	".\src\nen.h"\
-	".\src\resource.h"\
-	".\src\sendqueue.h"\
-	".\src\taskbar.h"\
-	".\src\templates.h"\
-	".\src\themes.h"\
-	".\src\typingnotify.h"\
+	".\commonheaders.h"\
+	".\functions.h"\
+	".\generic_msghandlers.h"\
+	".\msgdlgutils.h"\
+	".\msgs.h"\
+	".\nen.h"\
+	".\templates.h"\
+	".\typingnotify.h"\
+	{$(INCLUDE)}"tom.h"\
+	{$(INCLUDE)}"uxtheme.h"\
 	
-NODEP_CPP_TABCT=\
-	".\xtheme.h"\
-	
+
+!IF  "$(CFG)" == "tabSRMM - Win32 Debug"
+
+!ELSEIF  "$(CFG)" == "tabSRMM - Win32 Release Unicode"
+
+# ADD CPP /Zi
+
+!ELSEIF  "$(CFG)" == "tabSRMM - Win32 Release"
+
+!ELSEIF  "$(CFG)" == "tabSRMM - Win32 Debug Unicode"
+
+!ENDIF 
+
 # End Source File
 # Begin Source File
 
-SOURCE=.\src\taskbar.cpp
-DEP_CPP_TASKB=\
-	"..\..\include\m_acc.h"\
-	"..\..\include\m_addcontact.h"\
-	"..\..\include\m_avatars.h"\
-	"..\..\include\m_button.h"\
-	"..\..\include\m_chat.h"\
-	"..\..\include\m_clc.h"\
-	"..\..\include\m_clist.h"\
-	"..\..\include\m_clui.h"\
-	"..\..\include\m_contacts.h"\
-	"..\..\include\m_database.h"\
-	"..\..\include\m_file.h"\
-	"..\..\include\m_fontservice.h"\
-	"..\..\include\m_freeimage.h"\
-	"..\..\include\m_history.h"\
-	"..\..\include\m_hotkeys.h"\
-	"..\..\include\m_icolib.h"\
-	"..\..\include\m_imgsrvc.h"\
-	"..\..\include\m_langpack.h"\
-	"..\..\include\m_message.h"\
-	"..\..\include\m_options.h"\
-	"..\..\include\m_plugins.h"\
-	"..\..\include\m_protocols.h"\
-	"..\..\include\m_protomod.h"\
-	"..\..\include\m_protosvc.h"\
-	"..\..\include\m_skin.h"\
-	"..\..\include\m_stdhdr.h"\
-	"..\..\include\m_system.h"\
-	"..\..\include\m_userinfo.h"\
-	"..\..\include\m_utils.h"\
-	"..\..\include\newpluginapi.h"\
-	"..\..\include\statusmodes.h"\
-	"..\..\include\win2k.h"\
-	".\API\m_buttonbar.h"\
-	".\API\m_cln_skinedit.h"\
-	".\API\m_fingerprint.h"\
-	".\API\m_flash.h"\
-	".\API\m_folders.h"\
-	".\API\m_historyevents.h"\
-	".\API\m_ieview.h"\
-	".\API\m_mathmodule.h"\
-	".\API\m_metacontacts.h"\
-	".\API\m_msg_buttonsbar.h"\
-	".\API\m_nudge.h"\
-	".\API\m_popup.h"\
-	".\API\m_smileyadd.h"\
-	".\API\m_spellchecker.h"\
-	".\API\m_toptoolbar.h"\
-	".\API\m_updater.h"\
-	".\chat\chat.h"\
-	".\chat\chatprototypes.h"\
-	".\src\commonheaders.h"\
-	".\src\controls.h"\
-	".\src\functions.h"\
-	".\src\generic_msghandlers.h"\
-	".\src\globals.h"\
-	".\src\mim.h"\
-	".\src\msgdlgutils.h"\
-	".\src\msgs.h"\
-	".\src\nen.h"\
-	".\src\resource.h"\
-	".\src\sendqueue.h"\
-	".\src\taskbar.h"\
-	".\src\templates.h"\
-	".\src\themes.h"\
-	".\src\typingnotify.h"\
-	
-NODEP_CPP_TASKB=\
-	".\xtheme.h"\
-	
-# End Source File
-# Begin Source File
-
-SOURCE=.\src\templates.cpp
+SOURCE=templates.c
 DEP_CPP_TEMPL=\
 	"..\..\include\m_acc.h"\
 	"..\..\include\m_addcontact.h"\
@@ -2719,11 +2301,8 @@ DEP_CPP_TEMPL=\
 	"..\..\include\m_database.h"\
 	"..\..\include\m_file.h"\
 	"..\..\include\m_fontservice.h"\
-	"..\..\include\m_freeimage.h"\
 	"..\..\include\m_history.h"\
-	"..\..\include\m_hotkeys.h"\
 	"..\..\include\m_icolib.h"\
-	"..\..\include\m_imgsrvc.h"\
 	"..\..\include\m_langpack.h"\
 	"..\..\include\m_message.h"\
 	"..\..\include\m_options.h"\
@@ -2739,7 +2318,6 @@ DEP_CPP_TEMPL=\
 	"..\..\include\newpluginapi.h"\
 	"..\..\include\statusmodes.h"\
 	"..\..\include\win2k.h"\
-	".\API\m_buttonbar.h"\
 	".\API\m_cln_skinedit.h"\
 	".\API\m_fingerprint.h"\
 	".\API\m_flash.h"\
@@ -2753,33 +2331,37 @@ DEP_CPP_TEMPL=\
 	".\API\m_popup.h"\
 	".\API\m_smileyadd.h"\
 	".\API\m_spellchecker.h"\
-	".\API\m_toptoolbar.h"\
-	".\API\m_updater.h"\
+	".\buttonsbar.h"\
 	".\chat\chat.h"\
 	".\chat\chatprototypes.h"\
-	".\src\commonheaders.h"\
-	".\src\controls.h"\
-	".\src\functions.h"\
-	".\src\generic_msghandlers.h"\
-	".\src\globals.h"\
-	".\src\mim.h"\
-	".\src\msgdlgutils.h"\
-	".\src\msgs.h"\
-	".\src\nen.h"\
-	".\src\resource.h"\
-	".\src\sendqueue.h"\
-	".\src\taskbar.h"\
-	".\src\templates.h"\
-	".\src\themes.h"\
-	".\src\typingnotify.h"\
+	".\commonheaders.h"\
+	".\functions.h"\
+	".\generic_msghandlers.h"\
+	".\msgdlgutils.h"\
+	".\msgs.h"\
+	".\nen.h"\
+	".\templates.h"\
+	".\typingnotify.h"\
+	{$(INCLUDE)}"tom.h"\
+	{$(INCLUDE)}"uxtheme.h"\
 	
-NODEP_CPP_TEMPL=\
-	".\xtheme.h"\
-	
+
+!IF  "$(CFG)" == "tabSRMM - Win32 Debug"
+
+!ELSEIF  "$(CFG)" == "tabSRMM - Win32 Release Unicode"
+
+# ADD CPP /Zi
+
+!ELSEIF  "$(CFG)" == "tabSRMM - Win32 Release"
+
+!ELSEIF  "$(CFG)" == "tabSRMM - Win32 Debug Unicode"
+
+!ENDIF 
+
 # End Source File
 # Begin Source File
 
-SOURCE=.\src\themeio.cpp
+SOURCE=.\themes.c
 DEP_CPP_THEME=\
 	"..\..\include\m_acc.h"\
 	"..\..\include\m_addcontact.h"\
@@ -2793,11 +2375,8 @@ DEP_CPP_THEME=\
 	"..\..\include\m_database.h"\
 	"..\..\include\m_file.h"\
 	"..\..\include\m_fontservice.h"\
-	"..\..\include\m_freeimage.h"\
 	"..\..\include\m_history.h"\
-	"..\..\include\m_hotkeys.h"\
 	"..\..\include\m_icolib.h"\
-	"..\..\include\m_imgsrvc.h"\
 	"..\..\include\m_langpack.h"\
 	"..\..\include\m_message.h"\
 	"..\..\include\m_options.h"\
@@ -2813,7 +2392,6 @@ DEP_CPP_THEME=\
 	"..\..\include\newpluginapi.h"\
 	"..\..\include\statusmodes.h"\
 	"..\..\include\win2k.h"\
-	".\API\m_buttonbar.h"\
 	".\API\m_cln_skinedit.h"\
 	".\API\m_fingerprint.h"\
 	".\API\m_flash.h"\
@@ -2827,111 +2405,37 @@ DEP_CPP_THEME=\
 	".\API\m_popup.h"\
 	".\API\m_smileyadd.h"\
 	".\API\m_spellchecker.h"\
-	".\API\m_toptoolbar.h"\
-	".\API\m_updater.h"\
+	".\buttonsbar.h"\
 	".\chat\chat.h"\
 	".\chat\chatprototypes.h"\
-	".\src\commonheaders.h"\
-	".\src\controls.h"\
-	".\src\functions.h"\
-	".\src\generic_msghandlers.h"\
-	".\src\globals.h"\
-	".\src\mim.h"\
-	".\src\msgdlgutils.h"\
-	".\src\msgs.h"\
-	".\src\nen.h"\
-	".\src\resource.h"\
-	".\src\sendqueue.h"\
-	".\src\taskbar.h"\
-	".\src\templates.h"\
-	".\src\themes.h"\
-	".\src\typingnotify.h"\
+	".\commonheaders.h"\
+	".\functions.h"\
+	".\generic_msghandlers.h"\
+	".\msgdlgutils.h"\
+	".\msgs.h"\
+	".\nen.h"\
+	".\templates.h"\
+	".\typingnotify.h"\
+	{$(INCLUDE)}"tom.h"\
+	{$(INCLUDE)}"uxtheme.h"\
 	
-NODEP_CPP_THEME=\
-	".\xtheme.h"\
-	
+
+!IF  "$(CFG)" == "tabSRMM - Win32 Debug"
+
+!ELSEIF  "$(CFG)" == "tabSRMM - Win32 Release Unicode"
+
+# ADD CPP /Zi
+
+!ELSEIF  "$(CFG)" == "tabSRMM - Win32 Release"
+
+!ELSEIF  "$(CFG)" == "tabSRMM - Win32 Debug Unicode"
+
+!ENDIF 
+
 # End Source File
 # Begin Source File
 
-SOURCE=.\src\themes.cpp
-DEP_CPP_THEMES=\
-	"..\..\include\m_acc.h"\
-	"..\..\include\m_addcontact.h"\
-	"..\..\include\m_avatars.h"\
-	"..\..\include\m_button.h"\
-	"..\..\include\m_chat.h"\
-	"..\..\include\m_clc.h"\
-	"..\..\include\m_clist.h"\
-	"..\..\include\m_clui.h"\
-	"..\..\include\m_contacts.h"\
-	"..\..\include\m_database.h"\
-	"..\..\include\m_file.h"\
-	"..\..\include\m_fontservice.h"\
-	"..\..\include\m_freeimage.h"\
-	"..\..\include\m_history.h"\
-	"..\..\include\m_hotkeys.h"\
-	"..\..\include\m_icolib.h"\
-	"..\..\include\m_imgsrvc.h"\
-	"..\..\include\m_langpack.h"\
-	"..\..\include\m_message.h"\
-	"..\..\include\m_options.h"\
-	"..\..\include\m_plugins.h"\
-	"..\..\include\m_protocols.h"\
-	"..\..\include\m_protomod.h"\
-	"..\..\include\m_protosvc.h"\
-	"..\..\include\m_skin.h"\
-	"..\..\include\m_stdhdr.h"\
-	"..\..\include\m_system.h"\
-	"..\..\include\m_userinfo.h"\
-	"..\..\include\m_utils.h"\
-	"..\..\include\newpluginapi.h"\
-	"..\..\include\statusmodes.h"\
-	"..\..\include\win2k.h"\
-	".\API\m_buttonbar.h"\
-	".\API\m_cln_skinedit.h"\
-	".\API\m_fingerprint.h"\
-	".\API\m_flash.h"\
-	".\API\m_folders.h"\
-	".\API\m_historyevents.h"\
-	".\API\m_ieview.h"\
-	".\API\m_mathmodule.h"\
-	".\API\m_metacontacts.h"\
-	".\API\m_msg_buttonsbar.h"\
-	".\API\m_nudge.h"\
-	".\API\m_popup.h"\
-	".\API\m_smileyadd.h"\
-	".\API\m_spellchecker.h"\
-	".\API\m_toptoolbar.h"\
-	".\API\m_updater.h"\
-	".\chat\chat.h"\
-	".\chat\chatprototypes.h"\
-	".\src\commonheaders.h"\
-	".\src\controls.h"\
-	".\src\functions.h"\
-	".\src\generic_msghandlers.h"\
-	".\src\globals.h"\
-	".\src\mim.h"\
-	".\src\msgdlgutils.h"\
-	".\src\msgs.h"\
-	".\src\nen.h"\
-	".\src\resource.h"\
-	".\src\sendqueue.h"\
-	".\src\taskbar.h"\
-	".\src\templates.h"\
-	".\src\themes.h"\
-	".\src\typingnotify.h"\
-	
-NODEP_CPP_THEMES=\
-	".\xtheme.h"\
-	
-# End Source File
-# Begin Source File
-
-SOURCE=.\src\translator.cpp
-# End Source File
-# Begin Source File
-
-SOURCE=.\src\trayicon.cpp
+SOURCE=trayicon.c
 DEP_CPP_TRAYI=\
 	"..\..\include\m_acc.h"\
 	"..\..\include\m_addcontact.h"\
@@ -2945,11 +2449,8 @@ DEP_CPP_TRAYI=\
 	"..\..\include\m_database.h"\
 	"..\..\include\m_file.h"\
 	"..\..\include\m_fontservice.h"\
-	"..\..\include\m_freeimage.h"\
 	"..\..\include\m_history.h"\
-	"..\..\include\m_hotkeys.h"\
 	"..\..\include\m_icolib.h"\
-	"..\..\include\m_imgsrvc.h"\
 	"..\..\include\m_langpack.h"\
 	"..\..\include\m_message.h"\
 	"..\..\include\m_options.h"\
@@ -2965,7 +2466,6 @@ DEP_CPP_TRAYI=\
 	"..\..\include\newpluginapi.h"\
 	"..\..\include\statusmodes.h"\
 	"..\..\include\win2k.h"\
-	".\API\m_buttonbar.h"\
 	".\API\m_cln_skinedit.h"\
 	".\API\m_fingerprint.h"\
 	".\API\m_flash.h"\
@@ -2979,33 +2479,37 @@ DEP_CPP_TRAYI=\
 	".\API\m_popup.h"\
 	".\API\m_smileyadd.h"\
 	".\API\m_spellchecker.h"\
-	".\API\m_toptoolbar.h"\
-	".\API\m_updater.h"\
+	".\buttonsbar.h"\
 	".\chat\chat.h"\
 	".\chat\chatprototypes.h"\
-	".\src\commonheaders.h"\
-	".\src\controls.h"\
-	".\src\functions.h"\
-	".\src\generic_msghandlers.h"\
-	".\src\globals.h"\
-	".\src\mim.h"\
-	".\src\msgdlgutils.h"\
-	".\src\msgs.h"\
-	".\src\nen.h"\
-	".\src\resource.h"\
-	".\src\sendqueue.h"\
-	".\src\taskbar.h"\
-	".\src\templates.h"\
-	".\src\themes.h"\
-	".\src\typingnotify.h"\
+	".\commonheaders.h"\
+	".\functions.h"\
+	".\generic_msghandlers.h"\
+	".\msgdlgutils.h"\
+	".\msgs.h"\
+	".\nen.h"\
+	".\templates.h"\
+	".\typingnotify.h"\
+	{$(INCLUDE)}"tom.h"\
+	{$(INCLUDE)}"uxtheme.h"\
 	
-NODEP_CPP_TRAYI=\
-	".\xtheme.h"\
-	
+
+!IF  "$(CFG)" == "tabSRMM - Win32 Debug"
+
+!ELSEIF  "$(CFG)" == "tabSRMM - Win32 Release Unicode"
+
+# ADD CPP /Zi
+
+!ELSEIF  "$(CFG)" == "tabSRMM - Win32 Release"
+
+!ELSEIF  "$(CFG)" == "tabSRMM - Win32 Debug Unicode"
+
+!ENDIF 
+
 # End Source File
 # Begin Source File
 
-SOURCE=.\src\TSButton.cpp
+SOURCE=TSButton.c
 DEP_CPP_TSBUT=\
 	"..\..\include\m_acc.h"\
 	"..\..\include\m_addcontact.h"\
@@ -3019,11 +2523,8 @@ DEP_CPP_TSBUT=\
 	"..\..\include\m_database.h"\
 	"..\..\include\m_file.h"\
 	"..\..\include\m_fontservice.h"\
-	"..\..\include\m_freeimage.h"\
 	"..\..\include\m_history.h"\
-	"..\..\include\m_hotkeys.h"\
 	"..\..\include\m_icolib.h"\
-	"..\..\include\m_imgsrvc.h"\
 	"..\..\include\m_langpack.h"\
 	"..\..\include\m_message.h"\
 	"..\..\include\m_options.h"\
@@ -3039,7 +2540,6 @@ DEP_CPP_TSBUT=\
 	"..\..\include\newpluginapi.h"\
 	"..\..\include\statusmodes.h"\
 	"..\..\include\win2k.h"\
-	".\API\m_buttonbar.h"\
 	".\API\m_cln_skinedit.h"\
 	".\API\m_fingerprint.h"\
 	".\API\m_flash.h"\
@@ -3053,33 +2553,37 @@ DEP_CPP_TSBUT=\
 	".\API\m_popup.h"\
 	".\API\m_smileyadd.h"\
 	".\API\m_spellchecker.h"\
-	".\API\m_toptoolbar.h"\
-	".\API\m_updater.h"\
+	".\buttonsbar.h"\
 	".\chat\chat.h"\
 	".\chat\chatprototypes.h"\
-	".\src\commonheaders.h"\
-	".\src\controls.h"\
-	".\src\functions.h"\
-	".\src\generic_msghandlers.h"\
-	".\src\globals.h"\
-	".\src\mim.h"\
-	".\src\msgdlgutils.h"\
-	".\src\msgs.h"\
-	".\src\nen.h"\
-	".\src\resource.h"\
-	".\src\sendqueue.h"\
-	".\src\taskbar.h"\
-	".\src\templates.h"\
-	".\src\themes.h"\
-	".\src\typingnotify.h"\
+	".\commonheaders.h"\
+	".\functions.h"\
+	".\generic_msghandlers.h"\
+	".\msgdlgutils.h"\
+	".\msgs.h"\
+	".\nen.h"\
+	".\templates.h"\
+	".\typingnotify.h"\
+	{$(INCLUDE)}"tom.h"\
+	{$(INCLUDE)}"uxtheme.h"\
 	
-NODEP_CPP_TSBUT=\
-	".\xtheme.h"\
-	
+
+!IF  "$(CFG)" == "tabSRMM - Win32 Debug"
+
+!ELSEIF  "$(CFG)" == "tabSRMM - Win32 Release Unicode"
+
+# ADD CPP /Zi
+
+!ELSEIF  "$(CFG)" == "tabSRMM - Win32 Release"
+
+!ELSEIF  "$(CFG)" == "tabSRMM - Win32 Debug Unicode"
+
+!ENDIF 
+
 # End Source File
 # Begin Source File
 
-SOURCE=.\src\typingnotify.cpp
+SOURCE=.\typingnotify.c
 DEP_CPP_TYPIN=\
 	"..\..\include\m_acc.h"\
 	"..\..\include\m_addcontact.h"\
@@ -3093,11 +2597,8 @@ DEP_CPP_TYPIN=\
 	"..\..\include\m_database.h"\
 	"..\..\include\m_file.h"\
 	"..\..\include\m_fontservice.h"\
-	"..\..\include\m_freeimage.h"\
 	"..\..\include\m_history.h"\
-	"..\..\include\m_hotkeys.h"\
 	"..\..\include\m_icolib.h"\
-	"..\..\include\m_imgsrvc.h"\
 	"..\..\include\m_langpack.h"\
 	"..\..\include\m_message.h"\
 	"..\..\include\m_options.h"\
@@ -3113,7 +2614,6 @@ DEP_CPP_TYPIN=\
 	"..\..\include\newpluginapi.h"\
 	"..\..\include\statusmodes.h"\
 	"..\..\include\win2k.h"\
-	".\API\m_buttonbar.h"\
 	".\API\m_cln_skinedit.h"\
 	".\API\m_fingerprint.h"\
 	".\API\m_flash.h"\
@@ -3127,33 +2627,24 @@ DEP_CPP_TYPIN=\
 	".\API\m_popup.h"\
 	".\API\m_smileyadd.h"\
 	".\API\m_spellchecker.h"\
-	".\API\m_toptoolbar.h"\
-	".\API\m_updater.h"\
+	".\buttonsbar.h"\
 	".\chat\chat.h"\
 	".\chat\chatprototypes.h"\
-	".\src\commonheaders.h"\
-	".\src\controls.h"\
-	".\src\functions.h"\
-	".\src\generic_msghandlers.h"\
-	".\src\globals.h"\
-	".\src\mim.h"\
-	".\src\msgdlgutils.h"\
-	".\src\msgs.h"\
-	".\src\nen.h"\
-	".\src\resource.h"\
-	".\src\sendqueue.h"\
-	".\src\taskbar.h"\
-	".\src\templates.h"\
-	".\src\themes.h"\
-	".\src\typingnotify.h"\
-	
-NODEP_CPP_TYPIN=\
-	".\xtheme.h"\
+	".\commonheaders.h"\
+	".\functions.h"\
+	".\generic_msghandlers.h"\
+	".\msgdlgutils.h"\
+	".\msgs.h"\
+	".\nen.h"\
+	".\templates.h"\
+	".\typingnotify.h"\
+	{$(INCLUDE)}"tom.h"\
+	{$(INCLUDE)}"uxtheme.h"\
 	
 # End Source File
 # Begin Source File
 
-SOURCE=.\src\userprefs.cpp
+SOURCE=userprefs.c
 DEP_CPP_USERP=\
 	"..\..\include\m_acc.h"\
 	"..\..\include\m_addcontact.h"\
@@ -3167,11 +2658,8 @@ DEP_CPP_USERP=\
 	"..\..\include\m_database.h"\
 	"..\..\include\m_file.h"\
 	"..\..\include\m_fontservice.h"\
-	"..\..\include\m_freeimage.h"\
 	"..\..\include\m_history.h"\
-	"..\..\include\m_hotkeys.h"\
 	"..\..\include\m_icolib.h"\
-	"..\..\include\m_imgsrvc.h"\
 	"..\..\include\m_langpack.h"\
 	"..\..\include\m_message.h"\
 	"..\..\include\m_options.h"\
@@ -3187,7 +2675,6 @@ DEP_CPP_USERP=\
 	"..\..\include\newpluginapi.h"\
 	"..\..\include\statusmodes.h"\
 	"..\..\include\win2k.h"\
-	".\API\m_buttonbar.h"\
 	".\API\m_cln_skinedit.h"\
 	".\API\m_fingerprint.h"\
 	".\API\m_flash.h"\
@@ -3201,29 +2688,33 @@ DEP_CPP_USERP=\
 	".\API\m_popup.h"\
 	".\API\m_smileyadd.h"\
 	".\API\m_spellchecker.h"\
-	".\API\m_toptoolbar.h"\
-	".\API\m_updater.h"\
+	".\buttonsbar.h"\
 	".\chat\chat.h"\
 	".\chat\chatprototypes.h"\
-	".\src\commonheaders.h"\
-	".\src\controls.h"\
-	".\src\functions.h"\
-	".\src\generic_msghandlers.h"\
-	".\src\globals.h"\
-	".\src\mim.h"\
-	".\src\msgdlgutils.h"\
-	".\src\msgs.h"\
-	".\src\nen.h"\
-	".\src\resource.h"\
-	".\src\sendqueue.h"\
-	".\src\taskbar.h"\
-	".\src\templates.h"\
-	".\src\themes.h"\
-	".\src\typingnotify.h"\
+	".\commonheaders.h"\
+	".\functions.h"\
+	".\generic_msghandlers.h"\
+	".\msgdlgutils.h"\
+	".\msgs.h"\
+	".\nen.h"\
+	".\templates.h"\
+	".\typingnotify.h"\
+	{$(INCLUDE)}"tom.h"\
+	{$(INCLUDE)}"uxtheme.h"\
 	
-NODEP_CPP_USERP=\
-	".\xtheme.h"\
-	
+
+!IF  "$(CFG)" == "tabSRMM - Win32 Debug"
+
+!ELSEIF  "$(CFG)" == "tabSRMM - Win32 Release Unicode"
+
+# ADD CPP /Zi
+
+!ELSEIF  "$(CFG)" == "tabSRMM - Win32 Release"
+
+!ELSEIF  "$(CFG)" == "tabSRMM - Win32 Debug Unicode"
+
+!ENDIF 
+
 # End Source File
 # End Group
 # Begin Group "Header Files"
@@ -3231,83 +2722,95 @@ NODEP_CPP_USERP=\
 # PROP Default_Filter "h;hpp;hxx;hm;inl"
 # Begin Source File
 
-SOURCE=.\src\commonheaders.h
+SOURCE=commonheaders.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\src\controls.h
+SOURCE=functions.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\src\functions.h
+SOURCE=.\generic_msghandlers.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\src\generic_msghandlers.h
+SOURCE=IcoLib.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\src\globals.h
+SOURCE=ImageDataObject.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\src\ImageDataObject.h
+SOURCE=.\API\m_buttonbar.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\src\infopanel.h
+SOURCE=m_fontservice.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\src\mim.h
+SOURCE=m_ieview.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\src\msgdlgutils.h
+SOURCE=m_MathModule.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\src\msgs.h
+SOURCE=m_message.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\src\nen.h
+SOURCE=m_metacontacts.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\src\resource.h
+SOURCE=.\m_popup.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\src\sendqueue.h
+SOURCE=m_smileyadd.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\src\sidebar.h
+SOURCE=m_Snapping_windows.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\src\taskbar.h
+SOURCE=.\m_spellchecker.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\src\templates.h
+SOURCE=msgdlgutils.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\src\themes.h
+SOURCE=msgs.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\src\translator.h
+SOURCE=nen.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\src\typingnotify.h
+SOURCE=resource.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\src\version.h
+SOURCE=sendqueue.h
+# End Source File
+# Begin Source File
+
+SOURCE=templates.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\typingnotify.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\version.h
 # End Source File
 # End Group
 # Begin Group "Resource Files"

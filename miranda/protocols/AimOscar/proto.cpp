@@ -206,12 +206,12 @@ HANDLE __cdecl CAimProto::ChangeInfo(int iInfoType, void* pInfoData)
 ////////////////////////////////////////////////////////////////////////////////////////
 // FileAllow - starts a file transfer
 
-HANDLE __cdecl CAimProto::FileAllow(HANDLE hContact, HANDLE hTransfer, const PROTOCHAR* szPath)
+HANDLE __cdecl CAimProto::FileAllow(HANDLE hContact, HANDLE hTransfer, const char* szPath)
 {
     file_transfer *ft = (file_transfer*)hTransfer;
 	if (ft) 
     {
-        char *path = mir_utf8encodeT(szPath);
+        char *path = mir_utf8encode(szPath);
 
         if (ft->pfts.totalFiles > 1 && ft->file[0])
         {
@@ -257,7 +257,7 @@ int __cdecl CAimProto::FileCancel(HANDLE hContact, HANDLE hTransfer)
 ////////////////////////////////////////////////////////////////////////////////////////
 // FileDeny - denies a file transfer
 
-int __cdecl CAimProto::FileDeny(HANDLE hContact, HANDLE hTransfer, const PROTOCHAR* /*szReason*/)
+int __cdecl CAimProto::FileDeny(HANDLE hContact, HANDLE hTransfer, const char* /*szReason*/)
 {
     file_transfer *ft = (file_transfer*)hTransfer;
     if (!ft_list.find_by_ft(ft)) return 0;
@@ -271,7 +271,7 @@ int __cdecl CAimProto::FileDeny(HANDLE hContact, HANDLE hTransfer, const PROTOCH
 ////////////////////////////////////////////////////////////////////////////////////////
 // FileResume - processes file renaming etc
 
-int __cdecl CAimProto::FileResume(HANDLE hTransfer, int* action, const PROTOCHAR** szFilename)
+int __cdecl CAimProto::FileResume(HANDLE hTransfer, int* action, const char** szFilename)
 {
     file_transfer *ft = (file_transfer*)hTransfer;
     if (!ft_list.find_by_ft(ft)) return 0;
@@ -280,24 +280,24 @@ int __cdecl CAimProto::FileResume(HANDLE hTransfer, int* action, const PROTOCHAR
     {
     case FILERESUME_RESUME:
         {
-	        struct _stati64 statbuf;
-            _tstati64(ft->pfts.tszCurrentFile, &statbuf);
+	        struct _stat statbuf;
+            _stat(ft->pfts.currentFile, &statbuf);
             ft->pfts.currentFileProgress = statbuf.st_size;
         }
         break;
 
     case FILERESUME_RENAME:
-        mir_free(ft->pfts.tszCurrentFile);
-        ft->pfts.tszCurrentFile = mir_tstrdup(*szFilename);
-        break;
+        mir_free(ft->pfts.currentFile);
+        ft->pfts.currentFile = mir_strdup(*szFilename);
+		break;
 
     case FILERESUME_OVERWRITE:
         ft->pfts.currentFileProgress = 0;
         break;
 
     case FILERESUME_SKIP:
-        mir_free(ft->pfts.tszCurrentFile);
-        ft->pfts.tszCurrentFile = NULL;
+        mir_free(ft->pfts.currentFile);
+        ft->pfts.currentFile = NULL;
         break;
 
     default:
@@ -437,7 +437,7 @@ int __cdecl CAimProto::RecvContacts(HANDLE hContact, PROTORECVEVENT*)
 ////////////////////////////////////////////////////////////////////////////////////////
 // RecvFile
 
-int __cdecl CAimProto::RecvFile(HANDLE hContact, PROTOFILEEVENT* evt)
+int __cdecl CAimProto::RecvFile(HANDLE hContact, PROTORECVFILE* evt)
 {
 	CCSDATA ccs = { hContact, PSR_FILE, 0, (LPARAM)evt };
 	return CallService(MS_PROTO_RECVFILE, 0, (LPARAM)&ccs);
@@ -474,7 +474,7 @@ int __cdecl CAimProto::SendContacts(HANDLE hContact, int flags, int nContacts, H
 ////////////////////////////////////////////////////////////////////////////////////////
 // SendFile - sends a file
 
-HANDLE __cdecl CAimProto::SendFile(HANDLE hContact, const PROTOCHAR* szDescription, PROTOCHAR** ppszFiles)
+HANDLE __cdecl CAimProto::SendFile(HANDLE hContact, const char* szDescription, char** ppszFiles)
 {
 	if (state != 1) return 0;
 
@@ -489,8 +489,8 @@ HANDLE __cdecl CAimProto::SendFile(HANDLE hContact, const PROTOCHAR* szDescripti
 			int count = 0;
 	        while (ppszFiles[count] != NULL) 
             {
-		        struct _stati64 statbuf;
-				if (_tstati64(ppszFiles[count++], &statbuf) == 0)
+		        struct _stat statbuf;
+				if (_stat(ppszFiles[count++], &statbuf) == 0)
 				{
 					if (statbuf.st_mode & _S_IFDIR)
 					{
@@ -511,12 +511,12 @@ HANDLE __cdecl CAimProto::SendFile(HANDLE hContact, const PROTOCHAR* szDescripti
                 return NULL;
             }
 
-            ft->pfts.flags |= PFTS_SENDING;
-            ft->pfts.ptszFiles = ppszFiles;
+            ft->pfts.sending = true;
+            ft->pfts.files = ppszFiles;
 
-			ft->file = ft->pfts.totalFiles == 1 || isDir ? mir_utf8encodeT(ppszFiles[0]) : (char*)mir_calloc(1);
+			ft->file = ft->pfts.totalFiles == 1 || isDir ? mir_utf8encode(ppszFiles[0]) : (char*)mir_calloc(1);
             ft->sending = true;
-            ft->message = szDescription[0] ? mir_utf8encodeT(szDescription) : NULL;
+            ft->message = szDescription[0] ? mir_utf8encode(szDescription) : NULL;
 			ft->me_force_proxy = getByte(AIM_KEY_FP, 0) != 0;
             ft->requester = true;
 

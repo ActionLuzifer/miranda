@@ -140,23 +140,24 @@ void CMsnProto::sttInviteMessage(ThreadData* info, char* msgBody, char* email, c
 		filetransfer* ft = info->mMsnFtp = new filetransfer(this);
 
 		ft->std.hContact = MSN_HContactFromEmail(email, nick, true, true);
-        mir_free(ft->std.tszCurrentFile);
-		ft->std.tszCurrentFile = mir_utf8decodeT(Appfile);
+		replaceStr(ft->std.currentFile, Appfile);
+		mir_utf8decode(ft->std.currentFile, &ft->wszFileName);
 		ft->fileId = -1;
-		ft->std.totalBytes = ft->std.currentFileSize = _atoi64(Appfilesize);
+		ft->std.currentFileSize = atol(Appfilesize);
+		ft->std.totalBytes = atol(Appfilesize);
 		ft->std.totalFiles = 1;
 		ft->szInvcookie = mir_strdup(Invcookie);
 
-		size_t tFileNameLen = strlen(Appfile);
+		size_t tFileNameLen = strlen(ft->std.currentFile);
 		char tComment[40];
-		int tCommentLen = mir_snprintf(tComment, sizeof(tComment), "%I64u bytes", ft->std.currentFileSize);
+		int tCommentLen = mir_snprintf(tComment, sizeof(tComment), "%lu bytes", ft->std.currentFileSize);
 		char* szBlob = (char*)mir_alloc(sizeof(DWORD) + tFileNameLen + tCommentLen + 2);
 		*(PDWORD)szBlob = 0;
-		strcpy(szBlob + sizeof(DWORD), Appfile);
+		strcpy(szBlob + sizeof(DWORD), ft->std.currentFile);
 		strcpy(szBlob + sizeof(DWORD) + tFileNameLen + 1, tComment);
 
 		PROTORECVEVENT pre;
-		pre.flags = PREF_UTF;
+		pre.flags = 0;
 		pre.timestamp = (DWORD)time(NULL);
 		pre.szMessage = (char*)szBlob;
 		pre.lParam = (LPARAM)ft;
@@ -317,9 +318,8 @@ void CMsnProto::sttCustomSmiley(const char* msgBody, char* email, char* nick, in
 			UrlEncode(buf, smileyName, rlen*3);
 			mir_free(buf);
 
-            char path[MAX_PATH];
-			MSN_GetCustomSmileyFileName(hContact, path, SIZEOF(path), smileyName, iSmileyType);
-            ft->std.tszCurrentFile = mir_a2t(path);
+			ft->std.currentFile = (char*)mir_alloc(MAX_PATH);
+			MSN_GetCustomSmileyFileName(hContact, ft->std.currentFile, MAX_PATH, smileyName, iSmileyType);
 			mir_free(smileyName);
 
 			if (p2p_IsDlFileOk(ft))

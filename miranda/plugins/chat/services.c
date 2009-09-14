@@ -44,32 +44,21 @@ CRITICAL_SECTION	cs;
 void RegisterFonts( void );
 
 static HANDLE
-   hServiceRegister = NULL,
+	hServiceRegister = NULL,
    hServiceNewChat = NULL,
    hServiceAddEvent = NULL,
    hServiceGetAddEventPtr = NULL,
    hServiceGetInfo = NULL,
    hServiceGetCount = NULL,
-   hEventPrebuildMenu = NULL,
-   hEventDoubleclicked = NULL,
+	hEventPrebuildMenu = NULL,
+	hEventDoubleclicked = NULL,
    hEventJoinChat = NULL,
-   hEventLeaveChat = NULL;
-
-#ifdef _WIN64 
-
-#define SIZEOF_STRUCT_GCREGISTER_V1 40
-#define SIZEOF_STRUCT_GCWINDOW_V1	48
-#define SIZEOF_STRUCT_GCEVENT_V1	76
-#define SIZEOF_STRUCT_GCEVENT_V2	80
-
-#else
+	hEventLeaveChat = NULL;
 
 #define SIZEOF_STRUCT_GCREGISTER_V1 28
 #define SIZEOF_STRUCT_GCWINDOW_V1	32
 #define SIZEOF_STRUCT_GCEVENT_V1	44
 #define SIZEOF_STRUCT_GCEVENT_V2	48
-
-#endif
 
 void ShowRoom(SESSION_INFO* si, WPARAM wp, BOOL bSetForeground)
 {
@@ -319,7 +308,7 @@ static INT_PTR Service_Register(WPARAM wParam, LPARAM lParam)
 	if ( gcr == NULL)
 		return GC_REGISTER_ERROR;
 
-	if (gcr->cbSize != SIZEOF_STRUCT_GCREGISTER_V1)
+	if ( gcr->cbSize != SIZEOF_STRUCT_GCREGISTER_V1 )
 		return GC_REGISTER_WRONGVER;
 
 	#ifndef _UNICODE
@@ -331,7 +320,7 @@ static INT_PTR Service_Register(WPARAM wParam, LPARAM lParam)
 
 	mi = MM_AddModule( gcr->pszModule );
 	if ( mi ) {
-		mi->ptszModDispName = a2tf( gcr->ptszModuleDispName, gcr->dwFlags );
+		mi->pszModDispName = mir_strdup( gcr->pszModuleDispName );
 		mi->bBold = gcr->dwFlags&GC_BOLD;
 		mi->bUnderline = gcr->dwFlags&GC_UNDERLINE ;
 		mi->bItalics = gcr->dwFlags&GC_ITALICS ;

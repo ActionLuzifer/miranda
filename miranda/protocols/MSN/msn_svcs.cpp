@@ -186,7 +186,7 @@ INT_PTR CMsnProto::GetAvatarInfo(WPARAM wParam,LPARAM lParam)
 				filetransfer* ft = new filetransfer(this);
 				ft->std.hContact = AI->hContact;
 				ft->p2p_object = mir_strdup(szContext);
-				ft->std.tszCurrentFile = mir_a2t(AI->filename);
+				ft->std.currentFile = mir_strdup(AI->filename);
 
 				p2p_invite(AI->hContact, MSN_APPID_AVATAR, ft);
 			}
@@ -249,7 +249,7 @@ INT_PTR CMsnProto::SetAvatar(WPARAM wParam, LPARAM lParam)
 		int fileId = _open(szFileName, _O_RDONLY | _O_BINARY, _S_IREAD);
 		if (fileId < 0) return 1;
 
-		long  dwPngSize = _filelengthi64(fileId);
+		long  dwPngSize = _filelength(fileId);
 		unsigned char* pResult = (unsigned char*)mir_alloc(dwPngSize);
 		if (pResult == NULL) return 2;
 
@@ -327,11 +327,8 @@ INT_PTR CMsnProto::SetAvatar(WPARAM wParam, LPARAM lParam)
 				_close(fileId);
 			}
 			else
-            {
-                TCHAR *fname = mir_a2t(tFileName);
-				MSN_ShowError("Cannot set avatar. File '%s' could not be created/overwritten", fname);
-                mir_free(fname);
-            }
+				MSN_ShowError("Cannot set avatar. File '%s' could not be created/overwritten", tFileName);
+
 		}
 
 		StoreAvatarData* par = (StoreAvatarData*)mir_alloc(sizeof(StoreAvatarData));

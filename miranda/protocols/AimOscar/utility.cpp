@@ -643,13 +643,13 @@ unsigned long aim_oft_checksum_chunk(unsigned long dwChecksum, const unsigned ch
 	return checksum << 16;
 }
 
-unsigned int aim_oft_checksum_file(TCHAR *filename, unsigned __int64 size) 
+unsigned aim_oft_checksum_file(char *filename, unsigned size) 
 {
     unsigned long checksum = 0xffff0000;
-	int fid = _topen(filename, _O_RDONLY | _O_BINARY, _S_IREAD);
+	int fid = _open(filename, _O_RDONLY | _O_BINARY, _S_IREAD);
 	if (fid >= 0)  
     {
-        unsigned __int64 sz = _filelengthi64(fid);
+        unsigned sz = _filelength(fid);
         if (size > sz) size = sz; 
         while (size)
         {
