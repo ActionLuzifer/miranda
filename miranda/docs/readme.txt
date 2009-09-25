@@ -20,10 +20,127 @@ Contents
 
 1. Changes in this version
 --------------------------
-* New in 0.8.1
-Bugfixes:
- - ICQ: Fixed AIM away message handling (caused online status to be seen as away in some clients)
+* New in 0.8.7
+Enhancements:
+ - New update notification detection
 
+Bugfixes:
+ - Fixed memory leaks
+ - Fixed possible crash on startup
+ - Jabber: Fixed SASL authentication
+ - MSN: Fixed MSN contact search 
+ - MSN: Disabled server list options when MSN not logged-in
+ - MSN: Added removal of new style for MSN color codes in nicks and status messages
+ - MSN: Fixed infinite loop on authorization failure
+
+
+* New in 0.8.6
+Enhancements:
+ - Performance improvements with network logging disabled
+ - AIM: Added send directory ability
+ - MSN: Added ability to transfer all files in a directory
+ - MSN: Use protocol username for chat names in contact list
+
+Bugfixes:
+ - Fixed possible crash in the file transfer window while scrolling
+ - Fixed file transfer resume
+ - AIM: AIM 7 is now detected
+ - AIM: Improved file transfer support
+ - Jabber: Ignored the "Manual host" setting during the account registration
+ - MSN: Fixed chats with IM Control users
+ - MSN: Auth request reason is now displayed
+ - MSN: Fixed deletion of contact from Hotmail address book
+ - MSN: Fixed avatar sending on chat session
+
+
+* New in 0.8.5
+Bugfixes:
+ - Auto away did not respect locked protocols
+ - Fixed possible file transfer crashes with Windows 9x
+ - Fixed deleting accounts for not loaded protocols
+ - Fixed minor selection issues with the profile manager
+ - ICQ: Incorrect behavior of error messages when popups were unloaded
+ - ICQ: Improved file transfer resume
+ - ICQ: Improved status message handling
+ - ICQ: Improved changeinfo module accessibility
+ - MSN: Fixed address book migration from 0.7
+ - MSN: Fixed phones in the contact list
+ - MSN: Fixed removing IM contacts
+ - MSN: Fixed blocking contacts not on contact list
+
+
+* New in 0.8.4
+Enhancements:
+ - Gadu-Gadu: Added option: 'Show links from unknown contacts'
+ - Yahoo: Improved login error detection
+
+Bugfixes:
+ - Installer uses safer method of previous installation choices detection
+ - AIM: Fixed mail notifications
+ - AIM: Filenames were not correct on file receive
+ - AIM: Fixed setting status message to not supported status
+ - Gadu-Gadu: Icons were not installed correctly
+ - Gadu-Gadu: Fixed crash opening new conference
+ - Gadu-Gadu: Removed 'Show contacts not on my list having me on their list' option due to the server changes
+ - ICQ: Advanced search was not working in some cases
+ - Jabber: Ignored Google Talk custom domains in account manager
+ - Jabber: Receiving messages stops if <version> tag in response is incomplete
+ - Jabber: Group chat invites didn't process non-legacy invites
+ - Jabber: Fix for rare crash
+ - Jabber: Handle realms correctly in Digest-MD5 SASL
+ - MSN: Fixed setting status message to not supported status
+
+
+* New in 0.8.3
+Bugfixes:
+ - Fixed contact list minimum row height determination
+ - AIM: Chat message processing improvements
+ - AIM: Fixed error messages during nickname upload
+ - AIM: File transfer improvements
+ - Jabber: Fix for saving the checkbox value in password dialog
+ - MSN: Away message api compatibility improvement
+
+
+* New in 0.8.2
+Enhancements:
+ - Improved account deletion support
+ - MSN: Non IM contacts removed from the contact list and database
+ - Yahoo: Removed "Show Profile" for non Yahoo contacts
+ 
+Bugfixes:
+ - Fix for ssl errors when client tries to send on closed connection
+ - AIM: File transfer fixes
+ - IRC: Own actions were not always shown
+ - Jabber: Random disconnect issue caused by timeouts
+ - Jabber: Fixed encrypted messages being empty (XEP-0027)
+
+ 
+* New in 0.8.1
+Enhancements:
+ - Improve account renaming inside of the account manager
+ - Notification if missing messaging plugin
+ 
+Bugfixes:
+ - Improved upgrade procedure when using older contact list and messaging plugins
+ - Network list in options wasn’t sorted
+ - Fixed missing icon/menu issues
+ - Fixed crash in options on XP pre SP2
+ - Fixed errors loading dlls on wrong OS
+ - Fixed drawing background in options search
+ - Fixed account removal handling
+ - Fixed hotkey issue with some MS keyboards
+ - Fixed possible crash with event data
+ - AIM: Fixed issue with multiple connection requests
+ - AIM: Fixed issue setting AIM profile
+ - ICQ: Fixed AIM away message handling (caused online status to be seen as away in some clients)
+ - IRC: Possible crash on specific alias
+ - MSN: Fixed renaming nickname from options
+ - MSN: Fixed Offline messaging reception from Beejive client
+ - Yahoo: Show download progress properly
+ - Yahoo: Cancel out in the middle of file receive.
+ - Yahoo: Main menu fixes
+
+ 
 * New in 0.8.0
 Enhancements:
  - Support for multiple accounts (without dll renaming) for all protocols
@@ -31,7 +148,7 @@ Enhancements:
  - Support for compressed HTTP transactions
  - AIM: Unicode messaging, status messages, profiles
  - AIM: Offline messaging
- - AIM: Set/retrive status message for any status
+ - AIM: Set/retrieve status message for any status
  - AIM: Ability to set your own avatar
  - AIM: Privacy settings & lists support
  - AIM: Server groups support
@@ -47,7 +164,7 @@ Enhancements:
  - ICQ: Server-list support now groups requests
  - IRC: IRC servers now stored in the database
  - IRC: Filter for IRC channel list
- - IRC: Ehanced identd processing
+ - IRC: Enhanced identd processing
  - IRC: Added menu item for nickserv commands
  - IRC: Auto request client info on adding to contacts or private message
  - IRC: Enhanced WhoIs request
@@ -63,7 +180,7 @@ Enhancements:
  - Jabber: Directed presences, ability to change connection priority
  - Jabber: Display active resource of user in message window
  - Jabber: Jabber VCard moved integrated with user details
- - Jabber: Redesigned almost all dialogs (roster editor, bookmarks, privacty lists, groupchat join, user info and other)
+ - Jabber: Redesigned almost all dialogs (roster editor, bookmarks, privacy lists, groupchat join, user info and other)
  - Jabber: Redesigned menus (main menu in status bar, privacy lists menu, custom status, priority menu, groupchat menus and other)
  - Jabber: Added new and updated old icons, improvements in UI
  - Jabber: Added hotkeys and toolbar buttons
@@ -78,15 +195,22 @@ Enhancements:
  - MSN: Rewritten to support WLM 8.5 protocol (and all it features)
  - MSN: Offline messaging
  - MSN: Added Hotmail Notifier functionality 
+ - Yahoo: Added Yahoo 9.x protocol support
+ - Yahoo: File transfer overhauled with support for batches of files
+ - Yahoo: Added user info dialog for Yahoo that shows more detailed information
+ - Yahoo: Improved support for HTTP proxies
+ - Yahoo: Yahoo Japan support
+ - Yahoo: Yahoo now provides a Unicode version
 
 Bugfixes:
  - ICQ: Fixed receiving of multi-part messages (only first part was received)
  - ICQ: Fixed processing of UTF-8 encoded status messages from QIP
- - Jabber: Fixed varions serious bugs (accidental account unregister, message sender spoofing, roster access by remote users)
+ - Jabber: Fixed various serious bugs (accidental account unregister, message sender spoofing, roster access by remote users)
  - Jabber: Fixed wrong timestamps in offline and forwarded messages, fixed xmpp time answers
  - Jabber: Various connection stability fixes (XMPP ping, ZLib keepalive and other)
  - Jabber: Fixed chat issues with autojoin and unstable connection
  - Jabber: Fixed displaying of active resource (including software info) in contact list
+ - Yahoo: Tons of bug fixes
 
 
 * New in 0.7.19
@@ -1111,7 +1235,7 @@ The official webpage for the Miranda IM project is http://www.miranda-im.org.
 Miranda IM is provided free of charge but without any warranty or support.
 
 If you have difficulties using Miranda IM, you can find a lot of resources in
-the Help section of the website: http://wiki.miranda-im.org/
+the Support section of the website.
 
 You can also ask for help in the official forums and someone will try to help.
 But remember; everyone involved in the Miranda IM project are volunteers, as
@@ -1128,7 +1252,7 @@ Source code is available at: http://www.miranda-im.org/download/
 Miranda IM is released under the terms of the GNU General Public License. See
 "License.txt" for more details.
 
-Miranda IM is copyright 2000-2003 by Richard Hughes, Roland Rabien,
+Miranda IM is copyright 2000-2009 by Richard Hughes, Roland Rabien,
 Tristan Van de Vreede, Martin Öberg, Robert Rainwater, Sam Kothari, and Lyon Lim.
 
 The plugins included with this release is copyrighted by their authors. See the
