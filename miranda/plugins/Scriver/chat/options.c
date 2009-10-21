@@ -1,7 +1,7 @@
 /*
 Chat module plugin for Miranda IM
 
-Copyright (C) 2003 Jï¿½rgen Persson
+Copyright (C) 2003 Jörgen Persson
 Copyright 2003-2008 Miranda ICQ/IM project,
 
 This program is free software; you can redistribute it and/or
@@ -616,6 +616,33 @@ static void InitSetting(TCHAR** ppPointer, char* pszSetting, TCHAR* pszDefault)
 
 #define OPT_FIXHEADINGS (WM_USER+1)
 
+HWND CreateToolTip(HWND hwndParent, LPTSTR ptszText, LPTSTR ptszTitle)
+{
+	TOOLINFO ti = { 0 };
+	HWND hwndTT;
+	hwndTT = CreateWindowEx(WS_EX_TOPMOST,
+		TOOLTIPS_CLASS, NULL,
+		WS_POPUP | TTS_NOPREFIX,		
+		CW_USEDEFAULT, CW_USEDEFAULT,
+		CW_USEDEFAULT, CW_USEDEFAULT,
+		hwndParent, NULL, g_hInst, NULL);
+
+	SetWindowPos(hwndTT, HWND_TOPMOST, 0, 0, 0, 0,
+		SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
+
+	ti.cbSize = sizeof(TOOLINFO);
+	ti.uFlags = TTF_SUBCLASS | TTF_CENTERTIP;
+	ti.hwnd = hwndParent;
+	ti.hinst = g_hInst;
+	ti.lpszText = ptszText;
+	GetClientRect (hwndParent, &ti.rect);
+	ti.rect.left =- 85;
+
+	SendMessage(hwndTT, TTM_ADDTOOL, 0, (LPARAM) (LPTOOLINFO) &ti);
+	SendMessage(hwndTT, TTM_SETTITLE, 1, (LPARAM)ptszTitle);
+	return hwndTT;
+} 
+
 
 INT_PTR CALLBACK DlgProcOptions1(HWND hwndDlg,UINT uMsg,WPARAM wParam,LPARAM lParam)
 {
@@ -766,7 +793,6 @@ BOOL CALLBACK DlgProcOptions2(HWND hwndDlg,UINT uMsg,WPARAM wParam,LPARAM lParam
 
 		if (ServiceExists(MS_UTILS_REPLACEVARS)) {
 			TCHAR tszTooltipText[2048];
-			RECT rect;
 
 			mir_sntprintf(tszTooltipText, SIZEOF(tszTooltipText), 
 				_T("%s - %s\n%s - %s\n%s - %s\n\n")
@@ -797,9 +823,7 @@ BOOL CALLBACK DlgProcOptions2(HWND hwndDlg,UINT uMsg,WPARAM wParam,LPARAM lParam
 				_T("%yyyy%"),		TranslateT("year with century, 1901-9999"),
 				_T("%wday%"),		TranslateT("abbreviated weekday name"),
 				_T("%weekday%"),	TranslateT("full weekday name") );
-			GetClientRect (GetDlgItem(hwndDlg, IDC_CHAT_LOGDIRECTORY), &rect);
-			rect.left = -85;
-			hPathTip = CreateToolTip(GetDlgItem(hwndDlg, IDC_CHAT_LOGDIRECTORY), tszTooltipText, TranslateT("Variables"), &rect);
+			hPathTip = CreateToolTip(GetDlgItem(hwndDlg, IDC_CHAT_LOGDIRECTORY), tszTooltipText, TranslateT("Variables"));
 			SetTimer(hwndDlg, 0, 3000, NULL);
 		}
 
@@ -920,8 +944,8 @@ BOOL CALLBACK DlgProcOptions2(HWND hwndDlg,UINT uMsg,WPARAM wParam,LPARAM lParam
 				}
 			}
 		} else if (((LPNMHDR)lParam)->idFrom == 0 && ((LPNMHDR)lParam)->code == PSN_APPLY ) {
-			char *pszText = NULL;
 			int iLen;
+            char *pszText = NULL;
 
 			iLen = GetWindowTextLength(GetDlgItem(hwndDlg, IDC_CHAT_HIGHLIGHTWORDS));
 			if ( iLen > 0 ) {
@@ -950,9 +974,9 @@ BOOL CALLBACK DlgProcOptions2(HWND hwndDlg,UINT uMsg,WPARAM wParam,LPARAM lParam
 				free(pszText1);
 			}
 			else {
-				lstrcpyn(g_Settings.pszLogDir, DEFLOGFILENAME, MAX_PATH);
-				DBDeleteContactSetting(NULL, "Chat", "LogDirectory");
-			}
+                lstrcpyn(g_Settings.pszLogDir, DEFLOGFILENAME, MAX_PATH);
+                DBDeleteContactSetting(NULL, "Chat", "LogDirectory");
+            }
 
 			iLen = GetWindowTextLength(GetDlgItem(hwndDlg, IDC_CHAT_LOGTIMESTAMP));
 			if ( iLen > 0 ) {

@@ -289,32 +289,13 @@ struct { UINT cpId; TCHAR *cpName; } static cpTable[] =
 
 static CCtrlCombo* sttCombo;
 
-typedef BOOL ( WINAPI *pfnGetCPInfoEx )( UINT, DWORD, LPCPINFOEX );
-static pfnGetCPInfoEx fnGetCPInfoEx = NULL;
-
 static BOOL CALLBACK sttLangAddCallback( CHAR* str )
 {
 	UINT cp = atoi(str);
-	if ( fnGetCPInfoEx == NULL ) {
-		int i;
-		for ( i=0; i < SIZEOF(cpTable) && cpTable[i].cpId != cp; i++ );
-		if ( i < SIZEOF(cpTable))
-			sttCombo->AddString( TranslateTS( cpTable[i].cpName ), cp );
-	}
-	else {
-		CPINFOEX cpinfo;
-		if ( fnGetCPInfoEx( cp, 0, &cpinfo )) {
-			TCHAR* b = _tcschr( cpinfo.CodePageName, '(' );
-			if ( b ) {
-				TCHAR* e = _tcsrchr( cpinfo.CodePageName, ')' );
-				if ( e ) {
-					*e = 0;
-					sttCombo->AddString( b+1, cp );
-				}
-				else sttCombo->AddString( cpinfo.CodePageName, cp );
-			}
-			else sttCombo->AddString( cpinfo.CodePageName, cp );
-	}	}
+	int i;
+	for ( i=0; i < SIZEOF(cpTable) && cpTable[i].cpId != cp; i++ );
+	if ( i < SIZEOF(cpTable))
+		sttCombo->AddString( TranslateTS( cpTable[i].cpName ), cp );
 
 	return TRUE;
 }
@@ -1074,15 +1055,8 @@ void COtherPrefsDlg::OnInitDialog()
 	m_add.Enable( m_proto->m_perform );
 	m_delete.Enable( m_proto->m_perform );
 
-	#if defined( _UNICODE )
-		fnGetCPInfoEx = ( pfnGetCPInfoEx )GetProcAddress( GetModuleHandleA( "kernel32.dll" ), "GetCPInfoExW" );
-	#else
-		fnGetCPInfoEx = ( pfnGetCPInfoEx )GetProcAddress( GetModuleHandleA( "kernel32.dll" ), "GetCPInfoExA" );
-	#endif
-
 	m_codepage.AddString( TranslateT("Default ANSI codepage"), CP_ACP );
-	if ( fnGetCPInfoEx == NULL )
-		m_codepage.AddString( TranslateT("UTF-8"), CP_UTF8 );
+	m_codepage.AddString( TranslateT("UTF-8"), CP_UTF8 );
 
 	sttCombo = &m_codepage;
 	EnumSystemCodePagesA(sttLangAddCallback, CP_INSTALLED);
@@ -1780,7 +1754,7 @@ void CIrcProto::InitPrefs(void)
 	if ( m_alias == NULL )
 		m_alias = mir_tstrdup( _T("/op /mode ## +ooo $1 $2 $3\r\n/dop /mode ## -ooo $1 $2 $3\r\n/voice /mode ## +vvv $1 $2 $3\r\n/dvoice /mode ## -vvv $1 $2 $3\r\n/j /join #$1 $2-\r\n/p /part ## $1-\r\n/w /whois $1\r\n/k /kick ## $1 $2-\r\n/q /query $1\r\n/logon /log on ##\r\n/logoff /log off ##\r\n/save /log buffer $1\r\n/slap /me slaps $1 around a bit with a large trout" ));
 
-	m_quickComboSelection = getDword( "QuickComboSelection", m_serverComboSelection + 1);
+	m_quickComboSelection = getDword( "QuickComboSelection", m_serverComboSelection);
 	m_myHost[0] = '\0';
 
 	colors[0] = RGB(255,255,255);
@@ -1856,17 +1830,17 @@ struct CDlgAccMgrUI : public CProtoDlgBase<CIrcProto>
 		m_port2.GetTextA( m_proto->m_portEnd, SIZEOF(m_proto->m_portEnd));
 		m_pass.GetTextA( m_proto->m_password, SIZEOF(m_proto->m_password));
 		CallService( MS_DB_CRYPT_ENCODESTRING, SIZEOF(m_proto->m_password), (LPARAM)m_proto->m_password);
+		mir_sntprintf(m_proto->m_pNick, 30, _T("%s"), m_proto->m_nick);
+		m_proto->WriteSettings( ConnectSettings, SIZEOF( ConnectSettings ));
+		CallService( MS_DB_CRYPT_DECODESTRING, SIZEOF(m_proto->m_password), (LPARAM)m_proto->m_password);
 
 		m_nick.GetText( m_proto->m_nick, SIZEOF(m_proto->m_nick));
 		removeSpaces(m_proto->m_nick);
-		mir_sntprintf(m_proto->m_pNick, 30, _T("%s"), m_proto->m_nick);
 		m_nick2.GetText( m_proto->m_alternativeNick, SIZEOF(m_proto->m_alternativeNick));
 		removeSpaces(m_proto->m_alternativeNick);
 		m_userID.GetText( m_proto->m_userID, SIZEOF(m_proto->m_userID));
 		removeSpaces(m_proto->m_userID);
 		m_name.GetText( m_proto->m_name, SIZEOF(m_proto->m_name));
-		m_proto->WriteSettings( ConnectSettings, SIZEOF( ConnectSettings ));
-		CallService( MS_DB_CRYPT_DECODESTRING, SIZEOF(m_proto->m_password), (LPARAM)m_proto->m_password);
 	}
 
 	void OnChangeCombo( CCtrlCombo* )

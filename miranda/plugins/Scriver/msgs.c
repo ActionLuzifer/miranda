@@ -326,7 +326,7 @@ static int MessageSettingChanged(WPARAM wParam, LPARAM lParam)
    szProto = (char *) CallService(MS_PROTO_GETCONTACTBASEPROTO, wParam, 0);
    if (lstrcmpA(cws->szModule, "CList") && (szProto == NULL || lstrcmpA(cws->szModule, szProto)))
       return 0;
-   WindowList_Broadcast(g_dat->hMessageWindowList, DM_CLISTSETTINGSCHANGED, wParam, lParam);
+   WindowList_Broadcast(g_dat->hMessageWindowList, DM_CLISTSETTINGSCHANGED, (WPARAM) cws, 0);
    return 0;
 }
 
@@ -595,7 +595,6 @@ int OnUnloadModule(void)
 	FreeMsgLogIcons();
 	FreeLibrary(GetModuleHandleA("riched20.dll"));
 	OleUninitialize();
-	RichUtil_Unload();
 	FreeGlobals();
 	return 0;
 }
@@ -622,7 +621,6 @@ int OnLoadModule(void) {
 		}
 	}
 	InitGlobals();
-	RichUtil_Load();
 	OleInitialize(NULL);
 	InitREOleCallback();
 	InitStatusIcons();

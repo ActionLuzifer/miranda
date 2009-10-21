@@ -90,7 +90,7 @@ HANDLE  CMsnProto::MsgQueue_GetNextRecipient(void)
 	HANDLE ret = NULL;
 	for (int i=0; i < msgQueueList.getCount(); i++)
 	{
-		MsgQueueEntry& E = msgQueueList[i];
+		MsgQueueEntry& E = msgQueueList[ i ];
 		if (!E.allocatedToThread)
 		{
 			E.allocatedToThread = 1;
@@ -101,8 +101,7 @@ HANDLE  CMsnProto::MsgQueue_GetNextRecipient(void)
 					msgQueueList[i].allocatedToThread = 1;
 
 			break;
-		}	
-	}
+	}	}
 
 	LeaveCriticalSection(&csMsgQueue);
 	return ret;
@@ -115,13 +114,13 @@ bool  CMsnProto::MsgQueue_GetNext(HANDLE hContact, MsgQueueEntry& retVal)
 
 	EnterCriticalSection(&csMsgQueue);
 	for(i=0; i < msgQueueList.getCount(); i++)
-		if (msgQueueList[i].hContact == hContact)
+		if (msgQueueList[ i ].hContact == hContact)
 			break;
 	
 	bool res = i != msgQueueList.getCount();
 	if (res)
 	{	
-		retVal = msgQueueList[i];
+		retVal = msgQueueList[ i ];
 		msgQueueList.remove(i);
 	}
 	LeaveCriticalSection(&csMsgQueue);
@@ -134,7 +133,7 @@ int  CMsnProto::MsgQueue_NumMsg(HANDLE hContact)
 	EnterCriticalSection(&csMsgQueue);
 
 	for(int i=0; i < msgQueueList.getCount(); i++)
-		res += msgQueueList[i].hContact == hContact;
+		res += msgQueueList[ i ].hContact == hContact;
 	
 	LeaveCriticalSection(&csMsgQueue);
 	return res;
@@ -150,7 +149,7 @@ void  CMsnProto::MsgQueue_Clear(HANDLE hContact, bool msg)
 
 		for(i=0; i < msgQueueList.getCount(); i++)
 		{
-			const MsgQueueEntry& E = msgQueueList[i];
+			const MsgQueueEntry& E = msgQueueList[ i ];
 			if (E.msgSize == 0)
 				SendBroadcast(E.hContact, ACKTYPE_MESSAGE, ACKRESULT_FAILED, 
 					(HANDLE)E.seq, (LPARAM)MSN_Translate("Message delivery failed"));
@@ -164,7 +163,7 @@ void  CMsnProto::MsgQueue_Clear(HANDLE hContact, bool msg)
 	{
 		for(i=0; i < msgQueueList.getCount(); i++)
 		{
-			time_t ts = time(NULL);
+		    time_t ts = time(NULL);
 			const MsgQueueEntry& E = msgQueueList[i];
 			if (E.hContact == hContact && (!msg || E.msgSize == 0))
 			{
@@ -174,8 +173,7 @@ void  CMsnProto::MsgQueue_Clear(HANDLE hContact, bool msg)
 				mir_free(E.message);
 				msgQueueList.remove(i);
 
-				if (msgfnd) 
-				{
+				if (msgfnd) {
 					LeaveCriticalSection(&csMsgQueue);
 					SendBroadcast(hContact, ACKTYPE_MESSAGE, ACKRESULT_FAILED, (HANDLE)seq, 
 						(LPARAM)MSN_Translate("Message delivery failed"));
@@ -190,5 +188,5 @@ void  CMsnProto::MsgQueue_Clear(HANDLE hContact, bool msg)
 
 void __cdecl CMsnProto::MsgQueue_AllClearThread(void* arg)
 {
-	MsgQueue_Clear(arg);
+    MsgQueue_Clear(arg);
 }

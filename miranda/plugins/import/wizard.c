@@ -31,8 +31,6 @@ INT_PTR CALLBACK ICQserverPageProc(HWND hdlg, UINT message, WPARAM wParam, LPARA
 
 extern HINSTANCE hInst;
 BOOL IsProtocolLoaded(char* pszProtocolName);
-BOOL EnumICQAccounts();
-void FreeICQAccountsList();
 
 INT_PTR CALLBACK ImportTypePageProc(HWND hdlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
@@ -42,7 +40,7 @@ INT_PTR CALLBACK ImportTypePageProc(HWND hdlg, UINT message, WPARAM wParam, LPAR
 		CheckDlgButton(hdlg, IDC_MIRANDA, BST_CHECKED);
 
 		// Disable Mirabilis import if ICQ isn't loaded.
-		if (!EnumICQAccounts())
+		if (!IsProtocolLoaded(ICQOSCPROTONAME))
 			EnableWindow(GetDlgItem(hdlg, IDC_MIRABILIS), FALSE);
 
 		return TRUE;
@@ -207,8 +205,6 @@ INT_PTR CALLBACK WizardDlgProc(HWND hdlg, UINT message, WPARAM wParam, LPARAM lP
 	case WM_CLOSE:
 		DestroyWindow(hwndPage);
 		DestroyWindow(hdlg);
-		
-		FreeICQAccountsList();
 		break;
 	}
 	

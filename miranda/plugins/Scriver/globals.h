@@ -142,6 +142,7 @@ struct GlobalMessageData
 	HFONT	   hContactStatusFont;
 	COLORREF   contactStatusColour;
 	HBRUSH	   hInfobarBrush;
+	HPEN	   hInfobarPen;
 	int		   toolbarPosition;
 	int        splitterY;
 	HWND       hFocusWnd;

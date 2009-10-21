@@ -1052,7 +1052,7 @@ void __cdecl CIcqProto::AvatarThread(avatarthreadstartinfo *atsi)
 #endif
 				if (GetTickCount() > wLastKeepAlive)
 				{ // limit frequency (HACK: on some systems select() does not work well)
-					if (getSettingByte(NULL, "KeepAlive", 0))
+					if (getSettingByte(NULL, "KeepAlive", DEFAULT_KEEPALIVE_ENABLED))
 					{ // send keep-alive packet
 						icq_packet packet;
 

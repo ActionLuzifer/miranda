@@ -26,7 +26,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <richedit.h>
 #include <richole.h>
 #include "sendqueue.h"
-#include "infobar.h"
 #define MSGERROR_CANCEL	0
 #define MSGERROR_RETRY	1
 #define MSGERROR_DONE	2
@@ -147,7 +146,6 @@ struct MessageWindowData
 	HICON   statusIcon;
 	HICON   statusIconOverlay;
 	CommonWindowData windowData;
-	InfobarWindowData* infobarData;
 };
 
 
@@ -365,7 +363,7 @@ extern int fontOptionsListSize;
 #define SRMSGSET_OUTGOINGBKGCOLOUR		"OutgoingBkgColour"
 #define SRMSGDEFSET_OUTGOINGBKGCOLOUR	GetSysColor(COLOR_WINDOW)
 #define SRMSGSET_INFOBARBKGCOLOUR		"InfobarBkgColour"
-#define SRMSGDEFSET_INFOBARBKGCOLOUR	GetSysColor(COLOR_BTNFACE)
+#define SRMSGDEFSET_INFOBARBKGCOLOUR	RGB(130,140,170)
 
 #define SRMSGSET_USEIEVIEW				"UseIEView"
 #define SRMSGDEFSET_USEIEVIEW			1

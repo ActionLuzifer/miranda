@@ -1364,9 +1364,10 @@ INT_PTR CALLBACK RoomWndProc(HWND hwndDlg,UINT uMsg,WPARAM wParam,LPARAM lParam)
 			StatusBarData sbd;
 			HICON hIcon;
 			MODULEINFO* mi = MM_FindModule(si->pszModule);
+			TCHAR* ptszDispName = a2tf((TCHAR*)mi->pszModDispName, 0);
 			TCHAR szTemp[512];
 			hIcon = si->wStatus==ID_STATUS_ONLINE ? mi->hOnlineIcon : mi->hOfflineIcon;
-			mir_sntprintf(szTemp, SIZEOF(szTemp), _T("%s : %s"), mi->ptszModDispName, si->ptszStatusbarText ? si->ptszStatusbarText : _T(""));
+			mir_sntprintf(szTemp, SIZEOF(szTemp), _T("%s : %s"), ptszDispName, si->ptszStatusbarText ? si->ptszStatusbarText : _T(""));
 			sbd.iItem = 0;
 			sbd.iFlags = SBDF_TEXT | SBDF_ICON;
 			sbd.hIcon = hIcon;
@@ -1376,6 +1377,7 @@ INT_PTR CALLBACK RoomWndProc(HWND hwndDlg,UINT uMsg,WPARAM wParam,LPARAM lParam)
 			sbd.hIcon = NULL;
 			sbd.pszText   = _T("");
 			SendMessage(GetParent(hwndDlg), CM_UPDATESTATUSBAR, (WPARAM) &sbd, (LPARAM) hwndDlg);
+			mir_free( ptszDispName );
 			sid.cbSize = sizeof(sid);
 			sid.szModule = SRMMMOD;
 			sid.dwId = 0;
@@ -1846,18 +1848,68 @@ LABEL_SHOWWINDOW:
 				return TRUE;
             }
             break;
+
          case EN_LINK:
 			if (pNmhdr->idFrom == IDC_CHAT_LOG) {
 				switch (((ENLINK *) lParam)->msg) {
 				case WM_RBUTTONDOWN:
 				case WM_LBUTTONUP:
 				case WM_LBUTTONDBLCLK:
-					if (HandleLinkClick(g_hInst, hwndDlg, GetDlgItem(hwndDlg, IDC_CHAT_MESSAGE),(ENLINK*)lParam)) {
-						SetWindowLongPtr(hwndDlg, DWLP_MSGRESULT, TRUE);
-						return TRUE;
-					}
-					break;
-			}	}
+					{
+						TEXTRANGE tr;
+						CHARRANGE sel;
+						char* pszUrl;
+
+						SendMessage(pNmhdr->hwndFrom, EM_EXGETSEL, 0, (LPARAM) & sel);
+						if (sel.cpMin != sel.cpMax)
+							break;
+						tr.chrg = ((ENLINK *) lParam)->chrg;
+						tr.lpstrText = mir_alloc(sizeof(TCHAR)*(tr.chrg.cpMax - tr.chrg.cpMin + 1));
+						SendMessage(pNmhdr->hwndFrom, EM_GETTEXTRANGE, 0, (LPARAM) & tr);
+						pszUrl = t2a( tr.lpstrText );
+
+						if (((ENLINK *) lParam)->msg == WM_RBUTTONDOWN) {
+							HMENU hSubMenu;
+							POINT pt;
+
+							hSubMenu = GetSubMenu(g_hMenu, 2);
+							pt.x = (short) LOWORD(((ENLINK *) lParam)->lParam);
+							pt.y = (short) HIWORD(((ENLINK *) lParam)->lParam);
+							ClientToScreen(((NMHDR *) lParam)->hwndFrom, &pt);
+							switch (TrackPopupMenu(hSubMenu, TPM_RETURNCMD, pt.x, pt.y, 0, hwndDlg, NULL)) {
+							case IDM_OPENLINK:
+								CallService(MS_UTILS_OPENURL, 1, (LPARAM) pszUrl);
+								break;
+
+							case IDM_COPYLINK:
+								{
+									HGLOBAL hData;
+									if (!OpenClipboard(hwndDlg))
+										break;
+									EmptyClipboard();
+									hData = GlobalAlloc(GMEM_MOVEABLE, sizeof(TCHAR)*(lstrlen(tr.lpstrText) + 1));
+									lstrcpy(( TCHAR* )GlobalLock(hData), tr.lpstrText);
+									GlobalUnlock(hData);
+									#if defined( _UNICODE )
+										SetClipboardData(CF_UNICODETEXT, hData);
+									#else
+										SetClipboardData(CF_TEXT, hData);
+									#endif
+									CloseClipboard();
+									SetFocus(GetDlgItem(hwndDlg, IDC_CHAT_MESSAGE));
+									break;
+							}	}
+							mir_free(tr.lpstrText);
+							mir_free(pszUrl);
+							return TRUE;
+						}
+
+						CallService(MS_UTILS_OPENURL, 1, (LPARAM) pszUrl);
+						SetFocus(GetDlgItem(hwndDlg, IDC_CHAT_MESSAGE));
+						mir_free(tr.lpstrText);
+						mir_free(pszUrl);
+						break;
+			}	}	}
 			break;
 			case TTN_NEEDTEXT:
 				if (pNmhdr->idFrom == (UINT_PTR)GetDlgItem(hwndDlg,IDC_CHAT_LIST))

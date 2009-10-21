@@ -390,7 +390,7 @@ XCHAR *GetInternalVariable(XCHAR *key, size_t keyLength, HANDLE hContact)
 			theValue = mir_a2x(key, (char *)CallService(MS_PROTO_GETCONTACTBASEPROTO, (WPARAM)hContact,0));
 		else if (!_xcscmp(theKey, XSTR(key, "userid"))) 
 			theValue = GetContactIDX(key, hContact);
-	}
+				}
 
 	if (!theValue) {
 		if (!_xcscmp(theKey, XSTR(key, "miranda_path")))

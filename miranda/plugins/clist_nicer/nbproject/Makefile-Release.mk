@@ -16,18 +16,15 @@ CC=gcc.exe
 CCC=g++.exe
 CXX=g++.exe
 FC=gfortran.exe
-AS=
 
 # Macros
-CND_PLATFORM=MinGW-Windows
-CND_CONF=Release
-CND_DISTDIR=dist
+PLATFORM=MinGW-Windows
 
 # Include project Makefile
 include Makefile
 
 # Object Directory
-OBJECTDIR=build/${CND_CONF}/${CND_PLATFORM}
+OBJECTDIR=build/Release/${PLATFORM}
 
 # Object Files
 OBJECTFILES= \
@@ -36,6 +33,7 @@ OBJECTFILES= \
 	${OBJECTDIR}/contact.o \
 	${OBJECTDIR}/cluiservices.o \
 	${OBJECTDIR}/Docking.o \
+	${OBJECTDIR}/utf.o \
 	${OBJECTDIR}/clcmsgs.o \
 	${OBJECTDIR}/wallpaper.o \
 	${OBJECTDIR}/forkthread.o \
@@ -56,13 +54,13 @@ OBJECTFILES= \
 	${OBJECTDIR}/clcpaint.o \
 	${OBJECTDIR}/CLUIFrames/framesmenu.o \
 	${OBJECTDIR}/statusfloater.o \
-	${OBJECTDIR}/clistsettings.o \
 	${OBJECTDIR}/clistopts.o \
+	${OBJECTDIR}/clistsettings.o \
 	${OBJECTDIR}/viewmodes.o \
 	${OBJECTDIR}/clisttray.o \
 	${OBJECTDIR}/cluiopts.o \
-	${OBJECTDIR}/statusbar.o \
 	${OBJECTDIR}/clui.o \
+	${OBJECTDIR}/statusbar.o \
 	${OBJECTDIR}/rowheight_funcs.o \
 	${OBJECTDIR}/clcidents.o \
 	${OBJECTDIR}/clnplus.o \
@@ -78,196 +76,198 @@ CXXFLAGS=
 # Fortran Compiler Flags
 FFLAGS=
 
-# Assembler Flags
-ASFLAGS=
-
 # Link Libraries and Options
 LDLIBSOPTIONS=build/resource.coff -lgdi32 -lcomctl32 -lcomdlg32 -lmsvcrt -lkernel32 -lmsimg32 -lshlwapi -luser32 -lshell32 -lshlwapi -luser32 -lole32 -lole32
 
 # Build Targets
 .build-conf: ${BUILD_SUBPROJECTS}
-	${MAKE}  -f nbproject/Makefile-Release.mk dist/Release/MinGW-Windows/clist_nicer.dll
+	${MAKE}  -f nbproject/Makefile-Release.mk dist/Release/${PLATFORM}/clist_nicer.dll
 
-dist/Release/MinGW-Windows/clist_nicer.dll: ${OBJECTFILES}
-	${MKDIR} -p dist/Release/MinGW-Windows
+dist/Release/${PLATFORM}/clist_nicer.dll: ${OBJECTFILES}
+	${MKDIR} -p dist/Release/${PLATFORM}
 	${LINK.cc} -shared -o dist/Release/${PLATFORM}/clist_nicer.dll -s ${OBJECTFILES} ${LDLIBSOPTIONS} 
 
-${OBJECTDIR}/alphablend.o: nbproject/Makefile-${CND_CONF}.mk alphablend.c 
+${OBJECTDIR}/alphablend.o: alphablend.c 
 	${MKDIR} -p ${OBJECTDIR}
 	${RM} $@.d
 	$(COMPILE.c) -O2 -s -D__GNUWIN32__ -I../../include -I../../include/mingw -MMD -MP -MF $@.d -o ${OBJECTDIR}/alphablend.o alphablend.c
 
-${OBJECTDIR}/init.o: nbproject/Makefile-${CND_CONF}.mk init.c 
+${OBJECTDIR}/init.o: init.c 
 	${MKDIR} -p ${OBJECTDIR}
 	${RM} $@.d
 	$(COMPILE.c) -O2 -s -D__GNUWIN32__ -I../../include -I../../include/mingw -MMD -MP -MF $@.d -o ${OBJECTDIR}/init.o init.c
 
-${OBJECTDIR}/contact.o: nbproject/Makefile-${CND_CONF}.mk contact.c 
+${OBJECTDIR}/contact.o: contact.c 
 	${MKDIR} -p ${OBJECTDIR}
 	${RM} $@.d
 	$(COMPILE.c) -O2 -s -D__GNUWIN32__ -I../../include -I../../include/mingw -MMD -MP -MF $@.d -o ${OBJECTDIR}/contact.o contact.c
 
-${OBJECTDIR}/cluiservices.o: nbproject/Makefile-${CND_CONF}.mk cluiservices.c 
+${OBJECTDIR}/cluiservices.o: cluiservices.c 
 	${MKDIR} -p ${OBJECTDIR}
 	${RM} $@.d
 	$(COMPILE.c) -O2 -s -D__GNUWIN32__ -I../../include -I../../include/mingw -MMD -MP -MF $@.d -o ${OBJECTDIR}/cluiservices.o cluiservices.c
 
-${OBJECTDIR}/Docking.o: nbproject/Makefile-${CND_CONF}.mk Docking.c 
+${OBJECTDIR}/Docking.o: Docking.c 
 	${MKDIR} -p ${OBJECTDIR}
 	${RM} $@.d
 	$(COMPILE.c) -O2 -s -D__GNUWIN32__ -I../../include -I../../include/mingw -MMD -MP -MF $@.d -o ${OBJECTDIR}/Docking.o Docking.c
 
-${OBJECTDIR}/clcmsgs.o: nbproject/Makefile-${CND_CONF}.mk clcmsgs.c 
+${OBJECTDIR}/utf.o: utf.c 
+	${MKDIR} -p ${OBJECTDIR}
+	${RM} $@.d
+	$(COMPILE.c) -O2 -s -D__GNUWIN32__ -I../../include -I../../include/mingw -MMD -MP -MF $@.d -o ${OBJECTDIR}/utf.o utf.c
+
+${OBJECTDIR}/clcmsgs.o: clcmsgs.c 
 	${MKDIR} -p ${OBJECTDIR}
 	${RM} $@.d
 	$(COMPILE.c) -O2 -s -D__GNUWIN32__ -I../../include -I../../include/mingw -MMD -MP -MF $@.d -o ${OBJECTDIR}/clcmsgs.o clcmsgs.c
 
-${OBJECTDIR}/wallpaper.o: nbproject/Makefile-${CND_CONF}.mk wallpaper.c 
+${OBJECTDIR}/wallpaper.o: wallpaper.c 
 	${MKDIR} -p ${OBJECTDIR}
 	${RM} $@.d
 	$(COMPILE.c) -O2 -s -D__GNUWIN32__ -I../../include -I../../include/mingw -MMD -MP -MF $@.d -o ${OBJECTDIR}/wallpaper.o wallpaper.c
 
-${OBJECTDIR}/forkthread.o: nbproject/Makefile-${CND_CONF}.mk forkthread.c 
+${OBJECTDIR}/forkthread.o: forkthread.c 
 	${MKDIR} -p ${OBJECTDIR}
 	${RM} $@.d
 	$(COMPILE.c) -O2 -s -D__GNUWIN32__ -I../../include -I../../include/mingw -MMD -MP -MF $@.d -o ${OBJECTDIR}/forkthread.o forkthread.c
 
-${OBJECTDIR}/clcopts.o: nbproject/Makefile-${CND_CONF}.mk clcopts.c 
+${OBJECTDIR}/clcopts.o: clcopts.c 
 	${MKDIR} -p ${OBJECTDIR}
 	${RM} $@.d
 	$(COMPILE.c) -O2 -s -D__GNUWIN32__ -I../../include -I../../include/mingw -MMD -MP -MF $@.d -o ${OBJECTDIR}/clcopts.o clcopts.c
 
-${OBJECTDIR}/clistmod.o: nbproject/Makefile-${CND_CONF}.mk clistmod.c 
+${OBJECTDIR}/clistmod.o: clistmod.c 
 	${MKDIR} -p ${OBJECTDIR}
 	${RM} $@.d
 	$(COMPILE.c) -O2 -s -D__GNUWIN32__ -I../../include -I../../include/mingw -MMD -MP -MF $@.d -o ${OBJECTDIR}/clistmod.o clistmod.c
 
-${OBJECTDIR}/clistevents.o: nbproject/Makefile-${CND_CONF}.mk clistevents.c 
+${OBJECTDIR}/clistevents.o: clistevents.c 
 	${MKDIR} -p ${OBJECTDIR}
 	${RM} $@.d
 	$(COMPILE.c) -O2 -s -D__GNUWIN32__ -I../../include -I../../include/mingw -MMD -MP -MF $@.d -o ${OBJECTDIR}/clistevents.o clistevents.c
 
-${OBJECTDIR}/clistmenus.o: nbproject/Makefile-${CND_CONF}.mk clistmenus.c 
+${OBJECTDIR}/clistmenus.o: clistmenus.c 
 	${MKDIR} -p ${OBJECTDIR}
 	${RM} $@.d
 	$(COMPILE.c) -O2 -s -D__GNUWIN32__ -I../../include -I../../include/mingw -MMD -MP -MF $@.d -o ${OBJECTDIR}/clistmenus.o clistmenus.c
 
-${OBJECTDIR}/clcitems.o: nbproject/Makefile-${CND_CONF}.mk clcitems.c 
+${OBJECTDIR}/clcitems.o: clcitems.c 
 	${MKDIR} -p ${OBJECTDIR}
 	${RM} $@.d
 	$(COMPILE.c) -O2 -s -D__GNUWIN32__ -I../../include -I../../include/mingw -MMD -MP -MF $@.d -o ${OBJECTDIR}/clcitems.o clcitems.c
 
-${OBJECTDIR}/CLUIFrames/groupmenu.o: nbproject/Makefile-${CND_CONF}.mk CLUIFrames/groupmenu.c 
+${OBJECTDIR}/CLUIFrames/groupmenu.o: CLUIFrames/groupmenu.c 
 	${MKDIR} -p ${OBJECTDIR}/CLUIFrames
 	${RM} $@.d
 	$(COMPILE.c) -O2 -s -D__GNUWIN32__ -I../../include -I../../include/mingw -MMD -MP -MF $@.d -o ${OBJECTDIR}/CLUIFrames/groupmenu.o CLUIFrames/groupmenu.c
 
-${OBJECTDIR}/CLUIFrames/movetogroup.o: nbproject/Makefile-${CND_CONF}.mk CLUIFrames/movetogroup.c 
+${OBJECTDIR}/CLUIFrames/movetogroup.o: CLUIFrames/movetogroup.c 
 	${MKDIR} -p ${OBJECTDIR}/CLUIFrames
 	${RM} $@.d
 	$(COMPILE.c) -O2 -s -D__GNUWIN32__ -I../../include -I../../include/mingw -MMD -MP -MF $@.d -o ${OBJECTDIR}/CLUIFrames/movetogroup.o CLUIFrames/movetogroup.c
 
-${OBJECTDIR}/extBackg.o: nbproject/Makefile-${CND_CONF}.mk extBackg.c 
+${OBJECTDIR}/extBackg.o: extBackg.c 
 	${MKDIR} -p ${OBJECTDIR}
 	${RM} $@.d
 	$(COMPILE.c) -O2 -s -D__GNUWIN32__ -I../../include -I../../include/mingw -MMD -MP -MF $@.d -o ${OBJECTDIR}/extBackg.o extBackg.c
 
-${OBJECTDIR}/clcutils.o: nbproject/Makefile-${CND_CONF}.mk clcutils.c 
+${OBJECTDIR}/clcutils.o: clcutils.c 
 	${MKDIR} -p ${OBJECTDIR}
 	${RM} $@.d
 	$(COMPILE.c) -O2 -s -D__GNUWIN32__ -I../../include -I../../include/mingw -MMD -MP -MF $@.d -o ${OBJECTDIR}/clcutils.o clcutils.c
 
-${OBJECTDIR}/coolsb/coolscroll.o: nbproject/Makefile-${CND_CONF}.mk coolsb/coolscroll.c 
+${OBJECTDIR}/coolsb/coolscroll.o: coolsb/coolscroll.c 
 	${MKDIR} -p ${OBJECTDIR}/coolsb
 	${RM} $@.d
 	$(COMPILE.c) -O2 -s -D__GNUWIN32__ -I../../include -I../../include/mingw -MMD -MP -MF $@.d -o ${OBJECTDIR}/coolsb/coolscroll.o coolsb/coolscroll.c
 
-${OBJECTDIR}/CLUIFrames/cluiframes.o: nbproject/Makefile-${CND_CONF}.mk CLUIFrames/cluiframes.c 
+${OBJECTDIR}/CLUIFrames/cluiframes.o: CLUIFrames/cluiframes.c 
 	${MKDIR} -p ${OBJECTDIR}/CLUIFrames
 	${RM} $@.d
 	$(COMPILE.c) -O2 -s -D__GNUWIN32__ -I../../include -I../../include/mingw -MMD -MP -MF $@.d -o ${OBJECTDIR}/CLUIFrames/cluiframes.o CLUIFrames/cluiframes.c
 
-${OBJECTDIR}/coolsb/coolsblib.o: nbproject/Makefile-${CND_CONF}.mk coolsb/coolsblib.c 
+${OBJECTDIR}/coolsb/coolsblib.o: coolsb/coolsblib.c 
 	${MKDIR} -p ${OBJECTDIR}/coolsb
 	${RM} $@.d
 	$(COMPILE.c) -O2 -s -D__GNUWIN32__ -I../../include -I../../include/mingw -MMD -MP -MF $@.d -o ${OBJECTDIR}/coolsb/coolsblib.o coolsb/coolsblib.c
 
-${OBJECTDIR}/clc.o: nbproject/Makefile-${CND_CONF}.mk clc.c 
+${OBJECTDIR}/clc.o: clc.c 
 	${MKDIR} -p ${OBJECTDIR}
 	${RM} $@.d
 	$(COMPILE.c) -O2 -s -D__GNUWIN32__ -I../../include -I../../include/mingw -MMD -MP -MF $@.d -o ${OBJECTDIR}/clc.o clc.c
 
-${OBJECTDIR}/CLCButton.o: nbproject/Makefile-${CND_CONF}.mk CLCButton.c 
+${OBJECTDIR}/CLCButton.o: CLCButton.c 
 	${MKDIR} -p ${OBJECTDIR}
 	${RM} $@.d
 	$(COMPILE.c) -O2 -s -D__GNUWIN32__ -I../../include -I../../include/mingw -MMD -MP -MF $@.d -o ${OBJECTDIR}/CLCButton.o CLCButton.c
 
-${OBJECTDIR}/clcpaint.o: nbproject/Makefile-${CND_CONF}.mk clcpaint.c 
+${OBJECTDIR}/clcpaint.o: clcpaint.c 
 	${MKDIR} -p ${OBJECTDIR}
 	${RM} $@.d
 	$(COMPILE.c) -O2 -s -D__GNUWIN32__ -I../../include -I../../include/mingw -MMD -MP -MF $@.d -o ${OBJECTDIR}/clcpaint.o clcpaint.c
 
-${OBJECTDIR}/CLUIFrames/framesmenu.o: nbproject/Makefile-${CND_CONF}.mk CLUIFrames/framesmenu.c 
+${OBJECTDIR}/CLUIFrames/framesmenu.o: CLUIFrames/framesmenu.c 
 	${MKDIR} -p ${OBJECTDIR}/CLUIFrames
 	${RM} $@.d
 	$(COMPILE.c) -O2 -s -D__GNUWIN32__ -I../../include -I../../include/mingw -MMD -MP -MF $@.d -o ${OBJECTDIR}/CLUIFrames/framesmenu.o CLUIFrames/framesmenu.c
 
-${OBJECTDIR}/statusfloater.o: nbproject/Makefile-${CND_CONF}.mk statusfloater.c 
+${OBJECTDIR}/statusfloater.o: statusfloater.c 
 	${MKDIR} -p ${OBJECTDIR}
 	${RM} $@.d
 	$(COMPILE.c) -O2 -s -D__GNUWIN32__ -I../../include -I../../include/mingw -MMD -MP -MF $@.d -o ${OBJECTDIR}/statusfloater.o statusfloater.c
 
-${OBJECTDIR}/clistsettings.o: nbproject/Makefile-${CND_CONF}.mk clistsettings.c 
-	${MKDIR} -p ${OBJECTDIR}
-	${RM} $@.d
-	$(COMPILE.c) -O2 -s -D__GNUWIN32__ -I../../include -I../../include/mingw -MMD -MP -MF $@.d -o ${OBJECTDIR}/clistsettings.o clistsettings.c
-
-${OBJECTDIR}/clistopts.o: nbproject/Makefile-${CND_CONF}.mk clistopts.c 
+${OBJECTDIR}/clistopts.o: clistopts.c 
 	${MKDIR} -p ${OBJECTDIR}
 	${RM} $@.d
 	$(COMPILE.c) -O2 -s -D__GNUWIN32__ -I../../include -I../../include/mingw -MMD -MP -MF $@.d -o ${OBJECTDIR}/clistopts.o clistopts.c
 
-${OBJECTDIR}/viewmodes.o: nbproject/Makefile-${CND_CONF}.mk viewmodes.c 
+${OBJECTDIR}/clistsettings.o: clistsettings.c 
+	${MKDIR} -p ${OBJECTDIR}
+	${RM} $@.d
+	$(COMPILE.c) -O2 -s -D__GNUWIN32__ -I../../include -I../../include/mingw -MMD -MP -MF $@.d -o ${OBJECTDIR}/clistsettings.o clistsettings.c
+
+${OBJECTDIR}/viewmodes.o: viewmodes.c 
 	${MKDIR} -p ${OBJECTDIR}
 	${RM} $@.d
 	$(COMPILE.c) -O2 -s -D__GNUWIN32__ -I../../include -I../../include/mingw -MMD -MP -MF $@.d -o ${OBJECTDIR}/viewmodes.o viewmodes.c
 
-${OBJECTDIR}/clisttray.o: nbproject/Makefile-${CND_CONF}.mk clisttray.c 
+${OBJECTDIR}/clisttray.o: clisttray.c 
 	${MKDIR} -p ${OBJECTDIR}
 	${RM} $@.d
 	$(COMPILE.c) -O2 -s -D__GNUWIN32__ -I../../include -I../../include/mingw -MMD -MP -MF $@.d -o ${OBJECTDIR}/clisttray.o clisttray.c
 
-${OBJECTDIR}/cluiopts.o: nbproject/Makefile-${CND_CONF}.mk cluiopts.c 
+${OBJECTDIR}/cluiopts.o: cluiopts.c 
 	${MKDIR} -p ${OBJECTDIR}
 	${RM} $@.d
 	$(COMPILE.c) -O2 -s -D__GNUWIN32__ -I../../include -I../../include/mingw -MMD -MP -MF $@.d -o ${OBJECTDIR}/cluiopts.o cluiopts.c
 
-${OBJECTDIR}/statusbar.o: nbproject/Makefile-${CND_CONF}.mk statusbar.c 
-	${MKDIR} -p ${OBJECTDIR}
-	${RM} $@.d
-	$(COMPILE.c) -O2 -s -D__GNUWIN32__ -I../../include -I../../include/mingw -MMD -MP -MF $@.d -o ${OBJECTDIR}/statusbar.o statusbar.c
-
-${OBJECTDIR}/clui.o: nbproject/Makefile-${CND_CONF}.mk clui.c 
+${OBJECTDIR}/clui.o: clui.c 
 	${MKDIR} -p ${OBJECTDIR}
 	${RM} $@.d
 	$(COMPILE.c) -O2 -s -D__GNUWIN32__ -I../../include -I../../include/mingw -MMD -MP -MF $@.d -o ${OBJECTDIR}/clui.o clui.c
 
-${OBJECTDIR}/rowheight_funcs.o: nbproject/Makefile-${CND_CONF}.mk rowheight_funcs.c 
+${OBJECTDIR}/statusbar.o: statusbar.c 
+	${MKDIR} -p ${OBJECTDIR}
+	${RM} $@.d
+	$(COMPILE.c) -O2 -s -D__GNUWIN32__ -I../../include -I../../include/mingw -MMD -MP -MF $@.d -o ${OBJECTDIR}/statusbar.o statusbar.c
+
+${OBJECTDIR}/rowheight_funcs.o: rowheight_funcs.c 
 	${MKDIR} -p ${OBJECTDIR}
 	${RM} $@.d
 	$(COMPILE.c) -O2 -s -D__GNUWIN32__ -I../../include -I../../include/mingw -MMD -MP -MF $@.d -o ${OBJECTDIR}/rowheight_funcs.o rowheight_funcs.c
 
-${OBJECTDIR}/clcidents.o: nbproject/Makefile-${CND_CONF}.mk clcidents.c 
+${OBJECTDIR}/clcidents.o: clcidents.c 
 	${MKDIR} -p ${OBJECTDIR}
 	${RM} $@.d
 	$(COMPILE.c) -O2 -s -D__GNUWIN32__ -I../../include -I../../include/mingw -MMD -MP -MF $@.d -o ${OBJECTDIR}/clcidents.o clcidents.c
 
-${OBJECTDIR}/clnplus.o: nbproject/Makefile-${CND_CONF}.mk clnplus.cpp 
+${OBJECTDIR}/clnplus.o: clnplus.cpp 
 	${MKDIR} -p ${OBJECTDIR}
 	${RM} $@.d
 	$(COMPILE.cc) -O2 -s -D__GNUWIN32__ -I../../include -I../../include/mingw -MMD -MP -MF $@.d -o ${OBJECTDIR}/clnplus.o clnplus.cpp
 
-${OBJECTDIR}/commonheaders.o: nbproject/Makefile-${CND_CONF}.mk commonheaders.c 
+${OBJECTDIR}/commonheaders.o: commonheaders.c 
 	${MKDIR} -p ${OBJECTDIR}
 	${RM} $@.d
 	$(COMPILE.c) -O2 -s -D__GNUWIN32__ -I../../include -I../../include/mingw -MMD -MP -MF $@.d -o ${OBJECTDIR}/commonheaders.o commonheaders.c
@@ -278,7 +278,7 @@ ${OBJECTDIR}/commonheaders.o: nbproject/Makefile-${CND_CONF}.mk commonheaders.c
 # Clean Targets
 .clean-conf:
 	${RM} -r build/Release
-	${RM} dist/Release/MinGW-Windows/clist_nicer.dll
+	${RM} dist/Release/${PLATFORM}/clist_nicer.dll
 
 # Subprojects
 .clean-subprojects:

@@ -2,7 +2,6 @@
 #define IDD_MSG                         101
 #define IDD_MSGSENDERROR                102
 #define IDD_CONFIRM_SENDALL             103
-#define IDD_INFOBAR                     104
 #define IDD_OPT_MSGDLG                  111
 #define IDD_OPT_MSGLOG                  112
 #define IDD_OPT_MSGTYPE                 114
@@ -125,8 +124,6 @@
 #define IDC_SMILEYS                     1081
 #define IDC_REMEMBER					1082
 #define IDC_AUTORESIZE                  1083
-#define IDC_INFOBAR_NAME				1090
-#define IDC_INFOBAR_STATUS				1091
 #define IDC_STMSGLOGGROUP               1442
 #define IDC_ERRORTEXT                   1596
 #define IDC_MSGTEXT                     1597
@@ -171,7 +168,7 @@
 #define IDC_CHAT_LIMITTEXT2				1643
 #define IDC_INFOBAR						1644
 #define IDC_AVATAR						1645
-#define IDC_XSTATUSICON                 1646
+
 #define IDM_CUT                         40000
 #define IDM_COPY                        40001
 #define IDM_PASTE                       40002
@@ -190,7 +187,7 @@
 #define IDM_SEARCH_GOOGLE               40080
 #define IDM_SEARCH_YAHOO				40081
 #define IDM_SEARCH_WIKIPEDIA            40082
-#define IDM_SEARCH_FOODNETWORK          40083
+#define IDM_SEARCH_FOODNETWORK        40083
 /* chat.dll resources */
 
 #define IDC_CHAT_LOG                         5005
