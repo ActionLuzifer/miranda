@@ -626,32 +626,44 @@ void CJabberProto::OnIqRequestOOB( HXML, CJabberIqInfo *pInfo )
 		ft->iqId = mir_tstrdup( pInfo->GetIdStr() );
 
 	if ( ft->httpHostName && ft->httpPath ) {
-		TCHAR* desc = NULL;
+		char* szBlob, *desc;
 
 		Log( "Host=%s Port=%d Path=%s", ft->httpHostName, ft->httpPort, ft->httpPath );
-		if (( n = xmlGetChild( pInfo->GetChildNode(), "desc" )) != NULL )
-			desc = ( TCHAR* )xmlGetText( n );
-
-		TCHAR* str2;
-		Log( "description = %s", desc );
-		if (( str2 = _tcsrchr( ft->httpPath, '/' )) != NULL )
-			str2++;
+		if (( n = xmlGetChild( pInfo->GetChildNode(), "desc" ))!=NULL && xmlGetText( n )!=NULL )
+			desc = mir_t2a( xmlGetText( n ) );
 		else
-			str2 = ft->httpPath;
-		str2 = mir_tstrdup( str2 );
-		JabberHttpUrlDecode( str2 );
+			desc = mir_strdup( "" );
 
-		PROTORECVFILET pre;
-		pre.flags = PREF_TCHAR;
-		pre.timestamp = time( NULL );
-		pre.tszDescription = desc;
-		pre.ptszFiles = &str2;
-		pre.fileCount = 1;
-		pre.lParam = ( LPARAM )ft;
+		if ( desc != NULL ) {
+			char* str2;
+			Log( "description = %s", desc );
+			if (( str2 = strrchr( ft->httpPath, '/' )) != NULL )
+				str2++;
+			else
+				str2 = ft->httpPath;
+			str2 = mir_strdup( str2 );
+			JabberHttpUrlDecode( str2 );
+			szBlob = ( char* )mir_alloc( sizeof( DWORD )+ strlen( str2 ) + strlen( desc ) + 2 );
+			*(( PDWORD ) szBlob ) = 0;
+			strcpy( szBlob + sizeof( DWORD ), str2 );
+			strcpy( szBlob + sizeof( DWORD )+ strlen( str2 ) + 1, desc );
 
-		CCSDATA ccs = { ft->std.hContact, PSR_FILE, 0, ( LPARAM )&pre };
-		JCallService( MS_PROTO_CHAINRECV, 0, ( LPARAM )&ccs );
-		mir_free( str2 );
+			PROTORECVEVENT pre;
+			pre.flags = 0;
+			pre.timestamp = time( NULL );
+			pre.szMessage = szBlob;
+			pre.lParam = ( LPARAM )ft;
+
+			CCSDATA ccs;
+			ccs.szProtoService = PSR_FILE;
+			ccs.hContact = ft->std.hContact;
+			ccs.wParam = 0;
+			ccs.lParam = ( LPARAM )&pre;
+			JCallService( MS_PROTO_CHAINRECV, 0, ( LPARAM )&ccs );
+			mir_free( szBlob );
+			mir_free( str2 );
+			mir_free( desc );
+		}
 	}
 	else {
 		// reject

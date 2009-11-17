@@ -18,9 +18,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include "aim.h"
 
-char**  CAimProto::getStatusMsgLoc( int status )
+char** CAimProto::getStatusMsgLoc(int status)
 {
-	static const int modes[] = {
+	static const int modes[] =
+	{
 		ID_STATUS_ONLINE,
 		ID_STATUS_AWAY,
 		ID_STATUS_DND, 
@@ -32,8 +33,8 @@ char**  CAimProto::getStatusMsgLoc( int status )
 		ID_STATUS_OUTTOLUNCH, 
 	};
 
-	for ( int i=0; i<9; i++ ) 
-		if ( modes[i] == status ) return &modeMsgs[i];
+	for (int i=0; i<9; i++) 
+		if (modes[i] == status) return &modeMsgs[i];
 
 	return NULL;
 }
@@ -95,7 +96,10 @@ int CAimProto::aim_set_statusmsg(HANDLE hServerConn,unsigned short &seqno,const 
 	aim_writesnac(0x01,0x1e,offset,buf);
 	aim_writetlv(0x1d,msgoffset,msgbuf,offset,buf);
 	
-	return aim_sendflap(hServerConn,0x02,offset,buf,seqno);
+	if(aim_sendflap(hServerConn,0x02,offset,buf,seqno)==0)
+		return 0;
+	else
+		return -1;
 }
 
 int CAimProto::aim_query_away_message(HANDLE hServerConn,unsigned short &seqno,const char* sn)

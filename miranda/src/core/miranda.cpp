@@ -63,8 +63,6 @@ pfnIsThemeActive isThemeActive;
 pfnDwmExtendFrameIntoClientArea dwmExtendFrameIntoClientArea;
 pfnDwmIsCompositionEnabled dwmIsCompositionEnabled;
 
-ITaskbarList3 * pTaskbarInterface;
-
 static DWORD MsgWaitForMultipleObjectsExWorkaround(DWORD nCount, const HANDLE *pHandles,
 	DWORD dwMsecs, DWORD dwWakeMask, DWORD dwFlags);
 
@@ -593,11 +591,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int )
 	    }
     }
 
-	OleInitialize(NULL);
-
-	if (IsWinVer7Plus())
-		CoCreateInstance(CLSID_TaskbarList, NULL, CLSCTX_ALL, IID_ITaskbarList3, (void**)&pTaskbarInterface);
-
 	InitialiseModularEngine();
 	ParseCommandLine();
 
@@ -665,11 +658,6 @@ exit:
 	CloseHandle(hMirandaShutdown);
 	CloseHandle(hThreadQueueEmpty);
 	DestroyWindow(hAPCWindow);
-
-	if (pTaskbarInterface)
-		pTaskbarInterface->Release();
-
-	OleUninitialize();
 
     if (hDwmApi) FreeLibrary(hDwmApi);
     if (hThemeAPI) FreeLibrary(hThemeAPI);

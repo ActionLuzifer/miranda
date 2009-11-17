@@ -699,6 +699,7 @@ void CYahooProto::ext_buddy_added(char *myid, char *who, char *group, int status
 		break;
 
 	case 1:  /* invalid ID? */
+	case 3:  /* invalid ID  */
 		if (hContact != NULL) {
 			ShowPopup( "Invalid Contact", "The id you tried to add is invalid.", NULL);
 			/* Make it TEMP first, we don't want to send any extra packets for FALSE ids */
@@ -1055,16 +1056,9 @@ void CYahooProto::ext_login_response(int succ, const char *url)
 	LOG(("[ext_login_response] succ: %d, url: %s", succ, url));
 	
 	if(succ == YAHOO_LOGIN_OK) {
-		const char *c;
-		
 		m_status = yahoo_current_status(m_id);
 		LOG(("logged in status-> %d", m_status));
 		
-		c = yahoo_get_pw_token(m_id);
-		
-		SetString(YAHOO_PWTOKEN, c);
-		
-		LOG(("PW Token-> %s", c));
 		return;
 	}
 	
@@ -1491,6 +1485,9 @@ void CYahooProto::ext_login(enum yahoo_status login_mode)
 							GetByte("YahooJapan",0) != 0 ? YAHOO_DEFAULT_JAPAN_LOGIN_SERVER :
 															YAHOO_DEFAULT_LOGIN_SERVER
 					);
+			//ShowError(Translate("Yahoo Login Error"), Translate("Please enter Yahoo server to Connect to in Options."));
+	
+			//return;
 		}
 	}
 	
@@ -1508,7 +1505,8 @@ void CYahooProto::ext_login(enum yahoo_status login_mode)
 	LOG(("Proxy Type: %d HTTP Gateway: %d", nlus.proxyType, iHTTPGateway));
 #endif
 
-	m_id = yahoo_init_with_attributes(m_yahoo_id, m_password, m_pw_token,
+	//m_id = yahoo_init(ylad->yahoo_id, ylad->password);
+	m_id = yahoo_init_with_attributes(m_yahoo_id, m_password, 
 		"pager_host", host,
 		"pager_port", port,
 		"filetransfer_host", fthost,

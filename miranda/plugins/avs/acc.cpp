@@ -40,6 +40,7 @@ void InternalDrawAvatar(AVATARDRAWREQUEST *r, HBITMAP hbm, LONG bmWidth, LONG bm
 #define GIF_DISPOSAL_BACKGROUND		2
 #define GIF_DISPOSAL_PREVIOUS		3
 
+
 typedef struct 
 {
 	HANDLE hContact;
@@ -55,7 +56,7 @@ typedef struct
 	BOOL respectHidden;
 	BOOL showingFlash;
 	BOOL resizeIfSmaller;
-	BOOL fAero;
+
 	BOOL showingAnimatedGif;
 
 	struct {
@@ -540,7 +541,6 @@ static LRESULT CALLBACK ACCWndProc(HWND hwnd, UINT msg,  WPARAM wParam, LPARAM l
 			data->showingFlash = FALSE;
 			data->resizeIfSmaller = TRUE;
 			data->showingAnimatedGif = FALSE;
-			data->fAero = FALSE;
 
 			return TRUE;
 		}
@@ -645,11 +645,6 @@ static LRESULT CALLBACK ACCWndProc(HWND hwnd, UINT msg,  WPARAM wParam, LPARAM l
 			Invalidate(hwnd);
 			return TRUE;
 		}
-
-		case AVATAR_SETAEROCOMPATDRAWING:
-			data->fAero = lParam;
-			return(TRUE);
-
 		case AVATAR_GETUSEDSPACE:
 		{
 			int *width = (int *)wParam;
@@ -795,7 +790,6 @@ static LRESULT CALLBACK ACCWndProc(HWND hwnd, UINT msg,  WPARAM wParam, LPARAM l
 					| (data->hContact != NULL ? 0 : AVDRQ_OWNPIC)
 					| (data->avatarBorderColor == -1 ? 0 : AVDRQ_DRAWBORDER)
 					| (data->avatarRoundCornerRadius <= 0 ? 0 : AVDRQ_ROUNDEDCORNER)
-					| (data->fAero ? AVDRQ_AERO : 0)
 					| (data->resizeIfSmaller ? 0 : AVDRQ_DONTRESIZEIFSMALLER);
 				avdrq.clrBorder = data->avatarBorderColor;
 				avdrq.radius = data->avatarRoundCornerRadius;

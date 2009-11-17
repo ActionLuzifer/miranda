@@ -184,6 +184,7 @@ void fnFreeCacheItem( ClcCacheEntryBase* p );
 
 /* clcfiledrop.c */
 void InitFileDropping(void);
+void FreeFileDropping(void);
 
 void   fnRegisterFileDropping ( HWND hwnd );
 void   fnUnregisterFileDropping ( HWND hwnd );

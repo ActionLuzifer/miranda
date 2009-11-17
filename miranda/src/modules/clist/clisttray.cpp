@@ -445,12 +445,6 @@ void fnTrayIconUpdateWithImageList(int iImage, const TCHAR *szNewTip, char *szPr
 {
 	HICON hIcon = ImageList_GetIcon(hCListImages, iImage, ILD_NORMAL);
 	cli.pfnTrayIconUpdate(hIcon, szNewTip, szPreferredProto, 0);
-	if (pTaskbarInterface)
-	{
-		wchar_t *szTip = mir_t2u(szNewTip);
-		pTaskbarInterface->SetOverlayIcon(cli.hwndContactList, hIcon, szTip);
-		mir_free(szTip);
-	}
 	DestroyIcon(hIcon);
 }
 
@@ -566,10 +560,6 @@ void fnTrayIconSetToBase(char *szPreferredProto)
 	int i;
 	initcheck;
 	lock;
-
-	if (pTaskbarInterface)
-		pTaskbarInterface->SetOverlayIcon(cli.hwndContactList, NULL, NULL);
-
 	for (i = 0; i < cli.trayIconCount; i++) {
 		if ( cli.trayIcon[i].id == 0 )
 			continue;

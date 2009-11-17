@@ -738,8 +738,11 @@ HWND __cdecl CJabberProto::SearchAdvanced( HWND hwndDlg )
 	XmlNodeIq iq( _T("set"), iqId, szServerName );
 	HXML query = iq << XQUERY( _T("jabber:iq:search"));
 	
-	if ( m_tszSelectedLang )
-		iq << XATTR( _T("xml:lang"), m_tszSelectedLang ); // i'm sure :)
+	TCHAR *szXmlLang = GetXmlLang();
+	if ( szXmlLang ) {
+		iq << XATTR( _T("xml:lang"), szXmlLang ); // i'm sure :)
+		mir_free( szXmlLang );
+	}
 
 	// next can be 2 cases:
 	// Forms: XEP-0055 Example 7
