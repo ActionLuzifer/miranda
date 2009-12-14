@@ -307,7 +307,7 @@ void CJabberProto::GetAvatarFileName( HANDLE hContact, char* pszDest, int cbLen 
 			str[ sizeof(str)-1 ] = 0;
 			JFreeVariant( &dbv );
 		}
-		else _i64toa(( LONG_PTR )hContact, str, 10 );
+		else _ltoa(( long )hContact, str, 10 );
 
 		char* hash = JabberSha1( str );
 		mir_snprintf( pszDest + tPathLen, MAX_PATH - tPathLen, "%s.%s", hash, szFileType );
@@ -541,10 +541,7 @@ void CJabberProto::UpdateMirVer(HANDLE hContact, JABBER_RESOURCE_STATUS *resourc
 {
 	TCHAR szMirVer[ 512 ];
 	FormatMirVer(resource, szMirVer, SIZEOF(szMirVer));
-	if ( szMirVer[0] )
-		JSetStringT( hContact, "MirVer", szMirVer );
-	else
-		JDeleteSetting( hContact, "MirVer" );
+	JSetStringT( hContact, "MirVer", szMirVer );
 
 	DBVARIANT dbv;
 	if ( !JGetStringT( hContact, "jid", &dbv )) {

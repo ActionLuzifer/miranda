@@ -5,7 +5,7 @@
 // Copyright © 2000-2001 Richard Hughes, Roland Rabien, Tristan Van de Vreede
 // Copyright © 2001-2002 Jon Keating, Richard Hughes
 // Copyright © 2002-2004 Martin Öberg, Sam Kothari, Robert Rainwater
-// Copyright © 2004-2009 Joe Kucera
+// Copyright © 2004-2008 Joe Kucera
 // 
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -37,8 +37,10 @@
 #ifndef __ICQ_DIRECT_H
 #define __ICQ_DIRECT_H
 
-struct filetransfer: public basic_filetransfer
+struct filetransfer
 {
+  cookie_message_data pMessage;
+  BYTE ft_magic;
   int status;
   int sending;
   int iCurrentFile;
@@ -52,7 +54,7 @@ struct filetransfer: public basic_filetransfer
   char *szSavePath;
   char *szThisFile;
   char *szThisSubdir;
-  char **pszFiles;
+  char **files;
   DWORD dwThisFileSize;
   DWORD dwThisFileDate;
   DWORD dwTotalSize;

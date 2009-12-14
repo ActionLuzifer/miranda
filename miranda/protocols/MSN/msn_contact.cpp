@@ -23,19 +23,29 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 HANDLE  CMsnProto::MSN_HContactFromEmail(const char* msnEmail, const char* msnNick, bool addIfNeeded, bool temporary)
 {
-	MsnContact *msc = Lists_Get(msnEmail);
-	if (msc && msc->hContact) return msc->hContact;
+	HANDLE hContact = (HANDLE)MSN_CallService(MS_DB_CONTACT_FINDFIRST, 0, 0);
+	while (hContact != NULL)
+	{
+		if (MSN_IsMyContact(hContact)) 
+		{
+			char tEmail[MSN_MAX_EMAIL_LEN];
+			if (!getStaticString(hContact, "e-mail", tEmail, sizeof(tEmail)))
+				if (!_stricmp(msnEmail, tEmail))
+					return hContact;
+		}
+
+		hContact = (HANDLE)MSN_CallService(MS_DB_CONTACT_FINDNEXT, (WPARAM)hContact, 0);
+	}
 
 	if (addIfNeeded)
 	{
-		HANDLE hContact = (HANDLE)MSN_CallService(MS_DB_CONTACT_ADD, 0, 0);
+		hContact = (HANDLE)MSN_CallService(MS_DB_CONTACT_ADD, 0, 0);
 		MSN_CallService(MS_PROTO_ADDTOCONTACT, (WPARAM)hContact, (LPARAM)m_szModuleName);
 		setString(hContact, "e-mail", msnEmail);
 		setStringUtf(hContact, "Nick", (char*)msnNick);
 		if (temporary)
 			DBWriteContactSettingByte(hContact, "CList", "NotOnList", 1);
 
-		Lists_Add(0, NETID_MSN, msnEmail, hContact);
 		return hContact;
 	}
 	return NULL;
@@ -140,7 +150,7 @@ bool CMsnProto::MSN_AddUser(HANDLE hContact, const char* email, int netId, int f
 				else
 					res = MSN_ABAddDelContactGroup(id , NULL, "ABContactDelete");
 				if (res) AddDelUserContList(email, flags, netId, true);
-
+				
 				deleteSetting(hContact, "GroupID");
 				deleteSetting(hContact, "ID");
 				MSN_RemoveEmptyGroups();
@@ -175,6 +185,13 @@ bool CMsnProto::MSN_AddUser(HANDLE hContact, const char* email, int netId, int f
 			if (res)
 			{
 				AddDelUserContList(email, flags, netId, false);
+
+				DBVARIANT dbv;
+				if (!DBGetContactSettingStringUtf(hContact, "CList", "Group", &dbv)) 
+				{
+					MSN_MoveContactToGroup(hContact, dbv.pszVal);
+					MSN_FreeVariant(&dbv);
+				}
 
 				char szContactID[100];
 				if (getStaticString(hContact, "ID", szContactID, sizeof(szContactID)) == 0)
@@ -234,8 +251,6 @@ void CMsnProto::MSN_FindYahooUser(const char* email)
 bool CMsnProto::MSN_RefreshContactList(void)
 {
 	Lists_Wipe();
-	Lists_Populate();
-
 	if (!MSN_SharingFindMembership()) return false;
 
 	if (m_iDesiredStatus == ID_STATUS_OFFLINE) return false;
@@ -247,7 +262,7 @@ bool CMsnProto::MSN_RefreshContactList(void)
 	MSN_CleanupLists();
 
 	if (m_iDesiredStatus == ID_STATUS_OFFLINE) return false;
-		
+
 	msnLoggedIn = true;
 
 	MSN_CreateContList();

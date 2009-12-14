@@ -46,11 +46,6 @@ INT_PTR CALLBACK FinishedPageProc(HWND hdlg,UINT message,WPARAM wParam,LPARAM lP
 // == GLOBAL VARIABLES ==
 // ======================
 
-extern int      cICQAccounts;
-extern char  ** szICQModuleName;
-extern TCHAR ** tszICQAccountName;
-extern int      iICQAccount;
-
 // =====================
 // == LOCAL VARIABLES ==
 // =====================

@@ -83,7 +83,7 @@ static void DisconnectAll()
 
 static int CluiIconsChanged(WPARAM, LPARAM)
 {
-	ImageList_ReplaceIcon_IconLibLoaded(himlMirandaIcon, 0, LoadSkinIcon( SKINICON_OTHER_MIRANDA ));
+	ImageList_ReplaceIcon_IconLibLoaded(himlMirandaIcon, 0, IsWinVer7Plus() ? LoadIcon(hMirandaInst, MAKEINTRESOURCE(IDI_MIRANDA)) : LoadSkinIcon( SKINICON_OTHER_MIRANDA ) );
 	DrawMenuBar(cli.hwndContactList);
 	return 0;
 }
@@ -301,7 +301,7 @@ int LoadCLUIModule(void)
 	wndclass.cbClsExtra = 0;
 	wndclass.cbWndExtra = 0;
 	wndclass.hInstance = cli.hInst;
-	wndclass.hIcon = LoadSkinIcon( SKINICON_OTHER_MIRANDA );
+	wndclass.hIcon = IsWinVer7Plus() ? LoadIcon(hMirandaInst, MAKEINTRESOURCE(IDI_MIRANDA)) : LoadSkinIcon( SKINICON_OTHER_MIRANDA );
 	wndclass.hCursor = LoadCursor(NULL, IDC_ARROW);
 	wndclass.hbrBackground = (HBRUSH) (COLOR_3DFACE + 1);
 	wndclass.lpszMenuName = MAKEINTRESOURCE(IDR_CLISTMENU);
@@ -315,21 +315,16 @@ int LoadCLUIModule(void)
 		DBFreeVariant(&dbv);
 	}
 
-	RECT pos;
-	pos.left = (int) DBGetContactSettingDword(NULL, "CList", "x", 700);
-	pos.top = (int) DBGetContactSettingDword(NULL, "CList", "y", 221);
-	pos.right = pos.left + (int) DBGetContactSettingDword(NULL, "CList", "Width", 108);
-	pos.bottom = pos.top + (int) DBGetContactSettingDword(NULL, "CList", "Height", 310);
-
-	Utils_AssertInsideScreen(&pos);
-
 	cli.hwndContactList = CreateWindowEx(
 		DBGetContactSettingByte(NULL, "CList", "ToolWindow", SETTING_TOOLWINDOW_DEFAULT) ? WS_EX_TOOLWINDOW : 0,
 		_T(MIRANDACLASS),
 		titleText,
 		(DBGetContactSettingByte(NULL, "CLUI", "ShowCaption", SETTING_SHOWCAPTION_DEFAULT) ?
 			WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX : 0) | WS_POPUPWINDOW | WS_THICKFRAME | WS_CLIPCHILDREN,
-		pos.left, pos.top, pos.right - pos.left, pos.bottom - pos.top,
+		(int) DBGetContactSettingDword(NULL, "CList", "x", 700),
+		(int) DBGetContactSettingDword(NULL, "CList", "y", 221),
+		(int) DBGetContactSettingDword(NULL, "CList", "Width", 108),
+		(int) DBGetContactSettingDword(NULL, "CList", "Height", 310),
 		NULL, NULL, cli.hInst, NULL);
 
 	if (DBGetContactSettingByte(NULL, "CList", "OnDesktop", 0)) {
@@ -980,7 +975,7 @@ LRESULT CALLBACK fnContactListWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM
 			LPDRAWITEMSTRUCT dis = (LPDRAWITEMSTRUCT) lParam;
 			if (dis->hwndItem == cli.hwndStatus) {
 				char *szProto = (char *) dis->itemData;
-				if (szProto == NULL) return 0;
+                if (szProto == NULL) return 0;
 				int status, x;
 				SIZE textSize;
 				BYTE showOpts = DBGetContactSettingByte(NULL, "CLUI", "SBarShow", 1);
@@ -992,7 +987,7 @@ LRESULT CALLBACK fnContactListWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM
 					DrawIconEx(dis->hDC, x, (dis->rcItem.top + dis->rcItem.bottom - g_IconHeight) >> 1, hIcon,
 						g_IconWidth, g_IconHeight, 0, NULL, DI_NORMAL);
 					IconLib_ReleaseIcon(hIcon,0);
-					if ( Proto_IsAccountLocked( Proto_GetAccount( szProto ))) {
+					if ( DBGetContactSettingByte( NULL, szProto, "LockMainStatus", 0 )) {
 						hIcon = LoadSkinnedIcon(SKINICON_OTHER_STATUS_LOCKED);
 						if (hIcon != NULL) {
 							DrawIconEx(dis->hDC, x, (dis->rcItem.top + dis->rcItem.bottom - g_IconHeight) >> 1, hIcon,

@@ -739,6 +739,7 @@ int null_snprintf(WCHAR *buffer, size_t count, const WCHAR *fmt, ...)
   return len;
 }
 
+
 char* __fastcall null_strdup(const char *string)
 {
 	if (string)
@@ -746,6 +747,24 @@ char* __fastcall null_strdup(const char *string)
 
 	return NULL;
 }
+
+
+char* __fastcall null_strcpy(char *dest, const char *src, size_t maxlen)
+{
+  if (!dest)
+    return NULL;
+
+  if (strlennull(src))
+  {
+    strncpy(dest, src, maxlen);
+    dest[maxlen] = '\0';
+  }
+  else
+    dest[0] = '\0';
+
+  return dest;
+}
+
 
 size_t __fastcall null_strcut(char *string, size_t maxlen)
 { // limit the string to max length (null & utf-8 strings ready)
@@ -765,6 +784,7 @@ size_t __fastcall null_strcut(char *string, size_t maxlen)
 
 	return len;
 }
+
 
 void parseServerAddress(char* szServer, WORD* wPort)
 {
@@ -1969,7 +1989,7 @@ char *ExtractFileName(const char *fullname)
 	return szFileName+1;  // skip backslash
 }
 
-char *FileNameToUtf(const TCHAR *filename)
+char *FileNameToUtf(const char *filename)
 {
 	#if defined( _UNICODE )
 		// reasonable only on NT systems
@@ -1981,17 +2001,27 @@ char *FileNameToUtf(const TCHAR *filename)
 
 		if (RealGetLongPathName)
 		{ // the function is available (it is not on old NT systems)
-			WCHAR *usFileName = NULL;
-			int wchars = RealGetLongPathName(filename, usFileName, 0);
+			WCHAR *unicode, *usFileName = NULL;
+			int wchars;
+
+			wchars = MultiByteToWideChar(CP_ACP, MB_PRECOMPOSED, filename,
+				strlennull(filename), NULL, 0);
+
+			unicode = (WCHAR*)_alloca((wchars + 1) * sizeof(WCHAR));
+			unicode[wchars] = 0;
+
+			MultiByteToWideChar(CP_ACP, MB_PRECOMPOSED, filename,
+				strlennull(filename), unicode, wchars);
+
+			wchars = RealGetLongPathName(unicode, usFileName, 0);
 			usFileName = (WCHAR*)_alloca((wchars + 1) * sizeof(WCHAR));
-			RealGetLongPathName(filename, usFileName, wchars);
+			RealGetLongPathName(unicode, usFileName, wchars);
 
 			return make_utf8_string(usFileName);
 		}
-		return make_utf8_string(filename);
-	#else
-		return ansi_to_utf8(filename);
 	#endif
+
+	return ansi_to_utf8(filename);
 }
 
 int FileStatUtf(const char *path, struct _stati64 *buffer)

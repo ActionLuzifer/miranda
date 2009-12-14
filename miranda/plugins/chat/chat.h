@@ -159,7 +159,7 @@ typedef struct  {
 typedef struct  MODULE_INFO_TYPE
 {
 	char*		pszModule;
-	TCHAR*		ptszModDispName;
+	char*		pszModDispName;
 	char*		pszHeader;
 	BOOL		bBold;
 	BOOL		bUnderline;

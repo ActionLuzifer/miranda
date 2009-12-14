@@ -29,15 +29,6 @@ void replaceStr(char*& dest, const char* src)
 	}	
 }
 
-void replaceStr(wchar_t*& dest, const wchar_t* src)
-{
-	if (src != NULL) 
-	{
-		mir_free(dest);
-		dest = mir_wstrdup(src);
-	}	
-}
-
 static TCHAR* a2tf(const TCHAR* str, bool unicode)
 {
 	if (str == NULL)
@@ -321,18 +312,21 @@ void stripColorCode(char* src)
 				if (isdigit(ps[3]))
 				{
 					ps += 3;
-					if (ps[0] == '1' && isdigit(ps[1]))
+					if (isdigit(ps[1]))
 					{
 						ps += 2;
-						if (ps[0] == ',' && isdigit(ps[1]))
-						{
-							ps += 2;
-							if (ps[0] == '1' && isdigit(ps[1]))
-								ps += 2;
-						}
 					}
 					else
 						++ps;
+
+						if (ps[0] == ',' && isdigit(ps[1]))
+						{
+							ps += 2;
+							if (isdigit(ps[1]))
+								ps += 2;
+						else
+							++ps;
+					}
 					continue;
 				}
 				else if (ps[3] == '#')

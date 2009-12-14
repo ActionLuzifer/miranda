@@ -68,13 +68,13 @@
 
 #define DEFAULT_SECURE_LOGIN        1
 #define DEFAULT_SECURE_CONNECTION   0
+#define DEFAULT_KEEPALIVE_ENABLED   1
 #define DEFAULT_AIM_ENABLED         1
 #define DEFAULT_UTF_ENABLED         2 // everything unicode is default
 #define DEFAULT_ANSI_CODEPAGE       CP_ACP
 #define DEFAULT_DCMSG_ENABLED       1 // passive dc messaging is default
 #define DEFAULT_TEMPVIS_ENABLED     1 // temporary visible is enabled by default
 #define DEFAULT_MTN_ENABLED         1
-#define DEFAULT_CAPS                0
 #define DEFAULT_AVATARS_ENABLED     1
 #define DEFAULT_LOAD_AVATARS        1
 #define DEFAULT_BIGGER_AVATARS      1
@@ -619,7 +619,7 @@
 
 // Internal Constants
 #define ICQ_PROTOCOL_NAME           LPGEN("ICQ")
-#define ICQ_PLUG_VERSION            0x80050102
+#define ICQ_PLUG_VERSION            0x0005000C
 #define ICQ_VERSION                 8         // Protocol version
 #define DC_TYPE                     DC_NORMAL // Used for DC settings
 #define MAX_CONTACTSSEND            15
