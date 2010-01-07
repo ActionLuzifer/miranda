@@ -238,7 +238,6 @@
 #define MTYPE_EEXPRESS              0x0E // Email express message (0xFE formatted)
 #define MTYPE_CONTACTS              0x13 // Contact list message
 #define MTYPE_PLUGIN                0x1A // Plugin message described by text string
-#define MTYPE_AUTOONLINE            0xE7 // Auto online message (internal only)
 #define MTYPE_AUTOAWAY              0xE8 // Auto away message
 #define MTYPE_AUTOBUSY              0xE9 // Auto occupied message
 #define MTYPE_AUTONA                0xEA // Auto not available message
@@ -620,7 +619,7 @@
 
 // Internal Constants
 #define ICQ_PROTOCOL_NAME           LPGEN("ICQ")
-#define ICQ_PLUG_VERSION            0x80050102
+#define ICQ_PLUG_VERSION            0x0005000C
 #define ICQ_VERSION                 8         // Protocol version
 #define DC_TYPE                     DC_NORMAL // Used for DC settings
 #define MAX_CONTACTSSEND            15

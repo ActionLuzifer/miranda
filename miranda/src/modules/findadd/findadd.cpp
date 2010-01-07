@@ -35,50 +35,6 @@ static HANDLE hHookModulesLoaded = 0;
 static HANDLE hMainMenuItem = NULL;
 static int OnSystemModulesLoaded(WPARAM wParam,LPARAM lParam);
 
-// FINDADD button tooltip handle
-static HWND hSearchTip = 0;
-// FINDADD button tooltip timer
-#define TIMERID_STACT  222
-
-// FINDADD search button tooltip create func
-int CreateSearchTip(HWND hwndDlg, HWND hwndParent, WCHAR* pszText)
-{
-	if ( !hwndDlg || !hwndParent ) 
-		return 1;
-	
-	if ( hSearchTip ) {
-		KillTimer(hwndDlg, TIMERID_STACT);
-		DestroyWindow(hSearchTip);
-	}
-
-	TOOLINFO ti = { 0 };
-
-	hSearchTip = CreateWindowEx(WS_EX_TOPMOST,
-		TOOLTIPS_CLASS,
-		NULL,
-		WS_POPUP | TTS_NOPREFIX | TTS_ALWAYSTIP,
-		CW_USEDEFAULT, CW_USEDEFAULT,
-		CW_USEDEFAULT, CW_USEDEFAULT,
-		hwndParent, NULL, hMirandaInst, NULL);
-
-	SetWindowPos(hSearchTip, HWND_TOPMOST, 0, 0, 0, 0,
-		SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
-
-	ti.cbSize = sizeof(TOOLINFO);
-	ti.uFlags = TTF_SUBCLASS | TTS_BALLOON;
-	ti.hwnd = hwndParent;
-	ti.hinst = hMirandaInst;
-	ti.lpszText = TranslateT("Press Ctrl + Search to add a contact without searching.");
-	GetClientRect(hwndParent, &ti.rect);
-
-	SendMessage(hSearchTip, TTM_ADDTOOL, 0, (LPARAM) (LPTOOLINFO) &ti);
-	SendMessage(hSearchTip, TTM_SETTITLE, 1, (LPARAM)TranslateT("Hint"));
-	if ( hSearchTip )
-		SetTimer(hwndDlg, TIMERID_STACT, 3000, NULL);
-
-	return 0;
-}
-
 void ListView_SetItemTextA( HWND hwndLV, int i, int iSubItem, char* pszText )
 {
 	LV_ITEMA _ms_lvi;
@@ -407,7 +363,7 @@ static INT_PTR CALLBACK DlgProcFindAdd(HWND hwndDlg, UINT msg, WPARAM wParam, LP
 					szProto = dbv.ptszVal;
 				
 				for( i=0, netProtoCount=0; i < accounts.getCount(); i++ ) {
-					if (!Proto_IsAccountEnabled( accounts[i] )) continue;
+                    if (!IsAccountEnabled(accounts[i])) continue;
 					DWORD caps = (DWORD)CallProtoService( accounts[i]->szModuleName, PS_GETCAPS, PFLAGNUM_1, 0 );
 					if (caps & PF1_BASICSEARCH || caps & PF1_EXTSEARCH || caps & PF1_SEARCHBYEMAIL || caps & PF1_SEARCHBYNAME)
 						netProtoCount++;
@@ -429,7 +385,7 @@ static INT_PTR CALLBACK DlgProcFindAdd(HWND hwndDlg, UINT msg, WPARAM wParam, LP
 				}
 				for( i=0; i < accounts.getCount(); i++ ) {
 					PROTOACCOUNT* pa = accounts[i];
-					if (!Proto_IsAccountEnabled(pa)) continue;
+                    if (!IsAccountEnabled(pa)) continue;
 					DWORD caps=(DWORD)CallProtoService( pa->szModuleName, PS_GETCAPS, PFLAGNUM_1, 0 );
 					if ( !(caps&PF1_BASICSEARCH) && !(caps&PF1_EXTSEARCH) && !(caps&PF1_SEARCHBYEMAIL) && !(caps&PF1_SEARCHBYNAME))
 						continue;
@@ -455,9 +411,6 @@ static INT_PTR CALLBACK DlgProcFindAdd(HWND hwndDlg, UINT msg, WPARAM wParam, LP
 			}
 			SendMessage(hwndDlg,M_SETGROUPVISIBILITIES,0,0);
 			Utils_RestoreWindowPosition(hwndDlg,NULL,"FindAdd","");
-
-			// FINDADD button tooltip INITIALIZE
-			CreateSearchTip(hwndDlg,GetDlgItem(hwndDlg,IDOK), TranslateT("Press Ctrl + Search to add a contact without searching."));
 			return TRUE;
 		}
 		case WM_SIZE:
@@ -516,7 +469,7 @@ static INT_PTR CALLBACK DlgProcFindAdd(HWND hwndDlg, UINT msg, WPARAM wParam, LP
 			if ( szProto == NULL ) {
 				for ( i=0; i < accounts.getCount(); i++ ) {
 					PROTOACCOUNT* pa = accounts[i];
-					if (!Proto_IsAccountEnabled(pa)) continue;
+                    if (!IsAccountEnabled(pa)) continue;
 					protoCaps=(DWORD)CallProtoService(pa->szModuleName,PS_GETCAPS,PFLAGNUM_1,0);
 					if(protoCaps&PF1_SEARCHBYEMAIL) dat->showEmail=1;
 					if(protoCaps&PF1_SEARCHBYNAME) dat->showName=1;
@@ -596,9 +549,6 @@ static INT_PTR CALLBACK DlgProcFindAdd(HWND hwndDlg, UINT msg, WPARAM wParam, LP
 				RenderThrobber(hdc,&rc,&dat->throbbing,&dat->pivot);
 				ReleaseDC(GetDlgItem(hwndDlg,IDC_STATUSBAR),hdc);
 			}
-			// FINDADD tolltip autoclose disable trick
-			if(IsWindow(hSearchTip))
-				KillTimer(hSearchTip, 4);
 			break;
 		case WM_DRAWITEM:
 		{	DRAWITEMSTRUCT *dis=(DRAWITEMSTRUCT*)lParam;
@@ -695,9 +645,7 @@ static INT_PTR CALLBACK DlgProcFindAdd(HWND hwndDlg, UINT msg, WPARAM wParam, LP
 					DestroyWindow(hwndDlg);
 					break;
 				case IDOK:
-				{	
-					// FINDADD button tooltip REinitialize
-					CreateSearchTip(hwndDlg,GetDlgItem(hwndDlg,IDOK), TranslateT("Press Ctrl + Search to add a contact without searching."));
+				{	char *szProto;
 
 					HideAdvancedSearchDlg(hwndDlg,dat);
 					if(dat->searchCount) {	 //cancel search
@@ -709,7 +657,7 @@ static INT_PTR CALLBACK DlgProcFindAdd(HWND hwndDlg, UINT msg, WPARAM wParam, LP
 						SetStatusBarSearchInfo(GetDlgItem(hwndDlg,IDC_STATUSBAR),dat);
 						break;
 					}
-					char *szProto=(char*)SendDlgItemMessage(hwndDlg,IDC_PROTOLIST,CB_GETITEMDATA,SendDlgItemMessage(hwndDlg,IDC_PROTOLIST,CB_GETCURSEL,0,0),0);
+					szProto=(char*)SendDlgItemMessage(hwndDlg,IDC_PROTOLIST,CB_GETITEMDATA,SendDlgItemMessage(hwndDlg,IDC_PROTOLIST,CB_GETCURSEL,0,0),0);
 					if(dat->search) {mir_free(dat->search); dat->search=NULL;}
 					dat->searchCount=0;
 					dat->hResultHook=HookEventMessage(ME_PROTO_ACK,hwndDlg,HM_SEARCHACK);
@@ -984,14 +932,6 @@ static INT_PTR CALLBACK DlgProcFindAdd(HWND hwndDlg, UINT msg, WPARAM wParam, LP
 			mir_free(dat);
 			Window_FreeIcon_IcoLib(hwndDlg);
 			Utils_SaveWindowPosition(hwndDlg,NULL,"FindAdd","");
-
-			// FINDADD tooltip timer destroying
-			if (hSearchTip) {
-				KillTimer(hwndDlg, TIMERID_STACT);
-				DestroyWindow(hSearchTip);
-				hSearchTip = 0;
-			}
-
 			break;
 	}
 	return FALSE;
@@ -1016,7 +956,7 @@ static INT_PTR FindAddCommand(WPARAM, LPARAM)
 		// that is not good either...
 		for ( i=0, netProtoCount=0; i < accounts.getCount(); i++ ) {
 			PROTOACCOUNT* pa = accounts[i];
-			if (!Proto_IsAccountEnabled(pa)) continue;
+            if (!IsAccountEnabled(pa)) continue;
 			int protoCaps=CallProtoService( pa->szModuleName, PS_GETCAPS, PFLAGNUM_1, 0 );
 			if ( protoCaps&PF1_BASICSEARCH || protoCaps&PF1_SEARCHBYEMAIL || protoCaps&PF1_SEARCHBYNAME
 				|| protoCaps&PF1_EXTSEARCHUI ) netProtoCount++;
@@ -1025,7 +965,6 @@ static INT_PTR FindAddCommand(WPARAM, LPARAM)
 			icce.dwSize=sizeof(icce);
 			icce.dwICC=ICC_USEREX_CLASSES;
 			InitCommonControlsEx(&icce);
-			
 			hwndFindAdd=CreateDialog(hMirandaInst, MAKEINTRESOURCE(IDD_FINDADD), NULL, DlgProcFindAdd);
 	}	}
 	return 0;

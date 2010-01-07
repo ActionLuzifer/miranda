@@ -257,9 +257,6 @@ char** CIcqProto::MirandaStatusToAwayMsg(int nStatus)
 int AwayMsgTypeToStatus(int nMsgType)
 {
 	switch (nMsgType) {
-  case MTYPE_AUTOONLINE:
-    return ID_STATUS_ONLINE;
-
 	case MTYPE_AUTOAWAY:
 		return ID_STATUS_AWAY;
 
@@ -1677,8 +1674,7 @@ BOOL CIcqProto::validateStatusMessageRequest(HANDLE hContact, WORD byMessageType
 	}
 
 	// Dont respond to request for other statuses than your current one
-	if ((byMessageType == MTYPE_AUTOONLINE && m_iStatus != ID_STATUS_ONLINE) ||
-    (byMessageType == MTYPE_AUTOAWAY && m_iStatus != ID_STATUS_AWAY) ||
+	if ((byMessageType == MTYPE_AUTOAWAY && m_iStatus != ID_STATUS_AWAY) ||
 		(byMessageType == MTYPE_AUTOBUSY && m_iStatus != ID_STATUS_OCCUPIED) ||
 		(byMessageType == MTYPE_AUTONA   && m_iStatus != ID_STATUS_NA) ||
 		(byMessageType == MTYPE_AUTODND  && m_iStatus != ID_STATUS_DND) ||
@@ -2004,7 +2000,7 @@ char *ExtractFileName(const char *fullname)
 	return szFileName+1;  // skip backslash
 }
 
-char *FileNameToUtf(const TCHAR *filename)
+char *FileNameToUtf(const char *filename)
 {
 	#if defined( _UNICODE )
 		// reasonable only on NT systems
@@ -2016,17 +2012,27 @@ char *FileNameToUtf(const TCHAR *filename)
 
 		if (RealGetLongPathName)
 		{ // the function is available (it is not on old NT systems)
-			WCHAR *usFileName = NULL;
-			int wchars = RealGetLongPathName(filename, usFileName, 0);
+			WCHAR *unicode, *usFileName = NULL;
+			int wchars;
+
+			wchars = MultiByteToWideChar(CP_ACP, MB_PRECOMPOSED, filename,
+				strlennull(filename), NULL, 0);
+
+			unicode = (WCHAR*)_alloca((wchars + 1) * sizeof(WCHAR));
+			unicode[wchars] = 0;
+
+			MultiByteToWideChar(CP_ACP, MB_PRECOMPOSED, filename,
+				strlennull(filename), unicode, wchars);
+
+			wchars = RealGetLongPathName(unicode, usFileName, 0);
 			usFileName = (WCHAR*)_alloca((wchars + 1) * sizeof(WCHAR));
-			RealGetLongPathName(filename, usFileName, wchars);
+			RealGetLongPathName(unicode, usFileName, wchars);
 
 			return make_utf8_string(usFileName);
 		}
-		return make_utf8_string(filename);
-	#else
-		return ansi_to_utf8(filename);
 	#endif
+
+	return ansi_to_utf8(filename);
 }
 
 int FileStatUtf(const char *path, struct _stati64 *buffer)

@@ -71,21 +71,17 @@ CLEAN :
 	-@erase "$(INTDIR)\jabber_libstr.obj"
 	-@erase "$(INTDIR)\jabber_list.obj"
 	-@erase "$(INTDIR)\jabber_menu.obj"
-	-@erase "$(INTDIR)\jabber_message_handlers.obj"
-	-@erase "$(INTDIR)\jabber_message_manager.obj"
 	-@erase "$(INTDIR)\jabber_misc.obj"
 	-@erase "$(INTDIR)\jabber_notes.obj"
 	-@erase "$(INTDIR)\jabber_opt.obj"
 	-@erase "$(INTDIR)\jabber_opttree.obj"
 	-@erase "$(INTDIR)\jabber_password.obj"
-	-@erase "$(INTDIR)\jabber_presence_manager.obj"
 	-@erase "$(INTDIR)\jabber_privacy.obj"
 	-@erase "$(INTDIR)\jabber_proto.obj"
 	-@erase "$(INTDIR)\jabber_proxy.obj"
 	-@erase "$(INTDIR)\jabber_rc.obj"
 	-@erase "$(INTDIR)\jabber_search.obj"
 	-@erase "$(INTDIR)\jabber_secur.obj"
-	-@erase "$(INTDIR)\jabber_send_manager.obj"
 	-@erase "$(INTDIR)\jabber_std.obj"
 	-@erase "$(INTDIR)\jabber_svc.obj"
 	-@erase "$(INTDIR)\jabber_thread.obj"
@@ -177,21 +173,17 @@ LINK32_OBJS= \
 	"$(INTDIR)\jabber_libstr.obj" \
 	"$(INTDIR)\jabber_list.obj" \
 	"$(INTDIR)\jabber_menu.obj" \
-	"$(INTDIR)\jabber_message_handlers.obj" \
-	"$(INTDIR)\jabber_message_manager.obj" \
 	"$(INTDIR)\jabber_misc.obj" \
 	"$(INTDIR)\jabber_notes.obj" \
 	"$(INTDIR)\jabber_opt.obj" \
 	"$(INTDIR)\jabber_opttree.obj" \
 	"$(INTDIR)\jabber_password.obj" \
-	"$(INTDIR)\jabber_presence_manager.obj" \
 	"$(INTDIR)\jabber_privacy.obj" \
 	"$(INTDIR)\jabber_proto.obj" \
 	"$(INTDIR)\jabber_proxy.obj" \
 	"$(INTDIR)\jabber_rc.obj" \
 	"$(INTDIR)\jabber_search.obj" \
 	"$(INTDIR)\jabber_secur.obj" \
-	"$(INTDIR)\jabber_send_manager.obj" \
 	"$(INTDIR)\jabber_std.obj" \
 	"$(INTDIR)\jabber_svc.obj" \
 	"$(INTDIR)\jabber_thread.obj" \
@@ -283,10 +275,6 @@ CLEAN :
 	-@erase "$(INTDIR)\jabber_list.sbr"
 	-@erase "$(INTDIR)\jabber_menu.obj"
 	-@erase "$(INTDIR)\jabber_menu.sbr"
-	-@erase "$(INTDIR)\jabber_message_handlers.obj"
-	-@erase "$(INTDIR)\jabber_message_handlers.sbr"
-	-@erase "$(INTDIR)\jabber_message_manager.obj"
-	-@erase "$(INTDIR)\jabber_message_manager.sbr"
 	-@erase "$(INTDIR)\jabber_misc.obj"
 	-@erase "$(INTDIR)\jabber_misc.sbr"
 	-@erase "$(INTDIR)\jabber_notes.obj"
@@ -297,8 +285,6 @@ CLEAN :
 	-@erase "$(INTDIR)\jabber_opttree.sbr"
 	-@erase "$(INTDIR)\jabber_password.obj"
 	-@erase "$(INTDIR)\jabber_password.sbr"
-	-@erase "$(INTDIR)\jabber_presence_manager.obj"
-	-@erase "$(INTDIR)\jabber_presence_manager.sbr"
 	-@erase "$(INTDIR)\jabber_privacy.obj"
 	-@erase "$(INTDIR)\jabber_privacy.sbr"
 	-@erase "$(INTDIR)\jabber_proto.obj"
@@ -311,8 +297,6 @@ CLEAN :
 	-@erase "$(INTDIR)\jabber_search.sbr"
 	-@erase "$(INTDIR)\jabber_secur.obj"
 	-@erase "$(INTDIR)\jabber_secur.sbr"
-	-@erase "$(INTDIR)\jabber_send_manager.obj"
-	-@erase "$(INTDIR)\jabber_send_manager.sbr"
 	-@erase "$(INTDIR)\jabber_std.obj"
 	-@erase "$(INTDIR)\jabber_std.sbr"
 	-@erase "$(INTDIR)\jabber_svc.obj"
@@ -415,21 +399,17 @@ BSC32_SBRS= \
 	"$(INTDIR)\jabber_libstr.sbr" \
 	"$(INTDIR)\jabber_list.sbr" \
 	"$(INTDIR)\jabber_menu.sbr" \
-	"$(INTDIR)\jabber_message_handlers.sbr" \
-	"$(INTDIR)\jabber_message_manager.sbr" \
 	"$(INTDIR)\jabber_misc.sbr" \
 	"$(INTDIR)\jabber_notes.sbr" \
 	"$(INTDIR)\jabber_opt.sbr" \
 	"$(INTDIR)\jabber_opttree.sbr" \
 	"$(INTDIR)\jabber_password.sbr" \
-	"$(INTDIR)\jabber_presence_manager.sbr" \
 	"$(INTDIR)\jabber_privacy.sbr" \
 	"$(INTDIR)\jabber_proto.sbr" \
 	"$(INTDIR)\jabber_proxy.sbr" \
 	"$(INTDIR)\jabber_rc.sbr" \
 	"$(INTDIR)\jabber_search.sbr" \
 	"$(INTDIR)\jabber_secur.sbr" \
-	"$(INTDIR)\jabber_send_manager.sbr" \
 	"$(INTDIR)\jabber_std.sbr" \
 	"$(INTDIR)\jabber_svc.sbr" \
 	"$(INTDIR)\jabber_thread.sbr" \
@@ -475,21 +455,17 @@ LINK32_OBJS= \
 	"$(INTDIR)\jabber_libstr.obj" \
 	"$(INTDIR)\jabber_list.obj" \
 	"$(INTDIR)\jabber_menu.obj" \
-	"$(INTDIR)\jabber_message_handlers.obj" \
-	"$(INTDIR)\jabber_message_manager.obj" \
 	"$(INTDIR)\jabber_misc.obj" \
 	"$(INTDIR)\jabber_notes.obj" \
 	"$(INTDIR)\jabber_opt.obj" \
 	"$(INTDIR)\jabber_opttree.obj" \
 	"$(INTDIR)\jabber_password.obj" \
-	"$(INTDIR)\jabber_presence_manager.obj" \
 	"$(INTDIR)\jabber_privacy.obj" \
 	"$(INTDIR)\jabber_proto.obj" \
 	"$(INTDIR)\jabber_proxy.obj" \
 	"$(INTDIR)\jabber_rc.obj" \
 	"$(INTDIR)\jabber_search.obj" \
 	"$(INTDIR)\jabber_secur.obj" \
-	"$(INTDIR)\jabber_send_manager.obj" \
 	"$(INTDIR)\jabber_std.obj" \
 	"$(INTDIR)\jabber_svc.obj" \
 	"$(INTDIR)\jabber_thread.obj" \
@@ -555,21 +531,17 @@ CLEAN :
 	-@erase "$(INTDIR)\jabber_libstr.obj"
 	-@erase "$(INTDIR)\jabber_list.obj"
 	-@erase "$(INTDIR)\jabber_menu.obj"
-	-@erase "$(INTDIR)\jabber_message_handlers.obj"
-	-@erase "$(INTDIR)\jabber_message_manager.obj"
 	-@erase "$(INTDIR)\jabber_misc.obj"
 	-@erase "$(INTDIR)\jabber_notes.obj"
 	-@erase "$(INTDIR)\jabber_opt.obj"
 	-@erase "$(INTDIR)\jabber_opttree.obj"
 	-@erase "$(INTDIR)\jabber_password.obj"
-	-@erase "$(INTDIR)\jabber_presence_manager.obj"
 	-@erase "$(INTDIR)\jabber_privacy.obj"
 	-@erase "$(INTDIR)\jabber_proto.obj"
 	-@erase "$(INTDIR)\jabber_proxy.obj"
 	-@erase "$(INTDIR)\jabber_rc.obj"
 	-@erase "$(INTDIR)\jabber_search.obj"
 	-@erase "$(INTDIR)\jabber_secur.obj"
-	-@erase "$(INTDIR)\jabber_send_manager.obj"
 	-@erase "$(INTDIR)\jabber_std.obj"
 	-@erase "$(INTDIR)\jabber_svc.obj"
 	-@erase "$(INTDIR)\jabber_thread.obj"
@@ -661,21 +633,17 @@ LINK32_OBJS= \
 	"$(INTDIR)\jabber_libstr.obj" \
 	"$(INTDIR)\jabber_list.obj" \
 	"$(INTDIR)\jabber_menu.obj" \
-	"$(INTDIR)\jabber_message_handlers.obj" \
-	"$(INTDIR)\jabber_message_manager.obj" \
 	"$(INTDIR)\jabber_misc.obj" \
 	"$(INTDIR)\jabber_notes.obj" \
 	"$(INTDIR)\jabber_opt.obj" \
 	"$(INTDIR)\jabber_opttree.obj" \
 	"$(INTDIR)\jabber_password.obj" \
-	"$(INTDIR)\jabber_presence_manager.obj" \
 	"$(INTDIR)\jabber_privacy.obj" \
 	"$(INTDIR)\jabber_proto.obj" \
 	"$(INTDIR)\jabber_proxy.obj" \
 	"$(INTDIR)\jabber_rc.obj" \
 	"$(INTDIR)\jabber_search.obj" \
 	"$(INTDIR)\jabber_secur.obj" \
-	"$(INTDIR)\jabber_send_manager.obj" \
 	"$(INTDIR)\jabber_std.obj" \
 	"$(INTDIR)\jabber_svc.obj" \
 	"$(INTDIR)\jabber_thread.obj" \
@@ -767,10 +735,6 @@ CLEAN :
 	-@erase "$(INTDIR)\jabber_list.sbr"
 	-@erase "$(INTDIR)\jabber_menu.obj"
 	-@erase "$(INTDIR)\jabber_menu.sbr"
-	-@erase "$(INTDIR)\jabber_message_handlers.obj"
-	-@erase "$(INTDIR)\jabber_message_handlers.sbr"
-	-@erase "$(INTDIR)\jabber_message_manager.obj"
-	-@erase "$(INTDIR)\jabber_message_manager.sbr"
 	-@erase "$(INTDIR)\jabber_misc.obj"
 	-@erase "$(INTDIR)\jabber_misc.sbr"
 	-@erase "$(INTDIR)\jabber_notes.obj"
@@ -781,8 +745,6 @@ CLEAN :
 	-@erase "$(INTDIR)\jabber_opttree.sbr"
 	-@erase "$(INTDIR)\jabber_password.obj"
 	-@erase "$(INTDIR)\jabber_password.sbr"
-	-@erase "$(INTDIR)\jabber_presence_manager.obj"
-	-@erase "$(INTDIR)\jabber_presence_manager.sbr"
 	-@erase "$(INTDIR)\jabber_privacy.obj"
 	-@erase "$(INTDIR)\jabber_privacy.sbr"
 	-@erase "$(INTDIR)\jabber_proto.obj"
@@ -795,8 +757,6 @@ CLEAN :
 	-@erase "$(INTDIR)\jabber_search.sbr"
 	-@erase "$(INTDIR)\jabber_secur.obj"
 	-@erase "$(INTDIR)\jabber_secur.sbr"
-	-@erase "$(INTDIR)\jabber_send_manager.obj"
-	-@erase "$(INTDIR)\jabber_send_manager.sbr"
 	-@erase "$(INTDIR)\jabber_std.obj"
 	-@erase "$(INTDIR)\jabber_std.sbr"
 	-@erase "$(INTDIR)\jabber_svc.obj"
@@ -899,21 +859,17 @@ BSC32_SBRS= \
 	"$(INTDIR)\jabber_libstr.sbr" \
 	"$(INTDIR)\jabber_list.sbr" \
 	"$(INTDIR)\jabber_menu.sbr" \
-	"$(INTDIR)\jabber_message_handlers.sbr" \
-	"$(INTDIR)\jabber_message_manager.sbr" \
 	"$(INTDIR)\jabber_misc.sbr" \
 	"$(INTDIR)\jabber_notes.sbr" \
 	"$(INTDIR)\jabber_opt.sbr" \
 	"$(INTDIR)\jabber_opttree.sbr" \
 	"$(INTDIR)\jabber_password.sbr" \
-	"$(INTDIR)\jabber_presence_manager.sbr" \
 	"$(INTDIR)\jabber_privacy.sbr" \
 	"$(INTDIR)\jabber_proto.sbr" \
 	"$(INTDIR)\jabber_proxy.sbr" \
 	"$(INTDIR)\jabber_rc.sbr" \
 	"$(INTDIR)\jabber_search.sbr" \
 	"$(INTDIR)\jabber_secur.sbr" \
-	"$(INTDIR)\jabber_send_manager.sbr" \
 	"$(INTDIR)\jabber_std.sbr" \
 	"$(INTDIR)\jabber_svc.sbr" \
 	"$(INTDIR)\jabber_thread.sbr" \
@@ -959,21 +915,17 @@ LINK32_OBJS= \
 	"$(INTDIR)\jabber_libstr.obj" \
 	"$(INTDIR)\jabber_list.obj" \
 	"$(INTDIR)\jabber_menu.obj" \
-	"$(INTDIR)\jabber_message_handlers.obj" \
-	"$(INTDIR)\jabber_message_manager.obj" \
 	"$(INTDIR)\jabber_misc.obj" \
 	"$(INTDIR)\jabber_notes.obj" \
 	"$(INTDIR)\jabber_opt.obj" \
 	"$(INTDIR)\jabber_opttree.obj" \
 	"$(INTDIR)\jabber_password.obj" \
-	"$(INTDIR)\jabber_presence_manager.obj" \
 	"$(INTDIR)\jabber_privacy.obj" \
 	"$(INTDIR)\jabber_proto.obj" \
 	"$(INTDIR)\jabber_proxy.obj" \
 	"$(INTDIR)\jabber_rc.obj" \
 	"$(INTDIR)\jabber_search.obj" \
 	"$(INTDIR)\jabber_secur.obj" \
-	"$(INTDIR)\jabber_send_manager.obj" \
 	"$(INTDIR)\jabber_std.obj" \
 	"$(INTDIR)\jabber_svc.obj" \
 	"$(INTDIR)\jabber_thread.obj" \
@@ -1844,62 +1796,6 @@ CPP_SWITCHES=/nologo /MDd /W3 /Gm /GX /ZI /Od /I "../../include" /D "WIN32" /D "
 
 !ENDIF 
 
-SOURCE=.\jabber_message_handlers.cpp
-
-!IF  "$(CFG)" == "jabberg - Win32 Release"
-
-
-"$(INTDIR)\jabber_message_handlers.obj" : $(SOURCE) "$(INTDIR)" "$(INTDIR)\jabber.pch"
-
-
-!ELSEIF  "$(CFG)" == "jabberg - Win32 Debug"
-
-
-"$(INTDIR)\jabber_message_handlers.obj"	"$(INTDIR)\jabber_message_handlers.sbr" : $(SOURCE) "$(INTDIR)" "$(INTDIR)\jabber.pch"
-
-
-!ELSEIF  "$(CFG)" == "jabberg - Win32 Release Unicode"
-
-
-"$(INTDIR)\jabber_message_handlers.obj" : $(SOURCE) "$(INTDIR)" "$(INTDIR)\jabber.pch"
-
-
-!ELSEIF  "$(CFG)" == "jabberg - Win32 Debug Unicode"
-
-
-"$(INTDIR)\jabber_message_handlers.obj"	"$(INTDIR)\jabber_message_handlers.sbr" : $(SOURCE) "$(INTDIR)" "$(INTDIR)\jabber.pch"
-
-
-!ENDIF 
-
-SOURCE=.\jabber_message_manager.cpp
-
-!IF  "$(CFG)" == "jabberg - Win32 Release"
-
-
-"$(INTDIR)\jabber_message_manager.obj" : $(SOURCE) "$(INTDIR)" "$(INTDIR)\jabber.pch"
-
-
-!ELSEIF  "$(CFG)" == "jabberg - Win32 Debug"
-
-
-"$(INTDIR)\jabber_message_manager.obj"	"$(INTDIR)\jabber_message_manager.sbr" : $(SOURCE) "$(INTDIR)" "$(INTDIR)\jabber.pch"
-
-
-!ELSEIF  "$(CFG)" == "jabberg - Win32 Release Unicode"
-
-
-"$(INTDIR)\jabber_message_manager.obj" : $(SOURCE) "$(INTDIR)" "$(INTDIR)\jabber.pch"
-
-
-!ELSEIF  "$(CFG)" == "jabberg - Win32 Debug Unicode"
-
-
-"$(INTDIR)\jabber_message_manager.obj"	"$(INTDIR)\jabber_message_manager.sbr" : $(SOURCE) "$(INTDIR)" "$(INTDIR)\jabber.pch"
-
-
-!ENDIF 
-
 SOURCE=.\jabber_misc.cpp
 
 !IF  "$(CFG)" == "jabberg - Win32 Release"
@@ -2088,34 +1984,6 @@ CPP_SWITCHES=/nologo /MDd /W3 /Gm /GX /ZI /Od /I "../../include" /D "WIN32" /D "
 
 !ENDIF 
 
-SOURCE=.\jabber_presence_manager.cpp
-
-!IF  "$(CFG)" == "jabberg - Win32 Release"
-
-
-"$(INTDIR)\jabber_presence_manager.obj" : $(SOURCE) "$(INTDIR)" "$(INTDIR)\jabber.pch"
-
-
-!ELSEIF  "$(CFG)" == "jabberg - Win32 Debug"
-
-
-"$(INTDIR)\jabber_presence_manager.obj"	"$(INTDIR)\jabber_presence_manager.sbr" : $(SOURCE) "$(INTDIR)" "$(INTDIR)\jabber.pch"
-
-
-!ELSEIF  "$(CFG)" == "jabberg - Win32 Release Unicode"
-
-
-"$(INTDIR)\jabber_presence_manager.obj" : $(SOURCE) "$(INTDIR)" "$(INTDIR)\jabber.pch"
-
-
-!ELSEIF  "$(CFG)" == "jabberg - Win32 Debug Unicode"
-
-
-"$(INTDIR)\jabber_presence_manager.obj"	"$(INTDIR)\jabber_presence_manager.sbr" : $(SOURCE) "$(INTDIR)" "$(INTDIR)\jabber.pch"
-
-
-!ENDIF 
-
 SOURCE=.\jabber_privacy.cpp
 
 !IF  "$(CFG)" == "jabberg - Win32 Release"
@@ -2296,34 +2164,6 @@ SOURCE=.\jabber_secur.cpp
 
 
 "$(INTDIR)\jabber_secur.obj"	"$(INTDIR)\jabber_secur.sbr" : $(SOURCE) "$(INTDIR)" "$(INTDIR)\jabber.pch"
-
-
-!ENDIF 
-
-SOURCE=.\jabber_send_manager.cpp
-
-!IF  "$(CFG)" == "jabberg - Win32 Release"
-
-
-"$(INTDIR)\jabber_send_manager.obj" : $(SOURCE) "$(INTDIR)" "$(INTDIR)\jabber.pch"
-
-
-!ELSEIF  "$(CFG)" == "jabberg - Win32 Debug"
-
-
-"$(INTDIR)\jabber_send_manager.obj"	"$(INTDIR)\jabber_send_manager.sbr" : $(SOURCE) "$(INTDIR)" "$(INTDIR)\jabber.pch"
-
-
-!ELSEIF  "$(CFG)" == "jabberg - Win32 Release Unicode"
-
-
-"$(INTDIR)\jabber_send_manager.obj" : $(SOURCE) "$(INTDIR)" "$(INTDIR)\jabber.pch"
-
-
-!ELSEIF  "$(CFG)" == "jabberg - Win32 Debug Unicode"
-
-
-"$(INTDIR)\jabber_send_manager.obj"	"$(INTDIR)\jabber_send_manager.sbr" : $(SOURCE) "$(INTDIR)" "$(INTDIR)\jabber.pch"
 
 
 !ENDIF 

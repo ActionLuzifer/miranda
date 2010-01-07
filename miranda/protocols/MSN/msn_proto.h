@@ -30,15 +30,15 @@ typedef INT_PTR (__cdecl CMsnProto::*MsnServiceFuncParam)(WPARAM, LPARAM, LPARAM
 
 struct CMsnProto : public PROTO_INTERFACE
 {
-	CMsnProto(const char*, const TCHAR*);
-	~CMsnProto();
+		CMsnProto(const char*, const TCHAR*);
+		~CMsnProto();
 
-	__inline void* operator new(size_t size)
-	{	return calloc(1, size);
-	}
-	__inline void operator delete(void* p)
-	{	free(p);
-	}
+		__inline void* operator new(size_t size)
+		{	return calloc(1, size);
+		}
+		__inline void operator delete(void* p)
+		{	free(p);
+		}
 
 	//====================================================================================
 	// PROTO_INTERFACE
@@ -54,10 +54,10 @@ struct CMsnProto : public PROTO_INTERFACE
 
 	virtual	HANDLE    __cdecl ChangeInfo(int iInfoType, void* pInfoData);
 
-	virtual	HANDLE    __cdecl FileAllow(HANDLE hContact, HANDLE hTransfer, const PROTOCHAR* szPath);
+	virtual	HANDLE    __cdecl FileAllow(HANDLE hContact, HANDLE hTransfer, const char* szPath);
 	virtual	int       __cdecl FileCancel(HANDLE hContact, HANDLE hTransfer);
-	virtual	int       __cdecl FileDeny(HANDLE hContact, HANDLE hTransfer, const PROTOCHAR* szReason);
-	virtual	int       __cdecl FileResume(HANDLE hTransfer, int* action, const PROTOCHAR** szFilename);
+	virtual	int       __cdecl FileDeny(HANDLE hContact, HANDLE hTransfer, const char* szReason);
+	virtual	int       __cdecl FileResume(HANDLE hTransfer, int* action, const char** szFilename);
 
 	virtual	DWORD_PTR __cdecl GetCaps(int type, HANDLE hContact = NULL);
 	virtual	HICON     __cdecl GetIcon(int iconIndex);
@@ -70,12 +70,12 @@ struct CMsnProto : public PROTO_INTERFACE
 	virtual	HWND      __cdecl CreateExtendedSearchUI(HWND owner);
 
 	virtual	int       __cdecl RecvContacts(HANDLE hContact, PROTORECVEVENT*);
-	virtual	int       __cdecl RecvFile(HANDLE hContact, PROTOFILEEVENT*);
+	virtual	int       __cdecl RecvFile(HANDLE hContact, PROTORECVFILE*);
 	virtual	int       __cdecl RecvMsg(HANDLE hContact, PROTORECVEVENT*);
 	virtual	int       __cdecl RecvUrl(HANDLE hContact, PROTORECVEVENT*);
 
 	virtual	int       __cdecl SendContacts(HANDLE hContact, int flags, int nContacts, HANDLE* hContactsList);
-	virtual	HANDLE    __cdecl SendFile(HANDLE hContact, const PROTOCHAR* szDescription, PROTOCHAR** ppszFiles);
+	virtual	HANDLE    __cdecl SendFile(HANDLE hContact, const char* szDescription, char** ppszFiles);
 	virtual	int       __cdecl SendMsg(HANDLE hContact, int flags, const char* msg);
 	virtual	int       __cdecl SendUrl(HANDLE hContact, int flags, const char* url);
 
@@ -159,7 +159,7 @@ struct CMsnProto : public PROTO_INTERFACE
 	int msnPingTimeout;
 	HANDLE hKeepAliveThreadEvt;
 
-	char*    msnModeMsgs[MSN_NUM_MODES];
+	char*    msnModeMsgs[ MSN_NUM_MODES ];
 
 	LISTENINGTOINFO     msnCurrentMedia;
 	MYOPTIONS			MyOptions;
@@ -253,8 +253,8 @@ struct CMsnProto : public PROTO_INTERFACE
 	HANDLE mainMenuRoot;
 	HANDLE hBlockMenuItem;
 	HANDLE hOpenInboxMenuItem;
-	HANDLE menuItems[1];
-	HANDLE menuItemsAll[7];
+	HANDLE menuItems[ 1 ];
+	HANDLE menuItemsAll[ 7 ];
 
 	void MsnInitMenus(void);
 	void MsnUninitMenus(void);
@@ -424,16 +424,13 @@ struct CMsnProto : public PROTO_INTERFACE
 	/////////////////////////////////////////////////////////////////////////////////////////
 	//	MSN contact list
 
-	int		 Lists_Add(int list, int netId, const char* email, HANDLE hContact = NULL, const char* invite = NULL);
+	int		 Lists_Add(int list, int netId, const char* email, const char* invite = NULL);
 	bool	 Lists_IsInList(int list, const char* email);
+	char*	 Lists_GetInvite(const char* email);
 	int		 Lists_GetMask(const char* email);
 	int		 Lists_GetNetId(const char* email);
 	void	 Lists_Remove(int list, const char* email);
-	void	 Lists_Populate(void);
 	void	 Lists_Wipe(void);
-
-	MsnContact* Lists_Get(const char* email);
-	MsnContact* Lists_GetNext(int& i);
 
 	void     Lists_Init(void);
 	void     Lists_Uninit(void);

@@ -141,23 +141,24 @@ void CMsnProto::sttInviteMessage(ThreadData* info, char* msgBody, char* email, c
 		filetransfer* ft = info->mMsnFtp = new filetransfer(this);
 
 		ft->std.hContact = MSN_HContactFromEmail(email, nick, true, true);
-		mir_free(ft->std.tszCurrentFile);
-		ft->std.tszCurrentFile = mir_utf8decodeT(Appfile);
+		replaceStr(ft->std.currentFile, Appfile);
+		mir_utf8decode(ft->std.currentFile, &ft->wszFileName);
 		ft->fileId = -1;
-		ft->std.totalBytes = ft->std.currentFileSize = _atoi64(Appfilesize);
+		ft->std.currentFileSize = atol(Appfilesize);
+		ft->std.totalBytes = atol(Appfilesize);
 		ft->std.totalFiles = 1;
 		ft->szInvcookie = mir_strdup(Invcookie);
 
-		size_t tFileNameLen = strlen(Appfile);
+		size_t tFileNameLen = strlen(ft->std.currentFile);
 		char tComment[40];
-		int tCommentLen = mir_snprintf(tComment, sizeof(tComment), "%I64u bytes", ft->std.currentFileSize);
+		int tCommentLen = mir_snprintf(tComment, sizeof(tComment), "%lu bytes", ft->std.currentFileSize);
 		char* szBlob = (char*)mir_alloc(sizeof(DWORD) + tFileNameLen + tCommentLen + 2);
 		*(PDWORD)szBlob = 0;
-		strcpy(szBlob + sizeof(DWORD), Appfile);
+		strcpy(szBlob + sizeof(DWORD), ft->std.currentFile);
 		strcpy(szBlob + sizeof(DWORD) + tFileNameLen + 1, tComment);
 
 		PROTORECVEVENT pre;
-		pre.flags = PREF_UTF;
+		pre.flags = 0;
 		pre.timestamp = (DWORD)time(NULL);
 		pre.szMessage = (char*)szBlob;
 		pre.lParam = (LPARAM)ft;
@@ -319,9 +320,8 @@ void CMsnProto::sttCustomSmiley(const char* msgBody, char* email, char* nick, in
 			UrlEncode(buf, smileyName, rlen*3);
 			mir_free(buf);
 
-			char path[MAX_PATH];
-			MSN_GetCustomSmileyFileName(hContact, path, SIZEOF(path), smileyName, iSmileyType);
-			ft->std.tszCurrentFile = mir_a2t(path);
+			ft->std.currentFile = (char*)mir_alloc(MAX_PATH);
+			MSN_GetCustomSmileyFileName(hContact, ft->std.currentFile, MAX_PATH, smileyName, iSmileyType);
 			mir_free(smileyName);
 
 			if (p2p_IsDlFileOk(ft))
@@ -702,10 +702,8 @@ void CMsnProto::sttProcessAdd(char* buf, size_t len)
 
 			MSN_AddUser(NULL, szEmail, netId, listId);
 
-			MsnContact* msc = Lists_Get(szEmail);
-
-			if (listId == LIST_RL && !(msc->list & (LIST_FL | LIST_AL | LIST_BL)))
-				MSN_AddAuthRequest(szEmail, szNick, msc->invite);
+			if (listId == LIST_RL && !(Lists_GetMask(szEmail) & (LIST_FL | LIST_AL | LIST_BL)))
+				MSN_AddAuthRequest(szEmail, szNick, Lists_GetInvite(szEmail));
 
 			cont = ezxml_next(cont);
 		}
@@ -732,11 +730,13 @@ void CMsnProto::sttProcessRemove(char* buf, size_t len)
 			mir_snprintf(szEmail, sizeof(szEmail), "%s@%s", szCont, szDom);
 			Lists_Remove(listId, szEmail);
 
-			MsnContact* msc = Lists_Get(szEmail);
-			if (msc == NULL || (msc->list & (LIST_RL | LIST_FL | LIST_LL)) == 0) 
+			listId = Lists_GetMask(szEmail);
+
+			if ((listId & (LIST_RL | LIST_FL)) == 0) 
 			{
-				if (msc->hContact && strcmp(szEmail, MyOptions.szEmail))
-					MSN_CallService(MS_DB_CONTACT_DELETE, (WPARAM)msc->hContact, 0);
+				HANDLE hContact = MSN_HContactFromEmail(szEmail, NULL, false, false);
+				if (strcmp(szEmail, MyOptions.szEmail))
+					MSN_CallService(MS_DB_CONTACT_DELETE, (WPARAM)hContact, 0);
 			}
 
 			cont = ezxml_next(cont);
@@ -1167,16 +1167,18 @@ LBL_InvalidCommand:
 			if (m_iStatus == ID_STATUS_OFFLINE) return 1;
 			if (oldMode <= ID_STATUS_OFFLINE)
 			{
-				int count = -1;
-				for (;;)
+				HANDLE hContact = (HANDLE)MSN_CallService(MS_DB_CONTACT_FINDFIRST, 0, 0);
+				while (hContact != NULL)
 				{
-					MsnContact *msc = Lists_GetNext(count);
-					if (msc == NULL) break;
-
-					if (strncmp(msc->email, "tel:", 4) == 0)
+					if (MSN_IsMyContact(hContact)) 
 					{
-						setWord(msc->hContact, "Status", ID_STATUS_ONTHEPHONE);
+						char tEmail[MSN_MAX_EMAIL_LEN];
+						if (getStaticString(hContact, "e-mail", tEmail, sizeof(tEmail)) == 0 && strncmp(tEmail, "tel:", 4) == 0)
+						{
+							setWord(hContact, "Status", ID_STATUS_ONTHEPHONE);
+						}
 					}
+					hContact = (HANDLE)MSN_CallService(MS_DB_CONTACT_FINDNEXT, (WPARAM)hContact, 0);
 				}	
 			}			
 			if (m_iStatus != ID_STATUS_IDLE)

@@ -63,10 +63,11 @@ struct NetlibConnection {
 	HANDLE hOkToCloseEvent;
 	LONG dontCloseNow;
 	struct NetlibNestedCriticalSection ncsSend,ncsRecv;
+	HANDLE hNtlmSecurity;
 	HSSL hSsl;
 	struct NetlibHTTPProxyPacketQueue * pHttpProxyPacketQueue;
 	int pollingTimeout;
-	NETLIBOPENCONNECTION nloc;
+	char* szHost;
 };
 
 struct NetlibBoundPort {
@@ -130,7 +131,6 @@ void NetlibLogShutdown(void);
 DWORD DnsLookup(struct NetlibUser *nlu,const char *szHost);
 int WaitUntilReadable(SOCKET s,DWORD dwTimeout);
 int WaitUntilWritable(SOCKET s,DWORD dwTimeout);
-bool NetlibReconnect(NetlibConnection *nlc);
 INT_PTR NetlibOpenConnection(WPARAM wParam,LPARAM lParam);
 INT_PTR NetlibStartSsl(WPARAM wParam, LPARAM lParam);
 
@@ -164,10 +164,9 @@ void NetlibUPnPDestroy(void);
 //netlibsecurity.c
 void   NetlibSecurityInit(void);
 void   NetlibSecurityDestroy(void);
-void   NetlibDestroySecurityProvider(HANDLE hSecurity);
-HANDLE NetlibInitSecurityProvider(const TCHAR* szProvider, const TCHAR* szPrincipal);
-char*  NtlmCreateResponseFromChallenge(HANDLE hSecurity, const char *szChallenge, const TCHAR* login, const TCHAR* psw, 
-									   bool http, unsigned& complete);
+void   NetlibDestroySecurityProvider(char* provider, HANDLE hSecurity);
+HANDLE NetlibInitSecurityProvider(char* provider);
+char*  NtlmCreateResponseFromChallenge(HANDLE hSecurity, char *szChallenge, const char* login, const char* psw);
 
 
 static __inline INT_PTR NLSend(struct NetlibConnection *nlc,const char *buf,int len,int flags) {

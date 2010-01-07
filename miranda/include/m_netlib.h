@@ -715,14 +715,6 @@ static __inline INT_PTR Netlib_Logf(HANDLE hUser,const char *fmt,...)
 /////////////////////////////////////////////////////////////////////////////////////////
 // Security providers (0.6+)
 
-#define NNR_UNICODE 1
-
-#ifdef UNICODE 
-#define NNR_TCHAR 1
-#else
-#define NNR_TCHAR 0
-#endif
-
 // Inits a required security provider. Right now only NTLM is supported
 // Returns HANDLE = NULL on error or non-null value on success
 #define MS_NETLIB_INITSECURITYPROVIDER "Netlib/InitSecurityProvider"
@@ -731,23 +723,6 @@ static __inline HANDLE Netlib_InitSecurityProvider( char* szProviderName )
 {
 	return (HANDLE)CallService( MS_NETLIB_INITSECURITYPROVIDER, 0, (LPARAM)szProviderName );
 }
-
-typedef struct {
-	size_t cbSize;
-	const TCHAR* szProviderName;
-	const TCHAR* szPrincipal;
-	unsigned flags;
-}
-	NETLIBNTLMINIT2;
-
-#define MS_NETLIB_INITSECURITYPROVIDER2 "Netlib/InitSecurityProvider2"
-
-static __inline HANDLE Netlib_InitSecurityProvider2( const TCHAR* szProviderName, const TCHAR* szPrincipal )
-{
-	NETLIBNTLMINIT2 temp = { sizeof(temp), szProviderName, szPrincipal, NNR_TCHAR };
-	return (HANDLE)CallService( MS_NETLIB_INITSECURITYPROVIDER2, 0, (LPARAM)&temp );
-}
-
 
 // Destroys a security provider's handle, provided by Netlib_InitSecurityProvider.
 // Right now only NTLM is supported
@@ -759,40 +734,19 @@ static __inline void Netlib_DestroySecurityProvider( char* szProviderName, HANDL
 }
 
 // Returns the NTLM response string. The result value should be freed using mir_free
+#define MS_NETLIB_NTLMCREATERESPONSE "Netlib/NtlmCreateResponse"
 
 typedef struct {
-	char* szChallenge;
+   char* szChallenge;
 	char* userName;
 	char* password;
 }
 	NETLIBNTLMREQUEST;
 
-#define MS_NETLIB_NTLMCREATERESPONSE "Netlib/NtlmCreateResponse"
-
 static __inline char* Netlib_NtlmCreateResponse( HANDLE hProvider, char* szChallenge, char* login, char* psw )
 {
 	NETLIBNTLMREQUEST temp = { szChallenge, login, psw };
 	return (char*)CallService( MS_NETLIB_NTLMCREATERESPONSE, (WPARAM)hProvider, (LPARAM)&temp );
-}
-
-typedef struct {
-	size_t cbSize;
-	const char* szChallenge;
-	const TCHAR* szUserName;
-	const TCHAR* szPassword;
-	unsigned complete;
-	unsigned flags;
-}
-	NETLIBNTLMREQUEST2;
-
-#define MS_NETLIB_NTLMCREATERESPONSE2 "Netlib/NtlmCreateResponse2"
-
-static __inline char* Netlib_NtlmCreateResponse2( HANDLE hProvider, char* szChallenge, TCHAR* szLogin, TCHAR* szPass, unsigned *complete )
-{
-	NETLIBNTLMREQUEST2 temp = { sizeof(temp), szChallenge, szLogin, szPass, 0, NNR_TCHAR };
-	char* res = (char*)CallService( MS_NETLIB_NTLMCREATERESPONSE2, (WPARAM)hProvider, (LPARAM)&temp );
-	*complete = temp.complete;
-	return res;
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////

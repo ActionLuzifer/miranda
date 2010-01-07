@@ -28,8 +28,7 @@ static HANDLE hServiceParseLink;
 static HANDLE GetContact(char *arg, char **email, CMsnProto *proto)
 {
 	*email = NULL;
-	do 
-	{
+	do {
 		char *tok = strchr(arg, '&'); /* next token */
 		if (tok != NULL) *tok++ = '\0';
 
@@ -40,8 +39,7 @@ static HANDLE GetContact(char *arg, char **email, CMsnProto *proto)
 			*email = arg;
 		}
 		arg = tok;
-	} 
-	while(arg != NULL);
+	} while(arg != NULL);
 
 	if (*email == NULL || **email == '\0')
 	{
@@ -68,7 +66,7 @@ static INT_PTR ServiceParseMsnimLink(WPARAM, LPARAM lParam)
 	arg = strchr(arg, ':');
 	if (arg == NULL) return 1; /* parse failed */
 
-	for (++arg; *arg == '/'; ++arg) {}
+    for (++arg; *arg == '/'; ++arg) {}
 
 	arg = NEWSTR_ALLOCA(arg);
 
@@ -166,6 +164,6 @@ void MsnLinks_Init(void)
 
 void MsnLinks_Destroy(void)
 {
-	DestroyServiceFunction(hServiceParseLink);
+    DestroyServiceFunction(hServiceParseLink);
 	CallService(MS_ASSOCMGR_REMOVEURLTYPE, 0, (LPARAM)"msnim:");
 }

@@ -689,6 +689,7 @@ static void yahoo_free_data(struct yahoo_data *yd)
 {
 	FREE(yd->user);
 	FREE(yd->password);
+	FREE(yd->pw_token);
 	FREE(yd->cookie_y);
 	FREE(yd->cookie_t);
 	FREE(yd->cookie_c);
@@ -1371,6 +1372,7 @@ static void yahoo_process_filetransfer7(struct yahoo_input_data *yid, struct yah
 		YAHOO_CALLBACK(ext_yahoo_send_file7info)(yd->client_id, to, from, ft_token);
 		break;
 	case 4: // FT7 Declined
+		
 		break;
 	}
 }
@@ -2834,12 +2836,19 @@ static void yahoo_process_mail(struct yahoo_input_data *yid, struct yahoo_packet
 			LOG(("key: %d => value: '%s'", pair->key, pair->value));
 	}
 
-	if (who && email && subj) {
+	if (email && subj) {
 		char from[1024];
-		snprintf(from, sizeof(from), "%s (%s)", who, email);
+		
+		if (who) {
+			snprintf(from, sizeof(from), "\"%s\" <%s>", who, email);
+		} else {
+			snprintf(from, sizeof(from), "%s", email);
+		}
+		
 		YAHOO_CALLBACK(ext_yahoo_mail_notify)(yd->client_id, from, subj, count);
-	} else 
+	} else {
 		YAHOO_CALLBACK(ext_yahoo_mail_notify)(yd->client_id, NULL, NULL, count);
+	}
 }
 
 static void yahoo_buddy_added_us(struct yahoo_input_data *yid, struct yahoo_packet *pkt)
