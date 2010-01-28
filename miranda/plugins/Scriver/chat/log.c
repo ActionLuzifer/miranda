@@ -1,8 +1,8 @@
 /*
 Chat module plugin for Miranda IM
 
-Copyright (C) 2003 JÃ¶rgen Persson
-Copyright 2003-2009 Miranda ICQ/IM project,
+Copyright (C) 2003 Jörgen Persson
+Copyright 2003-2008 Miranda ICQ/IM project,
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -33,13 +33,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // the srmm module and then modified to fit the chat module.
 
 extern FONTINFO  aFonts[OPTIONS_FONTCOUNT];
+extern HICON     hIcons[30];
 
 static PBYTE pLogIconBmpBits[14];
-static const char *logIconNames[14] = {
-	"chat_log_action", "chat_log_addstatus", "chat_log_highlight", "chat_log_info", "chat_log_join",
-	"chat_log_kick", "chat_log_message_in", "chat_log_message_out", "chat_log_nick", "chat_log_notice",
-	"chat_log_part", "chat_log_quit", "chat_log_removestatus", "chat_log_topic"
-};
 static int logIconBmpSize[ SIZEOF(pLogIconBmpBits) ];
 
 static int logPixelSY = 0;
@@ -74,21 +70,21 @@ static int EventToIcon(LOGINFO * lin)
 	switch (lin->iType) {
 		case GC_EVENT_MESSAGE:
 			if (lin->bIsMe)
-				return 7;
+				return ICON_MESSAGEOUT;
 			else
-				return 6;
+				return ICON_MESSAGE;
 
-		case GC_EVENT_JOIN: return 4;
-		case GC_EVENT_PART: return 10;
-		case GC_EVENT_QUIT: return 11;
-		case GC_EVENT_NICK: return 8;
-		case GC_EVENT_KICK: return 5;
-		case GC_EVENT_NOTICE: return 9;
-		case GC_EVENT_TOPIC: return 13;
-		case GC_EVENT_INFORMATION:return 3;
-		case GC_EVENT_ADDSTATUS: return 1;
-		case GC_EVENT_REMOVESTATUS: return 12;
-		case GC_EVENT_ACTION: return 0;
+		case GC_EVENT_JOIN: return ICON_JOIN;
+		case GC_EVENT_PART: return ICON_PART;
+		case GC_EVENT_QUIT: return ICON_QUIT;
+		case GC_EVENT_NICK: return ICON_NICK;
+		case GC_EVENT_KICK: return ICON_KICK;
+		case GC_EVENT_NOTICE: return ICON_NOTICE;
+		case GC_EVENT_TOPIC: return ICON_TOPIC;
+		case GC_EVENT_INFORMATION:return ICON_INFO;
+		case GC_EVENT_ADDSTATUS: return ICON_ADDSTATUS;
+		case GC_EVENT_REMOVESTATUS: return ICON_REMSTATUS;
+		case GC_EVENT_ACTION: return ICON_ACTION;
 	}
 	return 0;
 }
@@ -653,14 +649,13 @@ static char* Log_CreateRTF(LOGSTREAMDATA *streamData, BOOL ieviewMode)
 				// Insert icon
 				if ((lin->iType&g_Settings.dwIconFlags) || (lin->bIsHighlighted&&g_Settings.dwIconFlags&GC_EVENT_HIGHLIGHT))
 				{
-					int iIndex = (lin->bIsHighlighted&&g_Settings.dwIconFlags&GC_EVENT_HIGHLIGHT) ? 2 : EventToIcon(lin);
-					AppendToBuffer(&buffer, &bufferEnd, &bufferAlloced, "\\fs1  ");
+					int iIndex = (lin->bIsHighlighted&&g_Settings.dwIconFlags&GC_EVENT_HIGHLIGHT) ? ICON_HIGHLIGHT : EventToIcon(lin);
+					AppendToBuffer(&buffer, &bufferEnd, &bufferAlloced, "\\f0\\fs14");
 					while (bufferAlloced - bufferEnd < logIconBmpSize[0])
 						bufferAlloced += 4096;
 					buffer = (char *) mir_realloc(buffer, bufferAlloced);
 					CopyMemory(buffer + bufferEnd, pLogIconBmpBits[iIndex], logIconBmpSize[iIndex]);
 					bufferEnd += logIconBmpSize[iIndex];
-					AppendToBuffer(&buffer, &bufferEnd, &bufferAlloced, " ");
 				}
 
 				if (g_Settings.TimeStampEventColour)
@@ -684,8 +679,8 @@ static char* Log_CreateRTF(LOGSTREAMDATA *streamData, BOOL ieviewMode)
 				else
 					AppendToBuffer(&buffer, &bufferEnd, &bufferAlloced, "%s ", Log_SetStyle(0, 0 ));
 				// insert a TAB if necessary to put the timestamp in the right position
-//				if (g_Settings.dwIconFlags)
-//					AppendToBuffer(&buffer, &bufferEnd, &bufferAlloced, "\\tab ");
+				if (g_Settings.dwIconFlags)
+					AppendToBuffer(&buffer, &bufferEnd, &bufferAlloced, "\\tab ");
 
 				//insert timestamp
 				if (g_Settings.ShowTime)
@@ -992,7 +987,7 @@ void LoadMsgLogBitmaps(void)
 	hdcMem = CreateCompatibleDC(hdc);
 	pBmpBits = (PBYTE) mir_alloc(widthBytes * bih.biHeight);
 	for (i = 0; i < SIZEOF(pLogIconBmpBits); i++) {
-		hIcon = GetCachedIcon(logIconNames[i]);
+		hIcon = hIcons[i];
 		pLogIconBmpBits[i] = (PBYTE) mir_alloc(RTFPICTHEADERMAXSIZE + (bih.biSize + widthBytes * bih.biHeight) * 2);
 		rtfHeaderSize = sprintf(pLogIconBmpBits[i], "{\\pict\\dibitmap0\\wbmbitspixel%u\\wbmplanes1\\wbmwidthbytes%u\\picw%u\\pich%u ", bih.biBitCount, widthBytes, (unsigned int)bih.biWidth, (unsigned int)bih.biHeight);
 		hoBmp = (HBITMAP) SelectObject(hdcMem, hBmp);

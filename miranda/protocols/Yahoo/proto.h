@@ -22,13 +22,13 @@ struct CYahooProto;
 extern "C"
 {
 	typedef void    ( CYahooProto::*YThreadFunc )( void* );
-	typedef INT_PTR ( CYahooProto::*YEventFunc )( WPARAM, LPARAM );
-	typedef INT_PTR ( CYahooProto::*YServiceFunc )( WPARAM, LPARAM );
-	typedef INT_PTR ( CYahooProto::*YServiceFuncParam )( WPARAM, LPARAM, LPARAM );
+	typedef int     ( CYahooProto::*YEventFunc )( WPARAM, LPARAM );
+	typedef INT_PTR  ( CYahooProto::*YServiceFunc )( WPARAM, LPARAM );
+	typedef INT_PTR  ( CYahooProto::*YServiceFuncParam )( WPARAM, LPARAM, LPARAM );
 }
 #else
 	typedef void    ( __cdecl CYahooProto::*YThreadFunc )( void* );
-	typedef INT_PTR ( __cdecl CYahooProto::*YEventFunc )( WPARAM, LPARAM );
+	typedef int     ( __cdecl CYahooProto::*YEventFunc )( WPARAM, LPARAM );
 	typedef INT_PTR ( __cdecl CYahooProto::*YServiceFunc )( WPARAM, LPARAM );
 	typedef INT_PTR ( __cdecl CYahooProto::*YServiceFuncParam )( WPARAM, LPARAM, LPARAM );
 #endif
@@ -59,10 +59,10 @@ struct CYahooProto : public PROTO_INTERFACE
 
 	virtual	HANDLE __cdecl ChangeInfo( int iInfoType, void* pInfoData );
 
-	virtual	HANDLE __cdecl FileAllow( HANDLE hContact, HANDLE hTransfer, const PROTOCHAR* szPath );
+	virtual	HANDLE __cdecl FileAllow( HANDLE hContact, HANDLE hTransfer, const char* szPath );
 	virtual	int    __cdecl FileCancel( HANDLE hContact, HANDLE hTransfer );
-	virtual	int    __cdecl FileDeny( HANDLE hContact, HANDLE hTransfer, const PROTOCHAR* szReason );
-	virtual	int    __cdecl FileResume( HANDLE hTransfer, int* action, const PROTOCHAR** szFilename );
+	virtual	int    __cdecl FileDeny( HANDLE hContact, HANDLE hTransfer, const char* szReason );
+	virtual	int    __cdecl FileResume( HANDLE hTransfer, int* action, const char** szFilename );
 
 	virtual	DWORD_PTR __cdecl GetCaps( int type, HANDLE hContact = NULL );
 	virtual	HICON  __cdecl GetIcon( int iconIndex );
@@ -75,12 +75,12 @@ struct CYahooProto : public PROTO_INTERFACE
 	virtual	HWND   __cdecl CreateExtendedSearchUI( HWND owner );
 
 	virtual	int    __cdecl RecvContacts( HANDLE hContact, PROTORECVEVENT* );
-	virtual	int    __cdecl RecvFile( HANDLE hContact, PROTORECVFILET* );
+	virtual	int    __cdecl RecvFile( HANDLE hContact, PROTORECVFILE* );
 	virtual	int    __cdecl RecvMsg( HANDLE hContact, PROTORECVEVENT* );
 	virtual	int    __cdecl RecvUrl( HANDLE hContact, PROTORECVEVENT* );
 
 	virtual	int    __cdecl SendContacts( HANDLE hContact, int flags, int nContacts, HANDLE* hContactsList );
-	virtual	HANDLE __cdecl SendFile( HANDLE hContact, const PROTOCHAR* szDescription, PROTOCHAR** ppszFiles );
+	virtual	HANDLE __cdecl SendFile( HANDLE hContact, const char* szDescription, char** ppszFiles );
 	virtual	int    __cdecl SendMsg( HANDLE hContact, int flags, const char* msg );
 	virtual	int    __cdecl SendUrl( HANDLE hContact, int flags, const char* url );
 
@@ -98,11 +98,11 @@ struct CYahooProto : public PROTO_INTERFACE
 	virtual	int    __cdecl OnEvent( PROTOEVENTTYPE eventType, WPARAM wParam, LPARAM lParam );
 
 	//====| Events |======================================================================
-	INT_PTR __cdecl OnContactDeleted( WPARAM, LPARAM );
-	INT_PTR __cdecl OnIdleEvent( WPARAM, LPARAM );
-	INT_PTR __cdecl OnModulesLoadedEx( WPARAM, LPARAM );
-	INT_PTR __cdecl OnOptionsInit( WPARAM, LPARAM );
-	INT_PTR __cdecl OnSettingChanged( WPARAM, LPARAM );
+	int __cdecl OnContactDeleted( WPARAM, LPARAM );
+	int __cdecl OnIdleEvent( WPARAM, LPARAM );
+	int __cdecl OnModulesLoadedEx( WPARAM, LPARAM );
+	int __cdecl OnOptionsInit( WPARAM, LPARAM );
+	int __cdecl OnSettingChanged( WPARAM, LPARAM );
 
 	INT_PTR __cdecl OnABCommand( WPARAM, LPARAM );
 	INT_PTR __cdecl OnCalendarCommand( WPARAM, LPARAM );
@@ -114,10 +114,10 @@ struct CYahooProto : public PROTO_INTERFACE
 	INT_PTR __cdecl OnPrebuildContactMenu(WPARAM wParam,LPARAM lParam);
 	
 	//====| Services |====================================================================
-	INT_PTR __cdecl SvcCreateAccMgrUI(WPARAM wParam, LPARAM lParam);
-	INT_PTR __cdecl GetUnreadEmailCount( WPARAM, LPARAM );
-	INT_PTR __cdecl SendNudge( WPARAM, LPARAM );
-	INT_PTR __cdecl SetMyAvatar( WPARAM, LPARAM );
+	INT_PTR  __cdecl SvcCreateAccMgrUI(WPARAM wParam, LPARAM lParam);
+	INT_PTR __cdecl  GetUnreadEmailCount( WPARAM, LPARAM );
+	INT_PTR __cdecl  SendNudge( WPARAM, LPARAM );
+	INT_PTR __cdecl  SetMyAvatar( WPARAM, LPARAM );
 
 	void   BroadcastStatus(int s);
 	void   LoadYahooServices( void );
@@ -145,9 +145,9 @@ struct CYahooProto : public PROTO_INTERFACE
 	void __cdecl send_avt_thread(void *psf);
 	void __cdecl recv_avatarthread(void *pavt);
 
-	INT_PTR __cdecl GetAvatarInfo( WPARAM, LPARAM );
-	INT_PTR __cdecl GetAvatarCaps( WPARAM, LPARAM );
-	INT_PTR __cdecl GetMyAvatar( WPARAM, LPARAM );
+	int  __cdecl GetAvatarInfo( WPARAM, LPARAM );
+	int  __cdecl GetAvatarCaps( WPARAM, LPARAM );
+	int  __cdecl GetMyAvatar( WPARAM, LPARAM );
 
 	void   ext_got_picture(const char *me, const char *who, const char *pic_url, int cksum, int type);
 	void   ext_got_picture_checksum(const char *me, const char *who, int cksum);
@@ -214,7 +214,7 @@ struct CYahooProto : public PROTO_INTERFACE
 	INT_PTR __cdecl  SetCustomStatCommand( WPARAM, LPARAM );
 
 	//====| user_info.cpp |===============================================================
-	INT_PTR __cdecl  OnUserInfoInit( WPARAM wParam, LPARAM lParam );
+	int     __cdecl  OnUserInfoInit( WPARAM wParam, LPARAM lParam );
 	
 	//====| util.cpp |====================================================================
 	int  GetByte( const char* valueName, int parDefltValue );

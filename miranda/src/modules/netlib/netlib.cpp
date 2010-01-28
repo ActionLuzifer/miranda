@@ -132,7 +132,7 @@ static INT_PTR NetlibRegisterUser(WPARAM,LPARAM lParam)
 	   || (!(nlu->flags&NUF_NOOPTIONS) && nlu->szDescriptiveName==NULL)
 	   || (nlu->flags&NUF_HTTPGATEWAY && (nlu->pfnHttpGatewayInit==NULL))) {
 		SetLastError(ERROR_INVALID_PARAMETER);
-		return 0;
+		return (INT_PTR)(HANDLE)NULL;
 	}
 
 	EnterCriticalSection(&csNetlibUser);
@@ -140,7 +140,7 @@ static INT_PTR NetlibRegisterUser(WPARAM,LPARAM lParam)
 		if(!lstrcmpA(netlibUser[i]->user.szSettingsModule,nlu->szSettingsModule)) {
 			LeaveCriticalSection(&csNetlibUser);
 			SetLastError(ERROR_DUP_NAME);
-			return 0;
+			return (INT_PTR)(HANDLE)NULL;
 		}
 	LeaveCriticalSection(&csNetlibUser);
 
@@ -155,7 +155,7 @@ static INT_PTR NetlibRegisterUser(WPARAM,LPARAM lParam)
 	   || (nlu->szDescriptiveName && thisUser->user.ptszDescriptiveName ==NULL)
 	   || (nlu->szHttpGatewayUserAgent && (thisUser->user.szHttpGatewayUserAgent=mir_strdup(nlu->szHttpGatewayUserAgent))==NULL)) {
 		SetLastError(ERROR_OUTOFMEMORY);
-		return 0;
+		return (INT_PTR)(HANDLE)NULL;
 	}
 	if (nlu->szHttpGatewayHello)
 		thisUser->user.szHttpGatewayHello=mir_strdup(nlu->szHttpGatewayHello);
@@ -250,7 +250,15 @@ INT_PTR NetlibCloseHandle(WPARAM wParam, LPARAM)
 			WaitForSingleObject(hConnectionHeaderMutex,INFINITE);
 			if (nlc->usingHttpGateway)
 			{
-				HttpGatewayRemovePacket(nlc, -1);
+				struct NetlibHTTPProxyPacketQueue *p = nlc->pHttpProxyPacketQueue;
+				while (p != NULL) {
+					struct NetlibHTTPProxyPacketQueue *t = p;
+
+					p = p->next;
+
+					mir_free(t->dataBuffer);
+					mir_free(t);
+				}
 			}
 			else
 			{
@@ -265,11 +273,9 @@ INT_PTR NetlibCloseHandle(WPARAM wParam, LPARAM)
 					si.sfree(nlc->hSsl);
 					nlc->hSsl = NULL;
 				}
-				shutdown(nlc->s, 2);
+                shutdown(nlc->s, 2);
 				closesocket(nlc->s);
 				nlc->s=INVALID_SOCKET;
-				closesocket(nlc->s2);
-				nlc->s2=INVALID_SOCKET;
 			}
 			ReleaseMutex(hConnectionHeaderMutex);
 
@@ -284,12 +290,11 @@ INT_PTR NetlibCloseHandle(WPARAM wParam, LPARAM)
 				return 0;
 			}
 			nlc->handleType=0;
-			nlc->sinProxy.sin_addr.S_un.S_addr = 0;
 			mir_free(nlc->nlhpi.szHttpPostUrl);
 			mir_free(nlc->nlhpi.szHttpGetUrl);
 			mir_free(nlc->dataBuffer);
-			mir_free((char*)nlc->nloc.szHost);
-			mir_free(nlc->szNewUrl);
+			mir_free(nlc->szHost);
+			NetlibDestroySecurityProvider("NTLM", nlc->hNtlmSecurity);
 			NetlibDeleteNestedCS(&nlc->ncsRecv);
 			NetlibDeleteNestedCS(&nlc->ncsSend);
 			CloseHandle(nlc->hOkToCloseEvent);
@@ -343,28 +348,27 @@ INT_PTR NetlibShutdown(WPARAM wParam, LPARAM)
 {
 	if (wParam) 
 	{
-		SOCKET s = INVALID_SOCKET;
+        SOCKET s = INVALID_SOCKET;
 
 		WaitForSingleObject(hConnectionHeaderMutex,INFINITE);
 		switch(GetNetlibHandleType(wParam)) {
 			case NLH_CONNECTION:
 				{
 					struct NetlibConnection* nlc = (struct NetlibConnection*)wParam;
-					if (nlc->hSsl) si.shutdown(nlc->hSsl);
-					s = nlc->s;
-					nlc->sinProxy.sin_addr.S_un.S_addr = 0;
+            		if (nlc->hSsl) si.shutdown(nlc->hSsl);
+                    s = nlc->s;
 				}
 				break;
 			case NLH_BOUNDPORT:
 				{
 					struct NetlibBoundPort* nlb = (struct NetlibBoundPort*)wParam;
-					s = nlb->s;
+                    s = nlb->s;
 				}
 				break;
 		}
 		ReleaseMutex(hConnectionHeaderMutex);
 
-		if (s != INVALID_SOCKET) shutdown(s, 2);
+        if (s != INVALID_SOCKET) shutdown(s, 2);
 	}
 	return 0;
 }
@@ -512,7 +516,7 @@ void UnloadNetlibModule(void)
 		mir_free( netlibUser );
 
 		CloseHandle(hConnectionHeaderMutex);
-		if (hConnectionOpenMutex) CloseHandle(hConnectionOpenMutex);
+        if (hConnectionOpenMutex) CloseHandle(hConnectionOpenMutex);
 		DeleteCriticalSection(&csNetlibUser);
 		WSACleanup();
 }	}
@@ -531,19 +535,19 @@ int LoadNetlibModule(void)
 	hConnectionHeaderMutex=CreateMutex(NULL,FALSE,NULL);
 	NetlibLogInit();
 
-	connectionTimeout = 0;
+    connectionTimeout = 0;
 
-	OSVERSIONINFOEX osvi = {0};
+    OSVERSIONINFOEX osvi = {0};
 	osvi.dwOSVersionInfoSize = sizeof(osvi);
-	if (GetVersionEx((LPOSVERSIONINFO)&osvi))
-	{
-		// Connection limiting was introduced in Windows XP SP2 and later and set to 10 / sec
-		if (osvi.dwMajorVersion == 5 && ((osvi.dwMinorVersion == 1 && osvi.wServicePackMajor >= 2) || osvi.dwMinorVersion > 1)) 
-			connectionTimeout = 150;
-		// Connection limiting has limits based on addition Windows Vista pre SP2
-		else if (osvi.dwMajorVersion == 6 && osvi.wServicePackMajor < 2)
-		{
-			DWORD dwType = 0;
+    if (GetVersionEx((LPOSVERSIONINFO)&osvi))
+    {
+        // Connection limiting was introduced in Windows XP SP2 and later and set to 10 / sec
+        if (osvi.dwMajorVersion == 5 && ((osvi.dwMinorVersion == 1 && osvi.wServicePackMajor >= 2) || osvi.dwMinorVersion > 1)) 
+            connectionTimeout = 150;
+        // Connection limiting has limits based on addition Windows Vista pre SP2
+        else if (osvi.dwMajorVersion == 6 && osvi.wServicePackMajor < 2)
+        {
+            DWORD dwType = 0;
 			tGetProductInfo pGetProductInfo = (tGetProductInfo) GetProcAddress(GetModuleHandleA("kernel32"), "GetProductInfo");
 			if (pGetProductInfo != NULL) pGetProductInfo(6, 0, 0, 0, &dwType);
 			switch( dwType )
@@ -556,32 +560,32 @@ int LoadNetlibModule(void)
 			case 0x05:
 			   connectionTimeout = 1000;
 			   break;
-			
-			default:    // all other editions have connection limit of 10 / sec
-				connectionTimeout = 150;
-				break;
+            
+            default:    // all other editions have connection limit of 10 / sec
+                connectionTimeout = 150;
+                break;
 			}
-		}
-		// Connection limiting is disabled by default and is controlled by registry setting in Windows Vista SP2 and later
-		else if (osvi.dwMajorVersion >= 6)
-		{
-			static const char keyn[] = "SYSTEM\\CurrentControlSet\\Services\\Tcpip\\Parameters";
-			static const char valn[] = "EnableConnectionRateLimiting";
+        }
+        // Connection limiting is disabled by default and is controlled by registry setting in Windows Vista SP2 and later
+        else if (osvi.dwMajorVersion >= 6)
+        {
+            static const char keyn[] = "SYSTEM\\CurrentControlSet\\Services\\Tcpip\\Parameters";
+            static const char valn[] = "EnableConnectionRateLimiting";
 
-			HKEY hSettings;
-			if (RegOpenKeyExA(HKEY_LOCAL_MACHINE, keyn, 0, KEY_QUERY_VALUE, &hSettings) == ERROR_SUCCESS)
-			{
-				DWORD tValueLen, enabled;
-				tValueLen = sizeof(enabled);
-				if (RegQueryValueExA(hSettings, valn, NULL, NULL, (BYTE*)&enabled, &tValueLen) == ERROR_SUCCESS && enabled)
-					connectionTimeout = 150;  // if enabled limit is set to 10 / sec
-				RegCloseKey(hSettings);
-			}
+            HKEY hSettings;
+	        if (RegOpenKeyExA(HKEY_LOCAL_MACHINE, keyn, 0, KEY_QUERY_VALUE, &hSettings) == ERROR_SUCCESS)
+            {
+                DWORD tValueLen, enabled;
+                tValueLen = sizeof(enabled);
+	            if (RegQueryValueExA(hSettings, valn, NULL, NULL, (BYTE*)&enabled, &tValueLen) == ERROR_SUCCESS && enabled)
+                    connectionTimeout = 150;  // if enabled limit is set to 10 / sec
+                RegCloseKey(hSettings);
+            }
 
-		}
-	}
+        }
+    }
 
-	hConnectionOpenMutex = connectionTimeout ? CreateMutex(NULL,FALSE,NULL) : NULL;
+    hConnectionOpenMutex = connectionTimeout ? CreateMutex(NULL,FALSE,NULL) : NULL;
 	g_LastConnectionTick = GetTickCount();
 
 	CreateServiceFunction(MS_NETLIB_REGISTERUSER,NetlibRegisterUser);
@@ -620,5 +624,5 @@ int LoadNetlibModule(void)
 
 void NetlibInitSsl(void)
 {
-	mir_getSI(&si);
+    mir_getSI(&si);
 }
