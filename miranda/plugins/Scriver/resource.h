@@ -2,7 +2,6 @@
 #define IDD_MSG                         101
 #define IDD_MSGSENDERROR                102
 #define IDD_CONFIRM_SENDALL             103
-#define IDD_INFOBAR                     104
 #define IDD_OPT_MSGDLG                  111
 #define IDD_OPT_MSGLOG                  112
 #define IDD_OPT_MSGTYPE                 114
@@ -88,12 +87,12 @@
 #define IDC_LIMITCHATSTABSNUM			1013
 #define IDC_SPLITTER                    1017
 #define IDC_SHOWNAMES                   1020
+#define IDC_SHOWSENDBTN                 1021
 #define IDC_USETABS                     1022
 #define IDC_SHOWSECONDS                 1023
 #define IDC_USELONGDATE                 1024
 #define IDC_USERELATIVEDATE             1025
 #define IDC_USEIEVIEW					1026
-#define IDC_FONTSCOLORS					1027
 #define IDC_SHOWLOGICONS                1032
 #define IDC_SHOWTIMES                   1033
 #define IDC_SHOWDATES                   1034
@@ -125,8 +124,6 @@
 #define IDC_SMILEYS                     1081
 #define IDC_REMEMBER					1082
 #define IDC_AUTORESIZE                  1083
-#define IDC_INFOBAR_NAME				1090
-#define IDC_INFOBAR_STATUS				1091
 #define IDC_STMSGLOGGROUP               1442
 #define IDC_ERRORTEXT                   1596
 #define IDC_MSGTEXT                     1597
@@ -171,7 +168,7 @@
 #define IDC_CHAT_LIMITTEXT2				1643
 #define IDC_INFOBAR						1644
 #define IDC_AVATAR						1645
-#define IDC_XSTATUSICON                 1646
+
 #define IDM_CUT                         40000
 #define IDM_COPY                        40001
 #define IDM_PASTE                       40002
@@ -190,7 +187,7 @@
 #define IDM_SEARCH_GOOGLE               40080
 #define IDM_SEARCH_YAHOO				40081
 #define IDM_SEARCH_WIKIPEDIA            40082
-#define IDM_SEARCH_FOODNETWORK          40083
+#define IDM_SEARCH_FOODNETWORK        40083
 /* chat.dll resources */
 
 #define IDC_CHAT_LOG                         5005
@@ -209,6 +206,7 @@
 #define IDC_CHAT_FONTSIZE			5020
 #define IDC_CHAT_CHECKBOXES                  5021
 #define IDC_CHAT_HISTORY                     5022
+#define IDC_CHAT_CLOSE                       5023
 #define IDC_CHAT_NICKROW                     5024
 #define IDC_CHAT_LOGLIMIT                    5024
 #define IDC_CHAT_SPIN1                       5028

@@ -126,10 +126,6 @@ SOURCE=.\libgadu\http.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\libgadu\internal.h
-# End Source File
-# Begin Source File
-
 SOURCE=.\libgadu\libgadu.c
 # SUBTRACT CPP /YX
 # End Source File
@@ -170,10 +166,6 @@ SOURCE=.\libgadu\sha1.c
 SOURCE=.\libgadu\win32.h
 # End Source File
 # End Group
-# Begin Source File
-
-SOURCE=.\avatar.c
-# End Source File
 # Begin Source File
 
 SOURCE=.\core.c

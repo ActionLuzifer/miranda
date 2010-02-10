@@ -321,12 +321,11 @@ typedef struct {
 //    ERROR_INVALID_ADDRESS (socks5 address type not supported)
 //    HTTP: anything from nlu.pfnHttpGatewayInit, nlu.pfnHttpGatewayBegin,
 //          MS_NETLIB_SENDHTTPREQUEST or MS_NETLIB_RECVHTTPHEADERS
-#define NLOCF_HTTP          0x0001 //this connection will be used for HTTP communications. If configured for an HTTP/HTTPS proxy the connection is opened as if there was no proxy.
+#define NLOCF_HTTP  0x0001  //this connection will be used for HTTP communications. If configured for an HTTP/HTTPS proxy the connection is opened as if there was no proxy.
 #define NLOCF_STICKYHEADERS 0x0002 //this connection should send the sticky headers associated with NetLib user apart of any HTTP request
-#define NLOCF_V2            0x0004 //this connection understands the newer structure, newer cbSize isnt enough
-#define NLOCF_UDP           0x0008 // this connection is UDP
-#define NLOCF_SSL           0x0010 // this connection is SSL
-#define NLOCF_HTTPGATEWAY   0x0020 // this connection is SSL
+#define NLOCF_V2 0x0004 //this connection understands the newer structure, newer cbSize isnt enough
+#define NLOCF_UDP 0x0008 // this connection is UDP
+#define NLOCF_SSL 0x0010 // this connection is SSL
 
 /* Added during 0.4.0+ development!! (2004/11/29) prior to this, connect() blocks til a connection is made or
 a hard timeout is reached, this can be anywhere between 30-60 seconds, and it stops Miranda from unloading whilst
@@ -364,9 +363,6 @@ typedef struct {
 	char *szHttpPostUrl;
 	char *szHttpGetUrl;
 	int firstGetSequence,firstPostSequence;
-#if MIRANDA_VER >= 0x0900
-	int combinePackets;
-#endif
 } NETLIBHTTPPROXYINFO;
 #define MS_NETLIB_SETHTTPPROXYINFO   "Netlib/SetHttpProxyInfo"
 
@@ -453,11 +449,8 @@ typedef struct {
 #define NLHRF_SMARTREMOVEHOST 0x00000004   //removes host and/or protocol from szUrl unless the connection was opened through an HTTP or HTTPS proxy.
 #define NLHRF_SMARTAUTHHEADER 0x00000008   //if the connection was opened through an HTTP or HTTPS proxy then send a Proxy-Authorization header if required.
 #define NLHRF_HTTP11          0x00000010   //use HTTP 1.1
-#define NLHRF_PERSISTENT      0x00000020   //preserve connection on exit, open connection provided in the nlc field of the reply
-                                           //it should be supplied in nlc field of request for reuse or closed if not needed
-#define NLHRF_SSL             0x00000040   //use SSL connection
-#define NLHRF_NOPROXY         0x00000080   //do not use proxy server
-#define NLHRF_REDIRECT        0x00000100   //handle HTTP redirect requests (response 30x), the resulting url provided in szUrl of the response
+#define NLHRF_PERSISTENT      0x00000020   //preserve connection on exit
+#define NLHRF_SSL             0x00000040   //use ssl connection
 #define NLHRF_NODUMP          0x00010000   //never dump this to the log
 #define NLHRF_NODUMPHEADERS   0x00020000   //don't dump http headers (only useful for POSTs and MS_NETLIB_HTTPTRANSACTION)
 #define NLHRF_DUMPPROXY       0x00040000   //this transaction is a proxy communication. For dump filtering only.
@@ -722,14 +715,6 @@ static __inline INT_PTR Netlib_Logf(HANDLE hUser,const char *fmt,...)
 /////////////////////////////////////////////////////////////////////////////////////////
 // Security providers (0.6+)
 
-#define NNR_UNICODE 1
-
-#ifdef UNICODE 
-#define NNR_TCHAR 1
-#else
-#define NNR_TCHAR 0
-#endif
-
 // Inits a required security provider. Right now only NTLM is supported
 // Returns HANDLE = NULL on error or non-null value on success
 #define MS_NETLIB_INITSECURITYPROVIDER "Netlib/InitSecurityProvider"
@@ -738,23 +723,6 @@ static __inline HANDLE Netlib_InitSecurityProvider( char* szProviderName )
 {
 	return (HANDLE)CallService( MS_NETLIB_INITSECURITYPROVIDER, 0, (LPARAM)szProviderName );
 }
-
-typedef struct {
-	size_t cbSize;
-	const TCHAR* szProviderName;
-	const TCHAR* szPrincipal;
-	unsigned flags;
-}
-	NETLIBNTLMINIT2;
-
-#define MS_NETLIB_INITSECURITYPROVIDER2 "Netlib/InitSecurityProvider2"
-
-static __inline HANDLE Netlib_InitSecurityProvider2( const TCHAR* szProviderName, const TCHAR* szPrincipal )
-{
-	NETLIBNTLMINIT2 temp = { sizeof(temp), szProviderName, szPrincipal, NNR_TCHAR };
-	return (HANDLE)CallService( MS_NETLIB_INITSECURITYPROVIDER2, 0, (LPARAM)&temp );
-}
-
 
 // Destroys a security provider's handle, provided by Netlib_InitSecurityProvider.
 // Right now only NTLM is supported
@@ -766,40 +734,19 @@ static __inline void Netlib_DestroySecurityProvider( char* szProviderName, HANDL
 }
 
 // Returns the NTLM response string. The result value should be freed using mir_free
+#define MS_NETLIB_NTLMCREATERESPONSE "Netlib/NtlmCreateResponse"
 
 typedef struct {
-	char* szChallenge;
+   char* szChallenge;
 	char* userName;
 	char* password;
 }
 	NETLIBNTLMREQUEST;
 
-#define MS_NETLIB_NTLMCREATERESPONSE "Netlib/NtlmCreateResponse"
-
 static __inline char* Netlib_NtlmCreateResponse( HANDLE hProvider, char* szChallenge, char* login, char* psw )
 {
 	NETLIBNTLMREQUEST temp = { szChallenge, login, psw };
 	return (char*)CallService( MS_NETLIB_NTLMCREATERESPONSE, (WPARAM)hProvider, (LPARAM)&temp );
-}
-
-typedef struct {
-	size_t cbSize;
-	const char* szChallenge;
-	const TCHAR* szUserName;
-	const TCHAR* szPassword;
-	unsigned complete;
-	unsigned flags;
-}
-	NETLIBNTLMREQUEST2;
-
-#define MS_NETLIB_NTLMCREATERESPONSE2 "Netlib/NtlmCreateResponse2"
-
-static __inline char* Netlib_NtlmCreateResponse2( HANDLE hProvider, char* szChallenge, TCHAR* szLogin, TCHAR* szPass, unsigned *complete )
-{
-	NETLIBNTLMREQUEST2 temp = { sizeof(temp), szChallenge, szLogin, szPass, 0, NNR_TCHAR };
-	char* res = (char*)CallService( MS_NETLIB_NTLMCREATERESPONSE2, (WPARAM)hProvider, (LPARAM)&temp );
-	*complete = temp.complete;
-	return res;
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////

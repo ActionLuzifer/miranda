@@ -19,8 +19,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
 #include "chat.h"
-#include <Initguid.h >
-#include <Oleacc.h>
 
 extern HBRUSH		hEditBkgBrush;
 extern HBRUSH		hListBkgBrush;
@@ -42,7 +40,6 @@ static WNDPROC OldTabProc;
 static WNDPROC OldFilterButtonProc;
 static WNDPROC OldLogProc;
 static HKL hkl = NULL;
-static IAccPropServices* pAccPropServicesForNickList = NULL;
 
 typedef struct
 {
@@ -1184,8 +1181,7 @@ INT_PTR CALLBACK RoomWndProc(HWND hwndDlg,UINT uMsg,WPARAM wParam,LPARAM lParam)
 			SESSION_INFO* psi = (SESSION_INFO*)lParam;
 			int mask;
 			HWND hNickList = GetDlgItem(hwndDlg,IDC_LIST);
-			HRESULT hr = CoCreateInstance(&CLSID_AccPropServices, NULL, CLSCTX_SERVER, &IID_IAccPropServices, /*(void**)*/&pAccPropServicesForNickList);
-			if (FAILED(hr)) pAccPropServicesForNickList=NULL;
+
 			TranslateDialogDefault(hwndDlg);
 			SetWindowLongPtr(hwndDlg,GWLP_USERDATA,(LONG_PTR)psi);
 			OldSplitterProc=(WNDPROC)SetWindowLongPtr(GetDlgItem(hwndDlg,IDC_SPLITTERX),GWLP_WNDPROC,(LONG_PTR)SplitterSubclassProc);
@@ -1347,7 +1343,7 @@ INT_PTR CALLBACK RoomWndProc(HWND hwndDlg,UINT uMsg,WPARAM wParam,LPARAM lParam)
 		{
 			HICON hIcon;
 			int iStatusbarParts[2];
-			TCHAR* ptszDispName = MM_FindModule(si->pszModule)->ptszModDispName;
+			TCHAR* ptszDispName = a2tf((TCHAR*)MM_FindModule(si->pszModule)->pszModDispName, 0);
 			int x = 12;
 
 			x += GetTextPixelSize(ptszDispName, (HFONT)SendMessage(si->hwndStatus,WM_GETFONT,0,0), TRUE);
@@ -1370,6 +1366,7 @@ INT_PTR CALLBACK RoomWndProc(HWND hwndDlg,UINT uMsg,WPARAM wParam,LPARAM lParam)
 
 			SendMessage(si->hwndStatus, SB_SETTEXT,1,(LPARAM)(si->ptszStatusbarText ? si->ptszStatusbarText : _T("")));
 			SendMessage(si->hwndStatus, SB_SETTIPTEXT,1,(LPARAM)(si->ptszStatusbarText ? si->ptszStatusbarText : _T("")));
+			mir_free( ptszDispName );
 			return TRUE;
 		}
 		break;
@@ -1903,7 +1900,6 @@ END_REMOVETAB:
 					SetTextColor(dis->hDC, ui->iStatusEx == 0?g_Settings.crUserListColor:g_Settings.crUserListHeadingsColor);
 					TextOut(dis->hDC, dis->rcItem.left+x_offset, dis->rcItem.top, ui->pszNick, lstrlen(ui->pszNick));
 					SelectObject(dis->hDC, hOldFont);
-					if (pAccPropServicesForNickList) pAccPropServicesForNickList->lpVtbl->SetHwndPropStr(pAccPropServicesForNickList,GetDlgItem(hwndDlg,IDC_LIST), OBJID_CLIENT, dis->itemID+1, PROPID_ACC_NAME, ui->pszNick);
 				}
 				return TRUE;
 		}	}
@@ -2538,12 +2534,7 @@ LABEL_SHOWWINDOW:
 					break;
 
 				if ( pInfo ) {
-					char *szModName = NULL;
-					if (pInfo->ptszModDispName) {
-						 szModName = mir_t2a(pInfo->ptszModDispName);
-					}
-					mir_snprintf(szName, MAX_PATH,"%s",szModName?szModName:si->pszModule);
-					mir_free(szModName);
+					mir_snprintf(szName, MAX_PATH,"%s",pInfo->pszModDispName?pInfo->pszModDispName:si->pszModule);
 					ValidateFilename(szName);
 					mir_snprintf(szFolder, MAX_PATH,"%s\\%s", g_Settings.pszLogDir, szName );
 #if defined(_UNICODE)
@@ -2727,7 +2718,7 @@ LABEL_SHOWWINDOW:
 		}
 		DestroyWindow( si->hwndTooltip );
 		si->hwndTooltip = NULL;
-		if (pAccPropServicesForNickList) pAccPropServicesForNickList->lpVtbl->Release(pAccPropServicesForNickList);
+
 		SetWindowLongPtr(hwndDlg,GWLP_USERDATA,0);
 		SetWindowLongPtr(GetDlgItem(hwndDlg,IDC_SPLITTERX),GWLP_WNDPROC,(LONG_PTR)OldSplitterProc);
 		SetWindowLongPtr(GetDlgItem(hwndDlg,IDC_SPLITTERY),GWLP_WNDPROC,(LONG_PTR)OldSplitterProc);

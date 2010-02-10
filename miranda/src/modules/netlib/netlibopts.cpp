@@ -25,6 +25,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 extern struct NetlibUser **netlibUser;
 extern int netlibUserCount;
+extern CRITICAL_SECTION csNetlibUser;
 
 struct NetlibTempSettings {
 	DWORD flags;
@@ -40,7 +41,7 @@ static const UINT outgoingConnectionsControls[]={
 	  IDC_STATIC22,IDC_PROXYHOST,IDC_STATIC23,IDC_PROXYPORT,IDC_STOFTENPORT,
 	  IDC_PROXYAUTH,
 	    IDC_STATIC31,IDC_PROXYUSER,IDC_STATIC32,IDC_PROXYPASS,
-//	    IDC_PROXYAUTHNTLM,
+	    IDC_PROXYAUTHNTLM,
 	  IDC_PROXYDNS,
 	IDC_SPECIFYPORTSO,
 	  IDC_PORTSRANGEO,
@@ -51,7 +52,7 @@ static const UINT useProxyControls[]={
 	IDC_STATIC22,IDC_PROXYHOST,IDC_STATIC23,IDC_PROXYPORT,IDC_STOFTENPORT,
 	IDC_PROXYAUTH,
 	  IDC_STATIC31,IDC_PROXYUSER,IDC_STATIC32,IDC_PROXYPASS,
-//	  IDC_PROXYAUTHNTLM,
+	  IDC_PROXYAUTHNTLM,
 	IDC_PROXYDNS};
 static const UINT specifyOPortsControls[]={
 	IDC_PORTSRANGEO,

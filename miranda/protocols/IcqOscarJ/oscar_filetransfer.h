@@ -5,7 +5,7 @@
 // Copyright © 2000-2001 Richard Hughes, Roland Rabien, Tristan Van de Vreede
 // Copyright © 2001-2002 Jon Keating, Richard Hughes
 // Copyright © 2002-2004 Martin Öberg, Sam Kothari, Robert Rainwater
-// Copyright © 2004-2009 Joe Kucera
+// Copyright © 2004-2008 Joe Kucera
 // 
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -37,15 +37,8 @@
 #ifndef __OSCAR_FILETRANSFER_H
 #define __OSCAR_FILETRANSFER_H
 
-
 #define FT_MAGIC_ICQ    0x00
 #define FT_MAGIC_OSCAR  0x4F
-
-struct basic_filetransfer
-{
-	cookie_message_data pMessage;
-	BYTE ft_magic;
-};
 
 #define OFT_BUFFER_SIZE 8192
 
@@ -58,6 +51,12 @@ struct oft_file_record
 char *FindFilePathContainer(const char **files, int iFile, char *szContainer);
 
 
+struct basic_filetransfer
+{
+	cookie_message_data pMessage;
+	BYTE ft_magic;
+};
+
 struct oscar_filetransfer: public basic_filetransfer
 {
 	HANDLE hContact;
@@ -65,8 +64,8 @@ struct oscar_filetransfer: public basic_filetransfer
 	int sending;
 	int containerCount;
 	char **file_containers;
-	oft_file_record *files;
-	char **files_list; // sending only 
+	oft_file_record* files;
+	char **files_ansi; // sending only 
 	int iCurrentFile;
 	int currentIsDir;
 	int bUseProxy;
@@ -105,8 +104,8 @@ struct oscar_filetransfer: public basic_filetransfer
 	// helper data
 	DWORD64 qwFileBytesDone;
 	int fileId;
-	struct oscar_connection *connection;
-	struct oscar_listener *listener;
+	struct oscar_connection* connection;
+	void* listener;
 	DWORD dwLastNotify;
 	int resumeAction;
 };

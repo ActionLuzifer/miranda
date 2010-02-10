@@ -523,7 +523,7 @@ void fnTrayIconUpdateBase(const char *szChangedProto)
 		if (!lstrcmpA(szChangedProto, accounts[i]->szModuleName ))
 			cycleStep = i - 1;
 	}
-    
+
 	if (netProtoCount > 0) 
     {
         int trayIconSetting = DBGetContactSettingByte(NULL, "CList", "TrayIcon", SETTING_TRAYICON_DEFAULT);
@@ -592,7 +592,7 @@ void fnTrayIconSetToBase(char *szPreferredProto)
 	int i;
 	initcheck;
 	lock;
-    
+
 	for (i = 0; i < cli.trayIconCount; i++) {
 		if ( cli.trayIcon[i].id == 0 )
 			continue;

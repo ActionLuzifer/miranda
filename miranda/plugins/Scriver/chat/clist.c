@@ -1,8 +1,8 @@
 /*
 Chat module plugin for Miranda IM
 
-Copyright (C) 2003 JÃ¶rgen Persson
-Copyright 2003-2009 Miranda ICQ/IM project,
+Copyright (C) 2003 Jörgen Persson
+Copyright 2003-2008 Miranda ICQ/IM project,
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -98,11 +98,10 @@ BOOL CList_SetOffline(HANDLE hContact, BOOL bHide)
 {
 	if ( hContact ) {
 		char * szProto = (char *) CallService(MS_PROTO_GETCONTACTBASEPROTO, (WPARAM) hContact, 0);
+		int i = DBGetContactSettingByte(hContact, szProto, "ChatRoom", 0);
 		DBWriteContactSettingWord(hContact, szProto,"ApparentMode",(LPARAM) 0);
 		DBWriteContactSettingWord(hContact, szProto, "Status", ID_STATUS_OFFLINE);
-/*
-		int i = DBGetContactSettingByte(hContact, szProto, "ChatRoom", 0);
- 		if (bHide && i != GCW_SERVER)
+/*		if (bHide && i != GCW_SERVER)
 			DBWriteContactSettingByte(hContact, "CList", "Hidden", 1);*/
 		return TRUE;
 	}

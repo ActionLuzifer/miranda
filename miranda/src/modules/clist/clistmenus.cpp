@@ -641,9 +641,9 @@ INT_PTR StatusMenuExecService(WPARAM wParam, LPARAM)
 
 	            for ( int j=0; j < accounts.getCount(); j++ ) {
 		            PROTOACCOUNT* pa = accounts[j];
-		            if ( !Proto_IsAccountEnabled( pa ))
+		            if ( !IsAccountEnabled( pa ))
 			            continue;
-		            if ( MenusProtoCount > 1 && Proto_IsAccountLocked( pa ))
+		            if ( MenusProtoCount > 1 && DBGetContactSettingByte( NULL, pa->szModuleName, "LockMainStatus", 0 ))
 			            continue;
 
 		            CallProtoService( pa->szModuleName, PS_SETSTATUS, cli.currentDesiredStatusMode, 0 );
@@ -818,7 +818,7 @@ int fnGetProtocolVisibility(const char* accName)
 {
 	if ( accName ) {
 		PROTOACCOUNT* pa = Proto_GetAccount( accName );
-		return pa && pa->bIsVisible && Proto_IsAccountEnabled( pa ) && 
+		return pa && pa->bIsVisible && IsAccountEnabled( pa ) && 
             pa->ppro && (pa->ppro->GetCaps( PFLAGNUM_2, 0 ) & ~pa->ppro->GetCaps( PFLAGNUM_5, 0 ));
 	}
 
@@ -935,7 +935,7 @@ void RebuildMenuOrder( void )
 			tmi.ownerdata = smep;
 		}
 
-		if ( Proto_IsAccountLocked( pa ))
+		if ( DBGetContactSettingByte( NULL, pa->szModuleName, "LockMainStatus", 0 ))
 			tmi.flags |= CMIF_CHECKED;
 
 		if (( tmi.flags & CMIF_CHECKED ) && cli.bDisplayLocked )

@@ -5,7 +5,7 @@
 // Copyright © 2000-2001 Richard Hughes, Roland Rabien, Tristan Van de Vreede
 // Copyright © 2001-2002 Jon Keating, Richard Hughes
 // Copyright © 2002-2004 Martin Öberg, Sam Kothari, Robert Rainwater
-// Copyright © 2004-2009 Joe Kucera, George Hazan
+// Copyright © 2004-2010 Joe Kucera, George Hazan
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -19,7 +19,7 @@
 //
 // You should have received a copy of the GNU General Public License
 // along with this program; if not, write to the Free Software
-// Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+// Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 //
 // -----------------------------------------------------------------------------
 //
@@ -86,10 +86,10 @@ struct CIcqProto : public PROTO_INTERFACE
 
 	virtual	HANDLE __cdecl ChangeInfo( int iInfoType, void* pInfoData );
 
-	virtual	HANDLE __cdecl FileAllow( HANDLE hContact, HANDLE hTransfer, const TCHAR* szPath );
+	virtual	HANDLE __cdecl FileAllow( HANDLE hContact, HANDLE hTransfer, const char* szPath );
 	virtual	int    __cdecl FileCancel( HANDLE hContact, HANDLE hTransfer );
-	virtual	int    __cdecl FileDeny( HANDLE hContact, HANDLE hTransfer, const TCHAR* szReason );
-	virtual	int    __cdecl FileResume( HANDLE hTransfer, int* action, const TCHAR** szFilename );
+	virtual	int    __cdecl FileDeny( HANDLE hContact, HANDLE hTransfer, const char* szReason );
+	virtual	int    __cdecl FileResume( HANDLE hTransfer, int* action, const char** szFilename );
 
 	virtual	DWORD_PTR __cdecl GetCaps( int type, HANDLE hContact = NULL );
 	virtual	HICON  __cdecl GetIcon( int iconIndex );
@@ -102,12 +102,12 @@ struct CIcqProto : public PROTO_INTERFACE
 	virtual	HWND   __cdecl CreateExtendedSearchUI( HWND owner );
 
 	virtual	int    __cdecl RecvContacts( HANDLE hContact, PROTORECVEVENT* );
-	virtual	int    __cdecl RecvFile( HANDLE hContact, PROTORECVFILET* );
+	virtual	int    __cdecl RecvFile( HANDLE hContact, PROTORECVFILE* );
 	virtual	int    __cdecl RecvMsg( HANDLE hContact, PROTORECVEVENT* );
 	virtual	int    __cdecl RecvUrl( HANDLE hContact, PROTORECVEVENT* );
 
 	virtual	int    __cdecl SendContacts( HANDLE hContact, int flags, int nContacts, HANDLE* hContactsList );
-	virtual	HANDLE __cdecl SendFile( HANDLE hContact, const TCHAR* szDescription, TCHAR** ppszFiles );
+	virtual	HANDLE __cdecl SendFile( HANDLE hContact, const char* szDescription, char** ppszFiles );
 	virtual	int    __cdecl SendMsg( HANDLE hContact, int flags, const char* msg );
 	virtual	int    __cdecl SendUrl( HANDLE hContact, int flags, const char* url );
 
@@ -231,9 +231,9 @@ struct CIcqProto : public PROTO_INTERFACE
 	void   handleLoginChannel(BYTE *buf, WORD datalen, serverthread_info *info);
 
 	//----| chan_02data.cpp |-------------------------------------------------------------
-	void   handleDataChannel(unsigned char *buf, WORD wLen, serverthread_info *info);
+	void   handleDataChannel(BYTE *buf, WORD wLen, serverthread_info *info);
 
-	int    unpackSnacHeader(snac_header* pSnacHeader, unsigned char **pBuffer, WORD* pwBufferLength);
+	int    unpackSnacHeader(snac_header *pSnacHeader, BYTE **pBuffer, WORD *pwBufferLength);
 	void   LogFamilyError(WORD wFamily, WORD wError);
 
 	//----| chan_03error.cpp |------------------------------------------------------------
@@ -282,10 +282,10 @@ struct CIcqProto : public PROTO_INTERFACE
 	//----| directpackets.cpp |-----------------------------------------------------------
 	void   icq_sendDirectMsgAck(directconnect* dc, WORD wCookie, BYTE bMsgType, BYTE bMsgFlags, char* szCap);
 	DWORD  icq_sendGetAwayMsgDirect(HANDLE hContact, int type);
-	void   icq_sendAwayMsgReplyDirect(directconnect *dc, WORD wCookie, BYTE msgType, const char** szMsg);
-	void   icq_sendFileAcceptDirect(HANDLE hContact, filetransfer *ft);
-	void   icq_sendFileDenyDirect(HANDLE hContact, filetransfer *ft, const char *szReason);
-	int    icq_sendFileSendDirectv7(filetransfer *ft, const char *pszFiles);
+	void   icq_sendAwayMsgReplyDirect(directconnect* dc, WORD wCookie, BYTE msgType, const char** szMsg);
+	void   icq_sendFileAcceptDirect(HANDLE hContact, filetransfer* ft);
+	void   icq_sendFileDenyDirect(HANDLE hContact, filetransfer* ft, const char *szReason);
+	int    icq_sendFileSendDirectv7(filetransfer *ft, const char* pszFiles);
 	int    icq_sendFileSendDirectv8(filetransfer *ft, const char *pszFiles);
 	DWORD  icq_SendDirectMessage(HANDLE hContact, const char *szMessage, int nBodyLength, WORD wPriority, cookie_message_data *pCookieData, char *szCap);
 	void   icq_sendXtrazRequestDirect(HANDLE hContact, DWORD dwCookie, char* szBody, int nBodyLen, WORD wType);
@@ -305,12 +305,12 @@ struct CIcqProto : public PROTO_INTERFACE
 	void   handleLocationUserInfoReply(BYTE* buf, WORD wLen, DWORD dwCookie);
 
 	//----| fam_03buddy.cpp |-------------------------------------------------------------
-	void   handleBuddyFam(BYTE* pBuffer, WORD wBufferLength, snac_header* pSnacHeader, serverthread_info *info);
-	void   handleReplyBuddy(BYTE* buf, WORD wPackLen);
-	void   handleUserOffline(BYTE* buf, WORD wPackLen);
-	void   handleUserOnline(BYTE* buf, WORD wPackLen, serverthread_info* info);
+	void   handleBuddyFam(BYTE *pBuffer, WORD wBufferLength, snac_header *pSnacHeader, serverthread_info *info);
+	void   handleReplyBuddy(BYTE *buf, WORD wPackLen);
+	void   handleUserOffline(BYTE *buf, WORD wPackLen);
+	void   handleUserOnline(BYTE *buf, WORD wPackLen, serverthread_info *info);
   void   parseStatusNote(DWORD dwUin, char *szUid, HANDLE hContact, oscar_tlv_chain *pChain);
-	void   handleNotifyRejected(BYTE* buf, WORD wPackLen);
+	void   handleNotifyRejected(BYTE *buf, WORD wPackLen);
 
 	//----| fam_04message.cpp |-----------------------------------------------------------
 	icq_mode_messages m_modeMsgs;
@@ -451,7 +451,7 @@ struct CIcqProto : public PROTO_INTERFACE
 	void   StopAvatarThread();
 
 	//----| icq_clients.cpp |-------------------------------------------------------------
-	char*  detectUserClient(HANDLE hContact, DWORD dwUin, WORD wUserClass, WORD wVersion, DWORD dwFT1, DWORD dwFT2, DWORD dwFT3, DWORD dwOnlineSince, BYTE bDirectFlag, DWORD dwDirectCookie, DWORD dwWebPort, BYTE* caps, WORD wLen, BYTE* bClientId, char* szClientBuf);
+	const char*  detectUserClient(HANDLE hContact, int nIsICQ, DWORD dwUin, WORD wUserClass, WORD wVersion, DWORD dwFT1, DWORD dwFT2, DWORD dwFT3, DWORD dwOnlineSince, BYTE bDirectFlag, DWORD dwDirectCookie, DWORD dwWebPort, BYTE* caps, WORD wLen, BYTE* bClientId, char* szClientBuf);
 
 	//----| icq_db.cpp |------------------------------------------------------------------
 	HANDLE AddEvent(HANDLE hContact, WORD wType, DWORD dwTime, DWORD flags, DWORD cbBlob, PBYTE pBlob);
@@ -765,7 +765,7 @@ struct CIcqProto : public PROTO_INTERFACE
 	void   icq_sendFileAcceptServv7(DWORD dwUin, DWORD TS1, DWORD TS2, DWORD dwCookie, const char *szFiles, const char *szDescr, DWORD dwTotalSize, WORD wPort, BOOL accepted, int nAckType);
 	void   icq_sendFileAcceptServv8(DWORD dwUin, DWORD TS1, DWORD TS2, DWORD dwCookie, const char *szFiles, const char *szDescr, DWORD dwTotalSize, WORD wPort, BOOL accepted, int nAckType);
 
-	void   icq_sendFileDenyServ(DWORD dwUin, filetransfer *ft, const char *szReason, int nAckType);
+	void   icq_sendFileDenyServ(DWORD dwUin, filetransfer* ft, const char *szReason, int nAckType);
 
 	DWORD  icq_sendAdvancedSearchServ(BYTE *fieldsBuffer,int bufferLen);
 	DWORD  icq_changeUserPasswordServ(const char *szPassword);
@@ -894,11 +894,11 @@ struct CIcqProto : public PROTO_INTERFACE
 	void   handleRecvServMsgOFT(BYTE *buf, WORD wLen, DWORD dwUin, char *szUID, DWORD dwID1, DWORD dwID2, WORD wCommand);
 	void   handleRecvServResponseOFT(BYTE *buf, WORD wLen, DWORD dwUin, char *szUID, void* ft);
 
-	HANDLE oftInitTransfer(HANDLE hContact, DWORD dwUin, char *szUid, const TCHAR **pszFiles, const TCHAR *szDescription);
-	HANDLE oftFileAllow(HANDLE hContact, HANDLE hTransfer, const TCHAR *szPath);
-	DWORD  oftFileDeny(HANDLE hContact, HANDLE hTransfer, const TCHAR *szReason);
+	HANDLE oftInitTransfer(HANDLE hContact, DWORD dwUin, char *szUid, char** files, const char* pszDesc);
+	HANDLE oftFileAllow(HANDLE hContact, HANDLE hTransfer, const char* szPath);
+	DWORD  oftFileDeny(HANDLE hContact, HANDLE hTransfer, const char* reazon);
 	DWORD  oftFileCancel(HANDLE hContact, HANDLE hTransfer);
-	void   oftFileResume(oscar_filetransfer *ft, int action, const TCHAR *szFilename);
+	void   oftFileResume(oscar_filetransfer *ft, int action, const char *szFilename);
 
 	void   sendOscarPacket(oscar_connection *oc, icq_packet *packet);
 	void   handleOFT2FramePacket(oscar_connection *oc, WORD datatype, BYTE *pBuffer, WORD wLen);
@@ -910,9 +910,9 @@ struct CIcqProto : public PROTO_INTERFACE
 	//----| stdpackets.cpp |--------------------------------------------------------------
 	void   __cdecl oft_connectionThread(struct oscarthreadstartinfo *otsi);
 
-	int    oft_handlePackets(oscar_connection *oc, BYTE *buf, int len);
-	int    oft_handleFileData(oscar_connection *oc, BYTE *buf, int len);
-	int    oft_handleProxyData(oscar_connection *oc, BYTE *buf, int len);
+	int    oft_handlePackets(oscar_connection *oc, unsigned char *buf, int len);
+	int    oft_handleFileData(oscar_connection *oc, unsigned char *buf, int len);
+	int    oft_handleProxyData(oscar_connection *oc, unsigned char *buf, int len);
 	void   oft_sendFileData(oscar_connection *oc);
 	void   oft_sendPeerInit(oscar_connection *oc);
 	void   oft_sendFileReply(DWORD dwUin, char *szUid, oscar_filetransfer *ft, WORD wResult);

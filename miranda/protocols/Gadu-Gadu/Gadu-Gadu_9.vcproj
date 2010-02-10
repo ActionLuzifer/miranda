@@ -863,10 +863,6 @@
 			Filter="cpp;c;cxx;rc;def;r;odl;idl;hpj;bat"
 			>
 			<File
-				RelativePath="avatar.c"
-				>
-			</File>
-			<File
 				RelativePath="core.c"
 				>
 			</File>
@@ -1344,10 +1340,6 @@
 							UsePrecompiledHeader="0"
 						/>
 					</FileConfiguration>
-				</File>
-				<File
-					RelativePath="libgadu\internal.h"
-					>
 				</File>
 				<File
 					RelativePath="libgadu\libgadu.c"
