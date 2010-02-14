@@ -1174,19 +1174,16 @@ static void __cdecl phase2(void * lParam)
 INT_PTR CALLBACK RoomWndProc(HWND hwndDlg,UINT uMsg,WPARAM wParam,LPARAM lParam)
 {
 	SESSION_INFO* si;
-
-	si = (SESSION_INFO*)GetWindowLongPtr(hwndDlg, GWLP_USERDATA);
-	
+	si = (SESSION_INFO*)GetWindowLongPtr(hwndDlg,GWLP_USERDATA);
 	switch (uMsg) {
 	case WM_INITDIALOG:
 		{
+			SESSION_INFO* psi = (SESSION_INFO*)lParam;
 			int mask;
 			HWND hNickList = GetDlgItem(hwndDlg,IDC_LIST);
-			si = (SESSION_INFO*)lParam;
-			si->pAccPropServicesForNickList = NULL;
-			CoCreateInstance(&CLSID_AccPropServices, NULL, CLSCTX_SERVER, &IID_IAccPropServices, &si->pAccPropServicesForNickList);
+
 			TranslateDialogDefault(hwndDlg);
-			SetWindowLongPtr(hwndDlg, GWLP_USERDATA, (LONG_PTR)si);
+			SetWindowLongPtr(hwndDlg,GWLP_USERDATA,(LONG_PTR)psi);
 			OldSplitterProc=(WNDPROC)SetWindowLongPtr(GetDlgItem(hwndDlg,IDC_SPLITTERX),GWLP_WNDPROC,(LONG_PTR)SplitterSubclassProc);
 			SetWindowLongPtr(GetDlgItem(hwndDlg,IDC_SPLITTERY),GWLP_WNDPROC,(LONG_PTR)SplitterSubclassProc);
 			OldNicklistProc=(WNDPROC)SetWindowLongPtr(hNickList,GWLP_WNDPROC,(LONG_PTR)NicklistSubclassProc);
@@ -1206,15 +1203,15 @@ INT_PTR CALLBACK RoomWndProc(HWND hwndDlg,UINT uMsg,WPARAM wParam,LPARAM lParam)
 			//			RichUtil_SubClass(GetDlgItem(hwndDlg, IDC_MESSAGE));
 			//			RichUtil_SubClass(GetDlgItem(hwndDlg, IDC_LOG));
 
-			si->hwndStatus = CreateWindowEx(0, STATUSCLASSNAME, NULL, WS_CHILD | WS_VISIBLE | SBARS_SIZEGRIP| SBT_TOOLTIPS , 0, 0, 0, 0, hwndDlg, NULL, g_hInst, NULL);
-			SendMessage(si->hwndStatus,SB_SETMINHEIGHT,GetSystemMetrics(SM_CYSMICON),0);
+			psi->hwndStatus = CreateWindowEx(0, STATUSCLASSNAME, NULL, WS_CHILD | WS_VISIBLE | SBARS_SIZEGRIP| SBT_TOOLTIPS , 0, 0, 0, 0, hwndDlg, NULL, g_hInst, NULL);
+			SendMessage(psi->hwndStatus,SB_SETMINHEIGHT,GetSystemMetrics(SM_CYSMICON),0);
 			TabCtrl_SetMinTabWidth(GetDlgItem(hwndDlg, IDC_TAB), 80);
 			TabCtrl_SetImageList(GetDlgItem(hwndDlg, IDC_TAB), hIconsList);
 
 			// enable tooltips
-			si->iOldItemID = -1;
-			si->hwndTooltip = CreateWindow(TOOLTIPS_CLASS,NULL,TTS_ALWAYSTIP,CW_USEDEFAULT,CW_USEDEFAULT,CW_USEDEFAULT,CW_USEDEFAULT,hNickList,(HMENU)NULL,g_hInst,NULL);
-			SetWindowPos(si->hwndTooltip, HWND_TOPMOST,0, 0, 0, 0,SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
+			psi->iOldItemID = -1;
+			psi->hwndTooltip = CreateWindow(TOOLTIPS_CLASS,NULL,TTS_ALWAYSTIP,CW_USEDEFAULT,CW_USEDEFAULT,CW_USEDEFAULT,CW_USEDEFAULT,hNickList,(HMENU)NULL,g_hInst,NULL);
+			SetWindowPos(psi->hwndTooltip, HWND_TOPMOST,0, 0, 0, 0,SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
 			{
 				TOOLINFO ti = {0};
 				ti.cbSize = sizeof(TOOLINFO);
@@ -1224,9 +1221,9 @@ INT_PTR CALLBACK RoomWndProc(HWND hwndDlg,UINT uMsg,WPARAM wParam,LPARAM lParam)
 				ti.uId    = (UINT_PTR)hNickList;
 				ti.lpszText  = LPSTR_TEXTCALLBACK;
 				//GetClientRect( hNickList, &ti.rect );
-				SendMessage( si->hwndTooltip, TTM_ADDTOOL, 0, ( LPARAM )&ti );
-				SendMessage( si->hwndTooltip, TTM_SETDELAYTIME, TTDT_AUTOPOP, 20000 );
-				SendMessage( si->hwndTooltip, TTM_SETMAXTIPWIDTH, 0, 300);
+				SendMessage( psi->hwndTooltip, TTM_ADDTOOL, 0, ( LPARAM )&ti );
+				SendMessage( psi->hwndTooltip, TTM_SETDELAYTIME, TTDT_AUTOPOP, 20000 );
+				SendMessage( psi->hwndTooltip, TTM_SETMAXTIPWIDTH, 0, 300);
 
 				//SendMessage( psi->hwndTooltip, TTM_TRACKACTIVATE, TRUE, ( LPARAM )&ti );
 			}
@@ -1346,7 +1343,7 @@ INT_PTR CALLBACK RoomWndProc(HWND hwndDlg,UINT uMsg,WPARAM wParam,LPARAM lParam)
 		{
 			HICON hIcon;
 			int iStatusbarParts[2];
-			TCHAR* ptszDispName = MM_FindModule(si->pszModule)->ptszModDispName;
+			TCHAR* ptszDispName = a2tf((TCHAR*)MM_FindModule(si->pszModule)->pszModDispName, 0);
 			int x = 12;
 
 			x += GetTextPixelSize(ptszDispName, (HFONT)SendMessage(si->hwndStatus,WM_GETFONT,0,0), TRUE);
@@ -1369,6 +1366,7 @@ INT_PTR CALLBACK RoomWndProc(HWND hwndDlg,UINT uMsg,WPARAM wParam,LPARAM lParam)
 
 			SendMessage(si->hwndStatus, SB_SETTEXT,1,(LPARAM)(si->ptszStatusbarText ? si->ptszStatusbarText : _T("")));
 			SendMessage(si->hwndStatus, SB_SETTIPTEXT,1,(LPARAM)(si->ptszStatusbarText ? si->ptszStatusbarText : _T("")));
+			mir_free( ptszDispName );
 			return TRUE;
 		}
 		break;
@@ -1902,8 +1900,6 @@ END_REMOVETAB:
 					SetTextColor(dis->hDC, ui->iStatusEx == 0?g_Settings.crUserListColor:g_Settings.crUserListHeadingsColor);
 					TextOut(dis->hDC, dis->rcItem.left+x_offset, dis->rcItem.top, ui->pszNick, lstrlen(ui->pszNick));
 					SelectObject(dis->hDC, hOldFont);
-					if (si->pAccPropServicesForNickList) si->pAccPropServicesForNickList->lpVtbl->SetHwndPropStr(si->pAccPropServicesForNickList,
-							GetDlgItem(hwndDlg,IDC_LIST), OBJID_CLIENT, dis->itemID+1, PROPID_ACC_NAME, ui->pszNick);
 				}
 				return TRUE;
 		}	}
@@ -2538,12 +2534,7 @@ LABEL_SHOWWINDOW:
 					break;
 
 				if ( pInfo ) {
-					char *szModName = NULL;
-					if (pInfo->ptszModDispName) {
-						 szModName = mir_t2a(pInfo->ptszModDispName);
-					}
-					mir_snprintf(szName, MAX_PATH,"%s",szModName?szModName:si->pszModule);
-					mir_free(szModName);
+					mir_snprintf(szName, MAX_PATH,"%s",pInfo->pszModDispName?pInfo->pszModDispName:si->pszModule);
 					ValidateFilename(szName);
 					mir_snprintf(szFolder, MAX_PATH,"%s\\%s", g_Settings.pszLogDir, szName );
 #if defined(_UNICODE)
@@ -2727,7 +2718,7 @@ LABEL_SHOWWINDOW:
 		}
 		DestroyWindow( si->hwndTooltip );
 		si->hwndTooltip = NULL;
-		if (si->pAccPropServicesForNickList) si->pAccPropServicesForNickList->lpVtbl->Release(si->pAccPropServicesForNickList);
+
 		SetWindowLongPtr(hwndDlg,GWLP_USERDATA,0);
 		SetWindowLongPtr(GetDlgItem(hwndDlg,IDC_SPLITTERX),GWLP_WNDPROC,(LONG_PTR)OldSplitterProc);
 		SetWindowLongPtr(GetDlgItem(hwndDlg,IDC_SPLITTERY),GWLP_WNDPROC,(LONG_PTR)OldSplitterProc);

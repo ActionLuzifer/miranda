@@ -404,7 +404,7 @@ static HICON LoadTransportIcon(char *filename,int i,char *IconName,TCHAR *SectNa
 	BOOL has_proto_icon=FALSE;
 	SKINICONDESC sid={0};
 	if (needFree) *needFree=FALSE;
-	GetModuleFileNameA(NULL, szPath, MAX_PATH);
+	GetModuleFileNameA(GetModuleHandle(NULL), szPath, MAX_PATH);
 	str=strrchr(szPath,'\\');
 	if(str!=NULL) *str=0;
 	_snprintf(szMyPath, sizeof(szMyPath), "%s\\Icons\\%s", szPath, filename);
@@ -581,7 +581,7 @@ BOOL CJabberProto::DBCheckIsTransportedContact(const TCHAR* jid, HANDLE hContact
 
 	if ( m_lstTransports.getIndex( domain ) == -1 ) {
 		if ( isAgent ) {
-			m_lstTransports.insert( mir_tstrdup(domain) ); 
+			m_lstTransports.insert( _tcsdup(domain) ); 
 			JSetByte( hContact, "IsTransport", 1 );
 	}	}
 

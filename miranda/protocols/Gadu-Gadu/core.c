@@ -296,8 +296,7 @@ void *__stdcall gg_mainthread(void *empty)
 	// Client version and misc settings
 	p.client_version = "8.0.0.8731";
 	p.protocol_version = 0x2e;
-	p.protocol_features = GG_FEATURE_STATUS77 | 0x01 | GG_FEATURE_MSG80 | GG_FEATURE_DND_FFC;
-	p.encoding = GG_ENCODING_CP1250;
+	p.protocol_features = GG_FEATURE_STATUS80BETA | GG_FEATURE_DND_FFC;
 	if (DBGetContactSettingByte(NULL, GG_PROTO, GG_KEY_SHOWLINKS, GG_KEYDEF_SHOWLINKS))
 		p.protocol_flags80 = 0x800000;
 
@@ -528,8 +527,6 @@ retry:
 		pthread_mutex_unlock(&gg->sess_mutex);
 		// Subscribe users status notifications
 		gg_notifyall(gg);
-		// Create avatar request thread
-		gg_initavatarrequestthread(gg);
 		// Set startup status
 		if(gg->proto.m_iDesiredStatus == ID_STATUS_OFFLINE)
 			gg_disconnect(gg);
@@ -589,7 +586,7 @@ retry:
 				}
 				break;
 
-			// Statuslist notify (deprecated)
+			// Statuslist notify
 			case GG_EVENT_NOTIFY:
 			case GG_EVENT_NOTIFY_DESCR:
 			{
@@ -604,16 +601,14 @@ retry:
 				}
 				break;
 			}
-			// Statuslist notify (version >= 6.0)
+			// Statuslist notify (version 6.0)
 			case GG_EVENT_NOTIFY60:
 			{
 				int i;
-				for(i = 0; e->event.notify60[i].uin; i++) {
+				for(i = 0; e->event.notify60[i].uin; i++)
 					gg_changecontactstatus(gg, e->event.notify60[i].uin, e->event.notify60[i].status, e->event.notify60[i].descr,
 						e->event.notify60[i].time, e->event.notify60[i].remote_ip, e->event.notify60[i].remote_port,
 						e->event.notify60[i].version);
-					gg_requestavatar(gg, gg_getcontact(gg, e->event.notify60[i].uin, 0, 0, NULL));
-				}
 				break;
 			}
 
@@ -743,23 +738,15 @@ retry:
 				break;
 			}
 
-			// Status (deprecated)
+			// Status (depreciated)
 			case GG_EVENT_STATUS:
 				gg_changecontactstatus(gg, e->event.status.uin, e->event.status.status, e->event.status.descr, 0, 0, 0, 0);
 				break;
 
-			// Status (version >= 6.0)
+			// Status (version 6.0)
 			case GG_EVENT_STATUS60:
-				{
-					HANDLE hContact = gg_getcontact(gg, e->event.status60.uin, 0, 0, NULL);
-					int oldstatus = DBGetContactSettingWord(hContact, GG_PROTO, GG_KEY_STATUS, (WORD)ID_STATUS_OFFLINE);
-
-					gg_changecontactstatus(gg, e->event.status60.uin, e->event.status60.status, e->event.status60.descr,
-						e->event.status60.time, e->event.status60.remote_ip, e->event.status60.remote_port, e->event.status60.version);
-
-					if (oldstatus == ID_STATUS_OFFLINE && DBGetContactSettingWord(hContact, GG_PROTO, GG_KEY_STATUS, (WORD)ID_STATUS_OFFLINE) != ID_STATUS_OFFLINE)
-						gg_requestavatar(gg, hContact);
-				}
+				gg_changecontactstatus(gg, e->event.status60.uin, e->event.status60.status, e->event.status60.descr,
+					e->event.status60.time, e->event.status60.remote_ip, e->event.status60.remote_port, e->event.status60.version);
 				break;
 
 			// Received userlist / or put info
@@ -1047,47 +1034,6 @@ retry:
 				}
 				break;
 #endif
-			case GG_EVENT_XML_ACTION:
-				if (DBGetContactSettingByte(NULL, GG_PROTO, GG_KEY_ENABLEAVATARS, GG_KEYDEF_ENABLEAVATARS)) {
-					HXML hXml;
-					TCHAR *xmlAction;
-					TCHAR *tag;
-
-					xmlAction = gg_a2t(e->event.xml_action.data);
-					tag = gg_a2t("events");
-					hXml = xi.parseString(xmlAction, 0, tag);
-
-					if (hXml != NULL) {
-						HXML node;
-						char *type, *sender;
-						
-						mir_free(tag);
-						tag = gg_a2t("event/type");
-						node = xi.getChildByPath(hXml, tag, 0);
-						type = node != NULL ? gg_t2a(xi.getText(node)) : NULL;
-
-						mir_free(tag);
-						tag = gg_a2t("event/sender");
-						node = xi.getChildByPath(hXml, tag, 0);
-						sender = node != NULL ? gg_t2a(xi.getText(node)) : NULL;
-#ifdef DEBUGMODE
-						gg_netlog(gg, "gg_mainthread(%x): XML Action type: %s.", gg, type != NULL ? type : "unknown");
-#endif
-						// Avatar change notify
-						if (type != NULL && !strcmp(type, "28")) {
-#ifdef DEBUGMODE
-							gg_netlog(gg, "gg_mainthread(%x): Client %s changed his avatar.", gg, sender);
-#endif
-							gg_requestavatar(gg, gg_getcontact(gg, atoi(sender), 0, 0, NULL));
-						}
-						mir_free(type);
-						mir_free(sender);
-						xi.destroyNode(hXml);
-					}
-					mir_free(tag);
-					mir_free(xmlAction);
-				}
-				break;
 		}
 		// Free event struct
 		gg_free_event(e);
@@ -1262,8 +1208,7 @@ int gg_dbsettingchanged(GGPROTO *gg, WPARAM wParam, LPARAM lParam)
 			{
 				// Notify user normally this time if added to the list permanently
 				DBDeleteContactSetting(hContact, GG_PROTO, GG_KEY_DELETEUSER); // What is it ?? I don't remember
-				gg_notifyuser(gg, hContact, 1);
-				gg_requestavatar(gg, hContact);
+				gg_notifyuser(gg, (HANDLE) wParam, 1);
 			}
 		}
 	}

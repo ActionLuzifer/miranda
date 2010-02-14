@@ -510,10 +510,6 @@ SOURCE=.\res\addgoupp.ico
 # End Source File
 # Begin Source File
 
-SOURCE=.\res\AlwaysVis.ico
-# End Source File
-# Begin Source File
-
 SOURCE=.\res\away.ico
 # End Source File
 # Begin Source File
@@ -527,14 +523,6 @@ SOURCE=.\res\blank1.ico
 # Begin Source File
 
 SOURCE=.\res\changefont.ico
-# End Source File
-# Begin Source File
-
-SOURCE=.\res\chat.ico
-# End Source File
-# Begin Source File
-
-SOURCE=.\res\Chatchannel.ico
 # End Source File
 # Begin Source File
 
@@ -602,10 +590,6 @@ SOURCE=.\res\help.ico
 # End Source File
 # Begin Source File
 
-SOURCE=.\res\hide_avatar.ico
-# End Source File
-# Begin Source File
-
 SOURCE=.\res\history.ico
 # End Source File
 # Begin Source File
@@ -662,51 +646,7 @@ SOURCE=.\res\Licq.ico
 # End Source File
 # Begin Source File
 
-SOURCE=.\res\listening_to.ico
-# End Source File
-# Begin Source File
-
-SOURCE=.\res\lunch.ico
-# End Source File
-# Begin Source File
-
 SOURCE=.\res\message.ico
-# End Source File
-# Begin Source File
-
-SOURCE=.\res\MicroAway.ico
-# End Source File
-# Begin Source File
-
-SOURCE=.\res\MicroChat.ico
-# End Source File
-# Begin Source File
-
-SOURCE=.\res\MicroDnd.ico
-# End Source File
-# Begin Source File
-
-SOURCE=.\res\MicroInvisible.ico
-# End Source File
-# Begin Source File
-
-SOURCE=.\res\MicroLunch.ico
-# End Source File
-# Begin Source File
-
-SOURCE=.\res\MicroNa.ico
-# End Source File
-# Begin Source File
-
-SOURCE=.\res\MicroOccupied.ico
-# End Source File
-# Begin Source File
-
-SOURCE=.\res\MicroOffline.ico
-# End Source File
-# Begin Source File
-
-SOURCE=.\res\MicroPhone.ico
 # End Source File
 # Begin Source File
 
@@ -726,35 +666,11 @@ SOURCE=.\res\multisend.ico
 # End Source File
 # Begin Source File
 
-SOURCE=.\res\NA.ico
-# End Source File
-# Begin Source File
-
 SOURCE=.\res\na2.ico
 # End Source File
 # Begin Source File
 
-SOURCE=.\res\neo_meta_create.cur
-# End Source File
-# Begin Source File
-
-SOURCE=.\res\neo_meta_default.cur
-# End Source File
-# Begin Source File
-
-SOURCE=.\res\neo_meta_move.cur
-# End Source File
-# Begin Source File
-
-SOURCE=.\res\NeverVis.ico
-# End Source File
-# Begin Source File
-
 SOURCE=.\res\occupied.ico
-# End Source File
-# Begin Source File
-
-SOURCE=.\res\offline.ico
 # End Source File
 # Begin Source File
 
@@ -778,27 +694,7 @@ SOURCE=.\res\outtolun.ico
 # End Source File
 # Begin Source File
 
-SOURCE=.\res\phone.ico
-# End Source File
-# Begin Source File
-
 SOURCE=.\res\QIP.ico
-# End Source File
-# Begin Source File
-
-SOURCE=.\res\rate_high.ico
-# End Source File
-# Begin Source File
-
-SOURCE=.\res\rate_low.ico
-# End Source File
-# Begin Source File
-
-SOURCE=.\res\rate_med.ico
-# End Source File
-# Begin Source File
-
-SOURCE=.\res\rate_none.ico
 # End Source File
 # Begin Source File
 
@@ -807,10 +703,6 @@ SOURCE=.\res\rename.ico
 # Begin Source File
 
 SOURCE=.\res\reply.ico
-# End Source File
-# Begin Source File
-
-SOURCE=.\res\reset_view.ico
 # End Source File
 # Begin Source File
 
@@ -823,14 +715,6 @@ SOURCE=.\res\searchal.ico
 # Begin Source File
 
 SOURCE=.\res\sendmail.ico
-# End Source File
-# Begin Source File
-
-SOURCE=.\res\set_view.ico
-# End Source File
-# Begin Source File
-
-SOURCE=.\res\show_avatar.ico
 # End Source File
 # Begin Source File
 
@@ -873,13 +757,5 @@ SOURCE=.\res\useronli.ico
 SOURCE=.\res\viewdetails.ico
 # End Source File
 # End Group
-# Begin Source File
-
-SOURCE=.\res\back.tga
-# End Source File
-# Begin Source File
-
-SOURCE=.\res\skin.msf
-# End Source File
 # End Target
 # End Project

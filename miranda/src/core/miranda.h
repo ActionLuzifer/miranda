@@ -222,9 +222,6 @@ extern LIST<PROTOACCOUNT> accounts;
 PROTOACCOUNT* Proto_GetAccount( const char* accName );
 PROTOCOLDESCRIPTOR* Proto_IsProtocolLoaded( const char* szProtoName );
 
-int Proto_IsAccountEnabled( PROTOACCOUNT* pa );
-int Proto_IsAccountLocked( PROTOACCOUNT* pa );
-
 PROTO_INTERFACE* AddDefaultAccount( const char* szProtoName );
 int  FreeDefaultAccount( PROTO_INTERFACE* ppi );
 
@@ -248,10 +245,6 @@ __inline static INT_PTR CallProtoService( const char* szModule, const char* szSe
 /**** utils.c **************************************************************************/
 
 #if defined( _UNICODE )
-	char*  rtrim(char* str);
+	char*  rtrim( char* string );
 #endif
-TCHAR* rtrim(TCHAR* str);
-char*  ltrim(char* str);
-__inline char* lrtrim(char* str) { return ltrim(rtrim(str)); };
-
-bool wildcmp(char * name, char * mask);
+TCHAR* rtrim( TCHAR* string );

@@ -47,36 +47,16 @@ DWORD DnsLookup(struct NetlibUser *nlu,const char *szHost)
 	return 0;
 }
 
-int WaitUntilReadable(SOCKET s, DWORD dwTimeout, bool check)
+int WaitUntilReadable(SOCKET s,DWORD dwTimeout)
 {
 	fd_set readfd;
 	TIMEVAL tv;
 
-	if (s == INVALID_SOCKET) return SOCKET_ERROR;
-
-	tv.tv_sec  = dwTimeout / 1000;
-	tv.tv_usec = (dwTimeout % 1000) * 1000;
-
+	tv.tv_sec=dwTimeout/1000;
+	tv.tv_usec=(dwTimeout%1000)*1000;
 	FD_ZERO(&readfd);
-	FD_SET(s, &readfd);
-
-	int result = select(0, &readfd, 0, 0, &tv);
-	if (result == 0 && !check) SetLastError(ERROR_TIMEOUT);
-	return result;
-}
-
-int WaitUntilWritable(SOCKET s,DWORD dwTimeout)
-{
-	fd_set writefd;
-	TIMEVAL tv;
-
-	tv.tv_sec = dwTimeout / 1000;
-	tv.tv_usec = (dwTimeout % 1000) * 1000;
-
-	FD_ZERO(&writefd);
-	FD_SET(s, &writefd);
-
-	switch(select(0, 0, &writefd, 0, &tv)) {
+	FD_SET(s,&readfd);
+	switch(select(0,&readfd,0,0,&tv)) {
 		case 0:
 			SetLastError(ERROR_TIMEOUT);
 		case SOCKET_ERROR:
@@ -85,23 +65,48 @@ int WaitUntilWritable(SOCKET s,DWORD dwTimeout)
 	return 1;
 }
 
-bool RecvUntilTimeout(struct NetlibConnection *nlc, char *buf, int len, int flags, DWORD dwTimeout)
+int WaitUntilWritable(SOCKET s,DWORD dwTimeout)
+{
+	fd_set writefd;
+	TIMEVAL tv;
+
+	tv.tv_sec=dwTimeout/1000;
+	tv.tv_usec=(dwTimeout%1000)*1000;
+	FD_ZERO(&writefd);
+	FD_SET(s,&writefd);
+	switch(select(0,0,&writefd,0,&tv)) {
+		case 0:
+			SetLastError(ERROR_TIMEOUT);
+		case SOCKET_ERROR:
+			return 0;
+	}
+	return 1;
+}
+
+BOOL RecvUntilTimeout(struct NetlibConnection *nlc,char *buf,int len,int flags,DWORD dwTimeout)
 {
 	int nReceived = 0;
-	DWORD dwTimeNow, dwCompleteTime = GetTickCount() + dwTimeout;
-
-	while ((dwTimeNow = GetTickCount()) < dwCompleteTime) 
-	{
-		if (WaitUntilReadable(nlc->s, dwCompleteTime - dwTimeNow) <= 0) return false; 
+	DWORD dwStartTime = GetTickCount();
+	while (GetTickCount() - dwStartTime < dwTimeout) {		
+		TIMEVAL timeout = {0, 10000};
+		fd_set fds;
+		FD_ZERO(&fds);
+		FD_SET(nlc->s, &fds);
+		switch( select(0, &fds, NULL, NULL, &timeout )) {
+		case 0:
+			continue;
+		case SOCKET_ERROR:
+			return FALSE;
+		}
 		nReceived = NLRecv(nlc, buf, len, flags);
-		if (nReceived <= 0) return false;
+		if (nReceived <= 0) return FALSE;
 
 		buf += nReceived;
 		len -= nReceived;
-		if (len <= 0) return true;
+		if (len <= 0) return TRUE;
 	}
 	SetLastError( ERROR_TIMEOUT );
-	return false;
+	return FALSE;
 }
 
 static int NetlibInitSocks4Connection(struct NetlibConnection *nlc,struct NetlibUser *nlu,NETLIBOPENCONNECTION *nloc)
@@ -300,44 +305,44 @@ static int NetlibInitSocks5Connection(struct NetlibConnection *nlc,struct Netlib
 
 static int NetlibInitHttpsConnection(struct NetlibConnection *nlc,struct NetlibUser *nlu,NETLIBOPENCONNECTION *nloc)
 {	//rfc2817
-	NETLIBHTTPREQUEST nlhrSend = {0}, *nlhrReply;
+	NETLIBHTTPHEADER httpHeaders[3];
+	NETLIBHTTPREQUEST nlhrSend={0},*nlhrReply;
 	char szUrl[512];
 
-	nlhrSend.cbSize = sizeof(nlhrSend);
-	nlhrSend.requestType = REQUEST_CONNECT;
-	nlhrSend.flags = NLHRF_GENERATEHOST | NLHRF_DUMPPROXY | NLHRF_SMARTAUTHHEADER | NLHRF_HTTP11 | NLHRF_NOPROXY;
-	if (nlu->settings.dnsThroughProxy) 
-	{
-		mir_snprintf(szUrl, SIZEOF(szUrl), "%s:%u", nloc->szHost, nloc->wPort);
-	}
-	else 
-	{
-		IN_ADDR addr;
-		DWORD ip = DnsLookup(nlu, nloc->szHost);
-		if (ip == 0) return 0;
-		addr.S_un.S_addr = ip;
-		mir_snprintf(szUrl, SIZEOF(szUrl), "%s:%u", inet_ntoa(addr), nloc->wPort);
-	}
-	nlhrSend.szUrl = szUrl;
+	memset(httpHeaders,0,sizeof(httpHeaders));
 
-	nlc->usingHttpGateway = true;
-
-	if (NetlibHttpSendRequest((WPARAM)nlc,(LPARAM)&nlhrSend) == SOCKET_ERROR)
-	{
-		nlc->usingHttpGateway = false;
+	nlhrSend.cbSize=sizeof(nlhrSend);
+	nlhrSend.requestType=REQUEST_CONNECT;
+	nlhrSend.flags=NLHRF_GENERATEHOST|NLHRF_DUMPPROXY|NLHRF_SMARTAUTHHEADER|NLHRF_HTTP11;
+	if(nlu->settings.dnsThroughProxy) {
+		mir_snprintf(szUrl,SIZEOF(szUrl),"%s:%u",nloc->szHost,nloc->wPort);
+		if(inet_addr(nloc->szHost)==INADDR_NONE) {
+			httpHeaders[0].szName="Host";
+			httpHeaders[0].szValue=szUrl;
+			nlhrSend.headersCount++;
+		}
+	}
+	else {
+		struct in_addr addr;
+		DWORD ip=DnsLookup(nlu,nloc->szHost);
+		if(ip==0) return 0;
+		addr.S_un.S_addr=ip;
+		mir_snprintf(szUrl,SIZEOF(szUrl),"%s:%u",inet_ntoa(addr),nloc->wPort);
+	}
+	nlhrSend.szUrl=szUrl;
+	nlhrSend.headers=httpHeaders;
+	nlhrSend.headersCount=0;
+	if(NetlibHttpSendRequest((WPARAM)nlc,(LPARAM)&nlhrSend)==SOCKET_ERROR)
 		return 0;
-	}
-	nlhrReply = (NETLIBHTTPREQUEST*)NetlibHttpRecvHeaders((WPARAM)nlc, MSG_DUMPPROXY | MSG_RAW);
-	nlc->usingHttpGateway = false;
-	if (nlhrReply == NULL) return 0;
-	if (nlhrReply->resultCode < 200 || nlhrReply->resultCode >= 300)
-	{
+	nlhrReply=(NETLIBHTTPREQUEST*)NetlibHttpRecvHeaders((WPARAM)nlc,MSG_DUMPPROXY);
+	if(nlhrReply==NULL) return 0;
+	if(nlhrReply->resultCode<200 || nlhrReply->resultCode>=300) {
 		NetlibHttpSetLastErrorUsingHttpResult(nlhrReply->resultCode);
 		Netlib_Logf(nlu,"%s %d: %s request failed (%u %s)",__FILE__,__LINE__,nlu->settings.proxyType==PROXYTYPE_HTTP?"HTTP":"HTTPS",nlhrReply->resultCode,nlhrReply->szResultDescr);
-		NetlibHttpFreeRequestStruct(0, (LPARAM)nlhrReply);
+		NetlibHttpFreeRequestStruct(0,(LPARAM)nlhrReply);
 		return 0;
 	}
-	NetlibHttpFreeRequestStruct(0, (LPARAM)nlhrReply);
+	NetlibHttpFreeRequestStruct(0,(LPARAM)nlhrReply);
 	//connected
 	return 1;
 }
@@ -346,11 +351,10 @@ static void FreePartiallyInitedConnection(struct NetlibConnection *nlc)
 {
 	DWORD dwOriginalLastError=GetLastError();
 
-	if (nlc->s!=INVALID_SOCKET) closesocket(nlc->s);
-	mir_free(nlc->nlhpi.szHttpPostUrl);
-	mir_free(nlc->nlhpi.szHttpGetUrl);
-	mir_free((char*)nlc->nloc.szHost);
-	mir_free(nlc->szProxyServer);
+	if(nlc->s!=INVALID_SOCKET) closesocket(nlc->s);
+	if(nlc->nlhpi.szHttpPostUrl) mir_free(nlc->nlhpi.szHttpPostUrl);
+	if(nlc->nlhpi.szHttpGetUrl) mir_free(nlc->nlhpi.szHttpGetUrl);
+	NetlibDestroySecurityProvider("NTLM", nlc->hNtlmSecurity);
 	NetlibDeleteNestedCS(&nlc->ncsSend);
 	NetlibDeleteNestedCS(&nlc->ncsRecv);
 	CloseHandle(nlc->hOkToCloseEvent);
@@ -396,7 +400,7 @@ retry:
 	// return the socket to non blocking
 	if ( ioctlsocket(nlc->s, FIONBIO, &notblocking) != 0 ) return SOCKET_ERROR;
 
-	if (nlc->nlu->settings.specifyOutgoingPorts && nlc->nlu->settings.szOutgoingPorts  && nlc->nlu->settings.szOutgoingPorts[0]) 
+	if (nlc->nlu->settings.specifyOutgoingPorts && nlc->nlu->settings.szOutgoingPorts) 
 	{
 		if (!BindSocketToPort(nlc->nlu->settings.szOutgoingPorts, nlc->s, &nlc->nlu->inportnum))
 			Netlib_Logf(nlc->nlu,"Netlib connect: Not enough ports for outgoing connections specified");
@@ -465,214 +469,135 @@ retry:
 unblock:	
 	notblocking=0;
 	ioctlsocket(nlc->s, FIONBIO, &notblocking);
-	if (lasterr) SetLastError(lasterr);
+	SetLastError(lasterr);
 	return rc;
 }
 
-bool NetlibDoConnect(NetlibConnection *nlc)
+INT_PTR NetlibOpenConnection(WPARAM wParam,LPARAM lParam)
 {
-	NETLIBOPENCONNECTION *nloc = &nlc->nloc;
-	NetlibUser *nlu = nlc->nlu;
+	NETLIBOPENCONNECTION *nloc=(NETLIBOPENCONNECTION*)lParam;
+	struct NetlibUser *nlu=(struct NetlibUser*)wParam;
+	struct NetlibConnection *nlc;
 
-	nlc->proxyAuthNeeded = true;
-	nlc->sinProxy.sin_family = AF_INET;
+	Netlib_Logf(nlu,"Connecting to %s:%d (Flags %x)....", nloc->szHost, nloc->wPort, nloc->flags);
 
-	mir_free(nlc->szProxyServer); nlc->szProxyServer = NULL;
+	EnterCriticalSection(&csNetlibUser);
+	if(iUPnPCleanup==0) {
+		forkthread(NetlibUPnPCleanup, 0, NULL);
+		iUPnPCleanup = 1;
+	}
+	LeaveCriticalSection(&csNetlibUser);
+	if(GetNetlibHandleType(nlu)!=NLH_USER || !(nlu->user.flags&NUF_OUTGOING) || nloc==NULL 
+		|| !(nloc->cbSize==NETLIBOPENCONNECTION_V1_SIZE||nloc->cbSize==sizeof(NETLIBOPENCONNECTION)) || nloc->szHost==NULL || nloc->wPort==0) {
+		SetLastError(ERROR_INVALID_PARAMETER);
+		return (INT_PTR)(HANDLE)NULL;
+	}
+	nlc=(struct NetlibConnection*)mir_calloc(sizeof(struct NetlibConnection));
+	nlc->handleType=NLH_CONNECTION;
+	nlc->nlu=nlu;
 
-	bool usingProxy = false;
-	if (nlu->settings.useProxy)
+	InitializeCriticalSection(&nlc->csHttpSequenceNums);
+	nlc->hOkToCloseEvent=CreateEvent(NULL,TRUE,TRUE,NULL);
+	nlc->dontCloseNow=0;
+	NetlibInitializeNestedCS(&nlc->ncsSend);
+	NetlibInitializeNestedCS(&nlc->ncsRecv);
+	if(nlu->settings.useProxy && (nlu->settings.proxyType==PROXYTYPE_HTTP || nlu->settings.proxyType==PROXYTYPE_HTTPS) && nlu->settings.useProxyAuth && nlu->settings.useProxyAuthNtlm)
+		nlc->hNtlmSecurity = NetlibInitSecurityProvider("NTLM");
+
+	nlc->sinProxy.sin_family=AF_INET;
+	if(nlu->settings.useProxy) {
+		nlc->sinProxy.sin_port=htons((short)nlu->settings.wProxyPort);
+		nlc->sinProxy.sin_addr.S_un.S_addr=DnsLookup(nlu,nlu->settings.szProxyServer);
+	}
+	else {
+		nlc->sinProxy.sin_port=htons((short)nloc->wPort);
+		nlc->sinProxy.sin_addr.S_un.S_addr=DnsLookup(nlu,nloc->szHost);
+	}
+	if(nlc->sinProxy.sin_addr.S_un.S_addr==0
+	   || my_connect(nlc, nloc)==SOCKET_ERROR) {
+		if(nlc->sinProxy.sin_addr.S_un.S_addr)
+			Netlib_Logf(nlu,"%s %d: %s() failed (%u)",__FILE__,__LINE__,"connect",WSAGetLastError());
+		FreePartiallyInitedConnection(nlc);		
+		return (INT_PTR)(HANDLE)NULL;
+	}
+
+	if(nlu->settings.useProxy
+	   && !((nloc->flags & (NLOCF_HTTP | NLOCF_SSL)) == NLOCF_HTTP
+			&& (nlu->settings.proxyType==PROXYTYPE_HTTP || nlu->settings.proxyType==PROXYTYPE_HTTPS)))
 	{
-		if (nlu->settings.proxyType == PROXYTYPE_IE)
-		{
-			usingProxy = NetlibGetIeProxyConn(nlc);
+		if(!WaitUntilWritable(nlc->s,30000)) {
+			FreePartiallyInitedConnection(nlc);
+			return (INT_PTR)NULL;
 		}
-		else
-		{
-			if (nlu->settings.szProxyServer && nlu->settings.szProxyServer[0])
-			{
-				nlc->szProxyServer = mir_strdup(nlu->settings.szProxyServer);
-				nlc->wProxyPort = nlu->settings.wProxyPort;
-				nlc->proxyType = nlu->settings.proxyType;
-				usingProxy = true;
-			}
-		}
-	}
 
-	if (usingProxy) 
-	{
-		nlc->sinProxy.sin_port = htons(nlc->wProxyPort);
-		nlc->sinProxy.sin_addr.S_un.S_addr = DnsLookup(nlu, nlc->szProxyServer);
-	}
-	else
-	{
-		nlc->sinProxy.sin_port = htons(nloc->wPort);
-		nlc->sinProxy.sin_addr.S_un.S_addr = DnsLookup(nlu, nloc->szHost);
-	}
-
-	if (nlc->sinProxy.sin_addr.S_un.S_addr == 0) return false;
-
-	if (my_connect(nlc, nloc)==SOCKET_ERROR) 
-	{
-		Netlib_Logf(nlu,"%s %d: %s() failed (%u)",__FILE__,__LINE__,"connect",WSAGetLastError());
-		return false;
-	}
-
-	if (usingProxy && !((nloc->flags & (NLOCF_HTTP | NLOCF_SSL)) == NLOCF_HTTP && 
-		(nlc->proxyType == PROXYTYPE_HTTP || nlc->proxyType == PROXYTYPE_HTTPS)))
-	{
-		if (!WaitUntilWritable(nlc->s,30000)) return false;
-
-		switch(nlc->proxyType) 
-		{
+		switch(nlu->settings.proxyType) {
 			case PROXYTYPE_SOCKS4:
-				if (!NetlibInitSocks4Connection(nlc, nlu, nloc)) return false;
+				if(!NetlibInitSocks4Connection(nlc,nlu,nloc)) {
+					FreePartiallyInitedConnection(nlc);
+					return (INT_PTR)NULL;
+				}
 				break;
 
 			case PROXYTYPE_SOCKS5:
-				if (!NetlibInitSocks5Connection(nlc, nlu, nloc)) return false;
+				if(!NetlibInitSocks5Connection(nlc,nlu,nloc)) {
+					FreePartiallyInitedConnection(nlc);
+					return (INT_PTR)NULL;
+				}
 				break;
 
 			case PROXYTYPE_HTTPS:
-				if (!NetlibInitHttpsConnection(nlc, nlu, nloc)) return false;
+				if(!NetlibInitHttpsConnection(nlc,nlu,nloc)) {
+					FreePartiallyInitedConnection(nlc);
+					return (INT_PTR)NULL;
+				}
 				break;
 
 			case PROXYTYPE_HTTP:
-				if (!(nlu->user.flags & NUF_HTTPGATEWAY || nloc->flags & NLOCF_HTTPGATEWAY) || nloc->flags & NLOCF_SSL)
-				{
+				if(!(nlu->user.flags & NUF_HTTPGATEWAY) || (nloc->flags & NLOCF_SSL)) {
 					//NLOCF_HTTP not specified and no HTTP gateway available: try HTTPS
-					if (!NetlibInitHttpsConnection(nlc, nlu, nloc))
-					{
+					if(!NetlibInitHttpsConnection(nlc,nlu,nloc)) {
 						//can't do HTTPS: try direct
 						closesocket(nlc->s);
 
-						nlc->sinProxy.sin_family = AF_INET;
-						nlc->sinProxy.sin_port = htons(nloc->wPort);
-						nlc->sinProxy.sin_addr.S_un.S_addr = DnsLookup(nlu, nloc->szHost);
-						if(nlc->sinProxy.sin_addr.S_un.S_addr == 0 || my_connect(nlc, nloc) == SOCKET_ERROR) 
+						nlc->sinProxy.sin_family=AF_INET;
+						nlc->sinProxy.sin_port=htons((short)nloc->wPort);
+						nlc->sinProxy.sin_addr.S_un.S_addr=DnsLookup(nlu,nloc->szHost);
+						if(nlc->sinProxy.sin_addr.S_un.S_addr==0 || my_connect(nlc, nloc)==SOCKET_ERROR) 
 						{
-							if (nlc->sinProxy.sin_addr.S_un.S_addr)
-								Netlib_Logf(nlu, "%s %d: %s() failed (%u)", __FILE__, __LINE__, "connect", WSAGetLastError());
-							return false;
+							if(nlc->sinProxy.sin_addr.S_un.S_addr)
+								Netlib_Logf(nlu,"%s %d: %s() failed (%u)",__FILE__,__LINE__,"connect",WSAGetLastError());
+							FreePartiallyInitedConnection(nlc);
+							return (INT_PTR)NULL;
 						}
 					}
 				}
-				else if (!NetlibInitHttpConnection(nlc, nlu, nloc)) return false;
+				else if(!NetlibInitHttpConnection(nlc,nlu,nloc)) {
+					FreePartiallyInitedConnection(nlc);
+					return (INT_PTR)NULL;
+				}
 				break;
 
 			default:
 				SetLastError(ERROR_INVALID_PARAMETER);
 				FreePartiallyInitedConnection(nlc);
-				return false;
+				return (INT_PTR)NULL;
 		}
 	}
-	else if (nloc->flags & NLOCF_HTTPGATEWAY)
-	{
-		if (!NetlibInitHttpConnection(nlc, nlu, nloc)) return false;
-		nlc->usingDirectHttpGateway = true;
-	}
-
 	if (NLOCF_SSL & nloc->flags)
 	{
-		Netlib_Logf(nlc->nlu, "(%d) Connected to %s:%d, Starting SSL negotiation", nlc->s, nloc->szHost, nloc->wPort);
+		Netlib_Logf(nlu,"(%d) Connected to %s:%d, Starting SSL negotiation",nlc->s,nloc->szHost,nloc->wPort);
 
-		nlc->hSsl = si.connect(nlc->s, nloc->szHost, nlc->nlu->settings.validateSSL);
+		nlc->hSsl = si.connect(nlc->s, nloc->szHost, nlu->settings.validateSSL);
 		if (nlc->hSsl == NULL)
 		{
-			Netlib_Logf(nlc->nlu, "(%d %s) Failure to negotiate SSL connection", nlc->s, nloc->szHost);
-			return false;
+			Netlib_Logf(nlu,"(%d %s) Failure to negotiate SSL connection",nlc->s,nloc->szHost);
+			FreePartiallyInitedConnection(nlc);
+			return 0;
 		}
 	}
+	nlc->szHost = mir_strdup(nloc->szHost);
 
 	Netlib_Logf(nlu,"(%d) Connected to %s:%d",nlc->s,nloc->szHost,nloc->wPort);
-	return true;
-}
-
-bool NetlibReconnect(NetlibConnection *nlc)
-{
-	char buf[4];
-	bool opened;  
-
-	switch (WaitUntilReadable(nlc->s, 0, true))
-	{
-	case SOCKET_ERROR:
-		opened = false;
-		break;
-
-	case 0:
-		opened = true;
-		break;
-
-	case 1:
-		opened = recv(nlc->s, buf, 1, MSG_PEEK) > 0;
-		break;
-	}
-
-	if (!opened)
-	{
-		if (nlc->hSsl)
-		{
-			si.sfree(nlc->hSsl);
-			nlc->hSsl = NULL;
-		}
-		closesocket(nlc->s);
-		nlc->s = INVALID_SOCKET;
-
-		if (Miranda_Terminated()) return false;
-
-		if (nlc->usingHttpGateway)
-			return my_connect(nlc, &nlc->nloc) == 0;
-		else
-			return NetlibDoConnect(nlc);
-	}
-	return true;
-}
-
-INT_PTR NetlibOpenConnection(WPARAM wParam,LPARAM lParam)
-{
-	NETLIBOPENCONNECTION *nloc = (NETLIBOPENCONNECTION*)lParam;
-	struct NetlibUser *nlu = (struct NetlibUser*)wParam;
-	struct NetlibConnection *nlc;
-
-	Netlib_Logf(nlu,"Connecting to %s:%d (Flags %x)....", nloc->szHost, nloc->wPort, nloc->flags);
-
-	if (iUPnPCleanup == 0)
-	{
-		EnterCriticalSection(&csNetlibUser);
-		if (iUPnPCleanup == 0) 
-		{
-			iUPnPCleanup = 1;
-			forkthread(NetlibUPnPCleanup, 0, NULL);
-		}
-		LeaveCriticalSection(&csNetlibUser);
-	}
-
-	if (GetNetlibHandleType(nlu) != NLH_USER || !(nlu->user.flags & NUF_OUTGOING) || nloc == NULL ||
-		(nloc->cbSize != NETLIBOPENCONNECTION_V1_SIZE && nloc->cbSize != sizeof(NETLIBOPENCONNECTION)) || 
-		nloc->szHost == NULL || nloc->wPort == 0)
-	{
-		SetLastError(ERROR_INVALID_PARAMETER);
-		return 0;
-	}
-	nlc = (struct NetlibConnection*)mir_calloc(sizeof(struct NetlibConnection));
-	nlc->handleType = NLH_CONNECTION;
-	nlc->nlu = nlu;
-	nlc->nloc = *nloc;
-	nlc->nloc.szHost = mir_strdup(nloc->szHost);
-	nlc->s = INVALID_SOCKET;
-	nlc->s2 = INVALID_SOCKET;
-
-	InitializeCriticalSection(&nlc->csHttpSequenceNums);
-	nlc->hOkToCloseEvent = CreateEvent(NULL,TRUE,TRUE,NULL);
-	nlc->dontCloseNow = 0;
-	NetlibInitializeNestedCS(&nlc->ncsSend);
-	NetlibInitializeNestedCS(&nlc->ncsRecv);
-
-	if (!NetlibDoConnect(nlc))
-	{
-		FreePartiallyInitedConnection(nlc);		
-		return 0;
-	}
-
 	return (INT_PTR)nlc;
 }
 
@@ -681,10 +606,10 @@ INT_PTR NetlibStartSsl(WPARAM wParam,LPARAM lParam)
 	struct NetlibConnection *nlc = (struct NetlibConnection*)wParam;
 	NETLIBSSL *sp = (NETLIBSSL*)lParam;
 
-	nlc->hSsl = si.connect(nlc->s, sp ? sp->host : nlc->nloc.szHost, nlc->nlu->settings.validateSSL);
+	nlc->hSsl = si.connect(nlc->s, sp ? sp->host : nlc->szHost, nlc->nlu->settings.validateSSL);
 
 	if (nlc->hSsl == NULL)
-		Netlib_Logf(nlc->nlu,"(%d %s) Failure to negotiate SSL connection",nlc->s, sp ? sp->host : nlc->nloc.szHost);
+		Netlib_Logf(nlc->nlu,"(%d %s) Failure to negotiate SSL connection",nlc->s, sp ? sp->host : nlc->szHost);
 
 	return nlc->hSsl != NULL;
 }

@@ -48,21 +48,19 @@ static y_filetransfer* new_ft(CYahooProto* ppro, int id, HANDLE hContact, const 
 
 	ft->pfts.cbSize = sizeof(PROTOFILETRANSFERSTATUS);
 	ft->pfts.hContact = hContact;
-	ft->pfts.flags =  PFTS_TCHAR; 
-	ft->pfts.flags |= (sending != 0 ) ? PFTS_SENDING : PFTS_RECEIVING;
-	
-	ft->pfts.tszWorkingDir = NULL;
+	ft->pfts.sending = sending;
+	ft->pfts.workingDir = NULL;
 	ft->pfts.currentFileTime = 0;
 
 	ft->pfts.totalFiles = y_list_length(fs);
 
-	ft->pfts.ptszFiles = (TCHAR**) mir_calloc(ft->pfts.totalFiles * sizeof(TCHAR *));
+	ft->pfts.files = (char**) calloc(ft->pfts.totalFiles, sizeof(char *));
 	ft->pfts.totalBytes = 0;
 
 	while(l) {
 		fi = ( yahoo_file_info* )l->data;
 
-		ft->pfts.ptszFiles[i++] = mir_utf8decodeT(fi->filename);
+		ft->pfts.files[i++] = strdup(fi->filename);
 		ft->pfts.totalBytes += fi->filesize;
 
 		l=l->next;
@@ -71,7 +69,7 @@ static y_filetransfer* new_ft(CYahooProto* ppro, int id, HANDLE hContact, const 
 	ft->pfts.currentFileNumber = 0;
 
 	fi = ( yahoo_file_info* )fs->data; 
-	ft->pfts.tszCurrentFile = _tcsdup(ft->pfts.ptszFiles[ft->pfts.currentFileNumber]);
+	ft->pfts.currentFile = strdup(fi->filename);
 	ft->pfts.currentFileSize = fi->filesize; 
 
 	file_transfers = y_list_prepend(file_transfers, ft);
@@ -138,11 +136,11 @@ static void free_ft(y_filetransfer* ft)
 	LOG(("[free_ft] About to free PFTS."));
 	
 	for (i=0; i< ft->pfts.totalFiles; i++)
-		mir_free(ft->pfts.ptszFiles[i]);
+		free(ft->pfts.files[i]);
 	
-	FREE(ft->pfts.tszCurrentFile);
-	FREE(ft->pfts.tszWorkingDir);
-	mir_free(ft->pfts.ptszFiles);
+	FREE(ft->pfts.currentFile);
+	FREE(ft->pfts.files);
+	FREE(ft->pfts.workingDir);
 	FREE(ft);
 	
 	LOG(("[/free_ft]"));
@@ -163,7 +161,7 @@ static void upload_file(int id, int fd, int error, void *data)
 	}
 
 	if(!error) {
-		HANDLE myhFile = CreateFile(sf->pfts.tszCurrentFile,
+		HANDLE myhFile = CreateFileA(fi->filename,
 			GENERIC_READ,
 			FILE_SHARE_READ|FILE_SHARE_WRITE,
 			NULL,
@@ -259,7 +257,7 @@ static void upload_file(int id, int fd, int error, void *data)
 			struct yahoo_file_info * fi;
 			
 			// Do Next file
-			FREE(sf->pfts.tszCurrentFile);
+			free(sf->pfts.currentFile);
 			
 			l = sf->files;
 			
@@ -272,7 +270,7 @@ static void upload_file(int id, int fd, int error, void *data)
 			
 			// need to move to the next file on the list and fill the file information
 			fi = ( yahoo_file_info* )sf->files->data; 
-			sf->pfts.tszCurrentFile = _tcsdup(sf->pfts.ptszFiles[sf->pfts.currentFileNumber]);
+			sf->pfts.currentFile = strdup(fi->filename);
 			sf->pfts.currentFileSize = fi->filesize; 
 			sf->pfts.currentFileProgress = 0;
 			
@@ -306,23 +304,25 @@ static void dl_file(int id, int fd, int error,	const char *filename, unsigned lo
 	
     if(!error) {
 		HANDLE myhFile;
-		TCHAR filefull[MAX_PATH];
+
+		//LOG(("dir: %s, file: %s", sf->pfts.workingDir, fi->filename ));
+		wsprintfA(buf, "%s\\%s", sf->pfts.workingDir, fi->filename);
 		
 		/*
 		 * We need FULL Path for File Resume to work properly!!!
 		 *
 		 * Don't rely on workingDir to be right, since it's not used to check if file exists.
 		 */
-		mir_sntprintf(filefull, MAX_PATH, _T("%s\\%s"), sf->pfts.tszWorkingDir, sf->pfts.tszCurrentFile);
-		FREE(sf->pfts.tszCurrentFile);
-		sf->pfts.tszCurrentFile = _tcsdup(filefull);		
+		FREE(sf->pfts.currentFile);
+		sf->pfts.currentFile = strdup(buf);		
+		LOG(("Saving: %s",  sf->pfts.currentFile));
 		
 		ResetEvent(sf->hWaitEvent);
 		
 		if ( sf->ppro->SendBroadcast( sf->hContact, ACKTYPE_FILE, ACKRESULT_FILERESUME, sf, ( LPARAM )&sf->pfts )) {
 			WaitForSingleObject( sf->hWaitEvent, INFINITE );
 			
-			LOG(("[dl_file] Got action: %d", sf->action));
+			LOG(("[dl_file] Got action: %ld", sf->action));
 			
 			switch(sf->action){
 				case FILERESUME_RENAME:
@@ -346,7 +346,8 @@ static void dl_file(int id, int fd, int error,	const char *filename, unsigned lo
 		
 		if (! sf->cancel) {
 			
-			myhFile    = CreateFile(sf->pfts.tszCurrentFile,
+			LOG(("Getting file: %s", sf->pfts.currentFile));
+			myhFile    = CreateFileA(sf->pfts.currentFile,
 									GENERIC_WRITE,
 									FILE_SHARE_WRITE,
 									NULL, OPEN_ALWAYS,  FILE_ATTRIBUTE_NORMAL,  0);
@@ -431,7 +432,7 @@ static void dl_file(int id, int fd, int error,	const char *filename, unsigned lo
 			
 			// Do Next file
 			yahoo_ft7dc_nextfile(id, sf->who, sf->ftoken);
-			FREE(sf->pfts.tszCurrentFile);
+			free(sf->pfts.currentFile);
 			
 			l = sf->files;
 			
@@ -444,7 +445,7 @@ static void dl_file(int id, int fd, int error,	const char *filename, unsigned lo
 			
 			// need to move to the next file on the list and fill the file information
 			fi = ( yahoo_file_info* )sf->files->data; 
-			sf->pfts.tszCurrentFile = _tcsdup(sf->pfts.ptszFiles[sf->pfts.currentFileNumber]);
+			sf->pfts.currentFile = strdup(fi->filename);
 			sf->pfts.currentFileSize = fi->filesize; 
 			sf->pfts.currentFileProgress = 0;
 			
@@ -532,7 +533,7 @@ void CYahooProto::ext_got_file(const char *me, const char *who, const char *url,
 	strcpy(szBlob + sizeof(DWORD) + lstrlenA(fn) + 1, ft->msg);
 
 	PROTORECVEVENT pre;
-	pre.flags = PREF_UTF;
+	pre.flags = 0;
 	pre.timestamp = (DWORD)time(NULL);
 	pre.szMessage = szBlob;
 	pre.lParam = (LPARAM)ft;
@@ -589,7 +590,7 @@ void CYahooProto::ext_got_files(const char *me, const char *who, const char *ft_
 	strcpy(szBlob + sizeof(DWORD) + lstrlenA(fn) + 1, "");
 
 	PROTORECVEVENT pre;
-	pre.flags = PREF_UTF;
+	pre.flags = 0;
 	pre.timestamp = (DWORD)time(NULL);
 	pre.szMessage = szBlob;
 	pre.lParam = (LPARAM)ft;
@@ -628,8 +629,6 @@ void CYahooProto::ext_got_file7info(const char *me, const char *who, const char 
 void ext_yahoo_send_file7info(int id, const char *me, const char *who, const char *ft_token)
 {
 	y_filetransfer *ft;
-	yahoo_file_info *fi;
-	
 	char *c;
 	LOG(("[ext_yahoo_send_file7info] id: %i, ident:%s, who: %s, ft_token: %s", id, me, who, ft_token));
 	
@@ -640,13 +639,11 @@ void ext_yahoo_send_file7info(int id, const char *me, const char *who, const cha
 		return;
 	}
 	
-	fi = (yahoo_file_info *) ft->files->data;
-	
-	c = strrchr(fi->filename, '\\');
+	c = strrchr(ft->pfts.currentFile, '\\');
 	if (c != NULL ) {
 		c++;
 	} else {
-		c = fi->filename;
+		c = ft->pfts.currentFile;
 	}
 	
 	LOG(("Resolving relay.msg.yahoo.com..."));
@@ -722,12 +719,12 @@ void __cdecl CYahooProto::send_filethread(void *psf)
 ////////////////////////////////////////////////////////////////////////////////////////
 // SendFile - sends a file
 
-HANDLE __cdecl CYahooProto::SendFile( HANDLE hContact, const PROTOCHAR* szDescription, PROTOCHAR** ppszFiles )
+HANDLE __cdecl CYahooProto::SendFile( HANDLE hContact, const char* szDescription, char** ppszFiles )
 {
 	DBVARIANT dbv;
 	y_filetransfer *sf;
 	
-	LOG(("[YahooSendFile]"));
+	LOG(("[YahooSendFile] msg: %s", szDescription));
 	
 	if ( !m_bLoggedIn )
 		return 0;
@@ -750,11 +747,11 @@ HANDLE __cdecl CYahooProto::SendFile( HANDLE hContact, const PROTOCHAR* szDescri
 		int i=0;
 	
 		while (ppszFiles[i] != NULL) {
-			if ( _tstat( ppszFiles[i], &statbuf ) == 0 )
+			if ( _stat( ppszFiles[i], &statbuf ) == 0 )
 				tFileSize = statbuf.st_size;
 	
 			fi = y_new(struct yahoo_file_info,1);
-			fi->filename = mir_utf8encodeT(ppszFiles[i]);
+			fi->filename = strdup(ppszFiles[i]);
 			fi->filesize = tFileSize;
 		
 			fs = y_list_append(fs, fi);
@@ -789,20 +786,20 @@ HANDLE __cdecl CYahooProto::SendFile( HANDLE hContact, const PROTOCHAR* szDescri
 ////////////////////////////////////////////////////////////////////////////////////////
 // FileAllow - starts a file transfer
 
-HANDLE __cdecl CYahooProto::FileAllow( HANDLE /*hContact*/, HANDLE hTransfer, const PROTOCHAR* szPath )
+HANDLE __cdecl CYahooProto::FileAllow( HANDLE /*hContact*/, HANDLE hTransfer, const char* szPath )
 {
 	y_filetransfer *ft = (y_filetransfer *)hTransfer;
-	size_t len;
+	int len;
 
 	DebugLog("[YahooFileAllow]");
 
 	//LOG(LOG_INFO, "[%s] Requesting file from %s", ft->cookie, ft->user);
-	ft->pfts.tszWorkingDir = _tcsdup( szPath );
+	ft->pfts.workingDir = strdup( szPath );
 
-	len = _tcslen(ft->pfts.tszWorkingDir) - 1;
-	if (ft->pfts.tszWorkingDir[len] == '\\')
-		ft->pfts.tszWorkingDir[len] = 0;
-		
+	len = lstrlenA(ft->pfts.workingDir) - 1;
+	if (ft->pfts.workingDir[len] == '\\')
+		ft->pfts.workingDir[len] = '\0';
+
 	if (ft->y7) {
 		DebugLog("[YahooFileAllow] Trying to relay Y7 transfer.");
 		//void yahoo_ft7dc_accept(int id, const char *buddy, const char *ft_token);
@@ -820,11 +817,11 @@ HANDLE __cdecl CYahooProto::FileAllow( HANDLE /*hContact*/, HANDLE hTransfer, co
 
 int __cdecl CYahooProto::FileCancel( HANDLE /*hContact*/, HANDLE hTransfer )
 {
-	DebugLog("[YahooFileCancel]");
-
 	y_filetransfer* ft = (y_filetransfer*)hTransfer;
 	
-	if (! (ft->pfts.flags & PFTS_SENDING)  && ! ft->cancel) {
+	DebugLog("[YahooFileCancel] id: %d, who: %s, token: %s", ft->id, ft->who, ft->ftoken);
+
+	if (! ft->pfts.sending  && ! ft->cancel) {
 		/* abort FT transfer */
 		yahoo_ft7dc_abort(ft->id, ft->who, ft->ftoken);
 	}
@@ -841,7 +838,7 @@ int __cdecl CYahooProto::FileCancel( HANDLE /*hContact*/, HANDLE hTransfer )
 ////////////////////////////////////////////////////////////////////////////////////////
 // FileDeny - denies a file transfer
 
-int __cdecl CYahooProto::FileDeny( HANDLE /*hContact*/, HANDLE hTransfer, const PROTOCHAR* )
+int __cdecl CYahooProto::FileDeny( HANDLE /*hContact*/, HANDLE hTransfer, const char* )
 {
 	/* deny file receive request.. just ignore it! */
 	y_filetransfer *ft = (y_filetransfer *)hTransfer;
@@ -872,11 +869,11 @@ int __cdecl CYahooProto::FileDeny( HANDLE /*hContact*/, HANDLE hTransfer, const 
 ////////////////////////////////////////////////////////////////////////////////////////
 // FileResume - processes file renaming etc
 
-int __cdecl CYahooProto::FileResume( HANDLE hTransfer, int* action, const PROTOCHAR** szFilename )
+int __cdecl CYahooProto::FileResume( HANDLE hTransfer, int* action, const char** szFilename )
 {
 	y_filetransfer *ft = (y_filetransfer *)hTransfer;
 
-	DebugLog("[YahooFileResume] Action: %d", *action);
+	DebugLog("[YahooFileResume]");
 
 	if ( !m_bLoggedIn || ft == NULL ) {
 		DebugLog("[YahooFileResume] Not loggedin or some other error!");
@@ -889,9 +886,8 @@ int __cdecl CYahooProto::FileResume( HANDLE hTransfer, int* action, const PROTOC
 
 	if ( *action == FILERESUME_RENAME ) {
 		DebugLog("[YahooFileResume] Renamed file!");
-		
-		FREE(ft->pfts.tszCurrentFile);
-		ft->pfts.tszCurrentFile = _tcsdup( *szFilename );
+		FREE( ft->pfts.currentFile );
+		ft->pfts.currentFile = strdup( *szFilename );
 	}	
 
 	SetEvent( ft->hWaitEvent );
