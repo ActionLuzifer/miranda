@@ -33,13 +33,11 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //nice function to wrap this:
 __inline static HICON LoadSkinnedIcon(int id) {return (HICON)CallService(MS_SKIN_LOADICON,id,0);}
 __inline static HANDLE LoadSkinnedIconHandle(int id) {return (HANDLE)CallService(MS_SKIN_LOADICON,id,1);}
-__inline static HICON LoadSkinnedIconLarge(int id) {return (HICON)CallService(MS_SKIN_LOADICON,id,2);}
 
 //event icons
 #define SKINICON_EVENT_MESSAGE      100
 #define SKINICON_EVENT_URL          101
 #define SKINICON_EVENT_FILE         102
-
 //other icons
 #define SKINICON_OTHER_MIRANDA      200
 #define SKINICON_OTHER_EXIT         201
@@ -105,10 +103,8 @@ __inline static HICON LoadSkinnedIconLarge(int id) {return (HICON)CallService(MS
 //if szProto is NULL the function will load the user's selected 'all protocols'
 //status icon.
 #define MS_SKIN_LOADPROTOICON     "Skin/Icons/LoadProto"
-#define MS_SKIN_LOADPROTOICONBIG  "Skin/Icons/LoadProtoBig"
 //nice function to wrap this:
 __inline static HICON LoadSkinnedProtoIcon(const char *szProto,int status) {return (HICON)CallService(MS_SKIN_LOADPROTOICON,(WPARAM)szProto,status);}
-__inline static HICON LoadSkinnedProtoIconBig(const char *szProto,int status) {return (HICON)CallService(MS_SKIN_LOADPROTOICONBIG,(WPARAM)szProto,status);}
 
 //add a new sound so it has a default and can be changed in the options dialog
 //wParam=0

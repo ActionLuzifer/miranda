@@ -283,14 +283,14 @@ void *__stdcall gg_dccmainthread(void *empty)
 								memset(&pfts, 0, sizeof(PROTOFILETRANSFERSTATUS));
 								pfts.cbSize = sizeof(PROTOFILETRANSFERSTATUS);
 								pfts.hContact = (HANDLE)dcc->contact;
-								pfts.flags = (dcc->type == GG_SESSION_DCC_SEND);
-								pfts.pszFiles = NULL;
+								pfts.sending = (dcc->type == GG_SESSION_DCC_SEND);
+								pfts.files = NULL;
 								pfts.totalFiles = 1;
 								pfts.currentFileNumber = 0;
 								pfts.totalBytes = dcc->file_info.size;
 								pfts.totalProgress = dcc->offset;
-								pfts.szWorkingDir = dcc->folder;
-								pfts.szCurrentFile = filename;
+								pfts.workingDir = dcc->folder;
+								pfts.currentFile = filename;
 								pfts.currentFileSize = dcc->file_info.size;
 								pfts.currentFileProgress = dcc->offset;
 								pfts.currentFileTime = 0;
@@ -314,14 +314,14 @@ void *__stdcall gg_dccmainthread(void *empty)
 								memset(&pfts, 0, sizeof(PROTOFILETRANSFERSTATUS));
 								pfts.cbSize = sizeof(PROTOFILETRANSFERSTATUS);
 								pfts.hContact = (HANDLE)dcc->contact;
-								pfts.flags = (dcc->type == GG_SESSION_DCC_SEND);
-								pfts.pszFiles = NULL;
+								pfts.sending = (dcc->type == GG_SESSION_DCC_SEND);
+								pfts.files = NULL;
 								pfts.totalFiles = 1;
 								pfts.currentFileNumber = 0;
 								pfts.totalBytes = dcc->file_info.size;
 								pfts.totalProgress = dcc->file_info.size;
-								pfts.szWorkingDir = dcc->folder;
-								pfts.szCurrentFile = filename;
+								pfts.workingDir = dcc->folder;
+								pfts.currentFile = filename;
 								pfts.currentFileSize = dcc->file_info.size;
 								pfts.currentFileProgress = dcc->file_info.size;
 								pfts.currentFileTime = 0;
@@ -527,14 +527,14 @@ void *__stdcall gg_dccmainthread(void *empty)
 								memset(&pfts, 0, sizeof(PROTOFILETRANSFERSTATUS));
 								pfts.cbSize = sizeof(PROTOFILETRANSFERSTATUS);
 								pfts.hContact = (HANDLE)dcc7->contact;
-								pfts.flags = (dcc7->type == GG_SESSION_DCC7_SEND);
-								pfts.pszFiles = NULL;
+								pfts.sending = (dcc7->type == GG_SESSION_DCC7_SEND);
+								pfts.files = NULL;
 								pfts.totalFiles = 1;
 								pfts.currentFileNumber = 0;
 								pfts.totalBytes = dcc7->size;
 								pfts.totalProgress = dcc7->offset;
-								pfts.szWorkingDir = dcc7->folder;
-								pfts.szCurrentFile = filename;
+								pfts.workingDir = dcc7->folder;
+								pfts.currentFile = filename;
 								pfts.currentFileSize = dcc7->size;
 								pfts.currentFileProgress = dcc7->offset;
 								pfts.currentFileTime = 0;
@@ -558,14 +558,14 @@ void *__stdcall gg_dccmainthread(void *empty)
 								memset(&pfts, 0, sizeof(PROTOFILETRANSFERSTATUS));
 								pfts.cbSize = sizeof(PROTOFILETRANSFERSTATUS);
 								pfts.hContact = (HANDLE)dcc7->contact;
-								pfts.flags = (dcc7->type == GG_SESSION_DCC7_SEND);
-								pfts.pszFiles = NULL;
+								pfts.sending = (dcc7->type == GG_SESSION_DCC7_SEND);
+								pfts.files = NULL;
 								pfts.totalFiles = 1;
 								pfts.currentFileNumber = 0;
 								pfts.totalBytes = dcc7->size;
 								pfts.totalProgress = dcc7->size;
-								pfts.szWorkingDir = dcc7->folder;
-								pfts.szCurrentFile = filename;
+								pfts.workingDir = dcc7->folder;
+								pfts.currentFile = filename;
 								pfts.currentFileSize = dcc7->size;
 								pfts.currentFileProgress = dcc7->size;
 								pfts.currentFileTime = 0;
@@ -679,7 +679,7 @@ void *__stdcall gg_dccmainthread(void *empty)
 
 ////////////////////////////////////////////////////////////
 // Called when received an file
-int gg_recvfile(PROTO_INTERFACE *proto, HANDLE hContact, PROTOFILEEVENT* pre)
+int gg_recvfile(PROTO_INTERFACE *proto, HANDLE hContact, PROTORECVFILE *pre)
 {
 	CCSDATA ccs = { hContact, PSR_FILE, 0, ( LPARAM )pre };
 	return CallService( MS_PROTO_RECVFILE, 0, ( LPARAM )&ccs );
@@ -687,10 +687,10 @@ int gg_recvfile(PROTO_INTERFACE *proto, HANDLE hContact, PROTOFILEEVENT* pre)
 
 ////////////////////////////////////////////////////////////
 // Called when user sends a file
-HANDLE gg_sendfile(PROTO_INTERFACE *proto, HANDLE hContact, const PROTOCHAR* szDescription, PROTOCHAR** ppszFiles)
+HANDLE gg_sendfile(PROTO_INTERFACE *proto, HANDLE hContact, const char* szDescription, char** files)
 {
 	GGPROTO *gg = (GGPROTO *) proto;
-	char *bslash, *filename;
+	char *bslash;
 	struct gg_dcc *dcc;
 	DWORD ip, ver;
 	WORD port;
@@ -698,8 +698,6 @@ HANDLE gg_sendfile(PROTO_INTERFACE *proto, HANDLE hContact, const PROTOCHAR* szD
 
 	// Check if main dcc thread is on
 	if(!gg_isonline(gg)) return ftfail(gg, hContact);
-
-	filename = gg_t2a(ppszFiles[0]);
 
 	// Read user IP and port
 	ip = swap32(DBGetContactSettingDword(hContact, GG_PROTO, GG_KEY_CLIENTIP, 0));
@@ -713,18 +711,17 @@ HANDLE gg_sendfile(PROTO_INTERFACE *proto, HANDLE hContact, const PROTOCHAR* szD
 		struct gg_dcc7 *dcc7;
 
 		pthread_mutex_lock(&gg->sess_mutex);
-		if (!(dcc7 = gg_dcc7_send_file(gg->sess, uin, filename, NULL, NULL))) {
+		if (!(dcc7 = gg_dcc7_send_file(gg->sess, uin, files[0], NULL, NULL))) {
 			pthread_mutex_unlock(&gg->sess_mutex);
 #ifdef DEBUGMODE
-			gg_netlog(gg, "gg_sendfile(): Failed to send file \"%s\".", filename);
+			gg_netlog(gg, "gg_sendfile(): Failed to send file \"%s\".", files[0]);
 #endif
-			mir_free(filename);
 			return ftfail(gg, hContact);
 		}
 		pthread_mutex_unlock(&gg->sess_mutex);
 
 #ifdef DEBUGMODE
-		gg_netlog(gg, "gg_sendfile(): Sending file \"%s\" to %d.", filename, uin);
+		gg_netlog(gg, "gg_sendfile(): Sending file \"%s\" to %d.", files[0], uin);
 #endif
 
 		// Add dcc to watches
@@ -732,7 +729,7 @@ HANDLE gg_sendfile(PROTO_INTERFACE *proto, HANDLE hContact, const PROTOCHAR* szD
 
 		// Store handle
 		dcc7->contact = hContact;
-		dcc7->folder = _strdup(filename);
+		dcc7->folder = _strdup(files[0]);
 		dcc7->tick = 0;
 		// Make folder name
 		bslash = strrchr(dcc7->folder, '\\');
@@ -740,7 +737,7 @@ HANDLE gg_sendfile(PROTO_INTERFACE *proto, HANDLE hContact, const PROTOCHAR* szD
 			*(bslash + 1) = 0;
 		else
 			*(dcc7->folder) = 0;
-		mir_free(filename);
+
 		return dcc7;
 	}
 
@@ -750,7 +747,6 @@ HANDLE gg_sendfile(PROTO_INTERFACE *proto, HANDLE hContact, const PROTOCHAR* szD
 #ifdef DEBUGMODE
 		gg_netlog(gg, "gg_sendfile(): Bad contact uin or my uin. Exit.");
 #endif
-		mir_free(filename);
 		return ftfail(gg, hContact);
 	}
 
@@ -775,18 +771,17 @@ HANDLE gg_sendfile(PROTO_INTERFACE *proto, HANDLE hContact, const PROTOCHAR* szD
 	}
 
 	// Write filename
-	if(gg_dcc_fill_file_info(dcc, filename) == -1)
+	if(gg_dcc_fill_file_info(dcc, files[0]) == -1)
 	{
 #ifdef DEBUGMODE
-		gg_netlog(gg, "gg_sendfile(): Cannot open and file fileinfo \"%s\".", filename);
+		gg_netlog(gg, "gg_sendfile(): Cannot open and file fileinfo \"%s\".", files[0]);
 #endif
 		gg_free_dcc(dcc);
-		mir_free(filename);
 		return ftfail(gg, hContact);
 	}
 
 #ifdef DEBUGMODE
-	gg_netlog(gg, "gg_sendfile(): Sending file \"%s\" to %d in %s mode.", filename, uin, (dcc->fd != -1) ? "active" : "passive");
+	gg_netlog(gg, "gg_sendfile(): Sending file \"%s\" to %d in %s mode.", files[0], uin, (dcc->fd != -1) ? "active" : "passive");
 #endif
 
 	// Add dcc to watches if not passive
@@ -794,7 +789,7 @@ HANDLE gg_sendfile(PROTO_INTERFACE *proto, HANDLE hContact, const PROTOCHAR* szD
 
 	// Store handle
 	dcc->contact = hContact;
-	dcc->folder = _strdup(filename);
+	dcc->folder = _strdup(files[0]);
 	dcc->tick = 0;
 	// Make folder name
 	bslash = strrchr(dcc->folder, '\\');
@@ -803,19 +798,17 @@ HANDLE gg_sendfile(PROTO_INTERFACE *proto, HANDLE hContact, const PROTOCHAR* szD
 	else
 		*(dcc->folder) = 0;
 
-	mir_free(filename);
 	return dcc;
 }
 
-HANDLE gg_dccfileallow(GGPROTO *gg, HANDLE hTransfer, const PROTOCHAR* szPath)
+HANDLE gg_dccfileallow(GGPROTO *gg, HANDLE hTransfer, const char* szPath)
 {
 	struct gg_dcc *dcc = (struct gg_dcc *) hTransfer;
-	char fileName[MAX_PATH], *path = gg_t2a(szPath);
-	strncpy(fileName, path, sizeof(fileName));
+	char fileName[MAX_PATH];
+	strncpy(fileName, szPath, sizeof(fileName));
 	strncat(fileName, dcc->file_info.filename, sizeof(fileName) - strlen(fileName));
-	dcc->folder = _strdup((char *) path);
+	dcc->folder = _strdup((char *) szPath);
 	dcc->tick = 0;
-	mir_free(path);
 
 	// Remove transfer from waiting list
 	pthread_mutex_lock(&gg->ft_mutex);
@@ -849,15 +842,14 @@ HANDLE gg_dccfileallow(GGPROTO *gg, HANDLE hTransfer, const PROTOCHAR* szPath)
 	return hTransfer;
 }
 
-HANDLE gg_dcc7fileallow(GGPROTO *gg, HANDLE hTransfer, const PROTOCHAR* szPath)
+HANDLE gg_dcc7fileallow(GGPROTO *gg, HANDLE hTransfer, const char* szPath)
 {
 	struct gg_dcc7 *dcc7 = (struct gg_dcc7 *) hTransfer;
-	char fileName[MAX_PATH], *path = gg_t2a(szPath);
-	strncpy(fileName, path, sizeof(fileName));
+	char fileName[MAX_PATH];
+	strncpy(fileName, szPath, sizeof(fileName));
 	strncat(fileName, dcc7->filename, sizeof(fileName) - strlen(fileName));
-	dcc7->folder = _strdup((char *) path);
+	dcc7->folder = _strdup((char *) szPath);
 	dcc7->tick = 0;
-	mir_free(path);
 
 	// Remove transfer from waiting list
 	pthread_mutex_lock(&gg->ft_mutex);
@@ -894,7 +886,7 @@ HANDLE gg_dcc7fileallow(GGPROTO *gg, HANDLE hTransfer, const PROTOCHAR* szPath)
 
 ////////////////////////////////////////////////////////////
 // File receiving allowed
-HANDLE gg_fileallow(PROTO_INTERFACE *proto, HANDLE hContact, HANDLE hTransfer, const PROTOCHAR* szPath)
+HANDLE gg_fileallow(PROTO_INTERFACE *proto, HANDLE hContact, HANDLE hTransfer, const char* szPath)
 {
 	struct gg_common *c = (struct gg_common *) hTransfer;
 
@@ -952,7 +944,7 @@ int gg_dcc7filedeny(GGPROTO *gg, HANDLE hTransfer)
 
 ////////////////////////////////////////////////////////////
 // File receiving denied
-int gg_filedeny(PROTO_INTERFACE *proto, HANDLE hContact, HANDLE hTransfer, const PROTOCHAR* szReason)
+int gg_filedeny(PROTO_INTERFACE *proto, HANDLE hContact, HANDLE hTransfer, const char* szReason)
 {
 	struct gg_common *c = (struct gg_common *) hTransfer;
 

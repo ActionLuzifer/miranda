@@ -31,15 +31,13 @@ static void SetFileListAndSizeControls(HWND hwndDlg,struct FileDlgData *dat)
 	struct _stat statbuf;
 	TCHAR str[64];
 
-	for ( i=0; dat->files[i]; i++ ) {
-		if ( _tstat( dat->files[i], &statbuf ) == 0 ) {
-			if ( statbuf.st_mode & _S_IFDIR)
-				dirCount++;
-			else
-				fileCount++;
-			totalSize += statbuf.st_size;
-	}	}
-
+	for(i=0;dat->files[i];i++) {
+		if(_stat(dat->files[i],&statbuf)==0) {
+			if(statbuf.st_mode&_S_IFDIR) dirCount++;
+			else fileCount++;
+			totalSize+=statbuf.st_size;
+		}
+	}
 	GetSensiblyFormattedSize(totalSize,str,SIZEOF(str),0,1,NULL);
 	SetDlgItemText(hwndDlg,IDC_TOTALSIZE,str);
 	if(i>1) {
@@ -58,9 +56,9 @@ static void SetFileListAndSizeControls(HWND hwndDlg,struct FileDlgData *dat)
 		}
 		SetDlgItemText(hwndDlg,IDC_FILE,str);
 	}
-	else SetDlgItemText(hwndDlg,IDC_FILE,dat->files[0]);
+	else SetDlgItemTextA(hwndDlg,IDC_FILE,dat->files[0]);
 
-	EnableWindow(GetDlgItem(hwndDlg, IDOK), fileCount || dirCount);
+    EnableWindow(GetDlgItem(hwndDlg, IDOK), fileCount || dirCount);
 }
 
 static void FilenameToFileList(HWND hwndDlg, struct FileDlgData* dat, const TCHAR* buf)
@@ -96,7 +94,7 @@ static void FilenameToFileList(HWND hwndDlg, struct FileDlgData* dat, const TCHA
 		}
 
 		// Allocate memory for a pointer array
-		if (( dat->files = ( TCHAR* *)mir_alloc((nNumberOfFiles + 1) * sizeof(TCHAR*))) == NULL )
+		if (( dat->files = (char**)mir_alloc((nNumberOfFiles + 1) * sizeof(char*))) == NULL )
 			return;
 
 		// Fill the array
@@ -106,13 +104,13 @@ static void FilenameToFileList(HWND hwndDlg, struct FileDlgData* dat, const TCHA
 		{
 			// Allocate space for path+filename
 			int cbFileNameLen = lstrlen( pBuf );
-			dat->files[nTemp] = ( TCHAR* )mir_alloc( sizeof(TCHAR)*(fileOffset + cbFileNameLen + 1));
+			dat->files[nTemp] = (char*)mir_alloc(fileOffset + cbFileNameLen + 1);
 
 			// Add path to filename and copy into array
 			#if defined( _UNICODE )
-				CopyMemory(dat->files[nTemp], buf, (fileOffset-1)*sizeof( TCHAR ));
+				WideCharToMultiByte( CP_ACP, 0, buf, fileOffset-1, dat->files[nTemp], fileOffset - 1, 0, 0 );
 				dat->files[nTemp][fileOffset-1] = '\\';
-				_tcscpy(dat->files[nTemp] + fileOffset - (buf[fileOffset-2]=='\\'?1:0), pBuf);
+				WideCharToMultiByte( CP_ACP, 0, pBuf, -1, dat->files[nTemp] + fileOffset - (buf[fileOffset-2]=='\\'?1:0), cbFileNameLen+1, 0, 0 );
 			#else
 				CopyMemory(dat->files[nTemp], buf, fileOffset-1 );
 				dat->files[nTemp][fileOffset-1] = '\\';
@@ -128,10 +126,28 @@ static void FilenameToFileList(HWND hwndDlg, struct FileDlgData* dat, const TCHA
 	// ...the selection is a single file
 	else
 	{
-		if (( dat->files = ( TCHAR **)mir_alloc(2 * sizeof( TCHAR*))) == NULL ) // Leaks when aborted
+		if (( dat->files = (char**)mir_alloc(2 * sizeof(char*))) == NULL ) // Leaks when aborted
 			return;
 
-		dat->files[0] = mir_tstrdup(buf);
+		#if defined( _UNICODE )
+		{
+			char szFileName[ MAX_PATH ];
+			BOOL bUsed;
+			WideCharToMultiByte( CP_ACP, 0, buf, -1, szFileName, MAX_PATH, NULL, &bUsed );
+			if ( bUsed ) {
+				WIN32_FIND_DATA dat;
+				HANDLE hSearch = FindFirstFile( buf, &dat );
+				if ( hSearch != INVALID_HANDLE_VALUE ) {
+					WideCharToMultiByte( CP_ACP, 0, dat.cAlternateFileName, -1, szFileName, MAX_PATH, 0, 0 );
+					FindClose( hSearch );
+			}	}
+
+			dat->files[0] = mir_strdup(szFileName);
+		}
+		#else
+			dat->files[0] = mir_strdup(buf);
+		#endif
+
 		dat->files[1] = NULL;
 	}
 
@@ -226,9 +242,9 @@ INT_PTR CALLBACK DlgProcSendFile(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM l
 		if(fsd->ppFiles!=NULL && fsd->ppFiles[0]!=NULL) {
 			int totalCount,i;
 			for(totalCount=0;fsd->ppFiles[totalCount];totalCount++);
-			dat->files = ( TCHAR** )mir_alloc( sizeof(TCHAR*)*(totalCount+1)); // Leaks
+			dat->files=(char**)mir_alloc(sizeof(char*)*(totalCount+1)); // Leaks
 			for(i=0;i<totalCount;i++)
-				dat->files[i] = mir_tstrdup( fsd->ppFiles[i] );
+				dat->files[i]=mir_strdup(fsd->ppFiles[i]);
 			dat->files[totalCount]=NULL;
 			SetFileListAndSizeControls(hwndDlg,dat);
 		}
@@ -318,9 +334,9 @@ INT_PTR CALLBACK DlgProcSendFile(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM l
 				EnableWindow(GetDlgItem(hwndDlg,IDC_MSG),FALSE);
 				EnableWindow(GetDlgItem(hwndDlg,IDC_CHOOSE),FALSE);
 
-				GetDlgItemText(hwndDlg,IDC_FILEDIR,dat->szSavePath,SIZEOF(dat->szSavePath));
-				GetDlgItemText(hwndDlg,IDC_FILE,dat->szFilenames,SIZEOF(dat->szFilenames));
-				GetDlgItemText(hwndDlg,IDC_MSG,dat->szMsg,SIZEOF(dat->szMsg));
+				GetDlgItemTextA(hwndDlg,IDC_FILEDIR,dat->szSavePath,SIZEOF(dat->szSavePath));
+				GetDlgItemTextA(hwndDlg,IDC_FILE,dat->szFilenames,SIZEOF(dat->szFilenames));
+				GetDlgItemTextA(hwndDlg,IDC_MSG,dat->szMsg,SIZEOF(dat->szMsg));
 				dat->hwndTransfer = FtMgr_AddTransfer(dat);
 				SetWindowLongPtr( hwndDlg, GWLP_USERDATA, 0);
 				DestroyWindow(hwndDlg);

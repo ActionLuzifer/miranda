@@ -1,7 +1,7 @@
 #include "commonheaders.h"
 #include "genmenu.h"
 
-#define STR_SEPARATOR _T("-----------------------------------")
+#define STR_SEPARATOR _T("---------------------------------------------")
 
 extern int DefaultImageListColorDepth;
 long handleCustomDraw(HWND hWndTreeView, LPNMTVCUSTOMDRAW pNMTVCD);
@@ -29,18 +29,17 @@ typedef struct tagMenuItemOptData
 }
 	MenuItemOptData,*lpMenuItemOptData;
 
-static BOOL GetCurrentMenuObjectID(HWND hwndDlg, int* result)
+static BOOL GetCurrentMenuObjectID( HWND hwndDlg, int* result )
 {
 	TVITEM tvi;
-	HWND hTree = GetDlgItem(hwndDlg, IDC_MENUOBJECTS);
-	HTREEITEM hti = TreeView_GetSelection(hTree);
+	HTREEITEM hti = TreeView_GetSelection( GetDlgItem( hwndDlg, IDC_MENUOBJECTS ));
 	if ( hti == NULL )
 		return FALSE;
 
 	tvi.mask = TVIF_HANDLE | TVIF_PARAM;
 	tvi.hItem = hti;
-	TreeView_GetItem(hTree, &tvi);
-	*result = (int)tvi.lParam;
+	TreeView_GetItem( GetDlgItem( hwndDlg, IDC_MENUOBJECTS ), &tvi );
+	*result = ( int )tvi.lParam;
 	return TRUE;
 }
 
@@ -118,7 +117,7 @@ static int BuildMenuObjectsTree(HWND hwndDlg)
 		return FALSE;
 
 	for ( i=0; i < g_menus.getCount(); i++ ) {
-		if ( g_menus[i]->id == (int)hStatusMenuObject  || !g_menus[i]->m_bUseUserDefinedItems )
+		if ( g_menus[i]->id == (int)hStatusMenuObject )
 			continue;
 
 		tvis.item.lParam  = ( LPARAM )g_menus[i]->id;

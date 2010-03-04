@@ -27,6 +27,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #define MS_NETLIB_LOGWIN "Netlib/Log/Win"
 
+extern struct NetlibUser **netlibUser;
+extern int netlibUserCount;
 extern HANDLE hConnectionHeaderMutex;
 
 #define TIMEFORMAT_NONE         0
@@ -108,7 +110,7 @@ static INT_PTR CALLBACK LogOptionsDlgProc(HWND hwndDlg,UINT message,WPARAM wPara
 			tvis.item.mask=TVIF_PARAM|TVIF_TEXT|TVIF_STATE;
 			tvis.item.stateMask=TVIS_STATEIMAGEMASK;
 
-			for (i = 0; i < netlibUser.getCount(); ++i)
+			for( i=0; i<netlibUserCount; i++ )
 			{
 				tvis.item.pszText=netlibUser[i]->user.ptszDescriptiveName;
 				tvis.item.lParam=i;
@@ -267,7 +269,7 @@ static INT_PTR CALLBACK LogOptionsDlgProc(HWND hwndDlg,UINT message,WPARAM wPara
 						DBWriteContactSettingDword(NULL, "Netlib", "NLlog",checked);
 					}
 					else
-					if (tvi.lParam < netlibUser.getCount()) {
+					if (tvi.lParam < netlibUserCount) {
 						netlibUser[tvi.lParam]->toLog = checked;
 						if ( logOptions.save )
 							DBWriteContactSettingDword(NULL,netlibUser[tvi.lParam]->user.szSettingsModule,"NLlog",checked);

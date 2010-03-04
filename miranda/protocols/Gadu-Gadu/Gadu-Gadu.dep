@@ -179,7 +179,6 @@
 	"..\..\include\openssl\x509.h"\
 	"..\..\include\openssl\x509_vfy.h"\
 	".\libgadu\compat.h"\
-	".\libgadu\internal.h"\
 	".\libgadu\libgadu.h"\
 	".\libgadu\protocol.h"\
 	".\libgadu\win32.h"\
@@ -276,7 +275,6 @@
 	"..\..\include\openssl\x509.h"\
 	"..\..\include\openssl\x509_vfy.h"\
 	".\libgadu\compat.h"\
-	".\libgadu\internal.h"\
 	".\libgadu\libgadu.h"\
 	".\libgadu\protocol.h"\
 	".\libgadu\resolver.h"\
@@ -368,7 +366,6 @@
 	"..\..\include\openssl\tls1.h"\
 	"..\..\include\openssl\x509.h"\
 	"..\..\include\openssl\x509_vfy.h"\
-	".\libgadu\internal.h"\
 	".\libgadu\libgadu.h"\
 	".\libgadu\win32.h"\
 	".\ssl.h"\
@@ -465,97 +462,13 @@
 	".\ssl.h"\
 	
 
-.\avatar.c : \
-	"..\..\include\m_avatars.h"\
-	"..\..\include\m_button.h"\
-	"..\..\include\m_chat.h"\
-	"..\..\include\m_clc.h"\
-	"..\..\include\m_clist.h"\
-	"..\..\include\m_clistint.h"\
-	"..\..\include\m_clui.h"\
-	"..\..\include\m_database.h"\
-	"..\..\include\m_file.h"\
-	"..\..\include\m_genmenu.h"\
-	"..\..\include\m_icolib.h"\
-	"..\..\include\m_ignore.h"\
-	"..\..\include\m_imgsrvc.h"\
-	"..\..\include\m_langpack.h"\
-	"..\..\include\m_message.h"\
-	"..\..\include\m_netlib.h"\
-	"..\..\include\m_options.h"\
-	"..\..\include\m_plugins.h"\
-	"..\..\include\m_popup.h"\
-	"..\..\include\m_protocols.h"\
-	"..\..\include\m_protomod.h"\
-	"..\..\include\m_protosvc.h"\
-	"..\..\include\m_protoint.h"\
-	"..\..\include\m_skin.h"\
-	"..\..\include\m_system.h"\
-	"..\..\include\m_userinfo.h"\
-	"..\..\include\m_utils.h"\
-	"..\..\include\m_xml.h"\
-	"..\..\include\newpluginapi.h"\
-	"..\..\include\openssl\asn1.h"\
-	"..\..\include\openssl\bio.h"\
-	"..\..\include\openssl\bn.h"\
-	"..\..\include\openssl\buffer.h"\
-	"..\..\include\openssl\comp.h"\
-	"..\..\include\openssl\crypto.h"\
-	"..\..\include\openssl\dh.h"\
-	"..\..\include\openssl\dsa.h"\
-	"..\..\include\openssl\dtls1.h"\
-	"..\..\include\openssl\e_os2.h"\
-	"..\..\include\openssl\ebcdic.h"\
-	"..\..\include\openssl\ec.h"\
-	"..\..\include\openssl\ecdh.h"\
-	"..\..\include\openssl\ecdsa.h"\
-	"..\..\include\openssl\evp.h"\
-	"..\..\include\openssl\kssl.h"\
-	"..\..\include\openssl\lhash.h"\
-	"..\..\include\openssl\obj_mac.h"\
-	"..\..\include\openssl\objects.h"\
-	"..\..\include\openssl\opensslconf.h"\
-	"..\..\include\openssl\opensslv.h"\
-	"..\..\include\openssl\ossl_typ.h"\
-	"..\..\include\openssl\pem.h"\
-	"..\..\include\openssl\pem2.h"\
-	"..\..\include\openssl\pkcs7.h"\
-	"..\..\include\openssl\pq_compat.h"\
-	"..\..\include\openssl\pqueue.h"\
-	"..\..\include\openssl\rsa.h"\
-	"..\..\include\openssl\safestack.h"\
-	"..\..\include\openssl\sha.h"\
-	"..\..\include\openssl\ssl.h"\
-	"..\..\include\openssl\ssl2.h"\
-	"..\..\include\openssl\ssl23.h"\
-	"..\..\include\openssl\ssl3.h"\
-	"..\..\include\openssl\stack.h"\
-	"..\..\include\openssl\symhacks.h"\
-	"..\..\include\openssl\tls1.h"\
-	"..\..\include\openssl\x509.h"\
-	"..\..\include\openssl\x509_vfy.h"\
-	"..\..\include\statusmodes.h"\
-	"..\..\include\m_freeimage.h"\
-	".\dynstuff.h"\
-	".\gg.h"\
-	".\libgadu\libgadu.h"\
-	".\m_folders.h"\
-	".\pthread.h"\
-	".\resource.h"\
-	".\ssl.h"\
-	
-
 .\core.c : \
-	"..\..\include\m_avatars.h"\
 	"..\..\include\m_button.h"\
 	"..\..\include\m_chat.h"\
 	"..\..\include\m_clc.h"\
 	"..\..\include\m_clist.h"\
-	"..\..\include\m_clistint.h"\
 	"..\..\include\m_clui.h"\
 	"..\..\include\m_database.h"\
-	"..\..\include\m_file.h"\
-	"..\..\include\m_genmenu.h"\
 	"..\..\include\m_icolib.h"\
 	"..\..\include\m_ignore.h"\
 	"..\..\include\m_imgsrvc.h"\
@@ -568,12 +481,10 @@
 	"..\..\include\m_protocols.h"\
 	"..\..\include\m_protomod.h"\
 	"..\..\include\m_protosvc.h"\
-	"..\..\include\m_protoint.h"\
 	"..\..\include\m_skin.h"\
 	"..\..\include\m_system.h"\
 	"..\..\include\m_userinfo.h"\
 	"..\..\include\m_utils.h"\
-	"..\..\include\m_xml.h"\
 	"..\..\include\newpluginapi.h"\
 	"..\..\include\openssl\asn1.h"\
 	"..\..\include\openssl\bio.h"\
@@ -619,23 +530,18 @@
 	".\dynstuff.h"\
 	".\gg.h"\
 	".\libgadu\libgadu.h"\
-	".\m_folders.h"\
 	".\pthread.h"\
 	".\resource.h"\
 	".\ssl.h"\
 	
 
 .\dialogs.c : \
-	"..\..\include\m_avatars.h"\
 	"..\..\include\m_button.h"\
 	"..\..\include\m_chat.h"\
 	"..\..\include\m_clc.h"\
 	"..\..\include\m_clist.h"\
-	"..\..\include\m_clistint.h"\
 	"..\..\include\m_clui.h"\
 	"..\..\include\m_database.h"\
-	"..\..\include\m_file.h"\
-	"..\..\include\m_genmenu.h"\
 	"..\..\include\m_icolib.h"\
 	"..\..\include\m_ignore.h"\
 	"..\..\include\m_imgsrvc.h"\
@@ -648,12 +554,10 @@
 	"..\..\include\m_protocols.h"\
 	"..\..\include\m_protomod.h"\
 	"..\..\include\m_protosvc.h"\
-	"..\..\include\m_protoint.h"\
 	"..\..\include\m_skin.h"\
 	"..\..\include\m_system.h"\
 	"..\..\include\m_userinfo.h"\
 	"..\..\include\m_utils.h"\
-	"..\..\include\m_xml.h"\
 	"..\..\include\newpluginapi.h"\
 	"..\..\include\openssl\asn1.h"\
 	"..\..\include\openssl\bio.h"\
@@ -699,23 +603,18 @@
 	".\dynstuff.h"\
 	".\gg.h"\
 	".\libgadu\libgadu.h"\
-	".\m_folders.h"\
 	".\pthread.h"\
 	".\resource.h"\
 	".\ssl.h"\
 	
 
 .\dynstuff.c : \
-	"..\..\include\m_avatars.h"\
 	"..\..\include\m_button.h"\
 	"..\..\include\m_chat.h"\
 	"..\..\include\m_clc.h"\
 	"..\..\include\m_clist.h"\
-	"..\..\include\m_clistint.h"\
 	"..\..\include\m_clui.h"\
 	"..\..\include\m_database.h"\
-	"..\..\include\m_file.h"\
-	"..\..\include\m_genmenu.h"\
 	"..\..\include\m_icolib.h"\
 	"..\..\include\m_ignore.h"\
 	"..\..\include\m_imgsrvc.h"\
@@ -728,12 +627,10 @@
 	"..\..\include\m_protocols.h"\
 	"..\..\include\m_protomod.h"\
 	"..\..\include\m_protosvc.h"\
-	"..\..\include\m_protoint.h"\
 	"..\..\include\m_skin.h"\
 	"..\..\include\m_system.h"\
 	"..\..\include\m_userinfo.h"\
 	"..\..\include\m_utils.h"\
-	"..\..\include\m_xml.h"\
 	"..\..\include\newpluginapi.h"\
 	"..\..\include\openssl\asn1.h"\
 	"..\..\include\openssl\bio.h"\
@@ -779,23 +676,18 @@
 	".\dynstuff.h"\
 	".\gg.h"\
 	".\libgadu\libgadu.h"\
-	".\m_folders.h"\
 	".\pthread.h"\
 	".\resource.h"\
 	".\ssl.h"\
 	
 
 .\filetransfer.c : \
-	"..\..\include\m_avatars.h"\
 	"..\..\include\m_button.h"\
 	"..\..\include\m_chat.h"\
 	"..\..\include\m_clc.h"\
 	"..\..\include\m_clist.h"\
-	"..\..\include\m_clistint.h"\
 	"..\..\include\m_clui.h"\
 	"..\..\include\m_database.h"\
-	"..\..\include\m_file.h"\
-	"..\..\include\m_genmenu.h"\
 	"..\..\include\m_icolib.h"\
 	"..\..\include\m_ignore.h"\
 	"..\..\include\m_imgsrvc.h"\
@@ -808,12 +700,10 @@
 	"..\..\include\m_protocols.h"\
 	"..\..\include\m_protomod.h"\
 	"..\..\include\m_protosvc.h"\
-	"..\..\include\m_protoint.h"\
 	"..\..\include\m_skin.h"\
 	"..\..\include\m_system.h"\
 	"..\..\include\m_userinfo.h"\
 	"..\..\include\m_utils.h"\
-	"..\..\include\m_xml.h"\
 	"..\..\include\newpluginapi.h"\
 	"..\..\include\openssl\asn1.h"\
 	"..\..\include\openssl\bio.h"\
@@ -859,23 +749,18 @@
 	".\dynstuff.h"\
 	".\gg.h"\
 	".\libgadu\libgadu.h"\
-	".\m_folders.h"\
 	".\pthread.h"\
 	".\resource.h"\
 	".\ssl.h"\
 	
 
 .\gg.c : \
-	"..\..\include\m_avatars.h"\
 	"..\..\include\m_button.h"\
 	"..\..\include\m_chat.h"\
 	"..\..\include\m_clc.h"\
 	"..\..\include\m_clist.h"\
-	"..\..\include\m_clistint.h"\
 	"..\..\include\m_clui.h"\
 	"..\..\include\m_database.h"\
-	"..\..\include\m_file.h"\
-	"..\..\include\m_genmenu.h"\
 	"..\..\include\m_icolib.h"\
 	"..\..\include\m_ignore.h"\
 	"..\..\include\m_imgsrvc.h"\
@@ -888,12 +773,10 @@
 	"..\..\include\m_protocols.h"\
 	"..\..\include\m_protomod.h"\
 	"..\..\include\m_protosvc.h"\
-	"..\..\include\m_protoint.h"\
 	"..\..\include\m_skin.h"\
 	"..\..\include\m_system.h"\
 	"..\..\include\m_userinfo.h"\
 	"..\..\include\m_utils.h"\
-	"..\..\include\m_xml.h"\
 	"..\..\include\newpluginapi.h"\
 	"..\..\include\openssl\asn1.h"\
 	"..\..\include\openssl\bio.h"\
@@ -939,23 +822,18 @@
 	".\dynstuff.h"\
 	".\gg.h"\
 	".\libgadu\libgadu.h"\
-	".\m_folders.h"\
 	".\pthread.h"\
 	".\resource.h"\
 	".\ssl.h"\
 	
 
 .\groupchat.c : \
-	"..\..\include\m_avatars.h"\
 	"..\..\include\m_button.h"\
 	"..\..\include\m_chat.h"\
 	"..\..\include\m_clc.h"\
 	"..\..\include\m_clist.h"\
-	"..\..\include\m_clistint.h"\
 	"..\..\include\m_clui.h"\
 	"..\..\include\m_database.h"\
-	"..\..\include\m_file.h"\
-	"..\..\include\m_genmenu.h"\
 	"..\..\include\m_icolib.h"\
 	"..\..\include\m_ignore.h"\
 	"..\..\include\m_imgsrvc.h"\
@@ -968,12 +846,10 @@
 	"..\..\include\m_protocols.h"\
 	"..\..\include\m_protomod.h"\
 	"..\..\include\m_protosvc.h"\
-	"..\..\include\m_protoint.h"\
 	"..\..\include\m_skin.h"\
 	"..\..\include\m_system.h"\
 	"..\..\include\m_userinfo.h"\
 	"..\..\include\m_utils.h"\
-	"..\..\include\m_xml.h"\
 	"..\..\include\newpluginapi.h"\
 	"..\..\include\openssl\asn1.h"\
 	"..\..\include\openssl\bio.h"\
@@ -1019,23 +895,18 @@
 	".\dynstuff.h"\
 	".\gg.h"\
 	".\libgadu\libgadu.h"\
-	".\m_folders.h"\
 	".\pthread.h"\
 	".\resource.h"\
 	".\ssl.h"\
 	
 
 .\icolib.c : \
-	"..\..\include\m_avatars.h"\
 	"..\..\include\m_button.h"\
 	"..\..\include\m_chat.h"\
 	"..\..\include\m_clc.h"\
 	"..\..\include\m_clist.h"\
-	"..\..\include\m_clistint.h"\
 	"..\..\include\m_clui.h"\
 	"..\..\include\m_database.h"\
-	"..\..\include\m_file.h"\
-	"..\..\include\m_genmenu.h"\
 	"..\..\include\m_icolib.h"\
 	"..\..\include\m_ignore.h"\
 	"..\..\include\m_imgsrvc.h"\
@@ -1048,12 +919,10 @@
 	"..\..\include\m_protocols.h"\
 	"..\..\include\m_protomod.h"\
 	"..\..\include\m_protosvc.h"\
-	"..\..\include\m_protoint.h"\
 	"..\..\include\m_skin.h"\
 	"..\..\include\m_system.h"\
 	"..\..\include\m_userinfo.h"\
 	"..\..\include\m_utils.h"\
-	"..\..\include\m_xml.h"\
 	"..\..\include\newpluginapi.h"\
 	"..\..\include\openssl\asn1.h"\
 	"..\..\include\openssl\bio.h"\
@@ -1099,23 +968,18 @@
 	".\dynstuff.h"\
 	".\gg.h"\
 	".\libgadu\libgadu.h"\
-	".\m_folders.h"\
 	".\pthread.h"\
 	".\resource.h"\
 	".\ssl.h"\
 	
 
 .\image.c : \
-	"..\..\include\m_avatars.h"\
 	"..\..\include\m_button.h"\
 	"..\..\include\m_chat.h"\
 	"..\..\include\m_clc.h"\
 	"..\..\include\m_clist.h"\
-	"..\..\include\m_clistint.h"\
 	"..\..\include\m_clui.h"\
 	"..\..\include\m_database.h"\
-	"..\..\include\m_file.h"\
-	"..\..\include\m_genmenu.h"\
 	"..\..\include\m_icolib.h"\
 	"..\..\include\m_ignore.h"\
 	"..\..\include\m_imgsrvc.h"\
@@ -1128,12 +992,10 @@
 	"..\..\include\m_protocols.h"\
 	"..\..\include\m_protomod.h"\
 	"..\..\include\m_protosvc.h"\
-	"..\..\include\m_protoint.h"\
 	"..\..\include\m_skin.h"\
 	"..\..\include\m_system.h"\
 	"..\..\include\m_userinfo.h"\
 	"..\..\include\m_utils.h"\
-	"..\..\include\m_xml.h"\
 	"..\..\include\newpluginapi.h"\
 	"..\..\include\openssl\asn1.h"\
 	"..\..\include\openssl\bio.h"\
@@ -1179,23 +1041,18 @@
 	".\dynstuff.h"\
 	".\gg.h"\
 	".\libgadu\libgadu.h"\
-	".\m_folders.h"\
 	".\pthread.h"\
 	".\resource.h"\
 	".\ssl.h"\
 	
 
 .\import.c : \
-	"..\..\include\m_avatars.h"\
 	"..\..\include\m_button.h"\
 	"..\..\include\m_chat.h"\
 	"..\..\include\m_clc.h"\
 	"..\..\include\m_clist.h"\
-	"..\..\include\m_clistint.h"\
 	"..\..\include\m_clui.h"\
 	"..\..\include\m_database.h"\
-	"..\..\include\m_file.h"\
-	"..\..\include\m_genmenu.h"\
 	"..\..\include\m_icolib.h"\
 	"..\..\include\m_ignore.h"\
 	"..\..\include\m_imgsrvc.h"\
@@ -1208,12 +1065,10 @@
 	"..\..\include\m_protocols.h"\
 	"..\..\include\m_protomod.h"\
 	"..\..\include\m_protosvc.h"\
-	"..\..\include\m_protoint.h"\
 	"..\..\include\m_skin.h"\
 	"..\..\include\m_system.h"\
 	"..\..\include\m_userinfo.h"\
 	"..\..\include\m_utils.h"\
-	"..\..\include\m_xml.h"\
 	"..\..\include\newpluginapi.h"\
 	"..\..\include\openssl\asn1.h"\
 	"..\..\include\openssl\bio.h"\
@@ -1259,23 +1114,18 @@
 	".\dynstuff.h"\
 	".\gg.h"\
 	".\libgadu\libgadu.h"\
-	".\m_folders.h"\
 	".\pthread.h"\
 	".\resource.h"\
 	".\ssl.h"\
 	
 
 .\keepalive.c : \
-	"..\..\include\m_avatars.h"\
 	"..\..\include\m_button.h"\
 	"..\..\include\m_chat.h"\
 	"..\..\include\m_clc.h"\
 	"..\..\include\m_clist.h"\
-	"..\..\include\m_clistint.h"\
 	"..\..\include\m_clui.h"\
 	"..\..\include\m_database.h"\
-	"..\..\include\m_file.h"\
-	"..\..\include\m_genmenu.h"\
 	"..\..\include\m_icolib.h"\
 	"..\..\include\m_ignore.h"\
 	"..\..\include\m_imgsrvc.h"\
@@ -1288,12 +1138,10 @@
 	"..\..\include\m_protocols.h"\
 	"..\..\include\m_protomod.h"\
 	"..\..\include\m_protosvc.h"\
-	"..\..\include\m_protoint.h"\
 	"..\..\include\m_skin.h"\
 	"..\..\include\m_system.h"\
 	"..\..\include\m_userinfo.h"\
 	"..\..\include\m_utils.h"\
-	"..\..\include\m_xml.h"\
 	"..\..\include\newpluginapi.h"\
 	"..\..\include\openssl\asn1.h"\
 	"..\..\include\openssl\bio.h"\
@@ -1339,23 +1187,18 @@
 	".\dynstuff.h"\
 	".\gg.h"\
 	".\libgadu\libgadu.h"\
-	".\m_folders.h"\
 	".\pthread.h"\
 	".\resource.h"\
 	".\ssl.h"\
 	
 
 .\links.c : \
-	"..\..\include\m_avatars.h"\
 	"..\..\include\m_button.h"\
 	"..\..\include\m_chat.h"\
 	"..\..\include\m_clc.h"\
 	"..\..\include\m_clist.h"\
-	"..\..\include\m_clistint.h"\
 	"..\..\include\m_clui.h"\
 	"..\..\include\m_database.h"\
-	"..\..\include\m_file.h"\
-	"..\..\include\m_genmenu.h"\
 	"..\..\include\m_icolib.h"\
 	"..\..\include\m_ignore.h"\
 	"..\..\include\m_imgsrvc.h"\
@@ -1368,12 +1211,10 @@
 	"..\..\include\m_protocols.h"\
 	"..\..\include\m_protomod.h"\
 	"..\..\include\m_protosvc.h"\
-	"..\..\include\m_protoint.h"\
 	"..\..\include\m_skin.h"\
 	"..\..\include\m_system.h"\
 	"..\..\include\m_userinfo.h"\
 	"..\..\include\m_utils.h"\
-	"..\..\include\m_xml.h"\
 	"..\..\include\newpluginapi.h"\
 	"..\..\include\openssl\asn1.h"\
 	"..\..\include\openssl\bio.h"\
@@ -1420,23 +1261,18 @@
 	".\gg.h"\
 	".\libgadu\libgadu.h"\
 	".\m_assocmgr.h"\
-	".\m_folders.h"\
 	".\pthread.h"\
 	".\resource.h"\
 	".\ssl.h"\
 	
 
 .\ownerinfo.c : \
-	"..\..\include\m_avatars.h"\
 	"..\..\include\m_button.h"\
 	"..\..\include\m_chat.h"\
 	"..\..\include\m_clc.h"\
 	"..\..\include\m_clist.h"\
-	"..\..\include\m_clistint.h"\
 	"..\..\include\m_clui.h"\
 	"..\..\include\m_database.h"\
-	"..\..\include\m_file.h"\
-	"..\..\include\m_genmenu.h"\
 	"..\..\include\m_icolib.h"\
 	"..\..\include\m_ignore.h"\
 	"..\..\include\m_imgsrvc.h"\
@@ -1449,12 +1285,10 @@
 	"..\..\include\m_protocols.h"\
 	"..\..\include\m_protomod.h"\
 	"..\..\include\m_protosvc.h"\
-	"..\..\include\m_protoint.h"\
 	"..\..\include\m_skin.h"\
 	"..\..\include\m_system.h"\
 	"..\..\include\m_userinfo.h"\
 	"..\..\include\m_utils.h"\
-	"..\..\include\m_xml.h"\
 	"..\..\include\newpluginapi.h"\
 	"..\..\include\openssl\asn1.h"\
 	"..\..\include\openssl\bio.h"\
@@ -1500,23 +1334,18 @@
 	".\dynstuff.h"\
 	".\gg.h"\
 	".\libgadu\libgadu.h"\
-	".\m_folders.h"\
 	".\pthread.h"\
 	".\resource.h"\
 	".\ssl.h"\
 	
 
 .\pthread.c : \
-	"..\..\include\m_avatars.h"\
 	"..\..\include\m_button.h"\
 	"..\..\include\m_chat.h"\
 	"..\..\include\m_clc.h"\
 	"..\..\include\m_clist.h"\
-	"..\..\include\m_clistint.h"\
 	"..\..\include\m_clui.h"\
 	"..\..\include\m_database.h"\
-	"..\..\include\m_file.h"\
-	"..\..\include\m_genmenu.h"\
 	"..\..\include\m_icolib.h"\
 	"..\..\include\m_ignore.h"\
 	"..\..\include\m_imgsrvc.h"\
@@ -1529,12 +1358,10 @@
 	"..\..\include\m_protocols.h"\
 	"..\..\include\m_protomod.h"\
 	"..\..\include\m_protosvc.h"\
-	"..\..\include\m_protoint.h"\
 	"..\..\include\m_skin.h"\
 	"..\..\include\m_system.h"\
 	"..\..\include\m_userinfo.h"\
 	"..\..\include\m_utils.h"\
-	"..\..\include\m_xml.h"\
 	"..\..\include\newpluginapi.h"\
 	"..\..\include\openssl\asn1.h"\
 	"..\..\include\openssl\bio.h"\
@@ -1580,23 +1407,18 @@
 	".\dynstuff.h"\
 	".\gg.h"\
 	".\libgadu\libgadu.h"\
-	".\m_folders.h"\
 	".\pthread.h"\
 	".\resource.h"\
 	".\ssl.h"\
 	
 
 .\services.c : \
-	"..\..\include\m_avatars.h"\
 	"..\..\include\m_button.h"\
 	"..\..\include\m_chat.h"\
 	"..\..\include\m_clc.h"\
 	"..\..\include\m_clist.h"\
-	"..\..\include\m_clistint.h"\
 	"..\..\include\m_clui.h"\
 	"..\..\include\m_database.h"\
-	"..\..\include\m_file.h"\
-	"..\..\include\m_genmenu.h"\
 	"..\..\include\m_icolib.h"\
 	"..\..\include\m_ignore.h"\
 	"..\..\include\m_imgsrvc.h"\
@@ -1609,12 +1431,10 @@
 	"..\..\include\m_protocols.h"\
 	"..\..\include\m_protomod.h"\
 	"..\..\include\m_protosvc.h"\
-	"..\..\include\m_protoint.h"\
 	"..\..\include\m_skin.h"\
 	"..\..\include\m_system.h"\
 	"..\..\include\m_userinfo.h"\
 	"..\..\include\m_utils.h"\
-	"..\..\include\m_xml.h"\
 	"..\..\include\newpluginapi.h"\
 	"..\..\include\openssl\asn1.h"\
 	"..\..\include\openssl\bio.h"\
@@ -1660,23 +1480,18 @@
 	".\dynstuff.h"\
 	".\gg.h"\
 	".\libgadu\libgadu.h"\
-	".\m_folders.h"\
 	".\pthread.h"\
 	".\resource.h"\
 	".\ssl.h"\
 	
 
 .\ssl.c : \
-	"..\..\include\m_avatars.h"\
 	"..\..\include\m_button.h"\
 	"..\..\include\m_chat.h"\
 	"..\..\include\m_clc.h"\
 	"..\..\include\m_clist.h"\
-	"..\..\include\m_clistint.h"\
 	"..\..\include\m_clui.h"\
 	"..\..\include\m_database.h"\
-	"..\..\include\m_file.h"\
-	"..\..\include\m_genmenu.h"\
 	"..\..\include\m_icolib.h"\
 	"..\..\include\m_ignore.h"\
 	"..\..\include\m_imgsrvc.h"\
@@ -1689,12 +1504,10 @@
 	"..\..\include\m_protocols.h"\
 	"..\..\include\m_protomod.h"\
 	"..\..\include\m_protosvc.h"\
-	"..\..\include\m_protoint.h"\
 	"..\..\include\m_skin.h"\
 	"..\..\include\m_system.h"\
 	"..\..\include\m_userinfo.h"\
 	"..\..\include\m_utils.h"\
-	"..\..\include\m_xml.h"\
 	"..\..\include\newpluginapi.h"\
 	"..\..\include\openssl\asn1.h"\
 	"..\..\include\openssl\bio.h"\
@@ -1740,23 +1553,18 @@
 	".\dynstuff.h"\
 	".\gg.h"\
 	".\libgadu\libgadu.h"\
-	".\m_folders.h"\
 	".\pthread.h"\
 	".\resource.h"\
 	".\ssl.h"\
 	
 
 .\token.c : \
-	"..\..\include\m_avatars.h"\
 	"..\..\include\m_button.h"\
 	"..\..\include\m_chat.h"\
 	"..\..\include\m_clc.h"\
 	"..\..\include\m_clist.h"\
-	"..\..\include\m_clistint.h"\
 	"..\..\include\m_clui.h"\
 	"..\..\include\m_database.h"\
-	"..\..\include\m_file.h"\
-	"..\..\include\m_genmenu.h"\
 	"..\..\include\m_icolib.h"\
 	"..\..\include\m_ignore.h"\
 	"..\..\include\m_imgsrvc.h"\
@@ -1769,12 +1577,10 @@
 	"..\..\include\m_protocols.h"\
 	"..\..\include\m_protomod.h"\
 	"..\..\include\m_protosvc.h"\
-	"..\..\include\m_protoint.h"\
 	"..\..\include\m_skin.h"\
 	"..\..\include\m_system.h"\
 	"..\..\include\m_userinfo.h"\
 	"..\..\include\m_utils.h"\
-	"..\..\include\m_xml.h"\
 	"..\..\include\newpluginapi.h"\
 	"..\..\include\openssl\asn1.h"\
 	"..\..\include\openssl\bio.h"\
@@ -1820,23 +1626,18 @@
 	".\dynstuff.h"\
 	".\gg.h"\
 	".\libgadu\libgadu.h"\
-	".\m_folders.h"\
 	".\pthread.h"\
 	".\resource.h"\
 	".\ssl.h"\
 	
 
 .\userutils.c : \
-	"..\..\include\m_avatars.h"\
 	"..\..\include\m_button.h"\
 	"..\..\include\m_chat.h"\
 	"..\..\include\m_clc.h"\
 	"..\..\include\m_clist.h"\
-	"..\..\include\m_clistint.h"\
 	"..\..\include\m_clui.h"\
 	"..\..\include\m_database.h"\
-	"..\..\include\m_file.h"\
-	"..\..\include\m_genmenu.h"\
 	"..\..\include\m_icolib.h"\
 	"..\..\include\m_ignore.h"\
 	"..\..\include\m_imgsrvc.h"\
@@ -1849,12 +1650,10 @@
 	"..\..\include\m_protocols.h"\
 	"..\..\include\m_protomod.h"\
 	"..\..\include\m_protosvc.h"\
-	"..\..\include\m_protoint.h"\
 	"..\..\include\m_skin.h"\
 	"..\..\include\m_system.h"\
 	"..\..\include\m_userinfo.h"\
 	"..\..\include\m_utils.h"\
-	"..\..\include\m_xml.h"\
 	"..\..\include\newpluginapi.h"\
 	"..\..\include\openssl\asn1.h"\
 	"..\..\include\openssl\bio.h"\
@@ -1900,14 +1699,12 @@
 	".\dynstuff.h"\
 	".\gg.h"\
 	".\libgadu\libgadu.h"\
-	".\m_folders.h"\
 	".\pthread.h"\
 	".\resource.h"\
 	".\ssl.h"\
 	
 
 .\resource.rc : \
-	".\icons\clear_ignored_conference.ico"\
 	".\icons\conference.ico"\
 	".\icons\delete.ico"\
 	".\icons\export_list_to_server.ico"\

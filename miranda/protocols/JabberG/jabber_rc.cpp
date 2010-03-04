@@ -52,22 +52,21 @@ BOOL CJabberProto::IsRcRequestAllowedByACL( CJabberIqInfo* pInfo )
 	return IsMyOwnJID( pInfo->GetFrom() );
 }
 
-BOOL CJabberProto::HandleAdhocCommandRequest( HXML iqNode, CJabberIqInfo* pInfo )
+void CJabberProto::HandleAdhocCommandRequest( HXML iqNode, CJabberIqInfo* pInfo )
 {
 	if ( !pInfo->GetChildNode() )
-		return TRUE;
+		return;
 
 	if ( !m_options.EnableRemoteControl || !IsRcRequestAllowedByACL( pInfo )) {
 		// FIXME: send error and return
-		return TRUE;
+		return;
 	}
 
 	const TCHAR* szNode = xmlGetAttrValue( pInfo->GetChildNode(), _T("node"));
 	if ( !szNode )
-		return TRUE;
+		return;
 
 	m_adhocManager.HandleCommandRequest( iqNode, pInfo, ( TCHAR* )szNode );
-	return TRUE;
 }
 
 BOOL CJabberAdhocManager::HandleItemsRequest( HXML, CJabberIqInfo* pInfo, const TCHAR* szNode )

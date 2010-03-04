@@ -696,16 +696,12 @@ void CIcqProto::ICQAddRecvEvent(HANDLE hContact, WORD wType, PROTORECVEVENT* pre
 	if (pre->flags & PREF_CREATEREAD) 
 		flags |= DBEF_READ;
 
-	if (pre->flags & PREF_UTF) 
-		flags |= DBEF_UTF;
-
 	if (hContact && DBGetContactSettingByte(hContact, "CList", "Hidden", 0))
 	{
 		DWORD dwUin;
 		uid_str szUid;
 
-		//setContactHidden(hContact, 0);
-
+		setContactHidden(hContact, 0);
 		// if the contact was hidden, add to client-list if not in server-list authed
 		if (!getSettingWord(hContact, DBSETTING_SERVLIST_ID, 0) || getSettingByte(hContact, "Auth", 0))
 		{

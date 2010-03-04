@@ -42,8 +42,6 @@ static const MUUID interfaces[] = {MIID_PROTOCOL, MIID_LAST};
 HINSTANCE hInstance;
 PLUGINLINK *pluginLink;
 struct MM_INTERFACE mmi;
-struct SHA1_INTERFACE sha1i;
-XML_API xi;
 CLIST_INTERFACE *pcli;
 
 // Event hooks
@@ -219,22 +217,6 @@ void gg_cleanuplastplugin(GGPROTO *gg, DWORD version)
 }
 
 //////////////////////////////////////////////////////////
-// Custom folders initialization
-void gg_initcustomfolders(GGPROTO *gg)
-{
-	char szPath[MAX_PATH];
-	char *tmpPath = Utils_ReplaceVars("%miranda_avatarcache%");
-	mir_snprintf(szPath, MAX_PATH, "%s\\%s", tmpPath, GG_PROTO);
-	mir_free(tmpPath);
-	gg->hAvatarsFolder = FoldersRegisterCustomPath(GG_PROTO, "Avatars", szPath);
-
-	tmpPath = Utils_ReplaceVars("%miranda_userdata%");
-	mir_snprintf(szPath, MAX_PATH, "%s\\%s\\ImageCache", tmpPath, GG_PROTO);
-	mir_free(tmpPath);
-	gg->hImagesFolder = FoldersRegisterCustomPath(GG_PROTO, "Images", szPath);
-}
-
-//////////////////////////////////////////////////////////
 // When miranda loaded its modules
 int gg_modulesloaded(WPARAM wParam, LPARAM lParam)
 {
@@ -338,7 +320,7 @@ int gg_event(PROTO_INTERFACE *proto, PROTOEVENTTYPE eventType, WPARAM wParam, LP
 			gg_netlog(gg, "gg_event(EV_PROTO_ONRENAME): renaming account...");
 #endif
 			mir_free(gg->name);
-			gg->name = gg_t2a(gg->proto.m_tszUserName);
+			gg->name = gg->unicode_core ? mir_u2a((wchar_t *)gg->proto.m_tszUserName) : mir_strdup(gg->proto.m_tszUserName);
 
 			mi.cbSize = sizeof(mi);
 			mi.flags = CMIM_NAME | CMIF_TCHAR;
@@ -370,7 +352,6 @@ static GGPROTO *gg_proto_init(const char* pszProtoName, const TCHAR* tszUserName
 	pthread_mutex_init(&gg->ft_mutex, NULL);
 	pthread_mutex_init(&gg->img_mutex, NULL);
 	pthread_mutex_init(&gg->modemsg_mutex, NULL);
-	pthread_mutex_init(&gg->avatar_mutex, NULL);
 
 	// Init instance names
 	gg->proto.m_szModuleName = mir_strdup(pszProtoName);
@@ -381,7 +362,7 @@ static GGPROTO *gg_proto_init(const char* pszProtoName, const TCHAR* tszUserName
 	gg->name = gg->proto.m_tszUserName = mir_tstrdup(tszUserName);
 #else
 	gg->proto.m_tszUserName = gg->unicode_core ? (TCHAR *)mir_wstrdup((wchar_t *)tszUserName) : (TCHAR *)mir_strdup((char *)tszUserName);
-	gg->name = gg_t2a(tszUserName);
+	gg->name = gg->unicode_core ? mir_u2a((wchar_t *)tszUserName) : mir_strdup(tszUserName);
 #endif
 
 	// Register services
@@ -392,7 +373,6 @@ static GGPROTO *gg_proto_init(const char* pszProtoName, const TCHAR* tszUserName
 		gg_cleanuplastplugin(gg, dwVersion);
 
 	gg_links_instance_init(gg);
-	gg_initcustomfolders(gg);
 
 	return gg;
 }
@@ -424,7 +404,6 @@ static int gg_proto_uninit(PROTO_INTERFACE *proto)
 	pthread_mutex_destroy(&gg->ft_mutex);
 	pthread_mutex_destroy(&gg->img_mutex);
 	pthread_mutex_destroy(&gg->modemsg_mutex);
-	pthread_mutex_destroy(&gg->avatar_mutex);
 
 	// Free status messages
 	if(gg->modemsg.online)    free(gg->modemsg.online);
@@ -452,8 +431,6 @@ int __declspec(dllexport) Load(PLUGINLINK * link)
 
 	pluginLink = link;
 	mir_getMMI(&mmi);
-	mir_getSHA1I(&sha1i);
-	mir_getXI(&xi);
 
 	// Init winsock
 	if (WSAStartup(MAKEWORD( 1, 1 ), &wsaData))
@@ -544,7 +521,6 @@ struct
 	{GG_EVENT_DCC7_PENDING,			"GG_EVENT_DCC7_PENDING"},
 	{GG_EVENT_XML_EVENT,			"GG_EVENT_XML_EVENT"},
 	{GG_EVENT_DISCONNECT_ACK,		"GG_EVENT_DISCONNECT_ACK"},
-	{GG_EVENT_XML_ACTION,			"GG_EVENT_XML_ACTION"},
 	{-1,							"<unknown event>"}
 };
 

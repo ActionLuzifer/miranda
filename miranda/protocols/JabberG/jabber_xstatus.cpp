@@ -246,10 +246,7 @@ void CJabberDlgPepSimple::OnInitDialog()
 			if (idx) m_txtDescription.Enable();
 		}
 	}
-	if (m_activeText)
-	{
-		m_txtDescription.SetText(m_activeText);
-	}
+	if (m_activeText) m_txtDescription.SetText(m_activeText);
 }
 
 int CJabberDlgPepSimple::Resizer(UTILRESIZECONTROL *urc)
@@ -658,11 +655,9 @@ void CPepMood::ProcessItems(const TCHAR *from, HXML itemsNode)
 			moodType = xmlGetName( n );
 	}
 
-	TCHAR *fixedText = JabberStrFixLines( moodText );
 	if (hSelfContact)
-		SetMood(hSelfContact, moodType, fixedText);
-	SetMood(hContact, moodType, fixedText);
-	mir_free( fixedText );
+		SetMood(hSelfContact, moodType, moodText);
+	SetMood(hContact, moodType, moodText);
 
 	if (!hContact)
 		ForceRepublishOnLogin();
@@ -1063,11 +1058,9 @@ void CPepActivity::ProcessItems(const TCHAR *from, HXML itemsNode)
 		}
 	}
 
-	TCHAR *fixedText = JabberStrFixLines( szText );
 	if (hSelfContact)
-		SetActivity(hSelfContact, szFirstNode, szSecondNode, fixedText);
-	SetActivity(hContact, szFirstNode, szSecondNode, fixedText);
-	mir_free( fixedText );
+		SetActivity(hSelfContact, szFirstNode, szSecondNode, szText);
+	SetActivity(hContact, szFirstNode, szSecondNode, szText);
 
 	if (!hContact)
 		ForceRepublishOnLogin();
@@ -1603,7 +1596,7 @@ CJabberInfoFrame::CJabberInfoFrame(CJabberProto *proto):
 	m_nextTooltipId = 0;
 	m_hhkFontsChanged = 0;
 
-	if (!proto->m_options.DisableFrame && ServiceExists(MS_CLIST_FRAMES_ADDFRAME))
+	if (ServiceExists(MS_CLIST_FRAMES_ADDFRAME))
 	{
 		InitClass();
 

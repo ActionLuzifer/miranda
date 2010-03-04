@@ -523,7 +523,7 @@ void fnTrayIconUpdateBase(const char *szChangedProto)
 		if (!lstrcmpA(szChangedProto, accounts[i]->szModuleName ))
 			cycleStep = i - 1;
 	}
-    
+
 	if (netProtoCount > 0) 
     {
         int trayIconSetting = DBGetContactSettingByte(NULL, "CList", "TrayIcon", SETTING_TRAYICON_DEFAULT);
@@ -592,7 +592,7 @@ void fnTrayIconSetToBase(char *szPreferredProto)
 	int i;
 	initcheck;
 	lock;
-    
+
 	for (i = 0; i < cli.trayIconCount; i++) {
 		if ( cli.trayIcon[i].id == 0 )
 			continue;
@@ -693,7 +693,7 @@ static void CALLBACK TrayToolTipTimerProc(HWND hwnd, UINT, UINT_PTR id, DWORD)
 			#if defined( _UNICODE )
 	        if (CallService( "mToolTip/ShowTipW", (WPARAM)szTipCur, (LPARAM)&ti ) == CALLSERVICE_NOTFOUND)
 			{	
-				char* p = mir_u2a( szTipCur );
+				char* p = u2a( szTipCur );
 	        	CallService( "mToolTip/ShowTip", (WPARAM)p, (LPARAM)&ti );
 				mir_free( p );
 			}
@@ -892,7 +892,7 @@ static INT_PTR pfnCListTrayNotifyStub(WPARAM, LPARAM lParam )
 
 void fnInitTray( void )
 {
-	HMODULE hLib = GetModuleHandleA("shell32");
+	HINSTANCE hLib = LoadLibraryA("shell32.dll");
 	if ( hLib ) {
 		DLLGETVERSIONPROC proc;
 		dviShell.cbSize = sizeof(dviShell);

@@ -200,7 +200,7 @@ static int InitializeStaticAccounts( WPARAM, LPARAM )
 
 	for ( int i = 0; i < accounts.getCount(); i++ ) {
 		PROTOACCOUNT* pa = accounts[i];
-		if ( !pa->ppro || !Proto_IsAccountEnabled( pa ))
+		if ( !pa->ppro || !IsAccountEnabled( pa ))
 			continue;
 
 		pa->ppro->OnEvent( EV_PROTO_ONLOAD, 0, 0 );
@@ -220,7 +220,7 @@ static int UninitializeStaticAccounts( WPARAM, LPARAM )
 {
 	for ( int i = 0; i < accounts.getCount(); i++ ) {
 		PROTOACCOUNT* pa = accounts[i];
-		if ( !pa->ppro || !Proto_IsAccountEnabled( pa ))
+		if ( !pa->ppro || !IsAccountEnabled( pa ))
 			continue;
 
 		pa->ppro->OnEvent( EV_PROTO_ONREADYTOEXIT, 0, 0 );
@@ -241,7 +241,7 @@ int LoadAccountsModule( void )
 		if ( pa->ppro )
 			continue;
 
-		if (!Proto_IsAccountEnabled( pa )) {
+		if (!IsAccountEnabled( pa )) {
 			pa->type = PROTOTYPE_DISPROTO;
 			continue;
 		}
@@ -271,7 +271,7 @@ static INT_PTR stub3( PROTO_INTERFACE* ppi, WPARAM wParam, LPARAM )
 }
 
 static INT_PTR stub4( PROTO_INTERFACE* ppi, WPARAM wParam, LPARAM lParam )
-{	return ( INT_PTR )ppi->AuthDeny(( HANDLE )wParam, ( const TCHAR* )lParam );
+{	return ( INT_PTR )ppi->AuthDeny(( HANDLE )wParam, ( const char* )lParam );
 }
 
 static INT_PTR stub7( PROTO_INTERFACE* ppi, WPARAM wParam, LPARAM lParam )
@@ -280,7 +280,7 @@ static INT_PTR stub7( PROTO_INTERFACE* ppi, WPARAM wParam, LPARAM lParam )
 
 static INT_PTR stub11( PROTO_INTERFACE* ppi, WPARAM wParam, LPARAM lParam )
 {	PROTOFILERESUME* pfr = ( PROTOFILERESUME* )lParam;
-	return ( INT_PTR )ppi->FileResume(( HANDLE )wParam, &pfr->action, (const PROTOCHAR**)&pfr->szFilename );
+	return ( INT_PTR )ppi->FileResume(( HANDLE )wParam, &pfr->action, &pfr->szFilename );
 }
 
 static INT_PTR stub12( PROTO_INTERFACE* ppi, WPARAM wParam, LPARAM lParam )

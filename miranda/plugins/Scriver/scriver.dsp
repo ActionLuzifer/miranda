@@ -160,10 +160,6 @@ SOURCE=.\globals.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\infobar.c
-# End Source File
-# Begin Source File
-
 SOURCE=.\input.c
 # End Source File
 # Begin Source File
@@ -189,10 +185,6 @@ SOURCE=.\msgtimedout.c
 # Begin Source File
 
 SOURCE=.\msgwindow.c
-# End Source File
-# Begin Source File
-
-SOURCE=.\richutil.c
 # End Source File
 # Begin Source File
 
@@ -232,10 +224,6 @@ SOURCE=.\chat\IcoLib.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\infobar.h
-# End Source File
-# Begin Source File
-
 SOURCE=.\input.h
 # End Source File
 # Begin Source File
@@ -257,10 +245,6 @@ SOURCE=.\multimon.h
 # Begin Source File
 
 SOURCE=.\resource.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\richutil.h
 # End Source File
 # Begin Source File
 

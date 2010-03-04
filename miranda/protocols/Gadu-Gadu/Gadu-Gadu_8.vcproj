@@ -434,10 +434,6 @@
 			Filter="cpp;c;cxx;rc;def;r;odl;idl;hpj;bat"
 			>
 			<File
-				RelativePath="avatar.c"
-				>
-			</File>
-			<File
 				RelativePath="core.c"
 				>
 			</File>
@@ -726,10 +722,6 @@
 				</File>
 				<File
 					RelativePath="libgadu\win32.h"
-					>
-				</File>
-				<File
-					RelativePath="libgadu\internal.h"
 					>
 				</File>
 				<File
