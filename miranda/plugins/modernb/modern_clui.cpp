@@ -2678,7 +2678,7 @@ LRESULT CLUI::OnListSizeChangeNotify( NMCLISTCONTROL * pnmc )
 
 	// TODO: Check and refactor possible problem of clist resized to full screen problem
 	static RECT rcWindow,rcTree,rcTree2,rcWorkArea,rcOld;
-	int maxHeight, minHeight,newHeight;
+	int maxHeight,newHeight;
 	int winstyle;
 	if (mutex_bDisableAutoUpdate==1)
 		return FALSE;
@@ -2690,7 +2690,6 @@ LRESULT CLUI::OnListSizeChangeNotify( NMCLISTCONTROL * pnmc )
 		return FALSE;
 
 	maxHeight=ModernGetSettingByte(NULL,"CLUI","MaxSizeHeight",SETTING_MAXSIZEHEIGHT_DEFAULT);
-	minHeight=ModernGetSettingByte(NULL,"CLUI","MinSizeHeight",SETTING_MINSIZEHEIGHT_DEFAULT);
 	rcOld=rcWindow;
 	GetWindowRect(pcli->hwndContactTree,&rcTree);
 
@@ -2714,9 +2713,6 @@ LRESULT CLUI::OnListSizeChangeNotify( NMCLISTCONTROL * pnmc )
 	nLastRequiredHeight=pnmc->pt.y;
 	newHeight=max(CLUIFramesGetMinHeight(),max(pnmc->pt.y,3)+1+((winstyle&WS_BORDER)?2:0)+(rcWindow.bottom-rcWindow.top)-(rcTree.bottom-rcTree.top));
 	if (newHeight==(rcWindow.bottom-rcWindow.top)) return 0;
-
-	if(newHeight<(rcWorkArea.bottom-rcWorkArea.top)*minHeight/100)
-		newHeight=(rcWorkArea.bottom-rcWorkArea.top)*minHeight/100;
 
 	if(newHeight>(rcWorkArea.bottom-rcWorkArea.top)*maxHeight/100)
 		newHeight=(rcWorkArea.bottom-rcWorkArea.top)*maxHeight/100;

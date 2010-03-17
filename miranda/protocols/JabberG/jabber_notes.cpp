@@ -52,6 +52,35 @@ static TCHAR *StrTrimCopy(TCHAR *str)
 	return res;
 }
 
+static TCHAR *StrFixLines(TCHAR *str)
+{
+	TCHAR *p;
+	int add = 0;
+	bool prev_r = false;
+	bool prev_n = false;
+
+	for (p = str; p && *p; ++p)
+		if (*p == _T('\r') || *p == _T('\n'))
+			++add;
+
+	TCHAR *buf = (TCHAR *)mir_alloc((lstrlen(str) + add + 1) * sizeof(TCHAR));
+	TCHAR *res = buf;
+
+	for (p = str; p && *p; ++p)
+	{
+		if (*p == _T('\n') && !prev_r)
+			*res++ = _T('\r');
+		if (*p != _T('\r') && *p != _T('\n') && prev_r)
+			*res++ = _T('\n');
+		*res++ = *p;
+		prev_r = *p == _T('\r');
+		prev_n = *p == _T('\n');
+	}
+	*res = 0;
+
+	return buf;
+}
+
 CNoteItem::CNoteItem()
 {
 	m_szTitle = 
@@ -94,7 +123,7 @@ void CNoteItem::SetData(TCHAR *title, TCHAR *from, TCHAR *text, TCHAR *tags)
 	mir_free(m_szTagsStr);
 
 	m_szTitle = StrTrimCopy(title);
-	m_szText = JabberStrFixLines(text);
+	m_szText = StrFixLines(text);
 	m_szFrom = StrTrimCopy(from);
 
 	const TCHAR *szTags = tags;
@@ -674,7 +703,7 @@ void CJabberDlgNotes::OnInitDialog()
 {
 	CSuper::OnInitDialog();
 	SendMessage(m_hwnd, WM_SETICON, ICON_BIG, (LPARAM)m_proto->LoadIconEx("notes"));
-	SendDlgItemMessage(m_hwnd, IDC_HEADERBAR, WM_SETICON, 0, (LPARAM)g_LoadIconEx("notes", true));
+	SendDlgItemMessage(m_hwnd, IDC_HEADERBAR, WM_SETICON, 0, (LPARAM)g_LoadIconEx32("notes"));
 
 	LOGFONT lf, lfTmp;
 	m_hfntNormal = (HFONT)GetStockObject(DEFAULT_GUI_FONT);

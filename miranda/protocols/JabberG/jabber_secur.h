@@ -33,8 +33,7 @@ class TJabberAuth
 {
 
 protected:  bool        bIsValid;
-            const char* szName;
-			unsigned	complete;
+            char*       szName;
 				ThreadData* info;
 
 public:
@@ -44,7 +43,7 @@ public:
 	virtual	char* getInitialRequest();
 	virtual	char* getChallenge( const TCHAR* challenge );
 
-	inline   const char* getName() const
+	inline   char* getName() const
 				{	return szName;
 				}
 
@@ -88,11 +87,12 @@ class TNtlmAuth : public TJabberAuth
 
 				HANDLE hProvider;
 public:		
-				TNtlmAuth( ThreadData*, const char* mechanism );
+				TNtlmAuth( ThreadData* );
 	virtual ~TNtlmAuth();
 
 	virtual	char* getInitialRequest();
 	virtual	char* getChallenge( const TCHAR* challenge );
-
-	bool getSpn( TCHAR* szSpn, size_t dwSpnLen );
 };
+
+
+

@@ -137,24 +137,14 @@ char* Utf8DecodeCP( char* str, int codepage, wchar_t** ucs2 );
 
 wchar_t* Utf8DecodeUcs2( const char* str );
 
-__forceinline char* Utf8DecodeA(const char* src)
-{
-    char* tmp = mir_strdup(src);
-    Utf8Decode(tmp, NULL);
-    return tmp;
-}
-
-
 char* Utf8Encode( const char* str );
 char* Utf8EncodeCP( const char* src, int codepage );
 
 char* Utf8EncodeUcs2( const wchar_t* str );
 
 #if defined( _UNICODE )
-	#define Utf8DecodeT Utf8DecodeUcs2
 	#define Utf8EncodeT Utf8EncodeUcs2
 #else
-	#define Utf8DecodeT Utf8DecodeA
 	#define Utf8EncodeT Utf8Encode
 #endif
 
@@ -164,6 +154,12 @@ int    LangPackGetDefaultCodePage();
 int    LangPackGetDefaultLocale();
 TCHAR* LangPackPcharToTchar( const char* pszStr );
 char*  LangPackTranslateString(const char *szEnglish, const int W);
+
+TCHAR*   a2t( const char* str );
+char*    t2a( const TCHAR* src );
+TCHAR*   u2t( const wchar_t* src );
+char*    u2a( const wchar_t* src );
+wchar_t* a2u( const char* src );
 
 /**** path.c ***************************************************************************/
 
@@ -186,15 +182,15 @@ int CreateDirectoryTree(const char *szDir);
 /**** skin2icons.c *********************************************************************/
 
 HANDLE IcoLib_AddNewIcon( SKINICONDESC* sid );
-HICON  IcoLib_GetIcon( const char* pszIconName, bool big );
-HICON  IcoLib_GetIconByHandle( HANDLE hItem, bool big );
+HICON  IcoLib_GetIcon( const char* pszIconName );
+HICON  IcoLib_GetIconByHandle( HANDLE hItem );
 HANDLE IcoLib_IsManaged( HICON hIcon );
-int    IcoLib_ReleaseIcon( HICON hIcon, char* szIconName, bool big );
+int    IcoLib_ReleaseIcon( HICON hIcon, char* szIconName );
 
 /**** skinicons.c **********************************************************************/
 
-HICON LoadSkinProtoIcon( const char* szProto, int status, bool big = false );
-HICON LoadSkinIcon( int idx, bool big = false );
+HICON LoadSkinProtoIcon( const char* szProto, int status );
+HICON LoadSkinIcon( int idx );
 HANDLE GetSkinIconHandle( int idx );
 
 HICON LoadIconEx(HINSTANCE hInstance, LPCTSTR lpIconName, BOOL bShared);
@@ -212,7 +208,7 @@ void Window_SetIcon_IcoLib(HWND hWnd, int iconId);
 void Window_SetProtoIcon_IcoLib(HWND hWnd, const char* szProto, int iconId);
 void Window_FreeIcon_IcoLib(HWND hWnd);
 
-#define IconLib_ReleaseIcon(hIcon, szName) IcoLib_ReleaseIcon(hIcon, szName, false);
+#define IconLib_ReleaseIcon(hIcon, szName) IcoLib_ReleaseIcon(hIcon, szName);
 #define Safe_DestroyIcon(hIcon) if (hIcon) DestroyIcon(hIcon)
 
 /**** clistmenus.c **********************************************************************/
@@ -238,9 +234,6 @@ extern LIST<PROTOACCOUNT> accounts;
 PROTOACCOUNT* Proto_GetAccount( const char* accName );
 PROTOCOLDESCRIPTOR* Proto_IsProtocolLoaded( const char* szProtoName );
 
-int Proto_IsAccountEnabled( PROTOACCOUNT* pa );
-int Proto_IsAccountLocked( PROTOACCOUNT* pa );
-
 PROTO_INTERFACE* AddDefaultAccount( const char* szProtoName );
 int  FreeDefaultAccount( PROTO_INTERFACE* ppi );
 
@@ -264,10 +257,6 @@ __inline static INT_PTR CallProtoService( const char* szModule, const char* szSe
 /**** utils.c **************************************************************************/
 
 #if defined( _UNICODE )
-	char*  rtrim(char* str);
+	char*  rtrim( char* string );
 #endif
-TCHAR* rtrim(TCHAR* str);
-char*  ltrim(char* str);
-__inline char* lrtrim(char* str) { return ltrim(rtrim(str)); };
-
-bool wildcmp(char * name, char * mask);
+TCHAR* rtrim( TCHAR* string );

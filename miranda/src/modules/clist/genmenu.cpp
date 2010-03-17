@@ -290,7 +290,7 @@ int MO_ModifyMenuItem( PMO_IntMenuItem menuHandle, PMO_MenuItem pmi )
 	}
 	if ( pmi->flags & CMIM_ICON ) {
 		if ( pimi->mi.flags & CMIF_ICONFROMICOLIB ) {
-			HICON hIcon = IcoLib_GetIconByHandle( pmi->hIcolibItem, false );
+			HICON hIcon = IcoLib_GetIconByHandle( pmi->hIcolibItem );
 			if ( hIcon != NULL ) {
 				pimi->hIcolibItem = pmi->hIcolibItem;
 				pimi->iconId = ImageList_ReplaceIcon( pimi->parent->m_hMenuIcons, pimi->iconId, hIcon );
@@ -620,7 +620,7 @@ PMO_IntMenuItem MO_AddNewMenuItem( HANDLE menuobjecthandle, PMO_MenuItem pmi )
 
 	if ( pmi->hIcon != NULL ) {
 		if ( pmi->flags & CMIF_ICONFROMICOLIB ) {
-			HICON hIcon = IcoLib_GetIconByHandle( pmi->hIcolibItem, false );
+			HICON hIcon = IcoLib_GetIconByHandle( pmi->hIcolibItem );
 			p->iconId = ImageList_AddIcon( pmo->m_hMenuIcons, hIcon );
 			p->hIcolibItem = pmi->hIcolibItem;
 			IconLib_ReleaseIcon( hIcon, 0 );
@@ -1009,7 +1009,7 @@ HMENU BuildRecursiveMenu(HMENU hMenu, PMO_IntMenuItem pRootMenu, ListParam *para
 static int MO_ReloadIcon( PMO_IntMenuItem pmi, void* )
 {
 	if ( pmi->hIcolibItem ) {
-		HICON newIcon = IcoLib_GetIconByHandle( pmi->hIcolibItem, false );
+		HICON newIcon = IcoLib_GetIconByHandle( pmi->hIcolibItem );
 		if ( newIcon )
 			ImageList_ReplaceIcon( pmi->parent->m_hMenuIcons, pmi->iconId, newIcon );
 
@@ -1039,8 +1039,8 @@ static int MO_RegisterIcon( PMO_IntMenuItem pmi, void* )
 	uname = pmi->UniqName;
 	if ( uname == NULL )
 		#ifdef UNICODE
-			uname = mir_u2a(pmi->CustomName);
-			descr = mir_u2a(pmi->mi.ptszName);
+			uname = u2a(pmi->CustomName);
+			descr = u2a(pmi->mi.ptszName);
 		#else
 			uname = pmi->CustomName;
 			descr = pmi->mi.pszName;

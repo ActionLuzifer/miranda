@@ -172,10 +172,6 @@ SOURCE=.\libgadu\win32.h
 # End Group
 # Begin Source File
 
-SOURCE=.\avatar.c
-# End Source File
-# Begin Source File
-
 SOURCE=.\core.c
 # End Source File
 # Begin Source File
@@ -218,10 +214,6 @@ SOURCE=.\keepalive.c
 # Begin Source File
 
 SOURCE=.\links.c
-# End Source File
-# Begin Source File
-
-SOURCE=.\oauth.c
 # End Source File
 # Begin Source File
 

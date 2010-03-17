@@ -434,10 +434,6 @@
 			Filter="cpp;c;cxx;rc;def;r;odl;idl;hpj;bat"
 			>
 			<File
-				RelativePath="avatar.c"
-				>
-			</File>
-			<File
 				RelativePath="core.c"
 				>
 			</File>
@@ -511,10 +507,6 @@
 			</File>
 			<File
 				RelativePath="links.c"
-				>
-			</File>
-			<File
-				RelativePath="oauth.c"
 				>
 			</File>
 			<File

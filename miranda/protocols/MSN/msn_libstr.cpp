@@ -1,6 +1,6 @@
 /*
 Plugin of Miranda IM for communicating with users of the MSN Messenger protocol.
-Copyright (c) 2006-2010 Boris Krasnovskiy.
+Copyright (c) 2006-2009 Boris Krasnovskiy.
 Copyright (c) 2003-2005 George Hazan.
 Copyright (c) 2002-2003 Richard Hughes (original version).
 
@@ -26,15 +26,6 @@ void replaceStr(char*& dest, const char* src)
 	{
 		mir_free(dest);
 		dest = mir_strdup(src);
-	}	
-}
-
-void replaceStr(wchar_t*& dest, const wchar_t* src)
-{
-	if (src != NULL) 
-	{
-		mir_free(dest);
-		dest = mir_wstrdup(src);
 	}	
 }
 
@@ -331,7 +322,7 @@ void stripColorCode(char* src)
 						if (ps[0] == ',' && isdigit(ps[1]))
 						{
 							ps += 2;
-						if (isdigit(ps[1]))
+							if (isdigit(ps[1]))
 								ps += 2;
 						else
 							++ps;

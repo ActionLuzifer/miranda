@@ -30,11 +30,9 @@ void InitExtraIcons(void);
 
 void DestroyExtraIcons(void);
 
-HICON  LoadIconEx(const char* name, bool big = false);
+HICON  LoadIconEx(const char* name);
 HANDLE GetIconHandle(const char* name);
 void   ReleaseIconEx(const char* name);
-void   WindowSetIcon(HWND hWnd, const char* name);
-void   WindowFreeIcon(HWND hWnd);
 
 void   add_AT_icons(CAimProto* ppro);
 void   remove_AT_icons(CAimProto* ppro);

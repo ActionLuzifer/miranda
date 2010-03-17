@@ -44,6 +44,7 @@ UTF8_INTERFACE utfi;
 MD5_INTERFACE md5i;
 LIST_INTERFACE li;
 
+BYTE gbUnicodeCore;
 DWORD MIRANDA_VERSION;
 
 HANDLE hStaticServices[1];
@@ -55,7 +56,7 @@ HANDLE hExtraXStatus = NULL;
 PLUGININFOEX pluginInfo = {
 	sizeof(PLUGININFOEX),
 	"IcqOscarJ Protocol",
-	PLUGIN_MAKE_VERSION(0,5,1,4),
+	PLUGIN_MAKE_VERSION(0,5,0,14),
 	"Support for ICQ network, enhanced.",
 	"Joe Kucera, Bio, Martin Öberg, Richard Hughes, Jon Keating, etc",
 	"jokusoftware@miranda-im.org",
@@ -72,11 +73,11 @@ PLUGININFOEX pluginInfo = {
 
 extern "C" PLUGININFOEX __declspec(dllexport) *MirandaPluginInfoEx(DWORD mirandaVersion)
 {
-	// Only load for 0.9.0.6 or greater
-	// We need the new Unicode aware Authorization API
-	if (mirandaVersion < PLUGIN_MAKE_VERSION(0, 9, 0, 6))
+	// Only load for 0.8.0.29 or greater
+	// We need the core stubs for PS_GETNAME and PS_GETSTATUS
+	if (mirandaVersion < PLUGIN_MAKE_VERSION(0, 8, 0, 29))
 	{
-		MessageBoxA( NULL, "ICQ plugin cannot be loaded. It requires Miranda IM 0.9.0.6 or later.", "ICQ Plugin",
+		MessageBoxA( NULL, "ICQ plugin cannot be loaded. It requires Miranda IM 0.8.0.29 or later.", "ICQ Plugin",
 			MB_OK|MB_ICONWARNING|MB_SETFOREGROUND|MB_TOPMOST );
 		return NULL;
 	}
@@ -131,34 +132,16 @@ extern "C" int __declspec(dllexport) Load(PLUGINLINK *link)
 
 		CallService(MS_SYSTEM_GETVERSIONTEXT, MAX_PATH, (LPARAM)szVer);
 		_strlwr(szVer); // make sure it is lowercase
+		gbUnicodeCore = (strstrnull(szVer, "unicode") != NULL);
 
 		if (strstrnull(szVer, "alpha") != NULL)
 		{ // Are we running under Alpha Core
 			MIRANDA_VERSION |= 0x80000000;
 		}
-		else if (strstrnull(szVer, "preview") == NULL)
+		else if (MIRANDA_VERSION >= 0x00050000 && strstrnull(szVer, "preview") == NULL)
 		{ // for Final Releases of Miranda 0.5+ clear build number
 			MIRANDA_VERSION &= 0xFFFFFF00;
 		}
-
-    // Check if _UNICODE matches Miranda's _UNICODE
-#if defined( _UNICODE )
-  	if (strstrnull(szVer, "unicode") == NULL)
-    {
-      char szMsg[MAX_PATH], szCaption[100];
-
-      MessageBoxUtf(NULL, ICQTranslateUtfStatic("You cannot use Unicode version of ICQ Protocol plug-in with Ansi version of Miranda IM.", szMsg, MAX_PATH), 
-        ICQTranslateUtfStatic("ICQ Plugin", szCaption, 100), MB_OK|MB_ICONWARNING|MB_SETFOREGROUND|MB_TOPMOST);
-      return 1; // Failure
-    }
-#else
-	  if (strstrnull(szVer, "unicode") != NULL)
-    {
-      MessageBox(NULL, Translate("You cannot use Ansi version of ICQ Protocol plug-in with Unicode version of Miranda IM.", Translate("ICQ Plugin"),
-  			MB_OK|MB_ICONWARNING|MB_SETFOREGROUND|MB_TOPMOST);
-      return 1; // Failure
-    }
-#endif
 	}
 
 	srand(time(NULL));
@@ -319,5 +302,4 @@ void CIcqProto::UpdateGlobalSettings()
 	m_bSsiSimpleGroups = FALSE; /// TODO: enable, after server-list revolution is over
 	m_bAvatarsEnabled = getSettingByte(NULL, "AvatarsEnabled", DEFAULT_AVATARS_ENABLED);
 	m_bXStatusEnabled = getSettingByte(NULL, "XStatusEnabled", DEFAULT_XSTATUS_ENABLED);
-  m_bMoodsEnabled = getSettingByte(NULL, "MoodsEnabled", DEFAULT_MOODS_ENABLED);
 }

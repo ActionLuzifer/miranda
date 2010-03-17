@@ -5,7 +5,7 @@
 // Copyright © 2000-2001 Richard Hughes, Roland Rabien, Tristan Van de Vreede
 // Copyright © 2001-2002 Jon Keating, Richard Hughes
 // Copyright © 2002-2004 Martin Öberg, Sam Kothari, Robert Rainwater
-// Copyright © 2004-2010 Joe Kucera
+// Copyright © 2004-2009 Joe Kucera
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -19,7 +19,7 @@
 //
 // You should have received a copy of the GNU General Public License
 // along with this program; if not, write to the Free Software
-// Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+// Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //
 // -----------------------------------------------------------------------------
 //
@@ -30,7 +30,7 @@
 //
 // DESCRIPTION:
 //
-//  Handles packets from Service family
+//  Describe me here please...
 //
 // -----------------------------------------------------------------------------
 
@@ -86,13 +86,11 @@ void CIcqProto::handleServiceFam(BYTE *pBuffer, WORD wBufferLength, snac_header 
 	case ICQ_SERVER_RATE_INFO:
 #ifdef _DEBUG
 		NetLog_Server("Server sent Rate Info");
+		NetLog_Server("Sending Rate Info Ack");
 #endif
 		/* init rates management */
 		m_rates = new rates(this, pBuffer, wBufferLength);
 		/* ack rate levels */
-#ifdef _DEBUG
-		NetLog_Server("Sending Rate Info Ack");
-#endif
     m_rates->initAckPacket(&packet);
 		sendServPacket(&packet);
 
@@ -188,7 +186,7 @@ void CIcqProto::handleServiceFam(BYTE *pBuffer, WORD wBufferLength, snac_header 
 		//              2 = Enable offline status message notification
 		//              4 = Enable Avatars for offline contacts
     //              8 = Use reject for not authorized contacts
-		packTLVWord(&packet, 0x05, 0x0007);
+		packTLVWord(&packet, 0x05, 0x0003); // mimic ICQ 6
 		sendServPacket(&packet);
 
 		// CLI_REQICBM
@@ -337,9 +335,9 @@ void CIcqProto::handleServiceFam(BYTE *pBuffer, WORD wBufferLength, snac_header 
 			pBuffer += 20;
 			unpackDWord(&pBuffer, &dwLevel);
 
-			EnterCriticalSection(&m_ratesMutex);
+			EnterCriticalSection(&ratesMutex);
 			m_rates->updateLevel(wClass, dwLevel);
-			LeaveCriticalSection(&m_ratesMutex);
+			LeaveCriticalSection(&ratesMutex);
 
 			if (wStatus == 2 || wStatus == 3)
 			{ // this is only the simplest solution, needs rate management to every section
@@ -360,7 +358,7 @@ void CIcqProto::handleServiceFam(BYTE *pBuffer, WORD wBufferLength, snac_header 
 
 	case ICQ_SERVER_REDIRECT_SERVICE: // reply to family request, got new connection point
 		{
-			oscar_tlv_chain *pChain = NULL;
+			oscar_tlv_chain* pChain = NULL;
 			cookie_family_request *pCookieData;
 
 			if (!(pChain = readIntoTLVChain(&pBuffer, wBufferLength, 0)))
@@ -440,17 +438,17 @@ void CIcqProto::handleServiceFam(BYTE *pBuffer, WORD wBufferLength, snac_header 
 #endif
       while (wBufferLength > 4)
       { // loop thru all items
-        WORD itemType = pBuffer[0] * 0x10 | pBuffer[1];
-        BYTE itemFlags = pBuffer[2];
-        BYTE itemLen = pBuffer[3];
+        WORD wItemID = pBuffer[0] * 0x10 | pBuffer[1];
+        BYTE bFlags = pBuffer[2];
+        BYTE nDataLen = pBuffer[3];
 
-			  if (itemType == AVATAR_HASH_PHOTO) /// TODO: handle photo item
+			  if (wItemID == AVATAR_HASH_PHOTO)
 			  { // skip photo item
 #ifdef _DEBUG
           NetLog_Server("Photo item recognized");
 #endif
 			  }
-			  else if ((itemType == AVATAR_HASH_STATIC || itemType == AVATAR_HASH_FLASH) && (itemLen >= 0x10))
+			  else if ((wItemID == AVATAR_HASH_STATIC || wItemID == AVATAR_HASH_FLASH) && (nDataLen >= 0x10))
 			  {
 #ifdef _DEBUG
           NetLog_Server("Avatar item recognized");
@@ -459,7 +457,7 @@ void CIcqProto::handleServiceFam(BYTE *pBuffer, WORD wBufferLength, snac_header 
 				  { // this refreshes avatar state - it used to work automatically, but now it does not
 					  if (getSettingByte(NULL, "ForceOurAvatar", 0))
 					  { // keep our avatar
-						  char *file = GetOwnerAvatarFileName();
+						  char *file = loadMyAvatarFileName();
 
 						  SetMyAvatar(0, (LPARAM)file);
 						  SAFE_FREE(&file);
@@ -476,15 +474,15 @@ void CIcqProto::handleServiceFam(BYTE *pBuffer, WORD wBufferLength, snac_header 
 					  break;
 				  }
           // process owner avatar hash changed notification
-          handleAvatarOwnerHash(itemType, itemFlags, pBuffer, itemLen + 4);
+          handleAvatarOwnerHash(wItemID, bFlags, pBuffer, nDataLen + 4);
         }
-        else if (itemType == 0x02)
+        else if (wItemID == 0x02)
         {
 #ifdef _DEBUG
           NetLog_Server("Status message item recognized");
 #endif
         }
-        else if (itemType == 0x0E)
+        else if (wItemID == 0x0E)
         {
 #ifdef _DEBUG
           NetLog_Server("Status mood item recognized");
@@ -492,10 +490,10 @@ void CIcqProto::handleServiceFam(BYTE *pBuffer, WORD wBufferLength, snac_header 
         }
 
         // move to next item
-			  if (wBufferLength >= itemLen + 4)
+			  if (wBufferLength >= nDataLen + 4)
 			  {
- 					wBufferLength -= itemLen + 4;
-  				pBuffer += itemLen + 4;
+ 					wBufferLength -= nDataLen + 4;
+  				pBuffer += nDataLen + 4;
 	  		}
 		  	else
 			  {
@@ -614,21 +612,24 @@ char* CIcqProto::buildUinList(int subtype, WORD wMaxLen, HANDLE* hContactResume)
 	return szList;
 }
 
-
 void CIcqProto::sendEntireListServ(WORD wFamily, WORD wSubtype, int listType)
 {
-	HANDLE hResumeContact = NULL;
+	HANDLE hResumeContact;
+	char* szList;
+	int nListLen;
+	icq_packet packet;
+
+
+	hResumeContact = NULL;
 
 	do
 	{ // server doesn't seem to be able to cope with packets larger than 8k
 		// send only about 100contacts per packet
-		char *szList = buildUinList(listType, 0x3E8, &hResumeContact);
-		int nListLen = strlennull(szList);
+		szList = buildUinList(listType, 0x3E8, &hResumeContact);
+		nListLen = strlennull(szList);
 
 		if (nListLen)
 		{
-			icq_packet packet;
-
 			serverPacketInit(&packet, (WORD)(nListLen + 10));
 			packFNACHeader(&packet, wFamily, wSubtype);
 			packBuffer(&packet, (LPBYTE)szList, (WORD)nListLen);
@@ -637,20 +638,18 @@ void CIcqProto::sendEntireListServ(WORD wFamily, WORD wSubtype, int listType)
 
 		SAFE_FREE((void**)&szList);
 	}
-	while (hResumeContact);
+		while (hResumeContact);
 }
 
-
-static void packShortCapability(icq_packet *packet, WORD wCapability)
+static void packNewCap(icq_packet* packet, WORD wNewCap)
 { // pack standard capability
-	DWORD dwQ1 = 0x09460000 | wCapability;
+	DWORD dwQ1 = 0x09460000 | wNewCap;
 
 	packDWord(packet, dwQ1); 
 	packDWord(packet, 0x4c7f11d1);
 	packDWord(packet, 0x82224445);
 	packDWord(packet, 0x53540000);
 }
-
 
 // CLI_SETUSERINFO
 void CIcqProto::setUserInfo()
@@ -677,7 +676,7 @@ void CIcqProto::setUserInfo()
 #endif
 	if (m_bAvatarsEnabled)
 		wAdditionalData += 16;
-	if (m_bXStatusEnabled && bXStatus != 0)
+	if (bXStatus)
 		wAdditionalData += 16;
 #ifdef DBG_CAPHTML
 	wAdditionalData += 16;
@@ -702,15 +701,15 @@ void CIcqProto::setUserInfo()
 	}
 #endif
 	{
-		packShortCapability(&packet, 0x1349);  // AIM_CAPS_ICQSERVERRELAY
+		packNewCap(&packet, 0x1349);    // AIM_CAPS_ICQSERVERRELAY
 	}
 	if (m_bUtfEnabled)
 	{
-		packShortCapability(&packet, 0x134E);  // CAP_UTF8MSGS
+		packNewCap(&packet, 0x134E);    // CAP_UTF8MSGS
 	} // Broadcasts the capability to receive UTF8 encoded messages
 #ifdef DBG_NEWCAPS
 	{
-		packShortCapability(&packet, 0x0000);  // CAP_SHORTCAPS
+		packNewCap(&packet, 0x0000);    // CAP_NEWCAPS
 	} // Tells server we understand to new format of caps
 #endif
 #ifdef DBG_CAPXTRAZ
@@ -723,28 +722,43 @@ void CIcqProto::setUserInfo()
 #endif
 	if (m_bAvatarsEnabled)
 	{
-		packShortCapability(&packet, 0x134C);  // CAP_DEVILS
+		packNewCap(&packet, 0x134C);    // CAP_DEVILS
 	}
 #ifdef DBG_OSCARFT
 	{
-		packShortCapability(&packet, 0x1343);  // CAP_AIM_FILE
+		packNewCap(&packet, 0x1343);    // CAP_AIM_FILE
 	} // Broadcasts the capability to receive Oscar File Transfers
 #endif
 	if (m_bAimEnabled)
 	{
-		packShortCapability(&packet, 0x134D);  // CAP_AIM_COMPATIBLE
-  } // Tells the server we can speak to AIM
+		packNewCap(&packet, 0x134D);    // Tells the server we can speak to AIM
+	}
 #ifdef DBG_AIMCONTACTSEND
 	{
-		packShortCapability(&packet, 0x134B);  // CAP_SENDBUDDYLIST
+		packNewCap(&packet, 0x134B);    // CAP_AIM_SENDBUDDYLIST
 	}
 #endif
-	if (m_bXStatusEnabled && bXStatus != 0)
+	if (bXStatus)
 	{
-		packBuffer(&packet, capXStatus[bXStatus-1], BINARY_CAP_SIZE);
+		packBuffer(&packet, capXStatus[bXStatus-1], 0x10);
 	}
 
-	packShortCapability(&packet, 0x1344);    // CAP_ICQDIRECT
+	packNewCap(&packet, 0x1344);      // AIM_CAPS_ICQDIRECT
+
+/*  packDWord(&packet, 0xb99708b5); /// voice chat ???? unknown
+  packDWord(&packet, 0x3a924202);
+  packDWord(&packet, 0xb069f1e7);
+  packDWord(&packet, 0x57bb2e17);*/
+
+/*  packDWord(&packet, 0x67361515); /// icq lite audio chat Xtraz "ICQTalk" plugin
+  packDWord(&packet, 0x612d4c07);
+  packDWord(&packet, 0x8f3dbde6);
+  packDWord(&packet, 0x408ea041);*/
+
+/*	packDWord(&packet, 0x178c2d9b); // Unknown cap
+	packDWord(&packet, 0xdaa545bb); /// icq lite video chat Xtraz "VideoRcv" plugin
+	packDWord(&packet, 0x8ddbf3bd);
+	packDWord(&packet, 0xbd53a10a);*/
 
 #ifdef DBG_CAPHTML
 	{
@@ -763,20 +777,18 @@ void CIcqProto::setUserInfo()
 	sendServPacket(&packet);
 }
 
-
 void CIcqProto::handleServUINSettings(int nPort, serverthread_info *info)
 {
 	icq_packet packet;
 
 	setUserInfo();
 
-	/* SNAC 3,4: Tell server who's on our list (deprecated) */
-  /* SNAC 3,15: Try to add unauthorised contacts to temporary list */
-	sendEntireListServ(ICQ_BUDDY_FAMILY, ICQ_USER_ADDTOTEMPLIST, BUL_ALLCONTACTS);
+	/* SNAC 3,4: Tell server who's on our list */
+	sendEntireListServ(ICQ_BUDDY_FAMILY, ICQ_USER_ADDTOLIST, BUL_ALLCONTACTS);
 
 	if (m_iDesiredStatus == ID_STATUS_INVISIBLE)
 	{
-		/* Tell server who's on our visible list (deprecated) */
+		/* Tell server who's on our visible list */
 		if (!m_bSsiEnabled)
 			sendEntireListServ(ICQ_BOS_FAMILY, ICQ_CLI_ADDVISIBLE, BUL_VISIBLE);
 		else
@@ -785,7 +797,7 @@ void CIcqProto::handleServUINSettings(int nPort, serverthread_info *info)
 
 	if (m_iDesiredStatus != ID_STATUS_INVISIBLE)
 	{
-		/* Tell server who's on our invisible list (deprecated) */
+		/* Tell server who's on our invisible list */
 		if (!m_bSsiEnabled)
 			sendEntireListServ(ICQ_BOS_FAMILY, ICQ_CLI_ADDINVISIBLE, BUL_INVISIBLE);
 		else
@@ -805,7 +817,7 @@ void CIcqProto::handleServUINSettings(int nPort, serverthread_info *info)
     char szMoodData[32];
 
 	  // prepare mood id
-  	if (m_bMoodsEnabled && bXStatus && moodXStatus[bXStatus-1] != -1)
+  	if (bXStatus && moodXStatus[bXStatus-1] != -1)
   	  null_snprintf(szMoodData, SIZEOF(szMoodData), "icqmood%d", moodXStatus[bXStatus-1]);
 	  else
       szMoodData[0] = '\0';
@@ -822,7 +834,7 @@ void CIcqProto::handleServUINSettings(int nPort, serverthread_info *info)
 		packDWord(&packet, 0x00060004);             // TLV 6: Status mode and security flags
 		packWord(&packet, GetMyStatusFlags());      // Status flags
 		packWord(&packet, wStatus);                 // Status
-		packTLVWord(&packet, 0x0008, 0x0A06);       // TLV 8: Independent Status Messages
+		packTLVWord(&packet, 0x0008, 0x0000);       // TLV 8: Error code
 		packDWord(&packet, 0x000c0025);             // TLV C: Direct connection info
 		packDWord(&packet, getSettingDword(NULL, "RealIP", 0));
 		packDWord(&packet, nPort);
@@ -831,11 +843,7 @@ void CIcqProto::handleServUINSettings(int nPort, serverthread_info *info)
 		packDWord(&packet, dwDirectCookie);         // DC Cookie
 		packDWord(&packet, WEBFRONTPORT);           // Web front port
 		packDWord(&packet, CLIENTFEATURES);         // Client features
-#if defined( _UNICODE )
-		packDWord(&packet, 0x7fffffff); // Abused timestamp
-#else
-		packDWord(&packet, 0xffffffff); // Abused timestamp
-#endif
+		packDWord(&packet, gbUnicodeCore ? 0x7fffffff : 0xffffffff); // Abused timestamp
 		packDWord(&packet, ICQ_PLUG_VERSION);       // Abused timestamp
 		if (ServiceExists("SecureIM/IsContactSecured"))
 			packDWord(&packet, 0x5AFEC0DE);           // SecureIM Abuse
@@ -949,7 +957,7 @@ void CIcqProto::handleServUINSettings(int nPort, serverthread_info *info)
 		{ // Send SNAC 1,4 - request avatar family 0x10 connection
 			icq_requestnewfamily(ICQ_AVATAR_FAMILY, &CIcqProto::StartAvatarThread);
 
-			m_avatarsConnectionPending = TRUE;
+			m_pendingAvatarsStart = 1;
 			NetLog_Server("Requesting Avatar family entry point.");
 		}
 	}
@@ -960,7 +968,7 @@ void CIcqProto::handleServUINSettings(int nPort, serverthread_info *info)
 		char **szAwayMsg = NULL;
 
 		EnterCriticalSection(&m_modeMsgsMutex);
-    if (m_iStatus == ID_STATUS_AWAY)
+    if (m_iStatus != ID_STATUS_ONLINE && m_iStatus != ID_STATUS_INVISIBLE && m_iStatus != ID_STATUS_FREECHAT)
       szAwayMsg = MirandaStatusToAwayMsg(m_iStatus);
 		if (szAwayMsg)
 			icq_sendSetAimAwayMsgServ(*szAwayMsg);

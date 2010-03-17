@@ -49,7 +49,7 @@ void CYahooProto::YHookEvent( const char* szEvent, YEventFunc handler )
 	::HookEventObj( szEvent, ( MIRANDAHOOKOBJ )*( void** )&handler, this );
 }
 
-INT_PTR __stdcall YAHOO_CallService( const char* szSvcName, WPARAM wParam, LPARAM lParam )
+int __stdcall YAHOO_CallService( const char* szSvcName, WPARAM wParam, LPARAM lParam )
 {
 	return CallService( szSvcName, wParam, lParam );
 }
@@ -293,7 +293,7 @@ void CYahooProto::ShowError(const char *title, const char *buff)
 			ShowNotification(title, buff, NIIF_ERROR);
 }
 
-INT_PTR __cdecl CYahooProto::OnSettingChanged(WPARAM wParam, LPARAM lParam)
+int __cdecl CYahooProto::OnSettingChanged(WPARAM wParam, LPARAM lParam)
 {
 	DBCONTACTWRITESETTING *cws = (DBCONTACTWRITESETTING *) lParam;
 
