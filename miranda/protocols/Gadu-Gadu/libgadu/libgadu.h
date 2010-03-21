@@ -168,7 +168,6 @@ typedef   signed int    int32_t;
 #  define gg_sock_close(sock)			closesocket(sock)
 #  define gg_getsockopt(sock,level,name,val,len) getsockopt(sock,level,name,(char *)val,len)
 #else
-   typedef int				SOCKET;
 #  define gg_sock_write		write
 #  define gg_sock_read		read
 #  define gg_sock_close		close
@@ -193,7 +192,7 @@ typedef struct {
  * Makro deklarujące pola wspólne dla struktur sesji.
  */
 #define gg_common_head(x) \
-	SOCKET fd;		/**< Obserwowany deskryptor */ \
+	int fd;			/**< Obserwowany deskryptor */ \
 	int check;		/**< Informacja o żądaniu odczytu/zapisu (patrz \ref gg_check_t) */ \
 	int state;		/**< Aktualny stan połączenia (patrz \ref gg_state_t) */ \
 	int error;		/**< Kod błędu dla \c GG_STATE_ERROR (patrz \ref gg_error_t) */ \
@@ -317,7 +316,7 @@ struct gg_session {
 	gg_encoding_t encoding;		/**< Rodzaj kodowania znaków */
 
 	gg_resolver_t resolver_type;	/**< Sposób rozwiązywania nazw serwerów */
-	int (*resolver_start)(SOCKET *fd, void **private_data, const char *hostname);	/**< Funkcja rozpoczynająca rozwiązywanie nazwy */
+	int (*resolver_start)(int *fd, void **private_data, const char *hostname);	/**< Funkcja rozpoczynająca rozwiązywanie nazwy */
 	void (*resolver_cleanup)(void **private_data, int force);	/**< Funkcja zwalniająca zasoby po rozwiązaniu nazwy */
 
 	int protocol_features;	/**< Opcje protokołu */
@@ -353,7 +352,7 @@ struct gg_http {
 	unsigned int body_done;	/**< Liczba odebranych bajtów strony */
 
 	gg_resolver_t resolver_type;	/**< Sposób rozwiązywania nazw serwerów */
-	int (*resolver_start)(SOCKET *fd, void **private_data, const char *hostname);	/**< Funkcja rozpoczynająca rozwiązywanie nazwy */
+	int (*resolver_start)(int *fd, void **private_data, const char *hostname);	/**< Funkcja rozpoczynająca rozwiązywanie nazwy */
 	void (*resolver_cleanup)(void **private_data, int force);	/**< Funkcja zwalniająca zasoby po rozwiązaniu nazwy */
 };
 
@@ -660,15 +659,15 @@ uint32_t gg_crc32(uint32_t crc, const unsigned char *buf, int len);
 
 int gg_session_set_resolver(struct gg_session *gs, gg_resolver_t type);
 gg_resolver_t gg_session_get_resolver(struct gg_session *gs);
-int gg_session_set_custom_resolver(struct gg_session *gs, int (*resolver_start)(SOCKET*, void**, const char*), void (*resolver_cleanup)(void**, int));
+int gg_session_set_custom_resolver(struct gg_session *gs, int (*resolver_start)(int*, void**, const char*), void (*resolver_cleanup)(void**, int));
 
 int gg_http_set_resolver(struct gg_http *gh, gg_resolver_t type);
 gg_resolver_t gg_http_get_resolver(struct gg_http *gh);
-int gg_http_set_custom_resolver(struct gg_http *gh, int (*resolver_start)(SOCKET*, void**, const char*), void (*resolver_cleanup)(void**, int));
+int gg_http_set_custom_resolver(struct gg_http *gh, int (*resolver_start)(int*, void**, const char*), void (*resolver_cleanup)(void**, int));
 
 int gg_global_set_resolver(gg_resolver_t type);
 gg_resolver_t gg_global_get_resolver(void);
-int gg_global_set_custom_resolver(int (*resolver_start)(SOCKET*, void**, const char*), void (*resolver_cleanup)(void**, int));
+int gg_global_set_custom_resolver(int (*resolver_start)(int*, void**, const char*), void (*resolver_cleanup)(void**, int));
 
 /**
  * Rodzaj zdarzenia.
@@ -718,7 +717,6 @@ enum gg_event_t {
 
 	GG_EVENT_XML_EVENT,		/**< Otrzymano komunikat systemowy (7.7) */
 	GG_EVENT_DISCONNECT_ACK,	/**< \brief Potwierdzenie zakończenia sesji. Informuje o tym, że zmiana stanu na niedostępny z opisem dotarła do serwera i można zakończyć połączenie TCP. */
-	GG_EVENT_XML_ACTION
 };
 
 #define GG_EVENT_SEARCH50_REPLY GG_EVENT_PUBDIR50_SEARCH_REPLY
@@ -914,13 +912,6 @@ struct gg_event_xml_event {
 };
 
 /**
- * Opis zdarzenia \c GG_EVENT_XML_ACTION.
- */
-struct gg_event_xml_action {
-	char *data;		/**< Bufor z komunikatem */
-};
-
-/**
  * Opis zdarzenia \c GG_EVENT_DCC7_CONNECTED.
  */
 struct gg_event_dcc7_connected {
@@ -976,7 +967,6 @@ union gg_event_union {
 	struct gg_event_userlist userlist;	/**< Odpowiedź listy kontaktów (\c GG_EVENT_USERLIST) */
 	gg_pubdir50_t pubdir50;	/**< Odpowiedź katalogu publicznego (\c GG_EVENT_PUBDIR50_*) */
 	struct gg_event_xml_event xml_event;	/**< Zdarzenie systemowe (\c GG_EVENT_XML_EVENT) */
-	struct gg_event_xml_action xml_action;	/**< Zdarzenie XML (\c GG_EVENT_XML_ACTION) */
 	struct gg_dcc *dcc_new;	/**< Nowe połączenie bezpośrednie (\c GG_EVENT_DCC_NEW) */
 	enum gg_error_t dcc_error;	/**< Błąd połączenia bezpośredniego (\c GG_EVENT_DCC_ERROR) */
 	struct gg_event_dcc_voice_data dcc_voice_data;	/**< Dane połączenia głosowego (\c GG_EVENT_DCC_VOICE_DATA) */
@@ -1368,9 +1358,9 @@ char *gg_vsaprintf(const char *format, va_list ap) GG_DEPRECATED;
 
 char *gg_get_line(char **ptr) GG_DEPRECATED;
 
-SOCKET gg_connect(void *addr, int port, int async) GG_DEPRECATED;
+int gg_connect(void *addr, int port, int async) GG_DEPRECATED;
 struct in_addr *gg_gethostbyname(const char *hostname) GG_DEPRECATED;
-char *gg_read_line(SOCKET sock, char *buf, int length) GG_DEPRECATED;
+char *gg_read_line(int sock, char *buf, int length) GG_DEPRECATED;
 void gg_chomp(char *line) GG_DEPRECATED;
 char *gg_urlencode(const char *str) GG_DEPRECATED;
 int gg_http_hash(const char *format, ...) GG_DEPRECATED;
@@ -1958,8 +1948,6 @@ struct gg_recv_msg {
 #define GG_USERLIST_REQUEST 0x0016
 
 #define GG_XML_EVENT 0x0027
-
-#define GG_XML_ACTION 0x002c
 
 #ifndef DOXYGEN
 

@@ -26,8 +26,6 @@
 #define TM_AUTOALPHA  1
 #define MENU_MIRANDAMENU         0xFFFF1234
 
-extern BOOL(WINAPI * MySetProcessWorkingSetSize) (HANDLE, SIZE_T, SIZE_T);
-
 static HMODULE hUserDll;
 static HANDLE hContactDraggingEvent, hContactDroppedEvent, hContactDragStopEvent;
 static int transparentFocus = 1;
@@ -239,7 +237,7 @@ static INT_PTR MenuItem_AddContactToList(WPARAM wParam, LPARAM)
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-// this is the smallest available window procedure
+// this is the smalles available window procedure
 
 #ifndef CS_DROPSHADOW
 #define CS_DROPSHADOW 0x00020000
@@ -304,7 +302,7 @@ int LoadCLUIModule(void)
 	wndclass.cbClsExtra = 0;
 	wndclass.cbWndExtra = 0;
 	wndclass.hInstance = cli.hInst;
-	wndclass.hIcon = LoadSkinIcon(SKINICON_OTHER_MIRANDA, true);
+	wndclass.hIcon = LoadIcon(hMirandaInst, MAKEINTRESOURCE(IDI_MIRANDA));
 	wndclass.hCursor = LoadCursor(NULL, IDC_ARROW);
 	wndclass.hbrBackground = (HBRUSH) (COLOR_3DFACE + 1);
 	wndclass.lpszMenuName = MAKEINTRESOURCE(IDR_CLISTMENU);
@@ -582,9 +580,6 @@ LRESULT CALLBACK fnContactListWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM
 			}
 			else
 				DBWriteContactSettingByte(NULL, "CList", "State", SETTING_STATE_MINIMIZED);
-			
-			if (MySetProcessWorkingSetSize != NULL && DBGetContactSettingByte(NULL, "CList", "DisableWorkingSet", 1))
-				MySetProcessWorkingSetSize(GetCurrentProcess(), -1, -1);
 		}
 		// drop thru
 	case WM_MOVE:
@@ -985,7 +980,7 @@ LRESULT CALLBACK fnContactListWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM
 			LPDRAWITEMSTRUCT dis = (LPDRAWITEMSTRUCT) lParam;
 			if (dis->hwndItem == cli.hwndStatus) {
 				char *szProto = (char *) dis->itemData;
-				if (szProto == NULL) return 0;
+                if (szProto == NULL) return 0;
 				int status, x;
 				SIZE textSize;
 				BYTE showOpts = DBGetContactSettingByte(NULL, "CLUI", "SBarShow", 1);
@@ -997,7 +992,7 @@ LRESULT CALLBACK fnContactListWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM
 					DrawIconEx(dis->hDC, x, (dis->rcItem.top + dis->rcItem.bottom - g_IconHeight) >> 1, hIcon,
 						g_IconWidth, g_IconHeight, 0, NULL, DI_NORMAL);
 					IconLib_ReleaseIcon(hIcon,0);
-					if ( Proto_IsAccountLocked( Proto_GetAccount( szProto ))) {
+					if ( DBGetContactSettingByte( NULL, szProto, "LockMainStatus", 0 )) {
 						hIcon = LoadSkinnedIcon(SKINICON_OTHER_STATUS_LOCKED);
 						if (hIcon != NULL) {
 							DrawIconEx(dis->hDC, x, (dis->rcItem.top + dis->rcItem.bottom - g_IconHeight) >> 1, hIcon,

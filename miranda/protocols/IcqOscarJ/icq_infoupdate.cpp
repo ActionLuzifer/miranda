@@ -5,7 +5,7 @@
 // Copyright © 2000-2001 Richard Hughes, Roland Rabien, Tristan Van de Vreede
 // Copyright © 2001-2002 Jon Keating, Richard Hughes
 // Copyright © 2002-2004 Martin Öberg, Sam Kothari, Robert Rainwater
-// Copyright © 2004-2010 Joe Kucera
+// Copyright © 2004-2009 Joe Kucera
 // 
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -19,7 +19,7 @@
 // 
 // You should have received a copy of the GNU General Public License
 // along with this program; if not, write to the Free Software
-// Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+// Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //
 // -----------------------------------------------------------------------------
 //
@@ -35,7 +35,6 @@
 // -----------------------------------------------------------------------------
 
 #include "icqoscar.h"
-
 
 // Retrieve users' info
 void CIcqProto::icq_InitInfoUpdate(void)
@@ -281,10 +280,10 @@ void __cdecl CIcqProto::InfoUpdateThread( void* )
   			NetLog_Server("Info-Update: Users %u in queue.", nInfoUserCount);
 #endif
         // Either some user is waiting long enough, or all users are ready (waited at least the minimum time)
-				EnterCriticalSection(&m_ratesMutex);
+				EnterCriticalSection(&ratesMutex);
 				if (!m_rates)
 				{ // we cannot send info request - icq is offline
-					LeaveCriticalSection(&m_ratesMutex);
+					LeaveCriticalSection(&ratesMutex);
 					break;
 				}
 				WORD wGroup = m_rates->getGroupFromSNAC(ICQ_EXTENSIONS_FAMILY, ICQ_META_CLI_REQUEST);
@@ -292,7 +291,7 @@ void __cdecl CIcqProto::InfoUpdateThread( void* )
 				{ // we are over rate, need to wait before sending
 					int nDelay = m_rates->getDelayToLimitLevel(wGroup, RML_IDLE_50);
 
-					LeaveCriticalSection(&m_ratesMutex);
+					LeaveCriticalSection(&ratesMutex);
 #ifdef _DEBUG
 					NetLog_Server("Rates: InfoUpdate delayed %dms", nDelay);
 #endif
@@ -302,16 +301,16 @@ void __cdecl CIcqProto::InfoUpdateThread( void* )
 						NetLog_Server("%s thread ended.", "Info-Update");
 						return;
 					}
-					EnterCriticalSection(&m_ratesMutex);
+					EnterCriticalSection(&ratesMutex);
 					if (!m_rates) // we lost connection when we slept, go away
 						break;
 				}
 				if (!m_rates)
 				{ // we cannot send info request - icq is offline
-					LeaveCriticalSection(&m_ratesMutex);
+					LeaveCriticalSection(&ratesMutex);
 					break;
 				}
-				LeaveCriticalSection(&m_ratesMutex);
+				LeaveCriticalSection(&ratesMutex);
 
         userinfo *hContactList[LISTSIZE];
         int nListIndex = 0;

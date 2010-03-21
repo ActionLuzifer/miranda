@@ -5,7 +5,7 @@
 // Copyright © 2000-2001 Richard Hughes, Roland Rabien, Tristan Van de Vreede
 // Copyright © 2001-2002 Jon Keating, Richard Hughes
 // Copyright © 2002-2004 Martin Öberg, Sam Kothari, Robert Rainwater
-// Copyright © 2004-2010 Joe Kucera
+// Copyright © 2004-2009 Joe Kucera
 // 
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -19,7 +19,7 @@
 // 
 // You should have received a copy of the GNU General Public License
 // along with this program; if not, write to the Free Software
-// Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+// Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //
 // -----------------------------------------------------------------------------
 //
@@ -145,7 +145,6 @@ void CIcqProto::handleDirectMessage(directconnect* dc, PBYTE buf, WORD wLen)
 		default: 
 			{
 				message_ack_params pMsgAck = {0};
-        uid_str szUID;
 
 				buf -= wTextLen;
 				wLen += wTextLen;
@@ -155,7 +154,7 @@ void CIcqProto::handleDirectMessage(directconnect* dc, PBYTE buf, WORD wLen)
 				pMsgAck.wCookie = wCookie;
 				pMsgAck.msgType = bMsgType;
 				pMsgAck.bFlags = bMsgFlags;
-				handleMessageTypes(dc->dwRemoteUin, szUID, time(NULL), 0, 0, wCookie, dc->wVersion, (int)bMsgType, (int)bMsgFlags, 0, (DWORD)wLen, wTextLen, (char*)buf, MTF_DIRECT, &pMsgAck);
+				handleMessageTypes(dc->dwRemoteUin, time(NULL), 0, 0, wCookie, dc->wVersion, (int)bMsgType, (int)bMsgFlags, 0, (DWORD)wLen, wTextLen, (char*)buf, MTF_DIRECT, &pMsgAck);
 				break;
 			}
 	}
@@ -163,12 +162,10 @@ void CIcqProto::handleDirectMessage(directconnect* dc, PBYTE buf, WORD wLen)
 	{
 		if (bMsgFlags == 3)
 		{ // this is status reply
-      uid_str szUID;
-
 			buf -= wTextLen;
 			wLen += wTextLen;
 
-			handleMessageTypes(dc->dwRemoteUin, szUID, time(NULL), 0, 0, wCookie, dc->wVersion, (int)bMsgType, (int)bMsgFlags, 2, (DWORD)wLen, wTextLen, (char*)buf, MTF_DIRECT, NULL);
+			handleMessageTypes(dc->dwRemoteUin, time(NULL), 0, 0, wCookie, dc->wVersion, (int)bMsgType, (int)bMsgFlags, 2, (DWORD)wLen, wTextLen, (char*)buf, MTF_DIRECT, NULL);
 		}
 		else
 		{
@@ -288,25 +285,24 @@ void CIcqProto::handleDirectGreetingMessage(directconnect* dc, PBYTE buf, WORD w
 	}
 	else if (typeId && wCommand == DIRECT_MESSAGE)
 	{
-    uid_str szUID;
 		message_ack_params pMsgAck = {0};
 
 		pMsgAck.bType = MAT_DIRECT;
 		pMsgAck.pDC = dc;
 		pMsgAck.wCookie = wCookie;
 		pMsgAck.msgType = typeId;
-		handleMessageTypes(dc->dwRemoteUin, szUID, time(NULL), 0, 0, wCookie, dc->wVersion, typeId, 0, 0, dwLengthToEnd, (WORD)dwDataLength, (char*)buf, MTF_PLUGIN | MTF_DIRECT, &pMsgAck);
+		handleMessageTypes(dc->dwRemoteUin, time(NULL), 0, 0, wCookie, dc->wVersion, typeId, 0, 0, dwLengthToEnd, (WORD)dwDataLength, (char*)buf, MTF_PLUGIN | MTF_DIRECT, &pMsgAck);
 	}
 	else if (typeId == MTYPE_STATUSMSGEXT && wCommand == DIRECT_ACK)
 	{ // especially for icq2003b
-		NetLog_Direct("This is extended status reply");
+		char* szMsg;
 
-		char *szMsg = (char*)_alloca(dwDataLength+1);
-    uid_str szUID;
+		NetLog_Direct("This is extended status reply");
+		szMsg = (char*)_alloca(dwDataLength+1);
 		unpackString(&buf, szMsg, (WORD)dwDataLength);
 		szMsg[dwDataLength] = '\0';
 
-		handleMessageTypes(dc->dwRemoteUin, szUID, time(NULL), 0, 0, wCookie, dc->wVersion, (int)(qt + 0xE7), 3, 2, (DWORD)wLen, (WORD)dwDataLength, szMsg, MTF_PLUGIN | MTF_DIRECT, NULL);
+		handleMessageTypes(dc->dwRemoteUin, time(NULL), 0, 0, wCookie, dc->wVersion, (int)(qt + 0xE7), 3, 2, (DWORD)wLen, (WORD)dwDataLength, szMsg, MTF_PLUGIN | MTF_DIRECT, NULL);
 	}
 	else if (typeId && wCommand == DIRECT_ACK)
 	{

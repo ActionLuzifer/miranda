@@ -710,9 +710,8 @@ static INT_PTR CALLBACK DlgProcClcTextOpts(HWND hwndDlg, UINT msg, WPARAM wParam
 		TranslateDialogDefault(hwndDlg);
 		if(!SendMessage(GetParent(hwndDlg),PSM_ISEXPERT,0,0))
 			SwitchTextDlgToMode(hwndDlg,0);
-		mir_forkthread(FillFontListThread,hwndDlg);
-		{	
-			int i,itemId,fontId;
+			forkthread(FillFontListThread,0,hwndDlg);
+		{	int i,itemId,fontId;
 			LOGFONT lf;
 			COLORREF colour;
 			WORD sameAs;

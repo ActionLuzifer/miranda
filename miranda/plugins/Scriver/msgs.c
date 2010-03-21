@@ -1,7 +1,8 @@
 /*
 Scriver
 
-Copyright 2000-2009 Miranda ICQ/IM project,
+Copyright 2000-2003 Miranda ICQ/IM project,
+Copyright 2005 Piotr Piastucki
 
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
@@ -307,7 +308,7 @@ static int TypingMessage(WPARAM wParam, LPARAM lParam)
          cle.hContact = (HANDLE) wParam;
          cle.hDbEvent = (HANDLE) 1;
          cle.flags = CLEF_ONLYAFEW | CLEF_TCHAR;
-		 cle.hIcon = GetCachedIcon("scriver_TYPING");
+         cle.hIcon = g_dat->hIcons[SMF_ICON_TYPING];
          cle.pszService = "SRMsg/TypingMessage";
          cle.ptszTooltip = szTip;
          CallServiceSync(MS_CLIST_REMOVEEVENT, wParam, (LPARAM) 1);
@@ -325,7 +326,7 @@ static int MessageSettingChanged(WPARAM wParam, LPARAM lParam)
    szProto = (char *) CallService(MS_PROTO_GETCONTACTBASEPROTO, wParam, 0);
    if (lstrcmpA(cws->szModule, "CList") && (szProto == NULL || lstrcmpA(cws->szModule, szProto)))
       return 0;
-   WindowList_Broadcast(g_dat->hMessageWindowList, DM_CLISTSETTINGSCHANGED, wParam, lParam);
+   WindowList_Broadcast(g_dat->hMessageWindowList, DM_CLISTSETTINGSCHANGED, (WPARAM) cws, 0);
    return 0;
 }
 
@@ -460,15 +461,15 @@ static void RegisterStatusIcons() {
 	sid.szModule = SRMMMOD;
 
 	sid.dwId = 1;
-	sid.hIcon = CopyIcon(GetCachedIcon("scriver_TYPING"));
-	sid.hIconDisabled = CopyIcon(GetCachedIcon("scriver_TYPINGOFF"));
+	sid.hIcon = g_dat->hIcons[SMF_ICON_TYPING];
+	sid.hIconDisabled = g_dat->hIcons[SMF_ICON_TYPINGOFF];
 	sid.flags = MBF_HIDDEN;
 	sid.szTooltip = NULL;
 	AddStickyStatusIcon((WPARAM) 0, (LPARAM) &sid);
 
 	sid.dwId = 0;
-	sid.hIcon = CopyIcon(GetCachedIcon("scriver_UNICODEON"));
-	sid.hIconDisabled = CopyIcon(GetCachedIcon("scriver_UNICODEOFF"));
+	sid.hIcon = g_dat->hIcons[SMF_ICON_UNICODEON];
+	sid.hIconDisabled = g_dat->hIcons[SMF_ICON_UNICODEOFF];
 	sid.flags = 0;
 	sid.szTooltip = NULL;
 	AddStickyStatusIcon((WPARAM) 0, (LPARAM) &sid);
@@ -479,15 +480,15 @@ void ChangeStatusIcons() {
 	sid.cbSize = sizeof(sid);
 	sid.szModule = SRMMMOD;
 	sid.dwId = 0;
-	sid.hIcon = CopyIcon(GetCachedIcon("scriver_UNICODEON"));
-	sid.hIconDisabled = CopyIcon(GetCachedIcon("scriver_UNICODEOFF"));
+	sid.hIcon = CopyIcon(g_dat->hIcons[SMF_ICON_UNICODEON]);
+	sid.hIconDisabled = CopyIcon(g_dat->hIcons[SMF_ICON_UNICODEOFF]);
 	sid.flags = 0;
 	sid.szTooltip = NULL;
 	ModifyStatusIcon((WPARAM)NULL, (LPARAM) &sid);
 
 	sid.dwId = 1;
-	sid.hIcon = CopyIcon(GetCachedIcon("scriver_TYPING"));
-	sid.hIconDisabled = CopyIcon(GetCachedIcon("scriver_TYPINGOFF"));
+	sid.hIcon = CopyIcon(g_dat->hIcons[SMF_ICON_TYPING]);
+	sid.hIconDisabled = CopyIcon(g_dat->hIcons[SMF_ICON_UNICODEOFF]);
 	sid.flags = MBF_HIDDEN;
 	sid.szTooltip = NULL;
 	ModifyStatusIcon((WPARAM)NULL, (LPARAM) &sid);
@@ -538,7 +539,7 @@ static int OnModulesLoaded(WPARAM wParam, LPARAM lParam)
 {
 	CLISTMENUITEM mi;
 	ReloadGlobals();
-	RegisterIcons();
+	RegisterIcoLibIcons();
 	RegisterFontServiceFonts();
 	RegisterKeyBindings();
 	LoadGlobalIcons();
@@ -591,11 +592,9 @@ int OnUnloadModule(void)
 	DestroyServices_Ex();
 	DestroyHookableEvent(hHookWinEvt);
 	DestroyHookableEvent(hHookWinPopup);
-	ReleaseIcons();
 	FreeMsgLogIcons();
 	FreeLibrary(GetModuleHandleA("riched20.dll"));
 	OleUninitialize();
-	RichUtil_Unload();
 	FreeGlobals();
 	return 0;
 }
@@ -622,7 +621,6 @@ int OnLoadModule(void) {
 		}
 	}
 	InitGlobals();
-	RichUtil_Load();
 	OleInitialize(NULL);
 	InitREOleCallback();
 	InitStatusIcons();

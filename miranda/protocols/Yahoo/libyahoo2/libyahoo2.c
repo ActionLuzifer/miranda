@@ -1372,6 +1372,7 @@ static void yahoo_process_filetransfer7(struct yahoo_input_data *yid, struct yah
 		YAHOO_CALLBACK(ext_yahoo_send_file7info)(yd->client_id, to, from, ft_token);
 		break;
 	case 4: // FT7 Declined
+		
 		break;
 	}
 }
@@ -2497,11 +2498,14 @@ GET /config/pwtoken_login?src=ymsgr&ts=1195577376&token=token HTTP/1.1
 	if (yd->pw_token == NULL ) {
 
 		c = yahoo_urlencode(yd->password);
+		t = yahoo_urlencode(seed);
 		
-		_snprintf(url, sizeof(url), "/config/pwtoken_get?src=ymsgr&login=%s&passwd=%s", sn, c);
+		_snprintf(url, sizeof(url), "/config/pwtoken_get?src=ymsgr&ts=%u&login=%s&passwd=%s&chal=%s",
+					time(NULL),sn, c, t);
 		response = YAHOO_CALLBACK(ext_yahoo_send_https_request)(yd, yss->login_host, url);
 		
 		FREE(c);
+		FREE(t);
 		
 		if (response == NULL) {
 			YAHOO_CALLBACK(ext_yahoo_login_response)(yd->client_id, YAHOO_LOGIN_SOCK, NULL);
@@ -2584,8 +2588,8 @@ GET /config/pwtoken_login?src=ymsgr&ts=1195577376&token=token HTTP/1.1
 		}
 	}
 	
-	//_snprintf(url, sizeof(url), "/config/pwtoken_login?src=ymsgr&token=%s&ext_err=1",token);
-	_snprintf(url, sizeof(url), "/config/pwtoken_login?src=ymsgr&token=%s",yd->pw_token);
+	_snprintf(url, sizeof(url), "/config/pwtoken_login?src=ymsgr&ts=%lu&token=%s",
+				time(NULL),yd->pw_token);
 				
 	/*
 				0

@@ -121,16 +121,16 @@ static __inline unsigned long Proto_Status2Flag(int status)
 }
 
 #define PFLAGNUM_4	 4			//misc options
-#define PF4_FORCEAUTH	     0x00000001 // forces auth requests to be sent when adding users
-#define PF4_FORCEADDED	     0x00000002 // forces "you were added" requests to be sent
-#define PF4_NOCUSTOMAUTH     0x00000004 // protocol doesn't support custom auth text (doesn't show auth text box)
-#define PF4_SUPPORTTYPING    0x00000008 // protocol supports user is typing messages v0.3.3+
-#define PF4_SUPPORTIDLE      0x00000010 // protocol understands idle, added during v0.3.4+ (2004/09/13)
-#define PF4_AVATARS		     0x00000020 // protocol has avatar support, added during v0.3.4 (2004/09/13)
-#define PF4_OFFLINEFILES     0x00000040 // protocols supports sending files to offline users (v0.5.2)
-#define PF4_IMSENDUTF        0x00000080 // protocol is able to process messages in utf-8 (v.0.7.0+)
-#define PF4_IMSENDOFFLINE    0x00000100 // protocol supports sending offline messages (v0.8.0+)
-#define PF4_INFOSETTINGSVC   0x00000200 // protocol supports user info translation services (v0.8.0+)
+#define PF4_FORCEAUTH	   0x00000001 // forces auth requests to be sent when adding users
+#define PF4_FORCEADDED	   0x00000002 // forces "you were added" requests to be sent
+#define PF4_NOCUSTOMAUTH   0x00000004 // protocol doesn't support custom auth text (doesn't show auth text box)
+#define PF4_SUPPORTTYPING  0x00000008 // protocol supports user is typing messages v0.3.3+
+#define PF4_SUPPORTIDLE    0x00000010 // protocol understands idle, added during v0.3.4+ (2004/09/13)
+#define PF4_AVATARS		   0x00000020 // protocol has avatar support, added during v0.3.4 (2004/09/13)
+#define PF4_OFFLINEFILES   0x00000040 // protocols supports sending files to offline users (v0.5.2)
+#define PF4_IMSENDUTF      0x00000080 // protocol is able to process messages in utf-8 (v.0.7.0+)
+#define PF4_IMSENDOFFLINE  0x00000100 // protocol supports sending offline messages (v0.8.0+)
+#define PF4_INFOSETTINGSVC 0x00000200 // protocol supports user info translation services (v0.8.0+)
 #define PF4_NOAUTHDENYREASON 0x00000400 // protocol doesn't support authorization deny reason (v0.9.0+)
 
 #define PFLAG_UNIQUEIDTEXT  100    //returns a static buffer of text describing the unique field by which this protocol identifies users (already translated), or NULL
@@ -267,7 +267,7 @@ will pick this up and everything will be good.
 
 //Deny an authorisation request
 //wParam=(WPARAM)(HANDLE)hDbEvent
-//lParam=(LPARAM)(const TCHAR*)szReason
+//lParam=(LPARAM)(const char*)szReason
 //Returns 0 on success, nonzero on failure
 //Protocol modules must be able to cope with szReason=NULL
 #define PS_AUTHDENY    "/AuthDeny"
@@ -431,7 +431,7 @@ typedef struct {
 #define FILERESUME_SKIP       4
 typedef struct {
 	int action;    //a FILERESUME_ flag
-	const FNAMECHAR *szFilename;  //full path. Only valid if action==FILERESUME_RENAME
+	const char *szFilename;  //full path. Only valid if action==FILERESUME_RENAME
 } PROTOFILERESUME;
 #define PS_FILERESUME     "/FileResume"
 
@@ -475,54 +475,6 @@ typedef struct {
 #endif
 
 #define PS_GETMYAWAYMSG  "/GetMyAwayMsg"
-
-// Set nickname for the user
-// wParam=(WPARAM)SMNN_xxx
-// lParam=(LPARAM)(char *) The new nickname for the user
-// return=0 for success
-
-#define SMNN_UNICODE 1        // return Unicode status
-#if defined( _UNICODE )
-	#define SMNN_TCHAR SMNN_UNICODE
-#else
-	#define SMNN_TCHAR 0
-#endif
-
-#define PS_SETMYNICKNAME "/SetNickname"
-
-// Get the max allowed length for the user nickname
-// Optional, default value is 1024
-// wParam=(WPARAM)0
-// lParam=(LPARAM)0
-// return= <=0 for error, >0 the max length of the nick
-#define PS_GETMYNICKNAMEMAXLENGTH "/GetMyNicknameMaxLength"
-
-// WAYD = What are you doing
-#define WAYD_UNICODE 1        // return Unicode texts
-#if defined( _UNICODE )
-	#define WAYD_TCHAR WAYD_UNICODE
-#else
-	#define WAYD_TCHAR 0
-#endif
-
-// Get the WAYD message for the user
-// wParam=(WPARAM)WAYD_xxx
-// lParam=(LPARAM)0
-// Returns the text or NULL if there is none. Remember to mir_free the return value.
-#define PS_GETMYWAYD "/GetMyWAYD"
-
-// Sets the WAYD message for the user
-// wParam=(WPARAM)WAYD_xxx
-// lParam=(LPARAM)(WCHAR * or char *)The message
-// Returns 0 on success, nonzero on failure
-#define PS_SETMYWAYD "/SetMyWAYD"
-
-// Get the max allowed length that a WAYD message can have
-// Optional, default value is 1024
-// wParam=(WPARAM)0
-// lParam=(LPARAM)0
-// Returns the max length
-#define PS_GETMYWAYDMAXLENGTH "/GetMyWAYDMaxLength"
 
 /****************************** SENDING SERVICES *************************/
 //these should be called with CallContactService()
@@ -648,7 +600,7 @@ typedef struct {
 
 // Send an auth request
 // wParam=0
-// lParam=(const TCHAR *)szMessage
+// lParam=(const char *)szMessage
 // Returns 0 on success, nonzero on failure
 #define PSS_AUTHREQUEST    "/AuthRequest"
 
@@ -688,7 +640,7 @@ typedef struct {
 	LPARAM lParam;     //extra space for the network level protocol module
 } PROTORECVEVENT;
 #define PREF_CREATEREAD   1     //create the database event with the 'read' flag set
-#define PREF_UNICODE	  2
+#define PREF_UNICODE	     2
 #define PREF_RTL          4     // 0.5+ addition: support for right-to-left messages
 #define PREF_UTF          8     // message is in utf-8 (0.7.0+)
 
@@ -733,24 +685,9 @@ zero-terminated, binary data should be converted to text.
 Use PS_ADDTOLISTBYEVENT to add the contacts from one of these to the list.
 */
 
-//File(s) have been received (0.9.x)
+//File(s) have been received
 //wParam=0
 //lParam=(LPARAM)(PROTORECVFILE*)&prf
-typedef struct {
-	DWORD flags;
-	DWORD timestamp;   //unix time
-	TCHAR *tszDescription;
-	int   fileCount;
-	TCHAR **ptszFiles;
-	LPARAM lParam;     //extra space for the network level protocol module
-} PROTORECVFILET;
-
-#define MS_PROTO_RECVFILET "Proto/RecvFileT"
-
-#define PSR_FILE       "/RecvFile"
-
-// left for compatibility with the old Miranda versions.
-
 typedef struct {
 	DWORD flags;
 	DWORD timestamp;   //unix time
@@ -758,6 +695,8 @@ typedef struct {
 	char **pFiles;
 	LPARAM lParam;     //extra space for the network level protocol module
 } PROTORECVFILE;
+#define PSR_FILE       "/RecvFile"
+
 #define MS_PROTO_RECVFILE "Proto/RecvFile"
 
 //An away message reply has been received

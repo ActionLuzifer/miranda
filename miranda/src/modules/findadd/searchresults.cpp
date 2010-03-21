@@ -103,7 +103,7 @@ void LoadColumnSizes(HWND hwndResults,const char *szProto)
 			else if( i == COLUMNID_HANDLE ) {
 				#if defined( _UNICODE )
 					bNeedsFree = TRUE;
-					lvc.pszText = mir_a2u((char*)CallProtoService(szProto,PS_GETCAPS,PFLAG_UNIQUEIDTEXT,0));
+					lvc.pszText = a2u((char*)CallProtoService(szProto,PS_GETCAPS,PFLAG_UNIQUEIDTEXT,0));
 				#else
 					lvc.pszText = (char*)CallProtoService(szProto,PS_GETCAPS,PFLAG_UNIQUEIDTEXT,0);
 				#endif
@@ -246,7 +246,7 @@ int BeginSearch(HWND,struct FindAddDlgData *dat,const char *szProto,const char *
 		dat->search = (struct ProtoSearchInfo*)mir_calloc(sizeof(struct ProtoSearchInfo) * accounts.getCount());
 		for( i=0; i < accounts.getCount();i++) {
 			PROTOACCOUNT* pa = accounts[i];
-			if (!Proto_IsAccountEnabled(pa)) continue;
+            if (!IsAccountEnabled(pa)) continue;
 			DWORD caps=(DWORD)CallProtoService(pa->szModuleName,PS_GETCAPS,PFLAGNUM_1,0);
 			if(!(caps&requiredCapability)) continue;
 			dat->search[dat->searchCount].hProcess = (HANDLE)CallProtoService(pa->szModuleName,szSearchService,0,(LPARAM)pvSearchParams);

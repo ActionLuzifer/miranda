@@ -5,7 +5,7 @@
 // Copyright © 2000-2001 Richard Hughes, Roland Rabien, Tristan Van de Vreede
 // Copyright © 2001-2002 Jon Keating, Richard Hughes
 // Copyright © 2002-2004 Martin Öberg, Sam Kothari, Robert Rainwater
-// Copyright © 2004-2010 Joe Kucera
+// Copyright © 2004-2009 Joe Kucera
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -19,7 +19,7 @@
 //
 // You should have received a copy of the GNU General Public License
 // along with this program; if not, write to the Free Software
-// Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+// Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //
 // -----------------------------------------------------------------------------
 //
@@ -64,11 +64,20 @@ BOOL __stdcall IsUSASCII(const char *pBuffer, int nSize)
 // Returns true if the unicode buffer only contains 7-bit characters.
 BOOL __stdcall IsUnicodeAscii(const WCHAR *pBuffer, int nSize)
 {
-	for (int nIndex = 0; nIndex < nSize; nIndex++)
-		if (WORD(pBuffer[nIndex]) > 0x7F)
-			return FALSE;
+	BOOL bResult = TRUE;
+	int nIndex;
 
-	return TRUE;
+
+	for (nIndex = 0; nIndex < nSize; nIndex++)
+	{
+		if (pBuffer[nIndex] > 0x7F)
+		{
+			bResult = FALSE;
+			break;
+		}
+	}
+
+	return bResult;
 }
 
 
@@ -180,7 +189,6 @@ char* __stdcall make_utf8_string_static(const WCHAR *unicode, char *utf8, size_t
 	return utf8;
 }
 
-
 char* __stdcall make_utf8_string(const WCHAR *unicode)
 {
 	int size = 0;
@@ -209,7 +217,6 @@ char* __stdcall make_utf8_string(const WCHAR *unicode)
 
 	return make_utf8_string_static(unicode, out, size + 1);
 }
-
 
 WCHAR* __stdcall make_unicode_string_static(const char *utf8, WCHAR *unicode, size_t unicode_size)
 {
@@ -246,10 +253,10 @@ WCHAR* __stdcall make_unicode_string_static(const char *utf8, WCHAR *unicode, si
 	return unicode;
 }
 
-
 WCHAR* __stdcall make_unicode_string(const char *utf8)
 {
 	int size = 0, index = 0;
+	WCHAR *out;
 	unsigned char c;
 
 	if (!utf8) return NULL;
@@ -274,13 +281,12 @@ WCHAR* __stdcall make_unicode_string(const char *utf8)
 		c = utf8[index++];
 	}
 
-	WCHAR *out = (WCHAR*)SAFE_MALLOC((size + 1) * sizeof(WCHAR));
+	out = (WCHAR*)SAFE_MALLOC((size + 1) * sizeof(WCHAR));
 	if (!out)
 		return NULL;
 	else
 		return make_unicode_string_static(utf8, out, size + 1);
 }
-
 
 int __stdcall utf8_encode(const char *from, char **to)
 {
@@ -458,4 +464,12 @@ int __stdcall utf8_decode_static(const char *from, char *to, size_t to_size)
 	}
 
 	return nResult;
+}
+
+char* __stdcall mtchar_to_utf8(const TCHAR *szTxt)
+{
+	if (gbUnicodeCore)
+		return make_utf8_string((WCHAR*)szTxt);
+	else
+		return ansi_to_utf8((char*)szTxt);
 }
