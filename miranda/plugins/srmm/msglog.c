@@ -389,25 +389,23 @@ static char *CreateRTFFromDbEvent(struct MessageWindowData *dat, HANDLE hContact
 		{
 			char* filename = dbei.pBlob + sizeof(DWORD);
 			char* descr = filename + lstrlenA( filename ) + 1;
-			TCHAR* ptszFileName = DbGetEventStringT( &dbei, filename );
-
+			TCHAR* ptszFileName = mir_a2t( filename );
 			AppendToBuffer(&buffer, &bufferEnd, &bufferAlloced, " %s ", SetToStyle(MSGFONTID_NOTICE));
 			AppendToBufferWithRTF(&buffer, &bufferEnd, &bufferAlloced,
 				(dbei.flags & DBEF_SENT) ? TranslateT("File sent") : TranslateT("File received"));
 			AppendToBuffer(&buffer, &bufferEnd, &bufferAlloced, ": ");
 			AppendToBufferWithRTF(&buffer, &bufferEnd, &bufferAlloced, ptszFileName);
-			mir_free( ptszFileName );
-
+			mir_free(ptszFileName);
 			if ( *descr != 0 ) {
-				TCHAR* ptszDescr = DbGetEventStringT( &dbei, descr );
+				TCHAR* ptszDescr = mir_a2t( descr );
 				AppendToBuffer( &buffer, &bufferEnd, &bufferAlloced, " (" );
 				AppendToBufferWithRTF(&buffer, &bufferEnd, &bufferAlloced, ptszDescr);
 				AppendToBuffer( &buffer, &bufferEnd, &bufferAlloced, ")" );
-				mir_free( ptszDescr );
+				mir_free(ptszDescr);
 			}
 			break;
-	}	}
-
+		}
+	}
 	if(dat->bIsAutoRTL)
 		AppendToBuffer(&buffer, &bufferEnd, &bufferAlloced, "\\par");
 

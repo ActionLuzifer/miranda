@@ -40,11 +40,11 @@ int gg_gc_init(GGPROTO *gg)
 
 		// Register Gadu-Gadu proto
 		gcr.cbSize = sizeof(GCREGISTER);
-		gcr.dwFlags = GC_TCHAR;
+		gcr.dwFlags = 0;
 		gcr.iMaxText = 0;
 		gcr.nColors = 0;
 		gcr.pColors = 0;
-		gcr.ptszModuleDispName = gg->proto.m_tszUserName;
+		gcr.pszModuleDispName = GG_PROTONAME;
 		gcr.pszModule = GG_PROTO;
 #ifdef DEBUGMODE
 		gg_netlog(gg, "gg_gc_init(): Trying to register groupchat plugin...");
@@ -198,7 +198,7 @@ int gg_gc_event(GGPROTO *gg, WPARAM wParam, LPARAM lParam)
 			gcevent.pszNick = Translate("Me");
 
 		// Get rid of CRLF at back
-		lc = (int)strlen(gch->pszText) - 1;
+		lc = strlen(gch->pszText) - 1;
 		while(lc >= 0 && (gch->pszText[lc] == '\n' || gch->pszText[lc] == '\r')) gch->pszText[lc --] = 0;
 		gcevent.time = time(NULL);
 		gcevent.bIsMe = 1;

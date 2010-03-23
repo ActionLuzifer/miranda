@@ -5,7 +5,7 @@
 // Copyright © 2000-2001 Richard Hughes, Roland Rabien, Tristan Van de Vreede
 // Copyright © 2001-2002 Jon Keating, Richard Hughes
 // Copyright © 2002-2004 Martin Öberg, Sam Kothari, Robert Rainwater
-// Copyright © 2004-2010 Joe Kucera
+// Copyright © 2004-2009 Joe Kucera
 // 
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -19,7 +19,7 @@
 // 
 // You should have received a copy of the GNU General Public License
 // along with this program; if not, write to the Free Software
-// Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+// Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //
 // -----------------------------------------------------------------------------
 //
@@ -109,14 +109,6 @@ void CIcqProto::handleExtensionError(BYTE *buf, WORD wPackLen)
 
 							NetLog_Server("Full info request error 0x%02x received", wErrorCode);
 						}
-            else if (wSubType == META_SET_PASSWORD_REQ)
-            { // failed to change user password, report to UI
-              BroadcastAck(NULL, ACKTYPE_SETINFO, ACKRESULT_FAILED, (HANDLE)wCookie, 0);
-
-              NetLog_Server("Meta change password request failed, error 0x%02x", wErrorCode);
-            }
-            else
-              NetLog_Server("Meta request error 0x%02x received", wErrorCode);
 					}
 					else 
 						NetLog_Server("Meta request error 0x%02x received", wErrorCode);
@@ -776,32 +768,8 @@ void CIcqProto::handleDirectoryQueryResponse(BYTE *databuf, WORD wPacketLen, WOR
 		switch (pCookieData->bRequestType)
 		{
 		case DIRECTORYREQUEST_INFOOWNER:
-			parseDirectoryUserDetailsData(NULL, pDirectoryData, wCookie, pCookieData, wReplySubtype);
-			break;
-
+			hContact = NULL;
 		case DIRECTORYREQUEST_INFOUSER:
-      {
-  		  DWORD dwUin = 0;
-	  	  char *szUid = pDirectoryData->getString(0x32, 1);
-		    if (!szUid) 
-		    {
-			    NetLog_Server("Error: Received unrecognized data from the directory");
-			    break;
-		    }
-
-  		  if (IsStringUIN(szUid))
-	  		  dwUin = atoi(szUid);
-
-        if (hContact != HContactFromUID(dwUin, szUid, NULL))
-        {
-          NetLog_Server("Error: Received data does not match cookie contact, ignoring.");
-          SAFE_FREE(&szUid);
-          break;
-        }
-        else
-          SAFE_FREE(&szUid);
-      }
-      
 		case DIRECTORYREQUEST_INFOMULTI:
 			parseDirectoryUserDetailsData(hContact, pDirectoryData, wCookie, pCookieData, wReplySubtype);
 			break;
@@ -852,6 +820,17 @@ void CIcqProto::parseDirectoryUserDetailsData(HANDLE hContact, oscar_tlv_chain *
 	oscar_tlv *pTLV;
 	WORD wRecordCount;
 
+#ifdef _DEBUG
+	{
+		char *szUid = cDetails->getString(0x32, 1);
+
+    if (!hContact)
+			NetLog_Server("Received owner user info from directory");
+		else
+			NetLog_Server("Received user info for %s from directory", szUid);
+		SAFE_FREE(&szUid);
+	}
+#endif
 	if (pCookieData->bRequestType == DIRECTORYREQUEST_INFOMULTI && !hContact)
 	{
 		DWORD dwUin = 0;
@@ -872,24 +851,8 @@ void CIcqProto::parseDirectoryUserDetailsData(HANDLE hContact, oscar_tlv_chain *
 			SAFE_FREE(&szUid);
 			return;
 		}
-#ifdef _DEBUG
-		else
-			NetLog_Server("Received user info for %s from directory", szUid);
-#endif
 		SAFE_FREE(&szUid);
 	}
-#ifdef _DEBUG
-  else
-	{
-		char *szUid = cDetails->getString(0x32, 1);
-
-    if (!hContact)
-			NetLog_Server("Received owner user info from directory");
-		else
-			NetLog_Server("Received user info for %s from directory", szUid);
-		SAFE_FREE(&szUid);
-	}
-#endif
 
 	pTLV = cDetails->getTLV(0x50, 1);
 	if (pTLV && pTLV->wLen > 0)

@@ -1,7 +1,8 @@
 /*
 Scriver
 
-Copyright 2000-2009 Miranda ICQ/IM project,
+Copyright 2000-2003 Miranda ICQ/IM project,
+Copyright 2005 Piotr Piastucki
 
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
@@ -24,6 +25,14 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "commonheaders.h"
 #include "statusicon.h"
 #include "chat/chat.h"
+
+
+#ifdef _MSC_VER
+#define STRING2(x) #x
+#define STRING(x) STRING2(x)
+#pragma message ("_MSC_VER: "STRING(_MSC_VER))
+#endif
+
 
 #ifndef __MINGW32__
 #if (_MSC_VER < 1300)
@@ -57,50 +66,38 @@ void UnsubclassTabCtrl(HWND hwnd) {
 	SetWindowLongPtr(hwnd, GWLP_WNDPROC, (LONG_PTR) OldTabCtrlProc);
 }
 
-static TCHAR *titleTokenNames[] = {_T("%name%"), _T("%status%"), _T("%statusmsg%"), _T("%account%")};
-
 TCHAR* GetWindowTitle(HANDLE *hContact, const char *szProto)
 {
+	DBVARIANT dbv;
 	int isTemplate;
-	int i, j, len;
-    TCHAR* tokens[4] = {NULL};
-    int tokenLen[4] = {0};
-	TCHAR *p, *tmplt, *title;
-    char *accModule;
+	int i, j, len, contactNameLen = 0, statusLen = 0, statusMsgLen = 0, protocolLen = 0;
+	TCHAR *p, *tmplt, *szContactName = NULL, *szStatus = NULL, *szStatusMsg = NULL, *szProtocol = NULL, *title;
 	TCHAR *pszNewTitleEnd = mir_tstrdup(TranslateT("Message Session"));
 	isTemplate = 0;
 	if (hContact && szProto) {
-		tokens[0] = GetNickname(hContact, szProto);
-		tokenLen[0] = lstrlen(tokens[0]);
-		tokens[1] = a2t((char *) CallService(MS_CLIST_GETSTATUSMODEDESCRIPTION, szProto == NULL ? ID_STATUS_OFFLINE : DBGetContactSettingWord(hContact, szProto, "Status", ID_STATUS_OFFLINE), 0));
-		tokenLen[1] = lstrlen(tokens[1]);
-		tokens[2] = DBGetStringT(hContact, "CList", "StatusMsg");
-		if (tokens[2] != NULL) {
-			tokenLen[2] = (int)lstrlen(tokens[2]);
-			for (i = j = 0; i < tokenLen[2]; i++) {
-				if (tokens[2][i] == '\r') {
+		szContactName = GetNickname(hContact, szProto);
+		contactNameLen = lstrlen(szContactName);
+		szStatus = a2t((char *) CallService(MS_CLIST_GETSTATUSMODEDESCRIPTION, szProto == NULL ? ID_STATUS_OFFLINE : DBGetContactSettingWord(hContact, szProto, "Status", ID_STATUS_OFFLINE), 0));
+		statusLen = lstrlen(szStatus);
+		szStatusMsg = DBGetStringT(hContact, "CList", "StatusMsg");
+		if (szStatusMsg != NULL) {
+			statusMsgLen = (int)_tcslen(szStatusMsg);
+			for (i = j = 0; i < statusMsgLen; i++) {
+				if (szStatusMsg[i] == '\r') {
 					continue;
-				} else if (tokens[2][i] == '\n') {
-					tokens[2][j++] = ' ';
+				} else if (szStatusMsg[i] == '\n') {
+					szStatusMsg[j++] = ' ';
 				} else {
-					tokens[2][j++] = tokens[2][i];
+					szStatusMsg[j++] = szStatusMsg[i];
 				}
 			}
-			tokens[2][j] = '\0';
-			tokenLen[2] = j;
+			szStatusMsg[j] = '\0';
+			statusMsgLen = j;
 		}
-
-    	accModule = (char *) CallService(MS_PROTO_GETCONTACTBASEACCOUNT, (WPARAM) hContact, 0);
-        if (accModule != NULL) {
-            PROTOACCOUNT* proto = (PROTOACCOUNT*)CallService(MS_PROTO_GETACCOUNT, 0, (LPARAM)accModule);
-            if (proto != NULL) {
-                tokens[3] = mir_tstrdup(proto->tszAccountName);
-                tokenLen[3] = lstrlen(tokens[3]);
-            }
-        }
-        tmplt = DBGetStringT(NULL, SRMMMOD, SRMSGSET_WINDOWTITLE);
-		if (tmplt != NULL) {
+		if (!DBGetContactSettingTString(NULL, SRMMMOD, SRMSGSET_WINDOWTITLE, &dbv)) {
 			isTemplate = 1;
+			tmplt = mir_tstrdup(dbv.ptszVal);
+			DBFreeVariant(&dbv);
 		} else {
 			if (g_dat->flags & SMF_STATUSICON) {
 				tmplt = _T("%name% - ");
@@ -113,14 +110,19 @@ TCHAR* GetWindowTitle(HANDLE *hContact, const char *szProto)
 	}
 	for (len = 0, p = tmplt; *p; p++) {
 		if (*p == '%') {
-            for (i = 0; i < SIZEOF(titleTokenNames); i ++) {
-                int tnlen = lstrlen(titleTokenNames[i]);
-                if (!_tcsncmp(p, titleTokenNames[i], tnlen)) {
-                    len += tokenLen[i];
-                    p += tnlen;
-                    break;
-                }
-            }
+			if (!_tcsncmp(p, _T("%name%"), 6)) {
+				len += contactNameLen;
+				p += 5;
+				continue;
+			} else if (!_tcsncmp(p, _T("%status%"), 8)) {
+				len += statusLen;
+				p += 7;
+				continue;
+			} else if (!_tcsncmp(p, _T("%statusmsg%"), 11)) {
+				len += statusMsgLen;
+				p += 10;
+				continue;
+			}
 		}
 		len++;
 	}
@@ -130,17 +132,22 @@ TCHAR* GetWindowTitle(HANDLE *hContact, const char *szProto)
 	title = (TCHAR *)mir_alloc(sizeof(TCHAR) * (len + 1));
 	for (len = 0, p = tmplt; *p; p++) {
 		if (*p == '%') {
-            for (i = 0; i < SIZEOF(titleTokenNames); i ++) {
-                int tnlen = lstrlen(titleTokenNames[i]);
-                if (!_tcsncmp(p, titleTokenNames[i], tnlen)) {
-                    if (tokens[i] != NULL) {
-                        memcpy(title+len, tokens[i], sizeof(TCHAR) * tokenLen[i]);
-                        len += tokenLen[i];
-                    }
-                    p += tnlen;
-                    break;
-                }
-            }
+			if (!_tcsncmp(p, _T("%name%"), 6)) {
+				memcpy(title+len, szContactName, sizeof(TCHAR) * contactNameLen);
+				len += contactNameLen;
+				p += 5;
+				continue;
+			} else if (!_tcsncmp(p, _T("%status%"), 8)) {
+				memcpy(title+len, szStatus, sizeof(TCHAR) * statusLen);
+				len += statusLen;
+				p += 7;
+				continue;
+			} else if (!_tcsncmp(p, _T("%statusmsg%"), 11)) {
+				memcpy(title+len, szStatusMsg, sizeof(TCHAR) * statusMsgLen);
+				len += statusMsgLen;
+				p += 10;
+				continue;
+			}
 		}
 		title[len++] = *p;
 	}
@@ -152,10 +159,11 @@ TCHAR* GetWindowTitle(HANDLE *hContact, const char *szProto)
 	if (isTemplate) {
 		mir_free(tmplt);
 	}
-    for (i = 0; i < SIZEOF(titleTokenNames); i ++) {
-        mir_free(tokens[i]);
-    }
+	mir_free(szContactName);
+	mir_free(szStatus);
 	mir_free(pszNewTitleEnd);
+	if (szStatusMsg)
+		mir_free(szStatusMsg);
 	return title;
 }
 
@@ -323,8 +331,8 @@ static void ActivateChild(ParentWindowData *dat, HWND child) {
 	RECT rcChild;
 	GetChildWindowRect(dat, &rcChild);
 	SetWindowPos(child, HWND_TOP, rcChild.left, rcChild.top, rcChild.right-rcChild.left, rcChild.bottom - rcChild.top, SWP_NOSIZE);
-	
-    i = GetTabFromHWND(dat, child);
+
+	i = GetTabFromHWND(dat, child);
 	if ( i == -1 )
 		return;
 	else {
@@ -779,7 +787,7 @@ INT_PTR CALLBACK DlgProcParentWindow(HWND hwndDlg, UINT msg, WPARAM wParam, LPAR
 			ActivateChild(dat, dat->hwndActive);
 			g_dat->hFocusWnd = dat->hwndActive;
 			PostMessage(dat->hwndActive, DM_SETFOCUS, 0, msg);
-        }
+		}
 		if (KillTimer(hwndDlg, TIMERID_FLASHWND)) {
 			FlashWindow(hwndDlg, FALSE);
 			dat->nFlash = 0;
@@ -1408,18 +1416,17 @@ BOOL CALLBACK TabCtrlProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 									MoveWindow(hParent, rc.left, rc.top, rc.right, rc.bottom, FALSE);
 
 								}
-								NotifyLocalWinEvent(hContact, hChild, MSG_WINDOW_EVT_CLOSING);
-								NotifyLocalWinEvent(hContact, hChild, MSG_WINDOW_EVT_CLOSE);
 								SetParent(hChild, hParent);
 								SendMessage(GetParent(hwnd), CM_REMOVECHILD, 0, (LPARAM) hChild);
 								SendMessage(hChild, DM_SETPARENT, 0, (LPARAM) hParent);
 								SendMessage(hParent, CM_ADDCHILD, (WPARAM)hChild, (LPARAM) hContact);
 								SendMessage(hChild, DM_UPDATETABCONTROL, 0, 0);
 								SendMessage(hParent, CM_ACTIVATECHILD, 0, (LPARAM) hChild);
+								NotifyLocalWinEvent(hContact, hChild, MSG_WINDOW_EVT_CLOSING);
+								NotifyLocalWinEvent(hContact, hChild, MSG_WINDOW_EVT_CLOSE);
 								NotifyLocalWinEvent(hContact, hChild, MSG_WINDOW_EVT_OPENING);
 								NotifyLocalWinEvent(hContact, hChild, MSG_WINDOW_EVT_OPEN);
 								ShowWindow(hParent, SW_SHOWNA);
-                                EnableWindow(hParent, TRUE);
 							}
 						}
 					} else {

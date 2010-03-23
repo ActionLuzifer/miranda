@@ -126,7 +126,7 @@ static INT_PTR GetStatusModeDescription(WPARAM wParam, LPARAM lParam)
 		{
 			static char szMode[64]={0};
 			TCHAR* buf1 = (TCHAR*)cli.pfnGetStatusModeDescription( wParam, lParam );
-			char *buf2 = mir_u2a(buf1);
+			char *buf2 = u2a(buf1);
 			_snprintf(szMode,sizeof(szMode),"%s",buf2);
 			mir_free(buf2);
 			return (INT_PTR)szMode;
@@ -390,7 +390,6 @@ int fnShowHide(WPARAM, LPARAM)
 			SetWindowPos(cli.hwndContactList, HWND_NOTOPMOST, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE);
 		SetForegroundWindow(cli.hwndContactList);
 		DBWriteContactSettingByte(NULL, "CList", "State", SETTING_STATE_NORMAL);
-
 		//this forces the window onto the visible screen
 		GetWindowRect(cli.hwndContactList, &rcWindow);
 		if (MyMonitorFromWindow) {

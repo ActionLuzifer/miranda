@@ -287,10 +287,10 @@ BOOL GetOSDisplayString(LPTSTR pszOS, int BUFSIZE)
 }
 
 
-BOOL CJabberProto::OnIqRequestVersion( HXML, CJabberIqInfo* pInfo )
+void CJabberProto::OnIqRequestVersion( HXML, CJabberIqInfo* pInfo )
 {
 	if ( !pInfo->GetFrom() )
-		return TRUE;
+		return;
 
 	XmlNodeIq iq( _T("result"), pInfo );
 	HXML query = iq << XQUERY( _T(JABBER_FEAT_VERSION));
@@ -306,23 +306,20 @@ BOOL CJabberProto::OnIqRequestVersion( HXML, CJabberIqInfo* pInfo )
 	}
 
 	m_ThreadInfo->send( iq );
-	return TRUE;
 }
 
 // last activity (XEP-0012) support
-BOOL CJabberProto::OnIqRequestLastActivity( HXML, CJabberIqInfo *pInfo )
+void CJabberProto::OnIqRequestLastActivity( HXML, CJabberIqInfo *pInfo )
 {
 	m_ThreadInfo->send(
 		XmlNodeIq( _T("result"), pInfo ) << XQUERY( _T(JABBER_FEAT_LAST_ACTIVITY))
 			<< XATTRI( _T("seconds"), m_tmJabberIdleStartTime ? time( 0 ) - m_tmJabberIdleStartTime : 0 ));
-	return TRUE;
 }
 
 // XEP-0199: XMPP Ping support
-BOOL CJabberProto::OnIqRequestPing( HXML, CJabberIqInfo *pInfo )
+void CJabberProto::OnIqRequestPing( HXML, CJabberIqInfo *pInfo )
 {
 	m_ThreadInfo->send( XmlNodeIq( _T("result"), pInfo ));
-	return TRUE;
 }
 
 // Returns the current GMT offset in seconds
@@ -353,7 +350,7 @@ int GetGMTOffset(void)
 }
 
 // entity time (XEP-0202) support
-BOOL CJabberProto::OnIqRequestTime( HXML, CJabberIqInfo *pInfo )
+void CJabberProto::OnIqRequestTime( HXML, CJabberIqInfo *pInfo )
 {
 	struct tm *gmt;
 	time_t ltime;
@@ -377,10 +374,9 @@ BOOL CJabberProto::OnIqRequestTime( HXML, CJabberIqInfo *pInfo )
 	HXML timeNode = iq << XCHILDNS( _T("time"), _T(JABBER_FEAT_ENTITY_TIME));
 	timeNode << XCHILD( _T("utc"), stime); timeNode << XCHILD( _T("tzo"), szTZ );
 	m_ThreadInfo->send( iq );
-	return TRUE;
 }
 
-BOOL CJabberProto::OnIqProcessIqOldTime( HXML, CJabberIqInfo *pInfo )
+void CJabberProto::OnIqProcessIqOldTime( HXML, CJabberIqInfo *pInfo )
 {
 	struct tm *gmt;
 	time_t ltime;
@@ -404,17 +400,16 @@ BOOL CJabberProto::OnIqProcessIqOldTime( HXML, CJabberIqInfo *pInfo )
 	mir_free( szTZName );
 	queryNode << XCHILD( _T("display"), dtime );
 	m_ThreadInfo->send( iq );
-	return TRUE;
 }
 
-BOOL CJabberProto::OnIqRequestAvatar( HXML, CJabberIqInfo *pInfo )
+void CJabberProto::OnIqRequestAvatar( HXML, CJabberIqInfo *pInfo )
 {
 	if ( !m_options.EnableAvatars )
-		return TRUE;
+		return;
 
 	int pictureType = m_options.AvatarType;
 	if ( pictureType == PA_FORMAT_UNKNOWN )
-		return TRUE;
+		return;
 
 	TCHAR* szMimeType;
 	switch( pictureType ) {
@@ -422,7 +417,7 @@ BOOL CJabberProto::OnIqRequestAvatar( HXML, CJabberIqInfo *pInfo )
 		case PA_FORMAT_GIF:	 szMimeType = _T("image/gif");    break;
 		case PA_FORMAT_PNG:	 szMimeType = _T("image/png");    break;
 		case PA_FORMAT_BMP:	 szMimeType = _T("image/bmp");    break;
-		default:	return TRUE;
+		default:	return;
 	}
 
 	char szFileName[ MAX_PATH ];
@@ -430,13 +425,13 @@ BOOL CJabberProto::OnIqRequestAvatar( HXML, CJabberIqInfo *pInfo )
 
 	FILE* in = fopen( szFileName, "rb" );
 	if ( in == NULL )
-		return TRUE;
+		return;
 
 	long bytes = _filelength( _fileno( in ));
 	char* buffer = ( char* )mir_alloc( bytes*4/3 + bytes + 1000 );
 	if ( buffer == NULL ) {
 		fclose( in );
-		return TRUE;
+		return;
 	}
 
 	fread( buffer, bytes, 1, in );
@@ -446,10 +441,9 @@ BOOL CJabberProto::OnIqRequestAvatar( HXML, CJabberIqInfo *pInfo )
 	m_ThreadInfo->send( XmlNodeIq( _T("result"), pInfo ) << XQUERY( _T(JABBER_FEAT_AVATAR)) << XCHILD( _T("query"), _A2T(str)) << XATTR( _T("mimetype"), szMimeType ));
 	mir_free( str );
 	mir_free( buffer );
-	return TRUE;
 }
 
-BOOL CJabberProto::OnSiRequest( HXML node, CJabberIqInfo *pInfo )
+void CJabberProto::OnSiRequest( HXML node, CJabberIqInfo *pInfo )
 {
 	const TCHAR* szProfile = xmlGetAttrValue( pInfo->GetChildNode(), _T("profile"));
 
@@ -462,10 +456,9 @@ BOOL CJabberProto::OnSiRequest( HXML node, CJabberIqInfo *pInfo )
 		error << XCHILD( _T("bad-profile")); 
 		m_ThreadInfo->send( iq );
 	}
-	return TRUE;
 }
 
-BOOL CJabberProto::OnRosterPushRequest( HXML, CJabberIqInfo *pInfo )
+void CJabberProto::OnRosterPushRequest( HXML, CJabberIqInfo *pInfo )
 {
 	HXML queryNode = pInfo->GetChildNode();
 
@@ -473,12 +466,12 @@ BOOL CJabberProto::OnRosterPushRequest( HXML, CJabberIqInfo *pInfo )
 	if ( pInfo->GetFrom() ) {
 		TCHAR* szFrom = JabberPrepareJid( pInfo->GetFrom() );
 		if ( !szFrom )
-			return TRUE;
+			return;
 
 		TCHAR* szTo = JabberPrepareJid( m_ThreadInfo->fullJID );
 		if ( !szTo ) {
 			mir_free( szFrom );
-			return TRUE;
+			return;
 		}
 
 		TCHAR* pDelimiter = _tcschr( szFrom, _T('/') );
@@ -495,7 +488,7 @@ BOOL CJabberProto::OnRosterPushRequest( HXML, CJabberIqInfo *pInfo )
 		// invalid JID
 		if ( !bRetVal ) {
 			Log( "<iq/> attempt to hack via roster push from " TCHAR_STR_PARAM, pInfo->GetFrom() );
-			return TRUE;
+			return;
 		}
 	}
 
@@ -583,24 +576,23 @@ BOOL CJabberProto::OnRosterPushRequest( HXML, CJabberIqInfo *pInfo )
 
 	UI_SAFE_NOTIFY(m_pDlgServiceDiscovery, WM_JABBER_TRANSPORT_REFRESH);
 	RebuildInfoFrame();
-	return TRUE;
 }
 
-BOOL CJabberProto::OnIqRequestOOB( HXML, CJabberIqInfo *pInfo )
+void CJabberProto::OnIqRequestOOB( HXML, CJabberIqInfo *pInfo )
 {
 	if ( !pInfo->GetFrom() || !pInfo->GetHContact() )
-		return TRUE;
+		return;
 
 	HXML n = xmlGetChild( pInfo->GetChildNode(), "url" );
 	if ( !n || !xmlGetText( n ))
-		return TRUE;
+		return;
 
 	if ( m_options.BsOnlyIBB ) {
 		// reject
 		XmlNodeIq iq( _T("error"), pInfo );
 		HXML e = xmlAddChild( iq, _T("error"), _T("File transfer refused")); xmlAddAttr( e, _T("code"), 406 );
 		m_ThreadInfo->send( iq );
-		return TRUE;
+		return;
 	}
 
 	TCHAR text[ 1024 ];
@@ -634,32 +626,44 @@ BOOL CJabberProto::OnIqRequestOOB( HXML, CJabberIqInfo *pInfo )
 		ft->iqId = mir_tstrdup( pInfo->GetIdStr() );
 
 	if ( ft->httpHostName && ft->httpPath ) {
-		TCHAR* desc = NULL;
+		char* szBlob, *desc;
 
 		Log( "Host=%s Port=%d Path=%s", ft->httpHostName, ft->httpPort, ft->httpPath );
-		if (( n = xmlGetChild( pInfo->GetChildNode(), "desc" )) != NULL )
-			desc = ( TCHAR* )xmlGetText( n );
-
-		TCHAR* str2;
-		Log( "description = %s", desc );
-		if (( str2 = _tcsrchr( ft->httpPath, '/' )) != NULL )
-			str2++;
+		if (( n = xmlGetChild( pInfo->GetChildNode(), "desc" ))!=NULL && xmlGetText( n )!=NULL )
+			desc = mir_t2a( xmlGetText( n ) );
 		else
-			str2 = ft->httpPath;
-		str2 = mir_tstrdup( str2 );
-		JabberHttpUrlDecode( str2 );
+			desc = mir_strdup( "" );
 
-		PROTORECVFILET pre;
-		pre.flags = PREF_TCHAR;
-		pre.timestamp = time( NULL );
-		pre.tszDescription = desc;
-		pre.ptszFiles = &str2;
-		pre.fileCount = 1;
-		pre.lParam = ( LPARAM )ft;
+		if ( desc != NULL ) {
+			char* str2;
+			Log( "description = %s", desc );
+			if (( str2 = strrchr( ft->httpPath, '/' )) != NULL )
+				str2++;
+			else
+				str2 = ft->httpPath;
+			str2 = mir_strdup( str2 );
+			JabberHttpUrlDecode( str2 );
+			szBlob = ( char* )mir_alloc( sizeof( DWORD )+ strlen( str2 ) + strlen( desc ) + 2 );
+			*(( PDWORD ) szBlob ) = 0;
+			strcpy( szBlob + sizeof( DWORD ), str2 );
+			strcpy( szBlob + sizeof( DWORD )+ strlen( str2 ) + 1, desc );
 
-		CCSDATA ccs = { ft->std.hContact, PSR_FILE, 0, ( LPARAM )&pre };
-		JCallService( MS_PROTO_CHAINRECV, 0, ( LPARAM )&ccs );
-		mir_free( str2 );
+			PROTORECVEVENT pre;
+			pre.flags = 0;
+			pre.timestamp = time( NULL );
+			pre.szMessage = szBlob;
+			pre.lParam = ( LPARAM )ft;
+
+			CCSDATA ccs;
+			ccs.szProtoService = PSR_FILE;
+			ccs.hContact = ft->std.hContact;
+			ccs.wParam = 0;
+			ccs.lParam = ( LPARAM )&pre;
+			JCallService( MS_PROTO_CHAINRECV, 0, ( LPARAM )&ccs );
+			mir_free( szBlob );
+			mir_free( str2 );
+			mir_free( desc );
+		}
 	}
 	else {
 		// reject
@@ -668,40 +672,38 @@ BOOL CJabberProto::OnIqRequestOOB( HXML, CJabberIqInfo *pInfo )
 		m_ThreadInfo->send( iq );
 		delete ft;
 	}
-	return TRUE;
 }
 
-BOOL CJabberProto::OnHandleDiscoInfoRequest( HXML iqNode, CJabberIqInfo* pInfo )
+void CJabberProto::OnHandleDiscoInfoRequest( HXML iqNode, CJabberIqInfo* pInfo )
 {
 	if ( !pInfo->GetChildNode() )
-		return TRUE;
+		return;
 
 	const TCHAR* szNode = xmlGetAttrValue( pInfo->GetChildNode(), _T("node"));
 	// caps hack
 	if ( m_clientCapsManager.HandleInfoRequest( iqNode, pInfo, szNode ))
-		return TRUE;
+		return;
 
 	// ad-hoc hack:
 	if ( szNode && m_adhocManager.HandleInfoRequest( iqNode, pInfo, szNode ))
-		return TRUE;
+		return;
 
 	// another request, send empty result
 	m_ThreadInfo->send(
 		XmlNodeIq( _T("error"), pInfo )
 			<< XCHILD( _T("error")) << XATTRI( _T("code"), 404 ) << XATTR( _T("type"), _T("cancel"))
 				<< XCHILDNS( _T("item-not-found"), _T("urn:ietf:params:xml:ns:xmpp-stanzas")));
-	return TRUE;
 }
 
-BOOL CJabberProto::OnHandleDiscoItemsRequest( HXML iqNode, CJabberIqInfo* pInfo )
+void CJabberProto::OnHandleDiscoItemsRequest( HXML iqNode, CJabberIqInfo* pInfo )
 {
 	if ( !pInfo->GetChildNode() )
-		return TRUE;
+		return;
 
 	// ad-hoc commands check:
 	const TCHAR* szNode = xmlGetAttrValue( pInfo->GetChildNode(), _T("node"));
 	if ( szNode && m_adhocManager.HandleItemsRequest( iqNode, pInfo, szNode ))
-		return TRUE;
+		return;
 
 	// another request, send empty result
 	XmlNodeIq iq( _T("result"), pInfo );
@@ -714,7 +716,6 @@ BOOL CJabberProto::OnHandleDiscoItemsRequest( HXML iqNode, CJabberIqInfo* pInfo 
 			<< XATTR( _T("node"), _T(JABBER_FEAT_COMMANDS)) << XATTR( _T("name"), _T("Ad-hoc commands"));
 
 	m_ThreadInfo->send( iq );
-	return TRUE;
 }
 
 BOOL CJabberProto::AddClistHttpAuthEvent( CJabberHttpAuthParams *pParams )
@@ -734,28 +735,28 @@ BOOL CJabberProto::AddClistHttpAuthEvent( CJabberHttpAuthParams *pParams )
 	return TRUE;
 }
 
-BOOL CJabberProto::OnIqHttpAuth( HXML node, CJabberIqInfo* pInfo )
+void CJabberProto::OnIqHttpAuth( HXML node, CJabberIqInfo* pInfo )
 {
 	if ( !m_options.AcceptHttpAuth )
-		return TRUE;
+		return;
 
 	if ( !node || !pInfo->GetChildNode() || !pInfo->GetFrom() || !pInfo->GetIdStr() )
-		return TRUE;
+		return;
 
 	HXML pConfirm = xmlGetChild( node , "confirm" );
 	if ( !pConfirm )
-		return TRUE;
+		return;
 
 	const TCHAR *szId = xmlGetAttrValue( pConfirm, _T("id"));
 	const TCHAR *szMethod = xmlGetAttrValue( pConfirm, _T("method"));
 	const TCHAR *szUrl = xmlGetAttrValue( pConfirm, _T("url"));
 
 	if ( !szId || !szMethod || !szUrl )
-		return TRUE;
+		return;
 
 	CJabberHttpAuthParams *pParams = (CJabberHttpAuthParams *)mir_alloc( sizeof( CJabberHttpAuthParams ));
 	if ( !pParams )
-		return TRUE;
+		return;
 	ZeroMemory( pParams, sizeof( CJabberHttpAuthParams ));
 	pParams->m_nType = CJabberHttpAuthParams::IQ;
 	pParams->m_szFrom = mir_tstrdup( pInfo->GetFrom() );
@@ -765,5 +766,5 @@ BOOL CJabberProto::OnIqHttpAuth( HXML node, CJabberIqInfo* pInfo )
 
 	AddClistHttpAuthEvent( pParams );
 
-	return TRUE;
+	return;
 }

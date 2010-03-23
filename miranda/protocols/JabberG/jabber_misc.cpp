@@ -128,8 +128,8 @@ void CJabberProto::DBAddAuthRequest( const TCHAR* jid, const TCHAR* nick )
 	JDeleteSetting( hContact, "Hidden" );
 	//JSetStringT( hContact, "Nick", nick );
 
-	char* szJid = mir_utf8encodeT( jid );
-	char* szNick = mir_utf8encodeT( nick );
+	char* szJid = mir_t2a( jid );
+	char* szNick = mir_t2a( nick );
 
 	//blob is: uin( DWORD ), hContact( HANDLE ), nick( ASCIIZ ), first( ASCIIZ ), last( ASCIIZ ), email( ASCIIZ ), reason( ASCIIZ )
 	//blob is: 0( DWORD ), hContact( HANDLE ), nick( ASCIIZ ), ""( ASCIIZ ), ""( ASCIIZ ), email( ASCIIZ ), ""( ASCIIZ )
@@ -137,7 +137,7 @@ void CJabberProto::DBAddAuthRequest( const TCHAR* jid, const TCHAR* nick )
 	dbei.cbSize = sizeof( DBEVENTINFO );
 	dbei.szModule = m_szModuleName;
 	dbei.timestamp = ( DWORD )time( NULL );
-	dbei.flags = DBEF_UTF;
+	dbei.flags = 0;
 	dbei.eventType = EVENTTYPE_AUTHREQUEST;
 	dbei.cbBlob = (DWORD)(sizeof( DWORD )+ sizeof( HANDLE ) + strlen( szNick ) + strlen( szJid ) + 5);
 	PBYTE pCurBlob = dbei.pBlob = ( PBYTE ) mir_alloc( dbei.cbBlob );
@@ -307,7 +307,7 @@ void CJabberProto::GetAvatarFileName( HANDLE hContact, char* pszDest, int cbLen 
 			str[ sizeof(str)-1 ] = 0;
 			JFreeVariant( &dbv );
 		}
-		else _i64toa(( LONG_PTR )hContact, str, 10 );
+		else _ltoa(( long )hContact, str, 10 );
 
 		char* hash = JabberSha1( str );
 		mir_snprintf( pszDest + tPathLen, MAX_PATH - tPathLen, "%s.%s", hash, szFileType );
@@ -541,10 +541,7 @@ void CJabberProto::UpdateMirVer(HANDLE hContact, JABBER_RESOURCE_STATUS *resourc
 {
 	TCHAR szMirVer[ 512 ];
 	FormatMirVer(resource, szMirVer, SIZEOF(szMirVer));
-	if ( szMirVer[0] )
-		JSetStringT( hContact, "MirVer", szMirVer );
-	else
-		JDeleteSetting( hContact, "MirVer" );
+	JSetStringT( hContact, "MirVer", szMirVer );
 
 	DBVARIANT dbv;
 	if ( !JGetStringT( hContact, "jid", &dbv )) {

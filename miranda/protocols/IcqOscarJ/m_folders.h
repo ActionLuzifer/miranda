@@ -185,6 +185,7 @@ __inline static int FoldersGetCustomPath(HANDLE hFolderEntry, char *path, const 
 	return res;
 }
 
+# ifdef _UNICODE
 __inline static int FoldersGetCustomPathW(HANDLE hFolderEntry, wchar_t *pathW, const int count, wchar_t *notFoundW)
 {
 	FOLDERSGETDATA fgd = {0};
@@ -202,7 +203,6 @@ __inline static int FoldersGetCustomPathW(HANDLE hFolderEntry, wchar_t *pathW, c
 	return res;
 }
 
-# ifdef _UNICODE
 #  define FoldersGetCustomPathT FoldersGetCustomPathW
 #  define FoldersRegisterCustomPathT FoldersRegisterCustomPathW
 #else

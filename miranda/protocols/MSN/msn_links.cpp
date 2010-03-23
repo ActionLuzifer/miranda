@@ -1,6 +1,6 @@
 /*
 Plugin of Miranda IM for communicating with users of the MSN Messenger protocol.
-Copyright (c) 2008-2010 Boris Krasnovskiy.
+Copyright (c) 2008-2009 Boris Krasnovskiy.
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -28,8 +28,7 @@ static HANDLE hServiceParseLink;
 static HANDLE GetContact(char *arg, char **email, CMsnProto *proto)
 {
 	*email = NULL;
-	do 
-	{
+	do {
 		char *tok = strchr(arg, '&'); /* next token */
 		if (tok != NULL) *tok++ = '\0';
 
@@ -40,8 +39,7 @@ static HANDLE GetContact(char *arg, char **email, CMsnProto *proto)
 			*email = arg;
 		}
 		arg = tok;
-	} 
-	while(arg != NULL);
+	} while(arg != NULL);
 
 	if (*email == NULL || **email == '\0')
 	{
@@ -68,7 +66,7 @@ static INT_PTR ServiceParseMsnimLink(WPARAM, LPARAM lParam)
 	arg = strchr(arg, ':');
 	if (arg == NULL) return 1; /* parse failed */
 
-	for (++arg; *arg == '/'; ++arg) {}
+    for (++arg; *arg == '/'; ++arg) {}
 
 	arg = NEWSTR_ALLOCA(arg);
 
@@ -166,6 +164,6 @@ void MsnLinks_Init(void)
 
 void MsnLinks_Destroy(void)
 {
-	DestroyServiceFunction(hServiceParseLink);
+    DestroyServiceFunction(hServiceParseLink);
 	CallService(MS_ASSOCMGR_REMOVEURLTYPE, 0, (LPARAM)"msnim:");
 }
