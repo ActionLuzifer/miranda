@@ -384,7 +384,7 @@ static INT_PTR CALLBACK JabberAdHoc_CommandDlgProc( HWND hwndDlg, UINT msg, WPAR
 			dat->proto = pStartupParams->m_pProto;
 
 			SetWindowLongPtr(hwndDlg,GWLP_USERDATA,(LONG_PTR)dat);
-			WindowSetIcon( hwndDlg, dat->proto, "adhoc" );
+			SendMessage( hwndDlg, WM_SETICON, ICON_BIG, ( LPARAM )dat->proto->LoadIconEx( "adhoc" ));
 			dat->proto->m_hwndCommandWindow = hwndDlg;
 			TranslateDialogDefault( hwndDlg );
 
@@ -529,7 +529,6 @@ static INT_PTR CALLBACK JabberAdHoc_CommandDlgProc( HWND hwndDlg, UINT msg, WPAR
 	case WM_DESTROY:
 		{
 			JabberFormDestroyUI(GetDlgItem(hwndDlg, IDC_FRAME));
-			WindowFreeIcon(hwndDlg);
 
 			dat->proto->m_hwndCommandWindow = NULL;
 			mir_free( dat->ResponderJID );

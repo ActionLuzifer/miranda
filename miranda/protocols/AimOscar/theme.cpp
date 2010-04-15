@@ -79,6 +79,7 @@ void InitIcons(void)
 	SKINICONDESC sid = {0};
 	sid.cbSize = sizeof(SKINICONDESC);
 	sid.ptszDefaultFile = szFile;
+	sid.cx = sid.cy = 16;
 	sid.pszName = szSettingName;
 	sid.pszSection = szSectionName;
 	sid.flags = SIDF_PATH_TCHAR;
@@ -98,11 +99,11 @@ void InitIcons(void)
 	}	
 }
 
-HICON LoadIconEx(const char* name, bool big)
+HICON LoadIconEx(const char* name)
 {
 	char szSettingName[100];
 	mir_snprintf(szSettingName, sizeof(szSettingName), "AIM_%s", name);
-	return (HICON)CallService(MS_SKIN2_GETICON, big, (LPARAM)szSettingName);
+	return (HICON)CallService(MS_SKIN2_GETICON, 0, (LPARAM)szSettingName);
 }
 
 HANDLE GetIconHandle(const char* name)
@@ -113,23 +114,11 @@ HANDLE GetIconHandle(const char* name)
 	return NULL;
 }
 
-void ReleaseIconEx(const char* name, bool big)
+void ReleaseIconEx(const char* name)
 {
 	char szSettingName[100];
 	mir_snprintf(szSettingName, sizeof(szSettingName ), "%s_%s", "AIM", name);
-	CallService(big ? MS_SKIN2_RELEASEICONBIG : MS_SKIN2_RELEASEICON, 0, (LPARAM)szSettingName);
-}
-
-void WindowSetIcon(HWND hWnd, const char* name)
-{
-	SendMessage(hWnd, WM_SETICON, ICON_BIG,   ( LPARAM )LoadIconEx( name, true ));
-	SendMessage(hWnd, WM_SETICON, ICON_SMALL, ( LPARAM )LoadIconEx( name ));
-}
-
-void WindowFreeIcon(HWND hWnd)
-{
-	CallService(MS_SKIN2_RELEASEICON, SendMessage(hWnd, WM_SETICON, ICON_BIG, 0), 0);
-	CallService(MS_SKIN2_RELEASEICON, SendMessage(hWnd, WM_SETICON, ICON_SMALL, 0), 0);
+	CallService(MS_SKIN2_RELEASEICON, 0, (LPARAM)szSettingName);
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////
@@ -514,8 +503,8 @@ void CAimProto::RemoveMenus(void)
 {
 	for (unsigned i=0; i<4; ++i)
 		CallService(MS_CLIST_REMOVEMAINMENUITEM, (WPARAM)hMainMenu[i], 0);
-   CallService(MS_CLIST_REMOVEMAINMENUITEM, (WPARAM)hMenuRoot, 0);
 
+	CallService(MS_CLIST_REMOVEMAINMENUITEM, (WPARAM)hMenuRoot, 0);
 	CallService(MS_CLIST_REMOVECONTACTMENUITEM, (WPARAM)hHTMLAwayContextMenuItem, 0);
 	CallService(MS_CLIST_REMOVECONTACTMENUITEM, (WPARAM)hReadProfileMenuItem, 0);
 	CallService(MS_CLIST_REMOVECONTACTMENUITEM, (WPARAM)hAddToServerListContextMenuItem, 0);

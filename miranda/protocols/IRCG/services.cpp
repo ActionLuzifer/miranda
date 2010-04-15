@@ -308,13 +308,12 @@ INT_PTR __cdecl CIrcProto::OnQuickConnectMenuCommand(WPARAM, LPARAM)
 	if ( !m_quickDlg ) {
 		m_quickDlg = new CQuickDlg( this );
 		m_quickDlg->Show();
-
-		SetWindowText( m_quickDlg->GetHwnd(), TranslateT( "Quick connect" ));
-		SetDlgItemText( m_quickDlg->GetHwnd(), IDC_TEXT, TranslateT( "Please select IRC network and enter the password if needed" ));
-		SetDlgItemText( m_quickDlg->GetHwnd(), IDC_CAPTION, TranslateT( "Quick connect" ));
-		WindowSetIcon( m_quickDlg->GetHwnd(), IDI_QUICK );
 	}
 
+	SetWindowText( m_quickDlg->GetHwnd(), TranslateT( "Quick connect" ));
+	SetDlgItemText( m_quickDlg->GetHwnd(), IDC_TEXT, TranslateT( "Please select IRC network and enter the password if needed" ));
+	SetDlgItemText( m_quickDlg->GetHwnd(), IDC_CAPTION, TranslateT( "Quick connect" ));
+	SendMessage( m_quickDlg->GetHwnd(), WM_SETICON, ICON_BIG, ( LPARAM )LoadIconEx( IDI_QUICK ));
 	ShowWindow( m_quickDlg->GetHwnd(), SW_SHOW );
 	SetActiveWindow( m_quickDlg->GetHwnd() );
 	return 0;
@@ -730,15 +729,14 @@ int __cdecl CIrcProto::GCEventHook(WPARAM wParam,LPARAM lParam)
 						{
 							PROTOSEARCHRESULT psr = { 0 };
 							psr.cbSize = sizeof(psr);
-							psr.flags = PSR_TCHAR;
-							psr.id = gch->ptszUID;
-							psr.nick = gch->ptszUID;
+							psr.nick = mir_t2a_cp( gch->ptszUID, getCodepage());
 
 							ADDCONTACTSTRUCT acs = { 0 };
 							acs.handleType = HANDLE_SEARCHRESULT;
 							acs.szProto = m_szModuleName;
 							acs.psr = &psr;
 							CallService( MS_ADDCONTACT_SHOW, (WPARAM)NULL, (LPARAM)&acs);
+							mir_free( psr.nick );
 						}
 						break;
 					case 31:	//slap
@@ -1073,7 +1071,7 @@ void __cdecl CIrcProto::ConnectServerThread( void* )
 		m_info.bNickFlag = false;
 		int Temp = m_iDesiredStatus;
 		m_iDesiredStatus = ID_STATUS_CONNECTING;
-		nickflag = true;
+		nickflag = false;
 		ProtoBroadcastAck(m_szModuleName,NULL,ACKTYPE_STATUS,ACKRESULT_SUCCESS,(HANDLE)Temp,ID_STATUS_CONNECTING);
 		Sleep(100);
 	    EnterCriticalSection(&cs);

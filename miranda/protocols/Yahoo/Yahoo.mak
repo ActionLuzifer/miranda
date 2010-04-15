@@ -1,7 +1,7 @@
 # Microsoft Developer Studio Generated NMAKE File, Based on Yahoo.dsp
 !IF "$(CFG)" == ""
-CFG=Yahoo - Win32 Debug Unicode
-!MESSAGE No configuration specified. Defaulting to Yahoo - Win32 Debug Unicode.
+CFG=Yahoo - Win32 Release Unicode
+!MESSAGE No configuration specified. Defaulting to Yahoo - Win32 Release Unicode.
 !ENDIF 
 
 !IF "$(CFG)" != "Yahoo - Win32 Release" && "$(CFG)" != "Yahoo - Win32 Debug" && "$(CFG)" != "Yahoo - Win32 Debug Unicode" && "$(CFG)" != "Yahoo - Win32 Release Unicode"

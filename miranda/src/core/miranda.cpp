@@ -856,10 +856,7 @@ INT_PTR GetUtfInterface(WPARAM, LPARAM lParam)
 
 int LoadSystemModule(void)
 {
-	INITCOMMONCONTROLSEX icce = {0};
-	icce.dwSize = sizeof(icce);
-	icce.dwICC = ICC_WIN95_CLASSES | ICC_USEREX_CLASSES;
-	InitCommonControlsEx(&icce);
+	InitCommonControls();
 
 	if (IsWinVerXPPlus()) {
 		hAPCWindow=CreateWindowEx(0,_T("ComboLBox"),NULL,0, 0,0,0,0, NULL,NULL,NULL,NULL);

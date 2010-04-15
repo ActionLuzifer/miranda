@@ -235,7 +235,6 @@ static INT_PTR CALLBACK gg_genoptsdlgproc(HWND hwndDlg, UINT msg, WPARAM wParam,
 			}
 			CheckDlgButton(hwndDlg, IDC_IMGRECEIVE, DBGetContactSettingByte(NULL, GG_PROTO, GG_KEY_IMGRECEIVE, GG_KEYDEF_IMGRECEIVE));
 			CheckDlgButton(hwndDlg, IDC_SHOWLINKS, DBGetContactSettingByte(NULL, GG_PROTO, GG_KEY_SHOWLINKS, GG_KEYDEF_SHOWLINKS));
-			CheckDlgButton(hwndDlg, IDC_ENABLEAVATARS, DBGetContactSettingByte(NULL, GG_PROTO, GG_KEY_ENABLEAVATARS, GG_KEYDEF_ENABLEAVATARS));
 
 			EnableWindow(GetDlgItem(hwndDlg, IDC_LEAVESTATUS), IsDlgButtonChecked(hwndDlg, IDC_LEAVESTATUSMSG));
 			EnableWindow(GetDlgItem(hwndDlg, IDC_IMGMETHOD), IsDlgButtonChecked(hwndDlg, IDC_IMGRECEIVE));
@@ -293,6 +292,11 @@ static INT_PTR CALLBACK gg_genoptsdlgproc(HWND hwndDlg, UINT msg, WPARAM wParam,
 				case IDC_IMGRECEIVE:
 				{
 					EnableWindow(GetDlgItem(hwndDlg, IDC_IMGMETHOD), IsDlgButtonChecked(hwndDlg, IDC_IMGRECEIVE));
+					break;
+				}
+				case IDC_SHOWLINKS:
+				{
+					ShowWindow(GetDlgItem(hwndDlg, IDC_RELOADREQD), SW_SHOW);
 					break;
 				}
 				case IDC_LOSTPASS:
@@ -426,9 +430,8 @@ static INT_PTR CALLBACK gg_genoptsdlgproc(HWND hwndDlg, UINT msg, WPARAM wParam,
 			switch (((LPNMHDR) lParam)->code) {
 				case PSN_APPLY:
 				{
-					GGPROTO *gg = (GGPROTO *)GetWindowLongPtr(hwndDlg, GWLP_USERDATA);
 					char str[128];
-					int status_flags = GG_STATUS_FLAG_UNKNOWN;
+					GGPROTO *gg = (GGPROTO *)GetWindowLongPtr(hwndDlg, GWLP_USERDATA);
 
 					// Write Gadu-Gadu number
 					GetDlgItemText(hwndDlg, IDC_UIN, str, sizeof(str));
@@ -445,16 +448,10 @@ static INT_PTR CALLBACK gg_genoptsdlgproc(HWND hwndDlg, UINT msg, WPARAM wParam,
 					DBWriteContactSettingByte(NULL, GG_PROTO, GG_KEY_FRIENDSONLY, (BYTE) IsDlgButtonChecked(hwndDlg, IDC_FRIENDSONLY));
 					DBWriteContactSettingByte(NULL, GG_PROTO, GG_KEY_SHOWINVISIBLE, (BYTE) IsDlgButtonChecked(hwndDlg, IDC_SHOWINVISIBLE));
 					DBWriteContactSettingByte(NULL, GG_PROTO, GG_KEY_LEAVESTATUSMSG, (BYTE) IsDlgButtonChecked(hwndDlg, IDC_LEAVESTATUSMSG));
-					if (gg->gc_enabled)
+					if(gg->gc_enabled)
 						DBWriteContactSettingByte(NULL, GG_PROTO, GG_KEY_IGNORECONF, (BYTE) IsDlgButtonChecked(hwndDlg, IDC_IGNORECONF));
 					DBWriteContactSettingByte(NULL, GG_PROTO, GG_KEY_IMGRECEIVE, (BYTE) IsDlgButtonChecked(hwndDlg, IDC_IMGRECEIVE));
 					DBWriteContactSettingByte(NULL, GG_PROTO, GG_KEY_SHOWLINKS, (BYTE) IsDlgButtonChecked(hwndDlg, IDC_SHOWLINKS));
-					if (IsDlgButtonChecked(hwndDlg, IDC_SHOWLINKS))
-						status_flags |= GG_STATUS_FLAG_SPAM;
-					EnterCriticalSection(&gg->sess_mutex);
-					gg_change_status_flags(gg->sess, status_flags);
-					LeaveCriticalSection(&gg->sess_mutex);
-					DBWriteContactSettingByte(NULL, GG_PROTO, GG_KEY_ENABLEAVATARS, (BYTE) IsDlgButtonChecked(hwndDlg, IDC_ENABLEAVATARS));
 
 					DBWriteContactSettingByte(NULL, GG_PROTO, GG_KEY_IMGMETHOD,
 						(BYTE)SendDlgItemMessage(hwndDlg, IDC_IMGMETHOD, CB_GETCURSEL, 0, 0));
@@ -717,7 +714,7 @@ static INT_PTR CALLBACK gg_detailsdlgproc(HWND hwndDlg, UINT msg, WPARAM wParam,
 				SendDlgItemMessage(hwndDlg, IDC_GENDER, CB_ADDSTRING, 0, (LPARAM)Translate("Male"));	// 1
 				SendDlgItemMessage(hwndDlg, IDC_GENDER, CB_ADDSTRING, 0, (LPARAM)Translate("Female"));	// 2
 			}
-			break;
+			return TRUE;
 		}
 
 		case WM_NOTIFY:
@@ -846,9 +843,9 @@ static INT_PTR CALLBACK gg_detailsdlgproc(HWND hwndDlg, UINT msg, WPARAM wParam,
 
 				// Run update
 				gg_pubdir50_seq_set(req, GG_SEQ_CHINFO);
-				EnterCriticalSection(&gg->sess_mutex);
+				pthread_mutex_lock(&gg->sess_mutex);
 				gg_pubdir50(gg->sess, req);
-				LeaveCriticalSection(&gg->sess_mutex);
+				pthread_mutex_unlock(&gg->sess_mutex);
 				dat->updating = TRUE;
 
 				gg_pubdir50_free(req);

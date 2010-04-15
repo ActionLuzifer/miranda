@@ -50,7 +50,7 @@ void CIcqProto::handleDataChannel(BYTE *pBuffer, WORD wBufferLength, serverthrea
 #ifdef _DEBUG
 		if (snacHeader.wFlags & 0x8000)
 			NetLog_Server(" Received SNAC(x%02X,x%02X), version %u", snacHeader.wFamily, snacHeader.wSubtype, snacHeader.wVersion);
-    else
+		else
 			NetLog_Server(" Received SNAC(x%02X,x%02X)", snacHeader.wFamily, snacHeader.wSubtype);
 #endif
 
@@ -104,8 +104,7 @@ void CIcqProto::handleDataChannel(BYTE *pBuffer, WORD wBufferLength, serverthrea
 	}
 }
 
-
-int unpackSnacHeader(snac_header *pSnacHeader, BYTE **pBuffer, WORD *pwBufferLength)
+int CIcqProto::unpackSnacHeader(snac_header *pSnacHeader, BYTE **pBuffer, WORD *pwBufferLength)
 {
 	WORD wRef1, wRef2;
 
@@ -184,7 +183,6 @@ int unpackSnacHeader(snac_header *pSnacHeader, BYTE **pBuffer, WORD *pwBufferLen
 
 	return 1;
 }
-
 
 void CIcqProto::LogFamilyError(WORD wFamily, WORD wError)
 {

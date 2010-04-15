@@ -45,7 +45,6 @@ HANDLE hStatusMenuObject = 0;
 int UnloadMoveToGroup(void);
 
 int statustopos(int status);
-void Proto_SetStatus(const char* szProto, unsigned status);
 
 bool prochotkey;
 
@@ -330,7 +329,7 @@ static INT_PTR AddContactMenuItem(WPARAM, LPARAM lParam)
 	{
 		if (tmi.flags&CMIF_UNICODE)
 		{
-			char * temp = mir_t2a(mi->ptszName);
+			char * temp=t2a(mi->ptszName);
 			mir_snprintf( buf, SIZEOF(buf), "%s/NoService/%s", (mi->pszContactOwner) ? mi->pszContactOwner : "", temp );
 			mir_free(temp);
 		}
@@ -455,6 +454,26 @@ BOOL FindMenuHandleByGlobalID(HMENU hMenu, PMO_IntMenuItem id, MenuItemData* itd
 	return FALSE;
 }
 
+BOOL __inline wildcmp(char * name, char * mask)
+{
+	char * last='\0';
+	for(;; mask++, name++)
+	{
+		if(*mask != '?' && *mask != *name) break;
+		if(*name == '\0') return ((BOOL)!*mask);
+	}
+	if(*mask != '*') return FALSE;
+	for(;; mask++, name++)
+	{
+		while(*mask == '*')
+		{
+			last = mask++;
+			if(*mask == '\0') return ((BOOL)!*mask);   /* true */
+		}
+		if(*name == '\0') return ((BOOL)!*mask);      /* *mask == EOS */
+		if(*mask != '?' && *mask != *name) name -= (size_t)(mask - last) - 1, mask = last;
+}	}
+
 INT_PTR StatusMenuCheckService(WPARAM wParam, LPARAM)
 {
 	PCheckProcParam pcpp = ( PCheckProcParam )wParam;
@@ -532,7 +551,7 @@ INT_PTR StatusMenuCheckService(WPARAM wParam, LPARAM)
 		else
 		{
 			#ifdef UNICODE
-				char *prn=mir_u2a(timi->mi.ptszName);
+				char *prn=u2a(timi->mi.ptszName);
 				prot = NEWSTR_ALLOCA( prn );
 				if (prn) mir_free(prn);
 			#else
@@ -608,7 +627,7 @@ INT_PTR StatusMenuExecService(WPARAM wParam, LPARAM)
 					InvalidateRect( cli.hwndStatus, NULL, TRUE );
 			}
 			else if ( smep->proto != NULL ) {
-				Proto_SetStatus(smep->proto, smep->status);
+				CallProtoService(smep->proto,PS_SETSTATUS,smep->status,0);
 				NotifyEventHooks(hStatusModeChangeEvent, smep->status, (LPARAM)smep->proto);
 			}
 			else {
@@ -622,12 +641,12 @@ INT_PTR StatusMenuExecService(WPARAM wParam, LPARAM)
 
 	            for ( int j=0; j < accounts.getCount(); j++ ) {
 		            PROTOACCOUNT* pa = accounts[j];
-		            if ( !Proto_IsAccountEnabled( pa ))
+		            if ( !IsAccountEnabled( pa ))
 			            continue;
-		            if ( MenusProtoCount > 1 && Proto_IsAccountLocked( pa ))
+		            if ( MenusProtoCount > 1 && DBGetContactSettingByte( NULL, pa->szModuleName, "LockMainStatus", 0 ))
 			            continue;
 
-					Proto_SetStatus(pa->szModuleName, cli.currentDesiredStatusMode);
+		            CallProtoService( pa->szModuleName, PS_SETSTATUS, cli.currentDesiredStatusMode, 0 );
 	            }
 	            NotifyEventHooks( hStatusModeChangeEvent, cli.currentDesiredStatusMode, 0 );
 	            DBWriteContactSettingWord( NULL, "CList", "Status", ( WORD )cli.currentDesiredStatusMode );
@@ -799,7 +818,7 @@ int fnGetProtocolVisibility(const char* accName)
 {
 	if ( accName ) {
 		PROTOACCOUNT* pa = Proto_GetAccount( accName );
-		return pa && pa->bIsVisible && Proto_IsAccountEnabled( pa ) && 
+		return pa && pa->bIsVisible && IsAccountEnabled( pa ) && 
             pa->ppro && (pa->ppro->GetCaps( PFLAGNUM_2, 0 ) & ~pa->ppro->GetCaps( PFLAGNUM_5, 0 ));
 	}
 
@@ -916,7 +935,7 @@ void RebuildMenuOrder( void )
 			tmi.ownerdata = smep;
 		}
 
-		if ( Proto_IsAccountLocked( pa ))
+		if ( DBGetContactSettingByte( NULL, pa->szModuleName, "LockMainStatus", 0 ))
 			tmi.flags |= CMIF_CHECKED;
 
 		if (( tmi.flags & CMIF_CHECKED ) && cli.bDisplayLocked )

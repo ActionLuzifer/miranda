@@ -1,6 +1,6 @@
 /*
 Plugin of Miranda IM for communicating with users of the MSN Messenger protocol.
-Copyright (c) 2006-2010 Boris Krasnovskiy.
+Copyright (c) 2006-2009 Boris Krasnovskiy.
 Copyright (c) 2003-2005 George Hazan.
 Copyright (c) 2002-2003 Richard Hughes (original version).
 
@@ -19,7 +19,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 // this plugin is for Miranda 0.8 only
-#define MIRANDA_VER 0x0900
+#define MIRANDA_VER 0x0800
 
 #include <m_stdhdr.h>
 
@@ -125,7 +125,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define MSN_DEFAULT_GATEWAY_PORT   80
 const char MSN_DEFAULT_LOGIN_SERVER[] = "messenger.hotmail.com";
 const char MSN_DEFAULT_GATEWAY[] =      "gateway.messenger.hotmail.com";
-const char MSN_USER_AGENT[] =           "Mozilla/4.0 (compatible; MSIE 8.0; Windows NT 5.1)";
+const char MSN_USER_AGENT[] =           "Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1)";
 
 #define MSN_BLOCK        "/BlockCommand"
 #define MSN_INVITE       "/InviteCommand"
@@ -138,6 +138,8 @@ const char MSN_USER_AGENT[] =           "Mozilla/4.0 (compatible; MSIE 8.0; Wind
 #define MS_EDIT_ALERTS		"/EditAlerts"
 #define MS_VIEW_STATUS		"/ViewMsnStatus"
 #define MS_SET_NICKNAME_UI  "/SetNicknameUI"
+
+#define MSN_SET_NICKNAME            "/SetNickname"
 
 #define MSN_GETUNREAD_EMAILCOUNT	"/GetUnreadEmailCount"
 /////////////////////////////////////////////////////////////////////////////////////////
@@ -161,8 +163,7 @@ void		stripBBCode(char* src);
 void		stripColorCode(char* src);
 char*		MSN_Base64Decode(const char* str);
 
-template <class chartype> void UrlDecode(chartype* str);
-
+void     	UrlDecode(char* str);
 void     	UrlEncode(const char* src, char* dest, size_t cbDest);
 
 void		__cdecl MSN_ConnectionProc(HANDLE hNewConnection, DWORD dwRemoteIP, void*);
@@ -186,26 +187,25 @@ char*       MSN_Translate(const char* str);
 unsigned    MSN_GenRandom(void);
 
 HANDLE      GetIconHandle(int iconId);
-HICON       LoadIconEx(const char* name, bool big = false);
-void        ReleaseIconEx(const char* name, bool big = false);
+HICON       LoadIconEx(const char*);
+void        ReleaseIconEx(const char*);
 
 void        MsnInitIcons(void);
 
+char*       httpParseHeader(char* buf, unsigned& status);
 int         sttDivideWords(char* parBuffer, int parMinItems, char** parDest);
 void		MSN_MakeDigest(const char* chl, char* dgst);
 char*		getNewUuid(void);
-bool        ForceHttpProxy(HANDLE hNetlib);
+bool        SetupIeProxy(HANDLE hNetlib, bool secur);
 
 TCHAR* EscapeChatTags(const TCHAR* pszText);
 TCHAR* UnEscapeChatTags(TCHAR* str_in);
 
 void   overrideStr(TCHAR*& dest, const TCHAR* src, bool unicode, const TCHAR* def = NULL);
+void   replaceStr(char*& dest, const char* src);
 char*  rtrim(char* string);
 wchar_t* rtrim(wchar_t* string);
 char* arrayToHex(BYTE* data, size_t datasz);
-
-void   replaceStr(char*& dest, const char* src);
-void   replaceStr(wchar_t*& dest, const wchar_t* src);
 
 #if defined(_UNICODE) || defined(_WIN64)
 
@@ -213,7 +213,7 @@ void   replaceStr(wchar_t*& dest, const wchar_t* src);
 
 #else
 
-extern LONG (WINAPI *MyInterlockedIncrement)(LONG volatile* pVal);
+extern LONG (WINAPI *MyInterlockedIncrement)(PLONG pVal);
 
 #endif
 
@@ -339,6 +339,7 @@ struct filetransfer
 	char*       p2p_object;     // MSN object for a transfer
 
 	//---- receiving a file
+	wchar_t*    wszFileName;	// file name in Unicode, for receiving
 	char*       szInvcookie;	// cookie for receiving
 
 	unsigned __int64 lstFilePtr;
@@ -400,6 +401,13 @@ bool p2p_IsDlFileOk(filetransfer* ft);
 /////////////////////////////////////////////////////////////////////////////////////////
 //	Thread handling functions and datatypes
 
+struct TQueueItem
+{
+	TQueueItem* next;
+	size_t  datalen;
+	char data[1];
+};
+
 #define MSG_DISABLE_HDR      1
 #define MSG_REQUIRE_ACK      2
 #define MSG_RTL              4
@@ -422,7 +430,7 @@ struct ThreadData
 	WORD           mIncomingPort;
 	TCHAR          mChatID[10];
 	bool           mIsMainThread;
-	clock_t        mWaitPeriod;
+	int            mWaitPeriod;
 
 	CMsnProto*     proto;
 
@@ -430,9 +438,16 @@ struct ThreadData
 	char           mSessionID[50]; // Gateway session ID
 	char           mGatewayIP[80]; // Gateway IP address
 	int            mGatewayTimeout;
+	char*          mReadAheadBuffer;
+	char*          mReadAheadBufferPtr;
+	size_t         mEhoughData;
 	bool           sessionClosed;
 	bool		   termPending;
 	bool		   gatewayType;
+
+	TQueueItem*	   mFirstQueueItem;
+	unsigned       numQueueItems;
+	HANDLE         hQueueMutex;
 
 	//----| for switchboard servers only |------------------------------------------------
 	int            mCaller;
@@ -459,9 +474,9 @@ struct ThreadData
 
 	int            send(const char data[], size_t datalen);
 	int            recv(char* data, size_t datalen);
-
-	void           resetTimeout(bool term = false);
+	int            recv_dg(char* data, size_t datalen);
 	bool           isTimeout(void);
+	char*          httpTransact(char* szCommand, size_t cmdsz, size_t& bdysz);
 
 	void           sendCaps(void);
 	LONG           sendMessage(int msgType, const char* email, int netId, const char* msg, int parFlags);
@@ -529,10 +544,8 @@ struct MsnContact
 {
 	char *email;
 	char *invite;
-	HANDLE hContact;
 	int list;
 	int netId;
-	int p2pMsgId;
 
 	~MsnContact() { mir_free(email); mir_free(invite); }
 };
@@ -565,6 +578,7 @@ typedef struct _tag_MYOPTIONS
 	bool		EnableSounds;
 
 	bool		UseGateway;
+	bool		UseProxy;
 	bool		ShowErrorsAsPopups;
 	bool		AwayAsBrb;
 	bool		SlowSend;

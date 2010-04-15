@@ -52,22 +52,21 @@ BOOL CJabberProto::IsRcRequestAllowedByACL( CJabberIqInfo* pInfo )
 	return IsMyOwnJID( pInfo->GetFrom() );
 }
 
-BOOL CJabberProto::HandleAdhocCommandRequest( HXML iqNode, CJabberIqInfo* pInfo )
+void CJabberProto::HandleAdhocCommandRequest( HXML iqNode, CJabberIqInfo* pInfo )
 {
 	if ( !pInfo->GetChildNode() )
-		return TRUE;
+		return;
 
 	if ( !m_options.EnableRemoteControl || !IsRcRequestAllowedByACL( pInfo )) {
 		// FIXME: send error and return
-		return TRUE;
+		return;
 	}
 
 	const TCHAR* szNode = xmlGetAttrValue( pInfo->GetChildNode(), _T("node"));
 	if ( !szNode )
-		return TRUE;
+		return;
 
 	m_adhocManager.HandleCommandRequest( iqNode, pInfo, ( TCHAR* )szNode );
-	return TRUE;
 }
 
 BOOL CJabberAdhocManager::HandleItemsRequest( HXML, CJabberIqInfo* pInfo, const TCHAR* szNode )
@@ -376,18 +375,18 @@ int CJabberProto::AdhocSetStatusHandler( HXML, CJabberIqInfo* pInfo, CJabberAdho
 		if ( priority >= -128 && priority <= 127 )
 			JSetWord( NULL, "Priority", (WORD)priority );
 
-		const TCHAR* szStatusMessage = NULL;
+		char* szStatusMessage = NULL;
 		fieldNode = xmlGetChildByTag( xNode, "field", "var", _T("status-message") );
 		if ( fieldNode && (valueNode = xmlGetChild( fieldNode , "value" ))) {
 			if ( xmlGetText( valueNode ) )
-				szStatusMessage = xmlGetText( valueNode );
+				szStatusMessage = mir_t2a(xmlGetText( valueNode ));
 		}
 
 		// skip f...ng away dialog
 		int nNoDlg = DBGetContactSettingByte( NULL, "SRAway", StatusModeToDbSetting( status, "NoDlg" ), 0 );
 		DBWriteContactSettingByte( NULL, "SRAway", StatusModeToDbSetting( status, "NoDlg" ), 1 );
 
-		DBWriteContactSettingTString( NULL, "SRAway", StatusModeToDbSetting( status, "Msg" ), szStatusMessage ? szStatusMessage : _T( "" ));
+		DBWriteContactSettingString( NULL, "SRAway", StatusModeToDbSetting( status, "Msg" ), szStatusMessage ? szStatusMessage : "" );
 		
 		fieldNode = xmlGetChildByTag( xNode, "field", "var", _T("status-global") );
 		if ( fieldNode && (valueNode = xmlGetChild( fieldNode , "value" ))) {
@@ -400,6 +399,9 @@ int CJabberProto::AdhocSetStatusHandler( HXML, CJabberIqInfo* pInfo, CJabberAdho
 
 		// return NoDlg setting
 		DBWriteContactSettingByte( NULL, "SRAway", StatusModeToDbSetting( status, "NoDlg" ), (BYTE)nNoDlg );
+
+		if ( szStatusMessage )
+			mir_free( szStatusMessage );
 
 		return JABBER_ADHOC_HANDLER_STATUS_COMPLETED;
 	}

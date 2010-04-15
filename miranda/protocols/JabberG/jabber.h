@@ -33,8 +33,8 @@ Last change by : $Author$
 	#pragma warning(disable:4706 4121 4127)
 #endif
 
-// this plugin is for Miranda 0.9 only
-#define MIRANDA_VER 0x0900
+// this plugin is for Miranda 0.8 only
+#define MIRANDA_VER 0x0800
 
 #include "m_stdhdr.h"
 
@@ -83,7 +83,6 @@ Last change by : $Author$
 #include <m_button.h>
 #include <m_avatars.h>
 #include <m_idle.h>
-#include <m_jabber.h>
 #include <win2k.h>
 
 #include "../../plugins/zlib/zlib.h"
@@ -237,6 +236,9 @@ enum {
 };
 
 // Services and Events
+#define JE_RAWXMLIN                "/RawXMLIn"
+#define JE_RAWXMLOUT               "/RawXMLOut"
+
 #define JS_PARSE_XMPP_URI          "/ParseXmppURI"
 
 // XEP-0224 support (Attention/Nudge)
@@ -249,7 +251,7 @@ enum {
 #define JE_CUSTOMSTATUS_EXTRAICON_CHANGED "/XStatusExtraIconChanged"
 #define JE_CUSTOMSTATUS_CHANGED						"/XStatusChanged"
 
-#define JS_SENDXML                 "/SendXML" // Warning: This service is obsolete. Use IJabberNetInterface::SendXmlNode() instead.
+#define JS_SENDXML                 "/SendXML"
 #define JS_GETADVANCEDSTATUSICON   "/GetAdvancedStatusIcon"
 #define JS_GETCUSTOMSTATUSICON     "/GetXStatusIcon"
 #define JS_GETXSTATUS              "/GetXStatus"
@@ -425,6 +427,7 @@ struct filetransfer
 	TCHAR* sid;
 	int    bCompleted;
 	HANDLE hWaitEvent;
+	WCHAR* wszFileName;
 
 	// For type == FT_BYTESTREAM
 	JABBER_BYTE_TRANSFER *jbt;
@@ -434,13 +437,13 @@ struct filetransfer
 	// Used by file receiving only
 	char* httpHostName;
 	WORD httpPort;
-	TCHAR* httpPath;
-	unsigned __int64 dwExpectedRecvFileSize;
+	char* httpPath;
+	DWORD dwExpectedRecvFileSize;
 
 	// Used by file sending only
 	HANDLE hFileEvent;
-	unsigned __int64 *fileSize;
-	TCHAR* szDescription;
+	long *fileSize;
+	char* szDescription;
 	
 	CJabberProto* ppro;
 };
@@ -650,12 +653,8 @@ HXML JabberFormGetData( HWND hwndStatic, HXML xNode );
 
 void   g_IconsInit();
 HANDLE g_GetIconHandle( int iconId );
-HICON  g_LoadIconEx( const char* name, bool big = false );
-void g_ReleaseIcon( HICON hIcon );
-
-void ImageList_AddIcon_Icolib( HIMAGELIST hIml, HICON hIcon );
-void WindowSetIcon(HWND hWnd, CJabberProto *proto, const char* name);
-void WindowFreeIcon(HWND hWnd);
+HICON  g_LoadIconEx( const char* name );
+HICON  g_LoadIconEx32( const char* name );
 
 int    ReloadIconsEventHook(WPARAM wParam, LPARAM lParam);
 
@@ -753,11 +752,10 @@ char*         __stdcall JabberUrlDecode( char* str );
 void          __stdcall JabberUrlDecodeW( WCHAR* str );
 char*         __stdcall JabberUrlEncode( const char* str );
 char*         __stdcall JabberSha1( char* str );
-TCHAR*        __stdcall JabberStrFixLines( const TCHAR* str );
 char*         __stdcall JabberUnixToDos( const char* str );
 WCHAR*        __stdcall JabberUnixToDosW( const WCHAR* str );
-void          __stdcall JabberHttpUrlDecode( TCHAR* str );
-TCHAR*        __stdcall JabberHttpUrlEncode( const TCHAR* str );
+void          __stdcall JabberHttpUrlDecode( char* str );
+char*         __stdcall JabberHttpUrlEncode( const char* str );
 int           __stdcall JabberCombineStatus( int status1, int status2 );
 TCHAR*        __stdcall JabberErrorStr( int errorCode );
 TCHAR*        __stdcall JabberErrorMsg( HXML errorNode );

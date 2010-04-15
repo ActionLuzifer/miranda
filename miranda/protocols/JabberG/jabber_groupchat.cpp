@@ -446,8 +446,8 @@ void CJabberDlgGcJoin::OnInitDialog()
 {
 	CSuper::OnInitDialog();
 
-	WindowSetIcon( m_hwnd, m_proto, "group" );
-	SendDlgItemMessage(m_hwnd, IDC_HEADERBAR, WM_SETICON, 0, (LPARAM)g_LoadIconEx("group", true));
+	SendMessage(m_hwnd, WM_SETICON, ICON_BIG, (LPARAM)m_proto->LoadIconEx("group"));
+	SendDlgItemMessage(m_hwnd, IDC_HEADERBAR, WM_SETICON, 0, (LPARAM)g_LoadIconEx32("group"));
 
 	JabberGcRecentInfo *info = NULL;
 	if ( m_jid )
@@ -541,7 +541,6 @@ void CJabberDlgGcJoin::OnDestroy()
 	if ( str != NULL )
 		mir_free( str );
 
-	g_ReleaseIcon(( HICON )SendDlgItemMessage( m_hwnd, IDC_BOOKMARKS, BM_SETIMAGE, IMAGE_ICON, 0 ));
 	m_proto->m_pDlgJabberJoinGroupchat = NULL;
 	DeleteObject((HFONT)SendDlgItemMessage(m_hwnd, IDC_TXT_RECENT, WM_GETFONT, 0, 0));
 
@@ -1100,10 +1099,7 @@ void CJabberProto::GroupchatProcessMessage( HXML node )
 		replaceStr(item->itemResource.statusMessage, msgText);
 	}
 	else {
-		if (( n = xmlGetChildByTag( node , "body", "xml:lang", m_tszSelectedLang )) == NULL )
-			if (( n = xmlGetChild( node , "body" )) == NULL )
-				return;
-
+		if (( n = xmlGetChild( node , "body" )) == NULL ) return;
 		if ( xmlGetText( n ) == NULL )
 			return;
 
@@ -1191,8 +1187,8 @@ public:
 		SetDlgItemText( m_hwnd, IDC_NICK, myNick );
 		mir_free( myNick );
 
-		WindowSetIcon( m_hwnd, m_proto, "group" );
-		SendDlgItemMessage(m_hwnd, IDC_HEADERBAR, WM_SETICON, 0, (LPARAM)g_LoadIconEx("group", true));
+		SendMessage( m_hwnd, WM_SETICON, ICON_BIG, ( LPARAM )m_proto->LoadIconEx( "group" ));
+		SendDlgItemMessage(m_hwnd, IDC_HEADERBAR, WM_SETICON, 0, (LPARAM)g_LoadIconEx32("group"));
 
 		SetFocus(GetDlgItem(m_hwnd, IDC_NICK));
 	}

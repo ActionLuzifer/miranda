@@ -483,15 +483,19 @@ protected:
 
 			m_cbResource.SetText(dbv.ptszVal);
 			JFreeVariant(&dbv);
+		} else
+		{
+			m_cbResource.SetText(_T("Miranda"));
 		}
-		else m_cbResource.SetText(_T("Miranda"));
 
+		TCHAR *szSelectedLang = m_proto->GetXmlLang();
 		for (i = 0; g_LanguageCodes[i].szCode; ++i)
 		{
 			int iItem = m_cbLocale.AddString(TranslateTS(g_LanguageCodes[i].szDescription), (LPARAM)g_LanguageCodes[i].szCode);
-			if (!_tcscmp(m_proto->m_tszSelectedLang, g_LanguageCodes[i].szCode))
+			if (!_tcscmp(szSelectedLang, g_LanguageCodes[i].szCode))
 				m_cbLocale.SetCurSel(iItem);
 		}
+		if ( szSelectedLang ) mir_free( szSelectedLang );
 
 		EnableWindow(GetDlgItem(m_hwnd, IDC_COMBO_RESOURCE ), m_chkUseHostnameAsResource.GetState() != BST_CHECKED);
 		EnableWindow(GetDlgItem(m_hwnd, IDC_UNREGISTER), m_proto->m_bJabberOnline);
@@ -521,19 +525,18 @@ protected:
 			JCallService(MS_DB_CRYPT_ENCODESTRING, lstrlenA(text), (LPARAM)text);
 			m_proto->JSetString(NULL, "Password", text);
 			mir_free(text);
+		} else
+		{
+			m_proto->JDeleteSetting(NULL, "Password");
 		}
-		else m_proto->JDeleteSetting(NULL, "Password");
 
 		int index = m_cbLocale.GetCurSel();
 		if ( index >= 0 )
 		{
 			TCHAR *szLanguageCode = (TCHAR *)m_cbLocale.GetItemData(index);
-			if ( szLanguageCode ) {
+			if ( szLanguageCode )
 				m_proto->JSetStringT(NULL, "XmlLang", szLanguageCode);
-
-				mir_free( m_proto->m_tszSelectedLang );
-				m_proto->m_tszSelectedLang = mir_tstrdup( szLanguageCode );
-		}	}
+		}
 
 		sttStoreJidFromUI(m_proto, m_txtUsername, m_cbServer);
 
@@ -614,7 +617,7 @@ private:
 			TranslateT("Account removal warning"), MB_YESNOCANCEL);
 
 		if ( res == IDYES )
-			m_proto->m_ThreadInfo->send(
+			m_proto->m_ThreadInfo->send( 
 				XmlNodeIq( _T("set"), m_proto->SerialNext(), m_proto->m_szJabberJID ) << XQUERY( _T(JABBER_FEAT_REGISTER))
 					<< XCHILD( _T("remove")));
 	}
@@ -821,8 +824,7 @@ public:
 		m_otvOptions.AddOption(LPGENT("Other") _T("/") LPGENT("Automatically add contact when accept authorization"), m_proto->m_options.AutoAdd);
 		m_otvOptions.AddOption(LPGENT("Other") _T("/") LPGENT("Automatically accept authorization requests"), m_proto->m_options.AutoAcceptAuthorization);
 		m_otvOptions.AddOption(LPGENT("Other") _T("/") LPGENT("Fix incorrect timestamps in incoming messages"), m_proto->m_options.FixIncorrectTimestamps);
-		m_otvOptions.AddOption(LPGENT("Other") _T("/") LPGENT("Disable frame"), m_proto->m_options.DisableFrame);
-
+		
 		m_otvOptions.AddOption(LPGENT("Security") _T("/") LPGENT("Show information about operating system in version replies"), m_proto->m_options.ShowOSVersion);
 		m_otvOptions.AddOption(LPGENT("Security") _T("/") LPGENT("Accept only in band incoming filetransfers (don't disclose own IP)"), m_proto->m_options.BsOnlyIBB);
 		m_otvOptions.AddOption(LPGENT("Security") _T("/") LPGENT("Accept HTTP Authentication requests (XEP-0070)"), m_proto->m_options.AcceptHttpAuth);
@@ -1266,7 +1268,7 @@ void CJabberProto::_RosterExportToFile(HWND hwndDlg)
 	     << XATTR(_T("xmlns:html"), _T("http://www.w3.org/TR/REC-html40"));
 	root << XCHILD(_T("ExcelWorkbook"))
 	     << XATTR(_T("xmlns"), _T("urn:schemas-microsoft-com:office:excel"));
-	HXML table = root << XCHILD(_T("Worksheet")) << XATTR(_T("ss:Name"), _T("Exported roster"))
+	HXML table = root << XCHILD(_T("Worksheet")) << XATTR(_T("ss:Name"), _T("Exported roster")) 
 	                  << XCHILD(_T("Table"));
 
 	for (int index=0; index<ListItemCount; index++)
@@ -1288,10 +1290,10 @@ void CJabberProto::_RosterExportToFile(HWND hwndDlg)
 		node << XCHILD(_T("Cell")) << XCHILD(_T("Data"), subscr) << XATTR(_T("ss:Type"), _T("String"));
 
 	}
-
+	
 	char header[] = "<?xml version=\"1.0\" encoding=\"utf8\"?>\n<?mso-application progid=\"Excel.Sheet\"?>\n";
 	fwrite(header, 1, sizeof(header) - 1 /* for zero terminator */, fp);
-
+	
 	TCHAR *xtmp = xi.toString(root, NULL);
 	char *tmp = mir_utf8encodeT(xtmp);
 	xi.freeMem(xtmp);
@@ -1327,7 +1329,7 @@ void CJabberProto::_RosterImportFromFile(HWND hwndDlg)
 		fclose(fp);
 		return;
 	}
-
+	
 	char* buffer=(char*)mir_calloc(bufsize+1); // zero-terminate it
 	fread(buffer,1,bufsize,fp);
 	fclose(fp);
@@ -1484,8 +1486,6 @@ static INT_PTR CALLBACK JabberRosterOptDlgProc( HWND hwndDlg, UINT msg, WPARAM w
 		{
 			Utils_SaveWindowPosition(hwndDlg, NULL, ppro->m_szModuleName, "rosterCtrlWnd_");
 			ppro->rrud.hwndDlg = NULL;
-			WindowFreeIcon(hwndDlg);
-			g_ReleaseIcon(( HICON )SendDlgItemMessage(hwndDlg, IDC_HEADERBAR, WM_SETICON, ICON_BIG, 0 ));
 			break;
 		}
 	case WM_INITDIALOG:
@@ -1494,8 +1494,8 @@ static INT_PTR CALLBACK JabberRosterOptDlgProc( HWND hwndDlg, UINT msg, WPARAM w
 			SetWindowLongPtr( hwndDlg, GWLP_USERDATA, lParam );
 
 			TranslateDialogDefault( hwndDlg );
-			WindowSetIcon( hwndDlg, ppro, "Agents" );
-			SendDlgItemMessage( hwndDlg, IDC_HEADERBAR, WM_SETICON, 0, (LPARAM)g_LoadIconEx("Agents", true));
+			SendMessage( hwndDlg, WM_SETICON, ICON_BIG, ( LPARAM )ppro->LoadIconEx( "Agents" ));
+			SendDlgItemMessage( hwndDlg, IDC_HEADERBAR, WM_SETICON, 0, (LPARAM)g_LoadIconEx32("Agents"));
 
 			Utils_RestoreWindowPosition(hwndDlg, NULL, ppro->m_szModuleName, "rosterCtrlWnd_");
 
@@ -1646,7 +1646,6 @@ public:
 		CreateLink(m_chkSavePassword, proto->m_options.SavePassword);
 		CreateLink(m_cbResource, "Resource", _T("Miranda"));
 		CreateLink(m_cbServer, "LoginServer", _T("jabber.org"));
-		CreateLink(m_txtPort, "Port", DBVT_WORD, 5222);
 
 		// Bind events
 		m_cbType.OnChange = Callback(this, &CJabberDlgAccMgrUI::cbType_OnChange);
@@ -1717,22 +1716,12 @@ protected:
 			JFreeVariant(&dbv);
 		}
 
-		m_canregister = true;
 		if (!lstrcmpA(manualServer, "talk.google.com"))
-		{
 			m_cbType.SetCurSel(ACC_GTALK);
-			m_canregister = false;
-		}
 		else if (!lstrcmpA(server, "livejournal.com"))
-		{
 			m_cbType.SetCurSel(ACC_LJTALK);
-			m_canregister = false;
-		}
 		else if (!lstrcmpA(server, "chat.facebook.com"))
-		{
 			m_cbType.SetCurSel(ACC_FBOOK);
-			m_canregister = false;
-		}
 		else if (m_proto->m_options.UseSSL)
 			m_cbType.SetCurSel(ACC_SSL);
 		else if (m_proto->m_options.UseTLS) {
@@ -1972,7 +1961,8 @@ private:
 
 void CJabberDlgAccMgrUI::CheckRegistration()
 {
-	if ( !m_canregister ) {
+	if (!m_canregister)
+	{
 		m_btnRegister.Disable();
 		return;
 	}
@@ -1983,11 +1973,14 @@ void CJabberDlgAccMgrUI::CheckRegistration()
 	m_cbServer.GetTextA(regInfo.server, SIZEOF(regInfo.server));
 	regInfo.port = (WORD)m_txtPort.GetInt();
 	if (m_chkManualHost.GetState() == BST_CHECKED)
+	{
 		m_txtManualHost.GetTextA(regInfo.manualHost, SIZEOF(regInfo.manualHost));
-	else
+	} else
+	{
 		regInfo.manualHost[0] = '\0';
+	}
 
-	if (regInfo.username[0] && regInfo.password[0] && regInfo.server[0] && regInfo.port > 0 && ( (m_chkManualHost.GetState() != BST_CHECKED) || regInfo.manualHost[0] ))
+	if (regInfo.username[0] && regInfo.password[0] && regInfo.server[0] && regInfo.port>0 && ( (m_chkManualHost.GetState() != BST_CHECKED) || regInfo.manualHost[0] ))
 		m_btnRegister.Enable();
 	else
 		m_btnRegister.Disable();
@@ -2104,7 +2097,7 @@ void CJabberDlgAccMgrUI::setupFB()
 	m_txtManualHost.Disable();
 	m_txtPort.Disable();
 	m_btnRegister.Disable();
-//	m_cbResource.Disable();
+	m_cbResource.Disable();
 }
 
 void CJabberDlgAccMgrUI::RefreshServers( HXML node )
