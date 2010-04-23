@@ -521,8 +521,11 @@ int cliShowHide(WPARAM wParam,LPARAM lParam)
 			return 0;
 	}
 
-	if( (bShow == TRUE || lParam == 1) ) 
-	{
+	if( (bShow == TRUE || lParam == 1) ) {
+		RECT rcWindow;
+
+		GetWindowRect(pcli->hwndContactList,&rcWindow);
+
 		Sync( CLUIFrames_ActivateSubContainers, TRUE );
 		CLUI_ShowWindowMod(pcli->hwndContactList, SW_RESTORE);
 
@@ -543,8 +546,6 @@ int cliShowHide(WPARAM wParam,LPARAM lParam)
 		}
 		ModernWriteSettingByte(NULL,"CList","State",SETTING_STATE_NORMAL);
 
-		RECT rcWindow;
-		GetWindowRect(pcli->hwndContactList,&rcWindow);
 		if (Utils_AssertInsideScreen(&rcWindow) == 1)
 		{
 			MoveWindow(pcli->hwndContactList, rcWindow.left, rcWindow.top, 

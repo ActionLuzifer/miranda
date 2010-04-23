@@ -1,7 +1,7 @@
 /*
 Scriver
 
-Copyright 2000-2009 Miranda ICQ/IM project,
+Copyright 2000-2008 Miranda ICQ/IM project,
 
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
@@ -26,7 +26,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <richedit.h>
 #include <richole.h>
 #include "sendqueue.h"
-#include "infobar.h"
 #define MSGERROR_CANCEL	0
 #define MSGERROR_RETRY	1
 #define MSGERROR_DONE	2
@@ -35,15 +34,6 @@ typedef DWORD (WINAPI *PSLWA)(HWND, DWORD, BYTE, DWORD);
 extern PSLWA pSetLayeredWindowAttributes;
 extern BOOL (WINAPI *pfnIsAppThemed)(VOID);
 extern HRESULT (WINAPI *pfnDrawThemeParentBackground)(HWND, HDC, RECT *);
-
-typedef struct ToolbarButtonStruct
-{
-	TCHAR *name;
-	UINT controlId;
-	int alignment;
-	int spacing;
-	int width;
-}ToolbarButton;
 
 typedef struct ErrorWindowDataStruct
 {
@@ -147,6 +137,7 @@ struct MessageWindowData
 	time_t	startTime;
 	time_t 	lastEventTime;
 	int    	lastEventType;
+	HANDLE  lastEventContact;
 	DWORD	flags;
 	int		messagesInProgress;
 	struct avatarCacheEntry *ace;
@@ -155,7 +146,6 @@ struct MessageWindowData
 	HICON   statusIcon;
 	HICON   statusIconOverlay;
 	CommonWindowData windowData;
-	InfobarWindowData* infobarData;
 };
 
 
@@ -217,8 +207,6 @@ INT_PTR CALLBACK DlgProcParentWindow(HWND hwndDlg, UINT msg, WPARAM wParam, LPAR
 INT_PTR CALLBACK DlgProcMessage(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam);
 INT_PTR CALLBACK ErrorDlgProc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam);
 int DbEventIsShown(DBEVENTINFO * dbei, struct MessageWindowData *dat);
-int DbEventIsCustomForMsgWindow(DBEVENTINFO *dbei);
-int DbEventIsMessageOrCustom(DBEVENTINFO *dbei);
 int safe_wcslen(wchar_t *msg, int maxLen);
 void StreamInEvents(HWND hwndDlg, HANDLE hDbEventFirst, int count, int fAppend);
 void LoadMsgLogIcons(void);
@@ -375,7 +363,7 @@ extern int fontOptionsListSize;
 #define SRMSGSET_OUTGOINGBKGCOLOUR		"OutgoingBkgColour"
 #define SRMSGDEFSET_OUTGOINGBKGCOLOUR	GetSysColor(COLOR_WINDOW)
 #define SRMSGSET_INFOBARBKGCOLOUR		"InfobarBkgColour"
-#define SRMSGDEFSET_INFOBARBKGCOLOUR	GetSysColor(COLOR_BTNFACE)
+#define SRMSGDEFSET_INFOBARBKGCOLOUR	RGB(130,140,170)
 
 #define SRMSGSET_USEIEVIEW				"UseIEView"
 #define SRMSGDEFSET_USEIEVIEW			1
@@ -411,8 +399,6 @@ extern int fontOptionsListSize;
 #define SRMSGDEFSET_SAVEDRAFTS		0
 #define SRMSGSET_BUTTONVISIBILITY	"ButtonVisibility"
 #define SRMSGDEFSET_BUTTONVISIBILITY 0xFFFF
-#define SRMSGSET_CHATBUTTONVISIBILITY	"ChatButtonVisibility"
-#define SRMSGDEFSET_CHATBUTTONVISIBILITY 0xFFFF
 
 #define SRMSGSET_HIDECONTAINERS		"HideContainers"
 #define SRMSGDEFSET_HIDECONTAINERS  0

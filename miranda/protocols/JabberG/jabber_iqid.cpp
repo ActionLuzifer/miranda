@@ -114,9 +114,6 @@ void CJabberProto::OnIqResultNotes( HXML iqNode, CJabberIqInfo* pInfo )
 
 void CJabberProto::OnProcessLoginRq( ThreadData* info, DWORD rq )
 {
-	if ( info == NULL )
-		return;
-
 	info->dwLoginRqs |= rq;
 
 	if ((info->dwLoginRqs & JABBER_LOGIN_ROSTER) && (info->dwLoginRqs & JABBER_LOGIN_BOOKMARKS) &&
@@ -227,7 +224,7 @@ void CJabberProto::OnIqResultGetAuth( HXML iqNode )
 		HXML query = iq << XQUERY( _T("jabber:iq:auth"));
 		query << XCHILD( _T("username"), m_ThreadInfo->username );
 		if ( xmlGetChild( queryNode, "digest" ) != NULL && m_szStreamId ) {
-			char* str = mir_utf8encodeT( m_ThreadInfo->password );
+			char* str = mir_utf8encode( m_ThreadInfo->password );
 			char text[200];
 			mir_snprintf( text, SIZEOF(text), "%s%s", m_szStreamId, str );
 			mir_free( str );
@@ -237,7 +234,7 @@ void CJabberProto::OnIqResultGetAuth( HXML iqNode )
 			}
 		}
 		else if ( xmlGetChild( queryNode, "password" ) != NULL )
-			query << XCHILD( _T("password"), m_ThreadInfo->password );
+			query << XCHILD( _T("password"), _A2T(m_ThreadInfo->password));
 		else {
 			Log( "No known authentication mechanism accepted by the server." );
 
@@ -729,13 +726,13 @@ LBL_Ret:
 	goto LBL_Ret;
 }
 
-static TCHAR* sttGetText( HXML node, char* tag )
+static char* sttGetText( HXML node, char* tag )
 {
 	HXML n = xmlGetChild( node , tag );
 	if ( n == NULL )
 		return NULL;
 
-	return ( TCHAR* )xmlGetText( n );
+	return mir_t2a( xmlGetText( n ) );
 }
 
 void CJabberProto::OnIqResultGetVcard( HXML iqNode )
@@ -758,15 +755,17 @@ void CJabberProto::OnIqResultGetVcard( HXML iqNode )
 			if ( !lstrcmp( type, _T("result"))) {
 				JABBER_SEARCH_RESULT jsr = { 0 };
 				jsr.hdr.cbSize = sizeof( JABBER_SEARCH_RESULT );
-				jsr.hdr.flags = PSR_TCHAR;
 				jsr.hdr.nick = sttGetText( vCardNode, "NICKNAME" );
 				jsr.hdr.firstName = sttGetText( vCardNode, "FN" );
-				jsr.hdr.lastName = _T("");
+				jsr.hdr.lastName = "";
 				jsr.hdr.email = sttGetText( vCardNode, "EMAIL" );
 				_tcsncpy( jsr.jid, jid, SIZEOF( jsr.jid ));
 				jsr.jid[ SIZEOF( jsr.jid )-1 ] = '\0';
 				JSendBroadcast( NULL, ACKTYPE_SEARCH, ACKRESULT_DATA, ( HANDLE )id, ( LPARAM )&jsr );
 				JSendBroadcast( NULL, ACKTYPE_SEARCH, ACKRESULT_SUCCESS, ( HANDLE )id, 0 );
+				mir_free( jsr.hdr.nick );
+				mir_free( jsr.hdr.firstName );
+				mir_free( jsr.hdr.email );
 			}
 			else if ( !lstrcmp( type, _T("error")))
 				JSendBroadcast( NULL, ACKTYPE_SEARCH, ACKRESULT_SUCCESS, ( HANDLE )id, 0 );
@@ -1243,26 +1242,28 @@ void CJabberProto::OnIqResultSetSearch( HXML iqNode )
 				if (( jid=xmlGetAttrValue( itemNode, _T("jid"))) != NULL ) {
 					_tcsncpy( jsr.jid, jid, SIZEOF( jsr.jid ));
 					jsr.jid[ SIZEOF( jsr.jid )-1] = '\0';
-					jsr.hdr.id  = (TCHAR*)jid;
 					Log( "Result jid = " TCHAR_STR_PARAM, jid );
 					if (( n=xmlGetChild( itemNode , "nick" ))!=NULL && xmlGetText( n )!=NULL )
-						jsr.hdr.nick = ( TCHAR* )xmlGetText( n );
+						jsr.hdr.nick = mir_t2a( xmlGetText( n ) );
 					else
-						jsr.hdr.nick = _T( "" );
+						jsr.hdr.nick = mir_strdup( "" );
 					if (( n=xmlGetChild( itemNode , "first" ))!=NULL && xmlGetText( n )!=NULL )
-						jsr.hdr.firstName = ( TCHAR* )xmlGetText( n );
+						jsr.hdr.firstName = mir_t2a( xmlGetText( n ) );
 					else
-						jsr.hdr.firstName = _T( "" );
+						jsr.hdr.firstName = mir_strdup( "" );
 					if (( n=xmlGetChild( itemNode , "last" ))!=NULL && xmlGetText( n )!=NULL )
-						jsr.hdr.lastName = ( TCHAR* )xmlGetText( n );
+						jsr.hdr.lastName = mir_t2a( xmlGetText( n ) );
 					else
-						jsr.hdr.lastName = _T( "" );
+						jsr.hdr.lastName = mir_strdup( "" );
 					if (( n=xmlGetChild( itemNode , "email" ))!=NULL && xmlGetText( n )!=NULL )
-						jsr.hdr.email = ( TCHAR* )xmlGetText( n );
+						jsr.hdr.email = mir_t2a( xmlGetText( n ) );
 					else
-						jsr.hdr.email = _T( "" );
-					jsr.hdr.flags = PSR_TCHAR;
+						jsr.hdr.email = mir_strdup( "" );
 					JSendBroadcast( NULL, ACKTYPE_SEARCH, ACKRESULT_DATA, ( HANDLE ) id, ( LPARAM )&jsr );
+					mir_free( jsr.hdr.nick );
+					mir_free( jsr.hdr.firstName );
+					mir_free( jsr.hdr.lastName );
+					mir_free( jsr.hdr.email );
 		}	}	}
 
 		JSendBroadcast( NULL, ACKTYPE_SEARCH, ACKRESULT_SUCCESS, ( HANDLE ) id, 0 );
@@ -1293,7 +1294,6 @@ void CJabberProto::OnIqResultExtSearch( HXML iqNode )
 
 			JABBER_SEARCH_RESULT jsr = { 0 };
 			jsr.hdr.cbSize = sizeof( JABBER_SEARCH_RESULT );
-			jsr.hdr.flags = PSR_TCHAR;
 //			jsr.hdr.firstName = "";
 
 			for ( int j=0; ; j++ ) {
@@ -1318,18 +1318,26 @@ void CJabberProto::OnIqResultExtSearch( HXML iqNode )
 					Log( "Result jid = " TCHAR_STR_PARAM, jsr.jid );
 				}
 				else if ( !lstrcmp( fieldName, _T("nickname")))
-					jsr.hdr.nick = ( xmlGetText( n ) != NULL ) ? ( TCHAR* )xmlGetText( n ) : _T( "" );
-				else if ( !lstrcmp( fieldName, _T("fn")))
-					jsr.hdr.firstName = ( xmlGetText( n ) != NULL ) ? ( TCHAR* )xmlGetText( n ) : _T( "" );
-				else if ( !lstrcmp( fieldName, _T("given")))
-					jsr.hdr.firstName = ( xmlGetText( n ) != NULL ) ? ( TCHAR* )xmlGetText( n ) : _T( "" );
+					jsr.hdr.nick = ( xmlGetText( n ) != NULL ) ? mir_t2a( xmlGetText( n ) ) : mir_strdup( "" );
+				else if ( !lstrcmp( fieldName, _T("fn"))) {
+					mir_free( jsr.hdr.firstName );
+					jsr.hdr.firstName = ( xmlGetText( n ) != NULL ) ? mir_t2a(xmlGetText( n )) : mir_strdup( "" );
+				}
+				else if ( !lstrcmp( fieldName, _T("given"))) {
+					mir_free( jsr.hdr.firstName );
+					jsr.hdr.firstName = ( xmlGetText( n ) != NULL ) ? mir_t2a(xmlGetText( n )) : mir_strdup( "" );
+				}
 				else if ( !lstrcmp( fieldName, _T("family")))
-					jsr.hdr.lastName = ( xmlGetText( n ) != NULL ) ? ( TCHAR* )xmlGetText( n ) : _T( "" );
+					jsr.hdr.lastName = ( xmlGetText( n ) != NULL ) ? mir_t2a(xmlGetText( n )) : mir_strdup( "" );
 				else if ( !lstrcmp( fieldName, _T("email")))
-					jsr.hdr.email = ( xmlGetText( n ) != NULL ) ? ( TCHAR* )xmlGetText( n ) : _T( "" );
+					jsr.hdr.email = ( xmlGetText( n ) != NULL ) ? mir_t2a(xmlGetText( n )) : mir_strdup( "" );
 			}
 
 			JSendBroadcast( NULL, ACKTYPE_SEARCH, ACKRESULT_DATA, ( HANDLE ) id, ( LPARAM )&jsr );
+			mir_free( jsr.hdr.nick );
+			mir_free( jsr.hdr.firstName );
+			mir_free( jsr.hdr.lastName );
+			mir_free( jsr.hdr.email );
 		}
 
 		JSendBroadcast( NULL, ACKTYPE_SEARCH, ACKRESULT_SUCCESS, ( HANDLE ) id, 0 );
@@ -1347,7 +1355,7 @@ void CJabberProto::OnIqResultSetPassword( HXML iqNode )
 		return;
 
 	if ( !lstrcmp( type, _T("result"))) {
-		_tcsncpy( m_ThreadInfo->password, m_ThreadInfo->newPassword, SIZEOF( m_ThreadInfo->password ));
+		strncpy( m_ThreadInfo->password, m_ThreadInfo->newPassword, SIZEOF( m_ThreadInfo->password ));
 		MessageBox( NULL, TranslateT( "Password is successfully changed. Don't forget to update your password in the Jabber protocol option." ), TranslateT( "Change Password" ), MB_OK|MB_ICONINFORMATION|MB_SETFOREGROUND );
 	}
 	else if ( !lstrcmp( type, _T("error")))

@@ -165,7 +165,6 @@ private:
 		bool m_subitem;
 
 		CStatusMode(LPARAM id, char *name, HICON hIcon, TCHAR *title, bool subitem): m_id(id), m_name(name), m_hIcon(hIcon), m_title(title), m_subitem(subitem) {}
-		~CStatusMode() { g_ReleaseIcon( m_hIcon ); }
 	};
 
 	OBJLIST<CStatusMode> m_modes;
@@ -233,7 +232,7 @@ void CJabberDlgPepSimple::OnInitDialog()
 {
 	CSuper::OnInitDialog();
 
-	WindowSetIcon( m_hwnd, m_proto, "main" );
+	SendMessage(m_hwnd, WM_SETICON, ICON_BIG, (LPARAM)m_proto->LoadIconEx("main"));
 	SetWindowText(m_hwnd, m_title);
 
 	m_txtDescription.Enable(false);
@@ -247,10 +246,7 @@ void CJabberDlgPepSimple::OnInitDialog()
 			if (idx) m_txtDescription.Enable();
 		}
 	}
-	if (m_activeText)
-	{
-		m_txtDescription.SetText(m_activeText);
-	}
+	if (m_activeText) m_txtDescription.SetText(m_activeText);
 }
 
 int CJabberDlgPepSimple::Resizer(UTILRESIZECONTROL *urc)
@@ -659,11 +655,9 @@ void CPepMood::ProcessItems(const TCHAR *from, HXML itemsNode)
 			moodType = xmlGetName( n );
 	}
 
-	TCHAR *fixedText = JabberStrFixLines( moodText );
 	if (hSelfContact)
-		SetMood(hSelfContact, moodType, fixedText);
-	SetMood(hContact, moodType, fixedText);
-	mir_free( fixedText );
+		SetMood(hSelfContact, moodType, moodText);
+	SetMood(hContact, moodType, moodText);
 
 	if (!hContact)
 		ForceRepublishOnLogin();
@@ -1064,11 +1058,9 @@ void CPepActivity::ProcessItems(const TCHAR *from, HXML itemsNode)
 		}
 	}
 
-	TCHAR *fixedText = JabberStrFixLines( szText );
 	if (hSelfContact)
-		SetActivity(hSelfContact, szFirstNode, szSecondNode, fixedText);
-	SetActivity(hContact, szFirstNode, szSecondNode, fixedText);
-	mir_free( fixedText );
+		SetActivity(hSelfContact, szFirstNode, szSecondNode, szText);
+	SetActivity(hContact, szFirstNode, szSecondNode, szText);
 
 	if (!hContact)
 		ForceRepublishOnLogin();
@@ -1604,7 +1596,7 @@ CJabberInfoFrame::CJabberInfoFrame(CJabberProto *proto):
 	m_nextTooltipId = 0;
 	m_hhkFontsChanged = 0;
 
-	if (!proto->m_options.DisableFrame && ServiceExists(MS_CLIST_FRAMES_ADDFRAME))
+	if (ServiceExists(MS_CLIST_FRAMES_ADDFRAME))
 	{
 		InitClass();
 
@@ -1910,7 +1902,7 @@ void CJabberInfoFrame::PaintCompact(HDC hdc)
 				if (hIcon)
 				{
 					DrawIconEx(hdc, SZ_FRAMEPADDING, (rc.bottom-cy_icon)/2, hIcon, cx_icon, cy_icon, 0, NULL, DI_NORMAL);
-					g_ReleaseIcon(hIcon);
+					CallService(MS_SKIN2_RELEASEICON, (WPARAM)hIcon, 0);
 				}
 			}
 
@@ -1927,7 +1919,7 @@ void CJabberInfoFrame::PaintCompact(HDC hdc)
 					DrawIconEx(hdc, cx, (rc.bottom-cy_icon)/2, hIcon, cx_icon, cy_icon, 0, NULL, DI_NORMAL);
 					cx -= cx_icon;
 
-					g_ReleaseIcon(hIcon);
+					CallService(MS_SKIN2_RELEASEICON, (WPARAM)hIcon, 0);
 
 					SetToolTip(item.m_tooltipId, &item.m_rcItem, item.m_pszText);
 				}
@@ -1976,7 +1968,7 @@ void CJabberInfoFrame::PaintNormal(HDC hdc)
 				DrawIconEx(hdc, cx, cy + (line_height-cy_icon)/2, hIcon, cx_icon, cy_icon, 0, NULL, DI_NORMAL);
 				cx += cx_icon + SZ_ICONSPACING;
 
-				g_ReleaseIcon(hIcon);
+				CallService(MS_SKIN2_RELEASEICON, (WPARAM)hIcon, 0);
 			}
 		}
 

@@ -27,13 +27,15 @@ typedef struct
 {
 	uin_t uin;
 	const char *email;
+	GGPROTO *gg;
 } GG_REMIND_PASS;
 
-void __cdecl gg_remindpasswordthread(GGPROTO *gg, void *param)
+static void *__stdcall gg_remindpasswordthread(void *empty)
 {
 	// Connection handle
 	struct gg_http *h;
-	GG_REMIND_PASS *rp = (GG_REMIND_PASS *)param;
+	GG_REMIND_PASS *rp = (GG_REMIND_PASS *)empty;
+	const GGPROTO *gg = rp->gg;
 	GGTOKEN token;
 
 #ifdef DEBUGMODE
@@ -42,11 +44,11 @@ void __cdecl gg_remindpasswordthread(GGPROTO *gg, void *param)
 	if(!rp || !rp->email || !rp->uin || !strlen(rp->email))
 	{
 		if(rp) free(rp);
-		return;
+		return NULL;
 	}
 
 	// Get token
-	if(!gg_gettoken(gg, &token)) return;
+	if(!gg_gettoken(rp->gg, &token)) return NULL;
 
 	if (!(h = gg_remind_passwd3(rp->uin, rp->email, token.id, token.val, 0)))
 	{
@@ -81,13 +83,17 @@ void __cdecl gg_remindpasswordthread(GGPROTO *gg, void *param)
 	gg_netlog(gg, "gg_remindpasswordthread(): End.");
 #endif
 	if(rp) free(rp);
+	return NULL;
 }
 
 void gg_remindpassword(GGPROTO *gg, uin_t uin, const char *email)
 {
 	GG_REMIND_PASS *rp = malloc(sizeof(GG_REMIND_PASS));
+	pthread_t tid;
 
 	rp->uin = uin;
 	rp->email = email;
-	gg_forkthread(gg, gg_remindpasswordthread, rp);
+	rp->gg = gg;
+	pthread_create(&tid, NULL, gg_remindpasswordthread, (void *)rp);
+	pthread_detach(&tid);
 }

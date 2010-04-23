@@ -21,7 +21,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 File name      : $URL: https://miranda.svn.sourceforge.net/svnroot/miranda/trunk/miranda/protocols/JabberG/jabber_svc.cpp $
 Revision       : $Revision: 7044 $
-Last change on : $Date: 2008-01-04 22:42:50 +0300 (Пт, 04 янв 2008) $
+Last change on : $Date: 2008-01-04 22:42:50 +0300 (Пт, 04 �?нв 2008) $
 Last change by : $Author: m_mluhov $
 
 */
@@ -74,9 +74,6 @@ CJabberProto::CJabberProto( const char* aProtoName, const TCHAR* aUserName ) :
 	m_lstTransports( 50, compareTransports ),
 	m_lstRoster( 50, compareListItems ),
 	m_iqManager( this ),
-	m_messageManager( this ),
-	m_presenceManager( this ),
-	m_sendManager( this ),
 	m_adhocManager( this ),
 	m_clientCapsManager( this ),
 	m_privacyListManager( this ),
@@ -85,9 +82,7 @@ CJabberProto::CJabberProto( const char* aProtoName, const TCHAR* aUserName ) :
 	m_priorityMenuValSet( false ),
 	m_hPrivacyMenuRoot( 0 ),
 	m_hPrivacyMenuItems( 10 ),
-	m_pLastResourceList( NULL ),
-	m_lstJabberFeatCapPairsDynamic( 2 ),
-	m_uEnabledFeatCapsDynamic( 0 )
+	m_pLastResourceList( NULL )
 {
 	InitializeCriticalSection( &m_csModeMsgMutex );
 	InitializeCriticalSection( &m_csLists );
@@ -95,7 +90,6 @@ CJabberProto::CJabberProto( const char* aProtoName, const TCHAR* aUserName ) :
 
 	m_szXmlStreamToBeInitialized = NULL;
 
-	m_iVersion = 2;
 	m_tszUserName = mir_tstrdup( aUserName );
 	m_szModuleName = mir_strdup( aProtoName );
 	m_szProtoName = mir_strdup( aProtoName );
@@ -103,16 +97,13 @@ CJabberProto::CJabberProto( const char* aProtoName, const TCHAR* aUserName ) :
 	m_szProtoName[0] = toupper( m_szProtoName[0] );
 	Log( "Setting protocol/module name to '%s/%s'", m_szProtoName, m_szModuleName );
 
-	// Initialize Jabber API
-	m_JabberApi.m_psProto = this;
-	m_JabberSysApi.m_psProto = this;
-	m_JabberNetApi.m_psProto = this;
-
 	// Jabber dialog list
 	m_windowList = (HANDLE)CallService(MS_UTILS_ALLOCWINDOWLIST, 0, 0);
 
 	// Protocol services and events...
 	m_hEventNudge = JCreateHookableEvent( JE_NUDGE );
+	m_hEventRawXMLIn = JCreateHookableEvent( JE_RAWXMLIN );
+	m_hEventRawXMLOut = JCreateHookableEvent( JE_RAWXMLOUT );
 	m_hEventXStatusIconChanged = JCreateHookableEvent( JE_CUSTOMSTATUS_EXTRAICON_CHANGED );
 	m_hEventXStatusChanged = JCreateHookableEvent( JE_CUSTOMSTATUS_CHANGED );
 
@@ -136,13 +127,10 @@ CJabberProto::CJabberProto( const char* aProtoName, const TCHAR* aUserName ) :
 	JCreateService( PS_GETMYAVATAR, &CJabberProto::JabberGetAvatar );
 	JCreateService( PS_GETAVATARCAPS, &CJabberProto::JabberGetAvatarCaps );
 	JCreateService( PS_SETMYAVATAR, &CJabberProto::JabberSetAvatar );
-	JCreateService( PS_SETMYNICKNAME, &CJabberProto::JabberSetNickname );
 
 	JCreateService( JS_GETADVANCEDSTATUSICON, &CJabberProto::JGetAdvancedStatusIcon );
 	JCreateService( JS_DB_GETEVENTTEXT_CHATSTATES, &CJabberProto::OnGetEventTextChatStates );
 	JCreateService( JS_DB_GETEVENTTEXT_PRESENCE, &CJabberProto::OnGetEventTextPresence );
-
-	JCreateService( JS_GETJABBERAPI, &CJabberProto::JabberGetApi );
 
 	// XEP-0224 support (Attention/Nudge)
 	JCreateService( JS_SEND_NUDGE, &CJabberProto::JabberSendNudge );
@@ -162,11 +150,6 @@ CJabberProto::CJabberProto( const char* aProtoName, const TCHAR* aUserName ) :
 
 	m_iqManager.FillPermanentHandlers();
 	m_iqManager.Start();
-	m_messageManager.FillPermanentHandlers();
-	m_messageManager.Start();
-	m_presenceManager.FillPermanentHandlers();
-	m_presenceManager.Start();
-	m_sendManager.Start();
 	m_adhocManager.FillDefaultNodes();
 	m_clientCapsManager.AddDefaultCaps();
 
@@ -198,24 +181,6 @@ CJabberProto::CJabberProto( const char* aProtoName, const TCHAR* aUserName ) :
 	mir_snprintf( text, sizeof( text ), "%s/Grant", m_szModuleName );
 	JCallService( MS_DB_SETSETTINGRESIDENT, TRUE, ( LPARAM )text );
 
-	DBVARIANT dbv;
-	if ( !JGetStringT( NULL, "XmlLang", &dbv )) {
-		m_tszSelectedLang = mir_tstrdup( dbv.ptszVal );
-		JFreeVariant( &dbv );
-	}
-	else m_tszSelectedLang = mir_tstrdup( _T( "en" ));
-
-	if (!DBGetContactSettingString(NULL, m_szModuleName, "Password", &dbv))
-	{
-		JCallService(MS_DB_CRYPT_DECODESTRING, lstrlenA(dbv.pszVal) + 1, (LPARAM)dbv.pszVal);
-		TCHAR *pssw = mir_a2t(dbv.pszVal);
-		JSetStringCrypt(NULL, "LoginPassword", pssw);
-		mir_free(pssw);
-		JFreeVariant(&dbv);
-		JDeleteSetting(NULL, "Password");
-	}
-
-	
 	CleanLastResourceMap();
 }
 
@@ -231,6 +196,8 @@ CJabberProto::~CJabberProto()
 	delete m_pInfoFrame;
 
 	DestroyHookableEvent( m_hEventNudge );
+	DestroyHookableEvent( m_hEventRawXMLIn );
+	DestroyHookableEvent( m_hEventRawXMLOut );
 	DestroyHookableEvent( m_hEventXStatusIconChanged );
 	DestroyHookableEvent( m_hEventXStatusChanged );
 	if ( m_hInitChat )
@@ -241,7 +208,6 @@ CJabberProto::~CJabberProto()
 	ListWipe();
 	DeleteCriticalSection( &m_csLists );
 
-	mir_free( m_tszSelectedLang );
 	mir_free( m_phIconLibItems );
 
 	DeleteCriticalSection( &m_filterInfo.csPatternLock );
@@ -261,20 +227,9 @@ CJabberProto::~CJabberProto()
 	mir_free( m_szModuleName );
 	mir_free( m_tszUserName );
 
-	int i;
-	for ( i=0; i < m_lstTransports.getCount(); i++ )
-		mir_free( m_lstTransports[i] );
+	for ( int i=0; i < m_lstTransports.getCount(); i++ )
+		free( m_lstTransports[i] );
 	m_lstTransports.destroy();
-
-	for ( i=0; i < m_lstJabberFeatCapPairsDynamic.getCount(); i++ ) {
-		mir_free( m_lstJabberFeatCapPairsDynamic[i]->szExt );
-		mir_free( m_lstJabberFeatCapPairsDynamic[i]->szFeature );
-		if ( m_lstJabberFeatCapPairsDynamic[i]->szDescription )
-			mir_free( m_lstJabberFeatCapPairsDynamic[i]->szDescription );
-		delete m_lstJabberFeatCapPairsDynamic[i];
-	}
-	m_lstJabberFeatCapPairsDynamic.destroy();
-	m_hPrivacyMenuItems.destroy();
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////
@@ -295,11 +250,11 @@ int CJabberProto::OnModulesLoadedEx( WPARAM, LPARAM )
 
 		GCREGISTER gcr = {0};
 		gcr.cbSize = sizeof( GCREGISTER );
-		gcr.dwFlags = GC_TYPNOTIF | GC_CHANMGR | GC_TCHAR;
+		gcr.dwFlags = GC_TYPNOTIF|GC_CHANMGR;
 		gcr.iMaxText = 0;
 		gcr.nColors = 16;
 		gcr.pColors = &crCols[0];
-		gcr.ptszModuleDispName = m_tszUserName;
+		gcr.pszModuleDispName = m_szModuleName;
 		gcr.pszModule = m_szModuleName;
 		CallServiceSync( MS_GC_REGISTER, NULL, ( LPARAM )&gcr );
 
@@ -362,7 +317,7 @@ int CJabberProto::OnModulesLoadedEx( WPARAM, LPARAM )
 					TCHAR* resourcepos = _tcschr( domain, '/' );
 					if ( resourcepos != NULL )
 						*resourcepos = '\0';
-					m_lstTransports.insert( mir_tstrdup( domain ));
+					m_lstTransports.insert( _tcsdup( domain ));
 					JFreeVariant( &dbv );
 		}	}	}
 
@@ -423,12 +378,11 @@ HANDLE CJabberProto::AddToListByJID( const TCHAR* newJid, DWORD flags )
 
 HANDLE CJabberProto::AddToList( int flags, PROTOSEARCHRESULT* psr )
 {
-	if ( psr->cbSize != sizeof( JABBER_SEARCH_RESULT ) && psr->id == NULL )
+	if ( psr->cbSize != sizeof( JABBER_SEARCH_RESULT ))
 		return NULL;
 
 	JABBER_SEARCH_RESULT* jsr = ( JABBER_SEARCH_RESULT* )psr;
-	TCHAR *jid = psr->id ? psr->id : jsr->jid;
-	return AddToListByJID( jid, flags );
+	return AddToListByJID( jsr->jid, flags );
 }
 
 HANDLE __cdecl CJabberProto::AddToListByEvent( int flags, int /*iContact*/, HANDLE hDbEvent )
@@ -464,7 +418,7 @@ HANDLE __cdecl CJabberProto::AddToListByEvent( int flags, int /*iContact*/, HAND
 	lastName = firstName + strlen( firstName ) + 1;
 	jid = lastName + strlen( lastName ) + 1;
 
-	TCHAR* newJid = dbei.flags & DBEF_UTF ? mir_utf8decodeT( jid ) : mir_a2t( jid );
+	TCHAR* newJid = mir_a2t( jid );
 	hContact = ( HANDLE ) AddToListByJID( newJid, flags );
 	mir_free( newJid );
 	return hContact;
@@ -501,9 +455,9 @@ int CJabberProto::Authorize( HANDLE hContact )
 
 	Log( "Send 'authorization allowed' to " TCHAR_STR_PARAM, jid );
 
-	TCHAR* newJid = dbei.flags & DBEF_UTF ? mir_utf8decodeT( jid ) : mir_a2t( jid );
+	m_ThreadInfo->send( XmlNode( _T("presence")) << XATTR( _T("to"), _A2T(jid)) << XATTR( _T("type"), _T("subscribed")));
 
-	m_ThreadInfo->send( XmlNode( _T("presence")) << XATTR( _T("to"), newJid) << XATTR( _T("type"), _T("subscribed")));
+	TCHAR* newJid = mir_a2t( jid );
 
 	// Automatically add this user to my roster if option is enabled
 	if ( m_options.AutoAdd == TRUE ) {
@@ -525,7 +479,7 @@ int CJabberProto::Authorize( HANDLE hContact )
 ////////////////////////////////////////////////////////////////////////////////////////
 // JabberAuthDeny - handles the unsuccessful authorization
 
-int CJabberProto::AuthDeny( HANDLE hContact, const TCHAR* /*szReason*/ )
+int CJabberProto::AuthDeny( HANDLE hContact, const char* /*szReason*/ )
 {
 	DBEVENTINFO dbei;
 	char* nick, *firstName, *lastName, *jid;
@@ -560,11 +514,8 @@ int CJabberProto::AuthDeny( HANDLE hContact, const TCHAR* /*szReason*/ )
 
 	Log( "Send 'authorization denied' to " TCHAR_STR_PARAM, jid );
 
-	TCHAR* newJid = dbei.flags & DBEF_UTF ? mir_utf8decodeT( jid ) : mir_a2t( jid );
+	m_ThreadInfo->send( XmlNode( _T("presence")) << XATTR( _T("to"), _A2T(jid)) << XATTR( _T("type"), _T("unsubscribed")));
 
-	m_ThreadInfo->send( XmlNode( _T("presence")) << XATTR( _T("to"), newJid) << XATTR( _T("type"), _T("unsubscribed")));
-
-	mir_free( newJid );
 	mir_free( dbei.pBlob );
 	return 0;
 }
@@ -580,7 +531,7 @@ int __cdecl CJabberProto::AuthRecv( HANDLE, PROTORECVEVENT* )
 ////////////////////////////////////////////////////////////////////////////////////////
 // PSS_AUTHREQUEST
 
-int __cdecl CJabberProto::AuthRequest( HANDLE, const TCHAR* )
+int __cdecl CJabberProto::AuthRequest( HANDLE, const char* )
 {	
 	return 1;
 }
@@ -596,16 +547,16 @@ HANDLE __cdecl CJabberProto::ChangeInfo( int /*iInfoType*/, void* )
 ////////////////////////////////////////////////////////////////////////////////////////
 // JabberFileAllow - starts a file transfer
 
-HANDLE __cdecl CJabberProto::FileAllow( HANDLE /*hContact*/, HANDLE hTransfer, const TCHAR* szPath )
+HANDLE __cdecl CJabberProto::FileAllow( HANDLE /*hContact*/, HANDLE hTransfer, const char* szPath )
 {
 	if ( !m_bJabberOnline )
 		return 0;
 
 	filetransfer* ft = ( filetransfer* )hTransfer;
-	ft->std.tszWorkingDir = mir_tstrdup( szPath );
-	size_t len = _tcslen( ft->std.tszWorkingDir )-1;
-	if ( ft->std.tszWorkingDir[len] == '/' || ft->std.tszWorkingDir[len] == '\\' )
-		ft->std.tszWorkingDir[len] = 0;
+	ft->std.workingDir = mir_strdup( szPath );
+	size_t len = strlen( ft->std.workingDir )-1;
+	if ( ft->std.workingDir[len] == '/' || ft->std.workingDir[len] == '\\' )
+		ft->std.workingDir[len] = 0;
 
 	switch ( ft->type ) {
 	case FT_OOB:
@@ -652,7 +603,7 @@ int __cdecl CJabberProto::FileCancel( HANDLE /*hContact*/, HANDLE hTransfer )
 ////////////////////////////////////////////////////////////////////////////////////////
 // JabberFileDeny - denies a file transfer
 
-int __cdecl CJabberProto::FileDeny( HANDLE /*hContact*/, HANDLE hTransfer, const TCHAR* /*reason*/ )
+int __cdecl CJabberProto::FileDeny( HANDLE /*hContact*/, HANDLE hTransfer, const char* )
 {
 	if ( !m_bJabberOnline )
 		return 1;
@@ -680,14 +631,20 @@ int __cdecl CJabberProto::FileDeny( HANDLE /*hContact*/, HANDLE hTransfer, const
 ////////////////////////////////////////////////////////////////////////////////////////
 // JabberFileResume - processes file renaming etc
 
-int __cdecl CJabberProto::FileResume( HANDLE hTransfer, int* action, const TCHAR** szFilename )
+int __cdecl CJabberProto::FileResume( HANDLE hTransfer, int* action, const char** szFilename )
 {
 	filetransfer* ft = ( filetransfer* )hTransfer;
 	if ( !m_bJabberOnline || ft == NULL )
 		return 1;
 
-	if ( *action == FILERESUME_RENAME )
-		replaceStr( ft->std.tszCurrentFile, *szFilename );
+	if ( *action == FILERESUME_RENAME ) {
+		if ( ft->wszFileName != NULL ) {
+			mir_free( ft->wszFileName );
+			ft->wszFileName = NULL;
+		}
+
+		replaceStr( ft->std.currentFile, *szFilename );
+	}
 
 	SetEvent( ft->hWaitEvent );
 	return 0;
@@ -700,13 +657,13 @@ DWORD_PTR __cdecl CJabberProto::GetCaps( int type, HANDLE /*hContact*/ )
 {
 	switch( type ) {
 	case PFLAGNUM_1:
-		return PF1_IM | PF1_AUTHREQ | PF1_CHAT | PF1_SERVERCLIST | PF1_MODEMSG | PF1_BASICSEARCH | PF1_EXTSEARCH | PF1_FILE;
+		return PF1_IM | PF1_AUTHREQ | PF1_CHAT | PF1_SERVERCLIST | PF1_MODEMSG|PF1_BASICSEARCH | PF1_EXTSEARCH | PF1_FILE;
 	case PFLAGNUM_2:
 		return PF2_ONLINE | PF2_INVISIBLE | PF2_SHORTAWAY | PF2_LONGAWAY | PF2_HEAVYDND | PF2_FREECHAT;
 	case PFLAGNUM_3:
 		return PF2_ONLINE | PF2_SHORTAWAY | PF2_LONGAWAY | PF2_HEAVYDND | PF2_FREECHAT;
 	case PFLAGNUM_4:
-		return PF4_FORCEAUTH | PF4_NOCUSTOMAUTH | PF4_NOAUTHDENYREASON | PF4_SUPPORTTYPING | PF4_AVATARS | PF4_IMSENDUTF;
+		return PF4_FORCEAUTH | PF4_NOCUSTOMAUTH | PF4_SUPPORTTYPING | PF4_AVATARS | PF4_IMSENDUTF;
 	case PFLAG_UNIQUEIDTEXT:
 		return ( DWORD_PTR ) JTranslate( "JID" );
 	case PFLAG_UNIQUEIDSETTING:
@@ -720,19 +677,8 @@ DWORD_PTR __cdecl CJabberProto::GetCaps( int type, HANDLE /*hContact*/ )
 
 HICON __cdecl CJabberProto::GetIcon( int iconIndex )
 {
-	if (( iconIndex & 0xffff ) == PLI_PROTOCOL ) {
-		if ( iconIndex & PLIF_ICOLIBHANDLE )
-			return (HICON)GetIconHandle( IDI_JABBER );
-		
-		HICON hIcon = LoadIconEx( "main" );
-
-		if ( iconIndex & PLIF_ICOLIB )
-			return hIcon;
-
-		HICON hIcon2 = CopyIcon( hIcon );
-		g_ReleaseIcon( hIcon );
-		return hIcon2;
-	}
+	if (( iconIndex & 0xffff ) == PLI_PROTOCOL )
+		return CopyIcon( LoadIconEx( "main" ));
 
 	return NULL;
 }
@@ -838,7 +784,7 @@ int __cdecl CJabberProto::GetInfo( HANDLE hContact, int /*infoType*/ )
 
 struct JABBER_SEARCH_BASIC
 {	int hSearch;
-	TCHAR jid[128];
+	char jid[128];
 };
 
 void __cdecl CJabberProto::BasicSearchThread( JABBER_SEARCH_BASIC *jsb )
@@ -847,13 +793,14 @@ void __cdecl CJabberProto::BasicSearchThread( JABBER_SEARCH_BASIC *jsb )
 
 	JABBER_SEARCH_RESULT jsr = { 0 };
 	jsr.hdr.cbSize = sizeof( JABBER_SEARCH_RESULT );
-	jsr.hdr.flags = PSR_TCHAR;
-	jsr.hdr.nick = jsb->jid;
-	jsr.hdr.firstName = _T("");
-	jsr.hdr.lastName = _T("");
-	jsr.hdr.id = jsb->jid;
+	jsr.hdr.nick = "";
+	jsr.hdr.firstName = "";
+	jsr.hdr.lastName = "";
+	jsr.hdr.email = jsb->jid;
 
-	_tcsncpy( jsr.jid, jsb->jid, SIZEOF( jsr.jid ));
+	TCHAR* jid = mir_a2t(jsb->jid);
+	_tcsncpy( jsr.jid, jid, SIZEOF( jsr.jid ));
+	mir_free( jid );
 
 	jsr.jid[SIZEOF( jsr.jid )-1] = '\0';
 	JSendBroadcast( NULL, ACKTYPE_SEARCH, ACKRESULT_DATA, ( HANDLE ) jsb->hSearch, ( LPARAM )&jsr );
@@ -861,7 +808,7 @@ void __cdecl CJabberProto::BasicSearchThread( JABBER_SEARCH_BASIC *jsb )
 	mir_free( jsb );
 }
 
-HANDLE __cdecl CJabberProto::SearchBasic( const TCHAR* szJid )
+HANDLE __cdecl CJabberProto::SearchBasic( const char* szJid )
 {
 	Log( "JabberBasicSearch called with lParam = '%s'", szJid );
 
@@ -869,21 +816,18 @@ HANDLE __cdecl CJabberProto::SearchBasic( const TCHAR* szJid )
 	if ( !m_bJabberOnline || ( jsb=( JABBER_SEARCH_BASIC * ) mir_alloc( sizeof( JABBER_SEARCH_BASIC )) )==NULL )
 		return 0;
 
-	if ( _tcschr( szJid, '@' ) == NULL ) {
-		TCHAR *szServer = mir_a2t( m_ThreadInfo->server );
-		const TCHAR* p = _tcsstr( szJid, szServer );
+	if ( strchr( szJid, '@' ) == NULL ) {
+		const char* p = strstr( szJid, m_ThreadInfo->server );
 		if ( !p ) {
-			mir_free( szServer );
-			szServer = JGetStringT( NULL, "LoginServer" ); 
-			if ( !szServer )
-				szServer = mir_tstrdup( _T( "jabber.org" ));
+			char szServer[ 100 ];
+			if ( JGetStaticString( "LoginServer", NULL, szServer, sizeof szServer ))
+				strcpy( szServer, "jabber.org" );
 
-			mir_sntprintf( jsb->jid, SIZEOF(jsb->jid), _T("%s@%s"), szJid, szServer );
+			mir_snprintf( jsb->jid, SIZEOF(jsb->jid), "%s@%s", szJid, szServer );
 		}
-		else _tcsncpy( jsb->jid, szJid, SIZEOF(jsb->jid));
-		mir_free( szServer );
+		else strncpy( jsb->jid, szJid, SIZEOF(jsb->jid));
 	}
-	else _tcsncpy( jsb->jid, szJid, SIZEOF(jsb->jid));
+	else strncpy( jsb->jid, szJid, SIZEOF(jsb->jid));
 
 	Log( "Adding '%s' without validation", jsb->jid );
 	jsb->hSearch = SerialNext();
@@ -894,7 +838,7 @@ HANDLE __cdecl CJabberProto::SearchBasic( const TCHAR* szJid )
 ////////////////////////////////////////////////////////////////////////////////////////
 // SearchByEmail - searches the contact by its e-mail
 
-HANDLE __cdecl CJabberProto::SearchByEmail( const TCHAR* email )
+HANDLE __cdecl CJabberProto::SearchByEmail( const char* email )
 {
 	if ( !m_bJabberOnline ) return 0;
 	if ( email == NULL ) return 0;
@@ -906,14 +850,14 @@ HANDLE __cdecl CJabberProto::SearchByEmail( const TCHAR* email )
 	int iqId = SerialNext();
 	IqAdd( iqId, IQ_PROC_GETSEARCH, &CJabberProto::OnIqResultSetSearch );
 	m_ThreadInfo->send( XmlNodeIq( _T("set"), iqId, _A2T(szServerName)) << XQUERY( _T("jabber:iq:search")) 
-		<< XCHILD( _T("email"), email));
+		<< XCHILD( _T("email"), _A2T(email)));
 	return ( HANDLE )iqId;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////
 // JabberSearchByName - searches the contact by its first or last name, or by a nickname
 
-HANDLE __cdecl CJabberProto::SearchByName( const TCHAR* nick, const TCHAR* firstName, const TCHAR* lastName )
+HANDLE __cdecl CJabberProto::SearchByName( const char* nick, const char* firstName, const char* lastName )
 {
 	if ( !m_bJabberOnline )
 		return NULL;
@@ -931,29 +875,31 @@ HANDLE __cdecl CJabberProto::SearchByName( const TCHAR* nick, const TCHAR* first
 	if ( bIsExtFormat ) {
 		IqAdd( iqId, IQ_PROC_GETSEARCH, &CJabberProto::OnIqResultExtSearch );
 
-		if ( m_tszSelectedLang )
-			iq << XATTR( _T("xml:lang"), m_tszSelectedLang );
-
+		TCHAR *szXmlLang = GetXmlLang();
+		if ( szXmlLang ) {
+			iq << XATTR( _T("xml:lang"), szXmlLang );
+			mir_free( szXmlLang );
+		}
 		HXML x = query << XCHILDNS( _T("x"), _T(JABBER_FEAT_DATA_FORMS)) << XATTR( _T("type"), _T("submit"));
 		if ( nick[0] != '\0' )
-			x << XCHILD( _T("field")) << XATTR( _T("var"), _T("user")) << XATTR( _T("value"), nick);
+			x << XCHILD( _T("field")) << XATTR( _T("var"), _T("user")) << XATTR( _T("value"), _A2T(nick));
 
 		if ( firstName[0] != '\0' )
-			x << XCHILD( _T("field")) << XATTR( _T("var"), _T("fn")) << XATTR( _T("value"), firstName);
+			x << XCHILD( _T("field")) << XATTR( _T("var"), _T("fn")) << XATTR( _T("value"), _A2T(firstName));
 
 		if ( lastName[0] != '\0' )
-			x << XCHILD( _T("field")) << XATTR( _T("var"), _T("given")) << XATTR( _T("value"), lastName);
+			x << XCHILD( _T("field")) << XATTR( _T("var"), _T("given")) << XATTR( _T("value"), _A2T(lastName));
 	}
 	else {
 		IqAdd( iqId, IQ_PROC_GETSEARCH, &CJabberProto::OnIqResultSetSearch );
 		if ( nick[0] != '\0' )
-			query << XCHILD( _T("nick"), nick);
+			query << XCHILD( _T("nick"), _A2T(nick));
 
 		if ( firstName[0] != '\0' )
-			query << XCHILD( _T("first"), firstName);
+			query << XCHILD( _T("first"), _A2T(firstName));
 
 		if ( lastName[0] != '\0' )
-			query << XCHILD( _T("last"), lastName);
+			query << XCHILD( _T("last"), _A2T(lastName));
 	}
 
 	m_ThreadInfo->send( iq );
@@ -971,10 +917,10 @@ int __cdecl CJabberProto::RecvContacts( HANDLE /*hContact*/, PROTORECVEVENT* )
 ////////////////////////////////////////////////////////////////////////////////////////
 // RecvFile
 
-int __cdecl CJabberProto::RecvFile( HANDLE hContact, PROTORECVFILET* evt )
+int __cdecl CJabberProto::RecvFile( HANDLE hContact, PROTORECVFILE* evt )
 {
 	CCSDATA ccs = { hContact, PSR_FILE, 0, ( LPARAM )evt };
-	return JCallService( MS_PROTO_RECVFILET, 0, ( LPARAM )&ccs );
+	return JCallService( MS_PROTO_RECVFILE, 0, ( LPARAM )&ccs );
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////
@@ -1016,7 +962,7 @@ int __cdecl CJabberProto::SendContacts( HANDLE /*hContact*/, int /*flags*/, int 
 ////////////////////////////////////////////////////////////////////////////////////////
 // SendFile - sends a file
 
-HANDLE __cdecl CJabberProto::SendFile( HANDLE hContact, const TCHAR* szDescription, TCHAR** ppszFiles )
+HANDLE __cdecl CJabberProto::SendFile( HANDLE hContact, const char* szDescription, char** ppszFiles )
 {
 	if ( !m_bJabberOnline ) return 0;
 
@@ -1028,7 +974,7 @@ HANDLE __cdecl CJabberProto::SendFile( HANDLE hContact, const TCHAR* szDescripti
 		return 0;
 
 	int i, j;
-	struct _stati64 statbuf;
+	struct _stat statbuf;
 	JABBER_LIST_ITEM* item = ListGetItemPtr( LIST_ROSTER, dbv.ptszVal );
 	if ( item == NULL ) {
 		JFreeVariant( &dbv );
@@ -1070,20 +1016,20 @@ HANDLE __cdecl CJabberProto::SendFile( HANDLE hContact, const TCHAR* szDescripti
 	while( ppszFiles[ ft->std.totalFiles ] != NULL )
 		ft->std.totalFiles++;
 
-	ft->std.ptszFiles = ( TCHAR** ) mir_alloc( sizeof( TCHAR* )* ft->std.totalFiles );
-	ft->fileSize = ( unsigned __int64* ) mir_alloc( sizeof( unsigned __int64 ) * ft->std.totalFiles );
+	ft->std.files = ( char** ) mir_alloc( sizeof( char* )* ft->std.totalFiles );
+	ft->fileSize = ( long* ) mir_alloc( sizeof( long ) * ft->std.totalFiles );
 	for( i=j=0; i < ft->std.totalFiles; i++ ) {
-		if ( _tstati64( ppszFiles[i], &statbuf ))
+		if ( _stat( ppszFiles[i], &statbuf ))
 			Log( "'%s' is an invalid filename", ppszFiles[i] );
 		else {
-			ft->std.ptszFiles[j] = mir_tstrdup( ppszFiles[i] );
+			ft->std.files[j] = mir_strdup( ppszFiles[i] );
 			ft->fileSize[j] = statbuf.st_size;
 			j++;
 			ft->std.totalBytes += statbuf.st_size;
 	}	}
 
-	ft->std.tszCurrentFile = mir_tstrdup( ppszFiles[0] );
-	ft->szDescription = mir_tstrdup( szDescription );
+	ft->std.currentFile = mir_strdup( ppszFiles[0] );
+	ft->szDescription = mir_strdup( szDescription );
 	ft->jid = mir_tstrdup( dbv.ptszVal );
 	JFreeVariant( &dbv );
 
@@ -1404,9 +1350,9 @@ int __cdecl CJabberProto::SendAwayMsg( HANDLE /*hContact*/, HANDLE /*hProcess*/,
 ////////////////////////////////////////////////////////////////////////////////////////
 // JabberSetAwayMsg - sets the away status message
 
-int __cdecl CJabberProto::SetAwayMsg( int status, const TCHAR* msg )
+int __cdecl CJabberProto::SetAwayMsg( int status, const char* msg )
 {
-	Log( "SetAwayMsg called, wParam=%d lParam=" TCHAR_STR_PARAM, status, msg );
+	Log( "SetAwayMsg called, wParam=%d lParam=%s", status, msg );
 
 	EnterCriticalSection( &m_csModeMsgMutex );
 
@@ -1438,7 +1384,7 @@ int __cdecl CJabberProto::SetAwayMsg( int status, const TCHAR* msg )
 		return 1;
 	}
 
-	TCHAR* newModeMsg = mir_tstrdup( msg );
+	TCHAR* newModeMsg = mir_a2t( msg );
 
 	if (( *szMsg == NULL && newModeMsg == NULL ) ||
 		( *szMsg != NULL && newModeMsg != NULL && !lstrcmp( *szMsg, newModeMsg )) ) {
@@ -1570,7 +1516,7 @@ int __cdecl CJabberProto::OnEvent( PROTOEVENTTYPE eventType, WPARAM wParam, LPAR
 		{	
 			CLISTMENUITEM clmi = { 0 };
 			clmi.cbSize = sizeof( CLISTMENUITEM );
-			clmi.flags = CMIM_NAME | CMIF_TCHAR | CMIF_KEEPUNTRANSLATED;
+			clmi.flags = CMIM_NAME | CMIF_TCHAR;
 			clmi.ptszName = m_tszUserName;
 			JCallService( MS_CLIST_MODIFYMENUITEM, ( WPARAM )m_hMenuRoot, ( LPARAM )&clmi );
 	}	}	

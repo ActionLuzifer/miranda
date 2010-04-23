@@ -93,7 +93,6 @@ struct OptionsDlgData
 	RECT rcDisplay;
 	RECT rcTab;
 	HFONT hBoldFont;
-	TCHAR szFilterString[1024];	
 };
 
 static HTREEITEM FindNamedTreeItemAtRoot(HWND hwndTree, const TCHAR* name)
@@ -249,7 +248,7 @@ static void FindFilterStrings(int enableKeywordFiltering, int current, HWND hWnd
 	
 	TCHAR * PluginFullName = NULL;
 	char * temp = GetPluginNameByInstance( page->hInst );
-	if ( temp ) PluginFullName = mir_a2t( temp );
+	if ( temp ) PluginFullName = a2t( temp );
 	GetDialogStrings(enableKeywordFiltering, key, GetPluginName(page->hInst, pluginName, SIZEOF(pluginName)), hWnd, page->pszGroup, page->pszTitle, page->pszTab, PluginFullName );
 	if ( PluginFullName ) mir_free( PluginFullName ) ;
 	
@@ -340,11 +339,11 @@ static LRESULT CALLBACK OptionsFilterSubclassProc(HWND hWnd, UINT message, WPARA
 	return 0;
 }
 
-static BOOL CheckPageShow( HWND hdlg, OptionsDlgData * dat, int i )
+static BOOL CheckPageShow( HWND hdlg, OptionsDlgData * dat, int i,  TCHAR * szFilterString )
 {
-	if (dat->szFilterString && dat->szFilterString[0] && !MatchesFilter(&dat->opd[i], dat->szFilterString)) return FALSE;
-	if ((dat->opd[i].flags & ODPF_SIMPLEONLY) && IsDlgButtonChecked( hdlg, IDC_EXPERT)) return FALSE;
-	if ((dat->opd[i].flags & ODPF_EXPERTONLY) && !IsDlgButtonChecked( hdlg, IDC_EXPERT)) return FALSE;
+	if ( szFilterString && _tcslen(szFilterString) > 0 && !MatchesFilter(&dat->opd[i], szFilterString) ) return FALSE;
+	if (( dat->opd[i].flags & ODPF_SIMPLEONLY ) && IsDlgButtonChecked( hdlg, IDC_EXPERT )) return FALSE;
+	if (( dat->opd[i].flags & ODPF_EXPERTONLY ) && !IsDlgButtonChecked( hdlg, IDC_EXPERT )) return FALSE;
 	return TRUE;
 }
 
@@ -488,7 +487,7 @@ static void FillFilterCombo(int enableKeywordFiltering, HWND hDlg, struct Option
 		{
 			char * name = GetPluginNameByInstance( inst );
 			if ( name )
-				dllName = mir_a2t( name ); 
+				dllName = a2t( name ); 
 		}
 
 		if (!dllName) dllName = mir_tstrdup( _tcsrchr(tszModuleName,_T('\\')) );
@@ -509,8 +508,7 @@ static void FillFilterCombo(int enableKeywordFiltering, HWND hDlg, struct Option
 static INT_PTR CALLBACK OptionsDlgProc(HWND hdlg,UINT message,WPARAM wParam,LPARAM lParam)
 {
 	struct OptionsDlgData* dat = (struct OptionsDlgData* )GetWindowLongPtr( hdlg, GWLP_USERDATA );
-	HWND hwndTree = GetDlgItem(hdlg, IDC_PAGETREE);
-
+	static TCHAR szFilterString[1024]={0};	
 	switch ( message ) {
 	case WM_CTLCOLORSTATIC:
 		switch ( GetDlgCtrlID(( HWND )lParam )) 
@@ -551,7 +549,7 @@ static INT_PTR CALLBACK OptionsDlgProc(HWND hdlg,UINT message,WPARAM wParam,LPAR
 
 			Utils_RestoreWindowPositionNoSize(hdlg, NULL, "Options", "");
 			TranslateDialogDefault(hdlg);
-			SendMessage(GetDlgItem(hdlg, IDC_HEADERBAR), WM_SETICON, 0, (LPARAM)LoadSkinIcon(SKINICON_OTHER_MIRANDA, true));
+			SendMessage(GetDlgItem(hdlg, IDC_HEADERBAR), WM_SETICON, 0, (LPARAM)LoadIcon(hMirandaInst, MAKEINTRESOURCE(IDI_MIRANDA)));
 			Window_SetIcon_IcoLib(hdlg, SKINICON_OTHER_OPTIONS);
 			CheckDlgButton(hdlg,IDC_EXPERT,DBGetContactSettingByte(NULL,"Options","Expert",SETTING_SHOWEXPERT_DEFAULT)?BST_CHECKED:BST_UNCHECKED);
 			EnableWindow(GetDlgItem(hdlg,IDC_APPLY),FALSE);
@@ -634,7 +632,7 @@ static INT_PTR CALLBACK OptionsDlgProc(HWND hdlg,UINT message,WPARAM wParam,LPAR
 					#if defined ( _UNICODE )
 						opd->pszTitle = ( TCHAR* )mir_wstrdup( odp->ptszTitle );
 					#else
-						opd->pszTitle = mir_u2a(( WCHAR* )odp->ptszTitle );
+						opd->pszTitle = u2a(( WCHAR* )odp->ptszTitle );
 					#endif
 				}
 				else opd->pszTitle = ( TCHAR* )mir_strdup( odp->pszTitle );
@@ -645,7 +643,7 @@ static INT_PTR CALLBACK OptionsDlgProc(HWND hdlg,UINT message,WPARAM wParam,LPAR
 					#if defined ( _UNICODE )
 						opd->pszGroup = ( TCHAR* )mir_wstrdup( odp->ptszGroup );
 					#else
-						opd->pszGroup = mir_u2a(( WCHAR* )odp->ptszGroup );
+						opd->pszGroup = u2a(( WCHAR* )odp->ptszGroup );
 					#endif
 				}
 				else opd->pszGroup = ( TCHAR* )mir_strdup( odp->pszGroup );
@@ -656,7 +654,7 @@ static INT_PTR CALLBACK OptionsDlgProc(HWND hdlg,UINT message,WPARAM wParam,LPAR
 					#if defined ( _UNICODE )
 						opd->pszTab = ( TCHAR* )mir_wstrdup( odp->ptszTab );
 					#else
-						opd->pszTab = mir_u2a(( WCHAR* )odp->ptszTab );
+						opd->pszTab = u2a(( WCHAR* )odp->ptszTab );
 					#endif
 				}
 				else opd->pszTab = ( TCHAR* )mir_strdup( odp->pszTab );
@@ -702,15 +700,15 @@ static INT_PTR CALLBACK OptionsDlgProc(HWND hdlg,UINT message,WPARAM wParam,LPAR
 			
 			LPARAM oldSel = SendDlgItemMessage(hdlg, IDC_KEYWORD_FILTER, CB_GETEDITSEL, 0, 0);
 
-			GetDlgItemText(hdlg, IDC_KEYWORD_FILTER, dat->szFilterString, SIZEOF(dat->szFilterString));
+			GetDlgItemText(hdlg, IDC_KEYWORD_FILTER, szFilterString, SIZEOF(szFilterString));
 			
 			//if filter string is set to all modules then make the filter string empty (this will return all modules)
-			if (_tcscmp(dat->szFilterString, TranslateTS( ALL_MODULES_FILTER ) ) == 0) {
-				dat->szFilterString[0] = 0; 
+			if (_tcscmp(szFilterString, TranslateTS( ALL_MODULES_FILTER ) ) == 0) {
+				szFilterString[0] = 0; 
 				bRemoveFocusFromFilter = TRUE;
 			} 
 			//if filter string is set to core modules replace it with the name of the executable (this will return all core modules)
-			else if (_tcscmp(dat->szFilterString, TranslateTS( CORE_MODULES_FILTER) ) == 0) {
+			else if (_tcscmp(szFilterString, TranslateTS( CORE_MODULES_FILTER) ) == 0) {
 				//replace string with process name - that will show core settings
 				TCHAR szFileName[300];
 				GetModuleFileName(NULL, szFileName, SIZEOF(szFileName));
@@ -720,7 +718,7 @@ static INT_PTR CALLBACK OptionsDlgProc(HWND hdlg,UINT message,WPARAM wParam,LPAR
 				else
 					pos = szFileName;
 				
-				_tcsncpy(dat->szFilterString, pos, SIZEOF(dat->szFilterString));
+				_tcsncpy(szFilterString, pos, SIZEOF(szFilterString));
 			}
 			else  {
 				int sel = SendMessage( GetDlgItem(hdlg, IDC_KEYWORD_FILTER ), (UINT) CB_GETCURSEL, 0,0 );
@@ -731,12 +729,12 @@ static INT_PTR CALLBACK OptionsDlgProc(HWND hdlg,UINT message,WPARAM wParam,LPAR
 					TCHAR *pos = _tcsrchr(szFileName, _T('\\'));
 					if (pos) pos++;
 					else pos = szFileName;
-					_tcsncpy(dat->szFilterString, pos, SIZEOF(dat->szFilterString));
+					_tcsncpy(szFilterString, pos, SIZEOF(szFilterString));
 			}	}
 			
-			_tcslwr_locale(dat->szFilterString); //all strings are stored as lowercase ... make sure filter string is lowercase too
+			_tcslwr_locale(szFilterString); //all strings are stored as lowercase ... make sure filter string is lowercase too
 
-			ShowWindow(hwndTree, SW_HIDE);	 //deleteall is annoyingly visible
+			ShowWindow(GetDlgItem(hdlg,IDC_PAGETREE),SW_HIDE);	 //deleteall is annoyingly visible
 			
 			HWND oldWnd = NULL;
 			HWND oldTab = NULL; 
@@ -748,9 +746,9 @@ static INT_PTR CALLBACK OptionsDlgProc(HWND hdlg,UINT message,WPARAM wParam,LPAR
 
 			dat->hCurrentPage = NULL;
 
-			TreeView_SelectItem(hwndTree, NULL);
+			TreeView_SelectItem(GetDlgItem(hdlg,IDC_PAGETREE),NULL);
 
-			TreeView_DeleteAllItems(hwndTree);
+			TreeView_DeleteAllItems(GetDlgItem(hdlg,IDC_PAGETREE));
 			
 			tvis.hParent = NULL;
 			tvis.hInsertAfter = TVI_SORT;
@@ -761,7 +759,7 @@ static INT_PTR CALLBACK OptionsDlgProc(HWND hdlg,UINT message,WPARAM wParam,LPAR
 				TCHAR * useTitle;
 				if (fullTitle) mir_free(fullTitle);
 				fullTitle=NULL;
-				if (! CheckPageShow( hdlg, dat, i ) ) continue;
+				if (! CheckPageShow( hdlg, dat, i, szFilterString ) ) continue;
 				tvis.hParent = NULL;
 				if ( FilterInst!=NULL ) {
 					size_t sz=dat->opd[i].pszGroup?_tcslen(dat->opd[i].pszGroup)+1:0;
@@ -772,39 +770,39 @@ static INT_PTR CALLBACK OptionsDlgProc(HWND hdlg,UINT message,WPARAM wParam,LPAR
 				}
 				useTitle=fullTitle?fullTitle:dat->opd[i].pszTitle;
 				if(dat->opd[i].pszGroup != NULL && FilterInst==NULL) {
-					tvis.hParent = FindNamedTreeItemAtRoot(hwndTree, dat->opd[i].pszGroup);
+					tvis.hParent = FindNamedTreeItemAtRoot(GetDlgItem(hdlg,IDC_PAGETREE),dat->opd[i].pszGroup);
 					if(tvis.hParent == NULL) {
 						tvis.item.lParam = -1;
 						tvis.item.pszText = dat->opd[i].pszGroup;
-						tvis.hParent = TreeView_InsertItem(hwndTree, &tvis);
+						tvis.hParent = TreeView_InsertItem( GetDlgItem(hdlg,IDC_PAGETREE), &tvis );
 					}
 				}
 				else {
 					TVITEM tvi;
-					tvi.hItem = FindNamedTreeItemAtRoot(hwndTree,useTitle);
+					tvi.hItem = FindNamedTreeItemAtRoot(GetDlgItem(hdlg,IDC_PAGETREE),useTitle);
 					if( tvi.hItem != NULL ) {
 						if ( i == dat->currentPage ) dat->hCurrentPage=tvi.hItem;
 						tvi.mask = TVIF_PARAM;
-						TreeView_GetItem(hwndTree,&tvi);
+						TreeView_GetItem(GetDlgItem(hdlg,IDC_PAGETREE),&tvi);
 						if ( tvi.lParam == -1 ) {
 							tvi.lParam = i;
-							TreeView_SetItem(hwndTree,&tvi);
+							TreeView_SetItem(GetDlgItem(hdlg,IDC_PAGETREE),&tvi);
 							continue;
 				}	}	}
 
 				if ( dat->opd[i].pszTab != NULL ) {
 					HTREEITEM hItem;
 					if (tvis.hParent == NULL)
-						hItem = FindNamedTreeItemAtRoot(hwndTree,useTitle);
+						hItem = FindNamedTreeItemAtRoot(GetDlgItem(hdlg,IDC_PAGETREE),useTitle);
 					else
-						hItem = FindNamedTreeItemAtChildren(hwndTree,tvis.hParent,useTitle);
+						hItem = FindNamedTreeItemAtChildren(GetDlgItem(hdlg,IDC_PAGETREE),tvis.hParent,useTitle);
 					if( hItem != NULL ) {
 						if ( i == dat->currentPage ) {
 							TVITEM tvi;
 							tvi.hItem=hItem;
 							tvi.mask=TVIF_PARAM;
 							tvi.lParam=dat->currentPage;
-							TreeView_SetItem(hwndTree,&tvi);
+							TreeView_SetItem(GetDlgItem(hdlg,IDC_PAGETREE),&tvi);
 							dat->hCurrentPage=hItem;
 						}
 						continue;
@@ -813,7 +811,7 @@ static INT_PTR CALLBACK OptionsDlgProc(HWND hdlg,UINT message,WPARAM wParam,LPAR
 
 				tvis.item.pszText = useTitle;
 				tvis.item.lParam = i;
-				dat->opd[i].hTreeItem = TreeView_InsertItem(hwndTree, &tvis);
+				dat->opd[i].hTreeItem = TreeView_InsertItem( GetDlgItem(hdlg,IDC_PAGETREE), &tvis);
 				if ( i == dat->currentPage )
 					dat->hCurrentPage = dat->opd[i].hTreeItem;	
 
@@ -823,20 +821,20 @@ static INT_PTR CALLBACK OptionsDlgProc(HWND hdlg,UINT message,WPARAM wParam,LPAR
 			tvi.mask = TVIF_TEXT | TVIF_STATE;
 			tvi.pszText = str;
 			tvi.cchTextMax = SIZEOF(str);
-			tvi.hItem = TreeView_GetRoot(hwndTree);
+			tvi.hItem = TreeView_GetRoot(GetDlgItem(hdlg,IDC_PAGETREE));
 			while ( tvi.hItem != NULL ) {
-				if ( SendMessageA( hwndTree, TVM_GETITEMA, 0, (LPARAM)&tvi )) {
+				if ( SendMessageA( GetDlgItem(hdlg,IDC_PAGETREE), TVM_GETITEMA, 0, (LPARAM)&tvi )) {
 					mir_snprintf(buf, SIZEOF(buf), "%s%s",OPTSTATE_PREFIX,str);
 					if ( !DBGetContactSettingByte( NULL, "Options", buf, 1 ))
-						TreeView_Expand( hwndTree, tvi.hItem, TVE_COLLAPSE );
+						TreeView_Expand( GetDlgItem(hdlg,IDC_PAGETREE), tvi.hItem, TVE_COLLAPSE );
 				}
-				tvi.hItem = TreeView_GetNextSibling( hwndTree, tvi.hItem );
+				tvi.hItem = TreeView_GetNextSibling( GetDlgItem( hdlg, IDC_PAGETREE ), tvi.hItem );
 			}
 			if(dat->hCurrentPage==NULL) {
-				dat->hCurrentPage=TreeView_GetRoot(hwndTree);
+				dat->hCurrentPage=TreeView_GetRoot(GetDlgItem(hdlg,IDC_PAGETREE));
 				dat->currentPage=-1;
 			}
-			TreeView_SelectItem(hwndTree,dat->hCurrentPage);
+			TreeView_SelectItem(GetDlgItem(hdlg,IDC_PAGETREE),dat->hCurrentPage);
 			
 			if ( oldWnd ) {
 				if ( dat->currentPage == (-1) || oldWnd != dat->opd[dat->currentPage].hwnd ) {
@@ -846,14 +844,14 @@ static INT_PTR CALLBACK OptionsDlgProc(HWND hdlg,UINT message,WPARAM wParam,LPAR
 				}	
 			}
 
-			if ( dat->szFilterString[0] == 0 ) // Clear the keyword combo box
+			if ( szFilterString[0] == 0 ) // Clear the keyword combo box
 				SetWindowText( GetDlgItem(hdlg, IDC_KEYWORD_FILTER), _T("") );
 			if ( !bRemoveFocusFromFilter )
 				SetFocus(GetDlgItem(hdlg, IDC_KEYWORD_FILTER)); //set the focus back to the combo box
 
 			SendDlgItemMessage(hdlg, IDC_KEYWORD_FILTER, CB_SETEDITSEL, 0, oldSel ); //but don't select any of the text
 			
-			ShowWindow(hwndTree,SW_SHOW);
+			ShowWindow(GetDlgItem(hdlg,IDC_PAGETREE),SW_SHOW);
 		}
 		break;
 
@@ -899,10 +897,10 @@ static INT_PTR CALLBACK OptionsDlgProc(HWND hdlg,UINT message,WPARAM wParam,LPAR
 					if(dat->currentPage!=-1 && dat->opd[dat->currentPage].hwnd!=NULL) ShowWindow(dat->opd[dat->currentPage].hwnd,SW_HIDE);
 					if (!tabChange) {
 						TVITEM tvi;
-						tvi.hItem=dat->hCurrentPage=TreeView_GetSelection(hwndTree);
+						tvi.hItem=dat->hCurrentPage=TreeView_GetSelection(GetDlgItem(hdlg,IDC_PAGETREE));
 						if(tvi.hItem==NULL) break;
 						tvi.mask=TVIF_HANDLE|TVIF_PARAM;
-						TreeView_GetItem(hwndTree,&tvi);
+						TreeView_GetItem(GetDlgItem(hdlg,IDC_PAGETREE),&tvi);
 						dat->currentPage=tvi.lParam;
 						ShowWindow(GetDlgItem(hdlg,IDC_TAB),SW_HIDE);
 					} 
@@ -917,7 +915,7 @@ static INT_PTR CALLBACK OptionsDlgProc(HWND hdlg,UINT message,WPARAM wParam,LPAR
 						tvi.hItem=dat->hCurrentPage;
 						tvi.mask=TVIF_PARAM;
 						tvi.lParam=dat->currentPage;
-						TreeView_SetItem(hwndTree,&tvi);
+						TreeView_SetItem(GetDlgItem(hdlg,IDC_PAGETREE),&tvi);
 					}
 					if ( dat->currentPage != -1 ) {
 						if ( dat->opd[dat->currentPage].hwnd == NULL ) {
@@ -964,7 +962,7 @@ static INT_PTR CALLBACK OptionsDlgProc(HWND hdlg,UINT message,WPARAM wParam,LPAR
 								// Count tabs to calc position
 								int i;
 								for ( i=0; i < dat->pageCount && pages < 2; i++ ) {
-									if (!CheckPageShow( hdlg, dat, i ) ) continue;
+									if (!CheckPageShow( hdlg, dat, i, szFilterString ) ) continue;
 									//if (( dat->opd[i].flags & ODPF_SIMPLEONLY ) && IsDlgButtonChecked( hdlg, IDC_EXPERT )) continue;
 									//if (( dat->opd[i].flags & ODPF_EXPERTONLY ) && !IsDlgButtonChecked( hdlg, IDC_EXPERT )) continue;
 									if ( lstrcmp(dat->opd[i].pszTitle, dat->opd[dat->currentPage].pszTitle) || lstrcmpnull(dat->opd[i].pszGroup, dat->opd[dat->currentPage].pszGroup) ) continue;
@@ -988,7 +986,7 @@ static INT_PTR CALLBACK OptionsDlgProc(HWND hdlg,UINT message,WPARAM wParam,LPAR
 								int pages=0;
 								for ( j=0; j < dat->pageCount && pages < 2; j++ )
 								{
-									if (!CheckPageShow( hdlg, dat, j ) ) continue;
+									if (!CheckPageShow( hdlg, dat, j, szFilterString ) ) continue;
 									//if (( dat->opd[j].flags & ODPF_SIMPLEONLY ) && IsDlgButtonChecked( hdlg, IDC_EXPERT )) continue;
 									//if (( dat->opd[j].flags & ODPF_EXPERTONLY ) && !IsDlgButtonChecked( hdlg, IDC_EXPERT )) continue;
 									if ( lstrcmp(dat->opd[j].pszTitle, dat->opd[dat->currentPage].pszTitle) || lstrcmpnull(dat->opd[j].pszGroup, dat->opd[dat->currentPage].pszGroup) ) continue;
@@ -1006,7 +1004,7 @@ static INT_PTR CALLBACK OptionsDlgProc(HWND hdlg,UINT message,WPARAM wParam,LPAR
 								tie.mask = TCIF_TEXT | TCIF_IMAGE | TCIF_PARAM;
 								tie.iImage = -1;
 								for ( i=0; i < dat->pageCount; i++ ) {
-									if (!CheckPageShow( hdlg, dat, i ) ) continue;
+									if (!CheckPageShow( hdlg, dat, i, szFilterString ) ) continue;
 									//if (( dat->opd[i].flags & ODPF_SIMPLEONLY ) && IsDlgButtonChecked( hdlg, IDC_EXPERT )) continue;
 									//if (( dat->opd[i].flags & ODPF_EXPERTONLY ) && !IsDlgButtonChecked( hdlg, IDC_EXPERT )) continue;
 									if ( lstrcmp(dat->opd[i].pszTitle, dat->opd[dat->currentPage].pszTitle) || lstrcmpnull(dat->opd[i].pszGroup, dat->opd[dat->currentPage].pszGroup) ) continue;
@@ -1076,7 +1074,7 @@ static INT_PTR CALLBACK OptionsDlgProc(HWND hdlg,UINT message,WPARAM wParam,LPAR
 
 						ShowWindow(dat->opd[dat->currentPage].hwnd,SW_SHOW);
 						if(((LPNMTREEVIEW)lParam)->action==TVC_BYMOUSE) PostMessage(hdlg,DM_FOCUSPAGE,0,0);
-						else SetFocus(hwndTree);
+						else SetFocus(GetDlgItem(hdlg,IDC_PAGETREE));
 					}
 					else ShowWindow(GetDlgItem(hdlg,IDC_STNOPAGE),SW_SHOW);
 					break;
@@ -1123,7 +1121,7 @@ static INT_PTR CALLBACK OptionsDlgProc(HWND hdlg,UINT message,WPARAM wParam,LPAR
 					int pages=0;
 
 					if(dat->opd[i].hwnd==NULL) continue;
-					if (!CheckPageShow( hdlg, dat, i ) ) continue;
+					if (!CheckPageShow( hdlg, dat, i, szFilterString ) ) continue;
 					//if (( dat->opd[i].flags & ODPF_SIMPLEONLY ) && expert) continue;
 					//if (( dat->opd[i].flags & ODPF_EXPERTONLY ) && !expert) continue;
 					pshn.hdr.hwndFrom=dat->opd[i].hwnd;
@@ -1136,7 +1134,7 @@ static INT_PTR CALLBACK OptionsDlgProc(HWND hdlg,UINT message,WPARAM wParam,LPAR
 						// Count tabs to calc position
 						int j;
 						for ( j=0; j < dat->pageCount && pages < 2; j++ ) {
-							if (!CheckPageShow( hdlg, dat, i ) ) continue;
+							if (!CheckPageShow( hdlg, dat, i, szFilterString ) ) continue;
 							//if (( dat->opd[j].flags & ODPF_SIMPLEONLY ) && IsDlgButtonChecked( hdlg, IDC_EXPERT )) continue;
 							//if (( dat->opd[j].flags & ODPF_EXPERTONLY ) && !IsDlgButtonChecked( hdlg, IDC_EXPERT )) continue;
 							if ( lstrcmp(dat->opd[j].pszTitle, dat->opd[i].pszTitle) || lstrcmpnull(dat->opd[j].pszGroup, dat->opd[i].pszGroup) ) continue;
@@ -1216,7 +1214,7 @@ static INT_PTR CALLBACK OptionsDlgProc(HWND hdlg,UINT message,WPARAM wParam,LPAR
 				int i;
 				PSHNOTIFY pshn;
 				EnableWindow(GetDlgItem(hdlg,IDC_APPLY),FALSE);
-				SetFocus(hwndTree);
+				SetFocus(GetDlgItem(hdlg,IDC_PAGETREE));
 				if(dat->currentPage!=(-1)) {
 					pshn.hdr.idFrom=0;
 					pshn.lParam=0;
@@ -1233,7 +1231,7 @@ static INT_PTR CALLBACK OptionsDlgProc(HWND hdlg,UINT message,WPARAM wParam,LPAR
 					pshn.hdr.hwndFrom=dat->opd[i].hwnd;
 					if(SendMessage(dat->opd[i].hwnd,WM_NOTIFY,0,(LPARAM)&pshn)==PSNRET_INVALID_NOCHANGEPAGE) {
 						dat->hCurrentPage=dat->opd[i].hTreeItem;
-						TreeView_SelectItem(hwndTree,dat->hCurrentPage);
+						TreeView_SelectItem(GetDlgItem(hdlg,IDC_PAGETREE),dat->hCurrentPage);
 						if(dat->currentPage!=(-1)) ShowWindow(dat->opd[dat->currentPage].hwnd,SW_HIDE);
 						dat->currentPage=i;
 						if (dat->currentPage != (-1)) ShowWindow(dat->opd[dat->currentPage].hwnd,SW_SHOW);
@@ -1250,12 +1248,10 @@ static INT_PTR CALLBACK OptionsDlgProc(HWND hdlg,UINT message,WPARAM wParam,LPAR
 		if ( FilterTimerId ) KillTimer ( hdlg, FilterTimerId );
 		DestroyWindow ( hFilterSearchWnd );
 		ClearFilterStrings();
-		dat->szFilterString[0]=0;
+		szFilterString[0]=0;
 
 		SaveOptionsTreeState( hdlg );
 		Window_FreeIcon_IcoLib( hdlg );
-		IconLib_ReleaseIcon((HICON)SendMessage(GetDlgItem(hdlg, IDC_HEADERBAR), WM_SETICON, 0, 0), 0);
-
 		if ( dat->currentPage != -1 ) {
 			if ( dat->opd[dat->currentPage].pszTab )
 				DBWriteContactSettingTString( NULL, "Options", "LastTab", dat->opd[dat->currentPage].pszTab );
@@ -1340,25 +1336,8 @@ static void OpenOptionsNow(const char *pszGroup,const char *pszPage,const char *
 	if ( IsWindow( hwndOptions )) {
 		ShowWindow( hwndOptions, SW_RESTORE );
 		SetForegroundWindow( hwndOptions );
-		if ( pszPage != NULL) {
-			TCHAR *ptszPage = LangPackPcharToTchar(pszPage);
-			HTREEITEM hItem = NULL;
-			if (pszGroup != NULL) {
-				TCHAR *ptszGroup = LangPackPcharToTchar(pszGroup);
-				hItem = FindNamedTreeItemAtRoot(GetDlgItem(hwndOptions,IDC_PAGETREE),ptszGroup);
-				if (hItem != NULL) {
-					hItem = FindNamedTreeItemAtChildren(GetDlgItem(hwndOptions,IDC_PAGETREE),hItem,ptszPage);
-				}
-				mir_free(ptszGroup);
-			} else {
-				hItem = FindNamedTreeItemAtRoot(GetDlgItem(hwndOptions,IDC_PAGETREE),ptszPage);
-			}
-			if (hItem != NULL) {
-				TreeView_SelectItem(GetDlgItem(hwndOptions,IDC_PAGETREE),hItem);
-			}
-			mir_free(ptszPage);
-		}	
-	} else {
+	}
+	else {
 		struct OptionsPageInit opi = { 0 };
 		NotifyEventHooks( hOptionsInitEvent, ( WPARAM )&opi, 0 );
 		if ( opi.pageCount > 0 ) {
@@ -1439,30 +1418,16 @@ static INT_PTR AddOptionsPage(WPARAM wParam,LPARAM lParam)
 	memcpy( dst, odp, odp->cbSize );
 
 	if ( odp->ptszTitle != NULL ) {
-		if ( odp->flags & ODPF_DONTTRANSLATE ) {
-			#if defined( _UNICODE )
-				if ( odp->flags & ODPF_UNICODE )
-					dst->ptszTitle = mir_wstrdup( odp->ptszTitle );
-				else {
-					dst->ptszTitle = mir_a2u( odp->pszTitle );
-					dst->flags |= ODPF_UNICODE;
-				}
-			#else
-				dst->pszTitle = mir_strdup( odp->pszTitle );
-			#endif
-		}
-		else {
-			#if defined( _UNICODE )
-				if ( odp->flags & ODPF_UNICODE )
-					dst->ptszTitle = mir_wstrdup( TranslateW( odp->ptszTitle ));
-				else {
-					dst->ptszTitle = LangPackPcharToTchar( odp->pszTitle );
-					dst->flags |= ODPF_UNICODE;
-				}
-			#else
-				dst->pszTitle = mir_strdup( Translate( odp->pszTitle ));
-			#endif
-		}
+		#if defined( _UNICODE )
+			if ( odp->flags & ODPF_UNICODE )
+				dst->ptszTitle = mir_wstrdup( TranslateW( odp->ptszTitle ));
+			else {
+				dst->ptszTitle = LangPackPcharToTchar( odp->pszTitle );
+				dst->flags |= ODPF_UNICODE;
+			}
+		#else
+			dst->pszTitle = mir_strdup( Translate( odp->pszTitle ));
+		#endif
 	}
 
 	if ( odp->ptszGroup != NULL ) {
