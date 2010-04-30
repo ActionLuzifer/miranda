@@ -410,7 +410,7 @@
 		</Configuration>
 		<Configuration
 			Name="Debug Unicode|Win32"
-			OutputDirectory="c:\miranda im 32/Plugins"
+			OutputDirectory="$(SolutionDir)$(ConfigurationName)/Plugins"
 			IntermediateDirectory="$(SolutionDir)$(ConfigurationName)/Obj/$(ProjectName)"
 			ConfigurationType="2"
 			UseOfMFC="0"
@@ -563,7 +563,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="wsock32.lib"
-				OutputFile="c:\miranda im\plugins\$(ProjectName).dll"
+				OutputFile="$(OutDir)\$(ProjectName).dll"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
 				GenerateDebugInformation="true"

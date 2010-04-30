@@ -418,7 +418,7 @@
 		</Configuration>
 		<Configuration
 			Name="Debug Unicode|Win32"
-			OutputDirectory="c:\miranda im/Plugins"
+			OutputDirectory="$(SolutionDir)$(ConfigurationName)/Plugins"
 			IntermediateDirectory="$(SolutionDir)$(ConfigurationName)/Obj/$(ProjectName)"
 			ConfigurationType="2"
 			UseOfMFC="0"
@@ -574,7 +574,6 @@
 				IgnoreImportLibrary="true"
 				AdditionalOptions="/DLL"
 				AdditionalDependencies="shlwapi.lib wsock32.lib"
-				OutputFile="c:\miranda im\plugins\$(ProjectName).dll"
 				SuppressStartupBanner="true"
 				GenerateDebugInformation="true"
 				GenerateMapFile="false"
@@ -1027,10 +1026,6 @@
 			</File>
 			<File
 				RelativePath="Icons\edit.ico"
-				>
-			</File>
-			<File
-				RelativePath=".\Icons\irc.ico"
 				>
 			</File>
 			<File

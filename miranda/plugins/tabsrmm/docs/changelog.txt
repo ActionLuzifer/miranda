@@ -6,10 +6,6 @@ Homepage: http://miranda.or.at
 Download: http://code.google.com/p/silvercircle/downloads/list
 Source:   http://code.google.com/p/miranda     (tabSRMM code is in Miranda SVN)
 
-Addtional annoucements can be found at my blog:
-	http://blog.miranda.or.at
-
-
 + : new feature
 * : changed
 ! : bugfix
@@ -27,75 +23,21 @@ It NEEDS Miranda 0.7.x and will not work on older versions.
 
 Version 2.2.1.x is for Miranda 0.8 and was released in June 2009
 
-Version 3.x is for Miranda 0.9 and incompatible with older Miranda cores. There
-are currently no downloads for it, you'll have to compile it from source.
-
 -----------------
 
 			Detailed change log
 			===================
 
-Version 3.0.0.26 - 2010/04/30
+Version 2.2.1.21  - 2009/08/05
 
-	* fixed the painting of close buttons on tabs when using a skin (they
-	  were incorrectly using visual styles instead of the button skin)
+	! fixed few groupchat issues
 
-	* new skin item for the switch bar background
-
-	* send later out of hidden state (see: http://wiki.miranda.or.at/SendLater)
-
-Version 3.0.0.25 - 2010/04/23
-
-	* bug fixes
-	* added two new switch bar layouts (more complex, allow showing avatars
-	  on the switch bar buttons).
-	* fix for a crash when AVS plugin is not available.
-
-Version 3.0.0.22 - 2010/04/01
-
-	* Alpha snapshot released to my googlecode site.
-	* many bug fixes and small improvements, new skin selection dialog
-	* still INCOMPLETE and not all features are fully working.
-	
-Version 3.0.0.8  - 3.0.0.21
-
-	* again, many, many changes and new things. Refer to the Wiki page 
-	  (http://miranda.or.at/TabSrmm:Development3_0_KnownIssues) for more information.
-
-Version 3.0.0.4  - 3.0.0.8
-
-	* Ongoing rewrite of the plugin. New infopanel, MUC highlighting, aero effects
-	  among many other things were added. Still in alpha stage.
-
-Version 3.0.0.3  - 2009/08/20
-
-	* too many changes to list here. Major rewrites in many areas, aero support
-	  new menu bar (rebar-based), new, more dynamic info panel layout and drawing,
-	  support for core hotkey service added, folders support extended, reworked
-	  some groupchat options, got rid of old protocol names where possible
-
-Version 3.0.0.2  - 2009/07/30
-
-	* Major rewrites in some areas
-	* converted source to C++
-	* basic aero support added (experimental, disabled by default, you have to set
-	  a database value BYTE "useAero" under the "Tab_SRMsg" module and set its
-	  value to 1. Restart required
-	* many parts of the plugin rewritten in C++ (just started, more to come)
-
-Version 3.0.0.1  - 2009/07/20
-
-	* MAJOR changes in some areas. Info panel overhaul and more. Expect
-	  tabSRMM to be unstable for a while. 2.2.1.x will continue to exist for user
-	  of a stable Miranda. 3.0.0.x is currently for TESTING ONLY.
-
-Version 3.0.0.0  - 2009/07/20
+Version 2.2.1.20  - 2009/07/20
 
 	! various visual glitches fixed.
 	! fixed problem with private container theme (using relative pathnames)
-	! plugin version updated and restricted to Miranda 0.9.x development
-	  branch.
-
+	! fixed few groupchat issues
+	
 Version 2.2.1.19  - 2009/07/08
 
 	! fixed some slowdowns when opening new tabs

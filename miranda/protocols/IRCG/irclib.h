@@ -132,7 +132,12 @@ protected:
 	int iGlobalToken;
 
 	PROTOFILETRANSFERSTATUS pfts; // structure used to setup and update the filetransfer dialogs of miranda
-	TCHAR* file[2];
+	char* file[2];		// used with the PROTOFILETRANSFER struct
+
+	#if defined( _UNICODE )
+		char* szFullPath;
+		char* szWorkingDir;
+	#endif
 
 	int SetupConnection();	
 	void DoSendFile();

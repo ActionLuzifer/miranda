@@ -26,7 +26,7 @@
 /*
  * DlgProcYahooOpts - Account Options Dialog
  */
-static INT_PTR CALLBACK DlgProcYahooOpts(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam)
+static BOOL CALLBACK DlgProcYahooOpts(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 {
 	DBVARIANT dbv;
 	CYahooProto* ppro = (CYahooProto*)GetWindowLongPtr( hwndDlg, GWLP_USERDATA );
@@ -151,7 +151,7 @@ static INT_PTR CALLBACK DlgProcYahooOpts(HWND hwndDlg, UINT msg, WPARAM wParam, 
 /*
  * DlgProcYahooOpts - Connection Options Dialog
  */
-static INT_PTR CALLBACK DlgProcYahooOptsConn(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam)
+static BOOL CALLBACK DlgProcYahooOptsConn(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 {
 	DBVARIANT dbv;
 	CYahooProto* ppro = (CYahooProto*)GetWindowLongPtr( hwndDlg, GWLP_USERDATA );
@@ -247,7 +247,7 @@ static INT_PTR CALLBACK DlgProcYahooOptsConn(HWND hwndDlg, UINT msg, WPARAM wPar
 /*
  * DlgProcYahooOpts - Connection Options Dialog
  */
-static INT_PTR CALLBACK DlgProcYahooOptsIgnore(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam)
+static BOOL CALLBACK DlgProcYahooOptsIgnore(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 {
 	YList *l;
 	CYahooProto* ppro = (CYahooProto*)GetWindowLongPtr( hwndDlg, GWLP_USERDATA );
@@ -359,7 +359,7 @@ static INT_PTR CALLBACK DlgProcYahooOptsIgnore(HWND hwndDlg, UINT msg, WPARAM wP
  * YahooOptInit - initialize/register our Options w/ Miranda.
  */
 
-INT_PTR __cdecl CYahooProto::OnOptionsInit(WPARAM wParam,LPARAM lParam)
+int __cdecl CYahooProto::OnOptionsInit(WPARAM wParam,LPARAM lParam)
 {
 	OPTIONSDIALOGPAGE odp = { 0 };
 	
@@ -368,7 +368,7 @@ INT_PTR __cdecl CYahooProto::OnOptionsInit(WPARAM wParam,LPARAM lParam)
 	odp.hInstance   = hInstance;
 	odp.pszTemplate = MAKEINTRESOURCEA(IDD_OPT_YAHOO);
 	odp.ptszTitle   = m_tszUserName;
-	odp.flags       = ODPF_BOLDGROUPS|ODPF_TCHAR|ODPF_DONTTRANSLATE;
+	odp.flags       = ODPF_BOLDGROUPS|ODPF_TCHAR;
 	odp.ptszGroup   = LPGENT("Network");
 	odp.ptszTab     = LPGENT("Account");
 	odp.pfnDlgProc  = DlgProcYahooOpts;

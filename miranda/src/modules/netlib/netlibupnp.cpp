@@ -23,6 +23,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "commonheaders.h"
 #include "netlib.h"
 
+extern struct NetlibUser **netlibUser;
+extern int netlibUserCount;
+extern CRITICAL_SECTION csNetlibUser;
 static const char search_request_msg[] =
 	"M-SEARCH * HTTP/1.1\r\n"
 	"HOST: 239.255.255.250:1900\r\n"
@@ -692,14 +695,10 @@ void NetlibUPnPCleanup(void*)
     {
         int i, incoming = 0;
         EnterCriticalSection(&csNetlibUser);
-        for (i = 0; i < netlibUser.getCount(); ++i)
-		{
-            if (netlibUser[i]->user.flags & NUF_INCOMING)
-			{
+        for(i=netlibUserCount; i--; )
+            if (netlibUser[i]->user.flags&NUF_INCOMING)
                 incoming = 1;
-				break;
-			}
-		}
+
 		LeaveCriticalSection(&csNetlibUser);
         if (!incoming) return;
     }

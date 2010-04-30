@@ -37,6 +37,9 @@ UINT uMsgProcessProfile;
 
 void LoadCluiServices();
 
+BOOL(WINAPI * MySetLayeredWindowAttributes) (HWND, COLORREF, BYTE, DWORD);
+BOOL(WINAPI * MyAnimateWindow) (HWND hWnd, DWORD dwTime, DWORD dwFlags);
+
 typedef struct {
 	int showsbar;
 	int showgrip;
@@ -267,7 +270,11 @@ int LoadCLUIModule(void)
 
 	uMsgProcessProfile = RegisterWindowMessage( _T("Miranda::ProcessProfile"));
 	cli.pfnLoadCluiGlobalOpts();
-
+	hUserDll = GetModuleHandleA("user32");
+	if (hUserDll) {
+		MySetLayeredWindowAttributes = (BOOL(WINAPI *) (HWND, COLORREF, BYTE, DWORD)) GetProcAddress(hUserDll, "SetLayeredWindowAttributes");
+		MyAnimateWindow = (BOOL(WINAPI *) (HWND, DWORD, DWORD)) GetProcAddress(hUserDll, "AnimateWindow");
+	}
 	HookEvent(ME_SYSTEM_MODULESLOADED, CluiModulesLoaded);
 	HookEvent(ME_SKIN_ICONSCHANGED, CluiIconsChanged);
 
@@ -297,7 +304,7 @@ int LoadCLUIModule(void)
 	wndclass.cbClsExtra = 0;
 	wndclass.cbWndExtra = 0;
 	wndclass.hInstance = cli.hInst;
-	wndclass.hIcon = LoadSkinIcon(SKINICON_OTHER_MIRANDA, true);
+	wndclass.hIcon = LoadIcon(hMirandaInst, MAKEINTRESOURCE(IDI_MIRANDA));
 	wndclass.hCursor = LoadCursor(NULL, IDC_ARROW);
 	wndclass.hbrBackground = (HBRUSH) (COLOR_3DFACE + 1);
 	wndclass.lpszMenuName = MAKEINTRESOURCE(IDR_CLISTMENU);
@@ -504,8 +511,8 @@ LRESULT CALLBACK fnContactListWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM
 
 		if (cluiopt.transparent) {
 			SetWindowLongPtr(hwnd, GWL_EXSTYLE, GetWindowLongPtr(hwnd, GWL_EXSTYLE) | WS_EX_LAYERED);
-			if (setLayeredWindowAttributes)
-				setLayeredWindowAttributes(hwnd, RGB(0, 0, 0), (BYTE) cluiopt.alpha, LWA_ALPHA);
+			if (MySetLayeredWindowAttributes)
+				MySetLayeredWindowAttributes(hwnd, RGB(0, 0, 0), (BYTE) cluiopt.alpha, LWA_ALPHA);
 		}
 		transparentFocus = 1;
 		return FALSE;
@@ -538,10 +545,10 @@ LRESULT CALLBACK fnContactListWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM
 			DisconnectAll();
 			break;
 
-		case PBT_APMRESUMEAUTOMATIC:
+        case PBT_APMRESUMEAUTOMATIC:
 		case PBT_APMRESUMESUSPEND:
 			// Computer is resuming, restore all protocols
-			PostMessage(hwnd, M_RESTORESTATUS, 0, 0);
+            PostMessage(hwnd, M_RESTORESTATUS, 0, 0);
 			break;
 		}
 		break;
@@ -608,8 +615,8 @@ LRESULT CALLBACK fnContactListWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM
 		else {
 			if (cluiopt.transparent) {
 				KillTimer(hwnd, TM_AUTOALPHA);
-				if (setLayeredWindowAttributes)
-					setLayeredWindowAttributes(hwnd, RGB(0, 0, 0), (BYTE) cluiopt.alpha, LWA_ALPHA);
+				if (MySetLayeredWindowAttributes)
+					MySetLayeredWindowAttributes(hwnd, RGB(0, 0, 0), (BYTE) cluiopt.alpha, LWA_ALPHA);
 				transparentFocus = 1;
 			}
 		}
@@ -617,8 +624,8 @@ LRESULT CALLBACK fnContactListWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM
 
 	case WM_SETCURSOR:
 		if(cluiopt.transparent) {
-			if (!transparentFocus && GetForegroundWindow()!=hwnd && setLayeredWindowAttributes) {
-				setLayeredWindowAttributes(hwnd, RGB(0,0,0), (BYTE)cluiopt.alpha, LWA_ALPHA);
+			if (!transparentFocus && GetForegroundWindow()!=hwnd && MySetLayeredWindowAttributes) {
+				MySetLayeredWindowAttributes(hwnd, RGB(0,0,0), (BYTE)cluiopt.alpha, LWA_ALPHA);
 				transparentFocus=1;
 				SetTimer(hwnd, TM_AUTOALPHA,250,NULL);
 			}
@@ -652,12 +659,12 @@ LRESULT CALLBACK fnContactListWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM
 				hwndPt = WindowFromPoint(pt);
 				inwnd = (hwndPt == hwnd || GetParent(hwndPt) == hwnd);
 			}
-			if (inwnd != transparentFocus && setLayeredWindowAttributes) {        //change
+			if (inwnd != transparentFocus && MySetLayeredWindowAttributes) {        //change
 				transparentFocus = inwnd;
 				if (transparentFocus)
-					setLayeredWindowAttributes(hwnd, RGB(0, 0, 0), (BYTE) cluiopt.alpha, LWA_ALPHA);
+					MySetLayeredWindowAttributes(hwnd, RGB(0, 0, 0), (BYTE) cluiopt.alpha, LWA_ALPHA);
 				else
-					setLayeredWindowAttributes(hwnd, RGB(0, 0, 0), (BYTE) DBGetContactSettingByte(NULL, "CList", "AutoAlpha", SETTING_AUTOALPHA_DEFAULT), LWA_ALPHA);
+					MySetLayeredWindowAttributes(hwnd, RGB(0, 0, 0), (BYTE) DBGetContactSettingByte(NULL, "CList", "AutoAlpha", SETTING_AUTOALPHA_DEFAULT), LWA_ALPHA);
 			}
 			if (!transparentFocus)
 				KillTimer(hwnd, TM_AUTOALPHA);
@@ -679,7 +686,7 @@ LRESULT CALLBACK fnContactListWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM
 			if (wParam) {
 				sourceAlpha = 0;
 				destAlpha = (BYTE) cluiopt.alpha;
-				setLayeredWindowAttributes(hwnd, RGB(0, 0, 0), 0, LWA_ALPHA);
+				MySetLayeredWindowAttributes(hwnd, RGB(0, 0, 0), 0, LWA_ALPHA);
 				noRecurse = 1;
 				ShowWindow(hwnd, SW_SHOW);
 				noRecurse = 0;
@@ -692,15 +699,15 @@ LRESULT CALLBACK fnContactListWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM
 				thisTick = GetTickCount();
 				if (thisTick >= startTick + 200)
 					break;
-				setLayeredWindowAttributes(hwnd, RGB(0, 0, 0),
+				MySetLayeredWindowAttributes(hwnd, RGB(0, 0, 0),
 					(BYTE) (sourceAlpha + (destAlpha - sourceAlpha) * (int) (thisTick - startTick) / 200), LWA_ALPHA);
 			}
-			setLayeredWindowAttributes(hwnd, RGB(0, 0, 0), (BYTE) destAlpha, LWA_ALPHA);
+			MySetLayeredWindowAttributes(hwnd, RGB(0, 0, 0), (BYTE) destAlpha, LWA_ALPHA);
 		}
 		else {
 			if (wParam)
 				SetForegroundWindow(hwnd);
-			animateWindow(hwnd, 200, AW_BLEND | (wParam ? 0 : AW_HIDE));
+			MyAnimateWindow(hwnd, 200, AW_BLEND | (wParam ? 0 : AW_HIDE));
 			SetWindowPos(cli.hwndContactTree, 0, 0, 0, 0, 0, SWP_NOZORDER | SWP_NOMOVE | SWP_NOSIZE | SWP_FRAMECHANGED);
 		}
 		break;
@@ -1000,7 +1007,7 @@ LRESULT CALLBACK fnContactListWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM
 					DrawIconEx(dis->hDC, x, (dis->rcItem.top + dis->rcItem.bottom - g_IconHeight) >> 1, hIcon,
 						g_IconWidth, g_IconHeight, 0, NULL, DI_NORMAL);
 					IconLib_ReleaseIcon(hIcon,0);
-					if ( Proto_IsAccountLocked( Proto_GetAccount( szProto ))) {
+					if ( DBGetContactSettingByte( NULL, szProto, "LockMainStatus", 0 )) {
 						hIcon = LoadSkinnedIcon(SKINICON_OTHER_STATUS_LOCKED);
 						if (hIcon != NULL) {
 							DrawIconEx(dis->hDC, x, (dis->rcItem.top + dis->rcItem.bottom - g_IconHeight) >> 1, hIcon,
