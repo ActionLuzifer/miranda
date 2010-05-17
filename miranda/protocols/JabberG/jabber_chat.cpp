@@ -777,7 +777,8 @@ public:
 		TCHAR buf[256];
 		mir_sntprintf(buf, SIZEOF(buf), _T("%s\n%s"), m_room, TranslateT("Send groupchat invitation.") );
 		SetDlgItemText( m_hwnd, IDC_HEADERBAR, buf );
-		SendMessage( m_hwnd, WM_SETICON, ICON_SMALL, ( LPARAM )m_proto->LoadIconEx( "group" ));
+		SendMessage( m_hwnd, WM_SETICON, ICON_BIG, ( LPARAM )m_proto->LoadIconEx( "group" ));
+		SendDlgItemMessage(m_hwnd, IDC_HEADERBAR, WM_SETICON, 0, (LPARAM)g_LoadIconEx32("group"));
 
 		SetWindowLong(GetDlgItem(m_hwnd, IDC_CLIST), GWL_STYLE,
 			GetWindowLong(GetDlgItem(m_hwnd, IDC_CLIST), GWL_STYLE)|CLS_HIDEOFFLINE|CLS_CHECKBOXES|CLS_HIDEEMPTYGROUPS|CLS_USEGROUPS|CLS_GREYALTERNATE|CLS_GROUPCHECKBOXES);
@@ -897,7 +898,8 @@ static LRESULT CALLBACK sttUserInfoDlgProc(HWND hwndDlg, UINT msg, WPARAM wParam
 		SetWindowLongPtr(hwndDlg, GWLP_USERDATA, lParam);
 		dat = (TUserInfoData *)lParam;
 
-		WindowSetIcon( hwndDlg, dat->ppro, "group" );
+		SendMessage(hwndDlg, WM_SETICON, ICON_BIG, (LPARAM)dat->ppro->LoadIconEx("group"));
+		SendDlgItemMessage(hwndDlg, IDC_HEADERBAR, WM_SETICON, 0, (LPARAM)g_LoadIconEx32("group"));
 
 		LOGFONT lf;
 		GetObject((HFONT)SendDlgItemMessage(hwndDlg, IDC_TXT_NICK, WM_GETFONT, 0, 0), sizeof(lf), &lf);
@@ -1032,9 +1034,6 @@ static LRESULT CALLBACK sttUserInfoDlgProc(HWND hwndDlg, UINT msg, WPARAM wParam
 
 	case WM_DESTROY:
 		{
-			WindowFreeIcon( hwndDlg );
-			g_ReleaseIcon(( HICON )SendDlgItemMessage( hwndDlg, IDC_BTN_AFFILIATION, BM_SETIMAGE, IMAGE_ICON, 0 ));
-			g_ReleaseIcon(( HICON )SendDlgItemMessage( hwndDlg, IDC_BTN_ROLE, BM_SETIMAGE, IMAGE_ICON, 0 ));
 			TUserInfoData *dat = (TUserInfoData *)GetWindowLongPtr(hwndDlg, GWLP_USERDATA);
 			if (!dat)break;
 			SetWindowLongPtr(hwndDlg, GWLP_USERDATA, 0);
@@ -1101,7 +1100,7 @@ static void sttNickListHook( CJabberProto* ppro, JABBER_LIST_ITEM* item, GCHOOK*
 	case IDM_VCARD:
 	{
 		HANDLE hContact;
-		JABBER_SEARCH_RESULT jsr = {0};
+		JABBER_SEARCH_RESULT jsr;
 		mir_sntprintf(jsr.jid, SIZEOF(jsr.jid), _T("%s/%s"), item->jid, him->resourceName );
 		jsr.hdr.cbSize = sizeof( JABBER_SEARCH_RESULT );
 		
@@ -1248,7 +1247,7 @@ static void sttNickListHook( CJabberProto* ppro, JABBER_LIST_ITEM* item, GCHOOK*
 		if (him->szRealJid && *him->szRealJid)
 		{
 			HANDLE hContact;
-			JABBER_SEARCH_RESULT jsr ={0};
+			JABBER_SEARCH_RESULT jsr;
 			jsr.hdr.cbSize = sizeof( JABBER_SEARCH_RESULT );
 			mir_sntprintf(jsr.jid, SIZEOF(jsr.jid), _T("%s"), him->szRealJid);
 			if (TCHAR *tmp = _tcschr(jsr.jid, _T('/'))) *tmp = 0;
@@ -1267,16 +1266,16 @@ static void sttNickListHook( CJabberProto* ppro, JABBER_LIST_ITEM* item, GCHOOK*
 		{
 			JABBER_SEARCH_RESULT jsr={0};
 			jsr.hdr.cbSize = sizeof( JABBER_SEARCH_RESULT );
-			jsr.hdr.flags = PSR_TCHAR;
 			mir_sntprintf(jsr.jid, SIZEOF(jsr.jid), _T("%s"), him->szRealJid);
 			if (TCHAR *tmp = _tcschr(jsr.jid, _T('/'))) *tmp = 0;
-			jsr.hdr.nick = jsr.jid;
+			jsr.hdr.nick = mir_t2a( jsr.jid );
 
 			ADDCONTACTSTRUCT acs={0};
 			acs.handleType = HANDLE_SEARCHRESULT;
 			acs.szProto = ppro->m_szModuleName;
 			acs.psr = (PROTOSEARCHRESULT *)&jsr;
 			CallService(MS_ADDCONTACT_SHOW, (WPARAM)CallService(MS_CLUI_GETHWND, 0, 0), (LPARAM)&acs);
+			mir_free( jsr.hdr.nick );
 			break;
 		}
 	}

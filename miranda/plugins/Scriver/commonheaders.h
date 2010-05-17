@@ -1,7 +1,8 @@
 /*
 Scriver
 
-Copyright 2000-2009 Miranda ICQ/IM project,
+Copyright 2000-2003 Miranda ICQ/IM project,
+Copyright 2005 Piotr Piastucki
 
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
@@ -34,16 +35,20 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <m_stdhdr.h>
 
 #include <windows.h>
+#include <process.h>
+#include <stdio.h>
+#include <stdarg.h>
+#include <time.h>
+#include <limits.h>
+#include <wchar.h>
+#include <tchar.h>
 #include <shellapi.h>
 #include <commctrl.h>
 #include <commdlg.h>
 #include <ole2.h>
-
-#include <uxtheme.h>
-#include <vssym32.h>
-
-#include <time.h>
-
+#include <stddef.h>
+#undef PBT_APMSUSPEND
+#undef PBT_APMRESUMESUSPEND
 #include <win2k.h>
 
 #include <newpluginapi.h>
@@ -83,7 +88,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "m_smileyadd.h"
 #include "m_metacontacts.h"
 #include "m_historyevents.h"
-#include "richutil.h"
 
 #ifndef IMF_AUTOFONTSIZEADJUST
 #define IMF_AUTOFONTSIZEADJUST	0x0010
@@ -107,9 +111,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 extern HWND SM_FindWindowByContact(HANDLE hContact);
 
-#define SPLITTER_HEIGHT   4
+#define SPLITTER_HEIGHT   3
 #define TOOLBAR_HEIGHT   24
-#define INFO_BAR_HEIGHT  54
+#define INFO_BAR_HEIGHT  51
 #define INFO_BAR_INNER_HEIGHT (INFO_BAR_HEIGHT - 3)
 #define INFO_BAR_AVATAR_HEIGHT INFO_BAR_INNER_HEIGHT
 #define BOTTOM_RIGHT_AVATAR_HEIGHT 64

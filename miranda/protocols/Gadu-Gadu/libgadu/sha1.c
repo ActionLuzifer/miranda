@@ -29,13 +29,15 @@
 
 #include <string.h>
 #include <sys/types.h>
-#ifdef _WIN32
-#include "win32.h"
-#else
+#ifndef _WIN32
 #include <unistd.h>
 #endif
 
 #include "libgadu.h"
+#ifdef _WIN32
+#include <io.h>
+#include <fcntl.h>
+#endif
 
 /** \cond ignore */
 
@@ -235,7 +237,7 @@ void gg_login_hash_sha1(const char *password, uint32_t seed, uint8_t *result)
 	SHA_CTX ctx;
 	
 	SHA1_Init(&ctx);
-	SHA1_Update(&ctx, (const unsigned char*) password, (unsigned int)strlen(password));
+	SHA1_Update(&ctx, (const unsigned char*) password, strlen(password));
 	seed = gg_fix32(seed);
 	SHA1_Update(&ctx, (uint8_t*) &seed, 4);
 	

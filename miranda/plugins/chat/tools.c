@@ -133,7 +133,7 @@ static int ShowPopup (HANDLE hContact, SESSION_INFO* si, HICON hIcon,  char* psz
 		return 0;
 
 	va_start(marker, fmt);
-	_vsntprintf(szBuf, 4096, fmt, marker);
+	_vstprintf(szBuf, fmt, marker);
 	va_end(marker);
 
 	pd.lchContact = hContact;
@@ -519,7 +519,6 @@ BOOL LogToFile(SESSION_INFO* si, GCEVENT * gce)
 	char szName[MAX_PATH];
 	char szFolder[MAX_PATH];
 	char p = '\0', *pszSessionName;
-	char *szModName = NULL;
 	szBuffer[0] = '\0';
 
 	if (!si || !gce)
@@ -529,11 +528,7 @@ BOOL LogToFile(SESSION_INFO* si, GCEVENT * gce)
 	if ( !mi )
 		return FALSE;
 
-	if (mi->ptszModDispName) {
-		 szModName = mir_t2a(mi->ptszModDispName);
-	}
-	mir_snprintf(szName, MAX_PATH,"%s",szModName?szModName:si->pszModule);
-	mir_free(szModName);
+ 	mir_snprintf(szName, MAX_PATH,"%s",mi->pszModDispName);
 	ValidateFilename(szName);
 	mir_snprintf(szFolder, MAX_PATH,"%s\\%s", g_Settings.pszLogDir, szName );
 

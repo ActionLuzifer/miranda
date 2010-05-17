@@ -182,7 +182,7 @@ int GetWindowVisibleState(HWND hWnd, int iStepX, int iStepY)
 				hAux = WindowFromPoint(pt);
 				while (GetParent(hAux) != NULL)
 					hAux = GetParent(hAux);
-				if (hAux != hWnd && hAux) //There's another window!
+				if (hAux != hWnd) //There's another window!
 					bPartiallyCovered = TRUE;
 				else
 					iNotCoveredDots++; //Let's count the not covered dots.
@@ -224,8 +224,12 @@ int ShowHide(WPARAM wParam, LPARAM lParam)
 		return 0;
 	}
 	if (bShow == TRUE) {
-		RECT rcWindow;
+		WINDOWPLACEMENT pl = { 0 };
+		HMONITOR(WINAPI * MyMonitorFromWindow) (HWND, DWORD);
+		RECT rcScreen, rcWindow;
+		int offScreen = 0;
 
+		SystemParametersInfo(SPI_GETWORKAREA, 0, &rcScreen, FALSE);
 		SetWindowPos(pcli->hwndContactList, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOREDRAW | SWP_NOSENDCHANGING | SWP_NOCOPYBITS);
 		if (!DBGetContactSettingByte(NULL, "CList", "OnTop", SETTING_ONTOP_DEFAULT))
 			SetWindowPos(pcli->hwndContactList, HWND_NOTOPMOST, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE | SWP_NOREDRAW | SWP_NOSENDCHANGING | SWP_NOCOPYBITS);
@@ -234,11 +238,37 @@ int ShowHide(WPARAM wParam, LPARAM lParam)
 		ShowWindow(pcli->hwndContactList, SW_SHOW);
 		DBWriteContactSettingByte(NULL, "CList", "State", SETTING_STATE_NORMAL);
 
+        //this forces the window onto the visible screen
+		MyMonitorFromWindow = (HMONITOR(WINAPI *) (HWND, DWORD)) GetProcAddress(GetModuleHandleA("USER32"), "MonitorFromWindow");
 		GetWindowRect(pcli->hwndContactList, &rcWindow);
-		if (Utils_AssertInsideScreen(&rcWindow) == 1)
-		{
-			MoveWindow(pcli->hwndContactList, rcWindow.left, rcWindow.top, 
-				rcWindow.right - rcWindow.left, rcWindow.bottom - rcWindow.top, TRUE);
+		if (MyMonitorFromWindow) {
+			if (MyMonitorFromWindow(pcli->hwndContactList, 0) == NULL) {
+				BOOL(WINAPI * MyGetMonitorInfoA) (HMONITOR, LPMONITORINFO);
+				MONITORINFO mi = { 0 };
+				HMONITOR hMonitor = MyMonitorFromWindow(pcli->hwndContactList, 2);
+				MyGetMonitorInfoA = (BOOL(WINAPI *) (HMONITOR, LPMONITORINFO)) GetProcAddress(GetModuleHandleA("USER32"), "GetMonitorInfoA");
+				mi.cbSize = sizeof(mi);
+				MyGetMonitorInfoA(hMonitor, &mi);
+				rcScreen = mi.rcWork;
+				offScreen = 1;
+			}
+		}
+		else {
+			RECT rcDest;
+			if (IntersectRect(&rcDest, &rcScreen, &rcWindow) == 0)
+				offScreen = 1;
+		}
+		if (offScreen) {
+			if (rcWindow.top >= rcScreen.bottom)
+				OffsetRect(&rcWindow, 0, rcScreen.bottom - rcWindow.bottom);
+			else if (rcWindow.bottom <= rcScreen.top)
+				OffsetRect(&rcWindow, 0, rcScreen.top - rcWindow.top);
+			if (rcWindow.left >= rcScreen.right)
+				OffsetRect(&rcWindow, rcScreen.right - rcWindow.right, 0);
+			else if (rcWindow.right <= rcScreen.left)
+				OffsetRect(&rcWindow, rcScreen.left - rcWindow.left, 0);
+			SetWindowPos(pcli->hwndContactList, 0, rcWindow.left, rcWindow.top, rcWindow.right - rcWindow.left, rcWindow.bottom - rcWindow.top,
+				SWP_NOZORDER);
 		}
 	}
 	else {                      //It needs to be hidden

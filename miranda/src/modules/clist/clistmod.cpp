@@ -126,7 +126,7 @@ static INT_PTR GetStatusModeDescription(WPARAM wParam, LPARAM lParam)
 		{
 			static char szMode[64]={0};
 			TCHAR* buf1 = (TCHAR*)cli.pfnGetStatusModeDescription( wParam, lParam );
-			char *buf2 = mir_u2a(buf1);
+			char *buf2 = u2a(buf1);
 			_snprintf(szMode,sizeof(szMode),"%s",buf2);
 			mir_free(buf2);
 			return (INT_PTR)szMode;
@@ -401,18 +401,8 @@ int fnShowHide(WPARAM, LPARAM)
 		}
 	}
 	else {                      //It needs to be hidden
-		if (DBGetContactSettingByte(NULL, "CList", "ToolWindow", SETTING_TOOLWINDOW_DEFAULT) || 
-			DBGetContactSettingByte(NULL, "CList", "Min2Tray", SETTING_MIN2TRAY_DEFAULT))
-		{
-			ShowWindow(cli.hwndContactList, SW_HIDE);
-			DBWriteContactSettingByte(NULL, "CList", "State", SETTING_STATE_HIDDEN);
-		}
-		else
-		{
-			ShowWindow(cli.hwndContactList, SW_MINIMIZE);
-			DBWriteContactSettingByte(NULL, "CList", "State", SETTING_STATE_MINIMIZED);
-		}
-
+		ShowWindow(cli.hwndContactList, SW_HIDE);
+		DBWriteContactSettingByte(NULL, "CList", "State", SETTING_STATE_HIDDEN);
 		if (MySetProcessWorkingSetSize != NULL && DBGetContactSettingByte(NULL, "CList", "DisableWorkingSet", 1))
 			MySetProcessWorkingSetSize(GetCurrentProcess(), -1, -1);
 	}

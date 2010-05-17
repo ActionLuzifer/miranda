@@ -5,7 +5,7 @@
 // Copyright © 2000-2001 Richard Hughes, Roland Rabien, Tristan Van de Vreede
 // Copyright © 2001-2002 Jon Keating, Richard Hughes
 // Copyright © 2002-2004 Martin Öberg, Sam Kothari, Robert Rainwater
-// Copyright © 2004-2010 Joe Kucera
+// Copyright © 2004-2009 Joe Kucera
 // 
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -19,7 +19,7 @@
 // 
 // You should have received a copy of the GNU General Public License
 // along with this program; if not, write to the Free Software
-// Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+// Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //
 // -----------------------------------------------------------------------------
 //
@@ -36,7 +36,6 @@
 
 #include "icqoscar.h"
 
-
 // Retrieve users' info
 void CIcqProto::icq_InitInfoUpdate(void)
 {
@@ -46,7 +45,7 @@ void CIcqProto::icq_InitInfoUpdate(void)
 	if (hInfoQueueEvent)
 	{
 		// Init mutexes
-		infoUpdateMutex = new icq_critical_section();
+		InitializeCriticalSection(&infoUpdateMutex);
 
 		// Init list
 		for (int i = 0; i<LISTSIZE; i++)
@@ -72,7 +71,7 @@ BOOL CIcqProto::icq_QueueUser(HANDLE hContact)
 		int i, nChecked = 0, nFirstFree = -1;
 		BOOL bFound = FALSE;
 
-		infoUpdateMutex->Enter();
+		EnterCriticalSection(&infoUpdateMutex);
 
 		// Check if in list
 		for (i = 0; (i<LISTSIZE && nChecked < nInfoUserCount); i++)
@@ -114,7 +113,7 @@ BOOL CIcqProto::icq_QueueUser(HANDLE hContact)
 			}
 		}
 
-		infoUpdateMutex->Leave();
+		LeaveCriticalSection(&infoUpdateMutex);
 
 		return TRUE;
 	}
@@ -129,7 +128,7 @@ void CIcqProto::icq_DequeueUser(DWORD dwUin)
 	{
 		int nChecked = 0;
 		// Check if in list
-		infoUpdateMutex->Enter();
+		EnterCriticalSection(&infoUpdateMutex);
 		for (int i = 0; (i < LISTSIZE && nChecked < nInfoUserCount); i++) 
 		{
 			if (m_infoUpdateList[i].dwUin) 
@@ -149,7 +148,7 @@ void CIcqProto::icq_DequeueUser(DWORD dwUin)
 				}
 			}
 		}
-		infoUpdateMutex->Leave();
+		LeaveCriticalSection(&infoUpdateMutex);
 	}
 }
 
@@ -236,7 +235,7 @@ void __cdecl CIcqProto::InfoUpdateThread( void* )
 
         // Check the list, take only users that were there for at least 5sec
         // wait if any user is there shorter than 5sec and not a single user is there longer than 20sec
-				infoUpdateMutex->Enter();
+				EnterCriticalSection(&infoUpdateMutex);
 				for (i = 0; i<LISTSIZE; i++)
 				{
 					if (m_infoUpdateList[i].hContact)
@@ -250,7 +249,7 @@ void __cdecl CIcqProto::InfoUpdateThread( void* )
               bNotReady = TRUE;
           }
         }
-        infoUpdateMutex->Leave();
+        LeaveCriticalSection(&infoUpdateMutex);
 
         if (!bTimeOuted && bNotReady)
         {
@@ -281,10 +280,10 @@ void __cdecl CIcqProto::InfoUpdateThread( void* )
   			NetLog_Server("Info-Update: Users %u in queue.", nInfoUserCount);
 #endif
         // Either some user is waiting long enough, or all users are ready (waited at least the minimum time)
-				m_ratesMutex->Enter();
+				EnterCriticalSection(&ratesMutex);
 				if (!m_rates)
 				{ // we cannot send info request - icq is offline
-					m_ratesMutex->Leave();
+					LeaveCriticalSection(&ratesMutex);
 					break;
 				}
 				WORD wGroup = m_rates->getGroupFromSNAC(ICQ_EXTENSIONS_FAMILY, ICQ_META_CLI_REQUEST);
@@ -292,7 +291,7 @@ void __cdecl CIcqProto::InfoUpdateThread( void* )
 				{ // we are over rate, need to wait before sending
 					int nDelay = m_rates->getDelayToLimitLevel(wGroup, RML_IDLE_50);
 
-					m_ratesMutex->Leave();
+					LeaveCriticalSection(&ratesMutex);
 #ifdef _DEBUG
 					NetLog_Server("Rates: InfoUpdate delayed %dms", nDelay);
 #endif
@@ -302,23 +301,23 @@ void __cdecl CIcqProto::InfoUpdateThread( void* )
 						NetLog_Server("%s thread ended.", "Info-Update");
 						return;
 					}
-					m_ratesMutex->Enter();
+					EnterCriticalSection(&ratesMutex);
 					if (!m_rates) // we lost connection when we slept, go away
 						break;
 				}
 				if (!m_rates)
 				{ // we cannot send info request - icq is offline
-					m_ratesMutex->Leave();
+					LeaveCriticalSection(&ratesMutex);
 					break;
 				}
-				m_ratesMutex->Leave();
+				LeaveCriticalSection(&ratesMutex);
 
         userinfo *hContactList[LISTSIZE];
         int nListIndex = 0;
         BYTE *pRequestData = NULL;
         int nRequestSize = 0;
 
-				infoUpdateMutex->Enter();
+				EnterCriticalSection(&infoUpdateMutex);
 				for (i = 0; i<LISTSIZE; i++)
 				{
 					if (m_infoUpdateList[i].hContact)
@@ -367,13 +366,13 @@ void __cdecl CIcqProto::InfoUpdateThread( void* )
 #endif
         if (!nListIndex)
         { // no users to request info for
-          infoUpdateMutex->Leave();
+          LeaveCriticalSection(&infoUpdateMutex);
           break;
         }
 				if (!(dwInfoActiveRequest = sendUserInfoMultiRequest(pRequestData, nRequestSize, nListIndex)))
         { // sending data packet failed
           SAFE_FREE((void**)&pRequestData);
-          infoUpdateMutex->Leave();
+          LeaveCriticalSection(&infoUpdateMutex);
           break;
         }
         SAFE_FREE((void**)&pRequestData);
@@ -385,7 +384,7 @@ void __cdecl CIcqProto::InfoUpdateThread( void* )
           hContactList[i]->queued = 0;
 					nInfoUserCount--;
 				}
-				infoUpdateMutex->Leave();
+				LeaveCriticalSection(&infoUpdateMutex);
 			}
 			break;
 
@@ -406,7 +405,7 @@ void CIcqProto::icq_InfoUpdateCleanup(void)
 	SetEvent(hInfoQueueEvent); // break queue loop
 	if (hInfoThread) ICQWaitForSingleObject(hInfoThread, INFINITE, TRUE);
 	// Uninit mutex
-	SAFE_DELETE(&infoUpdateMutex);
+	DeleteCriticalSection(&infoUpdateMutex);
 	CloseHandle(hInfoQueueEvent);
 	CloseHandle(hInfoThread);
 }

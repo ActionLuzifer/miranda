@@ -63,6 +63,7 @@ CLEAN :
 	-@erase "$(INTDIR)\coolscroll.obj"
 	-@erase "$(INTDIR)\Docking.obj"
 	-@erase "$(INTDIR)\extBackg.obj"
+	-@erase "$(INTDIR)\forkthread.obj"
 	-@erase "$(INTDIR)\framesmenu.obj"
 	-@erase "$(INTDIR)\groupmenu.obj"
 	-@erase "$(INTDIR)\init.obj"
@@ -155,6 +156,7 @@ LINK32_OBJS= \
 	"$(INTDIR)\coolscroll.obj" \
 	"$(INTDIR)\Docking.obj" \
 	"$(INTDIR)\extBackg.obj" \
+	"$(INTDIR)\forkthread.obj" \
 	"$(INTDIR)\init.obj" \
 	"$(INTDIR)\movetogroup.obj" \
 	"$(INTDIR)\rowheight_funcs.obj" \
@@ -205,6 +207,7 @@ CLEAN :
 	-@erase "$(INTDIR)\coolscroll.obj"
 	-@erase "$(INTDIR)\Docking.obj"
 	-@erase "$(INTDIR)\extBackg.obj"
+	-@erase "$(INTDIR)\forkthread.obj"
 	-@erase "$(INTDIR)\framesmenu.obj"
 	-@erase "$(INTDIR)\groupmenu.obj"
 	-@erase "$(INTDIR)\init.obj"
@@ -297,6 +300,7 @@ LINK32_OBJS= \
 	"$(INTDIR)\coolscroll.obj" \
 	"$(INTDIR)\Docking.obj" \
 	"$(INTDIR)\extBackg.obj" \
+	"$(INTDIR)\forkthread.obj" \
 	"$(INTDIR)\init.obj" \
 	"$(INTDIR)\movetogroup.obj" \
 	"$(INTDIR)\rowheight_funcs.obj" \
@@ -347,6 +351,7 @@ CLEAN :
 	-@erase "$(INTDIR)\coolscroll.obj"
 	-@erase "$(INTDIR)\Docking.obj"
 	-@erase "$(INTDIR)\extBackg.obj"
+	-@erase "$(INTDIR)\forkthread.obj"
 	-@erase "$(INTDIR)\framesmenu.obj"
 	-@erase "$(INTDIR)\groupmenu.obj"
 	-@erase "$(INTDIR)\init.obj"
@@ -439,6 +444,7 @@ LINK32_OBJS= \
 	"$(INTDIR)\coolscroll.obj" \
 	"$(INTDIR)\Docking.obj" \
 	"$(INTDIR)\extBackg.obj" \
+	"$(INTDIR)\forkthread.obj" \
 	"$(INTDIR)\init.obj" \
 	"$(INTDIR)\movetogroup.obj" \
 	"$(INTDIR)\rowheight_funcs.obj" \
@@ -489,6 +495,7 @@ CLEAN :
 	-@erase "$(INTDIR)\coolscroll.obj"
 	-@erase "$(INTDIR)\Docking.obj"
 	-@erase "$(INTDIR)\extBackg.obj"
+	-@erase "$(INTDIR)\forkthread.obj"
 	-@erase "$(INTDIR)\framesmenu.obj"
 	-@erase "$(INTDIR)\groupmenu.obj"
 	-@erase "$(INTDIR)\init.obj"
@@ -581,6 +588,7 @@ LINK32_OBJS= \
 	"$(INTDIR)\coolscroll.obj" \
 	"$(INTDIR)\Docking.obj" \
 	"$(INTDIR)\extBackg.obj" \
+	"$(INTDIR)\forkthread.obj" \
 	"$(INTDIR)\init.obj" \
 	"$(INTDIR)\movetogroup.obj" \
 	"$(INTDIR)\rowheight_funcs.obj" \
@@ -1682,6 +1690,51 @@ SOURCE=.\Docking.c
 SOURCE=.\extBackg.c
 
 "$(INTDIR)\extBackg.obj" : $(SOURCE) "$(INTDIR)" "$(INTDIR)\clist.pch"
+
+
+SOURCE=.\forkthread.c
+
+!IF  "$(CFG)" == "clist_nicer - Win32 Release"
+
+CPP_SWITCHES=/nologo /MD /W3 /Zi /O1 /I "../../include/" /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "CLIST_EXPORTS" /Fp"$(INTDIR)\clist.pch" /Yu"commonheaders.h" /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /c 
+
+"$(INTDIR)\forkthread.obj" : $(SOURCE) "$(INTDIR)" "$(INTDIR)\clist.pch"
+	$(CPP) @<<
+  $(CPP_SWITCHES) $(SOURCE)
+<<
+
+
+!ELSEIF  "$(CFG)" == "clist_nicer - Win32 Debug"
+
+CPP_SWITCHES=/nologo /MDd /W3 /Gm /GX /ZI /Od /I "../../include" /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "CLIST_EXPORTS" /Fp"$(INTDIR)\clist.pch" /Yu"commonheaders.h" /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /GZ /c 
+
+"$(INTDIR)\forkthread.obj" : $(SOURCE) "$(INTDIR)" "$(INTDIR)\clist.pch"
+	$(CPP) @<<
+  $(CPP_SWITCHES) $(SOURCE)
+<<
+
+
+!ELSEIF  "$(CFG)" == "clist_nicer - Win32 Release Unicode"
+
+CPP_SWITCHES=/nologo /MD /W3 /Zi /O1 /Oy /I "../../include/" /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "UNICODE" /D "_USRDLL" /D "CLIST_EXPORTS" /Fp"$(INTDIR)\clist.pch" /Yu"commonheaders.h" /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /c 
+
+"$(INTDIR)\forkthread.obj" : $(SOURCE) "$(INTDIR)" "$(INTDIR)\clist.pch"
+	$(CPP) @<<
+  $(CPP_SWITCHES) $(SOURCE)
+<<
+
+
+!ELSEIF  "$(CFG)" == "clist_nicer - Win32 Debug Unicode"
+
+CPP_SWITCHES=/nologo /MDd /W3 /Gm /GX /ZI /Od /I "../../include" /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "UNICODE" /D "_USRDLL" /D "CLIST_EXPORTS" /Fp"$(INTDIR)\clist.pch" /Yu"commonheaders.h" /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /GZ /c 
+
+"$(INTDIR)\forkthread.obj" : $(SOURCE) "$(INTDIR)" "$(INTDIR)\clist.pch"
+	$(CPP) @<<
+  $(CPP_SWITCHES) $(SOURCE)
+<<
+
+
+!ENDIF 
 
 SOURCE=.\init.c
 

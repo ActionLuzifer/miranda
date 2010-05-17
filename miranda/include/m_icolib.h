@@ -52,7 +52,7 @@ typedef struct {
   };
   int  iDefaultIndex;         // index of icon in default file
   HICON hDefaultIcon;         // handle to default icon
-  int cx,cy;                  // dimensions of icon (if 0 then standard size icon (big and small options available)
+  int cx,cy;                  // dimensions of icon
   int flags;                  // combination of SIDF_*
 } SKINICONDESC;
 
@@ -91,8 +91,6 @@ typedef struct {
 
 //
 //  Retrieve HICON with name specified in lParam
-//  wParam = (WPARAM)0 - small 1 - big
-//  lParam = (LPARAM)(char*)pszName
 //  Returned HICON SHOULDN'T be destroyed, it is managed by IcoLib
 //
 #define MS_SKIN2_GETICON "Skin2/Icons/GetIcon"
@@ -106,8 +104,6 @@ typedef struct {
 
 //
 //  Retrieve HICON with HANDLE specified in lParam
-//  wParam = (WPARAM)0 - small 1 - big
-//  lParam = (LPARAM)(HANDLE)hIcoLibIcon
 //  Returned HICON SHOULDN'T be destroyed, it is managed by IcoLib
 //
 #define MS_SKIN2_GETICONBYHANDLE "Skin2/Icons/GetIconByHandle"
@@ -116,7 +112,7 @@ typedef struct {
 //  Add reference to HICON
 //
 //  wParam = (WPARAM)HICON
-//  lParam = 0 - small 1 - big
+//  lParam = 0
 //
 #define MS_SKIN2_ADDREFICON "Skin2/Icons/AddRef"
 
@@ -127,7 +123,6 @@ typedef struct {
 //  lParam = (LPARAM)(char*)pszName (optional)  // at least one needs to be specified
 //
 #define MS_SKIN2_RELEASEICON "Skin2/Icons/ReleaseIcon"
-#define MS_SKIN2_RELEASEICONBIG "Skin2/Icons/ReleaseIconBig"
 
 //
 //  Check whether HICON is managed by IcoLib

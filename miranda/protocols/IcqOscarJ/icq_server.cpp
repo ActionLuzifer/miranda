@@ -5,7 +5,7 @@
 // Copyright © 2000-2001 Richard Hughes, Roland Rabien, Tristan Van de Vreede
 // Copyright © 2001-2002 Jon Keating, Richard Hughes
 // Copyright © 2002-2004 Martin Öberg, Sam Kothari, Robert Rainwater
-// Copyright © 2004-2010 Joe Kucera
+// Copyright © 2004-2009 Joe Kucera
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -19,7 +19,7 @@
 //
 // You should have received a copy of the GNU General Public License
 // along with this program; if not, write to the Free Software
-// Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+// Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //
 // -----------------------------------------------------------------------------
 //
@@ -36,13 +36,12 @@
 
 #include "icqoscar.h"
 
-
 void icq_newConnectionReceived(HANDLE hNewConnection, DWORD dwRemoteIP, void *pExtra);
 
 /////////////////////////////////////////////////////////////////////////////////////////
 // ICQ Server thread
 
-void __cdecl CIcqProto::ServerThread(serverthread_start_info *infoParam)
+void __cdecl CIcqProto::ServerThread(serverthread_start_info* infoParam)
 {
 	serverthread_info info = {0};
 
@@ -60,7 +59,6 @@ void __cdecl CIcqProto::ServerThread(serverthread_start_info *infoParam)
 	NetLog_Server("Authenticating to server");
 	{
 		NETLIBOPENCONNECTION nloc = infoParam->nloc;
-		nloc.timeout = 6;
 
 		hServerConn = NetLib_OpenConnection(m_hServerNetlibUser, NULL, &nloc);
 
@@ -104,14 +102,6 @@ void __cdecl CIcqProto::ServerThread(serverthread_start_info *infoParam)
 		else if (!bConstInternalIP)
 			setSettingDword(NULL, "RealIP", dwInternalIP);
 	}
-
-  // Initialize rate limiting queues
-  { 
-    icq_lock l(m_ratesMutex);
-
-    m_ratesQueue_Request = new rates_queue(this, "request", RML_IDLE_30, RML_IDLE_50, 1);
-    m_ratesQueue_Response = new rates_queue(this, "response", RML_IDLE_10, RML_IDLE_30, -1);
-  }
 
 	// This is the "infinite" loop that receives the packets from the ICQ server
 	{
@@ -203,11 +193,9 @@ void __cdecl CIcqProto::ServerThread(serverthread_start_info *infoParam)
 		{
 			if (getContactStatus(hContact) != ID_STATUS_OFFLINE)
 			{
-        char tmp = 0;
-
 				setSettingWord(hContact, "Status", ID_STATUS_OFFLINE);
 
-				handleXStatusCaps(dwUIN, szUID, hContact, (BYTE*)&tmp, 0, &tmp, 0);
+				handleXStatusCaps(hContact, NULL, 0, NULL, 0);
 			}
 		}
 
@@ -218,13 +206,10 @@ void __cdecl CIcqProto::ServerThread(serverthread_start_info *infoParam)
 
 	servlistPendingFlushOperations(); // clear pending operations list
 	
-  { // release rates queues
-    icq_lock l(m_ratesMutex);
-
-    SAFE_DELETE((void_struct**)&m_ratesQueue_Request);
-    SAFE_DELETE((void_struct**)&m_ratesQueue_Response);
-    SAFE_DELETE((void_struct**)&m_rates);
-  }
+  EnterCriticalSection(&ratesMutex);
+  delete m_rates;
+  m_rates = NULL;
+	LeaveCriticalSection(&ratesMutex);
 
 	FlushServerIDs();         // clear server IDs list
 
@@ -234,12 +219,12 @@ void __cdecl CIcqProto::ServerThread(serverthread_start_info *infoParam)
 
 void CIcqProto::icq_serverDisconnect(BOOL bBlock)
 {
-	connectionHandleMutex->Enter();
+	EnterCriticalSection(&connectionHandleMutex);
 
 	if (hServerConn)
 	{
 		NetLib_CloseConnection(&hServerConn, TRUE);
-		connectionHandleMutex->Leave();
+		LeaveCriticalSection(&connectionHandleMutex);
 
 		// Not called from network thread?
 		if (bBlock && GetCurrentThreadId() != serverThreadId)
@@ -251,11 +236,10 @@ void CIcqProto::icq_serverDisconnect(BOOL bBlock)
 			CloseHandle(serverThreadHandle);
 	}
 	else
-		connectionHandleMutex->Leave();
+		LeaveCriticalSection(&connectionHandleMutex);
 }
 
-
-int CIcqProto::handleServerPackets(BYTE *buf, int len, serverthread_info *info)
+int CIcqProto::handleServerPackets(unsigned char* buf, int len, serverthread_info* info)
 {
 	BYTE channel;
 	WORD sequence;
@@ -308,7 +292,7 @@ int CIcqProto::handleServerPackets(BYTE *buf, int len, serverthread_info *info)
 			break;
 
 		default:
-			NetLog_Server("Warning: Unhandled Server FLAP Channel: Channel %u, Seq %u, Length %u bytes", channel, sequence, datalen);
+			NetLog_Server("Warning: Unhandled %s FLAP Channel: Channel %u, Seq %u, Length %u bytes", "Server", channel, sequence, datalen);
 			break;
 		}
 
@@ -321,18 +305,17 @@ int CIcqProto::handleServerPackets(BYTE *buf, int len, serverthread_info *info)
 	return bytesUsed;
 }
 
-
-void CIcqProto::sendServPacket(icq_packet *pPacket)
+void CIcqProto::sendServPacket(icq_packet* pPacket)
 {
   // make sure to have the connection handle
-  connectionHandleMutex->Enter();
+  EnterCriticalSection(&connectionHandleMutex);
 
 	if (hServerConn)
 	{
 		int nSendResult;
 
     // This critsec makes sure that the sequence order doesn't get screwed up
-    localSeqMutex->Enter();
+    EnterCriticalSection(&localSeqMutex);
 
 		// :IMPORTANT:
 		// The FLAP sequence must be a WORD. When it reaches 0xFFFF it should wrap to
@@ -353,14 +336,13 @@ void CIcqProto::sendServPacket(icq_packet *pPacket)
 			Sleep(1000);
 		}
 
-    localSeqMutex->Leave();
-    connectionHandleMutex->Leave();
+    LeaveCriticalSection(&localSeqMutex);
+    LeaveCriticalSection(&connectionHandleMutex);
 
-		{ // Rates management
-			icq_lock l(m_ratesMutex);
-
-			m_rates->packetSent(pPacket);
-		}
+		// Rates management
+		EnterCriticalSection(&ratesMutex);
+		m_rates->packetSent(pPacket);
+		LeaveCriticalSection(&ratesMutex);
 
 		// Send error
 		if (nSendResult == SOCKET_ERROR)
@@ -376,7 +358,7 @@ void CIcqProto::sendServPacket(icq_packet *pPacket)
 	}
 	else
 	{
-    connectionHandleMutex->Leave();
+    LeaveCriticalSection(&connectionHandleMutex);
 
 		NetLog_Server("Error: Failed to send packet (no connection)");
 	}
@@ -384,13 +366,11 @@ void CIcqProto::sendServPacket(icq_packet *pPacket)
 	SAFE_FREE((void**)&pPacket->pData);
 }
 
-
 void __cdecl CIcqProto::SendPacketAsyncThread(icq_packet* pkt)
 {
 	sendServPacket( pkt );
 	SAFE_FREE((void**)&pkt);
 }
-
 
 void CIcqProto::sendServPacketAsync(icq_packet *packet)
 {
@@ -402,23 +382,21 @@ void CIcqProto::sendServPacketAsync(icq_packet *packet)
 	ForkThread(( IcqThreadFunc )&CIcqProto::SendPacketAsyncThread, pPacket);
 }
 
-
 int CIcqProto::IsServerOverRate(WORD wFamily, WORD wCommand, int nLevel)
 {
-	icq_lock l(m_ratesMutex);
+	int result = FALSE;
 
-  if (m_rates)
-  {
-	  WORD wGroup = m_rates->getGroupFromSNAC(wFamily, wCommand);
+	EnterCriticalSection(&ratesMutex);
+	WORD wGroup = m_rates->getGroupFromSNAC(wFamily, wCommand);
 
-	  // check if the rate is not over specified level
-	  if (m_rates->getNextRateLevel(wGroup) < m_rates->getLimitLevel(wGroup, nLevel))
-		  return TRUE;
-  }
+	// check if the rate is not over specified level
+	if (m_rates->getNextRateLevel(wGroup) < m_rates->getLimitLevel(wGroup, nLevel))
+		result = TRUE;
 
-	return FALSE;
+	LeaveCriticalSection(&ratesMutex);
+
+	return result;
 }
-
 
 /////////////////////////////////////////////////////////////////////////////////////////
 // ICQ Server thread
@@ -449,9 +427,6 @@ void CIcqProto::icq_login(const char* szPassword)
 	wLocalSequence = generate_flap_sequence();
 
 	m_dwLocalUIN = dwUin;
-
-  // Initialize members
-  m_avatarsConnectionPending = TRUE;
 
 	serverThreadHandle = ForkThreadEx(( IcqThreadFunc )&CIcqProto::ServerThread, stsi, &serverThreadId);
 }

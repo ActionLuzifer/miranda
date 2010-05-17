@@ -1,5 +1,7 @@
 /*
-Copyright 2000-2010 Miranda IM project, 
+SRMM
+
+Copyright 2000-2005 Miranda ICQ/IM project, 
 all portions of this codebase are copyrighted to the people 
 listed in contributors.txt.
 
@@ -18,6 +20,7 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 #include "commonheaders.h"
+#include "richutil.h"
 
 /*
 	To initialize this library, call:
@@ -67,7 +70,7 @@ void RichUtil_Load() {
 	ZeroMemory(&sListInt, sizeof(sListInt));
 	sListInt.increment = 10;
 	sListInt.sortFunc = RichUtil_CmpVal;
-	mTheme = IsWinVerXPPlus() ? GetModuleHandleA("uxtheme") : 0;
+	mTheme = RIsWinVerXPPlus()?LoadLibraryA("uxtheme.dll"):0;
 	InitializeCriticalSection(&csRich);
 	if (!mTheme) return;
 	MyOpenThemeData = (HANDLE (WINAPI *)(HWND, LPCWSTR))GetProcAddress(mTheme, "OpenThemeData");
@@ -101,8 +104,9 @@ int RichUtil_SubClass(HWND hwndEdit) {
 	if (IsWindow(hwndEdit)) {
 		int idx;
 
-		TRichUtil *ru = (TRichUtil*)mir_calloc(sizeof(TRichUtil));
+		TRichUtil *ru = (TRichUtil*)malloc(sizeof(TRichUtil));
 		
+		ZeroMemory(ru, sizeof(TRichUtil));
 		ru->hwnd = hwndEdit;
 		ru->hasUglyBorder = 0;
 		EnterCriticalSection(&csRich);
@@ -219,7 +223,7 @@ static LRESULT CALLBACK RichUtil_Proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM
 			EnterCriticalSection(&csRich);
 			li.List_Remove(&sListInt, idx);
 			LeaveCriticalSection(&csRich);
-			mir_free(ru);
+			if (ru) free(ru);
 			return ret;
 		}
 	}

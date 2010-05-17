@@ -184,7 +184,7 @@ static INT_PTR CALLBACK AccFormDlgProc(HWND hwndDlg,UINT message, WPARAM wParam,
                     if (!pa->tszAccountName[0])
                     {
 					    mir_free(pa->tszAccountName);
-                        pa->tszAccountName = mir_a2t(buf);
+                        pa->tszAccountName = a2t(buf);
                     }
 
 					DBWriteContactSettingString( NULL, pa->szModuleName, "AM_BaseProto", pa->szProtoName );
@@ -589,11 +589,11 @@ INT_PTR CALLBACK AccMgrDlgProc(HWND hwndDlg,UINT message, WPARAM wParam, LPARAM 
 
 			if ( acc->bOldProto )
 			{
-                tmp = SKINICON_OTHER_ON;
+                tmp = SKINICON_OTHER_LOADED;
 			} 
 			else if ( acc->bDynDisabled )
 			{
-                tmp = SKINICON_OTHER_OFF;
+                tmp = SKINICON_OTHER_NOTLOADED;
 			} 
             else
 			{
