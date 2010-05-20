@@ -21,48 +21,47 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifndef _CHAT_H_
 #define _CHAT_H_
 
-#define MIRANDA_VER 0x0800
+#define MIRANDA_VER 0x0700
 
-//#pragma warning( disable : 4786 ) // limitation in MSVC's debugger.
-//#pragma warning( disable : 4996 ) // limitation in MSVC's debugger.
+#pragma warning( disable : 4786 ) // limitation in MSVC's debugger.
+#pragma warning( disable : 4996 ) // limitation in MSVC's debugger.
 
 #define WIN32_LEAN_AND_MEAN
 #define _WIN32_WINNT 0x0501
 #define _WIN32_IE 0x0501
 
-#include <m_stdhdr.h>
+#include "m_stdhdr.h"
 
+#include <tchar.h>
 #include <windows.h>
 #include <commctrl.h>
 #include <richedit.h>
+#include <process.h>
 #include <ole2.h>
 #include <richole.h>
+#include <malloc.h>
 #include <commdlg.h>
-#include <shellapi.h>
-#include <Initguid.h>
-#include <Oleacc.h>
-
 #include <time.h>
-
-#include <win2k.h>
-#include <newpluginapi.h>
-#include <m_system.h>
-#include <m_options.h>
-#include <m_database.h>
-#include <m_utils.h>
-#include <m_langpack.h>
-#include <m_skin.h>
-#include <m_button.h>
-#include <m_protomod.h>
-#include <m_protosvc.h>
-#include <m_addcontact.h>
-#include <m_clist.h>
-#include <m_clui.h>
-#include <m_message.h>
-#include <m_icolib.h>
-#include <m_popup.h>
-#include <m_chat.h>
-
+#include <stdio.h>
+#include <shellapi.h>
+#include "../../include/win2k.h"
+#include "../../include/newpluginapi.h"
+#include "../../include/m_system.h"
+#include "../../include/m_options.h"
+#include "../../include/m_database.h"
+#include "../../include/m_utils.h"
+#include "../../include/m_langpack.h"
+#include "../../include/m_skin.h"
+#include "../../include/m_button.h"
+#include "../../include/m_protomod.h"
+#include "../../include/m_protosvc.h"
+#include "../../include/m_addcontact.h"
+#include "../../include/m_clist.h"
+#include "../../include/m_clui.h"
+#include "../../include/m_message.h"
+#include "../../include/m_icolib.h"
+#include "../../include/m_popup.h"
+#include "../../include/m_chat.h"
 #include "resource.h"
 #include "version.h"
 #include "m_ieview.h"
@@ -161,7 +160,7 @@ typedef struct  {
 typedef struct  MODULE_INFO_TYPE
 {
 	char*		pszModule;
-	TCHAR*		ptszModDispName;
+	char*		pszModDispName;
 	char*		pszHeader;
 	BOOL		bBold;
 	BOOL		bUnderline;
@@ -297,7 +296,6 @@ typedef struct SESSION_INFO_TYPE
 	HWND        hwndTooltip;
 	int         iOldItemID;
 
-	IAccPropServices* pAccPropServicesForNickList;
 	struct SESSION_INFO_TYPE *next;
 }
 	SESSION_INFO;
@@ -359,7 +357,7 @@ struct GlobalLogSettings_t {
 	TCHAR*      pszIncomingNick;
 	TCHAR*      pszOutgoingNick;
 	TCHAR*      pszHighlightWords;
-	TCHAR*      pszLogDir;
+	char*       pszLogDir;
 	HFONT       UserListFont;
 	HFONT       UserListHeadingsFont;
 	HFONT       MessageBoxFont;
@@ -399,7 +397,7 @@ INT_PTR CALLBACK DlgProcColorToolWindow(HWND hwndDlg, UINT msg, WPARAM wParam, L
 void   Log_StreamInEvent(HWND hwndDlg, LOGINFO* lin, SESSION_INFO* si, BOOL bRedraw, BOOL bPhaseTwo);
 void   LoadMsgLogBitmaps(void);
 void   FreeMsgLogBitmaps(void);
-void   ValidateFilename (TCHAR * filename);
+void   ValidateFilename (char * filename);
 TCHAR* MakeTimeStamp(TCHAR* pszStamp, time_t time);
 char*  Log_CreateRtfHeader(MODULEINFO * mi);
 
@@ -413,7 +411,7 @@ int    OptionsUnInit(void);
 void   LoadMsgDlgFont(int i, LOGFONT * lf, COLORREF * colour);
 void   LoadGlobalSettings(void);
 void   AddIcons(void);
-HICON  LoadIconEx(char* pszIcoLibName, BOOL big);
+HICON  LoadIconEx( char* pszIcoLibName );
 void   LoadLogFonts(void);
 
 //services.c
@@ -529,6 +527,7 @@ TCHAR*        DoRtfToTags( char* pszRtfText, SESSION_INFO* si);
 
 //////////////////////////////////////////////////////////////////////////////////
 
+char*  t2a( const TCHAR* str );
 TCHAR* a2tf( const TCHAR* str, int flags );
 TCHAR* replaceStr( TCHAR** dest, const TCHAR* src );
 char*  replaceStrA( char** dest, const char* src );

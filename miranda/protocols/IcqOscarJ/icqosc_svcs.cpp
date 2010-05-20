@@ -5,7 +5,7 @@
 // Copyright © 2000-2001 Richard Hughes, Roland Rabien, Tristan Van de Vreede
 // Copyright © 2001-2002 Jon Keating, Richard Hughes
 // Copyright © 2002-2004 Martin Öberg, Sam Kothari, Robert Rainwater
-// Copyright © 2004-2010 Joe Kucera
+// Copyright © 2004-2009 Joe Kucera
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -19,7 +19,7 @@
 //
 // You should have received a copy of the GNU General Public License
 // along with this program; if not, write to the Free Software
-// Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+// Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //
 // -----------------------------------------------------------------------------
 //
@@ -35,7 +35,6 @@
 // -----------------------------------------------------------------------------
 
 #include "icqoscar.h"
-
 
 INT_PTR CIcqProto::AddServerContact(WPARAM wParam, LPARAM lParam)
 {
@@ -351,7 +350,6 @@ INT_PTR CIcqProto::ChangeInfoEx(WPARAM wParam, LPARAM lParam)
 	return 0; // Failure
 }
 
-
 INT_PTR CIcqProto::GetAvatarCaps(WPARAM wParam, LPARAM lParam)
 {
 	if (wParam == AF_MAXSIZE)
@@ -404,29 +402,21 @@ INT_PTR CIcqProto::GetAvatarCaps(WPARAM wParam, LPARAM lParam)
 	{ // do not request avatar again if server gave an error
 		return 1 * 60 * 60 * 1000; // one hour
 	}
-  else if (wParam == AF_FETCHALWAYS)
-  { // avatars can be fetched all the time (server only operation)
-    return 1;
-  }
 	return 0;
 }
 
-
 INT_PTR CIcqProto::GetAvatarInfo(WPARAM wParam, LPARAM lParam)
 {
-	PROTO_AVATAR_INFORMATION *pai = (PROTO_AVATAR_INFORMATION*)lParam;
+	PROTO_AVATAR_INFORMATION* pai = (PROTO_AVATAR_INFORMATION*)lParam;
 	DWORD dwUIN;
 	uid_str szUID;
-  DBVARIANT dbv = {DBVT_DELETED};
+	DBVARIANT dbv;
+	int dwPaFormat;
 
 	if (!m_bAvatarsEnabled) return GAIR_NOAVATAR;
 
 	if (getSetting(pai->hContact, "AvatarHash", &dbv) || dbv.type != DBVT_BLOB || (dbv.cpbVal != 0x14 && dbv.cpbVal != 0x09))
-  {
-    ICQFreeVariant(&dbv);
-
 		return GAIR_NOAVATAR; // we did not found avatar hash or hash invalid - no avatar available
-  }
 
 	if (getContactUid(pai->hContact, &dwUIN, &szUID))
 	{
@@ -435,20 +425,16 @@ INT_PTR CIcqProto::GetAvatarInfo(WPARAM wParam, LPARAM lParam)
 		return GAIR_NOAVATAR; // we do not support avatars for invalid contacts
 	}
 
-	int dwPaFormat = getSettingByte(pai->hContact, "AvatarType", PA_FORMAT_UNKNOWN);
-
+	dwPaFormat = getSettingByte(pai->hContact, "AvatarType", PA_FORMAT_UNKNOWN);
 	if (dwPaFormat != PA_FORMAT_UNKNOWN)
 	{ // we know the format, test file
-    char szFile[MAX_PATH * 2 + 4];
+		GetFullAvatarFileName(dwUIN, szUID, dwPaFormat, pai->filename, MAX_PATH);
 
-		GetFullAvatarFileName(dwUIN, szUID, dwPaFormat, szFile, MAX_PATH * 2);
-
-    utf8_decode_static(szFile, pai->filename, SIZEOF(pai->filename)); // Avatar API does not support unicode :-(
 		pai->format = dwPaFormat;
 
 		if (!IsAvatarChanged(pai->hContact, dbv.pbVal, dbv.cpbVal))
 		{ // hashes are the same
-			if (FileAccessUtf(szFile, 0) == 0)
+			if (_access(pai->filename, 0) == 0)
 			{
 				ICQFreeVariant(&dbv);
 
@@ -461,12 +447,8 @@ INT_PTR CIcqProto::GetAvatarInfo(WPARAM wParam, LPARAM lParam)
 	{ // we didn't received the avatar before - this ensures we will not request avatar again and again
 		if ((wParam & GAIF_FORCE) != 0 && pai->hContact != 0)
 		{ // request avatar data
-      char szFile[MAX_PATH * 2 + 4];
-
-			GetAvatarFileName(dwUIN, szUID, szFile, MAX_PATH * 2);
-			GetAvatarData(pai->hContact, dwUIN, szUID, dbv.pbVal, dbv.cpbVal, szFile);
-      utf8_decode_static(szFile, pai->filename, SIZEOF(pai->filename)); // Avatar API does not support unicode :-(
-
+			GetAvatarFileName(dwUIN, szUID, pai->filename, MAX_PATH);
+			GetAvatarData(pai->hContact, dwUIN, szUID, dbv.pbVal, dbv.cpbVal, pai->filename);
 			ICQFreeVariant(&dbv);
 
 			return GAIR_WAITFOR;
@@ -477,27 +459,18 @@ INT_PTR CIcqProto::GetAvatarInfo(WPARAM wParam, LPARAM lParam)
 	return GAIR_NOAVATAR;
 }
 
-
 INT_PTR CIcqProto::GetMyAvatar(WPARAM wParam, LPARAM lParam)
 {
 	if (!m_bAvatarsEnabled) return -2;
 
 	if (!wParam) return -3;
 
-	char *szFile = GetOwnerAvatarFileName();
-
-	if (szFile && !FileAccessUtf(szFile, 0)) 
-  {
-    utf8_decode_static(szFile, (char*)wParam, (int)lParam); // Avatar API does not support unicode :-(
-    SAFE_FREE(&szFile);
-
-    return 0;
-  }
-	SAFE_FREE(&szFile);
-
+	char* file = loadMyAvatarFileName();
+	null_strcpy((char*)wParam, file, (int)lParam - 1);
+	SAFE_FREE(&file);
+	if (!_access((char*)wParam, 0)) return 0;
 	return -1;
 }
-
 
 INT_PTR CIcqProto::GrantAuthorization(WPARAM wParam, LPARAM lParam)
 {
@@ -723,16 +696,12 @@ void CIcqProto::ICQAddRecvEvent(HANDLE hContact, WORD wType, PROTORECVEVENT* pre
 	if (pre->flags & PREF_CREATEREAD) 
 		flags |= DBEF_READ;
 
-	if (pre->flags & PREF_UTF) 
-		flags |= DBEF_UTF;
-
 	if (hContact && DBGetContactSettingByte(hContact, "CList", "Hidden", 0))
 	{
 		DWORD dwUin;
 		uid_str szUid;
 
-		//setContactHidden(hContact, 0);
-
+		setContactHidden(hContact, 0);
 		// if the contact was hidden, add to client-list if not in server-list authed
 		if (!getSettingWord(hContact, DBSETTING_SERVLIST_ID, 0) || getSettingByte(hContact, "Auth", 0))
 		{

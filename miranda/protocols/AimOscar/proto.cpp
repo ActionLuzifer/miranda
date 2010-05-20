@@ -22,7 +22,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 CAimProto::CAimProto(const char* aProtoName, const TCHAR* aUserName)
 	: chat_rooms(5)
 {
-	m_iVersion = 2; 
 	m_tszUserName = mir_tstrdup(aUserName);
 	m_szModuleName = mir_strdup(aProtoName);
 	m_szProtoName = mir_strdup(aProtoName);
@@ -143,10 +142,7 @@ int CAimProto::OnModulesLoaded(WPARAM wParam, LPARAM lParam)
 HANDLE CAimProto::AddToList(int flags, PROTOSEARCHRESULT* psr)
 {
 	if (state != 1) return 0;
-	TCHAR *id = psr->id ? psr->id : psr->nick;
-	char *sn = psr->flags & PSR_UNICODE ? mir_u2a((wchar_t*)id) : mir_strdup((char*)id);
-	HANDLE hContact = contact_from_sn(sn, true, (flags & PALF_TEMPORARY) != 0);
-	mir_free(sn);
+	HANDLE hContact = contact_from_sn(psr->nick, true, (flags & PALF_TEMPORARY) != 0);
 	return hContact; //See authrequest for serverside addition
 }
 
@@ -166,7 +162,7 @@ int CAimProto::Authorize(HANDLE hContact)
 ////////////////////////////////////////////////////////////////////////////////////////
 // AuthDeny - handles the unsuccessful authorization
 
-int CAimProto::AuthDeny(HANDLE hContact, const TCHAR* szReason)
+int CAimProto::AuthDeny(HANDLE hContact, const char* szReason)
 {
 	return 0;
 }
@@ -182,7 +178,7 @@ int __cdecl CAimProto::AuthRecv(HANDLE hContact, PROTORECVEVENT* evt)
 ////////////////////////////////////////////////////////////////////////////////////////
 // PSS_AUTHREQUEST
 
-int __cdecl CAimProto::AuthRequest(HANDLE hContact, const TCHAR* szMessage)
+int __cdecl CAimProto::AuthRequest(HANDLE hContact, const char* szMessage)
 {	
 	//Not a real authrequest- only used b/c we don't know the group until now.
 	if (state != 1)
@@ -210,24 +206,24 @@ HANDLE __cdecl CAimProto::ChangeInfo(int iInfoType, void* pInfoData)
 ////////////////////////////////////////////////////////////////////////////////////////
 // FileAllow - starts a file transfer
 
-HANDLE __cdecl CAimProto::FileAllow(HANDLE hContact, HANDLE hTransfer, const PROTOCHAR* szPath)
+HANDLE __cdecl CAimProto::FileAllow(HANDLE hContact, HANDLE hTransfer, const char* szPath)
 {
-	file_transfer *ft = (file_transfer*)hTransfer;
+    file_transfer *ft = (file_transfer*)hTransfer;
 	if (ft) 
-	{
-		char *path = mir_utf8encodeT(szPath);
+    {
+        char *path = mir_utf8encode(szPath);
 
-		if (ft->pfts.totalFiles > 1 && ft->file[0])
-		{
-			size_t path_len = strlen(path);
-			size_t len = strlen(ft->file) + 2;
+        if (ft->pfts.totalFiles > 1 && ft->file[0])
+        {
+            size_t path_len = strlen(path);
+            size_t len = strlen(ft->file) + 2;
 
-			path = (char*)mir_realloc(path, path_len + len);
-			mir_snprintf(&path[path_len], len, "%s\\", ft->file);
-		}
-		
-		mir_free(ft->file);
-		ft->file = path;
+            path = (char*)mir_realloc(path, path_len + len);
+            mir_snprintf(&path[path_len], len, "%s\\", ft->file);
+        }
+        
+        mir_free(ft->file);
+        ft->file = path;
 
 		ForkThread(&CAimProto::accept_file_thread, ft);
 		return ft;
@@ -240,20 +236,20 @@ HANDLE __cdecl CAimProto::FileAllow(HANDLE hContact, HANDLE hTransfer, const PRO
 
 int __cdecl CAimProto::FileCancel(HANDLE hContact, HANDLE hTransfer)
 {
-	file_transfer *ft = (file_transfer*)hTransfer;
-	if (!ft_list.find_by_ft(ft)) return 0;
+    file_transfer *ft = (file_transfer*)hTransfer;
+    if (!ft_list.find_by_ft(ft)) return 0;
 
 	LOG("We are cancelling a file transfer.");
 
-	aim_chat_deny(hServerConn, seqno, ft->sn, ft->icbm_cookie);
+    aim_chat_deny(hServerConn, seqno, ft->sn, ft->icbm_cookie);
 
 	if (ft->hConn) 
-	{
-		Netlib_Shutdown(ft->hConn);
-		SetEvent(ft->hResumeEvent);
-	}
+    {
+        Netlib_Shutdown(ft->hConn);
+        SetEvent(ft->hResumeEvent);
+    }
 	else 
-		ft_list.remove_by_ft(ft);
+        ft_list.remove_by_ft(ft);
 
 	return 0;
 }
@@ -261,56 +257,56 @@ int __cdecl CAimProto::FileCancel(HANDLE hContact, HANDLE hTransfer)
 ////////////////////////////////////////////////////////////////////////////////////////
 // FileDeny - denies a file transfer
 
-int __cdecl CAimProto::FileDeny(HANDLE hContact, HANDLE hTransfer, const PROTOCHAR* /*szReason*/)
+int __cdecl CAimProto::FileDeny(HANDLE hContact, HANDLE hTransfer, const char* /*szReason*/)
 {
-	file_transfer *ft = (file_transfer*)hTransfer;
-	if (!ft_list.find_by_ft(ft)) return 0;
+    file_transfer *ft = (file_transfer*)hTransfer;
+    if (!ft_list.find_by_ft(ft)) return 0;
 
 	LOG("We are denying a file transfer.");
 
-	aim_chat_deny(hServerConn, seqno, ft->sn, ft->icbm_cookie);
+    aim_chat_deny(hServerConn, seqno, ft->sn, ft->icbm_cookie);
 	return 0;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////
 // FileResume - processes file renaming etc
 
-int __cdecl CAimProto::FileResume(HANDLE hTransfer, int* action, const PROTOCHAR** szFilename)
+int __cdecl CAimProto::FileResume(HANDLE hTransfer, int* action, const char** szFilename)
 {
-	file_transfer *ft = (file_transfer*)hTransfer;
-	if (!ft_list.find_by_ft(ft)) return 0;
+    file_transfer *ft = (file_transfer*)hTransfer;
+    if (!ft_list.find_by_ft(ft)) return 0;
 
-	switch (*action) 
-	{
-	case FILERESUME_RESUME:
-		{
-			struct _stati64 statbuf;
-			_tstati64(ft->pfts.tszCurrentFile, &statbuf);
-			ft->pfts.currentFileProgress = statbuf.st_size;
-		}
+    switch (*action) 
+    {
+    case FILERESUME_RESUME:
+        {
+	        struct _stat statbuf;
+            _stat(ft->pfts.currentFile, &statbuf);
+            ft->pfts.currentFileProgress = statbuf.st_size;
+        }
+        break;
+
+    case FILERESUME_RENAME:
+        mir_free(ft->pfts.currentFile);
+        ft->pfts.currentFile = mir_strdup(*szFilename);
 		break;
 
-	case FILERESUME_RENAME:
-		mir_free(ft->pfts.tszCurrentFile);
-		ft->pfts.tszCurrentFile = mir_tstrdup(*szFilename);
-		break;
+    case FILERESUME_OVERWRITE:
+        ft->pfts.currentFileProgress = 0;
+        break;
 
-	case FILERESUME_OVERWRITE:
-		ft->pfts.currentFileProgress = 0;
-		break;
+    case FILERESUME_SKIP:
+        mir_free(ft->pfts.currentFile);
+        ft->pfts.currentFile = NULL;
+        break;
 
-	case FILERESUME_SKIP:
-		mir_free(ft->pfts.tszCurrentFile);
-		ft->pfts.tszCurrentFile = NULL;
-		break;
+    default:
+        aim_file_ad(hServerConn, seqno, ft->sn, ft->icbm_cookie, true, ft->max_ver);
+	    break;
+    }
+    SetEvent(ft->hResumeEvent);
 
-	default:
-		aim_file_ad(hServerConn, seqno, ft->sn, ft->icbm_cookie, true, ft->max_ver);
-		break;
-	}
-	SetEvent(ft->hResumeEvent);
-
-	return 0;
+    return 0;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////
@@ -319,7 +315,7 @@ int __cdecl CAimProto::FileResume(HANDLE hTransfer, int* action, const PROTOCHAR
 DWORD_PTR __cdecl CAimProto::GetCaps(int type, HANDLE hContact)
 {
 	switch (type) 
-	{
+    {
 	case PFLAGNUM_1:
 		return PF1_IM | PF1_MODEMSG | PF1_BASICSEARCH | PF1_SEARCHBYEMAIL | PF1_FILE;
 
@@ -355,17 +351,8 @@ HICON __cdecl CAimProto::GetIcon(int iconIndex)
 {
 	if (LOWORD(iconIndex) == PLI_PROTOCOL)
 	{
-		if (iconIndex & PLIF_ICOLIBHANDLE)
-			return (HICON)GetIconHandle("aim");
-		
-		bool big = (iconIndex & PLIF_LARGE) != 0;
-		HICON hIcon = LoadIconEx("aim", big);
-
-		if (iconIndex & PLIF_ICOLIB)
-			return hIcon;
-
-		hIcon =  CopyIcon(hIcon);
-		ReleaseIconEx("aim", big);
+		HICON hIcon =  CopyIcon(LoadIconEx("aim"));
+		ReleaseIconEx("aim");
 		return hIcon;
 	}
 	return NULL;
@@ -384,55 +371,54 @@ int __cdecl CAimProto::GetInfo(HANDLE hContact, int infoType)
 
 void __cdecl CAimProto::basic_search_ack_success(void* p)
 {
-	char *sn = normalize_name((char*)p);
+    char *sn = normalize_name((char*)p);
 	if (sn) // normalize it
-	{
+    {
 		if (strlen(sn) > 32) 
-		{
+        {
 			sendBroadcast(NULL, ACKTYPE_SEARCH, ACKRESULT_SUCCESS, (HANDLE) 1, 0);
 		}
-		else 
-		{
-			PROTOSEARCHRESULT psr = {0};
-			psr.cbSize = sizeof(psr);
-			psr.id = (TCHAR*)sn;
-			sendBroadcast(NULL, ACKTYPE_SEARCH, ACKRESULT_DATA, (HANDLE) 1, (LPARAM) & psr);
-			sendBroadcast(NULL, ACKTYPE_SEARCH, ACKRESULT_SUCCESS, (HANDLE) 1, 0);
-		}
+        else 
+        {
+		    PROTOSEARCHRESULT psr;
+		    ZeroMemory(&psr, sizeof(psr));
+		    psr.cbSize = sizeof(psr);
+		    psr.nick = sn;
+		    sendBroadcast(NULL, ACKTYPE_SEARCH, ACKRESULT_DATA, (HANDLE) 1, (LPARAM) & psr);
+		    sendBroadcast(NULL, ACKTYPE_SEARCH, ACKRESULT_SUCCESS, (HANDLE) 1, 0);
+        }
 	}
 	mir_free(sn);
 	mir_free(p);
 }
 
-HANDLE __cdecl CAimProto::SearchBasic(const PROTOCHAR* szId)
+HANDLE __cdecl CAimProto::SearchBasic(const char* szId)
 {
 	if (state != 1)
 		return 0;
 
 	//duplicating the parameter so that it isn't deleted before it's needed- e.g. this function ends before it's used
-	ForkThread(&CAimProto::basic_search_ack_success, mir_t2a(szId));
+	ForkThread(&CAimProto::basic_search_ack_success, mir_strdup(szId));
 	return (HANDLE)1;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////
 // SearchByEmail - searches the contact by its e-mail
 
-HANDLE __cdecl CAimProto::SearchByEmail(const PROTOCHAR* email)
+HANDLE __cdecl CAimProto::SearchByEmail(const char* email)
 {
 	// Maximum email size should really be 320, but the char string is limited to 255.
-	if (state != 1 || email == NULL || _tcslen(email) >= 254)
+	if (state != 1 || email == NULL || strlen(email) >= 254)
 		return NULL;
 
-	char* szEmail = mir_t2a(email);
-	aim_search_by_email(hServerConn, seqno, szEmail);
-	mir_free(szEmail);
+	aim_search_by_email(hServerConn,seqno,email);
 	return (HANDLE)1;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////
 // SearchByName - searches the contact by its first or last name, or by a nickname
 
-HANDLE __cdecl CAimProto::SearchByName(const PROTOCHAR* nick, const PROTOCHAR* firstName, const PROTOCHAR* lastName)
+HANDLE __cdecl CAimProto::SearchByName(const char* nick, const char* firstName, const char* lastName)
 {
 	return NULL;
 }
@@ -458,10 +444,10 @@ int __cdecl CAimProto::RecvContacts(HANDLE hContact, PROTORECVEVENT*)
 ////////////////////////////////////////////////////////////////////////////////////////
 // RecvFile
 
-int __cdecl CAimProto::RecvFile(HANDLE hContact, PROTOFILEEVENT* evt)
+int __cdecl CAimProto::RecvFile(HANDLE hContact, PROTORECVFILE* evt)
 {
 	CCSDATA ccs = { hContact, PSR_FILE, 0, (LPARAM)evt };
-	return CallService(MS_PROTO_RECVFILET, 0, (LPARAM)&ccs);
+	return CallService(MS_PROTO_RECVFILE, 0, (LPARAM)&ccs);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////
@@ -485,7 +471,7 @@ int __cdecl CAimProto::RecvMsg(HANDLE hContact, PROTORECVEVENT* pre)
     mir_free(bbuf);
 	pre->szMessage = omsg;
 
-	return ( int )res;
+    return (int)res;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////
@@ -507,23 +493,23 @@ int __cdecl CAimProto::SendContacts(HANDLE hContact, int flags, int nContacts, H
 ////////////////////////////////////////////////////////////////////////////////////////
 // SendFile - sends a file
 
-HANDLE __cdecl CAimProto::SendFile(HANDLE hContact, const PROTOCHAR* szDescription, PROTOCHAR** ppszFiles)
+HANDLE __cdecl CAimProto::SendFile(HANDLE hContact, const char* szDescription, char** ppszFiles)
 {
 	if (state != 1) return 0;
 
 	if (hContact && szDescription && ppszFiles) 
-	{
+    {
 		DBVARIANT dbv;
 		if (!getString(hContact, AIM_KEY_SN, &dbv)) 
-		{
-			file_transfer *ft = new file_transfer(hContact, dbv.pszVal, NULL);
+        {
+            file_transfer *ft = new file_transfer(hContact, dbv.pszVal, NULL);
 
 			bool isDir = false;
 			int count = 0;
-			while (ppszFiles[count] != NULL) 
-			{
-				struct _stati64 statbuf;
-				if (_tstati64(ppszFiles[count++], &statbuf) == 0)
+	        while (ppszFiles[count] != NULL) 
+            {
+		        struct _stat statbuf;
+				if (_stat(ppszFiles[count++], &statbuf) == 0)
 				{
 					if (statbuf.st_mode & _S_IFDIR)
 					{
@@ -535,36 +521,37 @@ HANDLE __cdecl CAimProto::SendFile(HANDLE hContact, const PROTOCHAR* szDescripti
 						++ft->pfts.totalFiles;
 					}
 				}
-			}
 
-			if (ft->pfts.totalFiles == 0)
-			{
-				delete ft;
-				return NULL;
-			}
+	        }
 
-			ft->pfts.flags |= PFTS_SENDING;
-			ft->pfts.ptszFiles = ppszFiles;
+            if (ft->pfts.totalFiles == 0)
+            {
+                delete ft;
+                return NULL;
+            }
 
-			ft->file = ft->pfts.totalFiles == 1 || isDir ? mir_utf8encodeT(ppszFiles[0]) : (char*)mir_calloc(1);
-			ft->sending = true;
-			ft->message = szDescription[0] ? mir_utf8encodeT(szDescription) : NULL;
+            ft->pfts.sending = true;
+            ft->pfts.files = ppszFiles;
+
+			ft->file = ft->pfts.totalFiles == 1 || isDir ? mir_utf8encode(ppszFiles[0]) : (char*)mir_calloc(1);
+            ft->sending = true;
+            ft->message = szDescription[0] ? mir_utf8encode(szDescription) : NULL;
 			ft->me_force_proxy = getByte(AIM_KEY_FP, 0) != 0;
-			ft->requester = true;
+            ft->requester = true;
 
-			ft_list.insert(ft);
+            ft_list.insert(ft);
 
 			if (ft->me_force_proxy) 
-			{
+            {
 				LOG("We are forcing a proxy file transfer.");
-				ForkThread(&CAimProto::accept_file_thread, ft);
+			    ForkThread(&CAimProto::accept_file_thread, ft);
 			}
 			else 
-			{
-				aim_send_file(hServerConn, seqno, detected_ip, local_port, false, ft);
-			}
+            {
+                aim_send_file(hServerConn, seqno, detected_ip, local_port, false, ft);
+            }
 
-			DBFreeVariant(&dbv);
+            DBFreeVariant(&dbv);
 
 			return ft;
 		}
@@ -583,7 +570,7 @@ int __cdecl CAimProto::SendMsg(HANDLE hContact, int flags, const char* pszSrc)
 	DBVARIANT dbv;
 	if (getString(hContact, AIM_KEY_SN, &dbv))  return 0;
 
-	char* msg;
+    char* msg;
 	if (flags & PREF_UNICODE) 
 	{
 		const char* p = strchr(pszSrc, '\0');
@@ -760,13 +747,13 @@ int __cdecl CAimProto::SendAwayMsg(HANDLE hContact, HANDLE hProcess, const char*
 ////////////////////////////////////////////////////////////////////////////////////////
 // SetAwayMsg - sets the away m_iStatus message
 
-int __cdecl CAimProto::SetAwayMsg(int status, const TCHAR* msg)
+int __cdecl CAimProto::SetAwayMsg(int status, const char* msg)
 {
 	char** msgptr = getStatusMsgLoc(status);
 	if (msgptr==NULL) return 1;
 
 	mir_free(*msgptr);
-	*msgptr = mir_utf8encodeT(msg);
+	*msgptr = mir_utf8encode(msg);
 
 	if (state == 1 && status == m_iDesiredStatus)
 	{
@@ -841,7 +828,7 @@ int __cdecl CAimProto::OnEvent(PROTOEVENTTYPE eventType, WPARAM wParam, LPARAM l
 		{	
 			CLISTMENUITEM clmi = { 0 };
 			clmi.cbSize = sizeof(CLISTMENUITEM);
-			clmi.flags = CMIM_NAME | CMIF_TCHAR | CMIF_KEEPUNTRANSLATED;
+			clmi.flags = CMIM_NAME | CMIF_TCHAR;
 			clmi.ptszName = m_tszUserName;
 			CallService(MS_CLIST_MODIFYMENUITEM, (WPARAM)hMenuRoot, (LPARAM)&clmi);
 			break;

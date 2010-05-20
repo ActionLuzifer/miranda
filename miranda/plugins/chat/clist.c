@@ -281,7 +281,7 @@ BOOL CList_AddEvent(HANDLE hContact, HICON Icon, HANDLE event, int type, TCHAR* 
 		return FALSE;
 
 	va_start(marker, fmt);
-	_vsntprintf(szBuf, 4096, fmt, marker);
+	_vstprintf(szBuf, fmt, marker);
 	va_end(marker);
 
 	cle.cbSize=sizeof(cle);

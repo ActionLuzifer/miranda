@@ -328,7 +328,7 @@ void g_MenuInit( void )
 		g_hMenuDirectPresence[i+1] = ( HGENMENU )CallService(MS_CLIST_ADDCONTACTMENUITEM, 0, (LPARAM)&mi);
 		CreateServiceFunctionParam( mi.pszService, JabberMenuHandleDirectPresence, PresenceModeArray[i].mode );
 	}
-
+	
 	mi.flags &= ~CMIF_ROOTHANDLE;
 	mi.flags |= CMIF_ICONFROMICOLIB;
 
@@ -476,6 +476,7 @@ int CJabberProto::OnPrebuildContactMenu( WPARAM wParam, LPARAM )
 					mir_snprintf( tDest, SIZEOF(text) - nModuleNameLength, "/UseResource_%d", i );
 					if ( i >= m_nMenuResourceItems ) {
 						JCreateServiceParam( tDest, &CJabberProto::OnMenuHandleResource, MENUITEM_RESOURCES+i );
+						JCreateService( tDest, &CJabberProto::OnMenuHandleRequestAuth );
 						mi.pszName = "";
 						mi.position = i;
 						mi.pszPopupName = (char *)g_hMenuResourcesRoot;
@@ -561,7 +562,7 @@ INT_PTR __cdecl CJabberProto::OnMenuRosterAdd( WPARAM wParam, LPARAM )
 			if ( m_options.AddRoster2Bookmarks == TRUE ) {
 
 				JABBER_LIST_ITEM* item = NULL;
-
+				
 				item = ListGetItemPtr(LIST_BOOKMARK, roomID);
 				if (!item) {
 					item = ( JABBER_LIST_ITEM* )mir_alloc( sizeof( JABBER_LIST_ITEM ));
@@ -688,7 +689,7 @@ INT_PTR __cdecl CJabberProto::OnMenuBookmarkAdd( WPARAM wParam, LPARAM )
 			}
 			AddEditBookmark( item );
 			mir_free(item);
-
+			
 			if (nick) mir_free(nick);
 		}
 		mir_free(roomID);
@@ -910,7 +911,7 @@ void CJabberProto::MenuInit()
 
 	TMO_MenuItem tmi = { 0 };
 	tmi.cbSize = sizeof(tmi);
-	tmi.flags = CMIF_TCHAR | CMIF_KEEPUNTRANSLATED;
+	tmi.flags = CMIF_TCHAR;
 	tmi.ownerdata = this;
 	tmi.position = iChooserMenuPos++;
 	tmi.ptszName = m_tszUserName;
@@ -1047,7 +1048,7 @@ void CJabberProto::CheckMenuItems()
 		clmi.flags |= CMIF_HIDDEN;
 	for ( int i=0; i < m_pepServices.getCount(); i++ )
 		JCallService( MS_CLIST_MODIFYMENUITEM, ( WPARAM )m_pepServices[i].GetMenu(), ( LPARAM )&clmi );
-
+	
 	JabberUpdateDialogs( m_menuItemsStatus );
 }
 
@@ -1116,7 +1117,7 @@ int CJabberProto::OnProcessSrmmEvent( WPARAM, LPARAM lParam )
 
 				if ( jcb & JABBER_CAPS_CHATSTATES ) {
 					int iqId = SerialNext();
-					m_ThreadInfo->send(
+					m_ThreadInfo->send( 
 						XmlNode( _T("message")) << XATTR( _T("to"), jid ) << XATTR( _T("type"), _T("chat")) << XATTRID( iqId )
 							<< XCHILDNS( _T("gone"), _T(JABBER_FEAT_CHATSTATES)));
 	}	}	}	}

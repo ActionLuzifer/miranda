@@ -491,23 +491,16 @@ static IconItem* IcoLib_FindIcon(const char* pszIconName)
 	return NULL;
 }
 
-static IconItem* IcoLib_FindHIcon(HICON hIcon, bool &big)
+static IconItem* IcoLib_FindHIcon(HICON hIcon)
 {
 	IconItem* item = NULL;
 	int indx;
 
 	for ( indx = 0; indx < iconList.getCount(); indx++ ) {
-		if ( iconList[ indx ]->source_small  && iconList[ indx ]->source_small->icon == hIcon) {
+		if ( iconList[ indx ]->source && iconList[ indx ]->source->icon == hIcon) {
 			item = iconList[ indx ];
-			big = false;
 			break;
-		}	
-		else if ( iconList[ indx ]->source_big && iconList[ indx ]->source_big->icon == hIcon) {
-			item = iconList[ indx ];
-			big = true;
-			break;
-		}	
-	}
+	}	}
 
 	return item;
 }
@@ -525,8 +518,7 @@ static void IcoLib_FreeIcon(IconItem* icon)
 			IcoLib_RemoveSection( icon->section );
 		icon->section = NULL;
 	}
-	IconSourceItem_Release( &icon->source_small );
-	IconSourceItem_Release( &icon->source_big );
+	IconSourceItem_Release( &icon->source );
 	IconSourceItem_Release( &icon->default_icon );
 	SafeDestroyIcon( &icon->temp_icon );
 }
@@ -563,19 +555,19 @@ HANDLE IcoLib_AddNewIcon( SKINICONDESC* sid )
 	ZeroMemory( item, sizeof( *item ));
 	item->name = mir_strdup( sid->pszName );
 	if ( utf ) {
-		item->description = mir_u2t( sid->pwszDescription );
+		item->description = u2t( sid->pwszDescription );
 		#ifdef _UNICODE
 			item->section = IcoLib_AddSection( sid->pwszSection, TRUE );
 		#else
-			char* pszSection = sid->pwszSection ? mir_u2a( sid->pwszSection ) : NULL;
+			char* pszSection = sid->pwszSection ? u2a( sid->pwszSection ) : NULL;
 			item->section = IcoLib_AddSection( pszSection, TRUE );
 			SAFE_FREE(( void** )&pszSection );
 		#endif
 	}
 	else {
-		item->description = mir_a2t( sid->pszDescription );
+		item->description = a2t( sid->pszDescription );
 		#ifdef _UNICODE
-			WCHAR* pwszSection = sid->pszSection ? mir_a2u( sid->pszSection ) : NULL;
+			WCHAR* pwszSection = sid->pszSection ? a2u( sid->pszSection ) : NULL;
 
 			item->section = IcoLib_AddSection( pwszSection, TRUE );
 			SAFE_FREE(( void** )&pwszSection );
@@ -598,7 +590,7 @@ HANDLE IcoLib_AddNewIcon( SKINICONDESC* sid )
 				pathToAbsoluteW( sid->pwszDefaultFile, fileFull, NULL );
 				item->default_file = mir_wstrdup( fileFull );
 			#else
-				char* file = mir_u2a( sid->pwszDefaultFile );
+				char* file = u2a( sid->pwszDefaultFile );
 				char fileFull[ MAX_PATH ];
 
 				pathToAbsolute( file, fileFull, NULL );
@@ -608,7 +600,7 @@ HANDLE IcoLib_AddNewIcon( SKINICONDESC* sid )
 		}
 		else {
 			#ifdef _UNICODE
-				WCHAR *file = mir_a2u( sid->pszDefaultFile );
+				WCHAR *file = a2u( sid->pszDefaultFile );
 				WCHAR fileFull[ MAX_PATH ];
 
 				pathToAbsoluteW( file, fileFull, NULL );
@@ -627,18 +619,19 @@ HANDLE IcoLib_AddNewIcon( SKINICONDESC* sid )
 		item->cx = sid->cx;
 		item->cy = sid->cy;
 	}
+	else {
+		item->cx = GetSystemMetrics( SM_CXSMICON );
+		item->cy = GetSystemMetrics( SM_CYSMICON );
+	}
 
 	if ( sid->cbSize >= SKINICONDESC_SIZE_V2 && sid->hDefaultIcon ) {
-		bool big;
-		IconItem* def_item = IcoLib_FindHIcon( sid->hDefaultIcon, big );
-		if ( def_item ) {
-			item->default_icon = big ? def_item->source_big : def_item->source_small;
+		IconItem* def_item = IcoLib_FindHIcon( sid->hDefaultIcon );
+		if ( def_item && def_item->source ) {
+			item->default_icon = def_item->source;
 			item->default_icon->ref_count++;
 		}
 		else {
-			int cx = item->cx ? item->cx : GetSystemMetrics(SM_CXSMICON);
-			int cy = item->cy ? item->cy : GetSystemMetrics(SM_CYSMICON);
-			item->default_icon = CreateStaticIconSourceItem( cx, cy );
+			item->default_icon = CreateStaticIconSourceItem( item->cx, item->cy );
 			if ( GetIconData( sid->hDefaultIcon, &item->default_icon->icon_data, &item->default_icon->icon_size )) {
 				IconSourceItem_Release( &item->default_icon );
 			}
@@ -674,75 +667,54 @@ static INT_PTR IcoLib_RemoveIcon( WPARAM, LPARAM lParam )
 	return 1; // Failed
 }
 
-HICON IconItem_GetDefaultIcon( IconItem* item, bool big )
+HICON IconItem_GetDefaultIcon( IconItem* item )
 {
 	HICON hIcon = NULL;
 
-	if ( item->default_icon && !big ) {
-		IconSourceItem_Release( &item->source_small );
-		item->source_small = item->default_icon;
-		item->source_small->ref_count++;
-		hIcon = IconSourceItem_GetIcon( item->source_small );
+	if ( item->default_icon ) {
+		IconSourceItem_Release( &item->source );
+		item->source = item->default_icon;
+		item->source->ref_count++;
+		hIcon = IconSourceItem_GetIcon( item->source );
 	}
 
 	if ( !hIcon && item->default_file ) {
-		int cx = item->cx ? item->cx : GetSystemMetrics(big ? SM_CXICON : SM_CXSMICON);
-		int cy = item->cy ? item->cy : GetSystemMetrics(big ? SM_CYICON : SM_CYSMICON);
-		IconSourceItem* def_icon = GetIconSourceItem( item->default_file, item->default_indx, cx, cy );
-		if ( big ) {
-			if ( def_icon != item->source_big ) {
-				IconSourceItem_Release( &item->source_big );
-				item->source_big = def_icon;
-				if ( def_icon ) {
-					def_icon->ref_count++;
-					hIcon = IconSourceItem_GetIcon( def_icon );
-				}
+		IconSourceItem* def_icon = GetIconSourceItem( item->default_file, item->default_indx, item->cx, item->cy );
+		if ( def_icon != item->default_icon ) {
+			IconSourceItem_Release( &item->default_icon );
+			item->default_icon = def_icon;
+			if ( item->default_icon ) {
+				IconSourceItem_Release( &item->source );
+				item->source = item->default_icon;
+				item->source->ref_count++;
+				hIcon = IconSourceItem_GetIcon( item->source );
 			}
-			else
-				IconSourceItem_Release( &def_icon );
 		}
-		else {
-			if ( def_icon != item->default_icon ) {
-				IconSourceItem_Release( &item->default_icon );
-				item->default_icon = def_icon;
-				if ( def_icon ) {
-					IconSourceItem_Release( &item->source_small );
-					item->source_small = def_icon;
-					def_icon->ref_count++;
-					hIcon = IconSourceItem_GetIcon( def_icon );
-				}
-			}
-			else
-				IconSourceItem_Release( &def_icon );
-		}
+		else
+			IconSourceItem_Release( &def_icon );
 	}
 	return hIcon;
 }
 
 
 /////////////////////////////////////////////////////////////////////////////////////////
-// IconItem_GetIcon
+// IcoLib_GetIcon
 
-HICON IconItem_GetIcon( IconItem* item, bool big )
+HICON IconItem_GetIcon( IconItem* item )
 {
 	DBVARIANT dbv = {0};
 	HICON hIcon = NULL;
 
-	big = big && !item->cx;
-	IconSourceItem* &source = big ? item->source_big : item->source_small;
-
-	if ( !source && !DBGetContactSettingTString( NULL, "SkinIcons", item->name, &dbv )) {
-		int cx = item->cx ? item->cx : GetSystemMetrics(big ? SM_CXICON : SM_CXSMICON);
-		int cy = item->cy ? item->cy : GetSystemMetrics(big ? SM_CYICON : SM_CYSMICON);
-		source = GetIconSourceItemFromPath( dbv.ptszVal, cx, cy );
+	if ( !item->source && !DBGetContactSettingTString( NULL, "SkinIcons", item->name, &dbv )) {
+		item->source = GetIconSourceItemFromPath( dbv.ptszVal, item->cx, item->cy );
 		DBFreeVariant( &dbv );
 	}
 
-	if ( source )
-		hIcon = IconSourceItem_GetIcon( source );
+	if ( item->source )
+		hIcon = IconSourceItem_GetIcon( item->source );
 
 	if ( !hIcon )
-		hIcon = IconItem_GetDefaultIcon( item, big );
+		hIcon = IconItem_GetDefaultIcon( item );
 
 	if ( !hIcon )
 		return hIconBlank;
@@ -751,17 +723,17 @@ HICON IconItem_GetIcon( IconItem* item, bool big )
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////
-// IconItem_GetIcon_Preview
+// IcoLib_GetIcon
 
 HICON IconItem_GetIcon_Preview( IconItem* item )
 {
 	HICON hIcon = NULL;
 
 	if ( !item->temp_reset ) {
-		HICON hRefIcon = IconItem_GetIcon( item, false );
+		HICON hRefIcon = IconItem_GetIcon( item );
 		hIcon = CopyIcon( hRefIcon );
-		if ( item->source_small && item->source_small->icon == hRefIcon )
-			IconSourceItem_ReleaseIcon( item->source_small );
+		if ( item->source && item->source->icon == hRefIcon )
+			IconSourceItem_ReleaseIcon( item->source );
 	}
 	else {
 		if ( item->default_icon ) {
@@ -799,7 +771,7 @@ HICON IconItem_GetIcon_Preview( IconItem* item )
 //     cx/cyDesired = GetSystemMetrics(SM_CX/CYSMICON)
 //     fuLoad = 0
 
-HICON IcoLib_GetIcon( const char* pszIconName, bool big )
+HICON IcoLib_GetIcon( const char* pszIconName )
 {
 	IconItem* item;
 	HICON result = NULL;
@@ -811,7 +783,7 @@ HICON IcoLib_GetIcon( const char* pszIconName, bool big )
 
 	item = IcoLib_FindIcon( pszIconName );
 	if ( item ) {
-		result = IconItem_GetIcon( item, big );
+		result = IconItem_GetIcon( item );
 	}
 	LeaveCriticalSection( &csIconList );
 	return result;
@@ -840,7 +812,7 @@ HANDLE IcoLib_GetIconHandle( const char* pszIconName )
 // lParam: icolib item handle
 // wParam: 0
 
-HICON IcoLib_GetIconByHandle( HANDLE hItem, bool big )
+HICON IcoLib_GetIconByHandle( HANDLE hItem )
 {
 	if ( hItem == NULL )
 		return NULL;
@@ -854,7 +826,7 @@ HICON IcoLib_GetIconByHandle( HANDLE hItem, bool big )
 	__try
 	{
 		if ( iconList.getIndex( pi ) != -1 )
-			result = IconItem_GetIcon( pi, big );
+			result = IconItem_GetIcon( pi );
 	}
 	__except( EXCEPTION_EXECUTE_HANDLER )
 	{
@@ -875,12 +847,10 @@ HANDLE IcoLib_IsManaged( HICON hIcon )
 
 	EnterCriticalSection( &csIconList );
 
-	bool big;
-	item = IcoLib_FindHIcon( hIcon, big );
-	if ( item ) {
-		IconSourceItem* source = big && !item->cx ? item->source_big : item->source_small;
-		if ( source->icon_ref_count == 0 )
-			item = NULL;
+	item = IcoLib_FindHIcon( hIcon );
+	if ( item && item->source && item->source->icon_ref_count ) {
+		LeaveCriticalSection( &csIconList );
+		return item;
 	}
 
 	LeaveCriticalSection( &csIconList );
@@ -894,22 +864,20 @@ HANDLE IcoLib_IsManaged( HICON hIcon )
 
 static INT_PTR IcoLib_AddRef( WPARAM wParam, LPARAM )
 {
+	IconItem *item = NULL;
+
 	EnterCriticalSection( &csIconList );
 
-	bool big;
-	IconItem *item = IcoLib_FindHIcon(( HICON )wParam, big);
+	item = IcoLib_FindHIcon(( HICON )wParam);
 
-	INT_PTR res = 1;
-	if ( item ) {
-		IconSourceItem* source = big && !item->cx ? item->source_big : item->source_small;
-		if ( source->icon_ref_count ) {
-			source->icon_ref_count++;
-			res = 0;
-		}
+	if ( item && item->source && item->source->icon_ref_count ) {
+		item->source->icon_ref_count++;
+		LeaveCriticalSection( &csIconList );
+		return 0;
 	}
 
 	LeaveCriticalSection( &csIconList );
-	return res;
+	return 1;
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////
@@ -917,7 +885,7 @@ static INT_PTR IcoLib_AddRef( WPARAM wParam, LPARAM )
 // lParam: pszIconName or NULL
 // wParam: HICON or NULL
 
-int IcoLib_ReleaseIcon( HICON hIcon, char* szIconName, bool big )
+int IcoLib_ReleaseIcon( HICON hIcon, char* szIconName )
 {
 	IconItem *item = NULL;
 
@@ -927,22 +895,19 @@ int IcoLib_ReleaseIcon( HICON hIcon, char* szIconName, bool big )
 		item = IcoLib_FindIcon( szIconName );
 
 	if ( !item && hIcon ) // find by HICON
-		item = IcoLib_FindHIcon( hIcon, big );
+		item = IcoLib_FindHIcon( hIcon );
 
-	int res = 1;
-	if ( item ) {
-		IconSourceItem* source = big && !item->cx ? item->source_big : item->source_small;
-		if ( source && source->icon_ref_count ) {
-			if ( iconEventActive )
-				source->icon_ref_count--;
-			else
-				IconSourceItem_ReleaseIcon( source );
-			res = 0;
-		}
+	if ( item && item->source && item->source->icon_ref_count ) {
+		if ( iconEventActive )
+			item->source->icon_ref_count--;
+		else
+			IconSourceItem_ReleaseIcon( item->source );
+		LeaveCriticalSection( &csIconList );
+		return 0;
 	}
 
 	LeaveCriticalSection( &csIconList );
-	return res;
+	return 1;
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////
@@ -1135,13 +1100,9 @@ void DoIconsChanged(HWND hwndDlg)
 	EnterCriticalSection(&csIconList); // Destroy unused icons
 	for (int indx = 0; indx < iconList.getCount(); indx++) {
 		IconItem *item = iconList[indx];
-		if ( item->source_small && !item->source_small->icon_ref_count) {
-			item->source_small->icon_ref_count++;
-			IconSourceItem_ReleaseIcon( item->source_small );
-		}
-		if ( item->source_big && !item->source_big->icon_ref_count) {
-			item->source_big->icon_ref_count++;
-			IconSourceItem_ReleaseIcon( item->source_big );
+		if ( item->source && !item->source->icon_ref_count) {
+			item->source->icon_ref_count++;
+			IconSourceItem_ReleaseIcon( item->source );
 		}
 	}
 	LeaveCriticalSection(&csIconList);
@@ -1758,13 +1719,13 @@ INT_PTR CALLBACK DlgProcIcoLibOpts(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM
 						IconItem *item = iconList[indx];
 						if (item->temp_reset) {
 							DBDeleteContactSetting(NULL, "SkinIcons", item->name);
-							if (item->source_small != item->default_icon) {
-								IconSourceItem_Release( &item->source_small );
+							if (item->source != item->default_icon) {
+								IconSourceItem_Release( &item->source );
 							}
 						}
 						else if (item->temp_file) {
 							DBWriteContactSettingTString(NULL, "SkinIcons", item->name, item->temp_file);
-							IconSourceItem_Release( &item->source_small );
+							IconSourceItem_Release( &item->source );
 							SafeDestroyIcon( &item->temp_icon );
 						}
 					}
@@ -1888,28 +1849,16 @@ static INT_PTR sttIcoLib_AddNewIcon( WPARAM, LPARAM lParam )
 {	return (INT_PTR)IcoLib_AddNewIcon(( SKINICONDESC* )lParam );
 }
 
-static INT_PTR sttIcoLib_GetIcon( WPARAM wParam, LPARAM lParam )
-{	return (INT_PTR)IcoLib_GetIcon(( const char* )lParam, wParam != 0 );
+static INT_PTR sttIcoLib_GetIcon( WPARAM, LPARAM lParam )
+{	return (INT_PTR)IcoLib_GetIcon(( const char* )lParam );
 }
 
 static INT_PTR sttIcoLib_GetIconHandle( WPARAM, LPARAM lParam )
 {	return (INT_PTR)IcoLib_GetIconHandle(( const char* )lParam );
 }
 
-static INT_PTR sttIcoLib_GetIconByHandle( WPARAM wParam, LPARAM lParam )
-{	return (INT_PTR)IcoLib_GetIconByHandle(( HANDLE )lParam, wParam != 0 );
-}
-
-static INT_PTR sttIcoLib_ReleaseIcon( WPARAM wParam, LPARAM lParam )
-{	return (INT_PTR)IcoLib_ReleaseIcon(( HICON )wParam, ( char* )lParam, false );
-}
-
-static INT_PTR sttIcoLib_ReleaseIconBig( WPARAM wParam, LPARAM lParam )
-{	return (INT_PTR)IcoLib_ReleaseIcon(( HICON )wParam, ( char* )lParam, true );
-}
-
-static INT_PTR sttIcoLib_IsManaged( WPARAM wParam, LPARAM )
-{	return (INT_PTR)IcoLib_IsManaged(( HICON )wParam );
+static INT_PTR sttIcoLib_GetIconByHandle( WPARAM, LPARAM lParam )
+{	return (INT_PTR)IcoLib_GetIconByHandle(( HANDLE )lParam );
 }
 
 int LoadIcoLibModule(void)
@@ -1919,15 +1868,14 @@ int LoadIcoLibModule(void)
 	hIconBlank = LoadIconEx(NULL, MAKEINTRESOURCE(IDI_BLANK),0);
 
 	InitializeCriticalSection(&csIconList);
-	hIcoLib_AddNewIcon    = CreateServiceFunction(MS_SKIN2_ADDICON,         sttIcoLib_AddNewIcon);
-	hIcoLib_RemoveIcon    = CreateServiceFunction(MS_SKIN2_REMOVEICON,      IcoLib_RemoveIcon);
-	hIcoLib_GetIcon       = CreateServiceFunction(MS_SKIN2_GETICON,         sttIcoLib_GetIcon);
+	hIcoLib_AddNewIcon  = CreateServiceFunction(MS_SKIN2_ADDICON,         sttIcoLib_AddNewIcon);
+	hIcoLib_RemoveIcon  = CreateServiceFunction(MS_SKIN2_REMOVEICON,      IcoLib_RemoveIcon);
+	hIcoLib_GetIcon     = CreateServiceFunction(MS_SKIN2_GETICON,         sttIcoLib_GetIcon);
 	hIcoLib_GetIconHandle = CreateServiceFunction(MS_SKIN2_GETICONHANDLE,   sttIcoLib_GetIconHandle);
-	hIcoLib_GetIcon2      = CreateServiceFunction(MS_SKIN2_GETICONBYHANDLE, sttIcoLib_GetIconByHandle);
-	hIcoLib_IsManaged     = CreateServiceFunction(MS_SKIN2_ISMANAGEDICON,   sttIcoLib_IsManaged);
-	hIcoLib_AddRef        = CreateServiceFunction(MS_SKIN2_ADDREFICON,      IcoLib_AddRef);
-	hIcoLib_ReleaseIcon   = CreateServiceFunction(MS_SKIN2_RELEASEICON,     sttIcoLib_ReleaseIcon);
-	hIcoLib_ReleaseIcon   = CreateServiceFunction(MS_SKIN2_RELEASEICONBIG,  sttIcoLib_ReleaseIconBig);
+	hIcoLib_GetIcon2    = CreateServiceFunction(MS_SKIN2_GETICONBYHANDLE, sttIcoLib_GetIconByHandle);
+	hIcoLib_IsManaged   = CreateServiceFunction(MS_SKIN2_ISMANAGEDICON,   ( MIRANDASERVICE )IcoLib_IsManaged);
+	hIcoLib_AddRef      = CreateServiceFunction(MS_SKIN2_ADDREFICON,      IcoLib_AddRef);
+	hIcoLib_ReleaseIcon = CreateServiceFunction(MS_SKIN2_RELEASEICON,     ( MIRANDASERVICE )IcoLib_ReleaseIcon);
 
 	hIcons2ChangedEvent = CreateHookableEvent(ME_SKIN2_ICONSCHANGED);
 	hIconsChangedEvent = CreateHookableEvent(ME_SKIN_ICONSCHANGED);

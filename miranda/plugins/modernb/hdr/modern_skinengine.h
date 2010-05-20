@@ -87,33 +87,30 @@ typedef struct
 class IniParser
 {
 public:
-	enum {	FLAG_WITH_SETTINGS = 0,
-		FLAG_ONLY_OBJECTS = 1,
-	};
 
-	enum {	IT_UNKNOWN,	IT_FILE, IT_RESOURCE };
+	typedef HRESULT (*ParserCallback_t)( const char * szSection, const char * szKey, const char * szValue, LPARAM lParam );
 
-	typedef HRESULT (*ParserCallback_t)( const char * szSection, const char * szKey, const char * szValue, IniParser * This );
-
-	IniParser( TCHAR * szFileName, BYTE flags = FLAG_WITH_SETTINGS );
-	IniParser(  HINSTANCE hInst, const char *  resourceName, const char * resourceType, BYTE flags = FLAG_ONLY_OBJECTS );
+	IniParser( TCHAR * szFileName );
+	IniParser(  HINSTANCE hInst, const char *  resourceName, const char * resourceType   );
 	~IniParser();
 
 	bool CheckOK() { return _isValid; }
 	HRESULT Parse( ParserCallback_t pLineCallBackProc, LPARAM lParam );
 
-	static HRESULT WriteStrToDb( const char * szSection, const char * szKey, const char * szValue, IniParser * This);
+	static HRESULT WriteStrToDb( const char * szSection, const char * szKey, const char * szValue, LPARAM lParam );
 	static int GetSkinFolder( IN const TCHAR * szFileName, OUT TCHAR * pszFolderName );
 
 private:
 
 	// common
+	enum {	IT_UNKNOWN,	IT_FILE, IT_RESOURCE };
 	enum {	MAX_LINE_LEN = 512 };
+
 	int		 _eType;
 	bool	_isValid;
 	char *	_szSection;
 	ParserCallback_t _pLineCallBackProc;
-	BOOL   _SecCheck;
+	LPARAM _lParam;
 	int		_nLine;
 
 	void _DoInit();
@@ -131,8 +128,6 @@ private:
 	HGLOBAL _hGlobalRes;
 	DWORD   _dwSizeOfRes;
 	char *	_pPosition;
-
-	BYTE _Flags;
 
 
 };

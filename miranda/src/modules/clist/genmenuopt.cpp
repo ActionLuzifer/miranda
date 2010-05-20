@@ -1,29 +1,7 @@
-/*
-
-Miranda IM: the free IM client for Microsoft* Windows*
-
-Copyright 2000-2010 Miranda ICQ/IM project,
-all portions of this codebase are copyrighted to the people
-listed in contributors.txt.
-
-This program is free software; you can redistribute it and/or
-modify it under the terms of the GNU General Public License
-as published by the Free Software Foundation; either version 2
-of the License, or (at your option) any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program; if not, write to the Free Software
-Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
-*/
 #include "commonheaders.h"
 #include "genmenu.h"
 
-#define STR_SEPARATOR _T("-----------------------------------")
+#define STR_SEPARATOR _T("---------------------------------------------")
 
 extern int DefaultImageListColorDepth;
 long handleCustomDraw(HWND hWndTreeView, LPNMTVCUSTOMDRAW pNMTVCD);
@@ -51,18 +29,17 @@ typedef struct tagMenuItemOptData
 }
 	MenuItemOptData,*lpMenuItemOptData;
 
-static BOOL GetCurrentMenuObjectID(HWND hwndDlg, int* result)
+static BOOL GetCurrentMenuObjectID( HWND hwndDlg, int* result )
 {
 	TVITEM tvi;
-	HWND hTree = GetDlgItem(hwndDlg, IDC_MENUOBJECTS);
-	HTREEITEM hti = TreeView_GetSelection(hTree);
+	HTREEITEM hti = TreeView_GetSelection( GetDlgItem( hwndDlg, IDC_MENUOBJECTS ));
 	if ( hti == NULL )
 		return FALSE;
 
 	tvi.mask = TVIF_HANDLE | TVIF_PARAM;
 	tvi.hItem = hti;
-	TreeView_GetItem(hTree, &tvi);
-	*result = (int)tvi.lParam;
+	TreeView_GetItem( GetDlgItem( hwndDlg, IDC_MENUOBJECTS ), &tvi );
+	*result = ( int )tvi.lParam;
 	return TRUE;
 }
 
@@ -140,7 +117,7 @@ static int BuildMenuObjectsTree(HWND hwndDlg)
 		return FALSE;
 
 	for ( i=0; i < g_menus.getCount(); i++ ) {
-		if ( g_menus[i]->id == (int)hStatusMenuObject  || !g_menus[i]->m_bUseUserDefinedItems )
+		if ( g_menus[i]->id == (int)hStatusMenuObject )
 			continue;
 
 		tvis.item.lParam  = ( LPARAM )g_menus[i]->id;
@@ -434,8 +411,7 @@ static INT_PTR CALLBACK GenMenuOpts(HWND hwndDlg, UINT msg, WPARAM wParam, LPARA
 		SetWindowLongPtr(GetDlgItem(hwndDlg,IDC_MENUITEMS),GWLP_WNDPROC,(LONG_PTR)&LBTNDOWNProc);
 		{
 			HIMAGELIST himlCheckBoxes;
-			himlCheckBoxes=ImageList_Create(GetSystemMetrics(SM_CXSMICON), GetSystemMetrics(SM_CYSMICON),
-				(IsWinVerXPPlus() ? ILC_COLOR32 : ILC_COLOR16) | ILC_MASK, 2, 2);
+			himlCheckBoxes=ImageList_Create(GetSystemMetrics(SM_CXSMICON),GetSystemMetrics(SM_CYSMICON),ILC_COLOR32|ILC_MASK,2,2);
 
 			ImageList_AddIcon_IconLibLoaded(himlCheckBoxes, SKINICON_OTHER_NOTICK);
 			ImageList_AddIcon_IconLibLoaded(himlCheckBoxes, SKINICON_OTHER_TICK);

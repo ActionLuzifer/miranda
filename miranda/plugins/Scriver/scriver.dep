@@ -14,15 +14,14 @@
 	"..\..\include\m_history.h"\
 	"..\..\include\m_hotkeys.h"\
 	"..\..\include\m_icolib.h"\
+	"..\..\include\m_keybindings.h"\
 	"..\..\include\m_langpack.h"\
 	"..\..\include\m_message.h"\
 	"..\..\include\m_options.h"\
 	"..\..\include\m_plugins.h"\
-	"..\..\include\m_popup.h"\
 	"..\..\include\m_protocols.h"\
 	"..\..\include\m_protosvc.h"\
 	"..\..\include\m_skin.h"\
-	"..\..\include\m_stdhdr.h"\
 	"..\..\include\m_system.h"\
 	"..\..\include\m_userinfo.h"\
 	"..\..\include\m_utils.h"\
@@ -32,16 +31,13 @@
 	".\cmdlist.h"\
 	".\commonheaders.h"\
 	".\globals.h"\
-	".\infobar.h"\
 	".\input.h"\
-	".\m_historyevents.h"\
 	".\m_ieview.h"\
 	".\m_metacontacts.h"\
 	".\m_smileyadd.h"\
 	".\msgs.h"\
 	".\msgwindow.h"\
 	".\resource.h"\
-	".\richutil.h"\
 	".\sendqueue.h"\
 	".\utils.h"\
 	
@@ -60,15 +56,14 @@
 	"..\..\include\m_history.h"\
 	"..\..\include\m_hotkeys.h"\
 	"..\..\include\m_icolib.h"\
+	"..\..\include\m_keybindings.h"\
 	"..\..\include\m_langpack.h"\
 	"..\..\include\m_message.h"\
 	"..\..\include\m_options.h"\
 	"..\..\include\m_plugins.h"\
-	"..\..\include\m_popup.h"\
 	"..\..\include\m_protocols.h"\
 	"..\..\include\m_protosvc.h"\
 	"..\..\include\m_skin.h"\
-	"..\..\include\m_stdhdr.h"\
 	"..\..\include\m_system.h"\
 	"..\..\include\m_userinfo.h"\
 	"..\..\include\m_utils.h"\
@@ -78,62 +73,13 @@
 	".\cmdlist.h"\
 	".\commonheaders.h"\
 	".\globals.h"\
-	".\infobar.h"\
 	".\input.h"\
-	".\m_historyevents.h"\
 	".\m_ieview.h"\
 	".\m_metacontacts.h"\
 	".\m_smileyadd.h"\
 	".\msgs.h"\
 	".\msgwindow.h"\
 	".\resource.h"\
-	".\richutil.h"\
-	".\sendqueue.h"\
-	".\utils.h"\
-	
-
-.\infobar.c : \
-	"..\..\include\m_addcontact.h"\
-	"..\..\include\m_avatars.h"\
-	"..\..\include\m_button.h"\
-	"..\..\include\m_clc.h"\
-	"..\..\include\m_clist.h"\
-	"..\..\include\m_clui.h"\
-	"..\..\include\m_contacts.h"\
-	"..\..\include\m_database.h"\
-	"..\..\include\m_file.h"\
-	"..\..\include\m_fontservice.h"\
-	"..\..\include\m_history.h"\
-	"..\..\include\m_hotkeys.h"\
-	"..\..\include\m_icolib.h"\
-	"..\..\include\m_langpack.h"\
-	"..\..\include\m_message.h"\
-	"..\..\include\m_options.h"\
-	"..\..\include\m_plugins.h"\
-	"..\..\include\m_popup.h"\
-	"..\..\include\m_protocols.h"\
-	"..\..\include\m_protosvc.h"\
-	"..\..\include\m_skin.h"\
-	"..\..\include\m_stdhdr.h"\
-	"..\..\include\m_system.h"\
-	"..\..\include\m_userinfo.h"\
-	"..\..\include\m_utils.h"\
-	"..\..\include\newpluginapi.h"\
-	"..\..\include\statusmodes.h"\
-	"..\..\include\win2k.h"\
-	".\cmdlist.h"\
-	".\commonheaders.h"\
-	".\globals.h"\
-	".\infobar.h"\
-	".\input.h"\
-	".\m_historyevents.h"\
-	".\m_ieview.h"\
-	".\m_metacontacts.h"\
-	".\m_smileyadd.h"\
-	".\msgs.h"\
-	".\msgwindow.h"\
-	".\resource.h"\
-	".\richutil.h"\
 	".\sendqueue.h"\
 	".\utils.h"\
 	
@@ -152,15 +98,14 @@
 	"..\..\include\m_history.h"\
 	"..\..\include\m_hotkeys.h"\
 	"..\..\include\m_icolib.h"\
+	"..\..\include\m_keybindings.h"\
 	"..\..\include\m_langpack.h"\
 	"..\..\include\m_message.h"\
 	"..\..\include\m_options.h"\
 	"..\..\include\m_plugins.h"\
-	"..\..\include\m_popup.h"\
 	"..\..\include\m_protocols.h"\
 	"..\..\include\m_protosvc.h"\
 	"..\..\include\m_skin.h"\
-	"..\..\include\m_stdhdr.h"\
 	"..\..\include\m_system.h"\
 	"..\..\include\m_userinfo.h"\
 	"..\..\include\m_utils.h"\
@@ -170,16 +115,13 @@
 	".\cmdlist.h"\
 	".\commonheaders.h"\
 	".\globals.h"\
-	".\infobar.h"\
 	".\input.h"\
-	".\m_historyevents.h"\
 	".\m_ieview.h"\
 	".\m_metacontacts.h"\
 	".\m_smileyadd.h"\
 	".\msgs.h"\
 	".\msgwindow.h"\
 	".\resource.h"\
-	".\richutil.h"\
 	".\sendqueue.h"\
 	".\utils.h"\
 	
@@ -198,15 +140,14 @@
 	"..\..\include\m_history.h"\
 	"..\..\include\m_hotkeys.h"\
 	"..\..\include\m_icolib.h"\
+	"..\..\include\m_keybindings.h"\
 	"..\..\include\m_langpack.h"\
 	"..\..\include\m_message.h"\
 	"..\..\include\m_options.h"\
 	"..\..\include\m_plugins.h"\
-	"..\..\include\m_popup.h"\
 	"..\..\include\m_protocols.h"\
 	"..\..\include\m_protosvc.h"\
 	"..\..\include\m_skin.h"\
-	"..\..\include\m_stdhdr.h"\
 	"..\..\include\m_system.h"\
 	"..\..\include\m_userinfo.h"\
 	"..\..\include\m_utils.h"\
@@ -216,16 +157,13 @@
 	".\cmdlist.h"\
 	".\commonheaders.h"\
 	".\globals.h"\
-	".\infobar.h"\
 	".\input.h"\
-	".\m_historyevents.h"\
 	".\m_ieview.h"\
 	".\m_metacontacts.h"\
 	".\m_smileyadd.h"\
 	".\msgs.h"\
 	".\msgwindow.h"\
 	".\resource.h"\
-	".\richutil.h"\
 	".\sendqueue.h"\
 	".\statusicon.h"\
 	".\utils.h"\
@@ -245,15 +183,14 @@
 	"..\..\include\m_history.h"\
 	"..\..\include\m_hotkeys.h"\
 	"..\..\include\m_icolib.h"\
+	"..\..\include\m_keybindings.h"\
 	"..\..\include\m_langpack.h"\
 	"..\..\include\m_message.h"\
 	"..\..\include\m_options.h"\
 	"..\..\include\m_plugins.h"\
-	"..\..\include\m_popup.h"\
 	"..\..\include\m_protocols.h"\
 	"..\..\include\m_protosvc.h"\
 	"..\..\include\m_skin.h"\
-	"..\..\include\m_stdhdr.h"\
 	"..\..\include\m_system.h"\
 	"..\..\include\m_userinfo.h"\
 	"..\..\include\m_utils.h"\
@@ -263,16 +200,13 @@
 	".\cmdlist.h"\
 	".\commonheaders.h"\
 	".\globals.h"\
-	".\infobar.h"\
 	".\input.h"\
-	".\m_historyevents.h"\
 	".\m_ieview.h"\
 	".\m_metacontacts.h"\
 	".\m_smileyadd.h"\
 	".\msgs.h"\
 	".\msgwindow.h"\
 	".\resource.h"\
-	".\richutil.h"\
 	".\sendqueue.h"\
 	".\utils.h"\
 	
@@ -281,7 +215,6 @@
 	"..\..\include\m_addcontact.h"\
 	"..\..\include\m_avatars.h"\
 	"..\..\include\m_button.h"\
-	"..\..\include\m_chat.h"\
 	"..\..\include\m_clc.h"\
 	"..\..\include\m_clist.h"\
 	"..\..\include\m_clui.h"\
@@ -292,36 +225,30 @@
 	"..\..\include\m_history.h"\
 	"..\..\include\m_hotkeys.h"\
 	"..\..\include\m_icolib.h"\
+	"..\..\include\m_keybindings.h"\
 	"..\..\include\m_langpack.h"\
 	"..\..\include\m_message.h"\
 	"..\..\include\m_options.h"\
 	"..\..\include\m_plugins.h"\
-	"..\..\include\m_popup.h"\
 	"..\..\include\m_protocols.h"\
-	"..\..\include\m_protomod.h"\
 	"..\..\include\m_protosvc.h"\
 	"..\..\include\m_skin.h"\
-	"..\..\include\m_stdhdr.h"\
 	"..\..\include\m_system.h"\
 	"..\..\include\m_userinfo.h"\
 	"..\..\include\m_utils.h"\
 	"..\..\include\newpluginapi.h"\
 	"..\..\include\statusmodes.h"\
 	"..\..\include\win2k.h"\
-	".\chat\chat.h"\
 	".\cmdlist.h"\
 	".\commonheaders.h"\
 	".\globals.h"\
-	".\infobar.h"\
 	".\input.h"\
-	".\m_historyevents.h"\
 	".\m_ieview.h"\
 	".\m_metacontacts.h"\
 	".\m_smileyadd.h"\
 	".\msgs.h"\
 	".\msgwindow.h"\
 	".\resource.h"\
-	".\richutil.h"\
 	".\sendqueue.h"\
 	".\utils.h"\
 	
@@ -340,15 +267,14 @@
 	"..\..\include\m_history.h"\
 	"..\..\include\m_hotkeys.h"\
 	"..\..\include\m_icolib.h"\
+	"..\..\include\m_keybindings.h"\
 	"..\..\include\m_langpack.h"\
 	"..\..\include\m_message.h"\
 	"..\..\include\m_options.h"\
 	"..\..\include\m_plugins.h"\
-	"..\..\include\m_popup.h"\
 	"..\..\include\m_protocols.h"\
 	"..\..\include\m_protosvc.h"\
 	"..\..\include\m_skin.h"\
-	"..\..\include\m_stdhdr.h"\
 	"..\..\include\m_system.h"\
 	"..\..\include\m_userinfo.h"\
 	"..\..\include\m_utils.h"\
@@ -358,16 +284,13 @@
 	".\cmdlist.h"\
 	".\commonheaders.h"\
 	".\globals.h"\
-	".\infobar.h"\
 	".\input.h"\
-	".\m_historyevents.h"\
 	".\m_ieview.h"\
 	".\m_metacontacts.h"\
 	".\m_smileyadd.h"\
 	".\msgs.h"\
 	".\msgwindow.h"\
 	".\resource.h"\
-	".\richutil.h"\
 	".\sendqueue.h"\
 	".\statusicon.h"\
 	".\utils.h"\
@@ -387,15 +310,14 @@
 	"..\..\include\m_history.h"\
 	"..\..\include\m_hotkeys.h"\
 	"..\..\include\m_icolib.h"\
+	"..\..\include\m_keybindings.h"\
 	"..\..\include\m_langpack.h"\
 	"..\..\include\m_message.h"\
 	"..\..\include\m_options.h"\
 	"..\..\include\m_plugins.h"\
-	"..\..\include\m_popup.h"\
 	"..\..\include\m_protocols.h"\
 	"..\..\include\m_protosvc.h"\
 	"..\..\include\m_skin.h"\
-	"..\..\include\m_stdhdr.h"\
 	"..\..\include\m_system.h"\
 	"..\..\include\m_userinfo.h"\
 	"..\..\include\m_utils.h"\
@@ -405,16 +327,13 @@
 	".\cmdlist.h"\
 	".\commonheaders.h"\
 	".\globals.h"\
-	".\infobar.h"\
 	".\input.h"\
-	".\m_historyevents.h"\
 	".\m_ieview.h"\
 	".\m_metacontacts.h"\
 	".\m_smileyadd.h"\
 	".\msgs.h"\
 	".\msgwindow.h"\
 	".\resource.h"\
-	".\richutil.h"\
 	".\sendqueue.h"\
 	".\utils.h"\
 	
@@ -434,6 +353,7 @@
 	"..\..\include\m_history.h"\
 	"..\..\include\m_hotkeys.h"\
 	"..\..\include\m_icolib.h"\
+	"..\..\include\m_keybindings.h"\
 	"..\..\include\m_langpack.h"\
 	"..\..\include\m_message.h"\
 	"..\..\include\m_options.h"\
@@ -443,7 +363,6 @@
 	"..\..\include\m_protomod.h"\
 	"..\..\include\m_protosvc.h"\
 	"..\..\include\m_skin.h"\
-	"..\..\include\m_stdhdr.h"\
 	"..\..\include\m_system.h"\
 	"..\..\include\m_userinfo.h"\
 	"..\..\include\m_utils.h"\
@@ -454,9 +373,7 @@
 	".\cmdlist.h"\
 	".\commonheaders.h"\
 	".\globals.h"\
-	".\infobar.h"\
 	".\input.h"\
-	".\m_historyevents.h"\
 	".\m_ieview.h"\
 	".\m_metacontacts.h"\
 	".\m_smileyadd.h"\
@@ -464,55 +381,8 @@
 	".\msgwindow.h"\
 	".\multimon.h"\
 	".\resource.h"\
-	".\richutil.h"\
 	".\sendqueue.h"\
 	".\statusicon.h"\
-	".\utils.h"\
-	
-
-.\richutil.c : \
-	"..\..\include\m_addcontact.h"\
-	"..\..\include\m_avatars.h"\
-	"..\..\include\m_button.h"\
-	"..\..\include\m_clc.h"\
-	"..\..\include\m_clist.h"\
-	"..\..\include\m_clui.h"\
-	"..\..\include\m_contacts.h"\
-	"..\..\include\m_database.h"\
-	"..\..\include\m_file.h"\
-	"..\..\include\m_fontservice.h"\
-	"..\..\include\m_history.h"\
-	"..\..\include\m_hotkeys.h"\
-	"..\..\include\m_icolib.h"\
-	"..\..\include\m_langpack.h"\
-	"..\..\include\m_message.h"\
-	"..\..\include\m_options.h"\
-	"..\..\include\m_plugins.h"\
-	"..\..\include\m_popup.h"\
-	"..\..\include\m_protocols.h"\
-	"..\..\include\m_protosvc.h"\
-	"..\..\include\m_skin.h"\
-	"..\..\include\m_stdhdr.h"\
-	"..\..\include\m_system.h"\
-	"..\..\include\m_userinfo.h"\
-	"..\..\include\m_utils.h"\
-	"..\..\include\newpluginapi.h"\
-	"..\..\include\statusmodes.h"\
-	"..\..\include\win2k.h"\
-	".\cmdlist.h"\
-	".\commonheaders.h"\
-	".\globals.h"\
-	".\infobar.h"\
-	".\input.h"\
-	".\m_historyevents.h"\
-	".\m_ieview.h"\
-	".\m_metacontacts.h"\
-	".\m_smileyadd.h"\
-	".\msgs.h"\
-	".\msgwindow.h"\
-	".\resource.h"\
-	".\richutil.h"\
-	".\sendqueue.h"\
 	".\utils.h"\
 	
 
@@ -530,15 +400,14 @@
 	"..\..\include\m_history.h"\
 	"..\..\include\m_hotkeys.h"\
 	"..\..\include\m_icolib.h"\
+	"..\..\include\m_keybindings.h"\
 	"..\..\include\m_langpack.h"\
 	"..\..\include\m_message.h"\
 	"..\..\include\m_options.h"\
 	"..\..\include\m_plugins.h"\
-	"..\..\include\m_popup.h"\
 	"..\..\include\m_protocols.h"\
 	"..\..\include\m_protosvc.h"\
 	"..\..\include\m_skin.h"\
-	"..\..\include\m_stdhdr.h"\
 	"..\..\include\m_system.h"\
 	"..\..\include\m_userinfo.h"\
 	"..\..\include\m_utils.h"\
@@ -548,16 +417,13 @@
 	".\cmdlist.h"\
 	".\commonheaders.h"\
 	".\globals.h"\
-	".\infobar.h"\
 	".\input.h"\
-	".\m_historyevents.h"\
 	".\m_ieview.h"\
 	".\m_metacontacts.h"\
 	".\m_smileyadd.h"\
 	".\msgs.h"\
 	".\msgwindow.h"\
 	".\resource.h"\
-	".\richutil.h"\
 	".\sendqueue.h"\
 	".\utils.h"\
 	
@@ -576,15 +442,14 @@
 	"..\..\include\m_history.h"\
 	"..\..\include\m_hotkeys.h"\
 	"..\..\include\m_icolib.h"\
+	"..\..\include\m_keybindings.h"\
 	"..\..\include\m_langpack.h"\
 	"..\..\include\m_message.h"\
 	"..\..\include\m_options.h"\
 	"..\..\include\m_plugins.h"\
-	"..\..\include\m_popup.h"\
 	"..\..\include\m_protocols.h"\
 	"..\..\include\m_protosvc.h"\
 	"..\..\include\m_skin.h"\
-	"..\..\include\m_stdhdr.h"\
 	"..\..\include\m_system.h"\
 	"..\..\include\m_userinfo.h"\
 	"..\..\include\m_utils.h"\
@@ -594,16 +459,13 @@
 	".\cmdlist.h"\
 	".\commonheaders.h"\
 	".\globals.h"\
-	".\infobar.h"\
 	".\input.h"\
-	".\m_historyevents.h"\
 	".\m_ieview.h"\
 	".\m_metacontacts.h"\
 	".\m_smileyadd.h"\
 	".\msgs.h"\
 	".\msgwindow.h"\
 	".\resource.h"\
-	".\richutil.h"\
 	".\sendqueue.h"\
 	".\utils.h"\
 	
@@ -622,15 +484,14 @@
 	"..\..\include\m_history.h"\
 	"..\..\include\m_hotkeys.h"\
 	"..\..\include\m_icolib.h"\
+	"..\..\include\m_keybindings.h"\
 	"..\..\include\m_langpack.h"\
 	"..\..\include\m_message.h"\
 	"..\..\include\m_options.h"\
 	"..\..\include\m_plugins.h"\
-	"..\..\include\m_popup.h"\
 	"..\..\include\m_protocols.h"\
 	"..\..\include\m_protosvc.h"\
 	"..\..\include\m_skin.h"\
-	"..\..\include\m_stdhdr.h"\
 	"..\..\include\m_system.h"\
 	"..\..\include\m_userinfo.h"\
 	"..\..\include\m_utils.h"\
@@ -640,16 +501,13 @@
 	".\cmdlist.h"\
 	".\commonheaders.h"\
 	".\globals.h"\
-	".\infobar.h"\
 	".\input.h"\
-	".\m_historyevents.h"\
 	".\m_ieview.h"\
 	".\m_metacontacts.h"\
 	".\m_smileyadd.h"\
 	".\msgs.h"\
 	".\msgwindow.h"\
 	".\resource.h"\
-	".\richutil.h"\
 	".\sendqueue.h"\
 	".\statusicon.h"\
 	".\utils.h"\
@@ -669,16 +527,15 @@
 	"..\..\include\m_history.h"\
 	"..\..\include\m_hotkeys.h"\
 	"..\..\include\m_icolib.h"\
+	"..\..\include\m_keybindings.h"\
 	"..\..\include\m_langpack.h"\
 	"..\..\include\m_message.h"\
 	"..\..\include\m_netlib.h"\
 	"..\..\include\m_options.h"\
 	"..\..\include\m_plugins.h"\
-	"..\..\include\m_popup.h"\
 	"..\..\include\m_protocols.h"\
 	"..\..\include\m_protosvc.h"\
 	"..\..\include\m_skin.h"\
-	"..\..\include\m_stdhdr.h"\
 	"..\..\include\m_system.h"\
 	"..\..\include\m_userinfo.h"\
 	"..\..\include\m_utils.h"\
@@ -688,16 +545,13 @@
 	".\cmdlist.h"\
 	".\commonheaders.h"\
 	".\globals.h"\
-	".\infobar.h"\
 	".\input.h"\
-	".\m_historyevents.h"\
 	".\m_ieview.h"\
 	".\m_metacontacts.h"\
 	".\m_smileyadd.h"\
 	".\msgs.h"\
 	".\msgwindow.h"\
 	".\resource.h"\
-	".\richutil.h"\
 	".\sendqueue.h"\
 	".\utils.h"\
 	
@@ -718,8 +572,9 @@
 	".\res\chat\color.ico"\
 	".\res\chat\filter.ico"\
 	".\res\chat\filter2.ico"\
+	".\res\chat\history.ico"\
 	".\res\chat\info.ico"\
-	".\res\chat\italic.ico"\
+	".\res\chat\italics.ico"\
 	".\res\chat\join.ico"\
 	".\res\chat\kick.ico"\
 	".\res\chat\nick.ico"\
@@ -739,8 +594,6 @@
 	".\res\delete.ico"\
 	".\res\details.ico"\
 	".\res\dragcopy.cur"\
-	".\res\foodnetwork.ico"\
-	".\res\google.ico"\
 	".\res\highlight.ico"\
 	".\res\history.ico"\
 	".\res\hyperlin.cur"\
@@ -752,8 +605,6 @@
 	".\res\typing.ico"\
 	".\res\typingoff.ico"\
 	".\res\unicode.ico"\
-	".\res\wikipedia.ico"\
-	".\res\yahoo.ico"\
 	".\resource.h"\
 	
 
@@ -772,6 +623,7 @@
 	"..\..\include\m_history.h"\
 	"..\..\include\m_hotkeys.h"\
 	"..\..\include\m_icolib.h"\
+	"..\..\include\m_keybindings.h"\
 	"..\..\include\m_langpack.h"\
 	"..\..\include\m_message.h"\
 	"..\..\include\m_options.h"\
@@ -781,7 +633,6 @@
 	"..\..\include\m_protomod.h"\
 	"..\..\include\m_protosvc.h"\
 	"..\..\include\m_skin.h"\
-	"..\..\include\m_stdhdr.h"\
 	"..\..\include\m_system.h"\
 	"..\..\include\m_userinfo.h"\
 	"..\..\include\m_utils.h"\
@@ -792,16 +643,13 @@
 	".\cmdlist.h"\
 	".\commonheaders.h"\
 	".\globals.h"\
-	".\infobar.h"\
 	".\input.h"\
-	".\m_historyevents.h"\
 	".\m_ieview.h"\
 	".\m_metacontacts.h"\
 	".\m_smileyadd.h"\
 	".\msgs.h"\
 	".\msgwindow.h"\
 	".\resource.h"\
-	".\richutil.h"\
 	".\sendqueue.h"\
 	".\utils.h"\
 	
@@ -821,6 +669,7 @@
 	"..\..\include\m_history.h"\
 	"..\..\include\m_hotkeys.h"\
 	"..\..\include\m_icolib.h"\
+	"..\..\include\m_keybindings.h"\
 	"..\..\include\m_langpack.h"\
 	"..\..\include\m_message.h"\
 	"..\..\include\m_options.h"\
@@ -830,7 +679,6 @@
 	"..\..\include\m_protomod.h"\
 	"..\..\include\m_protosvc.h"\
 	"..\..\include\m_skin.h"\
-	"..\..\include\m_stdhdr.h"\
 	"..\..\include\m_system.h"\
 	"..\..\include\m_userinfo.h"\
 	"..\..\include\m_utils.h"\
@@ -841,16 +689,13 @@
 	".\cmdlist.h"\
 	".\commonheaders.h"\
 	".\globals.h"\
-	".\infobar.h"\
 	".\input.h"\
-	".\m_historyevents.h"\
 	".\m_ieview.h"\
 	".\m_metacontacts.h"\
 	".\m_smileyadd.h"\
 	".\msgs.h"\
 	".\msgwindow.h"\
 	".\resource.h"\
-	".\richutil.h"\
 	".\sendqueue.h"\
 	".\utils.h"\
 	
@@ -870,6 +715,7 @@
 	"..\..\include\m_history.h"\
 	"..\..\include\m_hotkeys.h"\
 	"..\..\include\m_icolib.h"\
+	"..\..\include\m_keybindings.h"\
 	"..\..\include\m_langpack.h"\
 	"..\..\include\m_message.h"\
 	"..\..\include\m_options.h"\
@@ -879,7 +725,6 @@
 	"..\..\include\m_protomod.h"\
 	"..\..\include\m_protosvc.h"\
 	"..\..\include\m_skin.h"\
-	"..\..\include\m_stdhdr.h"\
 	"..\..\include\m_system.h"\
 	"..\..\include\m_userinfo.h"\
 	"..\..\include\m_utils.h"\
@@ -890,16 +735,13 @@
 	".\cmdlist.h"\
 	".\commonheaders.h"\
 	".\globals.h"\
-	".\infobar.h"\
 	".\input.h"\
-	".\m_historyevents.h"\
 	".\m_ieview.h"\
 	".\m_metacontacts.h"\
 	".\m_smileyadd.h"\
 	".\msgs.h"\
 	".\msgwindow.h"\
 	".\resource.h"\
-	".\richutil.h"\
 	".\sendqueue.h"\
 	".\utils.h"\
 	
@@ -919,6 +761,7 @@
 	"..\..\include\m_history.h"\
 	"..\..\include\m_hotkeys.h"\
 	"..\..\include\m_icolib.h"\
+	"..\..\include\m_keybindings.h"\
 	"..\..\include\m_langpack.h"\
 	"..\..\include\m_message.h"\
 	"..\..\include\m_options.h"\
@@ -928,7 +771,6 @@
 	"..\..\include\m_protomod.h"\
 	"..\..\include\m_protosvc.h"\
 	"..\..\include\m_skin.h"\
-	"..\..\include\m_stdhdr.h"\
 	"..\..\include\m_system.h"\
 	"..\..\include\m_userinfo.h"\
 	"..\..\include\m_utils.h"\
@@ -939,16 +781,13 @@
 	".\cmdlist.h"\
 	".\commonheaders.h"\
 	".\globals.h"\
-	".\infobar.h"\
 	".\input.h"\
-	".\m_historyevents.h"\
 	".\m_ieview.h"\
 	".\m_metacontacts.h"\
 	".\m_smileyadd.h"\
 	".\msgs.h"\
 	".\msgwindow.h"\
 	".\resource.h"\
-	".\richutil.h"\
 	".\sendqueue.h"\
 	".\utils.h"\
 	
@@ -968,6 +807,7 @@
 	"..\..\include\m_history.h"\
 	"..\..\include\m_hotkeys.h"\
 	"..\..\include\m_icolib.h"\
+	"..\..\include\m_keybindings.h"\
 	"..\..\include\m_langpack.h"\
 	"..\..\include\m_message.h"\
 	"..\..\include\m_options.h"\
@@ -977,7 +817,6 @@
 	"..\..\include\m_protomod.h"\
 	"..\..\include\m_protosvc.h"\
 	"..\..\include\m_skin.h"\
-	"..\..\include\m_stdhdr.h"\
 	"..\..\include\m_system.h"\
 	"..\..\include\m_userinfo.h"\
 	"..\..\include\m_utils.h"\
@@ -988,16 +827,13 @@
 	".\cmdlist.h"\
 	".\commonheaders.h"\
 	".\globals.h"\
-	".\infobar.h"\
 	".\input.h"\
-	".\m_historyevents.h"\
 	".\m_ieview.h"\
 	".\m_metacontacts.h"\
 	".\m_smileyadd.h"\
 	".\msgs.h"\
 	".\msgwindow.h"\
 	".\resource.h"\
-	".\richutil.h"\
 	".\sendqueue.h"\
 	".\utils.h"\
 	
@@ -1017,6 +853,7 @@
 	"..\..\include\m_history.h"\
 	"..\..\include\m_hotkeys.h"\
 	"..\..\include\m_icolib.h"\
+	"..\..\include\m_keybindings.h"\
 	"..\..\include\m_langpack.h"\
 	"..\..\include\m_message.h"\
 	"..\..\include\m_options.h"\
@@ -1026,7 +863,6 @@
 	"..\..\include\m_protomod.h"\
 	"..\..\include\m_protosvc.h"\
 	"..\..\include\m_skin.h"\
-	"..\..\include\m_stdhdr.h"\
 	"..\..\include\m_system.h"\
 	"..\..\include\m_userinfo.h"\
 	"..\..\include\m_utils.h"\
@@ -1037,16 +873,13 @@
 	".\cmdlist.h"\
 	".\commonheaders.h"\
 	".\globals.h"\
-	".\infobar.h"\
 	".\input.h"\
-	".\m_historyevents.h"\
 	".\m_ieview.h"\
 	".\m_metacontacts.h"\
 	".\m_smileyadd.h"\
 	".\msgs.h"\
 	".\msgwindow.h"\
 	".\resource.h"\
-	".\richutil.h"\
 	".\sendqueue.h"\
 	".\utils.h"\
 	
@@ -1066,6 +899,7 @@
 	"..\..\include\m_history.h"\
 	"..\..\include\m_hotkeys.h"\
 	"..\..\include\m_icolib.h"\
+	"..\..\include\m_keybindings.h"\
 	"..\..\include\m_langpack.h"\
 	"..\..\include\m_message.h"\
 	"..\..\include\m_options.h"\
@@ -1075,7 +909,6 @@
 	"..\..\include\m_protomod.h"\
 	"..\..\include\m_protosvc.h"\
 	"..\..\include\m_skin.h"\
-	"..\..\include\m_stdhdr.h"\
 	"..\..\include\m_system.h"\
 	"..\..\include\m_userinfo.h"\
 	"..\..\include\m_utils.h"\
@@ -1086,16 +919,13 @@
 	".\cmdlist.h"\
 	".\commonheaders.h"\
 	".\globals.h"\
-	".\infobar.h"\
 	".\input.h"\
-	".\m_historyevents.h"\
 	".\m_ieview.h"\
 	".\m_metacontacts.h"\
 	".\m_smileyadd.h"\
 	".\msgs.h"\
 	".\msgwindow.h"\
 	".\resource.h"\
-	".\richutil.h"\
 	".\sendqueue.h"\
 	".\utils.h"\
 	
@@ -1115,6 +945,7 @@
 	"..\..\include\m_history.h"\
 	"..\..\include\m_hotkeys.h"\
 	"..\..\include\m_icolib.h"\
+	"..\..\include\m_keybindings.h"\
 	"..\..\include\m_langpack.h"\
 	"..\..\include\m_message.h"\
 	"..\..\include\m_options.h"\
@@ -1124,7 +955,6 @@
 	"..\..\include\m_protomod.h"\
 	"..\..\include\m_protosvc.h"\
 	"..\..\include\m_skin.h"\
-	"..\..\include\m_stdhdr.h"\
 	"..\..\include\m_system.h"\
 	"..\..\include\m_userinfo.h"\
 	"..\..\include\m_utils.h"\
@@ -1135,16 +965,13 @@
 	".\cmdlist.h"\
 	".\commonheaders.h"\
 	".\globals.h"\
-	".\infobar.h"\
 	".\input.h"\
-	".\m_historyevents.h"\
 	".\m_ieview.h"\
 	".\m_metacontacts.h"\
 	".\m_smileyadd.h"\
 	".\msgs.h"\
 	".\msgwindow.h"\
 	".\resource.h"\
-	".\richutil.h"\
 	".\sendqueue.h"\
 	".\utils.h"\
 	
@@ -1164,6 +991,7 @@
 	"..\..\include\m_history.h"\
 	"..\..\include\m_hotkeys.h"\
 	"..\..\include\m_icolib.h"\
+	"..\..\include\m_keybindings.h"\
 	"..\..\include\m_langpack.h"\
 	"..\..\include\m_message.h"\
 	"..\..\include\m_options.h"\
@@ -1173,7 +1001,6 @@
 	"..\..\include\m_protomod.h"\
 	"..\..\include\m_protosvc.h"\
 	"..\..\include\m_skin.h"\
-	"..\..\include\m_stdhdr.h"\
 	"..\..\include\m_system.h"\
 	"..\..\include\m_userinfo.h"\
 	"..\..\include\m_utils.h"\
@@ -1184,16 +1011,13 @@
 	".\cmdlist.h"\
 	".\commonheaders.h"\
 	".\globals.h"\
-	".\infobar.h"\
 	".\input.h"\
-	".\m_historyevents.h"\
 	".\m_ieview.h"\
 	".\m_metacontacts.h"\
 	".\m_smileyadd.h"\
 	".\msgs.h"\
 	".\msgwindow.h"\
 	".\resource.h"\
-	".\richutil.h"\
 	".\sendqueue.h"\
 	".\utils.h"\
 	
@@ -1213,6 +1037,7 @@
 	"..\..\include\m_history.h"\
 	"..\..\include\m_hotkeys.h"\
 	"..\..\include\m_icolib.h"\
+	"..\..\include\m_keybindings.h"\
 	"..\..\include\m_langpack.h"\
 	"..\..\include\m_message.h"\
 	"..\..\include\m_options.h"\
@@ -1222,7 +1047,6 @@
 	"..\..\include\m_protomod.h"\
 	"..\..\include\m_protosvc.h"\
 	"..\..\include\m_skin.h"\
-	"..\..\include\m_stdhdr.h"\
 	"..\..\include\m_system.h"\
 	"..\..\include\m_userinfo.h"\
 	"..\..\include\m_utils.h"\
@@ -1233,16 +1057,13 @@
 	".\cmdlist.h"\
 	".\commonheaders.h"\
 	".\globals.h"\
-	".\infobar.h"\
 	".\input.h"\
-	".\m_historyevents.h"\
 	".\m_ieview.h"\
 	".\m_metacontacts.h"\
 	".\m_smileyadd.h"\
 	".\msgs.h"\
 	".\msgwindow.h"\
 	".\resource.h"\
-	".\richutil.h"\
 	".\sendqueue.h"\
 	".\statusicon.h"\
 	".\utils.h"\

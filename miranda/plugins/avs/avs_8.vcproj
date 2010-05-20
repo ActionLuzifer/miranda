@@ -545,10 +545,6 @@
 				RelativePath=".\avs.rc"
 				>
 			</File>
-			<File
-				RelativePath=".\version.rc"
-				>
-			</File>
 		</Filter>
 	</Files>
 	<Globals>

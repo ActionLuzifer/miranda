@@ -1,25 +1,3 @@
-/*
-
-Miranda IM: the free IM client for Microsoft* Windows*
-
-Copyright 2000-2010 Miranda ICQ/IM project,
-all portions of this codebase are copyrighted to the people
-listed in contributors.txt.
-
-This program is free software; you can redistribute it and/or
-modify it under the terms of the GNU General Public License
-as published by the Free Software Foundation; either version 2
-of the License, or (at your option) any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program; if not, write to the Free Software
-Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
-*/
 #include "commonheaders.h"
 #include "genmenu.h"
 
@@ -312,7 +290,7 @@ int MO_ModifyMenuItem( PMO_IntMenuItem menuHandle, PMO_MenuItem pmi )
 	}
 	if ( pmi->flags & CMIM_ICON ) {
 		if ( pimi->mi.flags & CMIF_ICONFROMICOLIB ) {
-			HICON hIcon = IcoLib_GetIconByHandle( pmi->hIcolibItem, false );
+			HICON hIcon = IcoLib_GetIconByHandle( pmi->hIcolibItem );
 			if ( hIcon != NULL ) {
 				pimi->hIcolibItem = pmi->hIcolibItem;
 				pimi->iconId = ImageList_ReplaceIcon( pimi->parent->m_hMenuIcons, pimi->iconId, hIcon );
@@ -358,7 +336,7 @@ INT_PTR MO_MenuItemGetOwnerData(WPARAM wParam, LPARAM)
 PMO_IntMenuItem MO_GetIntMenuItem(HGENMENU wParam)
 {
 	PMO_IntMenuItem result = ( PMO_IntMenuItem )wParam;
-	if ( result == NULL || wParam == (HGENMENU)0xffff1234 )
+	if ( result == NULL )
 		return NULL;
 
 	__try
@@ -527,8 +505,7 @@ INT_PTR MO_CreateNewMenuObject(WPARAM, LPARAM lParam)
 	p->Name = mir_strdup( pmp->name );
 	p->CheckService = mir_strdup( pmp->CheckService );
 	p->ExecService = mir_strdup( pmp->ExecService );
-	p->m_hMenuIcons = ImageList_Create( GetSystemMetrics(SM_CXSMICON), GetSystemMetrics(SM_CYSMICON), 
-		(IsWinVerXPPlus() ? ILC_COLOR32 : ILC_COLOR16) | ILC_MASK, 15, 100 );
+	p->m_hMenuIcons = ImageList_Create( GetSystemMetrics(SM_CXSMICON), GetSystemMetrics(SM_CYSMICON), ILC_COLOR32|ILC_MASK, 15, 100 );
 	g_menus.insert(p);
 
 	LeaveCriticalSection( &csMenuHook );
@@ -575,7 +552,7 @@ INT_PTR MO_RemoveMenuItem(WPARAM wParam, LPARAM)
 	pimi->parent->freeItem( pimi );
 
 	LeaveCriticalSection( &csMenuHook );
-	return 0;
+	return -1;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -643,7 +620,7 @@ PMO_IntMenuItem MO_AddNewMenuItem( HANDLE menuobjecthandle, PMO_MenuItem pmi )
 
 	if ( pmi->hIcon != NULL ) {
 		if ( pmi->flags & CMIF_ICONFROMICOLIB ) {
-			HICON hIcon = IcoLib_GetIconByHandle( pmi->hIcolibItem, false );
+			HICON hIcon = IcoLib_GetIconByHandle( pmi->hIcolibItem );
 			p->iconId = ImageList_AddIcon( pmo->m_hMenuIcons, hIcon );
 			p->hIcolibItem = pmi->hIcolibItem;
 			IconLib_ReleaseIcon( hIcon, 0 );
@@ -1032,7 +1009,7 @@ HMENU BuildRecursiveMenu(HMENU hMenu, PMO_IntMenuItem pRootMenu, ListParam *para
 static int MO_ReloadIcon( PMO_IntMenuItem pmi, void* )
 {
 	if ( pmi->hIcolibItem ) {
-		HICON newIcon = IcoLib_GetIconByHandle( pmi->hIcolibItem, false );
+		HICON newIcon = IcoLib_GetIconByHandle( pmi->hIcolibItem );
 		if ( newIcon )
 			ImageList_ReplaceIcon( pmi->parent->m_hMenuIcons, pmi->iconId, newIcon );
 
@@ -1062,8 +1039,8 @@ static int MO_RegisterIcon( PMO_IntMenuItem pmi, void* )
 	uname = pmi->UniqName;
 	if ( uname == NULL )
 		#ifdef UNICODE
-			uname = mir_u2a(pmi->CustomName);
-			descr = mir_u2a(pmi->mi.ptszName);
+			uname = u2a(pmi->CustomName);
+			descr = u2a(pmi->mi.ptszName);
 		#else
 			uname = pmi->CustomName;
 			descr = pmi->mi.pszName;
