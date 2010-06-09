@@ -177,7 +177,6 @@ struct CQuestionDlg : public CCoolIrcDlg
 {
 	CQuestionDlg( CIrcProto* _pro, CManagerDlg* owner = NULL );
 
-	virtual void OnInitDialog();
 	virtual void OnClose();
 
 	CCtrlButton  m_Ok;

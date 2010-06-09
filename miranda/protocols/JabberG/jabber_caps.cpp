@@ -71,8 +71,7 @@ JabberFeatCapPair g_JabberFeatCapPairs[] = {
 	{	_T(JABBER_FEAT_USER_ACTIVITY),        JABBER_CAPS_USER_ACTIVITY,        _T("Can report information about user activity"), },
 	{	_T(JABBER_FEAT_USER_ACTIVITY_NOTIFY), JABBER_CAPS_USER_ACTIVITY_NOTIFY, _T("Receives information about user activity"), },
 	{	_T(JABBER_FEAT_MIRANDA_NOTES),        JABBER_CAPS_MIRANDA_NOTES,        _T("Supports Miranda IM notes extension"), },
-	{	_T(JABBER_FEAT_JINGLE),               JABBER_CAPS_JINGLE,               _T("Supports Jingle"), },
-	{	NULL,                                 0,                                NULL}
+	{	NULL,                             0,                             NULL}
 };
 
 JabberFeatCapPair g_JabberFeatCapPairsExt[] = {
@@ -443,7 +442,7 @@ CJabberClientPartialCaps* CJabberClientCaps::FindById( int nIqId )
 	return pCaps;
 }
 
-CJabberClientCaps::CJabberClientCaps( const TCHAR *szNode )
+CJabberClientCaps::CJabberClientCaps( TCHAR *szNode )
 {
 	m_szNode = mir_tstrdup( szNode );
 	m_pCaps = NULL;
@@ -515,7 +514,7 @@ CJabberClientCapsManager::~CJabberClientCapsManager()
 	DeleteCriticalSection( &m_cs );
 }
 
-CJabberClientCaps * CJabberClientCapsManager::FindClient( const TCHAR *szNode )
+CJabberClientCaps * CJabberClientCapsManager::FindClient( TCHAR *szNode )
 {
 	if ( !m_pClients || !szNode )
 		return NULL;
@@ -551,7 +550,7 @@ JabberCapsBits CJabberClientCapsManager::GetClientCaps( TCHAR *szNode, TCHAR *sz
 	return jcbCaps;
 }
 
-BOOL CJabberClientCapsManager::SetClientCaps( const TCHAR *szNode, TCHAR *szVer, JabberCapsBits jcbCaps, int nIqId /*= -1*/ )
+BOOL CJabberClientCapsManager::SetClientCaps( TCHAR *szNode, TCHAR *szVer, JabberCapsBits jcbCaps, int nIqId /*= -1*/ )
 {
 	Lock();
 	CJabberClientCaps *pClient = FindClient( szNode );
@@ -593,11 +592,10 @@ BOOL CJabberClientCapsManager::SetClientCaps( int nIqId, JabberCapsBits jcbCaps 
 
 BOOL CJabberClientCapsManager::HandleInfoRequest( HXML, CJabberIqInfo* pInfo, const TCHAR* szNode )
 {
-	int i;
 	JabberCapsBits jcb = 0;
 
 	if ( szNode ) {
-		for ( i = 0; g_JabberFeatCapPairsExt[i].szFeature; i++ ) {
+		for ( int i = 0; g_JabberFeatCapPairsExt[i].szFeature; i++ ) {
 			TCHAR szExtCap[ 512 ];
 			mir_sntprintf( szExtCap, SIZEOF(szExtCap), _T("%s#%s"), _T(JABBER_CAPS_MIRANDA_NODE), g_JabberFeatCapPairsExt[i].szFeature );
 			if ( !_tcscmp( szNode, szExtCap )) {
@@ -605,26 +603,12 @@ BOOL CJabberClientCapsManager::HandleInfoRequest( HXML, CJabberIqInfo* pInfo, co
 				break;
 			}
 		}
-
-		// check features registered through IJabberNetInterface::RegisterFeature() and IJabberNetInterface::AddFeatures()
-		for ( i = 0; i < ppro->m_lstJabberFeatCapPairsDynamic.getCount(); i++ ) {
-			TCHAR szExtCap[ 512 ];
-			mir_sntprintf( szExtCap, SIZEOF(szExtCap), _T("%s#%s"), _T(JABBER_CAPS_MIRANDA_NODE), ppro->m_lstJabberFeatCapPairsDynamic[i]->szExt );
-			if ( !_tcscmp( szNode, szExtCap )) {
-				jcb = ppro->m_lstJabberFeatCapPairsDynamic[i]->jcbCap;
-				break;
-			}
-		}
-
 		// unknown node, not XEP-0115 request
 		if ( !jcb )
 			return FALSE;
 	}
-	else {
+	else
 		jcb = JABBER_CAPS_MIRANDA_ALL;
-		for ( i = 0; i < ppro->m_lstJabberFeatCapPairsDynamic.getCount(); i++ )
-			jcb |= ppro->m_lstJabberFeatCapPairsDynamic[i]->jcbCap;
-	}
 
 	XmlNodeIq iq( _T("result"), pInfo );
 
@@ -635,13 +619,9 @@ BOOL CJabberClientCapsManager::HandleInfoRequest( HXML, CJabberIqInfo* pInfo, co
 	query << XCHILD( _T("identity")) << XATTR( _T("category"), _T("client")) 
 			<< XATTR( _T("type"), _T("pc")) << XATTR( _T("name"), _T("Miranda"));
 
-	for ( i = 0; g_JabberFeatCapPairs[i].szFeature; i++ ) 
+	for ( int i = 0; g_JabberFeatCapPairs[i].szFeature; i++ ) 
 		if ( jcb & g_JabberFeatCapPairs[i].jcbCap )
 			query << XCHILD( _T("feature")) << XATTR( _T("var"), g_JabberFeatCapPairs[i].szFeature );
-
-	for ( i = 0; i < ppro->m_lstJabberFeatCapPairsDynamic.getCount(); i++ )
-		if ( jcb & ppro->m_lstJabberFeatCapPairsDynamic[i]->jcbCap )
-			query << XCHILD( _T("feature")) << XATTR( _T("var"), ppro->m_lstJabberFeatCapPairsDynamic[i]->szFeature );
 
 	if ( !szNode ) {
 		TCHAR szOsBuffer[256] = {0};
@@ -650,7 +630,7 @@ BOOL CJabberClientCapsManager::HandleInfoRequest( HXML, CJabberIqInfo* pInfo, co
 			lstrcpyn(szOsBuffer, _T(""), SIZEOF(szOsBuffer));
 		else {
 			TCHAR *szOsWindows = _T("Microsoft Windows");
-			size_t nOsWindowsLength = _tcslen( szOsWindows );
+			int nOsWindowsLength = _tcslen( szOsWindows );
 			if (!_tcsnicmp(szOsBuffer, szOsWindows, nOsWindowsLength))
 				os += nOsWindowsLength + 1;
 		}

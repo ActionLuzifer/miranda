@@ -139,7 +139,7 @@ struct JABBER_LIST_ITEM
 	JABBER_RESOURCE_MODE resourceMode;
 	JABBER_SUBSCRIPTION subscription;
 	TCHAR* group;
-	TCHAR* photoFileName;
+	char* photoFileName;
 	TCHAR* messageEventIdStr;
 
 	// LIST_AGENT

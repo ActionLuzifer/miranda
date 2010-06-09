@@ -75,35 +75,24 @@ int fnHitTest(HWND hwnd, struct ClcData *dat, int testx, int testy, struct ClcCo
 	HFONT hFont;
 	DWORD style = GetWindowLongPtr(hwnd, GWL_STYLE);
 	POINT pt;
+	HWND hwndTmp, hwndRoot;
 
 	if ( flags )
 		*flags = 0;
 
 	pt.x = testx;
 	pt.y = testy;
-	ClientToScreen(hwnd, &pt);
+	MapWindowPoints(hwnd, GetDesktopWindow(), &pt, 1);
 
-	HWND hwndParent = hwnd, hwndTemp;
-	do
-	{
-		hwndTemp = hwndParent;
-		hwndParent = GetParent(hwndTemp);
-
-		POINT pt1 = pt;
-		ScreenToClient(hwndParent, &pt1);
-		HWND h = ChildWindowFromPointEx(hwndParent ? hwndParent : GetDesktopWindow(), 
-			pt1, CWP_SKIPINVISIBLE | CWP_SKIPTRANSPARENT);
-		if (h != hwndTemp)
-		{
-			if (hwndParent == NULL)
-			{
-				h = ChildWindowFromPointEx(h, pt1, CWP_SKIPINVISIBLE | CWP_SKIPTRANSPARENT);
-				if (h == hwndTemp) break;
-			}
-			return -1;
-		}
-	}
-	while (hwndParent);
+	hwndRoot = hwnd;
+	while (hwndTmp = GetParent(hwndRoot))
+		hwndRoot = hwndTmp;
+	hwndTmp = ChildWindowFromPointEx(GetDesktopWindow(), pt, CWP_SKIPINVISIBLE|CWP_SKIPTRANSPARENT);
+	if (// [our root window is not under cursor]
+		(hwndTmp != hwndRoot) &&
+		// AND [desktop ("Progman" class) is not under cursor OR our root window is not it's child located under cursor (pinned mode)]
+		!(hwndTmp == FindWindowA("Progman",0)) && (ChildWindowFromPointEx(hwndTmp, pt, CWP_SKIPINVISIBLE|CWP_SKIPTRANSPARENT) == hwndRoot))
+		return -1;
 
 	GetClientRect(hwnd, &clRect);
 	if ( testx < 0 || testy < 0 || testy >= clRect.bottom || testx >= clRect.right ) {
@@ -729,25 +718,30 @@ void fnLoadClcOptions(HWND hwnd, struct ClcData *dat)
 		int i;
 		LOGFONT lf;
 		SIZE fontSize;
+		HDC hdc = GetDC(hwnd);
+		HFONT hFont = ( HFONT )GetCurrentObject(hdc, OBJ_FONT);
+		HFONT holdfont;
 
-        HDC hdc = GetDC(hwnd);
-		for (i = 0; i <= FONTID_MAX; i++) 
-        {
+		for (i = 0; i <= FONTID_MAX; i++) {
 			if (!dat->fontInfo[i].changed)
 				DeleteObject(dat->fontInfo[i].hFont);
-
 			cli.pfnGetFontSetting(i, &lf, &dat->fontInfo[i].colour);
-			lf.lfHeight = -MulDiv(lf.lfHeight, GetDeviceCaps(hdc, LOGPIXELSY), 72);
-
-			dat->fontInfo[i].hFont = CreateFontIndirect(&lf);
+			{
+				LONG height;
+				HDC hdc = GetDC(NULL);
+				height = lf.lfHeight;
+				lf.lfHeight = -MulDiv(lf.lfHeight, GetDeviceCaps(hdc, LOGPIXELSY), 72);
+				ReleaseDC(NULL, hdc);
+				dat->fontInfo[i].hFont = CreateFontIndirect(&lf);
+				lf.lfHeight = height;
+			}
 			dat->fontInfo[i].changed = 0;
-
-			HFONT holdfont = (HFONT)SelectObject(hdc,dat->fontInfo[i].hFont);
+			holdfont = ( HFONT )SelectObject(hdc,dat->fontInfo[i].hFont);
 			GetTextExtentPoint32(hdc, _T("x"), 1, &fontSize);
-			SelectObject(hdc, holdfont);
-
-            dat->fontInfo[i].fontHeight = fontSize.cy;
+			dat->fontInfo[i].fontHeight = fontSize.cy;
+			if (holdfont) SelectObject(hdc, holdfont);
 		}
+		SelectObject(hdc,hFont);
 		ReleaseDC(hwnd, hdc);
 	}
 	dat->leftMargin = DBGetContactSettingByte(NULL, "CLC", "LeftMargin", CLCDEFAULT_LEFTMARGIN);

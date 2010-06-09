@@ -32,12 +32,14 @@ Get an integer value from the actual position pointed by handle
 */
 static int
 GetInt(FreeImageIO *io, fi_handle handle) {
+	static const char *PNM_ERROR_PARSING	= "Parsing error";
+
     char c = 0;
 	BOOL firstchar;
 
     // skip forward to start of next number
 
-    if(!io->read_proc(&c, 1, 1, handle)) throw FI_MSG_ERROR_PARSING;
+    if(!io->read_proc(&c, 1, 1, handle)) throw PNM_ERROR_PARSING;
 
     while (1) {
         // eat comments
@@ -48,7 +50,7 @@ GetInt(FreeImageIO *io, fi_handle handle) {
             firstchar = TRUE;
 
             while (1) {
-				if(!io->read_proc(&c, 1, 1, handle)) throw FI_MSG_ERROR_PARSING;
+				if(!io->read_proc(&c, 1, 1, handle)) throw PNM_ERROR_PARSING;
 
 				if (firstchar && c == ' ') {
 					// loop off 1 sp after #
@@ -66,7 +68,7 @@ GetInt(FreeImageIO *io, fi_handle handle) {
             break;
 		}
 
-        if(!io->read_proc(&c, 1, 1, handle)) throw FI_MSG_ERROR_PARSING;
+        if(!io->read_proc(&c, 1, 1, handle)) throw PNM_ERROR_PARSING;
     }
 
     // we're at the start of a number, continue until we hit a non-number
@@ -76,7 +78,7 @@ GetInt(FreeImageIO *io, fi_handle handle) {
     while (1) {
         i = (i * 10) + (c - '0');
 
-        if(!io->read_proc(&c, 1, 1, handle)) throw FI_MSG_ERROR_PARSING;
+        if(!io->read_proc(&c, 1, 1, handle)) throw PNM_ERROR_PARSING;
 
         if (c < '0' || c > '9')
             break;
@@ -222,7 +224,7 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 
 		if ((id_one != 'P') || (id_two < '1') || (id_two > '6')) {			
 			// signature error
-			throw FI_MSG_ERROR_MAGIC_NUMBER;
+			throw "Invalid magic number";
 		}
 
 		// Read the header information: width, height and the 'max' value if any
@@ -273,9 +275,8 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 				break;
 		}
 
-		if (dib == NULL) {
-			throw FI_MSG_ERROR_DIB_MEMORY;
-		}
+		if (dib == NULL)
+			throw "DIB allocation failed";
 
 		// Read the image...
 

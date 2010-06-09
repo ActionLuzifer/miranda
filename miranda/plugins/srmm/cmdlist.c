@@ -1,5 +1,7 @@
 /*
-Copyright 2000-2010 Miranda IM project, 
+SRMM
+
+Copyright 2000-2005 Miranda ICQ/IM project, 
 all portions of this codebase are copyrighted to the people 
 listed in contributors.txt.
 
@@ -31,18 +33,21 @@ static unsigned long tcmdlist_hash(const CMDCHAR *data) {
 	return hash;
 }
 
-TCmdList *tcmdlist_append(TCmdList *list, CMDCHAR *data)
-{
+TCmdList *tcmdlist_append(TCmdList *list, CMDCHAR *data) {
 	TCmdList *n;
-	TCmdList *new_list = mir_alloc(sizeof(TCmdList));
+	TCmdList *new_list = malloc(sizeof(TCmdList));
 	TCmdList *attach_to = NULL;
 	
 	if (!data) {
-		mir_free(new_list);
+		free(new_list);
 		return list;
 	}
 	new_list->next = NULL;
-	new_list->szCmd = mir_tstrdup(data);
+#ifdef _UNICODE
+	new_list->szCmd = _tcsdup(data);
+#else
+	new_list->szCmd = _strdup(data);
+#endif
 	new_list->hash = tcmdlist_hash(data);
 	for (n=list; n!=NULL; n=n->next) {
 		attach_to = n;
@@ -68,21 +73,23 @@ TCmdList *tcmdlist_remove(TCmdList *list, CMDCHAR *data) {
 	if (!data) return list;
 	hash = tcmdlist_hash(data);
 	for (n=list; n!=NULL; n=n->next) {
-		if (n->hash==hash && !_tcscmp(n->szCmd, data)) 
-		{
+#ifdef _UNICODE
+		if (n->hash==hash&&!_tcscmp(n->szCmd, data)) {
+#else
+		if (n->hash==hash&&!strcmp(n->szCmd, data)) {
+#endif
 			if (n->next) n->next->prev = n->prev;
 			if (n->prev) n->prev->next = n->next;
 			if (n==list) list = n->next;
-			mir_free(n->szCmd);
-			mir_free(n);
+			free(n->szCmd);
+			free(n);
 			return list;
 		}
 	}
 	return list;
 }
 
-int tcmdlist_len(TCmdList *list)
-{
+int tcmdlist_len(TCmdList *list) {
 	TCmdList *n;
 	int i = 0;
 
@@ -107,8 +114,8 @@ void tcmdlist_free(TCmdList *list) {
 
 	while (n!=NULL) {
 		next = n->next;
-		mir_free(n->szCmd);
-		mir_free(n);
+		free(n->szCmd);
+		free(n);
 		n = next;
 	}
 }

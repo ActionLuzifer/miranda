@@ -74,10 +74,8 @@ CLEAN :
 	-@erase "$(INTDIR)\GetType.obj"
 	-@erase "$(INTDIR)\Halftoning.obj"
 	-@erase "$(INTDIR)\IPTC.obj"
-	-@erase "$(INTDIR)\jaricom.obj"
 	-@erase "$(INTDIR)\jcapimin.obj"
 	-@erase "$(INTDIR)\jcapistd.obj"
-	-@erase "$(INTDIR)\jcarith.obj"
 	-@erase "$(INTDIR)\jccoefct.obj"
 	-@erase "$(INTDIR)\jccolor.obj"
 	-@erase "$(INTDIR)\jcdctmgr.obj"
@@ -88,12 +86,12 @@ CLEAN :
 	-@erase "$(INTDIR)\jcmaster.obj"
 	-@erase "$(INTDIR)\jcomapi.obj"
 	-@erase "$(INTDIR)\jcparam.obj"
+	-@erase "$(INTDIR)\jcphuff.obj"
 	-@erase "$(INTDIR)\jcprepct.obj"
 	-@erase "$(INTDIR)\jcsample.obj"
 	-@erase "$(INTDIR)\jctrans.obj"
 	-@erase "$(INTDIR)\jdapimin.obj"
 	-@erase "$(INTDIR)\jdapistd.obj"
-	-@erase "$(INTDIR)\jdarith.obj"
 	-@erase "$(INTDIR)\jdatadst.obj"
 	-@erase "$(INTDIR)\jdatasrc.obj"
 	-@erase "$(INTDIR)\jdcoefct.obj"
@@ -105,6 +103,7 @@ CLEAN :
 	-@erase "$(INTDIR)\jdmarker.obj"
 	-@erase "$(INTDIR)\jdmaster.obj"
 	-@erase "$(INTDIR)\jdmerge.obj"
+	-@erase "$(INTDIR)\jdphuff.obj"
 	-@erase "$(INTDIR)\jdpostct.obj"
 	-@erase "$(INTDIR)\jdsample.obj"
 	-@erase "$(INTDIR)\jdtrans.obj"
@@ -115,6 +114,7 @@ CLEAN :
 	-@erase "$(INTDIR)\jidctflt.obj"
 	-@erase "$(INTDIR)\jidctfst.obj"
 	-@erase "$(INTDIR)\jidctint.obj"
+	-@erase "$(INTDIR)\jidctred.obj"
 	-@erase "$(INTDIR)\jmemmgr.obj"
 	-@erase "$(INTDIR)\jmemnobs.obj"
 	-@erase "$(INTDIR)\JPEGTransform.obj"
@@ -208,7 +208,7 @@ CPP_PROJ=/nologo /MT /W3 /GX /Zi /O1 /I "Source" /I "Source\ZLib" /I "..\..\incl
 MTL=midl.exe
 MTL_PROJ=/nologo /D "NDEBUG" /mktyplib203 /win32 
 RSC=rc.exe
-RSC_PROJ=/l 0x409 /fo"$(INTDIR)\FreeImage.res" /i "..\..\include" /d "NDEBUG" 
+RSC_PROJ=/l 0x409 /fo"$(INTDIR)\FreeImage.res" /d "NDEBUG" 
 BSC32=bscmake.exe
 BSC32_FLAGS=/nologo /o"$(OUTDIR)\FreeImage.bsc" 
 BSC32_SBRS= \
@@ -251,10 +251,8 @@ LINK32_OBJS= \
 	"$(INTDIR)\TagConversion.obj" \
 	"$(INTDIR)\TagLib.obj" \
 	"$(INTDIR)\main.obj" \
-	"$(INTDIR)\jaricom.obj" \
 	"$(INTDIR)\jcapimin.obj" \
 	"$(INTDIR)\jcapistd.obj" \
-	"$(INTDIR)\jcarith.obj" \
 	"$(INTDIR)\jccoefct.obj" \
 	"$(INTDIR)\jccolor.obj" \
 	"$(INTDIR)\jcdctmgr.obj" \
@@ -265,12 +263,12 @@ LINK32_OBJS= \
 	"$(INTDIR)\jcmaster.obj" \
 	"$(INTDIR)\jcomapi.obj" \
 	"$(INTDIR)\jcparam.obj" \
+	"$(INTDIR)\jcphuff.obj" \
 	"$(INTDIR)\jcprepct.obj" \
 	"$(INTDIR)\jcsample.obj" \
 	"$(INTDIR)\jctrans.obj" \
 	"$(INTDIR)\jdapimin.obj" \
 	"$(INTDIR)\jdapistd.obj" \
-	"$(INTDIR)\jdarith.obj" \
 	"$(INTDIR)\jdatadst.obj" \
 	"$(INTDIR)\jdatasrc.obj" \
 	"$(INTDIR)\jdcoefct.obj" \
@@ -282,6 +280,7 @@ LINK32_OBJS= \
 	"$(INTDIR)\jdmarker.obj" \
 	"$(INTDIR)\jdmaster.obj" \
 	"$(INTDIR)\jdmerge.obj" \
+	"$(INTDIR)\jdphuff.obj" \
 	"$(INTDIR)\jdpostct.obj" \
 	"$(INTDIR)\jdsample.obj" \
 	"$(INTDIR)\jdtrans.obj" \
@@ -292,6 +291,7 @@ LINK32_OBJS= \
 	"$(INTDIR)\jidctflt.obj" \
 	"$(INTDIR)\jidctfst.obj" \
 	"$(INTDIR)\jidctint.obj" \
+	"$(INTDIR)\jidctred.obj" \
 	"$(INTDIR)\jmemmgr.obj" \
 	"$(INTDIR)\jmemnobs.obj" \
 	"$(INTDIR)\jquant1.obj" \
@@ -421,14 +421,10 @@ CLEAN :
 	-@erase "$(INTDIR)\Halftoning.sbr"
 	-@erase "$(INTDIR)\IPTC.obj"
 	-@erase "$(INTDIR)\IPTC.sbr"
-	-@erase "$(INTDIR)\jaricom.obj"
-	-@erase "$(INTDIR)\jaricom.sbr"
 	-@erase "$(INTDIR)\jcapimin.obj"
 	-@erase "$(INTDIR)\jcapimin.sbr"
 	-@erase "$(INTDIR)\jcapistd.obj"
 	-@erase "$(INTDIR)\jcapistd.sbr"
-	-@erase "$(INTDIR)\jcarith.obj"
-	-@erase "$(INTDIR)\jcarith.sbr"
 	-@erase "$(INTDIR)\jccoefct.obj"
 	-@erase "$(INTDIR)\jccoefct.sbr"
 	-@erase "$(INTDIR)\jccolor.obj"
@@ -449,6 +445,8 @@ CLEAN :
 	-@erase "$(INTDIR)\jcomapi.sbr"
 	-@erase "$(INTDIR)\jcparam.obj"
 	-@erase "$(INTDIR)\jcparam.sbr"
+	-@erase "$(INTDIR)\jcphuff.obj"
+	-@erase "$(INTDIR)\jcphuff.sbr"
 	-@erase "$(INTDIR)\jcprepct.obj"
 	-@erase "$(INTDIR)\jcprepct.sbr"
 	-@erase "$(INTDIR)\jcsample.obj"
@@ -459,8 +457,6 @@ CLEAN :
 	-@erase "$(INTDIR)\jdapimin.sbr"
 	-@erase "$(INTDIR)\jdapistd.obj"
 	-@erase "$(INTDIR)\jdapistd.sbr"
-	-@erase "$(INTDIR)\jdarith.obj"
-	-@erase "$(INTDIR)\jdarith.sbr"
 	-@erase "$(INTDIR)\jdatadst.obj"
 	-@erase "$(INTDIR)\jdatadst.sbr"
 	-@erase "$(INTDIR)\jdatasrc.obj"
@@ -483,6 +479,8 @@ CLEAN :
 	-@erase "$(INTDIR)\jdmaster.sbr"
 	-@erase "$(INTDIR)\jdmerge.obj"
 	-@erase "$(INTDIR)\jdmerge.sbr"
+	-@erase "$(INTDIR)\jdphuff.obj"
+	-@erase "$(INTDIR)\jdphuff.sbr"
 	-@erase "$(INTDIR)\jdpostct.obj"
 	-@erase "$(INTDIR)\jdpostct.sbr"
 	-@erase "$(INTDIR)\jdsample.obj"
@@ -503,6 +501,8 @@ CLEAN :
 	-@erase "$(INTDIR)\jidctfst.sbr"
 	-@erase "$(INTDIR)\jidctint.obj"
 	-@erase "$(INTDIR)\jidctint.sbr"
+	-@erase "$(INTDIR)\jidctred.obj"
+	-@erase "$(INTDIR)\jidctred.sbr"
 	-@erase "$(INTDIR)\jmemmgr.obj"
 	-@erase "$(INTDIR)\jmemmgr.sbr"
 	-@erase "$(INTDIR)\jmemnobs.obj"
@@ -647,7 +647,7 @@ CPP_PROJ=/nologo /MTd /W3 /Gm /GX /ZI /Od /I "Source" /I "Source\ZLib" /I "..\..
 MTL=midl.exe
 MTL_PROJ=/nologo /D "_DEBUG" /mktyplib203 /win32 
 RSC=rc.exe
-RSC_PROJ=/l 0x409 /fo"$(INTDIR)\FreeImage.res" /i "..\..\include" /d "_DEBUG" 
+RSC_PROJ=/l 0x409 /fo"$(INTDIR)\FreeImage.res" /d "_DEBUG" 
 BSC32=bscmake.exe
 BSC32_FLAGS=/nologo /o"$(OUTDIR)\FreeImage.bsc" 
 BSC32_SBRS= \
@@ -686,10 +686,8 @@ BSC32_SBRS= \
 	"$(INTDIR)\TagConversion.sbr" \
 	"$(INTDIR)\TagLib.sbr" \
 	"$(INTDIR)\main.sbr" \
-	"$(INTDIR)\jaricom.sbr" \
 	"$(INTDIR)\jcapimin.sbr" \
 	"$(INTDIR)\jcapistd.sbr" \
-	"$(INTDIR)\jcarith.sbr" \
 	"$(INTDIR)\jccoefct.sbr" \
 	"$(INTDIR)\jccolor.sbr" \
 	"$(INTDIR)\jcdctmgr.sbr" \
@@ -700,12 +698,12 @@ BSC32_SBRS= \
 	"$(INTDIR)\jcmaster.sbr" \
 	"$(INTDIR)\jcomapi.sbr" \
 	"$(INTDIR)\jcparam.sbr" \
+	"$(INTDIR)\jcphuff.sbr" \
 	"$(INTDIR)\jcprepct.sbr" \
 	"$(INTDIR)\jcsample.sbr" \
 	"$(INTDIR)\jctrans.sbr" \
 	"$(INTDIR)\jdapimin.sbr" \
 	"$(INTDIR)\jdapistd.sbr" \
-	"$(INTDIR)\jdarith.sbr" \
 	"$(INTDIR)\jdatadst.sbr" \
 	"$(INTDIR)\jdatasrc.sbr" \
 	"$(INTDIR)\jdcoefct.sbr" \
@@ -717,6 +715,7 @@ BSC32_SBRS= \
 	"$(INTDIR)\jdmarker.sbr" \
 	"$(INTDIR)\jdmaster.sbr" \
 	"$(INTDIR)\jdmerge.sbr" \
+	"$(INTDIR)\jdphuff.sbr" \
 	"$(INTDIR)\jdpostct.sbr" \
 	"$(INTDIR)\jdsample.sbr" \
 	"$(INTDIR)\jdtrans.sbr" \
@@ -727,6 +726,7 @@ BSC32_SBRS= \
 	"$(INTDIR)\jidctflt.sbr" \
 	"$(INTDIR)\jidctfst.sbr" \
 	"$(INTDIR)\jidctint.sbr" \
+	"$(INTDIR)\jidctred.sbr" \
 	"$(INTDIR)\jmemmgr.sbr" \
 	"$(INTDIR)\jmemnobs.sbr" \
 	"$(INTDIR)\jquant1.sbr" \
@@ -812,10 +812,8 @@ LINK32_OBJS= \
 	"$(INTDIR)\TagConversion.obj" \
 	"$(INTDIR)\TagLib.obj" \
 	"$(INTDIR)\main.obj" \
-	"$(INTDIR)\jaricom.obj" \
 	"$(INTDIR)\jcapimin.obj" \
 	"$(INTDIR)\jcapistd.obj" \
-	"$(INTDIR)\jcarith.obj" \
 	"$(INTDIR)\jccoefct.obj" \
 	"$(INTDIR)\jccolor.obj" \
 	"$(INTDIR)\jcdctmgr.obj" \
@@ -826,12 +824,12 @@ LINK32_OBJS= \
 	"$(INTDIR)\jcmaster.obj" \
 	"$(INTDIR)\jcomapi.obj" \
 	"$(INTDIR)\jcparam.obj" \
+	"$(INTDIR)\jcphuff.obj" \
 	"$(INTDIR)\jcprepct.obj" \
 	"$(INTDIR)\jcsample.obj" \
 	"$(INTDIR)\jctrans.obj" \
 	"$(INTDIR)\jdapimin.obj" \
 	"$(INTDIR)\jdapistd.obj" \
-	"$(INTDIR)\jdarith.obj" \
 	"$(INTDIR)\jdatadst.obj" \
 	"$(INTDIR)\jdatasrc.obj" \
 	"$(INTDIR)\jdcoefct.obj" \
@@ -843,6 +841,7 @@ LINK32_OBJS= \
 	"$(INTDIR)\jdmarker.obj" \
 	"$(INTDIR)\jdmaster.obj" \
 	"$(INTDIR)\jdmerge.obj" \
+	"$(INTDIR)\jdphuff.obj" \
 	"$(INTDIR)\jdpostct.obj" \
 	"$(INTDIR)\jdsample.obj" \
 	"$(INTDIR)\jdtrans.obj" \
@@ -853,6 +852,7 @@ LINK32_OBJS= \
 	"$(INTDIR)\jidctflt.obj" \
 	"$(INTDIR)\jidctfst.obj" \
 	"$(INTDIR)\jidctint.obj" \
+	"$(INTDIR)\jidctred.obj" \
 	"$(INTDIR)\jmemmgr.obj" \
 	"$(INTDIR)\jmemnobs.obj" \
 	"$(INTDIR)\jquant1.obj" \
@@ -1545,24 +1545,6 @@ SOURCE=.\Miranda\main.cpp
 
 !ENDIF 
 
-SOURCE=.\Source\LibJPEG\jaricom.c
-
-!IF  "$(CFG)" == "FreeImage - Win32 Release"
-
-
-"$(INTDIR)\jaricom.obj" : $(SOURCE) "$(INTDIR)"
-	$(CPP) $(CPP_PROJ) $(SOURCE)
-
-
-!ELSEIF  "$(CFG)" == "FreeImage - Win32 Debug"
-
-
-"$(INTDIR)\jaricom.obj"	"$(INTDIR)\jaricom.sbr" : $(SOURCE) "$(INTDIR)"
-	$(CPP) $(CPP_PROJ) $(SOURCE)
-
-
-!ENDIF 
-
 SOURCE=.\Source\LibJPEG\jcapimin.c
 
 !IF  "$(CFG)" == "FreeImage - Win32 Release"
@@ -1594,24 +1576,6 @@ SOURCE=.\Source\LibJPEG\jcapistd.c
 
 
 "$(INTDIR)\jcapistd.obj"	"$(INTDIR)\jcapistd.sbr" : $(SOURCE) "$(INTDIR)"
-	$(CPP) $(CPP_PROJ) $(SOURCE)
-
-
-!ENDIF 
-
-SOURCE=.\Source\LibJPEG\jcarith.c
-
-!IF  "$(CFG)" == "FreeImage - Win32 Release"
-
-
-"$(INTDIR)\jcarith.obj" : $(SOURCE) "$(INTDIR)"
-	$(CPP) $(CPP_PROJ) $(SOURCE)
-
-
-!ELSEIF  "$(CFG)" == "FreeImage - Win32 Debug"
-
-
-"$(INTDIR)\jcarith.obj"	"$(INTDIR)\jcarith.sbr" : $(SOURCE) "$(INTDIR)"
 	$(CPP) $(CPP_PROJ) $(SOURCE)
 
 
@@ -1797,6 +1761,24 @@ SOURCE=.\Source\LibJPEG\jcparam.c
 
 !ENDIF 
 
+SOURCE=.\Source\LibJPEG\jcphuff.c
+
+!IF  "$(CFG)" == "FreeImage - Win32 Release"
+
+
+"$(INTDIR)\jcphuff.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "FreeImage - Win32 Debug"
+
+
+"$(INTDIR)\jcphuff.obj"	"$(INTDIR)\jcphuff.sbr" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ENDIF 
+
 SOURCE=.\Source\LibJPEG\jcprepct.c
 
 !IF  "$(CFG)" == "FreeImage - Win32 Release"
@@ -1882,24 +1864,6 @@ SOURCE=.\Source\LibJPEG\jdapistd.c
 
 
 "$(INTDIR)\jdapistd.obj"	"$(INTDIR)\jdapistd.sbr" : $(SOURCE) "$(INTDIR)"
-	$(CPP) $(CPP_PROJ) $(SOURCE)
-
-
-!ENDIF 
-
-SOURCE=.\Source\LibJPEG\jdarith.c
-
-!IF  "$(CFG)" == "FreeImage - Win32 Release"
-
-
-"$(INTDIR)\jdarith.obj" : $(SOURCE) "$(INTDIR)"
-	$(CPP) $(CPP_PROJ) $(SOURCE)
-
-
-!ELSEIF  "$(CFG)" == "FreeImage - Win32 Debug"
-
-
-"$(INTDIR)\jdarith.obj"	"$(INTDIR)\jdarith.sbr" : $(SOURCE) "$(INTDIR)"
 	$(CPP) $(CPP_PROJ) $(SOURCE)
 
 
@@ -2103,6 +2067,24 @@ SOURCE=.\Source\LibJPEG\jdmerge.c
 
 !ENDIF 
 
+SOURCE=.\Source\LibJPEG\jdphuff.c
+
+!IF  "$(CFG)" == "FreeImage - Win32 Release"
+
+
+"$(INTDIR)\jdphuff.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "FreeImage - Win32 Debug"
+
+
+"$(INTDIR)\jdphuff.obj"	"$(INTDIR)\jdphuff.sbr" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ENDIF 
+
 SOURCE=.\Source\LibJPEG\jdpostct.c
 
 !IF  "$(CFG)" == "FreeImage - Win32 Release"
@@ -2278,6 +2260,24 @@ SOURCE=.\Source\LibJPEG\jidctint.c
 
 
 "$(INTDIR)\jidctint.obj"	"$(INTDIR)\jidctint.sbr" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ENDIF 
+
+SOURCE=.\Source\LibJPEG\jidctred.c
+
+!IF  "$(CFG)" == "FreeImage - Win32 Release"
+
+
+"$(INTDIR)\jidctred.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "FreeImage - Win32 Debug"
+
+
+"$(INTDIR)\jidctred.obj"	"$(INTDIR)\jidctred.sbr" : $(SOURCE) "$(INTDIR)"
 	$(CPP) $(CPP_PROJ) $(SOURCE)
 
 

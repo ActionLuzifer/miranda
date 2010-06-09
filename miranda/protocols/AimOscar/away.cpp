@@ -40,15 +40,15 @@ char** CAimProto::getStatusMsgLoc(int status)
 }
 
 
-int CAimProto::aim_set_away(HANDLE hServerConn, unsigned short &seqno, const char *amsg, bool set)//user info
+int CAimProto::aim_set_away(HANDLE hServerConn,unsigned short &seqno,const char *amsg)//user info
 {
 	unsigned short offset=0;
 	char* html_msg = NULL;
 	size_t msg_size = 0;
-	if (set)
+	if (amsg != NULL)
 	{
-		setDword(AIM_KEY_LA, (DWORD)time(NULL));
-		html_msg = html_encode(amsg && amsg[0] ? amsg : DEFAULT_AWAY_MSG);
+		setDword( AIM_KEY_LA, (DWORD)time(NULL));
+		html_msg = html_encode(amsg);
 		msg_size = strlen(html_msg);
 	}
 

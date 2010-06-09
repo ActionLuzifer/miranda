@@ -34,6 +34,7 @@
 	".\CLUIFrames\cluiframes.h"\
 	".\commonheaders.h"\
 	".\extbackg.h"\
+	".\forkthread.h"\
 	".\m_avatars.h"\
 	".\m_cln_skinedit.h"\
 	".\m_metacontacts.h"\
@@ -74,6 +75,7 @@
 	".\CLUIFrames\cluiframes.h"\
 	".\commonheaders.h"\
 	".\extbackg.h"\
+	".\forkthread.h"\
 	".\m_avatars.h"\
 	".\m_cln_skinedit.h"\
 	".\m_metacontacts.h"\
@@ -113,6 +115,7 @@
 	".\clist.h"\
 	".\commonheaders.h"\
 	".\extbackg.h"\
+	".\forkthread.h"\
 	".\m_avatars.h"\
 	".\m_cln_skinedit.h"\
 	".\m_metacontacts.h"\
@@ -152,6 +155,7 @@
 	".\clist.h"\
 	".\commonheaders.h"\
 	".\extbackg.h"\
+	".\forkthread.h"\
 	".\m_avatars.h"\
 	".\m_cln_skinedit.h"\
 	".\m_metacontacts.h"\
@@ -194,6 +198,7 @@
 	".\commonheaders.h"\
 	".\coolsb\coolscroll.h"\
 	".\extbackg.h"\
+	".\forkthread.h"\
 	".\m_avatars.h"\
 	".\m_cln_skinedit.h"\
 	".\m_metacontacts.h"\
@@ -233,6 +238,7 @@
 	".\clist.h"\
 	".\commonheaders.h"\
 	".\extbackg.h"\
+	".\forkthread.h"\
 	".\m_avatars.h"\
 	".\m_cln_skinedit.h"\
 	".\m_metacontacts.h"\
@@ -272,6 +278,7 @@
 	".\clist.h"\
 	".\commonheaders.h"\
 	".\extbackg.h"\
+	".\forkthread.h"\
 	".\m_avatars.h"\
 	".\m_cln_skinedit.h"\
 	".\m_metacontacts.h"\
@@ -312,6 +319,7 @@
 	".\clist.h"\
 	".\commonheaders.h"\
 	".\extbackg.h"\
+	".\forkthread.h"\
 	".\m_avatars.h"\
 	".\m_cln_skinedit.h"\
 	".\m_metacontacts.h"\
@@ -351,6 +359,7 @@
 	".\clist.h"\
 	".\commonheaders.h"\
 	".\extbackg.h"\
+	".\forkthread.h"\
 	".\m_avatars.h"\
 	".\m_cln_skinedit.h"\
 	".\m_metacontacts.h"\
@@ -391,6 +400,7 @@
 	".\commonheaders.h"\
 	".\coolsb\coolscroll.h"\
 	".\extbackg.h"\
+	".\forkthread.h"\
 	".\m_avatars.h"\
 	".\m_cln_skinedit.h"\
 	".\m_metacontacts.h"\
@@ -430,6 +440,7 @@
 	".\clist.h"\
 	".\commonheaders.h"\
 	".\extbackg.h"\
+	".\forkthread.h"\
 	".\m_avatars.h"\
 	".\m_cln_skinedit.h"\
 	".\m_metacontacts.h"\
@@ -470,6 +481,7 @@
 	".\commonheaders.h"\
 	".\coolsb\coolscroll.h"\
 	".\extbackg.h"\
+	".\forkthread.h"\
 	".\m_avatars.h"\
 	".\m_cln_skinedit.h"\
 	".\m_metacontacts.h"\
@@ -510,6 +522,7 @@
 	".\CLUIFrames\cluiframes.h"\
 	".\commonheaders.h"\
 	".\extbackg.h"\
+	".\forkthread.h"\
 	".\m_avatars.h"\
 	".\m_cln_skinedit.h"\
 	".\m_metacontacts.h"\
@@ -551,6 +564,7 @@
 	".\CLUIFrames\cluiframes.h"\
 	".\commonheaders.h"\
 	".\extbackg.h"\
+	".\forkthread.h"\
 	".\m_avatars.h"\
 	".\m_cln_skinedit.h"\
 	".\m_metacontacts.h"\
@@ -590,6 +604,7 @@
 	".\clist.h"\
 	".\commonheaders.h"\
 	".\extbackg.h"\
+	".\forkthread.h"\
 	".\m_avatars.h"\
 	".\m_cln_skinedit.h"\
 	".\m_metacontacts.h"\
@@ -629,6 +644,7 @@
 	".\clist.h"\
 	".\commonheaders.h"\
 	".\extbackg.h"\
+	".\forkthread.h"\
 	".\m_avatars.h"\
 	".\m_cln_skinedit.h"\
 	".\m_metacontacts.h"\
@@ -668,6 +684,7 @@
 	".\clist.h"\
 	".\commonheaders.h"\
 	".\extbackg.h"\
+	".\forkthread.h"\
 	".\m_avatars.h"\
 	".\m_cln_skinedit.h"\
 	".\m_metacontacts.h"\
@@ -707,6 +724,7 @@
 	".\clist.h"\
 	".\commonheaders.h"\
 	".\extbackg.h"\
+	".\forkthread.h"\
 	".\m_avatars.h"\
 	".\m_cln_skinedit.h"\
 	".\m_metacontacts.h"\
@@ -754,6 +772,7 @@
 	".\commonheaders.h"\
 	".\coolsb\coolscroll.h"\
 	".\extbackg.h"\
+	".\forkthread.h"\
 	".\m_avatars.h"\
 	".\m_cln_skinedit.h"\
 	".\m_metacontacts.h"\
@@ -794,6 +813,7 @@
 	".\clist.h"\
 	".\commonheaders.h"\
 	".\extbackg.h"\
+	".\forkthread.h"\
 	".\m_avatars.h"\
 	".\m_cln_skinedit.h"\
 	".\m_metacontacts.h"\
@@ -835,6 +855,7 @@
 	".\CLUIFrames\cluiframes.h"\
 	".\commonheaders.h"\
 	".\extbackg.h"\
+	".\forkthread.h"\
 	".\m_avatars.h"\
 	".\m_cln_skinedit.h"\
 	".\m_metacontacts.h"\
@@ -874,6 +895,7 @@
 	".\clist.h"\
 	".\commonheaders.h"\
 	".\extbackg.h"\
+	".\forkthread.h"\
 	".\m_avatars.h"\
 	".\m_cln_skinedit.h"\
 	".\m_metacontacts.h"\
@@ -913,6 +935,7 @@
 	".\clist.h"\
 	".\commonheaders.h"\
 	".\extbackg.h"\
+	".\forkthread.h"\
 	".\m_avatars.h"\
 	".\m_cln_skinedit.h"\
 	".\m_metacontacts.h"\
@@ -966,6 +989,7 @@
 	".\clist.h"\
 	".\commonheaders.h"\
 	".\extbackg.h"\
+	".\forkthread.h"\
 	".\m_avatars.h"\
 	".\m_cln_skinedit.h"\
 	".\m_metacontacts.h"\
@@ -1006,6 +1030,7 @@
 	".\commonheaders.h"\
 	".\coolsb\coolscroll.h"\
 	".\extbackg.h"\
+	".\forkthread.h"\
 	".\m_avatars.h"\
 	".\m_cln_skinedit.h"\
 	".\m_metacontacts.h"\
@@ -1045,6 +1070,7 @@
 	".\clist.h"\
 	".\commonheaders.h"\
 	".\extbackg.h"\
+	".\forkthread.h"\
 	".\m_avatars.h"\
 	".\m_cln_skinedit.h"\
 	".\m_metacontacts.h"\
@@ -1085,6 +1111,7 @@
 	".\CLUIFrames\cluiframes.h"\
 	".\commonheaders.h"\
 	".\extbackg.h"\
+	".\forkthread.h"\
 	".\m_avatars.h"\
 	".\m_cln_skinedit.h"\
 	".\m_metacontacts.h"\
@@ -1124,6 +1151,7 @@
 	".\clist.h"\
 	".\commonheaders.h"\
 	".\extbackg.h"\
+	".\forkthread.h"\
 	".\m_avatars.h"\
 	".\m_cln_skinedit.h"\
 	".\m_metacontacts.h"\
@@ -1163,6 +1191,7 @@
 	".\clist.h"\
 	".\commonheaders.h"\
 	".\extbackg.h"\
+	".\forkthread.h"\
 	".\m_avatars.h"\
 	".\m_cln_skinedit.h"\
 	".\m_metacontacts.h"\
@@ -1203,6 +1232,7 @@
 	".\CLUIFrames\cluiframes.h"\
 	".\commonheaders.h"\
 	".\extbackg.h"\
+	".\forkthread.h"\
 	".\m_avatars.h"\
 	".\m_cln_skinedit.h"\
 	".\m_metacontacts.h"\
@@ -1242,6 +1272,7 @@
 	".\clist.h"\
 	".\commonheaders.h"\
 	".\extbackg.h"\
+	".\forkthread.h"\
 	".\m_avatars.h"\
 	".\m_cln_skinedit.h"\
 	".\m_metacontacts.h"\
@@ -1282,6 +1313,7 @@
 	".\CLUIFrames\cluiframes.h"\
 	".\commonheaders.h"\
 	".\extbackg.h"\
+	".\forkthread.h"\
 	".\m_avatars.h"\
 	".\m_cln_skinedit.h"\
 	".\m_metacontacts.h"\
@@ -1322,6 +1354,7 @@
 	".\clist.h"\
 	".\commonheaders.h"\
 	".\extbackg.h"\
+	".\forkthread.h"\
 	".\m_avatars.h"\
 	".\m_cln_skinedit.h"\
 	".\m_metacontacts.h"\

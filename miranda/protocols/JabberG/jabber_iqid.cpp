@@ -114,9 +114,6 @@ void CJabberProto::OnIqResultNotes( HXML iqNode, CJabberIqInfo* pInfo )
 
 void CJabberProto::OnProcessLoginRq( ThreadData* info, DWORD rq )
 {
-	if ( info == NULL )
-		return;
-
 	info->dwLoginRqs |= rq;
 
 	if ((info->dwLoginRqs & JABBER_LOGIN_ROSTER) && (info->dwLoginRqs & JABBER_LOGIN_BOOKMARKS) &&
@@ -192,6 +189,19 @@ void CJabberProto::OnLoggedIn()
 		SendGetVcard( m_szJabberJID );
 	JSetString( NULL, "LastLoggedServer", m_ThreadInfo->server );
 
+	//Check if avatar changed
+	DBVARIANT dbvSaved = {0};
+	DBVARIANT dbvHash = {0};
+	int resultSaved = JGetStringT( NULL, "AvatarSaved", &dbvSaved );
+	int resultHash  = JGetStringT( NULL, "AvatarHash", &dbvHash );
+	if ( resultSaved || resultHash || lstrcmp( dbvSaved.ptszVal, dbvHash.ptszVal ))	{
+		char tFileName[ MAX_PATH ];
+		GetAvatarFileName( NULL, tFileName, MAX_PATH );
+		SetServerVcard( TRUE, tFileName );
+	}
+	DBFreeVariant(&dbvSaved);
+	DBFreeVariant(&dbvHash);
+
 	m_pepServices.ResetPublishAll();
 }
 
@@ -214,7 +224,7 @@ void CJabberProto::OnIqResultGetAuth( HXML iqNode )
 		HXML query = iq << XQUERY( _T("jabber:iq:auth"));
 		query << XCHILD( _T("username"), m_ThreadInfo->username );
 		if ( xmlGetChild( queryNode, "digest" ) != NULL && m_szStreamId ) {
-			char* str = mir_utf8encodeT( m_ThreadInfo->password );
+			char* str = mir_utf8encode( m_ThreadInfo->password );
 			char text[200];
 			mir_snprintf( text, SIZEOF(text), "%s%s", m_szStreamId, str );
 			mir_free( str );
@@ -224,7 +234,7 @@ void CJabberProto::OnIqResultGetAuth( HXML iqNode )
 			}
 		}
 		else if ( xmlGetChild( queryNode, "password" ) != NULL )
-			query << XCHILD( _T("password"), m_ThreadInfo->password );
+			query << XCHILD( _T("password"), _A2T(m_ThreadInfo->password));
 		else {
 			Log( "No known authentication mechanism accepted by the server." );
 
@@ -632,52 +642,54 @@ void CJabberProto::OnIqResultGetVcardPhoto( const TCHAR* jid, HXML n, HANDLE hCo
 	if ( buffer == NULL )
 		return;
 
-	const TCHAR* szPicType;
+	char* szPicType;
 	HXML m = xmlGetChild( n , "TYPE" );
 	if ( m == NULL || xmlGetText( m ) == NULL ) {
 LBL_NoTypeSpecified:
 		switch( JabberGetPictureType( buffer )) {
-		case PA_FORMAT_GIF:	szPicType = _T("image/gif");	break;
-		case PA_FORMAT_BMP:  szPicType = _T("image/bmp");	break;
-		case PA_FORMAT_PNG:  szPicType = _T("image/png");	break;
-		case PA_FORMAT_JPEG: szPicType = _T("image/jpeg");	break;
+		case PA_FORMAT_GIF:	szPicType = "image/gif";	break;
+		case PA_FORMAT_BMP:  szPicType = "image/bmp";	break;
+		case PA_FORMAT_PNG:  szPicType = "image/png";	break;
+		case PA_FORMAT_JPEG: szPicType = "image/jpeg";	break;
 		default:
 			goto LBL_Ret;
 		}
 	}
 	else {
-		const TCHAR* tszType = xmlGetText( m );
-		if ( !_tcscmp( tszType, _T("image/jpeg")) ||
-		     !_tcscmp( tszType, _T("image/png"))  ||
-		     !_tcscmp( tszType, _T("image/gif"))  || 
-		     !_tcscmp( tszType, _T("image/bmp")))
-			szPicType = tszType;
+		if ( !_tcscmp( xmlGetText( m ), _T("image/jpeg")))
+			szPicType = "image/jpeg";
+		else if ( !_tcscmp( xmlGetText( m ), _T("image/png")))
+			szPicType = "image/png";
+		else if ( !_tcscmp( xmlGetText( m ), _T("image/gif")))
+			szPicType = "image/gif";
+		else if ( !_tcscmp( xmlGetText( m ), _T("image/bmp")))
+			szPicType = "image/bmp";
 		else
 			goto LBL_NoTypeSpecified;
 	}
 
 	DWORD nWritten;
-	TCHAR szTempPath[MAX_PATH], szAvatarFileName[MAX_PATH];
+	char szTempPath[MAX_PATH], szAvatarFileName[MAX_PATH];
 	JABBER_LIST_ITEM *item;
 	DBVARIANT dbv;
 
 	if ( hContact ) {
-		if ( GetTempPath( SIZEOF( szTempPath ), szTempPath ) <= 0 )
-			lstrcpy( szTempPath, _T(".\\"));
-		if ( !GetTempFileName( szTempPath, m_tszUserName, GetTickCount(), szAvatarFileName )) {
+		if ( GetTempPathA( sizeof( szTempPath ), szTempPath ) <= 0 )
+			lstrcpyA( szTempPath, ".\\" );
+		if ( !GetTempFileNameA( szTempPath, m_szModuleName, GetTickCount(), szAvatarFileName )) {
 LBL_Ret:
 			mir_free( buffer );
 			return;
 		}
 
-		TCHAR* p = _tcsrchr( szAvatarFileName, '.' );
+		char* p = strrchr( szAvatarFileName, '.' );
 		if ( p != NULL )
-			lstrcpy( p+1, szPicType + 6 );
+			lstrcpyA( p+1, szPicType + 6 );
 	}
 	else GetAvatarFileName( NULL, szAvatarFileName, sizeof( szAvatarFileName ));
 
-	Log( "Picture file name set to " TCHAR_STR_PARAM, szAvatarFileName );
-	HANDLE hFile = CreateFile( szAvatarFileName, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL );
+	Log( "Picture file name set to %s", szAvatarFileName );
+	HANDLE hFile = CreateFileA( szAvatarFileName, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL );
 	if ( hFile == INVALID_HANDLE_VALUE )
 		goto LBL_Ret;
 
@@ -685,16 +697,10 @@ LBL_Ret:
 	if ( !WriteFile( hFile, buffer, bufferLen, &nWritten, NULL ))
 		goto LBL_Ret;
 
-	CloseHandle( hFile );
-
 	Log( "%d bytes written", nWritten );
 	if ( hContact == NULL ) {
 		hasPhoto = TRUE;
-		char* p = mir_t2a( szAvatarFileName );
-		JCallService( MS_AV_SETMYAVATAR, ( WPARAM )this->m_szModuleName, ( LPARAM )p );
-		mir_free( p );
-
-		Log( "My picture saved to " TCHAR_STR_PARAM, szAvatarFileName );
+		Log( "My picture saved to %s", szAvatarFileName );
 	}
 	else if ( !JGetStringT( hContact, "jid", &dbv )) {
 		item = ListGetItemPtr( LIST_ROSTER, jid );
@@ -702,29 +708,31 @@ LBL_Ret:
 			item = ListAdd( LIST_VCARD_TEMP, jid ); // adding to the temp list to store information about photo
 			item->bUseResource = TRUE;
 		}
-		if ( item != NULL ) {
+		if (item != NULL ) {
 			hasPhoto = TRUE;
 			if ( item->photoFileName )
-				DeleteFile( item->photoFileName );
+				DeleteFileA( item->photoFileName );
 			replaceStr( item->photoFileName, szAvatarFileName );
-			Log( "Contact's picture saved to " TCHAR_STR_PARAM, szAvatarFileName );
+			Log( "Contact's picture saved to %s", szAvatarFileName );
 		}
 		JFreeVariant( &dbv );
 	}
 
+	CloseHandle( hFile );
+
 	if ( !hasPhoto )
-		DeleteFile( szAvatarFileName );
+		DeleteFileA( szAvatarFileName );
 
 	goto LBL_Ret;
 }
 
-static TCHAR* sttGetText( HXML node, char* tag )
+static char* sttGetText( HXML node, char* tag )
 {
 	HXML n = xmlGetChild( node , tag );
 	if ( n == NULL )
 		return NULL;
 
-	return ( TCHAR* )xmlGetText( n );
+	return mir_t2a( xmlGetText( n ) );
 }
 
 void CJabberProto::OnIqResultGetVcard( HXML iqNode )
@@ -747,15 +755,17 @@ void CJabberProto::OnIqResultGetVcard( HXML iqNode )
 			if ( !lstrcmp( type, _T("result"))) {
 				JABBER_SEARCH_RESULT jsr = { 0 };
 				jsr.hdr.cbSize = sizeof( JABBER_SEARCH_RESULT );
-				jsr.hdr.flags = PSR_TCHAR;
 				jsr.hdr.nick = sttGetText( vCardNode, "NICKNAME" );
 				jsr.hdr.firstName = sttGetText( vCardNode, "FN" );
-				jsr.hdr.lastName = _T("");
+				jsr.hdr.lastName = "";
 				jsr.hdr.email = sttGetText( vCardNode, "EMAIL" );
 				_tcsncpy( jsr.jid, jid, SIZEOF( jsr.jid ));
 				jsr.jid[ SIZEOF( jsr.jid )-1 ] = '\0';
 				JSendBroadcast( NULL, ACKTYPE_SEARCH, ACKRESULT_DATA, ( HANDLE )id, ( LPARAM )&jsr );
 				JSendBroadcast( NULL, ACKTYPE_SEARCH, ACKRESULT_SUCCESS, ( HANDLE )id, 0 );
+				mir_free( jsr.hdr.nick );
+				mir_free( jsr.hdr.firstName );
+				mir_free( jsr.hdr.email );
 			}
 			else if ( !lstrcmp( type, _T("error")))
 				JSendBroadcast( NULL, ACKTYPE_SEARCH, ACKRESULT_SUCCESS, ( HANDLE )id, 0 );
@@ -1232,26 +1242,28 @@ void CJabberProto::OnIqResultSetSearch( HXML iqNode )
 				if (( jid=xmlGetAttrValue( itemNode, _T("jid"))) != NULL ) {
 					_tcsncpy( jsr.jid, jid, SIZEOF( jsr.jid ));
 					jsr.jid[ SIZEOF( jsr.jid )-1] = '\0';
-					jsr.hdr.id  = (TCHAR*)jid;
 					Log( "Result jid = " TCHAR_STR_PARAM, jid );
 					if (( n=xmlGetChild( itemNode , "nick" ))!=NULL && xmlGetText( n )!=NULL )
-						jsr.hdr.nick = ( TCHAR* )xmlGetText( n );
+						jsr.hdr.nick = mir_t2a( xmlGetText( n ) );
 					else
-						jsr.hdr.nick = _T( "" );
+						jsr.hdr.nick = mir_strdup( "" );
 					if (( n=xmlGetChild( itemNode , "first" ))!=NULL && xmlGetText( n )!=NULL )
-						jsr.hdr.firstName = ( TCHAR* )xmlGetText( n );
+						jsr.hdr.firstName = mir_t2a( xmlGetText( n ) );
 					else
-						jsr.hdr.firstName = _T( "" );
+						jsr.hdr.firstName = mir_strdup( "" );
 					if (( n=xmlGetChild( itemNode , "last" ))!=NULL && xmlGetText( n )!=NULL )
-						jsr.hdr.lastName = ( TCHAR* )xmlGetText( n );
+						jsr.hdr.lastName = mir_t2a( xmlGetText( n ) );
 					else
-						jsr.hdr.lastName = _T( "" );
+						jsr.hdr.lastName = mir_strdup( "" );
 					if (( n=xmlGetChild( itemNode , "email" ))!=NULL && xmlGetText( n )!=NULL )
-						jsr.hdr.email = ( TCHAR* )xmlGetText( n );
+						jsr.hdr.email = mir_t2a( xmlGetText( n ) );
 					else
-						jsr.hdr.email = _T( "" );
-					jsr.hdr.flags = PSR_TCHAR;
+						jsr.hdr.email = mir_strdup( "" );
 					JSendBroadcast( NULL, ACKTYPE_SEARCH, ACKRESULT_DATA, ( HANDLE ) id, ( LPARAM )&jsr );
+					mir_free( jsr.hdr.nick );
+					mir_free( jsr.hdr.firstName );
+					mir_free( jsr.hdr.lastName );
+					mir_free( jsr.hdr.email );
 		}	}	}
 
 		JSendBroadcast( NULL, ACKTYPE_SEARCH, ACKRESULT_SUCCESS, ( HANDLE ) id, 0 );
@@ -1282,7 +1294,6 @@ void CJabberProto::OnIqResultExtSearch( HXML iqNode )
 
 			JABBER_SEARCH_RESULT jsr = { 0 };
 			jsr.hdr.cbSize = sizeof( JABBER_SEARCH_RESULT );
-			jsr.hdr.flags = PSR_TCHAR;
 //			jsr.hdr.firstName = "";
 
 			for ( int j=0; ; j++ ) {
@@ -1307,18 +1318,26 @@ void CJabberProto::OnIqResultExtSearch( HXML iqNode )
 					Log( "Result jid = " TCHAR_STR_PARAM, jsr.jid );
 				}
 				else if ( !lstrcmp( fieldName, _T("nickname")))
-					jsr.hdr.nick = ( xmlGetText( n ) != NULL ) ? ( TCHAR* )xmlGetText( n ) : _T( "" );
-				else if ( !lstrcmp( fieldName, _T("fn")))
-					jsr.hdr.firstName = ( xmlGetText( n ) != NULL ) ? ( TCHAR* )xmlGetText( n ) : _T( "" );
-				else if ( !lstrcmp( fieldName, _T("given")))
-					jsr.hdr.firstName = ( xmlGetText( n ) != NULL ) ? ( TCHAR* )xmlGetText( n ) : _T( "" );
+					jsr.hdr.nick = ( xmlGetText( n ) != NULL ) ? mir_t2a( xmlGetText( n ) ) : mir_strdup( "" );
+				else if ( !lstrcmp( fieldName, _T("fn"))) {
+					mir_free( jsr.hdr.firstName );
+					jsr.hdr.firstName = ( xmlGetText( n ) != NULL ) ? mir_t2a(xmlGetText( n )) : mir_strdup( "" );
+				}
+				else if ( !lstrcmp( fieldName, _T("given"))) {
+					mir_free( jsr.hdr.firstName );
+					jsr.hdr.firstName = ( xmlGetText( n ) != NULL ) ? mir_t2a(xmlGetText( n )) : mir_strdup( "" );
+				}
 				else if ( !lstrcmp( fieldName, _T("family")))
-					jsr.hdr.lastName = ( xmlGetText( n ) != NULL ) ? ( TCHAR* )xmlGetText( n ) : _T( "" );
+					jsr.hdr.lastName = ( xmlGetText( n ) != NULL ) ? mir_t2a(xmlGetText( n )) : mir_strdup( "" );
 				else if ( !lstrcmp( fieldName, _T("email")))
-					jsr.hdr.email = ( xmlGetText( n ) != NULL ) ? ( TCHAR* )xmlGetText( n ) : _T( "" );
+					jsr.hdr.email = ( xmlGetText( n ) != NULL ) ? mir_t2a(xmlGetText( n )) : mir_strdup( "" );
 			}
 
 			JSendBroadcast( NULL, ACKTYPE_SEARCH, ACKRESULT_DATA, ( HANDLE ) id, ( LPARAM )&jsr );
+			mir_free( jsr.hdr.nick );
+			mir_free( jsr.hdr.firstName );
+			mir_free( jsr.hdr.lastName );
+			mir_free( jsr.hdr.email );
 		}
 
 		JSendBroadcast( NULL, ACKTYPE_SEARCH, ACKRESULT_SUCCESS, ( HANDLE ) id, 0 );
@@ -1336,7 +1355,7 @@ void CJabberProto::OnIqResultSetPassword( HXML iqNode )
 		return;
 
 	if ( !lstrcmp( type, _T("result"))) {
-		_tcsncpy( m_ThreadInfo->password, m_ThreadInfo->newPassword, SIZEOF( m_ThreadInfo->password ));
+		strncpy( m_ThreadInfo->password, m_ThreadInfo->newPassword, SIZEOF( m_ThreadInfo->password ));
 		MessageBox( NULL, TranslateT( "Password is successfully changed. Don't forget to update your password in the Jabber protocol option." ), TranslateT( "Change Password" ), MB_OK|MB_ICONINFORMATION|MB_SETFOREGROUND );
 	}
 	else if ( !lstrcmp( type, _T("error")))
@@ -1509,16 +1528,14 @@ LBL_ErrFormat:
 	else if (( pictureType = JabberGetPictureType( body )) == PA_FORMAT_UNKNOWN )
 		goto LBL_ErrFormat;
 
-	TCHAR tszFileName[ MAX_PATH ];
-
 	PROTO_AVATAR_INFORMATION AI;
 	AI.cbSize = sizeof AI;
 	AI.format = pictureType;
 	AI.hContact = hContact;
 
 	if ( JGetByte( hContact, "AvatarType", PA_FORMAT_UNKNOWN ) != (unsigned char)pictureType ) {
-		GetAvatarFileName( hContact, tszFileName, SIZEOF(tszFileName));
-		DeleteFile( tszFileName );
+		GetAvatarFileName( hContact, AI.filename, sizeof AI.filename );
+		DeleteFileA( AI.filename );
 	}
 
 	JSetByte( hContact, "AvatarType", pictureType );
@@ -1532,14 +1549,9 @@ LBL_ErrFormat:
 	for ( int i=0; i<20; i++ )
 		sprintf( buffer+( i<<1 ), "%02x", digest[i] );
 
-	GetAvatarFileName( hContact, tszFileName, SIZEOF(tszFileName));
-	#if defined( _UNICODE )
-		WideCharToMultiByte( CP_ACP, 0, tszFileName, -1, AI.filename, sizeof AI.filename, 0, 0 );
-	#else
-		strncpy( AI.filename, tszFileName, sizeof AI.filename );
-	#endif
+	GetAvatarFileName( hContact, AI.filename, sizeof AI.filename );
 
-	FILE* out = _tfopen( tszFileName, _T("wb"));
+	FILE* out = fopen( AI.filename, "wb" );
 	if ( out != NULL ) {
 		fwrite( body, resultLen, 1, out );
 		fclose( out );

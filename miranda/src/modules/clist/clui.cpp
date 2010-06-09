@@ -37,6 +37,9 @@ UINT uMsgProcessProfile;
 
 void LoadCluiServices();
 
+BOOL(WINAPI * MySetLayeredWindowAttributes) (HWND, COLORREF, BYTE, DWORD);
+BOOL(WINAPI * MyAnimateWindow) (HWND hWnd, DWORD dwTime, DWORD dwFlags);
+
 typedef struct {
 	int showsbar;
 	int showgrip;
@@ -267,7 +270,11 @@ int LoadCLUIModule(void)
 
 	uMsgProcessProfile = RegisterWindowMessage( _T("Miranda::ProcessProfile"));
 	cli.pfnLoadCluiGlobalOpts();
-
+	hUserDll = GetModuleHandleA("user32");
+	if (hUserDll) {
+		MySetLayeredWindowAttributes = (BOOL(WINAPI *) (HWND, COLORREF, BYTE, DWORD)) GetProcAddress(hUserDll, "SetLayeredWindowAttributes");
+		MyAnimateWindow = (BOOL(WINAPI *) (HWND, DWORD, DWORD)) GetProcAddress(hUserDll, "AnimateWindow");
+	}
 	HookEvent(ME_SYSTEM_MODULESLOADED, CluiModulesLoaded);
 	HookEvent(ME_SKIN_ICONSCHANGED, CluiIconsChanged);
 
@@ -297,7 +304,7 @@ int LoadCLUIModule(void)
 	wndclass.cbClsExtra = 0;
 	wndclass.cbWndExtra = 0;
 	wndclass.hInstance = cli.hInst;
-	wndclass.hIcon = LoadSkinIcon(SKINICON_OTHER_MIRANDA, true);
+	wndclass.hIcon = LoadIcon(hMirandaInst, MAKEINTRESOURCE(IDI_MIRANDA));
 	wndclass.hCursor = LoadCursor(NULL, IDC_ARROW);
 	wndclass.hbrBackground = (HBRUSH) (COLOR_3DFACE + 1);
 	wndclass.lpszMenuName = MAKEINTRESOURCE(IDR_CLISTMENU);
@@ -321,17 +328,16 @@ int LoadCLUIModule(void)
 	Utils_AssertInsideScreen(&pos);
 
 	cli.hwndContactList = CreateWindowEx(
-		(DBGetContactSettingByte(NULL, "CList", "ToolWindow", SETTING_TOOLWINDOW_DEFAULT) ? WS_EX_TOOLWINDOW : WS_EX_APPWINDOW),
+		DBGetContactSettingByte(NULL, "CList", "ToolWindow", SETTING_TOOLWINDOW_DEFAULT) ? WS_EX_TOOLWINDOW : 0,
 		_T(MIRANDACLASS),
 		titleText,
-		WS_POPUPWINDOW | WS_THICKFRAME | WS_CLIPCHILDREN |
-		(DBGetContactSettingByte(NULL, "CLUI", "ShowCaption", SETTING_SHOWCAPTION_DEFAULT) ?  WS_CAPTION | WS_SYSMENU | 
-			(DBGetContactSettingByte(NULL, "CList", "Min2Tray", SETTING_MIN2TRAY_DEFAULT) ? 0 : WS_MINIMIZEBOX) : 0),
+		(DBGetContactSettingByte(NULL, "CLUI", "ShowCaption", SETTING_SHOWCAPTION_DEFAULT) ?
+			WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX : 0) | WS_POPUPWINDOW | WS_THICKFRAME | WS_CLIPCHILDREN,
 		pos.left, pos.top, pos.right - pos.left, pos.bottom - pos.top,
 		NULL, NULL, cli.hInst, NULL);
 
 	if (DBGetContactSettingByte(NULL, "CList", "OnDesktop", 0)) {
-		HWND hProgMan = FindWindow(_T("Progman"), NULL);
+		HWND hProgMan = FindWindowA("Progman", NULL);
 		if (IsWindow(hProgMan))
 			SetParent(cli.hwndContactList, hProgMan);
 	}
@@ -349,9 +355,7 @@ int LoadCLUIModule(void)
 			ShowWindow(cli.hwndContactList, SW_SHOW);
 		else if (state == SETTING_STATE_MINIMIZED)
 			ShowWindow(cli.hwndContactList, SW_SHOWMINIMIZED);
-		SetWindowPos(cli.hwndContactList, 
-			DBGetContactSettingByte(NULL, "CList", "OnTop", SETTING_ONTOP_DEFAULT) ? HWND_TOPMOST : HWND_NOTOPMOST, 
-			0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE);
+		SetWindowPos(cli.hwndContactList, DBGetContactSettingByte(NULL, "CList", "OnTop", SETTING_ONTOP_DEFAULT) ? HWND_TOPMOST : HWND_NOTOPMOST, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE);
 	}
 	{
 		CLISTMENUITEM mi = { 0 };
@@ -479,26 +483,13 @@ LRESULT CALLBACK fnContactListWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM
 	switch (msg) {
 	case WM_NCCREATE:
 	{
-		MENUITEMINFO mii = { 0 };
-/*
-		if (IsWinVerVistaPlus() && isThemeActive())
-		{
-			HICON hIcon = LoadSkinnedIcon(SKINICON_OTHER_MAINMENU);
-			HBITMAP hBmp = ConvertIconToBitmap(hIcon, NULL, 0);
-			IconLib_ReleaseIcon(hIcon, NULL);
-
-			mii.cbSize = sizeof(mii);
-			mii.fMask = MIIM_BITMAP | MIIM_STRING | MIIM_DATA;
-			mii.hbmpItem = hBmp;
-		}
-		else
-*/
-		{
-			mii.cbSize = MENUITEMINFO_V4_SIZE;
-			mii.fMask = MIIM_TYPE | MIIM_DATA;
-			mii.dwItemData = MENU_MIRANDAMENU;
-			mii.fType = MFT_OWNERDRAW;
-		}
+		MENUITEMINFO mii;
+		ZeroMemory(&mii, sizeof(mii));
+		mii.cbSize = MENUITEMINFO_V4_SIZE;
+		mii.fMask = MIIM_TYPE | MIIM_DATA;
+		mii.dwItemData = MENU_MIRANDAMENU;
+		mii.fType = MFT_OWNERDRAW;
+		mii.dwTypeData = NULL;
 		SetMenuItemInfo(GetMenu(hwnd), 0, TRUE, &mii);
 		return DefWindowProc(hwnd, msg, wParam, lParam);
 	}
@@ -520,8 +511,8 @@ LRESULT CALLBACK fnContactListWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM
 
 		if (cluiopt.transparent) {
 			SetWindowLongPtr(hwnd, GWL_EXSTYLE, GetWindowLongPtr(hwnd, GWL_EXSTYLE) | WS_EX_LAYERED);
-			if (setLayeredWindowAttributes)
-				setLayeredWindowAttributes(hwnd, RGB(0, 0, 0), (BYTE) cluiopt.alpha, LWA_ALPHA);
+			if (MySetLayeredWindowAttributes)
+				MySetLayeredWindowAttributes(hwnd, RGB(0, 0, 0), (BYTE) cluiopt.alpha, LWA_ALPHA);
 		}
 		transparentFocus = 1;
 		return FALSE;
@@ -554,10 +545,10 @@ LRESULT CALLBACK fnContactListWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM
 			DisconnectAll();
 			break;
 
-		case PBT_APMRESUMEAUTOMATIC:
+        case PBT_APMRESUMEAUTOMATIC:
 		case PBT_APMRESUMESUSPEND:
 			// Computer is resuming, restore all protocols
-			PostMessage(hwnd, M_RESTORESTATUS, 0, 0);
+            PostMessage(hwnd, M_RESTORESTATUS, 0, 0);
 			break;
 		}
 		break;
@@ -624,8 +615,8 @@ LRESULT CALLBACK fnContactListWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM
 		else {
 			if (cluiopt.transparent) {
 				KillTimer(hwnd, TM_AUTOALPHA);
-				if (setLayeredWindowAttributes)
-					setLayeredWindowAttributes(hwnd, RGB(0, 0, 0), (BYTE) cluiopt.alpha, LWA_ALPHA);
+				if (MySetLayeredWindowAttributes)
+					MySetLayeredWindowAttributes(hwnd, RGB(0, 0, 0), (BYTE) cluiopt.alpha, LWA_ALPHA);
 				transparentFocus = 1;
 			}
 		}
@@ -633,8 +624,8 @@ LRESULT CALLBACK fnContactListWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM
 
 	case WM_SETCURSOR:
 		if(cluiopt.transparent) {
-			if (!transparentFocus && GetForegroundWindow()!=hwnd && setLayeredWindowAttributes) {
-				setLayeredWindowAttributes(hwnd, RGB(0,0,0), (BYTE)cluiopt.alpha, LWA_ALPHA);
+			if (!transparentFocus && GetForegroundWindow()!=hwnd && MySetLayeredWindowAttributes) {
+				MySetLayeredWindowAttributes(hwnd, RGB(0,0,0), (BYTE)cluiopt.alpha, LWA_ALPHA);
 				transparentFocus=1;
 				SetTimer(hwnd, TM_AUTOALPHA,250,NULL);
 			}
@@ -668,12 +659,12 @@ LRESULT CALLBACK fnContactListWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM
 				hwndPt = WindowFromPoint(pt);
 				inwnd = (hwndPt == hwnd || GetParent(hwndPt) == hwnd);
 			}
-			if (inwnd != transparentFocus && setLayeredWindowAttributes) {        //change
+			if (inwnd != transparentFocus && MySetLayeredWindowAttributes) {        //change
 				transparentFocus = inwnd;
 				if (transparentFocus)
-					setLayeredWindowAttributes(hwnd, RGB(0, 0, 0), (BYTE) cluiopt.alpha, LWA_ALPHA);
+					MySetLayeredWindowAttributes(hwnd, RGB(0, 0, 0), (BYTE) cluiopt.alpha, LWA_ALPHA);
 				else
-					setLayeredWindowAttributes(hwnd, RGB(0, 0, 0), (BYTE) DBGetContactSettingByte(NULL, "CList", "AutoAlpha", SETTING_AUTOALPHA_DEFAULT), LWA_ALPHA);
+					MySetLayeredWindowAttributes(hwnd, RGB(0, 0, 0), (BYTE) DBGetContactSettingByte(NULL, "CList", "AutoAlpha", SETTING_AUTOALPHA_DEFAULT), LWA_ALPHA);
 			}
 			if (!transparentFocus)
 				KillTimer(hwnd, TM_AUTOALPHA);
@@ -695,7 +686,7 @@ LRESULT CALLBACK fnContactListWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM
 			if (wParam) {
 				sourceAlpha = 0;
 				destAlpha = (BYTE) cluiopt.alpha;
-				setLayeredWindowAttributes(hwnd, RGB(0, 0, 0), 0, LWA_ALPHA);
+				MySetLayeredWindowAttributes(hwnd, RGB(0, 0, 0), 0, LWA_ALPHA);
 				noRecurse = 1;
 				ShowWindow(hwnd, SW_SHOW);
 				noRecurse = 0;
@@ -708,15 +699,15 @@ LRESULT CALLBACK fnContactListWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM
 				thisTick = GetTickCount();
 				if (thisTick >= startTick + 200)
 					break;
-				setLayeredWindowAttributes(hwnd, RGB(0, 0, 0),
+				MySetLayeredWindowAttributes(hwnd, RGB(0, 0, 0),
 					(BYTE) (sourceAlpha + (destAlpha - sourceAlpha) * (int) (thisTick - startTick) / 200), LWA_ALPHA);
 			}
-			setLayeredWindowAttributes(hwnd, RGB(0, 0, 0), (BYTE) destAlpha, LWA_ALPHA);
+			MySetLayeredWindowAttributes(hwnd, RGB(0, 0, 0), (BYTE) destAlpha, LWA_ALPHA);
 		}
 		else {
 			if (wParam)
 				SetForegroundWindow(hwnd);
-			animateWindow(hwnd, 200, AW_BLEND | (wParam ? 0 : AW_HIDE));
+			MyAnimateWindow(hwnd, 200, AW_BLEND | (wParam ? 0 : AW_HIDE));
 			SetWindowPos(cli.hwndContactTree, 0, 0, 0, 0, 0, SWP_NOZORDER | SWP_NOMOVE | SWP_NOSIZE | SWP_FRAMECHANGED);
 		}
 		break;
@@ -731,15 +722,8 @@ LRESULT CALLBACK fnContactListWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM
 		return DefWindowProc(hwnd, msg, wParam, lParam);
 	}
 	case WM_SYSCOMMAND:
-		switch (wParam)
-		{
-		case SC_MAXIMIZE:
+		if (wParam == SC_MAXIMIZE)
 			return 0;
-
-		case SC_CLOSE:
-			PostMessage(hwnd, WM_SYSCOMMAND, SC_MINIMIZE, lParam);
-			return 0;
-		}
 		return DefWindowProc(hwnd, msg, wParam, lParam);
 
 	case WM_COMMAND:
@@ -1023,7 +1007,7 @@ LRESULT CALLBACK fnContactListWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM
 					DrawIconEx(dis->hDC, x, (dis->rcItem.top + dis->rcItem.bottom - g_IconHeight) >> 1, hIcon,
 						g_IconWidth, g_IconHeight, 0, NULL, DI_NORMAL);
 					IconLib_ReleaseIcon(hIcon,0);
-					if ( Proto_IsAccountLocked( Proto_GetAccount( szProto ))) {
+					if ( DBGetContactSettingByte( NULL, szProto, "LockMainStatus", 0 )) {
 						hIcon = LoadSkinnedIcon(SKINICON_OTHER_STATUS_LOCKED);
 						if (hIcon != NULL) {
 							DrawIconEx(dis->hDC, x, (dis->rcItem.top + dis->rcItem.bottom - g_IconHeight) >> 1, hIcon,
@@ -1068,10 +1052,12 @@ LRESULT CALLBACK fnContactListWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM
 		return 0;
 
 	case WM_CLOSE:
-		if (CallService(MS_SYSTEM_OKTOEXIT, 0, 0))
-			DestroyWindow(hwnd);
-		return FALSE;
+		if (DBGetContactSettingByte(NULL, "CList", "ToolWindow", SETTING_TOOLWINDOW_DEFAULT))
+			CallService(MS_CLIST_SHOWHIDE, 0, 0);
+		else
+			SendMessage(hwnd, WM_COMMAND, ID_ICQ_EXIT, 0);
 
+		return FALSE;
 	case WM_DESTROY:
 		if (!IsIconic(hwnd)) {
 			RECT rc;

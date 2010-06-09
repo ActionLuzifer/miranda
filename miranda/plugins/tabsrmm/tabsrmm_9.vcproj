@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="Windows-1252"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="9.00"
+	Version="9,00"
 	Name="tabsrmm"
 	ProjectGUID="{99D26CA1-BFD4-4E77-9A1E-919E54CF33F7}"
 	RootNamespace="srmm"
@@ -147,12 +147,9 @@
 				Optimization="0"
 				AdditionalIncludeDirectories="../../include; ../include"
 				PreprocessorDefinitions="_CRT_SECURE_NO_DEPRECATE"
-				ExceptionHandling="2"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
-				BufferSecurityCheck="false"
 				EnableFunctionLevelLinking="true"
-				EnableEnhancedInstructionSet="1"
 				UsePrecompiledHeader="2"
 				PrecompiledHeaderThrough="commonheaders.h"
 				AssemblerListingLocation=""
@@ -237,7 +234,7 @@
 				MkTypLibCompatible="true"
 				SuppressStartupBanner="true"
 				TargetEnvironment="1"
-				TypeLibraryName=".\Release Unicode/srmm.tlb"
+				TypeLibraryName=".\Release_Unicode/srmm.tlb"
 				HeaderFileName=""
 			/>
 			<Tool
@@ -245,7 +242,6 @@
 				Optimization="3"
 				InlineFunctionExpansion="1"
 				FavorSizeOrSpeed="2"
-				OmitFramePointers="false"
 				WholeProgramOptimization="true"
 				AdditionalIncludeDirectories="../../include; ../include"
 				PreprocessorDefinitions="_CRT_SECURE_NO_DEPRECATE"
@@ -346,7 +342,7 @@
 				MkTypLibCompatible="true"
 				SuppressStartupBanner="true"
 				TargetEnvironment="3"
-				TypeLibraryName=".\Release Unicode/srmm.tlb"
+				TypeLibraryName=".\Release_Unicode/srmm.tlb"
 				HeaderFileName=""
 			/>
 			<Tool
@@ -354,16 +350,13 @@
 				Optimization="3"
 				InlineFunctionExpansion="1"
 				FavorSizeOrSpeed="2"
-				OmitFramePointers="true"
 				WholeProgramOptimization="true"
 				AdditionalIncludeDirectories="../../include; ../include"
 				PreprocessorDefinitions="_CRT_SECURE_NO_DEPRECATE"
 				StringPooling="true"
 				ExceptionHandling="1"
-				RuntimeLibrary="2"
-				BufferSecurityCheck="false"
+				RuntimeLibrary="0"
 				EnableFunctionLevelLinking="true"
-				EnableEnhancedInstructionSet="0"
 				FloatingPointModel="1"
 				RuntimeTypeInfo="false"
 				UsePrecompiledHeader="2"
@@ -394,9 +387,9 @@
 				AdditionalManifestDependencies="type=&apos;Win32&apos; name=&apos;Microsoft.Windows.Common-Controls&apos; version=&apos;6.0.0.0&apos; processorArchitecture=&apos;*&apos; publicKeyToken=&apos;6595b64144ccf1df&apos; language=&apos;*&apos;"
 				IgnoreAllDefaultLibraries="false"
 				DelayLoadDLLs=""
-				GenerateDebugInformation="true"
+				GenerateDebugInformation="false"
 				ProgramDatabaseFile="$(TargetDir)$(TargetName).pdb"
-				GenerateMapFile="true"
+				GenerateMapFile="false"
 				MapFileName=""
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"
@@ -576,11 +569,10 @@
 				AdditionalIncludeDirectories="../../include"
 				PreprocessorDefinitions="_CRT_SECURE_NO_DEPRECATE"
 				StringPooling="true"
-				ExceptionHandling="2"
+				ExceptionHandling="1"
 				RuntimeLibrary="2"
 				BufferSecurityCheck="false"
 				EnableFunctionLevelLinking="true"
-				EnableEnhancedInstructionSet="1"
 				RuntimeTypeInfo="false"
 				UsePrecompiledHeader="2"
 				PrecompiledHeaderThrough="commonheaders.h"
@@ -670,7 +662,7 @@
 				MkTypLibCompatible="true"
 				SuppressStartupBanner="true"
 				TargetEnvironment="1"
-				TypeLibraryName=".\Debug Unicode/srmm.tlb"
+				TypeLibraryName=".\Debug_Unicode/srmm.tlb"
 				HeaderFileName=""
 			/>
 			<Tool
@@ -768,7 +760,7 @@
 				MkTypLibCompatible="true"
 				SuppressStartupBanner="true"
 				TargetEnvironment="3"
-				TypeLibraryName=".\Debug Unicode/srmm.tlb"
+				TypeLibraryName=".\Debug_Unicode/srmm.tlb"
 				HeaderFileName=""
 			/>
 			<Tool
@@ -777,14 +769,11 @@
 				AdditionalIncludeDirectories="../../include; ../include"
 				PreprocessorDefinitions="_CRT_SECURE_NO_DEPRECATE"
 				StringPooling="false"
-				ExceptionHandling="2"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="1"
-				BufferSecurityCheck="false"
 				EnableFunctionLevelLinking="true"
-				EnableEnhancedInstructionSet="0"
 				FloatingPointModel="0"
-				UsePrecompiledHeader="0"
+				UsePrecompiledHeader="2"
 				PrecompiledHeaderThrough="commonheaders.h"
 				AssemblerListingLocation=""
 				BrowseInformation="0"
@@ -850,54 +839,34 @@
 			Filter="cpp;c;cxx;rc;def;r;odl;idl;hpj;bat"
 			>
 			<File
-				RelativePath=".\src\buttonsbar.cpp"
+				RelativePath=".\buttonsbar.c"
 				>
 			</File>
 			<File
-				RelativePath=".\src\contactcache.cpp"
+				RelativePath=".\container.c"
 				>
 			</File>
 			<File
-				RelativePath=".\src\container.cpp"
+				RelativePath=".\containeroptions.c"
 				>
 			</File>
 			<File
-				RelativePath=".\src\containeroptions.cpp"
+				RelativePath="eventpopups.c"
 				>
 			</File>
 			<File
-				RelativePath=".\src\controls.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\src\eventpopups.cpp"
-				>
-				<FileConfiguration
-					Name="Release Unicode|x64"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						ExceptionHandling="1"
-					/>
-				</FileConfiguration>
-			</File>
-			<File
-				RelativePath=".\src\generic_msghandlers.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\src\globals.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\src\hotkeyhandler.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\src\ImageDataObject.cpp"
+				RelativePath=".\formatting.cpp"
 				>
 				<FileConfiguration
 					Name="Debug|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="0"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
@@ -929,7 +898,23 @@
 					/>
 				</FileConfiguration>
 				<FileConfiguration
+					Name="Release|x64"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="0"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
 					Name="Debug Unicode|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="0"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug Unicode|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
@@ -938,22 +923,30 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\src\infopanel.cpp"
+				RelativePath=".\generic_msghandlers.c"
 				>
 			</File>
 			<File
-				RelativePath=".\src\mim.cpp"
+				RelativePath=".\hotkeyhandler.c"
 				>
 			</File>
 			<File
-				RelativePath=".\tabmodplus\modplus.cpp"
+				RelativePath="ImageDataObject.cpp"
 				>
 				<FileConfiguration
 					Name="Debug|Win32"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-						PrecompiledHeaderThrough="../src/commonheaders.h"
+						UsePrecompiledHeader="0"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug|x64"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="0"
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -961,7 +954,7 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-						PrecompiledHeaderThrough="../src/commonheaders.h"
+						UsePrecompiledHeader="0"
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -969,7 +962,7 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-						PrecompiledHeaderThrough="../src/commonheaders.h"
+						UsePrecompiledHeader="0"
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -977,7 +970,15 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-						PrecompiledHeaderThrough="../src/commonheaders.h"
+						UsePrecompiledHeader="0"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|x64"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="0"
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -985,95 +986,67 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-						PrecompiledHeaderThrough="../src/commonheaders.h"
+						UsePrecompiledHeader="0"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug Unicode|x64"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="0"
 					/>
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\src\msgdialog.cpp"
+				RelativePath=".\tabmodplus\modplus.c"
 				>
 			</File>
 			<File
-				RelativePath=".\src\msgdlgutils.cpp"
+				RelativePath="msgdialog.c"
 				>
 			</File>
 			<File
-				RelativePath=".\src\msglog.cpp"
+				RelativePath=".\msgdlgutils.c"
 				>
 			</File>
 			<File
-				RelativePath=".\src\msgoptions.cpp"
+				RelativePath="msglog.c"
 				>
 			</File>
 			<File
-				RelativePath=".\tabmodplus\msgoptions_plus.cpp"
+				RelativePath="msgoptions.c"
+				>
+			</File>
+			<File
+				RelativePath=".\tabmodplus\msgoptions_plus.c"
+				>
+			</File>
+			<File
+				RelativePath="msgs.c"
+				>
+			</File>
+			<File
+				RelativePath=".\selectcontainer.c"
+				>
+			</File>
+			<File
+				RelativePath="sendqueue.c"
+				>
+			</File>
+			<File
+				RelativePath="srmm.c"
 				>
 				<FileConfiguration
 					Name="Debug|Win32"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-						PrecompiledHeaderThrough="../src/commonheaders.h"
+						UsePrecompiledHeader="1"
 					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="Release Unicode|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						PrecompiledHeaderThrough="../src/commonheaders.h"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release Unicode|x64"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						PrecompiledHeaderThrough="../src/commonheaders.h"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						PrecompiledHeaderThrough="../src/commonheaders.h"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug Unicode|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						PrecompiledHeaderThrough="../src/commonheaders.h"
-					/>
-				</FileConfiguration>
-			</File>
-			<File
-				RelativePath=".\src\msgs.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\src\selectcontainer.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\src\sendlater.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\src\sendqueue.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\src\sidebar.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\src\srmm.cpp"
-				>
-				<FileConfiguration
-					Name="Debug|Win32"
+					Name="Debug|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
@@ -1105,7 +1078,23 @@
 					/>
 				</FileConfiguration>
 				<FileConfiguration
+					Name="Release|x64"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="1"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
 					Name="Debug Unicode|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="1"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug Unicode|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
@@ -1114,47 +1103,31 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\src\tabctrl.cpp"
+				RelativePath=".\tabctrl.c"
 				>
 			</File>
 			<File
-				RelativePath=".\src\taskbar.cpp"
+				RelativePath="templates.c"
 				>
 			</File>
 			<File
-				RelativePath=".\src\templates.cpp"
+				RelativePath=".\themes.c"
 				>
 			</File>
 			<File
-				RelativePath=".\src\themeio.cpp"
+				RelativePath="trayicon.c"
 				>
 			</File>
 			<File
-				RelativePath=".\src\themes.cpp"
+				RelativePath="TSButton.c"
 				>
 			</File>
 			<File
-				RelativePath=".\src\translator.cpp"
+				RelativePath=".\typingnotify.c"
 				>
 			</File>
 			<File
-				RelativePath=".\src\trayicon.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\src\TSButton.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\src\typingnotify.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\src\userprefs.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\src\utils.cpp"
+				RelativePath="userprefs.c"
 				>
 			</File>
 			<Filter
@@ -1177,14 +1150,14 @@
 					>
 				</File>
 				<File
-					RelativePath=".\chat\clist.cpp"
+					RelativePath=".\chat\clist.c"
 					>
 					<FileConfiguration
 						Name="Debug|Win32"
 						>
 						<Tool
 							Name="VCCLCompilerTool"
-							PrecompiledHeaderThrough="../src/commonheaders.h"
+							PrecompiledHeaderThrough="../commonheaders.h"
 						/>
 					</FileConfiguration>
 					<FileConfiguration
@@ -1200,7 +1173,7 @@
 						>
 						<Tool
 							Name="VCCLCompilerTool"
-							PrecompiledHeaderThrough="../src/commonheaders.h"
+							PrecompiledHeaderThrough="../commonheaders.h"
 						/>
 					</FileConfiguration>
 					<FileConfiguration
@@ -1208,7 +1181,7 @@
 						>
 						<Tool
 							Name="VCCLCompilerTool"
-							PrecompiledHeaderThrough="../src/commonheaders.h"
+							PrecompiledHeaderThrough="../commonheaders.h"
 						/>
 					</FileConfiguration>
 					<FileConfiguration
@@ -1216,7 +1189,7 @@
 						>
 						<Tool
 							Name="VCCLCompilerTool"
-							PrecompiledHeaderThrough="../src/commonheaders.h"
+							PrecompiledHeaderThrough="../commonheaders.h"
 						/>
 					</FileConfiguration>
 					<FileConfiguration
@@ -1232,7 +1205,7 @@
 						>
 						<Tool
 							Name="VCCLCompilerTool"
-							PrecompiledHeaderThrough="../src/commonheaders.h"
+							PrecompiledHeaderThrough="../commonheaders.h"
 						/>
 					</FileConfiguration>
 					<FileConfiguration
@@ -1245,14 +1218,14 @@
 					</FileConfiguration>
 				</File>
 				<File
-					RelativePath=".\chat\colorchooser.cpp"
+					RelativePath=".\chat\colorchooser.c"
 					>
 					<FileConfiguration
 						Name="Debug|Win32"
 						>
 						<Tool
 							Name="VCCLCompilerTool"
-							PrecompiledHeaderThrough="../src/commonheaders.h"
+							PrecompiledHeaderThrough="../commonheaders.h"
 						/>
 					</FileConfiguration>
 					<FileConfiguration
@@ -1268,7 +1241,7 @@
 						>
 						<Tool
 							Name="VCCLCompilerTool"
-							PrecompiledHeaderThrough="../src/commonheaders.h"
+							PrecompiledHeaderThrough="../commonheaders.h"
 						/>
 					</FileConfiguration>
 					<FileConfiguration
@@ -1276,7 +1249,7 @@
 						>
 						<Tool
 							Name="VCCLCompilerTool"
-							PrecompiledHeaderThrough="../src/commonheaders.h"
+							PrecompiledHeaderThrough="../commonheaders.h"
 						/>
 					</FileConfiguration>
 					<FileConfiguration
@@ -1284,7 +1257,7 @@
 						>
 						<Tool
 							Name="VCCLCompilerTool"
-							PrecompiledHeaderThrough="../src/commonheaders.h"
+							PrecompiledHeaderThrough="../commonheaders.h"
 						/>
 					</FileConfiguration>
 					<FileConfiguration
@@ -1300,7 +1273,7 @@
 						>
 						<Tool
 							Name="VCCLCompilerTool"
-							PrecompiledHeaderThrough="../src/commonheaders.h"
+							PrecompiledHeaderThrough="../commonheaders.h"
 						/>
 					</FileConfiguration>
 					<FileConfiguration
@@ -1313,14 +1286,14 @@
 					</FileConfiguration>
 				</File>
 				<File
-					RelativePath=".\chat\log.cpp"
+					RelativePath=".\chat\log.c"
 					>
 					<FileConfiguration
 						Name="Debug|Win32"
 						>
 						<Tool
 							Name="VCCLCompilerTool"
-							PrecompiledHeaderThrough="../src/commonheaders.h"
+							PrecompiledHeaderThrough="../commonheaders.h"
 						/>
 					</FileConfiguration>
 					<FileConfiguration
@@ -1336,7 +1309,7 @@
 						>
 						<Tool
 							Name="VCCLCompilerTool"
-							PrecompiledHeaderThrough="../src/commonheaders.h"
+							PrecompiledHeaderThrough="../commonheaders.h"
 						/>
 					</FileConfiguration>
 					<FileConfiguration
@@ -1344,7 +1317,7 @@
 						>
 						<Tool
 							Name="VCCLCompilerTool"
-							PrecompiledHeaderThrough="../src/commonheaders.h"
+							PrecompiledHeaderThrough="../commonheaders.h"
 						/>
 					</FileConfiguration>
 					<FileConfiguration
@@ -1352,7 +1325,7 @@
 						>
 						<Tool
 							Name="VCCLCompilerTool"
-							PrecompiledHeaderThrough="../src/commonheaders.h"
+							PrecompiledHeaderThrough="../commonheaders.h"
 						/>
 					</FileConfiguration>
 					<FileConfiguration
@@ -1368,7 +1341,7 @@
 						>
 						<Tool
 							Name="VCCLCompilerTool"
-							PrecompiledHeaderThrough="../src/commonheaders.h"
+							PrecompiledHeaderThrough="../commonheaders.h"
 						/>
 					</FileConfiguration>
 					<FileConfiguration
@@ -1381,14 +1354,14 @@
 					</FileConfiguration>
 				</File>
 				<File
-					RelativePath=".\chat\main.cpp"
+					RelativePath=".\chat\main.c"
 					>
 					<FileConfiguration
 						Name="Debug|Win32"
 						>
 						<Tool
 							Name="VCCLCompilerTool"
-							PrecompiledHeaderThrough="../src/commonheaders.h"
+							PrecompiledHeaderThrough="../commonheaders.h"
 						/>
 					</FileConfiguration>
 					<FileConfiguration
@@ -1404,7 +1377,7 @@
 						>
 						<Tool
 							Name="VCCLCompilerTool"
-							PrecompiledHeaderThrough="../src/commonheaders.h"
+							PrecompiledHeaderThrough="../commonheaders.h"
 						/>
 					</FileConfiguration>
 					<FileConfiguration
@@ -1412,7 +1385,7 @@
 						>
 						<Tool
 							Name="VCCLCompilerTool"
-							PrecompiledHeaderThrough="../src/commonheaders.h"
+							PrecompiledHeaderThrough="../commonheaders.h"
 						/>
 					</FileConfiguration>
 					<FileConfiguration
@@ -1420,7 +1393,7 @@
 						>
 						<Tool
 							Name="VCCLCompilerTool"
-							PrecompiledHeaderThrough="../src/commonheaders.h"
+							PrecompiledHeaderThrough="../commonheaders.h"
 						/>
 					</FileConfiguration>
 					<FileConfiguration
@@ -1436,7 +1409,7 @@
 						>
 						<Tool
 							Name="VCCLCompilerTool"
-							PrecompiledHeaderThrough="../src/commonheaders.h"
+							PrecompiledHeaderThrough="../commonheaders.h"
 						/>
 					</FileConfiguration>
 					<FileConfiguration
@@ -1449,14 +1422,14 @@
 					</FileConfiguration>
 				</File>
 				<File
-					RelativePath=".\chat\manager.cpp"
+					RelativePath=".\chat\manager.c"
 					>
 					<FileConfiguration
 						Name="Debug|Win32"
 						>
 						<Tool
 							Name="VCCLCompilerTool"
-							PrecompiledHeaderThrough="../src/commonheaders.h"
+							PrecompiledHeaderThrough="../commonheaders.h"
 						/>
 					</FileConfiguration>
 					<FileConfiguration
@@ -1472,7 +1445,7 @@
 						>
 						<Tool
 							Name="VCCLCompilerTool"
-							PrecompiledHeaderThrough="../src/commonheaders.h"
+							PrecompiledHeaderThrough="../commonheaders.h"
 						/>
 					</FileConfiguration>
 					<FileConfiguration
@@ -1480,7 +1453,7 @@
 						>
 						<Tool
 							Name="VCCLCompilerTool"
-							PrecompiledHeaderThrough="../src/commonheaders.h"
+							PrecompiledHeaderThrough="../commonheaders.h"
 						/>
 					</FileConfiguration>
 					<FileConfiguration
@@ -1488,7 +1461,7 @@
 						>
 						<Tool
 							Name="VCCLCompilerTool"
-							PrecompiledHeaderThrough="../src/commonheaders.h"
+							PrecompiledHeaderThrough="../commonheaders.h"
 						/>
 					</FileConfiguration>
 					<FileConfiguration
@@ -1504,7 +1477,7 @@
 						>
 						<Tool
 							Name="VCCLCompilerTool"
-							PrecompiledHeaderThrough="../src/commonheaders.h"
+							PrecompiledHeaderThrough="../commonheaders.h"
 						/>
 					</FileConfiguration>
 					<FileConfiguration
@@ -1517,14 +1490,14 @@
 					</FileConfiguration>
 				</File>
 				<File
-					RelativePath=".\chat\message.cpp"
+					RelativePath=".\chat\message.c"
 					>
 					<FileConfiguration
 						Name="Debug|Win32"
 						>
 						<Tool
 							Name="VCCLCompilerTool"
-							PrecompiledHeaderThrough="../src/commonheaders.h"
+							PrecompiledHeaderThrough="../commonheaders.h"
 						/>
 					</FileConfiguration>
 					<FileConfiguration
@@ -1540,7 +1513,7 @@
 						>
 						<Tool
 							Name="VCCLCompilerTool"
-							PrecompiledHeaderThrough="../src/commonheaders.h"
+							PrecompiledHeaderThrough="../commonheaders.h"
 						/>
 					</FileConfiguration>
 					<FileConfiguration
@@ -1548,7 +1521,7 @@
 						>
 						<Tool
 							Name="VCCLCompilerTool"
-							PrecompiledHeaderThrough="../src/commonheaders.h"
+							PrecompiledHeaderThrough="../commonheaders.h"
 						/>
 					</FileConfiguration>
 					<FileConfiguration
@@ -1556,7 +1529,7 @@
 						>
 						<Tool
 							Name="VCCLCompilerTool"
-							PrecompiledHeaderThrough="../src/commonheaders.h"
+							PrecompiledHeaderThrough="../commonheaders.h"
 						/>
 					</FileConfiguration>
 					<FileConfiguration
@@ -1572,7 +1545,7 @@
 						>
 						<Tool
 							Name="VCCLCompilerTool"
-							PrecompiledHeaderThrough="../src/commonheaders.h"
+							PrecompiledHeaderThrough="../commonheaders.h"
 						/>
 					</FileConfiguration>
 					<FileConfiguration
@@ -1585,91 +1558,14 @@
 					</FileConfiguration>
 				</File>
 				<File
-					RelativePath=".\chat\muchighlight.cpp"
+					RelativePath=".\chat\options.c"
 					>
 					<FileConfiguration
 						Name="Debug|Win32"
 						>
 						<Tool
 							Name="VCCLCompilerTool"
-							PrecompiledHeaderThrough="../src/commonheaders.h"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Debug|x64"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release Unicode|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							FavorSizeOrSpeed="1"
-							ExceptionHandling="1"
-							UsePrecompiledHeader="0"
-							PrecompiledHeaderThrough="../src/commonheaders.h"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release Unicode|x64"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							FavorSizeOrSpeed="1"
-							UsePrecompiledHeader="0"
-							PrecompiledHeaderThrough="../src/commonheaders.h"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							PrecompiledHeaderThrough="../src/commonheaders.h"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release|x64"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Debug Unicode|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							PrecompiledHeaderThrough="../src/commonheaders.h"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Debug Unicode|x64"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-				</File>
-				<File
-					RelativePath=".\chat\muchighlight.h"
-					>
-				</File>
-				<File
-					RelativePath=".\chat\options.cpp"
-					>
-					<FileConfiguration
-						Name="Debug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							PrecompiledHeaderThrough="../src/commonheaders.h"
+							PrecompiledHeaderThrough="../commonheaders.h"
 						/>
 					</FileConfiguration>
 					<FileConfiguration
@@ -1685,7 +1581,7 @@
 						>
 						<Tool
 							Name="VCCLCompilerTool"
-							PrecompiledHeaderThrough="../src/commonheaders.h"
+							PrecompiledHeaderThrough="../commonheaders.h"
 						/>
 					</FileConfiguration>
 					<FileConfiguration
@@ -1693,7 +1589,7 @@
 						>
 						<Tool
 							Name="VCCLCompilerTool"
-							PrecompiledHeaderThrough="../src/commonheaders.h"
+							PrecompiledHeaderThrough="../commonheaders.h"
 						/>
 					</FileConfiguration>
 					<FileConfiguration
@@ -1701,7 +1597,7 @@
 						>
 						<Tool
 							Name="VCCLCompilerTool"
-							PrecompiledHeaderThrough="../src/commonheaders.h"
+							PrecompiledHeaderThrough="../commonheaders.h"
 						/>
 					</FileConfiguration>
 					<FileConfiguration
@@ -1717,7 +1613,7 @@
 						>
 						<Tool
 							Name="VCCLCompilerTool"
-							PrecompiledHeaderThrough="../src/commonheaders.h"
+							PrecompiledHeaderThrough="../commonheaders.h"
 						/>
 					</FileConfiguration>
 					<FileConfiguration
@@ -1730,14 +1626,14 @@
 					</FileConfiguration>
 				</File>
 				<File
-					RelativePath=".\chat\services.cpp"
+					RelativePath=".\chat\services.c"
 					>
 					<FileConfiguration
 						Name="Debug|Win32"
 						>
 						<Tool
 							Name="VCCLCompilerTool"
-							PrecompiledHeaderThrough="../src/commonheaders.h"
+							PrecompiledHeaderThrough="../commonheaders.h"
 						/>
 					</FileConfiguration>
 					<FileConfiguration
@@ -1753,7 +1649,7 @@
 						>
 						<Tool
 							Name="VCCLCompilerTool"
-							PrecompiledHeaderThrough="../src/commonheaders.h"
+							PrecompiledHeaderThrough="../commonheaders.h"
 						/>
 					</FileConfiguration>
 					<FileConfiguration
@@ -1761,7 +1657,7 @@
 						>
 						<Tool
 							Name="VCCLCompilerTool"
-							PrecompiledHeaderThrough="../src/commonheaders.h"
+							PrecompiledHeaderThrough="../commonheaders.h"
 						/>
 					</FileConfiguration>
 					<FileConfiguration
@@ -1769,7 +1665,7 @@
 						>
 						<Tool
 							Name="VCCLCompilerTool"
-							PrecompiledHeaderThrough="../src/commonheaders.h"
+							PrecompiledHeaderThrough="../commonheaders.h"
 						/>
 					</FileConfiguration>
 					<FileConfiguration
@@ -1785,7 +1681,7 @@
 						>
 						<Tool
 							Name="VCCLCompilerTool"
-							PrecompiledHeaderThrough="../src/commonheaders.h"
+							PrecompiledHeaderThrough="../commonheaders.h"
 						/>
 					</FileConfiguration>
 					<FileConfiguration
@@ -1798,14 +1694,14 @@
 					</FileConfiguration>
 				</File>
 				<File
-					RelativePath=".\chat\tools.cpp"
+					RelativePath=".\chat\tools.c"
 					>
 					<FileConfiguration
 						Name="Debug|Win32"
 						>
 						<Tool
 							Name="VCCLCompilerTool"
-							PrecompiledHeaderThrough="../src/commonheaders.h"
+							PrecompiledHeaderThrough="../commonheaders.h"
 						/>
 					</FileConfiguration>
 					<FileConfiguration
@@ -1821,7 +1717,7 @@
 						>
 						<Tool
 							Name="VCCLCompilerTool"
-							PrecompiledHeaderThrough="../src/commonheaders.h"
+							PrecompiledHeaderThrough="../commonheaders.h"
 						/>
 					</FileConfiguration>
 					<FileConfiguration
@@ -1829,7 +1725,7 @@
 						>
 						<Tool
 							Name="VCCLCompilerTool"
-							PrecompiledHeaderThrough="../src/commonheaders.h"
+							PrecompiledHeaderThrough="../commonheaders.h"
 						/>
 					</FileConfiguration>
 					<FileConfiguration
@@ -1837,7 +1733,7 @@
 						>
 						<Tool
 							Name="VCCLCompilerTool"
-							PrecompiledHeaderThrough="../src/commonheaders.h"
+							PrecompiledHeaderThrough="../commonheaders.h"
 						/>
 					</FileConfiguration>
 					<FileConfiguration
@@ -1853,7 +1749,7 @@
 						>
 						<Tool
 							Name="VCCLCompilerTool"
-							PrecompiledHeaderThrough="../src/commonheaders.h"
+							PrecompiledHeaderThrough="../commonheaders.h"
 						/>
 					</FileConfiguration>
 					<FileConfiguration
@@ -1866,14 +1762,14 @@
 					</FileConfiguration>
 				</File>
 				<File
-					RelativePath=".\chat\window.cpp"
+					RelativePath=".\chat\window.c"
 					>
 					<FileConfiguration
 						Name="Debug|Win32"
 						>
 						<Tool
 							Name="VCCLCompilerTool"
-							PrecompiledHeaderThrough="../src/commonheaders.h"
+							PrecompiledHeaderThrough="../commonheaders.h"
 						/>
 					</FileConfiguration>
 					<FileConfiguration
@@ -1889,7 +1785,7 @@
 						>
 						<Tool
 							Name="VCCLCompilerTool"
-							PrecompiledHeaderThrough="../src/commonheaders.h"
+							PrecompiledHeaderThrough="../commonheaders.h"
 						/>
 					</FileConfiguration>
 					<FileConfiguration
@@ -1897,7 +1793,7 @@
 						>
 						<Tool
 							Name="VCCLCompilerTool"
-							PrecompiledHeaderThrough="../src/commonheaders.h"
+							PrecompiledHeaderThrough="../commonheaders.h"
 						/>
 					</FileConfiguration>
 					<FileConfiguration
@@ -1905,7 +1801,7 @@
 						>
 						<Tool
 							Name="VCCLCompilerTool"
-							PrecompiledHeaderThrough="../src/commonheaders.h"
+							PrecompiledHeaderThrough="../commonheaders.h"
 						/>
 					</FileConfiguration>
 					<FileConfiguration
@@ -1921,7 +1817,7 @@
 						>
 						<Tool
 							Name="VCCLCompilerTool"
-							PrecompiledHeaderThrough="../src/commonheaders.h"
+							PrecompiledHeaderThrough="../commonheaders.h"
 						/>
 					</FileConfiguration>
 					<FileConfiguration
@@ -1940,100 +1836,60 @@
 			Filter="h;hpp;hxx;hm;inl"
 			>
 			<File
-				RelativePath=".\src\commonheaders.h"
+				RelativePath=".\buttonsbar.h"
 				>
 			</File>
 			<File
-				RelativePath=".\include\contactcache.h"
+				RelativePath="commonheaders.h"
 				>
 			</File>
 			<File
-				RelativePath=".\include\controls.h"
+				RelativePath="functions.h"
 				>
 			</File>
 			<File
-				RelativePath=".\include\functions.h"
+				RelativePath=".\generic_msghandlers.h"
 				>
 			</File>
 			<File
-				RelativePath=".\include\generic_msghandlers.h"
+				RelativePath="ImageDataObject.h"
 				>
 			</File>
 			<File
-				RelativePath=".\include\globals.h"
+				RelativePath="msgdlgutils.h"
 				>
 			</File>
 			<File
-				RelativePath=".\include\ImageDataObject.h"
+				RelativePath="msgs.h"
 				>
 			</File>
 			<File
-				RelativePath=".\include\infopanel.h"
+				RelativePath="nen.h"
 				>
 			</File>
 			<File
-				RelativePath=".\include\mim.h"
+				RelativePath="resource.h"
 				>
 			</File>
 			<File
-				RelativePath=".\include\msgdlgutils.h"
+				RelativePath="sendqueue.h"
 				>
 			</File>
 			<File
-				RelativePath=".\include\msgs.h"
+				RelativePath="templates.h"
 				>
 			</File>
 			<File
-				RelativePath=".\include\nen.h"
+				RelativePath=".\typingnotify.h"
 				>
 			</File>
 			<File
-				RelativePath=".\include\resource.h"
-				>
-			</File>
-			<File
-				RelativePath=".\include\sendqueue.h"
-				>
-			</File>
-			<File
-				RelativePath=".\include\sidebar.h"
-				>
-			</File>
-			<File
-				RelativePath=".\include\taskbar.h"
-				>
-			</File>
-			<File
-				RelativePath=".\include\templates.h"
-				>
-			</File>
-			<File
-				RelativePath=".\include\themes.h"
-				>
-			</File>
-			<File
-				RelativePath=".\include\translator.h"
-				>
-			</File>
-			<File
-				RelativePath=".\include\typingnotify.h"
-				>
-			</File>
-			<File
-				RelativePath=".\include\utils.h"
-				>
-			</File>
-			<File
-				RelativePath=".\include\version.h"
+				RelativePath=".\version.h"
 				>
 			</File>
 			<Filter
 				Name="API"
 				>
-				<File
-					RelativePath="API\m_buttonbar.h"
-					>
-				</File>
 				<File
 					RelativePath=".\API\m_cln_skinedit.h"
 					>
@@ -2080,6 +1936,10 @@
 				</File>
 				<File
 					RelativePath=".\API\m_smileyadd.h"
+					>
+				</File>
+				<File
+					RelativePath=".\API\m_Snapping_windows.h"
 					>
 				</File>
 				<File

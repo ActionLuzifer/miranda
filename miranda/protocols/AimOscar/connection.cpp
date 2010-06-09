@@ -36,7 +36,7 @@ HANDLE CAimProto::aim_connect(const char* server, unsigned short port, bool use_
 	ncon.cbSize = sizeof(ncon);
 	ncon.szHost = server;
 	ncon.wPort = port;
-	ncon.timeout = 6;
+	ncon.timeout = 5;
 	ncon.flags = NLOCF_V2;
 	LOG("%s:%u", server, port);
 	HANDLE con = (HANDLE) CallService(MS_NETLIB_OPENCONNECTION, (WPARAM)hNetlib, (LPARAM)&ncon);

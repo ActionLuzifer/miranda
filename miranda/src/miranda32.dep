@@ -14,7 +14,6 @@
 	"..\include\m_file.h"\
 	"..\include\m_findadd.h"\
 	"..\include\m_genmenu.h"\
-	"..\include\m_help.h"\
 	"..\include\m_history.h"\
 	"..\include\m_icolib.h"\
 	"..\include\m_idle.h"\
@@ -61,7 +60,6 @@
 	"..\include\m_file.h"\
 	"..\include\m_findadd.h"\
 	"..\include\m_genmenu.h"\
-	"..\include\m_help.h"\
 	"..\include\m_history.h"\
 	"..\include\m_icolib.h"\
 	"..\include\m_idle.h"\
@@ -108,7 +106,6 @@
 	"..\include\m_file.h"\
 	"..\include\m_findadd.h"\
 	"..\include\m_genmenu.h"\
-	"..\include\m_help.h"\
 	"..\include\m_history.h"\
 	"..\include\m_icolib.h"\
 	"..\include\m_idle.h"\
@@ -155,7 +152,6 @@
 	"..\include\m_file.h"\
 	"..\include\m_findadd.h"\
 	"..\include\m_genmenu.h"\
-	"..\include\m_help.h"\
 	"..\include\m_history.h"\
 	"..\include\m_icolib.h"\
 	"..\include\m_idle.h"\
@@ -207,7 +203,6 @@
 	"..\include\m_file.h"\
 	"..\include\m_findadd.h"\
 	"..\include\m_genmenu.h"\
-	"..\include\m_help.h"\
 	"..\include\m_history.h"\
 	"..\include\m_icolib.h"\
 	"..\include\m_idle.h"\
@@ -260,10 +255,6 @@
 	
 
 .\modules\netlib\netlib.cpp : \
-	".\modules\netlib\netlib.h"\
-	
-
-.\modules\netlib\netlibautoproxy.cpp : \
 	".\modules\netlib\netlib.h"\
 	
 
@@ -419,6 +410,7 @@
 
 .\modules\clist\clistmenus.cpp : \
 	"..\include\m_clist.h"\
+	"..\include\m_clui.h"\
 	"..\include\m_genmenu.h"\
 	"..\include\statusmodes.h"\
 	".\modules\clist\clc.h"\

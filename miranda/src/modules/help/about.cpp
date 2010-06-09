@@ -61,30 +61,24 @@ INT_PTR CALLBACK DlgProcAbout(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lPar
 			mir_sntprintf(str,SIZEOF(str),_T(STR_VERSION_FORMAT), TranslateT("v"), productVersion, isAnsi?" ANSI":"");
             {
                 TCHAR oldTitle[256], newTitle[256];
-				GetDlgItemText( hwndDlg, IDC_HEADERBAR, oldTitle, SIZEOF( oldTitle ));
+				GetWindowText( GetDlgItem(hwndDlg, IDC_HEADERBAR), oldTitle, SIZEOF( oldTitle ));
 				mir_sntprintf( newTitle, SIZEOF(newTitle), oldTitle, str );
-				SetDlgItemText( hwndDlg, IDC_HEADERBAR, newTitle );
+				SetWindowText( GetDlgItem(hwndDlg, IDC_HEADERBAR), newTitle );
+                SendMessage(GetDlgItem(hwndDlg, IDC_HEADERBAR), WM_SETICON, 0, (WPARAM)LoadIcon(hMirandaInst, MAKEINTRESOURCE(IDI_MIRANDA)));
 			}
             
 			mir_sntprintf(str,SIZEOF(str),TranslateT("Built %s %s"),_T(__DATE__),_T(__TIME__));
 			SetDlgItemText(hwndDlg,IDC_BUILDTIME,str);
 		}
 		ShowWindow(GetDlgItem(hwndDlg, IDC_CREDITSFILE), SW_HIDE);
-		{	
-			HRSRC   hResInfo  = FindResource(hMirandaInst,MAKEINTRESOURCE(IDR_CREDITS),_T("TEXT"));
-			DWORD   ResSize   = SizeofResource(hMirandaInst,hResInfo);
-			HGLOBAL hRes      = LoadResource(hMirandaInst,hResInfo);
-			char*   pszMsg    = (char*)LockResource(hRes);
-			if (pszMsg)
-			{
-				pszMsg  [ResSize] = 0;			// Resource is not NULL terminated
-				TCHAR*  ptszMsg   = mir_a2t(pszMsg);
-				SetDlgItemText(hwndDlg,IDC_CREDITSFILE, ptszMsg);
-				mir_free(ptszMsg);
-				UnlockResource(pszMsg);
-			}
-			FreeResource(hRes);
-
+		{	char* pszMsg = ( char* )LockResource(LoadResource(hMirandaInst,FindResource(hMirandaInst,MAKEINTRESOURCE(IDR_CREDITS),_T("TEXT"))));
+			#if defined( _UNICODE )
+				TCHAR* ptszMsg = ( TCHAR* )alloca(2000*sizeof(TCHAR));
+            MultiByteToWideChar(1252,0,pszMsg,-1,ptszMsg,2000);
+            SetDlgItemText(hwndDlg,IDC_CREDITSFILE, ptszMsg);
+			#else
+            SetDlgItemText(hwndDlg,IDC_CREDITSFILE, pszMsg);
+			#endif
 		}
 		Window_SetIcon_IcoLib(hwndDlg, SKINICON_OTHER_MIRANDA);
 		return TRUE;

@@ -425,7 +425,7 @@ void CIrcProto::DoReceive()
 						while( *p1 != '\0' ) {
 							if( *p1 == '\r' || *p1 == '\n')
 								*p1 = '\0';
-							p1++;
+							*p1++;
 						}
 
 						createMessageFromPchar( pszTemp );
@@ -803,6 +803,10 @@ CDccSession::CDccSession( CIrcProto* _pro, DCCINFO* pdci ) :
 
 	if ( di->dwAdr )
 		m_proto->setDword(di->hContact, "IP", di->dwAdr); // mtooltip stuff
+
+	#if defined( _UNICODE )
+		szFullPath = szWorkingDir = NULL;
+	#endif
 }
 
 CDccSession::~CDccSession() // destroy all that needs destroying
@@ -839,6 +843,11 @@ CDccSession::~CDccSession() // destroy all that needs destroying
 
 	if ( nDcc == 0 )
 		m_proto->KillChatTimer( m_proto->DCCTimer ); // destroy the timer when no dcc objects remain
+
+	#if defined( _UNICODE )
+		mir_free( szFullPath );
+		mir_free( szWorkingDir );
+	#endif
 }
 
 int CDccSession::NLSend(const unsigned char* buf, int cbBuf) 
@@ -901,24 +910,30 @@ void CDccSession::SetupPassive(DWORD adress, DWORD port)
 
 int CDccSession::SetupConnection()
 {
-	// if it is a dcc chat connection make sure it is "offline" to begin with, since no connection exists still
+	// if it is a dcc chat connection make sure it is "offline" to begoin with, since no connection exists still
 	if ( di->iType == DCC_CHAT )
 		m_proto->setWord(di->hContact, "Status", ID_STATUS_OFFLINE);
 
 	// Set up stuff needed for the filetransfer dialog (if it is a filetransfer)
 	if ( di->iType == DCC_SEND ) {
-		file[0] = ( TCHAR* )di->sFileAndPath.c_str();
+		file[0] = ( char* )di->sFileAndPath.c_str();
 		file[1] = 0;
 
-		pfts.tszCurrentFile = ( TCHAR* )di->sFileAndPath.c_str();
-		pfts.tszWorkingDir =	( TCHAR* )di->sPath.c_str();
+		#if defined( _UNICODE )
+			pfts.currentFile = szFullPath = mir_strdup( _T2A( di->sFileAndPath.c_str(), m_proto->getCodepage() ));
+			pfts.workingDir =	szWorkingDir = mir_strdup( _T2A( di->sPath.c_str(), m_proto->getCodepage() ));
+		#else
+			pfts.currentFile = ( char* )di->sFileAndPath.c_str();
+			pfts.workingDir =	( char* )di->sPath.c_str();
+		#endif
+
 		pfts.hContact = di->hContact;
-		pfts.flags = PFTS_TCHAR + ((di->bSender) ? PFTS_SENDING : PFTS_RECEIVING);
+		pfts.sending = di->bSender ? true : false;
 		pfts.totalFiles =	1;
 		pfts.currentFileNumber = 0;
 		pfts.totalBytes =	di->dwSize;
 		pfts.currentFileSize = pfts.totalBytes;
-		pfts.ptszFiles = file;
+		pfts.files = file;
 		pfts.totalProgress = 0;
 		pfts.currentFileProgress =	0;
 		pfts.currentFileTime = (unsigned long)time(0);
@@ -979,12 +994,20 @@ int CDccSession::SetupConnection()
 						di->sFile = di->sFileAndPath.Mid(i+1, di->sFileAndPath.GetLength());
 					}
 
-					pfts.tszCurrentFile = ( TCHAR* )di->sFileAndPath.c_str();
-					pfts.tszWorkingDir =	( TCHAR* )di->sPath.c_str();
+					#if defined( _UNICODE )
+						mir_free( szFullPath );
+						pfts.currentFile = szFullPath = mir_strdup( _T2A( di->sFileAndPath.c_str(), m_proto->getCodepage() ));
+						mir_free( szWorkingDir );
+						pfts.workingDir =	szWorkingDir = mir_strdup( _T2A( di->sPath.c_str(), m_proto->getCodepage() ));
+					#else
+						pfts.currentFile = ( char* )di->sFileAndPath.c_str();
+						pfts.workingDir =	( char* )di->sPath.c_str();
+					#endif
 					pfts.totalBytes = di->dwSize;
 					pfts.currentFileSize = pfts.totalBytes;
+					file[0] = pfts.currentFile;
 					
-					delete[] NewFileName;
+					delete []NewFileName;
 					NewFileName = NULL;
 				}
 				break;
