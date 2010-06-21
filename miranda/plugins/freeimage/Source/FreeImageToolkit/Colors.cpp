@@ -27,6 +27,12 @@
 //   Macros + structures
 // ----------------------------------------------------------
 
+#define RGB555(b, g, r) ((((b) >> 3) << FI16_555_BLUE_SHIFT) | (((g) >> 3) << FI16_555_GREEN_SHIFT) | (((r) >> 3) << FI16_555_RED_SHIFT))
+#define RGB565(b, g, r) ((((b) >> 3) << FI16_565_BLUE_SHIFT) | (((g) >> 2) << FI16_565_GREEN_SHIFT) | (((r) >> 3) << FI16_565_RED_SHIFT))
+
+#define FORMAT_RGB565(dib) ((FreeImage_GetRedMask(dib) == FI16_565_RED_MASK) &&(FreeImage_GetGreenMask(dib) == FI16_565_GREEN_MASK) &&(FreeImage_GetBlueMask(dib) == FI16_565_BLUE_MASK))
+#define RGBQUAD_TO_WORD(dib, color) (FORMAT_RGB565(dib) ? RGB565((color)->rgbBlue, (color)->rgbGreen, (color)->rgbRed) : RGB555((color)->rgbBlue, (color)->rgbGreen, (color)->rgbRed))
+
 #define GET_HI_NIBBLE(byte)     ((byte) >> 4)
 #define SET_HI_NIBBLE(byte, n)  byte &= 0x0F, byte |= ((n) << 4)
 #define GET_LO_NIBBLE(byte)     ((byte) & 0x0F)
@@ -278,9 +284,8 @@ FreeImage_AdjustBrightness(FIBITMAP *src, double percentage) {
 		return FALSE;
 	
 	// Build the lookup table
-	const double scale = (100 + percentage) / 100;
 	for(int i = 0; i < 256; i++) {
-		value = i * scale;
+		value = (i * (100 + percentage)) / 100;
 		value = MAX(0.0, MIN(value, 255.0));
 		LUT[i] = (BYTE)floor(value + 0.5);
 	}
@@ -304,9 +309,8 @@ FreeImage_AdjustContrast(FIBITMAP *src, double percentage) {
 		return FALSE;
 	
 	// Build the lookup table
-	const double scale = (100 + percentage) / 100;
 	for(int i = 0; i < 256; i++) {
-		value = 128 + (i - 128) * scale;
+		value = 128 + (i - 128) * (100 + percentage) / 100;
 		value = MAX(0.0, MIN(value, 255.0));
 		LUT[i] = (BYTE)floor(value + 0.5);
 	}
@@ -437,18 +441,18 @@ FreeImage_GetHistogram(FIBITMAP *src, DWORD *histo, FREE_IMAGE_COLOR_CHANNEL cha
  results:
  
  // snippet 1: contrast, brightness
- FreeImage_AdjustContrast(dib, 15.0);
+ FreeImage_AdjustContrast(dib, 150.0);
  FreeImage_AdjustBrightness(dib, 50.0); 
  
  // snippet 2: brightness, contrast
  FreeImage_AdjustBrightness(dib, 50.0);
- FreeImage_AdjustContrast(dib, 15.0);
+ FreeImage_AdjustContrast(dib, 150.0);
  
  Better and even faster would be snippet 3:
  
  // snippet 3:
  BYTE LUT[256];
- FreeImage_GetAdjustColorsLookupTable(LUT, 50.0, 15.0, 1.0, FALSE); 
+ FreeImage_GetAdjustColorsLookupTable(LUT, 50.0, 150.0, 1.0, FALSE); 
  FreeImage_AdjustCurve(dib, LUT, FICC_RGB);
  
  This function is also used internally by FreeImage_AdjustColors(), which does
@@ -474,7 +478,6 @@ FreeImage_GetHistogram(FIBITMAP *src, DWORD *histo, FREE_IMAGE_COLOR_CHANNEL cha
 int DLL_CALLCONV
 FreeImage_GetAdjustColorsLookupTable(BYTE *LUT, double brightness, double contrast, double gamma, BOOL invert) {
 	double dblLUT[256];
-	double value;
 	int result = 0;
 
 	if ((brightness == 0.0) && (contrast == 0.0) && (gamma == 1.0) && (!invert)) {
@@ -495,8 +498,7 @@ FreeImage_GetAdjustColorsLookupTable(BYTE *LUT, double brightness, double contra
 		// modify lookup table with contrast adjustment data
 		const double v = (100.0 + contrast) / 100.0;
 		for (int i = 0; i < 256; i++) {
-			value = 128 + (dblLUT[i] - 128) * v;
-			dblLUT[i] = MAX(0.0, MIN(value, 255.0));
+			dblLUT[i] = 128 + (dblLUT[i] - 128) * v;
 		}
 		result++;
 	}
@@ -505,30 +507,28 @@ FreeImage_GetAdjustColorsLookupTable(BYTE *LUT, double brightness, double contra
 		// modify lookup table with brightness adjustment data
 		const double v = (100.0 + brightness) / 100.0;
 		for (int i = 0; i < 256; i++) {
-			value = dblLUT[i] * v;
-			dblLUT[i] = MAX(0.0, MIN(value, 255.0));
+			dblLUT[i] = dblLUT[i] * v;
 		}
 		result++;
 	}
 
-	if ((gamma > 0) && (gamma != 1.0)) {
+	if (gamma != 1.0) {
 		// modify lookup table with gamma adjustment data
 		double exponent = 1 / gamma;
 		const double v = 255.0 * (double)pow((double)255, -exponent);
 		for (int i = 0; i < 256; i++) {
-			value = pow(dblLUT[i], exponent) * v;
-			dblLUT[i] = MAX(0.0, MIN(value, 255.0));
+			dblLUT[i] = pow(dblLUT[i], exponent) * v;
 		}
 		result++;
 	}
 
 	if (!invert) {
 		for (int i = 0; i < 256; i++) {
-			LUT[i] = (BYTE)floor(dblLUT[i] + 0.5);
+			LUT[i] = (BYTE)floor(MAX(0.0, MIN(dblLUT[i], 255.0)) + 0.5);
 		}
 	} else {
 		for (int i = 0; i < 256; i++) {
-			LUT[i] = 255 - (BYTE)floor(dblLUT[i] + 0.5);
+			LUT[i] = 255 - (BYTE)floor(MAX(0.0, MIN(dblLUT[i], 255.0)) + 0.5);
 		}
 		result++;
 	}
@@ -555,17 +555,17 @@ FreeImage_GetAdjustColorsLookupTable(BYTE *LUT, double brightness, double contra
  snippets most likely produce different results:
  
  // snippet 1: contrast, brightness
- FreeImage_AdjustContrast(dib, 15.0);
+ FreeImage_AdjustContrast(dib, 150.0);
  FreeImage_AdjustBrightness(dib, 50.0); 
  
  // snippet 2: brightness, contrast
  FreeImage_AdjustBrightness(dib, 50.0);
- FreeImage_AdjustContrast(dib, 15.0);
+ FreeImage_AdjustContrast(dib, 150.0);
  
  Better and even faster would be snippet 3:
  
  // snippet 3:
- FreeImage_AdjustColors(dib, 50.0, 15.0, 1.0, FALSE);
+ FreeImage_AdjustColors(dib, 50.0, 150.0, 1.0, FALSE);
  
  @param dib Input/output image to be processed.
  @param brightness Percentage brightness value where -100 <= brightness <= 100<br>

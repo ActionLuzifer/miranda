@@ -286,6 +286,7 @@
 	"..\..\include\m_system.h"\
 	"..\..\include\m_system_cpp.h"\
 	"..\..\include\m_utils.h"\
+	"..\..\include\m_version.h"\
 	"..\..\include\newpluginapi.h"\
 	"..\..\include\statusmodes.h"\
 	".\http_gateway.h"\

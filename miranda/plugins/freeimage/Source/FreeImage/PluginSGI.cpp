@@ -3,7 +3,6 @@
 //
 // Design and implementation by
 // - Sherman Wilcox
-// - Noam Gat
 //
 // References : 
 // ------------
@@ -97,7 +96,9 @@ typedef struct tagRLEStatus {
 #pragma pack()
 #endif
 
+static const char *SGI_BAD_MALLOC = "Out of memory";
 static const char *SGI_LESS_THAN_HEADER_LENGTH = "Incorrect header size";
+static const char *SGI_BAD_MAGIC_NUMBER = "Bad magic number";
 static const char *SGI_16_BIT_COMPONENTS_NOT_SUPPORTED = "No 16 bit support";
 static const char *SGI_COLORMAPS_NOT_SUPPORTED = "No colormap support";
 static const char *SGI_EOF_IN_RLE_INDEX = "EOF in run length encoding";
@@ -231,7 +232,7 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 		SwapHeader(&sgiHeader);
 #endif
 		if(sgiHeader.magic != 474) {
-			throw FI_MSG_ERROR_MAGIC_NUMBER;
+			throw SGI_BAD_MAGIC_NUMBER;
 		}
 		
 		BOOL bIsRLE = (sgiHeader.storage == 1) ? TRUE : FALSE;
@@ -266,7 +267,7 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 			int index_len = height * zsize;
 			pRowIndex = (LONG*)malloc(index_len * sizeof(LONG));
 			if(!pRowIndex) {
-				throw FI_MSG_ERROR_MEMORY;
+				throw SGI_BAD_MALLOC;
 			}
 			
 			if ((unsigned)index_len != io->read_proc(pRowIndex, sizeof(LONG), index_len, handle)) {
@@ -292,10 +293,6 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 			case 1:
 				bitcount = 8;
 				break;
-			case 2:
-				//Grayscale+Alpha. Need to fake RGBA
-				bitcount = 32;
-				break;
 			case 3:
 				bitcount = 24;
 				break;
@@ -308,7 +305,7 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 		
 		dib = FreeImage_Allocate(width, height, bitcount);
 		if(!dib) {
-			throw FI_MSG_ERROR_DIB_MEMORY;
+			throw SGI_BAD_MALLOC;
 		}
 		
 		if (bitcount == 8) {
@@ -330,20 +327,9 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 		int ns = FreeImage_GetPitch(dib);                                                    
 		BYTE *pStartRow = FreeImage_GetScanLine(dib, 0);
 		int offset_table[] = { 2, 1, 0, 3 };
-		int numChannels = zsize;
 		if (zsize < 3) {
 			offset_table[0] = 0;
 		}
-		if (zsize == 2)
-		{
-			//This is how faked grayscale+alpha works.
-			//First channel goes into first 
-			//second channel goes into alpha (4th channel)
-			//Two channels are left empty and will be copied later
-			offset_table[1] = 3;
-			numChannels = 4;
-		}
-		
 		LONG *pri = pRowIndex;
 		for (i = 0; i < zsize; i++) {
 			BYTE *pRow = pStartRow + offset_table[i];
@@ -353,7 +339,7 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 					my_rle_status.cnt = 0;
 					io->seek_proc(handle, *pri, SEEK_SET);
 				}
-				for (int k = 0; k < width; k++, p += numChannels) {
+				for (int k = 0; k < width; k++, p += zsize) {
 					int ch;
 					BYTE packed = 0;
 					if (bIsRLE) {
@@ -371,20 +357,6 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 			}
 		}
 		
-		if (zsize == 2)
-		{
-			BYTE *pRow = pStartRow;
-			//If faking RGBA from grayscale + alpha, copy first channel to second and third
-			for (int i=0; i<height; i++, pRow += ns)
-			{
-				BYTE *pPixel = pRow;
-				for (int j=0; j<width; j++)
-				{
-					pPixel[2] = pPixel[1] = pPixel[0];
-					pPixel += 4;
-				}
-			}
-		}
 		if(pRowIndex)
 			free(pRowIndex);
 

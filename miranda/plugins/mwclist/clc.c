@@ -65,9 +65,14 @@ void StatusUpdaterThread(HWND hwndDlg)
 				for (i=0; i<5; i++) {
 					if (hContact!=NULL) {
 						pdisplayNameCacheEntry pdnce =(pdisplayNameCacheEntry)pcli->pfnGetCacheEntry((HANDLE)hContact);
-						if (pdnce && !pdnce->protoNotExists && pdnce->szProto)
+						if (pdnce!=NULL&&pdnce->protoNotExists==FALSE&&pdnce->szProto!=NULL)
 						{			
-							CallContactService(hContact, PSS_GETAWAYMSG, 0, 0);
+							char *szProto =pdnce->szProto; //(char *) CallService(MS_PROTO_GETCONTACTBASEPROTO, (WPARAM) hContact, 0);
+							_snprintf(szServiceName, SIZEOF(szServiceName), "%s%s", szProto, PSS_GETAWAYMSG);
+							if (ServiceExists(szServiceName)) {
+								strncpy(szServiceName, PSS_GETAWAYMSG, SIZEOF(szServiceName));
+								CallContactService(hContact, szServiceName, 0, 0);
+							}
 						}
 						hContact = (HANDLE) CallService(MS_DB_CONTACT_FINDNEXT, (WPARAM) hContact, 0);
 					}
@@ -268,7 +273,7 @@ LRESULT CALLBACK ContactListControlWndProc(HWND hwnd, UINT msg, WPARAM wParam, L
 	{	LRESULT res = saveContactListControlWndProc(hwnd, msg, wParam, lParam);
 		switch (msg) {
 			case WM_CREATE:
-				mir_forkthread(StatusUpdaterThread,0);
+				forkthread(StatusUpdaterThread,0,0);
 				break;
 		}
 		return res;

@@ -1,4 +1,4 @@
-CC = ld
+CC = gcc
 RC = windres
 
 all:

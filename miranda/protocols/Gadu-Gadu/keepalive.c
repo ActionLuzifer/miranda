@@ -43,9 +43,9 @@ static VOID CALLBACK gg_keepalive(HWND hwnd, UINT message, UINT_PTR idEvent, DWO
 	#ifdef DEBUGMODE
 			gg_netlog(gg, "Sending keep-alive");
 	#endif
-			EnterCriticalSection(&gg->sess_mutex);
+			pthread_mutex_lock(&gg->sess_mutex);
 			gg_ping(gg->sess);
-			LeaveCriticalSection(&gg->sess_mutex);
+			pthread_mutex_unlock(&gg->sess_mutex);
 		}
 	}
 }

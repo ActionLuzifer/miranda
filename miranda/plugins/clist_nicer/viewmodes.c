@@ -894,7 +894,6 @@ void BuildViewModeMenu()
 
 	AppendMenuA(hViewModeMenu, MF_STRING, 10001, Translate("Setup View Modes..."));
 	AppendMenuA(hViewModeMenu, MF_STRING, 10002, Translate("Clear current View Mode"));
-
 }
 
 static UINT _buttons[] = {IDC_RESETMODES, IDC_SELECTMODE, IDC_CONFIGUREMODES, 0};

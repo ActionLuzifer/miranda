@@ -42,7 +42,7 @@ pfnMyMonitorFromWindow MyMonitorFromWindow;
 pfnMyGetMonitorInfo MyGetMonitorInfo;
 
 typedef DWORD (WINAPI *pfnMsgWaitForMultipleObjectsEx)(DWORD,CONST HANDLE*,DWORD,DWORD,DWORD);
-pfnMsgWaitForMultipleObjectsEx msgWaitForMultipleObjectsEx;
+pfnMsgWaitForMultipleObjectsEx MyMsgWaitForMultipleObjectsEx;
 
 pfnSHAutoComplete shAutoComplete;
 pfnSHGetSpecialFolderPathA shGetSpecialFolderPathA;
@@ -50,9 +50,6 @@ pfnSHGetSpecialFolderPathW shGetSpecialFolderPathW;
 
 pfnOpenInputDesktop openInputDesktop;
 pfnCloseDesktop closeDesktop;
-
-pfnAnimateWindow animateWindow;
-pfnSetLayeredWindowAttributes setLayeredWindowAttributes;
 
 pfnOpenThemeData openThemeData;
 pfnIsThemeBackgroundPartiallyTransparent isThemeBackgroundPartiallyTransparent;
@@ -67,11 +64,6 @@ pfnEnableThemeDialogTexture enableThemeDialogTexture;
 pfnSetWindowTheme setWindowTheme;
 pfnSetWindowThemeAttribute setWindowThemeAttribute;
 pfnIsThemeActive isThemeActive;
-pfnBufferedPaintInit bufferedPaintInit;
-pfnBufferedPaintUninit bufferedPaintUninit;
-pfnBeginBufferedPaint beginBufferedPaint;
-pfnEndBufferedPaint endBufferedPaint;
-pfnGetBufferedPaintBits getBufferedPaintBits;
 
 pfnDwmExtendFrameIntoClientArea dwmExtendFrameIntoClientArea;
 pfnDwmIsCompositionEnabled dwmIsCompositionEnabled;
@@ -288,7 +280,6 @@ VOID CALLBACK KillAllThreads(HWND, UINT, UINT_PTR, DWORD)
 			Netlib_Logf( NULL, "Thread %08x was abnormally terminated because module '%s' didn't release it. Entry point: %08x",
 				p->hThread, szModuleName, p->addr );
 			TerminateThread( p->hThread, 9999 );
-			CloseHandle(p->hThread);
 			mir_free( p );
 		}
 
@@ -377,16 +368,18 @@ void* GetCurrentThreadEntryPoint()
 INT_PTR UnwindThreadPush(WPARAM wParam,LPARAM lParam)
 {
 	ResetEvent(hThreadQueueEmpty); // thread list is not empty
-	if (WaitForSingleObject(hStackMutex, INFINITE) == WAIT_OBJECT_0)
+	if (WaitForSingleObject(hStackMutex,INFINITE)==WAIT_OBJECT_0)
 	{
-		THREAD_WAIT_ENTRY* p = (THREAD_WAIT_ENTRY*)mir_calloc(sizeof(THREAD_WAIT_ENTRY));
+		THREAD_WAIT_ENTRY* p = ( THREAD_WAIT_ENTRY* )mir_calloc( sizeof( THREAD_WAIT_ENTRY ));
 
-		DuplicateHandle(GetCurrentProcess(), GetCurrentThread(), GetCurrentProcess(), &p->hThread, 0, FALSE, DUPLICATE_SAME_ACCESS);
+		HANDLE hThread=0;
+		DuplicateHandle(GetCurrentProcess(),GetCurrentThread(),GetCurrentProcess(),&hThread,0,FALSE,DUPLICATE_SAME_ACCESS);
+		p->hThread = hThread;
 		p->dwThreadId = GetCurrentThreadId();
         p->pObject = (void*)wParam;
-		p->hOwner = GetInstByAddress((void*)lParam);
-		p->addr = (void*)lParam;
-		threads.insert(p);
+		p->hOwner = GetInstByAddress(( void* )lParam );
+		p->addr = (PVOID)lParam;
+		threads.insert( p );
 
  		//Netlib_Logf( NULL, "*** pushing thread %x[%x] (%d)", hThread, GetCurrentThreadId(), threads.count );
 		ReleaseMutex(hStackMutex);
@@ -483,8 +476,8 @@ static DWORD MsgWaitForMultipleObjectsExWorkaround(DWORD nCount, const HANDLE *p
 	DWORD dwMsecs, DWORD dwWakeMask, DWORD dwFlags)
 {
 	DWORD rc;
-	if ( msgWaitForMultipleObjectsEx != NULL )
-		return msgWaitForMultipleObjectsEx(nCount, pHandles, dwMsecs, dwWakeMask, dwFlags);
+	if ( MyMsgWaitForMultipleObjectsEx != NULL )
+		return MyMsgWaitForMultipleObjectsEx(nCount, pHandles, dwMsecs, dwWakeMask, dwFlags);
 	rc=MsgWaitForMultipleObjects(nCount, pHandles, FALSE, 50, QS_ALLINPUT);
 	if ( rc == WAIT_TIMEOUT ) rc=WaitForMultipleObjectsEx(nCount, pHandles, FALSE, 20, TRUE);
 	return rc;
@@ -561,9 +554,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int )
 	hUser32 = GetModuleHandleA("user32");
 	openInputDesktop = (pfnOpenInputDesktop)GetProcAddress (hUser32, "OpenInputDesktop");
 	closeDesktop = (pfnCloseDesktop)GetProcAddress (hUser32, "CloseDesktop");
-	msgWaitForMultipleObjectsEx = (pfnMsgWaitForMultipleObjectsEx)GetProcAddress(hUser32, "MsgWaitForMultipleObjectsEx");
-	animateWindow =(pfnAnimateWindow)GetProcAddress(hUser32, "AnimateWindow");
-	setLayeredWindowAttributes =(pfnSetLayeredWindowAttributes)GetProcAddress(hUser32, "SetLayeredWindowAttributes");
+	MyMsgWaitForMultipleObjectsEx = (pfnMsgWaitForMultipleObjectsEx)GetProcAddress(hUser32,"MsgWaitForMultipleObjectsEx");
 
 	MyMonitorFromPoint = (pfnMyMonitorFromPoint)GetProcAddress(hUser32, "MonitorFromPoint");
 	MyMonitorFromRect = (pfnMyMonitorFromRect)GetProcAddress(hUser32, "MonitorFromRect");
@@ -589,27 +580,21 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int )
     if (IsWinVerXPPlus())
     {
 	    hThemeAPI = LoadLibraryA("uxtheme.dll");
-	    if (hThemeAPI)
-		{
-		    openThemeData = (pfnOpenThemeData)GetProcAddress(hThemeAPI, "OpenThemeData");
-		    isThemeBackgroundPartiallyTransparent = (pfnIsThemeBackgroundPartiallyTransparent)GetProcAddress(hThemeAPI, "IsThemeBackgroundPartiallyTransparent");
-		    drawThemeParentBackground  = (pfnDrawThemeParentBackground)GetProcAddress(hThemeAPI, "DrawThemeParentBackground");
-		    drawThemeBackground = (pfnDrawThemeBackground)GetProcAddress(hThemeAPI, "DrawThemeBackground");
-		    drawThemeText = (pfnDrawThemeText)GetProcAddress(hThemeAPI, "DrawThemeText");
-		    drawThemeTextEx = (pfnDrawThemeTextEx)GetProcAddress(hThemeAPI, "DrawThemeTextEx");
-            getThemeBackgroundContentRect = (pfnGetThemeBackgroundContentRect)GetProcAddress(hThemeAPI ,"GetThemeBackgroundContentRect");
-            getThemeFont = (pfnGetThemeFont)GetProcAddress(hThemeAPI, "GetThemeFont");
-		    closeThemeData  = (pfnCloseThemeData)GetProcAddress(hThemeAPI, "CloseThemeData");
-            enableThemeDialogTexture = (pfnEnableThemeDialogTexture)GetProcAddress(hThemeAPI, "EnableThemeDialogTexture");
-            setWindowTheme = (pfnSetWindowTheme)GetProcAddress(hThemeAPI, "SetWindowTheme");
-            setWindowThemeAttribute = (pfnSetWindowThemeAttribute)GetProcAddress(hThemeAPI, "SetWindowThemeAttribute");
-            isThemeActive = (pfnIsThemeActive)GetProcAddress(hThemeAPI, "IsThemeActive");
-            bufferedPaintInit = (pfnBufferedPaintInit)GetProcAddress(hThemeAPI, "BufferedPaintInit");
-            bufferedPaintUninit = (pfnBufferedPaintUninit)GetProcAddress(hThemeAPI, "BufferedPaintUninit");
-            beginBufferedPaint = (pfnBeginBufferedPaint)GetProcAddress(hThemeAPI, "BeginBufferedPaint");
-            endBufferedPaint = (pfnEndBufferedPaint)GetProcAddress(hThemeAPI, "EndBufferedPaint");
-            getBufferedPaintBits = (pfnGetBufferedPaintBits)GetProcAddress(hThemeAPI, "GetBufferedPaintBits");
-		}
+	    if ( hThemeAPI ) {
+		    openThemeData = (pfnOpenThemeData)GetProcAddress(hThemeAPI,"OpenThemeData");
+		    isThemeBackgroundPartiallyTransparent = (pfnIsThemeBackgroundPartiallyTransparent)GetProcAddress(hThemeAPI,"IsThemeBackgroundPartiallyTransparent");
+		    drawThemeParentBackground  = (pfnDrawThemeParentBackground)GetProcAddress(hThemeAPI,"DrawThemeParentBackground");
+		    drawThemeBackground = (pfnDrawThemeBackground)GetProcAddress(hThemeAPI,"DrawThemeBackground");
+		    drawThemeText = (pfnDrawThemeText)GetProcAddress(hThemeAPI,"DrawThemeText");
+		    drawThemeTextEx = (pfnDrawThemeTextEx)GetProcAddress(hThemeAPI,"DrawThemeTextEx");
+            getThemeBackgroundContentRect = (pfnGetThemeBackgroundContentRect)GetProcAddress(hThemeAPI,"GetThemeBackgroundContentRect");
+            getThemeFont = (pfnGetThemeFont)GetProcAddress(hThemeAPI,"GetThemeFont");
+		    closeThemeData  = (pfnCloseThemeData)GetProcAddress(hThemeAPI,"CloseThemeData");
+            enableThemeDialogTexture = (pfnEnableThemeDialogTexture)GetProcAddress(hThemeAPI,"EnableThemeDialogTexture");
+            setWindowTheme = (pfnSetWindowTheme)GetProcAddress(hThemeAPI,"SetWindowTheme");
+            setWindowThemeAttribute = (pfnSetWindowThemeAttribute)GetProcAddress(hThemeAPI,"SetWindowThemeAttribute");
+            isThemeActive = (pfnIsThemeActive)GetProcAddress(hThemeAPI,"IsThemeActive");
+        }
     }
 
     if (IsWinVerVistaPlus())
@@ -621,8 +606,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int )
             dwmIsCompositionEnabled = (pfnDwmIsCompositionEnabled)GetProcAddress(hDwmApi,"DwmIsCompositionEnabled");
 	    }
     }
-
-	if (bufferedPaintInit) bufferedPaintInit();
 
 	OleInitialize(NULL);
 
@@ -701,8 +684,6 @@ exit:
 		pTaskbarInterface->Release();
 
 	OleUninitialize();
-
-	if (bufferedPaintUninit) bufferedPaintUninit();
 
     if (hDwmApi) FreeLibrary(hDwmApi);
     if (hThemeAPI) FreeLibrary(hThemeAPI);
@@ -875,10 +856,7 @@ INT_PTR GetUtfInterface(WPARAM, LPARAM lParam)
 
 int LoadSystemModule(void)
 {
-	INITCOMMONCONTROLSEX icce = {0};
-	icce.dwSize = sizeof(icce);
-	icce.dwICC = ICC_WIN95_CLASSES | ICC_USEREX_CLASSES;
-	InitCommonControlsEx(&icce);
+	InitCommonControls();
 
 	if (IsWinVerXPPlus()) {
 		hAPCWindow=CreateWindowEx(0,_T("ComboLBox"),NULL,0, 0,0,0,0, NULL,NULL,NULL,NULL);
