@@ -23,6 +23,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "commonheaders.h"
 #include "netlib.h"
 
+extern struct NetlibUser **netlibUser;
+extern int netlibUserCount;
+extern CRITICAL_SECTION csNetlibUser;
 static const char search_request_msg[] =
 	"M-SEARCH * HTTP/1.1\r\n"
 	"HOST: 239.255.255.250:1900\r\n"
@@ -264,7 +267,7 @@ static int httpTransact(char* szUrl, char* szResult, int resSize, char* szAction
 					enetaddr.sin_addr.s_addr = *(unsigned*)he->h_addr_list[0];
 			}
 
-			NetlibLogf(NULL, "UPnP HTTP connection Host: %s Port: %u\n", szHost, sPort);
+			Netlib_Logf(NULL, "UPnP HTTP connection Host: %s Port: %u\n", szHost, sPort);
 
 			FD_ZERO(&readfd);
 			FD_SET(sock, &readfd);
@@ -283,13 +286,13 @@ static int httpTransact(char* szUrl, char* szResult, int resSize, char* szAction
 				// Socket connection failed
 				if (err != WSAEWOULDBLOCK)
 				{
-					NetlibLogf(NULL, "UPnP connect failed %d", err);
+					Netlib_Logf(NULL, "UPnP connect failed %d", err);
 					break;
 				}
 				// Wait for socket to connect
 				else if (select(1, NULL, &readfd, NULL, &tv) != 1)
 				{
-					NetlibLogf(NULL, "UPnP connect timeout");
+					Netlib_Logf(NULL, "UPnP connect timeout");
 					break;
 				}
 			}
@@ -311,7 +314,7 @@ static int httpTransact(char* szUrl, char* szResult, int resSize, char* szAction
 					// Wait for the next packet
 					if (select(1, &readfd, NULL, NULL, &tv) != 1)
 					{
-						NetlibLogf(NULL, "UPnP recieve timeout");
+						Netlib_Logf(NULL, "UPnP recieve timeout");
 						break;
 					}
 
@@ -395,7 +398,7 @@ static int httpTransact(char* szUrl, char* szResult, int resSize, char* szAction
 				LongLog(szResult);
 			}
 			else
-				NetlibLogf(NULL, "UPnP send failed %d", WSAGetLastError());
+				Netlib_Logf(NULL, "UPnP send failed %d", WSAGetLastError());
 
 			if (szActionName == NULL)
 			{
@@ -606,7 +609,7 @@ static BOOL findUPnPGateway(void)
 		gatewayFound = FALSE;
 
 		discoverUPnP();
-		NetlibLogf(NULL, "UPnP Gateway detected %d, Control URL: %s\n", gatewayFound, szCtlUrl);
+		Netlib_Logf(NULL, "UPnP Gateway detected %d, Control URL: %s\n", gatewayFound, szCtlUrl);
 	}
 
 	ReleaseMutex(portListMutex);
@@ -692,14 +695,10 @@ void NetlibUPnPCleanup(void*)
     {
         int i, incoming = 0;
         EnterCriticalSection(&csNetlibUser);
-        for (i = 0; i < netlibUser.getCount(); ++i)
-		{
-            if (netlibUser[i]->user.flags & NUF_INCOMING)
-			{
+        for(i=netlibUserCount; i--; )
+            if (netlibUser[i]->user.flags&NUF_INCOMING)
                 incoming = 1;
-				break;
-			}
-		}
+
 		LeaveCriticalSection(&csNetlibUser);
         if (!incoming) return;
     }

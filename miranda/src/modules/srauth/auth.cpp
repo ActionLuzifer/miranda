@@ -30,62 +30,60 @@ INT_PTR CALLBACK DlgProcAdded(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lPar
 
 INT_PTR ShowReqWindow(WPARAM, LPARAM lParam)
 {
-	CreateDialogParam(hMirandaInst, MAKEINTRESOURCE(IDD_AUTHREQ), NULL, DlgProcAuthReq,
-		(LPARAM)((CLISTEVENT *)lParam)->hDbEvent);
+	CreateDialogParam(hMirandaInst,MAKEINTRESOURCE(IDD_AUTHREQ),NULL,DlgProcAuthReq,(LPARAM)((CLISTEVENT *)lParam)->hDbEvent);
 	return 0;
 }
 
 INT_PTR ShowAddedWindow(WPARAM, LPARAM lParam)
 {
-	CreateDialogParam(hMirandaInst, MAKEINTRESOURCE(IDD_ADDED), NULL, DlgProcAdded,
-		(LPARAM)((CLISTEVENT *)lParam)->hDbEvent);
+	CreateDialogParam(hMirandaInst,MAKEINTRESOURCE(IDD_ADDED),NULL,DlgProcAdded,(LPARAM)((CLISTEVENT *)lParam)->hDbEvent);
 	return 0;
 }
 
 static int AuthEventAdded(WPARAM, LPARAM lParam)
 {
-    TCHAR szUid[128] = _T("");
+	DBEVENTINFO dbei;
+	CLISTEVENT cli;
+	HANDLE hContact;
+    CONTACTINFO ci;
+    TCHAR szUid[128];
 	TCHAR szTooltip[256];
-	const HANDLE hDbEvent = (HANDLE)lParam;
-
-	DBEVENTINFO dbei = {0};
-	dbei.cbSize = sizeof(dbei);
+    
+	ZeroMemory(&dbei,sizeof(dbei));
+	dbei.cbSize=sizeof(dbei);
+	dbei.cbBlob=0;
 	CallService(MS_DB_EVENT_GET,(WPARAM)lParam,(LPARAM)&dbei);
-	if (dbei.flags & (DBEF_SENT | DBEF_READ) || 
-		(dbei.eventType != EVENTTYPE_AUTHREQUEST && dbei.eventType != EVENTTYPE_ADDED)) 
-		return 0;
+	if(dbei.flags&(DBEF_SENT|DBEF_READ) || (dbei.eventType!=EVENTTYPE_AUTHREQUEST && dbei.eventType!=EVENTTYPE_ADDED)) return 0;
 
-	dbei.cbBlob = CallService(MS_DB_EVENT_GETBLOBSIZE, lParam, 0);
-	dbei.pBlob = (PBYTE)alloca(dbei.cbBlob);
-	CallService(MS_DB_EVENT_GET, lParam, (LPARAM)&dbei);
+	dbei.cbBlob=CallService(MS_DB_EVENT_GETBLOBSIZE,(WPARAM)lParam,0);
+	dbei.pBlob=(PBYTE)mir_alloc(dbei.cbBlob);
+	CallService(MS_DB_EVENT_GET,(WPARAM)(HANDLE)lParam,(LPARAM)&dbei);
 
-	HANDLE hContact = *(PHANDLE)(dbei.pBlob + sizeof(DWORD));
+	hContact=*((PHANDLE)(dbei.pBlob+sizeof(DWORD)));
 
-	CLISTEVENT cli ={0};
-	cli.cbSize = sizeof(cli);
-	cli.hContact = hContact;
-	cli.ptszTooltip = szTooltip;
+	ZeroMemory(&cli,sizeof(cli));
+	cli.cbSize=sizeof(cli);
+	cli.hContact=hContact;
+	cli.ptszTooltip=szTooltip;
     cli.flags = CLEF_TCHAR;
-	cli.lParam = lParam;
-	cli.hDbEvent = hDbEvent;
+	cli.lParam=lParam;
+	cli.hDbEvent=(HANDLE)lParam;
 
-	CONTACTINFO ci = {0};
+    szUid[0] = 0;
+    ZeroMemory(&ci, sizeof(ci));
     ci.cbSize = sizeof(ci);
     ci.hContact = hContact;
     ci.szProto = (char *)CallService(MS_PROTO_GETCONTACTBASEPROTO, (WPARAM)hContact, 0);
     ci.dwFlag = CNF_UNIQUEID | CNF_TCHAR;
-    if (!CallService(MS_CONTACT_GETCONTACTINFO, 0, (LPARAM)&ci))
-	{
-        switch (ci.type)
-		{
-        case CNFT_ASCIIZ:
-            mir_sntprintf(szUid, SIZEOF(szUid), _T("%s"), ci.pszVal);
-            mir_free(ci.pszVal);
-            break;
-
-        case CNFT_DWORD:
-            mir_sntprintf(szUid, SIZEOF(szUid), _T("%u"), ci.dVal);
-            break;
+    if (!CallService(MS_CONTACT_GETCONTACTINFO, 0, (LPARAM)&ci)) {
+        switch (ci.type) {
+            case CNFT_ASCIIZ:
+                mir_sntprintf(szUid, SIZEOF(szUid), _T("%s"), ci.pszVal);
+                mir_free(ci.pszVal);
+                break;
+            case CNFT_DWORD:
+                mir_sntprintf(szUid, SIZEOF(szUid), _T("%u"), ci.dVal);
+                break;
         }
     }
                     
@@ -97,9 +95,10 @@ static int AuthEventAdded(WPARAM, LPARAM lParam)
         else
             mir_sntprintf(szTooltip, SIZEOF(szTooltip), TranslateT("%u requests authorization"), *((PDWORD)dbei.pBlob));
 
-		cli.hIcon = LoadSkinIcon(SKINICON_OTHER_MIRANDA);
+		cli.hIcon = LoadSkinIcon( SKINICON_OTHER_MIRANDA );
 		cli.pszService = MS_AUTH_SHOWREQUEST;
 		CallService(MS_CLIST_ADDEVENT, 0, (LPARAM)&cli);
+		mir_free(dbei.pBlob);
 	}
 	else if (dbei.eventType == EVENTTYPE_ADDED)
 	{
@@ -109,9 +108,10 @@ static int AuthEventAdded(WPARAM, LPARAM lParam)
         else
             mir_sntprintf(szTooltip, SIZEOF(szTooltip), TranslateT("%u added you to their contact list"), *((PDWORD)dbei.pBlob));
             
-		cli.hIcon = LoadSkinIcon(SKINICON_OTHER_MIRANDA);
+		cli.hIcon = LoadSkinIcon( SKINICON_OTHER_MIRANDA );
 		cli.pszService = MS_AUTH_SHOWADDED;
 		CallService(MS_CLIST_ADDEVENT, 0, (LPARAM)&cli);
+		mir_free(dbei.pBlob);
 	}
 	return 0;
 }

@@ -48,7 +48,7 @@ RSC=rc.exe
 # ADD BASE MTL /nologo /D "NDEBUG" /mktyplib203 /win32
 # ADD MTL /nologo /D "NDEBUG" /mktyplib203 /win32
 # ADD BASE RSC /l 0x409 /d "NDEBUG"
-# ADD RSC /l 0x409 /i "..\..\include" /d "NDEBUG"
+# ADD RSC /l 0x409 /d "NDEBUG"
 BSC32=bscmake.exe
 # ADD BASE BSC32 /nologo
 # ADD BSC32 /nologo
@@ -76,7 +76,7 @@ LINK32=link.exe
 # ADD BASE MTL /nologo /D "_DEBUG" /mktyplib203 /win32
 # ADD MTL /nologo /D "_DEBUG" /mktyplib203 /win32
 # ADD BASE RSC /l 0x409 /d "_DEBUG"
-# ADD RSC /l 0x409 /i "..\..\include" /d "_DEBUG"
+# ADD RSC /l 0x409 /d "_DEBUG"
 BSC32=bscmake.exe
 # ADD BASE BSC32 /nologo
 # ADD BSC32 /nologo
@@ -263,19 +263,11 @@ SOURCE=.\Miranda\main.cpp
 # PROP Default_Filter ""
 # Begin Source File
 
-SOURCE=.\Source\LibJPEG\jaricom.c
-# End Source File
-# Begin Source File
-
 SOURCE=.\Source\LibJPEG\jcapimin.c
 # End Source File
 # Begin Source File
 
 SOURCE=.\Source\LibJPEG\jcapistd.c
-# End Source File
-# Begin Source File
-
-SOURCE=.\Source\LibJPEG\jcarith.c
 # End Source File
 # Begin Source File
 
@@ -327,6 +319,10 @@ SOURCE=.\Source\LibJPEG\jcparam.c
 # End Source File
 # Begin Source File
 
+SOURCE=.\Source\LibJPEG\jcphuff.c
+# End Source File
+# Begin Source File
+
 SOURCE=.\Source\LibJPEG\jcprepct.c
 # End Source File
 # Begin Source File
@@ -344,10 +340,6 @@ SOURCE=.\Source\LibJPEG\jdapimin.c
 # Begin Source File
 
 SOURCE=.\Source\LibJPEG\jdapistd.c
-# End Source File
-# Begin Source File
-
-SOURCE=.\Source\LibJPEG\jdarith.c
 # End Source File
 # Begin Source File
 
@@ -403,6 +395,10 @@ SOURCE=.\Source\LibJPEG\jdmerge.c
 # End Source File
 # Begin Source File
 
+SOURCE=.\Source\LibJPEG\jdphuff.c
+# End Source File
+# Begin Source File
+
 SOURCE=.\Source\LibJPEG\jdpostct.c
 # End Source File
 # Begin Source File
@@ -444,6 +440,10 @@ SOURCE=.\Source\LibJPEG\jidctfst.c
 # Begin Source File
 
 SOURCE=.\Source\LibJPEG\jidctint.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\Source\LibJPEG\jidctred.c
 # End Source File
 # Begin Source File
 

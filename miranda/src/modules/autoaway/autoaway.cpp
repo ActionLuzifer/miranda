@@ -24,7 +24,16 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #define AA_MODULE "AutoAway"
 
-void Proto_SetStatus(const char* szProto, unsigned status);
+static void AutoAwaySetProtocol(const char* account, unsigned status)
+{
+	char* awayMsg = ( char* )CallService( MS_AWAYMSG_GETSTATUSMSG, (WPARAM)status, 0 );
+	CallProtoService( account, PS_SETSTATUS, status, 0);
+	if ( awayMsg != NULL ) {
+		if ( CallProtoService( account, PS_GETCAPS, PFLAGNUM_1, 0 ) & PF1_MODEMSGSEND )
+			CallProtoService( account, PS_SETAWAYMSG, status, (LPARAM) awayMsg);
+		mir_free(awayMsg);
+	}
+}
 
 static int AutoAwayEvent(WPARAM, LPARAM lParam)
 {
@@ -39,7 +48,7 @@ static int AutoAwayEvent(WPARAM, LPARAM lParam)
 	for ( i=0; i < accounts.getCount(); i++ ) {
 		PROTOACCOUNT* pa = accounts[i];
 
-		if (!Proto_IsAccountEnabled( pa ) || Proto_IsAccountLocked( pa )) continue;
+		if (!IsAccountEnabled(pa) || DBGetContactSettingByte(NULL, pa->szModuleName, "LockMainStatus", 0)) continue;
 
 		int statusbits = CallProtoService( pa->szModuleName, PS_GETCAPS, PFLAGNUM_2, 0 );
 		int currentstatus = CallProtoService( pa->szModuleName, PS_GETSTATUS, 0, 0 );
@@ -55,13 +64,13 @@ static int AutoAwayEvent(WPARAM, LPARAM lParam)
 		if ( currentstatus >= ID_STATUS_ONLINE && currentstatus != ID_STATUS_INVISIBLE ) {			
 			if ( (lParam&IDF_ISIDLE) && ( currentstatus == ID_STATUS_ONLINE || currentstatus == ID_STATUS_FREECHAT ))  {
 				DBWriteContactSettingByte( NULL, AA_MODULE, pa->szModuleName, 1 );
-				Proto_SetStatus( pa->szModuleName, status );
+				AutoAwaySetProtocol( pa->szModuleName, status );
 			}
 			else if ( !(lParam & IDF_ISIDLE) && DBGetContactSettingByte( NULL, AA_MODULE, pa->szModuleName, 0 )) {
 				// returning from idle and this proto was set away, set it back
 				DBWriteContactSettingByte( NULL, AA_MODULE, pa->szModuleName, 0 );
 				if ( !mii.aaLock )
-					Proto_SetStatus( pa->szModuleName, ID_STATUS_ONLINE);
+					AutoAwaySetProtocol( pa->szModuleName, ID_STATUS_ONLINE);
 	}	}	}
 
 	return 0;

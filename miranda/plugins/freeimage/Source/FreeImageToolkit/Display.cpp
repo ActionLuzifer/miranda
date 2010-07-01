@@ -178,9 +178,6 @@ FreeImage_Composite(FIBITMAP *fg, BOOL useFileBkg, RGBQUAD *appBkColor, FIBITMAP
 		}
 	}
 
-	// copy metadata from src to dst
-	FreeImage_CloneMetadata(composite, fg);
-	
 	return composite;	
 }
 

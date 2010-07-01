@@ -1,22 +1,3 @@
-/*
-Copyright 2000-2010 Miranda IM project, 
-all portions of this codebase are copyrighted to the people 
-listed in contributors.txt.
-
-This program is free software; you can redistribute it and/or
-modify it under the terms of the GNU General Public License
-as published by the Free Software Foundation; either version 2
-of the License, or (at your option) any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program; if not, write to the Free Software
-Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
-*/
 #include "commonheaders.h"
 #include "statusicon.h"
 
@@ -31,15 +12,15 @@ int status_icon_list_size = 0;
 
 INT_PTR AddStatusIcon(WPARAM wParam, LPARAM lParam) {
 	StatusIconData *sid = (StatusIconData *)lParam;
-	struct StatusIconListNode *siln = (struct StatusIconListNode *)mir_calloc(sizeof(struct StatusIconListNode));
+	struct StatusIconListNode *siln = (struct StatusIconListNode *)malloc(sizeof(struct StatusIconListNode));
 
 	siln->sid.cbSize = sid->cbSize;
-	siln->sid.szModule = mir_strdup(sid->szModule);
+	siln->sid.szModule = _strdup(sid->szModule);
 	siln->sid.dwId = sid->dwId;
 	siln->sid.hIcon = sid->hIcon;
 	siln->sid.hIconDisabled = sid->hIconDisabled;
 	siln->sid.flags = sid->flags;
-	if(sid->szTooltip) siln->sid.szTooltip = mir_strdup(sid->szTooltip);
+	if(sid->szTooltip) siln->sid.szTooltip = _strdup(sid->szTooltip);
 	else siln->sid.szTooltip = 0;
 
 	siln->next = status_icon_list;
@@ -61,11 +42,11 @@ INT_PTR RemoveStatusIcon(WPARAM wParam, LPARAM lParam) {
 
 			status_icon_list_size--;
 
-			mir_free(current->sid.szModule);
+			free(current->sid.szModule);
 			DestroyIcon(current->sid.hIcon);
 			if(current->sid.hIconDisabled) DestroyIcon(current->sid.hIconDisabled);
-			mir_free(current->sid.szTooltip);
-			mir_free(current);
+			if(current->sid.szTooltip) free(current->sid.szTooltip);
+			free(current);
 			WindowList_Broadcast(g_dat->hMessageWindowList, DM_STATUSICONCHANGE, 0, 0);
 			return 0;
 		}
@@ -85,11 +66,11 @@ void RemoveAllStatusIcons(void) {
 		status_icon_list = status_icon_list->next;
 		status_icon_list_size--;
 
-		mir_free(current->sid.szModule);
+		free(current->sid.szModule);
 		DestroyIcon(current->sid.hIcon);
 		if(current->sid.hIconDisabled) DestroyIcon(current->sid.hIconDisabled);
-		if(current->sid.szTooltip) mir_free(current->sid.szTooltip);
-		mir_free(current);
+		if(current->sid.szTooltip) free(current->sid.szTooltip);
+		free(current);
 	}
 
 	WindowList_Broadcast(g_dat->hMessageWindowList, DM_STATUSICONCHANGE, 0, 0);
@@ -114,8 +95,8 @@ INT_PTR ModifyStatusIcon(WPARAM wParam, LPARAM lParam) {
 					current->sid.hIconDisabled = sid->hIconDisabled;
 				}
 				if(sid->szTooltip) {
-					mir_free(current->sid.szTooltip);
-					current->sid.szTooltip = mir_strdup(sid->szTooltip);
+					if(current->sid.szTooltip) free(current->sid.szTooltip);
+					current->sid.szTooltip = _strdup(sid->szTooltip);
 				}
 
 				WindowList_Broadcast(g_dat->hMessageWindowList, DM_STATUSICONCHANGE, 0, 0);

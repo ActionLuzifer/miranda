@@ -1,10 +1,9 @@
 <?xml version="1.0" encoding="windows-1251"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="9.00"
+	Version="9,00"
 	Name="FreeImage"
 	ProjectGUID="{D0C4EACD-F264-4CFA-9AFC-3918FEC31A9A}"
-	RootNamespace="FreeImage"
 	TargetFrameworkVersion="131072"
 	>
 	<Platforms>
@@ -59,9 +58,7 @@
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;FREEIMAGE_EXPORTS;_CRT_SECURE_NO_WARNINGS"
 				StringPooling="true"
 				RuntimeLibrary="2"
-				BufferSecurityCheck="false"
 				EnableFunctionLevelLinking="true"
-				FloatingPointModel="2"
 				AssemblerListingLocation=""
 				BrowseInformation="0"
 				WarningLevel="3"
@@ -159,9 +156,7 @@
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;FREEIMAGE_EXPORTS;_CRT_SECURE_NO_WARNINGS"
 				StringPooling="true"
 				RuntimeLibrary="2"
-				BufferSecurityCheck="false"
 				EnableFunctionLevelLinking="true"
-				FloatingPointModel="2"
 				AssemblerListingLocation=""
 				BrowseInformation="0"
 				WarningLevel="3"
@@ -259,10 +254,7 @@
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;FREEIMAGE_EXPORTS;_CRT_SECURE_NO_WARNINGS"
 				StringPooling="true"
 				RuntimeLibrary="2"
-				BufferSecurityCheck="false"
 				EnableFunctionLevelLinking="true"
-				FloatingPointModel="2"
-				RuntimeTypeInfo="false"
 				PrecompiledHeaderFile=""
 				AssemblerListingLocation=""
 				BrowseInformation="0"
@@ -365,10 +357,7 @@
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;FREEIMAGE_EXPORTS;_CRT_SECURE_NO_WARNINGS"
 				StringPooling="true"
 				RuntimeLibrary="2"
-				BufferSecurityCheck="false"
 				EnableFunctionLevelLinking="true"
-				FloatingPointModel="2"
-				RuntimeTypeInfo="false"
 				PrecompiledHeaderFile=""
 				AssemblerListingLocation=""
 				BrowseInformation="0"
@@ -719,7 +708,7 @@
 			ConfigurationType="2"
 			UseOfMFC="0"
 			ATLMinimizesCRunTimeLibraryUsage="false"
-			CharacterSet="2"
+			CharacterSet="1"
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
@@ -811,8 +800,7 @@
 	</Configurations>
 	<References>
 		<ProjectReference
-			ReferencedProjectIdentifier="{E2A369CD-EDA3-414F-8AD0-E732CD7EE68C}"
-			RelativePathToProject="..\plugins\zlib\zlib_9.vcproj"
+			ReferencedProjectIdentifier="{FFD8637D-909C-4586-9E42-120B66B564FE}"
 		/>
 	</References>
 	<Files>
@@ -1027,19 +1015,11 @@
 					Name="Source Files"
 					>
 					<File
-						RelativePath=".\Source\LibJPEG\jaricom.c"
-						>
-					</File>
-					<File
 						RelativePath=".\Source\LibJPEG\jcapimin.c"
 						>
 					</File>
 					<File
 						RelativePath=".\Source\LibJPEG\jcapistd.c"
-						>
-					</File>
-					<File
-						RelativePath=".\Source\LibJPEG\jcarith.c"
 						>
 					</File>
 					<File
@@ -1083,6 +1063,10 @@
 						>
 					</File>
 					<File
+						RelativePath=".\Source\LibJPEG\jcphuff.c"
+						>
+					</File>
+					<File
 						RelativePath=".\Source\LibJPEG\jcprepct.c"
 						>
 					</File>
@@ -1100,10 +1084,6 @@
 					</File>
 					<File
 						RelativePath=".\Source\LibJPEG\jdapistd.c"
-						>
-					</File>
-					<File
-						RelativePath=".\Source\LibJPEG\jdarith.c"
 						>
 					</File>
 					<File
@@ -1151,6 +1131,10 @@
 						>
 					</File>
 					<File
+						RelativePath=".\Source\LibJPEG\jdphuff.c"
+						>
+					</File>
+					<File
 						RelativePath=".\Source\LibJPEG\jdpostct.c"
 						>
 					</File>
@@ -1188,6 +1172,10 @@
 					</File>
 					<File
 						RelativePath=".\Source\LibJPEG\jidctint.c"
+						>
+					</File>
+					<File
+						RelativePath=".\Source\LibJPEG\jidctred.c"
 						>
 					</File>
 					<File
@@ -1275,11 +1263,19 @@
 						>
 					</File>
 					<File
+						RelativePath=".\Source\LibJPEG\jchuff.h"
+						>
+					</File>
+					<File
 						RelativePath=".\Source\LibJPEG\jconfig.h"
 						>
 					</File>
 					<File
 						RelativePath=".\Source\LibJPEG\jdct.h"
+						>
+					</File>
+					<File
+						RelativePath=".\Source\LibJPEG\jdhuff.h"
 						>
 					</File>
 					<File
@@ -1461,10 +1457,6 @@
 				RelativePath="Source\Utilities.h"
 				>
 			</File>
-			<File
-				RelativePath=".\Miranda\version.h"
-				>
-			</File>
 		</Filter>
 		<Filter
 			Name="Toolkit Files"
@@ -1514,6 +1506,14 @@
 				>
 			</File>
 		</Filter>
+		<File
+			RelativePath="Todo.txt"
+			>
+		</File>
+		<File
+			RelativePath="Whatsnew.txt"
+			>
+		</File>
 	</Files>
 	<Globals>
 	</Globals>

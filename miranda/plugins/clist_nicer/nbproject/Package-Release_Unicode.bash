@@ -6,10 +6,8 @@
 
 # Macros
 TOP=`pwd`
-CND_PLATFORM=MinGW-Windows
-CND_CONF=Release_Unicode
-CND_DISTDIR=dist
-TMPDIR=build/${CND_CONF}/${CND_PLATFORM}/tmp-packaging
+PLATFORM=MinGW-Windows
+TMPDIR=build/Release_Unicode/${PLATFORM}/tmp-packaging
 TMPDIRNAME=tmp-packaging
 OUTPUT_PATH=dist/Release_Unicode/${PLATFORM}/clist_nicer.dll
 OUTPUT_BASENAME=clist_nicer.dll
@@ -52,7 +50,7 @@ function copyFileToTmpDir
 
 # Setup
 cd "${TOP}"
-mkdir -p ${CND_DISTDIR}/${CND_CONF}/${CND_PLATFORM}/package
+mkdir -p dist/Release_Unicode/${PLATFORM}/package
 rm -rf ${TMPDIR}
 mkdir -p ${TMPDIR}
 
@@ -64,9 +62,9 @@ copyFileToTmpDir "${OUTPUT_PATH}" "${TMPDIR}/${PACKAGE_TOP_DIR}lib/${OUTPUT_BASE
 
 # Generate tar file
 cd "${TOP}"
-rm -f ${CND_DISTDIR}/${CND_CONF}/${CND_PLATFORM}/package/libclistnicer.dll.tar
+rm -f dist/Release_Unicode/${PLATFORM}/package/libclistnicer.dll.tar
 cd ${TMPDIR}
-tar -vcf ../../../../${CND_DISTDIR}/${CND_CONF}/${CND_PLATFORM}/package/libclistnicer.dll.tar *
+tar -vcf ../../../../dist/Release_Unicode/${PLATFORM}/package/libclistnicer.dll.tar *
 checkReturnCode
 
 # Cleanup

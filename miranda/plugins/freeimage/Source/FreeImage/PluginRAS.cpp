@@ -219,9 +219,8 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 
 			// Verify SUN identifier
 
-			if (header.magic != RAS_MAGIC) {
-				throw FI_MSG_ERROR_MAGIC_NUMBER;
-			}
+			if (header.magic != RAS_MAGIC)
+				throw "Invalid magic number";
 
 			// Allocate a new DIB
 
@@ -240,9 +239,8 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 					break;
 			}
 
-			if (dib == NULL) {
-				throw FI_MSG_ERROR_DIB_MEMORY;
-			}
+			if (dib == NULL)
+				throw "DIB allocation failed";
 
 			// Check the file format
 
@@ -267,7 +265,7 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 					break;
 
 				default:
-					throw FI_MSG_ERROR_UNSUPPORTED_FORMAT;
+					throw "Unsupported Sun rasterfile";
 			}
 
 			// set up the colormap if needed

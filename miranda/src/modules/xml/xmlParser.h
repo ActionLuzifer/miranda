@@ -340,7 +340,6 @@ typedef struct XMLDLLENTRY XMLNode
      * @{ */
     XMLCSTR getName() const;                                       ///< name of the node
     XMLCSTR getText(int i=0) const;                                ///< return ith text field
-	XMLCSTR getInnerText() const;
     int nText() const;                                             ///< nbr of text field
     XMLNode getParentNode() const;                                 ///< return the parent node
     XMLNode getChildNode(int i=0) const;                           ///< return ith child node
@@ -611,7 +610,6 @@ typedef struct XMLDLLENTRY XMLNode
           XMLAttribute           *pAttribute;     // Array of attributes
           int                    *pOrder;         // order of the child_nodes,text_fields,clear_fields
           int                    ref_count;       // for garbage collection (smart pointers)
-		  XMLSTR                 pInnerText;      // cached value of inner text, for memory manadgement purposes
       } XMLNodeData;
       XMLNodeData *d;
 
@@ -626,7 +624,6 @@ typedef struct XMLDLLENTRY XMLNode
       XMLCSTR addText_priv(int,XMLSTR,int);
       XMLClear *addClear_priv(int,XMLSTR,XMLCSTR,XMLCSTR,int);
       void emptyTheNode(char force);
-	  void invalidateInnerText();
       static inline XMLElementPosition findPosition(XMLNodeData *d, int index, XMLElementType xtype);
       static int CreateXMLStringR(XMLNodeData *pEntry, XMLSTR lpszMarker, int nFormat);
       static int removeOrderElement(XMLNodeData *d, XMLElementType t, int index);

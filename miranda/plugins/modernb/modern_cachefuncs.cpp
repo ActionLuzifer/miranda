@@ -209,15 +209,13 @@ void CSmileyString::DestroySmileyList()
 */
 void CSmileyString::ReplaceSmileys(struct SHORTDATA *dat, PDNCE pdnce, TCHAR * szText, BOOL replace_smileys)
 {
-	SMADD_BATCHPARSE2 sp = {0};
-	SMADD_BATCHPARSERES *spr;
-
-	int last_pos=0;
+    SMADD_PARSET sp={0};
+    int last_pos=0;
     iMaxSmileyHeight = 0;
 
 	DestroySmileyList();
 
-    if (!dat->text_replace_smileys || !replace_smileys || szText == NULL)
+    if (!dat->text_replace_smileys || !replace_smileys || szText == NULL || !ServiceExists(MS_SMILEYADD_PARSE))
     {
         return;
     }
@@ -246,11 +244,13 @@ void CSmileyString::ReplaceSmileys(struct SHORTDATA *dat, PDNCE pdnce, TCHAR * s
     }
 
     sp.str = szText;
-	sp.flag = SAFL_TCHAR;
+    sp.startChar = 0;
+    sp.size = 0;
 
-	spr = (SMADD_BATCHPARSERES*)CallService(MS_SMILEYADD_BATCHPARSE, 0, (LPARAM)&sp);
+    if (ServiceExists(MS_SMILEYADD_PARSET))
+        CallService(MS_SMILEYADD_PARSET, 0, (LPARAM)&sp);
 
-    if (spr == NULL || (INT_PTR)spr == CALLSERVICE_NOTFOUND)
+    if (sp.size == 0)
     {
         // Did not find a simley
         return;
@@ -259,18 +259,18 @@ void CSmileyString::ReplaceSmileys(struct SHORTDATA *dat, PDNCE pdnce, TCHAR * s
     // Lets add smileys
     plText = li.List_Create( 0, 1 );
 
-    for (unsigned i = 0; i < sp.numSmileys; ++i)
+    do
     {
-        if (spr[i].hIcon != NULL)	// For deffective smileypacks
+        if (sp.SmileyIcon != NULL)	// For deffective smileypacks
         {
             // Add text
-            if (spr[i].startChar - last_pos > 0)
+            if (sp.startChar-last_pos > 0)
             {
                 ClcContactTextPiece *piece = (ClcContactTextPiece *) mir_alloc(sizeof(ClcContactTextPiece));
 
                 piece->type = TEXT_PIECE_TYPE_TEXT;
                 piece->start_pos = last_pos ;//sp.str - text;
-                piece->len = spr[i].startChar - last_pos;
+                piece->len = sp.startChar-last_pos;
                 li.List_Insert(plText, piece, plText->realCount);
             }
 
@@ -281,8 +281,8 @@ void CSmileyString::ReplaceSmileys(struct SHORTDATA *dat, PDNCE pdnce, TCHAR * s
                 ClcContactTextPiece *piece = (ClcContactTextPiece *) mir_alloc(sizeof(ClcContactTextPiece));
 
                 piece->type = TEXT_PIECE_TYPE_SMILEY;
-                piece->len = spr[i].size;
-                piece->smiley = spr[i].hIcon;
+                piece->len = sp.size;
+                piece->smiley = sp.SmileyIcon;
 
                 piece->smiley_width = 16;
                 piece->smiley_height = 16;
@@ -305,9 +305,12 @@ void CSmileyString::ReplaceSmileys(struct SHORTDATA *dat, PDNCE pdnce, TCHAR * s
             }
         }
         // Get next
-        last_pos = spr[i].startChar + spr[i].size;
+        last_pos=sp.startChar+sp.size;
+        if (ServiceExists(MS_SMILEYADD_PARSET))
+            CallService(MS_SMILEYADD_PARSET, 0, (LPARAM)&sp);
+
     }
-	CallService(MS_SMILEYADD_BATCHFREE, 0, (LPARAM)spr);
+    while (sp.size != 0);
 
     // Add rest of text
     if (last_pos < text_size)

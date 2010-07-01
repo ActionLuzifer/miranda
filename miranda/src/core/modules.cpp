@@ -156,7 +156,7 @@ int LoadHeaderbarModule();
 int LoadDescButtonModule();
 int LoadDefaultModules(void)
 {
-	INT_PTR *disableDefaultModule = 0;
+	int *disableDefaultModule = 0;
 
     //load order is very important for these
 	if (LoadSystemModule()) return 1;
@@ -182,7 +182,7 @@ int LoadDefaultModules(void)
 	}
 
 	//this info will be available at LoadNewPluginsModule()
-	disableDefaultModule=(INT_PTR*)CallService(MS_PLUGINS_GETDISABLEDEFAULTARRAY,0,0);
+	disableDefaultModule=(int*)CallService(MS_PLUGINS_GETDISABLEDEFAULTARRAY,0,0);
 
 	if (LoadSkinSounds()) return 1;
 	if (LoadSkinHotkeys()) return 1;

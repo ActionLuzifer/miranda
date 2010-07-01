@@ -55,9 +55,7 @@ static int ProcessDatabaseValueDefault(CONTACTINFO *ci, const char* setting)
 	if ( !GetDatabaseString( ci, setting, &dbv )) {
 		switch (dbv.type) {
 		case DBVT_ASCIIZ:
-			if (!dbv.pszVal[0]) break;
 		case DBVT_WCHAR:
-			if (!dbv.pwszVal[0]) break;
 			ci->type = CNFT_ASCIIZ;
 			ci->pszVal = dbv.ptszVal;
 			return 0;
@@ -138,13 +136,11 @@ static INT_PTR GetContactInfo(WPARAM, LPARAM lParam) {
 		}
 		case CNF_COUNTRY:
 		case CNF_COCOUNTRY:
-			if ( !GetDatabaseString( ci, (ci->dwFlag & 0x7F) == CNF_COUNTRY ? "CountryName" : "CompanyCountryName", &dbv ))
-				return 0;
-
+		{
+			int i,countryCount;
+			struct CountryListEntry *countries;
 			if ( !DBGetContactSetting( ci->hContact, ci->szProto, (ci->dwFlag & 0x7F)==CNF_COUNTRY ? "Country" : "CompanyCountry", &dbv )) {
 				if ( dbv.type == DBVT_WORD ) {
-					int i,countryCount;
-					struct CountryListEntry *countries;
 					CallService(MS_UTILS_GETCOUNTRYLIST,(WPARAM)&countryCount,(LPARAM)&countries);
 					for(i=0;i<countryCount;i++) {
 						if(countries[i].id!=dbv.wVal) continue;
@@ -167,7 +163,7 @@ static INT_PTR GetContactInfo(WPARAM, LPARAM lParam) {
 				DBFreeVariant(&dbv);
 			}
 			break;
-
+		}
 		case CNF_FIRSTLAST:
 			if( !GetDatabaseString( ci, "FirstName", &dbv )) {
 				DBVARIANT dbv2;

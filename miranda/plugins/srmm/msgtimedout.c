@@ -1,5 +1,7 @@
 /*
-Copyright 2000-2010 Miranda IM project, 
+SRMM
+
+Copyright 2000-2005 Miranda ICQ/IM project, 
 all portions of this codebase are copyrighted to the people 
 listed in contributors.txt.
 
@@ -32,19 +34,18 @@ INT_PTR CALLBACK ErrorDlgProc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lPar
 
 			TranslateDialogDefault(hwndDlg);
 
-			if (!pszError || !pszError[0])
+			if (!pszError||!strlen(pszError))
 				SetDlgItemText(hwndDlg, IDC_ERRORTEXT, TranslateT("An unknown error has occured."));
 			else {
-				TCHAR* ptszError = (TCHAR*)CallService(MS_LANGPACK_PCHARTOTCHAR, 0, (LPARAM)pszError);
+				TCHAR* ptszError = (TCHAR*)CallService(MS_LANGPACK_PCHARTOTCHAR,0,(LPARAM)pszError);
+
 				SetDlgItemText(hwndDlg, IDC_ERRORTEXT, ptszError);
 				mir_free(ptszError);
 			}
 
 			GetWindowRect(hwndDlg, &rc);
 			GetWindowRect(GetParent(hwndDlg), &rcParent);
-			SetWindowPos(hwndDlg, 0, (rcParent.left + rcParent.right - (rc.right - rc.left)) / 2, 
-				(rcParent.top + rcParent.bottom - (rc.bottom - rc.top)) / 2, 
-				0, 0, SWP_NOZORDER | SWP_NOSIZE);
+			SetWindowPos(hwndDlg, 0, (rcParent.left + rcParent.right - (rc.right - rc.left)) / 2, (rcParent.top + rcParent.bottom - (rc.bottom - rc.top)) / 2, 0, 0, SWP_NOZORDER | SWP_NOSIZE);
 		}
 		return TRUE;
 

@@ -493,9 +493,6 @@ FreeImage_MultigridPoissonSolver(FIBITMAP *Laplacian, int ncycle) {
 	// remap pixels to [0..1]
 	NormalizeY(U, 0, 1);
 
-	// copy metadata from src to dst
-	FreeImage_CloneMetadata(U, Laplacian);
-
 	// return the integrated image
 	return U;
 }

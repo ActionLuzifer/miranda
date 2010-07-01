@@ -365,7 +365,7 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 
 	} catch(const char *text) {
 		if(buffer)	free(buffer);
-		if(dib)		FreeImage_Unload(dib);
+		if(dib)		free(dib);
 		FreeImage_OutputMessageProc(s_format_id, text);
 		return NULL;
 	}

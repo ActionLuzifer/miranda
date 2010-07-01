@@ -104,18 +104,7 @@ static void SetValue(HWND hwndDlg,int idCtrl,HANDLE hContact,char *szModule,char
 				break;
 			case DBVT_WORD:
 				if(special==SVS_COUNTRY) {
-					WORD wSave = dbv.wVal;
-					if (wSave == ( WORD )-1) {
-						char szSettingName[100];
-						mir_snprintf( szSettingName, SIZEOF(szSettingName), "%sName", szSetting );
-						if ( !DBGetContactSettingTString(hContact,szModule,szSettingName,&dbv)) {
-							ptstr = dbv.ptszVal;
-							unspecified = false;
-							break;
-						}
-					}
-
-					pstr = Translate((char*)CallService(MS_UTILS_GETCOUNTRYBYNUMBER,wSave,0));
+					pstr=(char*)CallService(MS_UTILS_GETCOUNTRYBYNUMBER,dbv.wVal,0);
 					unspecified=pstr==NULL;
 				}
 				else {
@@ -176,8 +165,7 @@ static INT_PTR CALLBACK SummaryDlgProc(HWND hwndDlg, UINT msg, WPARAM wParam, LP
 	switch(msg) {
 	case WM_INITDIALOG:
 		TranslateDialogDefault(hwndDlg);
-		break;
-
+		return TRUE;
 	case WM_NOTIFY:
 		switch (((LPNMHDR)lParam)->idFrom) {
 		case 0:
@@ -207,10 +195,11 @@ static INT_PTR CALLBACK SummaryDlgProc(HWND hwndDlg, UINT msg, WPARAM wParam, LP
 			break;
 		case IDC_EMAIL:
 			if(IsWindowEnabled(GetDlgItem(hwndDlg,IDC_EMAIL))) {
-				TCHAR szExec[264], szEmail[256];
-				GetDlgItemText(hwndDlg, IDC_EMAIL, szEmail, SIZEOF(szEmail));
-				mir_sntprintf(szExec, SIZEOF(szExec), _T("mailto:%s"), szEmail);
-				ShellExecute(hwndDlg, _T("open"), szExec, NULL, NULL, SW_SHOW);
+				char szExec[264],szEmail[256];
+				GetDlgItemTextA(hwndDlg,IDC_EMAIL,szEmail,SIZEOF(szEmail));
+				lstrcpyA(szExec,"mailto:");
+				lstrcatA(szExec,szEmail);
+				ShellExecuteA(hwndDlg,"open",szExec,NULL,NULL,SW_SHOW);
 			}
 			break;
 		}
@@ -227,7 +216,7 @@ static INT_PTR CALLBACK LocationDlgProc(HWND hwndDlg, UINT msg, WPARAM wParam, L
 			TranslateDialogDefault(hwndDlg);
 			SetTimer(hwndDlg,1,1000,NULL);
 			SendMessage(hwndDlg,WM_TIMER,0,0);
-			break;
+			return TRUE;
 		case WM_TIMER:
 		{	char *szProto;
 			HANDLE hContact=(HANDLE)GetWindowLongPtr(hwndDlg,GWLP_USERDATA);
@@ -302,7 +291,7 @@ static INT_PTR CALLBACK WorkDlgProc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARA
 	switch(msg) {
 	case WM_INITDIALOG:
 		TranslateDialogDefault(hwndDlg);
-		break;
+		return TRUE;
 	case WM_NOTIFY:
 		switch (((LPNMHDR)lParam)->idFrom) {
 			case 0:
@@ -372,8 +361,7 @@ static INT_PTR CALLBACK BackgroundDlgProc(HWND hwndDlg, UINT msg, WPARAM wParam,
 		}
 		ListView_SetExtendedListViewStyleEx(GetDlgItem(hwndDlg,IDC_PAST),LVS_EX_LABELTIP,LVS_EX_LABELTIP);
 		ListView_SetExtendedListViewStyleEx(GetDlgItem(hwndDlg,IDC_INTERESTS),LVS_EX_LABELTIP,LVS_EX_LABELTIP);
-		break;
-
+		return TRUE;
 	case WM_NOTIFY:
 		switch (((LPNMHDR)lParam)->idFrom) {
 		case 0:
@@ -515,7 +503,7 @@ static INT_PTR CALLBACK NotesDlgProc(HWND hwndDlg, UINT msg, WPARAM wParam, LPAR
 			}
 		}
 		SendDlgItemMessage(hwndDlg,IDC_MYNOTES,EM_LIMITTEXT,2048,0);
-		break;
+		return TRUE;
 	case WM_NOTIFY:
 		switch (((LPNMHDR)lParam)->idFrom) {
 			case 0:
