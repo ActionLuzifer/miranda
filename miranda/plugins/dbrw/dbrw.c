@@ -46,11 +46,8 @@ PLUGININFOEX pluginInfo = {
 };
 
 HINSTANCE g_hInst;
-
-struct MM_INTERFACE   mmi;
-struct UTF8_INTERFACE utfi;
+struct MM_INTERFACE memoryManagerInterface = {0, 0, 0, 0};
 struct LIST_INTERFACE li;
-
 sqlite3 *g_sqlite;
 char g_szDbPath[MAX_PATH];
 HANDLE hSettingChangeEvent;
@@ -60,7 +57,6 @@ HANDLE hEventFilterAddedEvent;
 HANDLE hEventAddedEvent;
 HANDLE hEventDeletedEvent;
 PLUGINLINK *pluginLink;
-
 
 enum {
     DBRW_TABLE_SETTINGS = 0,
@@ -105,7 +101,7 @@ static int dbrw_getFriendlyName(char *buf, size_t cch, int shortName) {
 static int dbrw_makeDatabase(char *profile, int *error) {
 	sqlite3 *sql = NULL;
 	int rc;
-    char *szPath = mir_utf8encode(profile);
+    char *szPath = utf8_encode(profile);
     
 	rc = sqlite3_open(szPath, &sql);
     dbrw_free(szPath);
@@ -148,7 +144,7 @@ static int dbrw_grokHeader(char *profile, int *error) {
         CloseHandle(hFile);
         if (r && memcmp(buf, DBRW_HEADER_STR, strlen(DBRW_HEADER_STR))==0) {
             sqlite3 *sqlcheck = NULL;
-            char *szPath = mir_utf8encode(profile);
+            char *szPath = utf8_encode(profile);
 
             rc = sqlite3_open(szPath, &sqlcheck);
             dbrw_free(szPath);
@@ -184,16 +180,13 @@ static int dbrw_grokHeader(char *profile, int *error) {
     return rc;
 }
 
-static int dbrw_Load(char *profile, void *link) 
-{
+static int dbrw_Load(char *profile, void *link) {
 	pluginLink = (PLUGINLINK*)link;
-
-	mir_getMMI( &mmi );
-	mir_getLI( &li );
-	mir_getUTFI( &utfi );
-
+	ZeroMemory(&memoryManagerInterface, sizeof(memoryManagerInterface));
+    memoryManagerInterface.cbSize = sizeof(memoryManagerInterface);
+	CallService(MS_SYSTEM_GET_MMI, 0, (LPARAM)&memoryManagerInterface);
     {
-        char *szLocalPath = mir_utf8encode(profile);
+        char *szLocalPath = utf8_encode(profile);
         mir_snprintf(g_szDbPath, sizeof(g_szDbPath), "%s", szLocalPath);
         dbrw_free(szLocalPath);
     }
@@ -217,9 +210,13 @@ static int dbrw_Load(char *profile, void *link)
 		sql_exec(g_sqlite, "PRAGMA temp_store = MEMORY;");
         sql_exec(g_sqlite, "COMMIT;");
 	}
+	li.cbSize = sizeof(li);
+	CallService(MS_SYSTEM_GET_LI,0,(LPARAM)&li);
     
 	// Create Services
 	CreateServiceFunction(MS_DB_SETSAFETYMODE, utils_setSafetyMode);
+	CreateServiceFunction(MS_DB_GETPROFILENAME, utils_getProfileName);
+	CreateServiceFunction(MS_DB_GETPROFILEPATH, utils_getProfilePath);
 	CreateServiceFunction(MS_DB_CONTACT_GETSETTING, setting_getSetting);
 	CreateServiceFunction(MS_DB_CONTACT_GETSETTING_STR, setting_getSettingStr);
 	CreateServiceFunction(MS_DB_CONTACT_GETSETTINGSTATIC, setting_getSettingStatic);
