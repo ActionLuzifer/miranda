@@ -11,6 +11,7 @@
 !define MIM_BUILD_ICONS_HI      "icons\bin\hicolor"
 !define MIM_BUILD_OPTIONS_FILE  "miranda32.lst"
 !define MIM_BUILD_OPTIONS_SECT  "InstalledSections"
+!define MIM_BUILD_SUCCESS       "http://www.miranda-im.org/donate/"
 
 !ifdef MIM_BUILD_UNICODE
 !define MIM_BUILD_TYPE          "unicode"
@@ -45,6 +46,7 @@ VAR INST_UPGRADE
 VAR INST_SUCCESS
 VAR INST_MODE
 VAR INST_DIR
+VAR INST_WARN
 
 !define MUI_HEADERIMAGE
 !define MUI_HEADERIMAGE_BITMAP "Graphics\header.bmp"
@@ -61,8 +63,6 @@ VAR INST_DIR
 !define MUI_FINISHPAGE_SHOWREADME $INSTDIR\readme.txt
 !define MUI_FINISHPAGE_SHOWREADME_TEXT "View Readme"
 !define MUI_FINISHPAGE_SHOWREADME_NOTCHECKED
-!define MUI_FINISHPAGE_LINK "Support Miranda IM"
-!define MUI_FINISHPAGE_LINK_LOCATION "http://www.miranda-im.org/donate/"
 
 !insertmacro MUI_PAGE_LICENSE "${MIM_BUILD_SRC}\docs\license.txt"
 Page Custom CustomInstallPage CustomInstallPageLeave
@@ -136,6 +136,21 @@ Section "Miranda IM (core)"
   File "${MIM_BUILD_SRC}\docs\changelog.txt"
   File "${MIM_BUILD_SRC}\docs\license.txt"
   
+  !ifdef MIM_BUILD_UNICODE
+  ${If} $INST_MODE = 0
+    ${If} $INST_UPGRADE = 1
+      ${If} ${FileExists} "$INSTDIR\mirandaboot.ini"
+        ReadINIStr $0 "$INSTDIR\mirandaboot.ini" "Database" "ProfileDir"
+        ${If} $0 == ""
+          StrCpy $INST_WARN 1
+        ${Endif}
+        ${If} $0 == ""
+          StrCpy $INST_WARN 1
+        ${Endif}
+      ${EndIf}
+    ${EndIf}
+  ${EndIf}
+  !endif
   ${If} $INST_UPGRADE = 0
     SetOverWrite off
     File "${MIM_BUILD_SRC}\docs\mirandaboot.ini"
@@ -299,10 +314,20 @@ Function .onInit
   norun:
   StrCpy $INST_SUCCESS 0
   StrCpy $INST_MODE 0
+  StrCpy $INST_WARN 0
 FunctionEnd
 
 Function .onInstSuccess
   StrCpy $INST_SUCCESS 1
+  ${If} $INST_WARN == "1"
+    ;MessageBox MB_OK "Due to recent changes in Miranda IM, you may need to manually move your profiles to allow them to be recognized by Miranda IM.  Please see the support forums for more information."
+  ${Endif}
+FunctionEnd
+
+Function .onGUIEnd
+  ${If} $INST_SUCCESS = 1
+    ExecShell "open" "${MIM_BUILD_SUCCESS}"
+  ${EndIf}
 FunctionEnd
 
 Function VerifyInstallDir

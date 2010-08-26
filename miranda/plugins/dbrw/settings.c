@@ -434,9 +434,9 @@ static int settings_getContactSettingWorker(HANDLE hContact, DBCONTACTGETSETTING
 					dbcgs->pValue->pszVal = cbOrigPtr;
 					if (cbLen<cbOrigLen)
 						cbOrigLen = cbLen;
-					memcpy(dbcgs->pValue->pszVal, pCachedValue->pszVal, cbOrigLen);
+					CopyMemory(dbcgs->pValue->pszVal, pCachedValue->pszVal, cbOrigLen);
 					dbcgs->pValue->pszVal[cbOrigLen] = 0;
-					dbcgs->pValue->cchVal = (WORD)cbLen;
+					dbcgs->pValue->cchVal = cbLen;
 				}
 				else {
 					dbcgs->pValue->pszVal = (char*)dbrw_alloc(strlen(pCachedValue->pszVal)+1);
@@ -503,7 +503,7 @@ static int settings_getContactSettingWorker(HANDLE hContact, DBCONTACTGETSETTING
 				if (!isStatic) 
 					dbcgs->pValue->pbVal=dbrw_alloc(copylen);
 				CopyMemory(dbcgs->pValue->pbVal, sqlite3_column_blob(settings_stmts_prep[SQL_SET_STMT_READ], 1), copylen);
-                dbcgs->pValue->cpbVal = (WORD)copylen;
+                dbcgs->pValue->cpbVal = copylen;
 			}
 			else {
 				dbcgs->pValue = 0;
@@ -520,7 +520,7 @@ static int settings_getContactSettingWorker(HANDLE hContact, DBCONTACTGETSETTING
 	return 0;
 }
 
-INT_PTR setting_getSetting(WPARAM wParam, LPARAM lParam) {
+int setting_getSetting(WPARAM wParam, LPARAM lParam) {
 	DBCONTACTGETSETTING* dgs = (DBCONTACTGETSETTING*)lParam;
 
 	EnterCriticalSection(&csSettingsDb);
@@ -530,14 +530,14 @@ INT_PTR setting_getSetting(WPARAM wParam, LPARAM lParam) {
 		return 1;
 	}
 	if (dgs->pValue->type==DBVT_UTF8 ) {
-		mir_utf8decode(dgs->pValue->pszVal, NULL);
+		utf8_decode(dgs->pValue->pszVal, NULL);
 		dgs->pValue->type = DBVT_ASCIIZ;
 	}
 	LeaveCriticalSection(&csSettingsDb);
 	return 0;
 }
 
-INT_PTR setting_getSettingStr(WPARAM wParam, LPARAM lParam) {
+int setting_getSettingStr(WPARAM wParam, LPARAM lParam) {
 	DBCONTACTGETSETTING* dgs = (DBCONTACTGETSETTING*)lParam;
 	int iSaveType = dgs->pValue->type;
 	
@@ -571,12 +571,12 @@ INT_PTR setting_getSettingStr(WPARAM wParam, LPARAM lParam) {
 		else {
 			char *savePtr = dgs->pValue->pszVal;
 
-			mir_utf8decode(dgs->pValue->pszVal, &dgs->pValue->pwszVal);
+			utf8_decode(dgs->pValue->pszVal, &dgs->pValue->pwszVal);
 			dbrw_free(savePtr);
 		}
 	}
 	else if (iSaveType==DBVT_UTF8) {
-		char *tmpBuf = mir_utf8encode(dgs->pValue->pszVal);
+		char *tmpBuf = utf8_encode(dgs->pValue->pszVal);
 
 		if (tmpBuf==NULL) {
 			LeaveCriticalSection(&csSettingsDb);
@@ -586,13 +586,13 @@ INT_PTR setting_getSettingStr(WPARAM wParam, LPARAM lParam) {
 		dgs->pValue->pszVal = tmpBuf;
 	}
 	else if (iSaveType==DBVT_ASCIIZ)
-		mir_utf8decode(dgs->pValue->pszVal, NULL);
+		utf8_decode(dgs->pValue->pszVal, NULL);
 	dgs->pValue->type = iSaveType;
 	LeaveCriticalSection(&csSettingsDb);
 	return 0;
 }
 
-INT_PTR setting_getSettingStatic(WPARAM wParam, LPARAM lParam) {
+int setting_getSettingStatic(WPARAM wParam, LPARAM lParam) {
 	DBCONTACTGETSETTING* dgs = (DBCONTACTGETSETTING*)lParam;
 
 	EnterCriticalSection(&csSettingsDb);
@@ -601,14 +601,14 @@ INT_PTR setting_getSettingStatic(WPARAM wParam, LPARAM lParam) {
 		return 1;
 	}
 	if (dgs->pValue->type==DBVT_UTF8 ) {
-		mir_utf8decode(dgs->pValue->pszVal, NULL);
+		utf8_decode(dgs->pValue->pszVal, NULL);
 		dgs->pValue->type = DBVT_ASCIIZ;
 	}
 	LeaveCriticalSection(&csSettingsDb);
 	return 0;
 }
 
-INT_PTR setting_freeVariant(WPARAM wParam, LPARAM lParam) {
+int setting_freeVariant(WPARAM wParam, LPARAM lParam) {
 	DBVARIANT *dbv = (DBVARIANT*)lParam;
 	if (dbv==0) 
 		return 1;
@@ -634,7 +634,7 @@ INT_PTR setting_freeVariant(WPARAM wParam, LPARAM lParam) {
 	return 0;
 }
 
-INT_PTR setting_writeSetting(WPARAM wParam, LPARAM lParam) {
+int setting_writeSetting(WPARAM wParam, LPARAM lParam) {
 	HANDLE hContact = (HANDLE)wParam;
 	DBCONTACTWRITESETTING *dbcws = (DBCONTACTWRITESETTING*)lParam;
 	
@@ -642,7 +642,7 @@ INT_PTR setting_writeSetting(WPARAM wParam, LPARAM lParam) {
 		return 1;
 	if (dbcws->value.type==DBVT_WCHAR) {
 		if (dbcws->value.pszVal!=NULL) {
-			char *val = mir_utf8encodeW(dbcws->value.pwszVal);
+			char *val = utf8_encodeUsc2(dbcws->value.pwszVal);
 			if (val== NULL)
 				return 1;
 			dbcws->value.pszVal = (char*)alloca(strlen(val)+1);
@@ -709,7 +709,7 @@ INT_PTR setting_writeSetting(WPARAM wParam, LPARAM lParam) {
 	return 0;
 }
 
-INT_PTR setting_deleteSetting(WPARAM wParam, LPARAM lParam) {
+int setting_deleteSetting(WPARAM wParam, LPARAM lParam) {
 	HANDLE hContact = (HANDLE)wParam;
 	DBCONTACTGETSETTING *dbcgs = (DBCONTACTGETSETTING*)lParam;
 
@@ -759,7 +759,7 @@ INT_PTR setting_deleteSetting(WPARAM wParam, LPARAM lParam) {
 	return 0;
 }
 
-INT_PTR setting_enumSettings(WPARAM wParam, LPARAM lParam) {
+int setting_enumSettings(WPARAM wParam, LPARAM lParam) {
 	HANDLE hContact = (HANDLE)wParam;
 	DBCONTACTENUMSETTINGS *dbces = (DBCONTACTENUMSETTINGS*)lParam;
 	int rc = -1;
@@ -784,7 +784,7 @@ INT_PTR setting_enumSettings(WPARAM wParam, LPARAM lParam) {
 	return rc;
 }
 
-INT_PTR setting_modulesEnum(WPARAM wParam, LPARAM lParam) {
+int setting_modulesEnum(WPARAM wParam, LPARAM lParam) {
 	DBMODULEENUMPROC proc = (DBMODULEENUMPROC)lParam;
 	LPARAM lParamReal = (LPARAM)wParam;
 	int rc = 0;
@@ -830,7 +830,7 @@ void settings_deleteContactData(HANDLE hContact) {
     LeaveCriticalSection(&csSettingsDb);
 }
 
-INT_PTR settings_setResident(WPARAM wParam, LPARAM lParam) {
+int settings_setResident(WPARAM wParam, LPARAM lParam) {
     EnterCriticalSection(&csSettingsDb);
     {
         DBCachedResidentSettingValue Vtemp, *V;
