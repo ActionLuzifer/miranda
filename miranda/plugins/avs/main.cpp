@@ -347,7 +347,7 @@ static void NotifyMetaAware(HANDLE hContact, struct CacheNode *node = NULL, AVAT
 							cacn.hash[i*4+3] = '=';
 						}
 					}
-					DBFreeVariant(&dbv);
+				DBFreeVariant(&dbv);
 				}
 			}
 
