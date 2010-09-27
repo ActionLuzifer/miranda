@@ -969,9 +969,19 @@ static int stringCompare( DBCachedSettingName* p1, DBCachedSettingName* p2 )
 	return strcmp( p1->name, p2->name );
 }
 
+static int ptrCompare( DBCachedGlobalValue* p1, DBCachedGlobalValue* p2 )
+{
+	return (p1->name - p2->name);
+}
+
 static int stringCompare2( char* p1, char* p2 )
 {
 	return strcmp( p1, p2);
+}
+
+static int handleCompare( void* p1, void* p2 )
+{
+	return *( long* )p1 - *( long* )p2;
 }
 
 int InitSettings(void)
@@ -991,9 +1001,9 @@ int InitSettings(void)
 	hCacheHeap=HeapCreate(0,0,0);
 	lSettings.sortFunc=stringCompare;
 	lSettings.increment=100;
-	lContacts.sortFunc=HandleKeySort;
+	lContacts.sortFunc=handleCompare;
 	lContacts.increment=50;
-	lGlobalSettings.sortFunc=HandleKeySort;
+	lGlobalSettings.sortFunc=ptrCompare;
 	lGlobalSettings.increment=50;
 	lResidentSettings.sortFunc=stringCompare2;
 	lResidentSettings.increment=50;

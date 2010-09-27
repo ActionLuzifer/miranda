@@ -43,7 +43,7 @@ CIrcMessage::CIrcMessage( CIrcProto* _pro, const TCHAR* lpszCmdLine, int codepag
 	m_bIncoming( bIncoming ),
 	m_bNotify( bNotify ),
 	m_codePage( codepage ),
-	parameters( 10 )
+	parameters( 10, NULL )
 {
 	ParseIrcCommand(lpszCmdLine);
 }
@@ -54,7 +54,7 @@ CIrcMessage::CIrcMessage(const CIrcMessage& m) :
 	m_bNotify( m.m_bNotify ),
 	m_codePage( m.m_codePage ),
 	m_proto( m.m_proto ),
-	parameters( m.parameters.getCount() )
+	parameters( m.parameters.getCount(), NULL )
 {
 	prefix.sNick = m.prefix.sNick;
 	prefix.sUser = m.prefix.sUser;
@@ -255,7 +255,7 @@ void CIrcProto::Disconnect(void)
 	else
 		NLSend( "QUIT \r\n" );
 
-	Sleep(50);
+	for ( int i = 0; i < 20 && con; ++i ) Sleep(50);
 
 	if ( con )
 		Netlib_Shutdown(con);

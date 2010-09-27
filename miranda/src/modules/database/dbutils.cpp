@@ -230,7 +230,7 @@ static int sttEnumVars( const char* szVarName, LPARAM lParam )
 
 static INT_PTR DbDeleteModule( WPARAM, LPARAM lParam )
 {
-	LIST<char> vars( 20 );
+	LIST<char> vars( 20, NULL );
 
 	DBCONTACTENUMSETTINGS dbces = { 0 };
 	dbces.pfnEnumProc = sttEnumVars;

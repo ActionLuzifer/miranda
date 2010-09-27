@@ -225,6 +225,10 @@ static void FillOptionDialogByStatusItem(HWND hwndDlg, StatusItems_t *item)
     SendDlgItemMessage(hwndDlg, IDC_TEXTCOLOUR, CPM_SETDEFAULTCOLOUR, 0, CLCDEFAULT_TEXTCOLOR);
     SendDlgItemMessage(hwndDlg, IDC_TEXTCOLOUR, CPM_SETCOLOUR, 0, ret);
 
+
+    //  TODO: I suppose we don't need to use _itoa here. 
+    //  we could probably just set the integer value of the buddy spinner control:
+
     if (item->ALPHA == -1) {
         SetDlgItemTextA(hwndDlg, IDC_ALPHA, "");
     } else {
@@ -657,7 +661,7 @@ static void FillItemList(HWND hwndDlg)
 
 static BOOL CALLBACK SkinEdit_ExtBkDlgProc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 {
-    SKINDESCRIPTION *psd = (SKINDESCRIPTION *)GetWindowLongPtr(hwndDlg, GWLP_USERDATA);
+    SKINDESCRIPTION *psd = (SKINDESCRIPTION *)GetWindowLong(hwndDlg, GWL_USERDATA);
 
     if(psd) {
         ID_EXTBK_FIRST = psd->firstItem;
@@ -669,7 +673,7 @@ static BOOL CALLBACK SkinEdit_ExtBkDlgProc(HWND hwndDlg, UINT msg, WPARAM wParam
             psd = (SKINDESCRIPTION *)malloc(sizeof(SKINDESCRIPTION));
             ZeroMemory(psd, sizeof(SKINDESCRIPTION));
             CopyMemory(psd, (void *)lParam, sizeof(SKINDESCRIPTION));
-            SetWindowLongPtr(hwndDlg, GWLP_USERDATA, (LONG_PTR)psd);
+            SetWindowLong(hwndDlg, GWL_USERDATA, (LONG)psd);
 
             if(psd) {
                 ID_EXTBK_FIRST = psd->firstItem;
@@ -867,7 +871,7 @@ static BOOL CALLBACK SkinEdit_ExtBkDlgProc(HWND hwndDlg, UINT msg, WPARAM wParam
             break;
         case WM_NCDESTROY:
             free(psd);
-            SetWindowLongPtr(hwndDlg, GWLP_USERDATA, (LONG_PTR)0);
+            SetWindowLong(hwndDlg, GWL_USERDATA, 0);
             break;
     }
     return FALSE;
@@ -882,7 +886,7 @@ static BOOL CALLBACK SkinEdit_ImageItemEditProc(HWND hwndDlg, UINT msg, WPARAM w
     return FALSE;
 }
 
-static INT_PTR SkinEdit_FillByCurrentSel(WPARAM wParam, LPARAM lParam)
+static int SkinEdit_FillByCurrentSel(WPARAM wParam, LPARAM lParam)
 {
     if(wParam)
         FillOptionDialogByCurrentSel((HWND)wParam);
@@ -895,7 +899,7 @@ static INT_PTR SkinEdit_FillByCurrentSel(WPARAM wParam, LPARAM lParam)
  * expects a SKINDESCRIPTON * in lParam
 */
 
-static INT_PTR SkinEdit_Invoke(WPARAM wParam, LPARAM lParam)
+static int SkinEdit_Invoke(WPARAM wParam, LPARAM lParam)
 {
     SKINDESCRIPTION *psd = (SKINDESCRIPTION *)lParam;
     TCITEM  tci = {0};
@@ -909,22 +913,20 @@ static INT_PTR SkinEdit_Invoke(WPARAM wParam, LPARAM lParam)
     GetClientRect(psd->hWndParent, &rcClient);
 
     tci.mask = TCIF_PARAM|TCIF_TEXT;
-    tci.lParam = (LPARAM)CreateDialogParam(g_hInst, MAKEINTRESOURCE(IDD_SKINITEMEDIT), psd->hWndParent, (DLGPROC)SkinEdit_ExtBkDlgProc, (LPARAM)psd);
+    tci.lParam = (LPARAM)CreateDialogParam(g_hInst, MAKEINTRESOURCE(IDD_SKINITEMEDIT), psd->hWndParent, SkinEdit_ExtBkDlgProc, (LPARAM)psd);
 
     tci.pszText = TranslateT("Skin items");
     TabCtrl_InsertItem(psd->hWndTab, iTabs++, &tci);
     MoveWindow((HWND)tci.lParam, 5, 25, rcClient.right - 9, rcClient.bottom - 60, 1);
     psd->hwndSkinEdit = (HWND)tci.lParam;
 
-    /*
-    tci.lParam = (LPARAM)CreateDialogParam(g_hInst, MAKEINTRESOURCE(IDD_IMAGEITEMEDIT), psd->hWndParent, (DLGPROC)SkinEdit_ImageItemEditProc, (LPARAM)psd);
+    tci.lParam = (LPARAM)CreateDialogParam(g_hInst, MAKEINTRESOURCE(IDD_IMAGEITEMEDIT), psd->hWndParent, SkinEdit_ImageItemEditProc, (LPARAM)psd);
     tci.pszText = TranslateT("Image items");
     TabCtrl_InsertItem(psd->hWndTab, iTabs++, &tci);
     MoveWindow((HWND)tci.lParam, 5, 25, rcClient.right - 9, rcClient.bottom - 60, 1);
     psd->hwndImageEdit = (HWND)tci.lParam;
-    */
     
-    return (INT_PTR)psd->hwndSkinEdit;
+    return (int)psd->hwndSkinEdit;
 }
 
 static HANDLE hSvc_invoke = 0, hSvc_fillby = 0;
@@ -935,8 +937,8 @@ static int LoadModule()
     memoryManagerInterface.cbSize = sizeof(memoryManagerInterface);
     CallService(MS_SYSTEM_GET_MMI, 0, (LPARAM) &memoryManagerInterface);
 
-    hSvc_invoke = CreateServiceFunction(MS_CLNSE_INVOKE, (MIRANDASERVICE)SkinEdit_Invoke);
-    hSvc_fillby = CreateServiceFunction(MS_CLNSE_FILLBYCURRENTSEL, (MIRANDASERVICE)SkinEdit_FillByCurrentSel);
+    hSvc_invoke = CreateServiceFunction(MS_CLNSE_INVOKE, SkinEdit_Invoke);
+    hSvc_fillby = CreateServiceFunction(MS_CLNSE_FILLBYCURRENTSEL, SkinEdit_FillByCurrentSel);
     return 0;
 }
 
