@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="Windows-1252"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="9,00"
+	Version="9.00"
 	Name="clist_nicer"
 	ProjectGUID="{3C42510C-A29E-4A53-899C-203BFA874E0B}"
 	RootNamespace="clist_nicer"
@@ -51,17 +51,12 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="../../include;./include"
+				AdditionalIncludeDirectories="../../include"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;CLIST_EXPORTS"
-				StringPooling="true"
-				ExceptionHandling="2"
-				BasicRuntimeChecks="0"
+				ExceptionHandling="0"
+				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
-				BufferSecurityCheck="true"
 				EnableFunctionLevelLinking="true"
-				FloatingPointModel="1"
-				RuntimeTypeInfo="false"
-				UsePrecompiledHeader="2"
 				PrecompiledHeaderThrough="commonheaders.h"
 				AssemblerListingLocation=""
 				WarningLevel="3"
@@ -77,7 +72,7 @@
 				Name="VCResourceCompilerTool"
 				PreprocessorDefinitions="_DEBUG"
 				Culture="2057"
-				AdditionalIncludeDirectories="../../include;./include"
+				AdditionalIncludeDirectories="../../include/"
 			/>
 			<Tool
 				Name="VCPreLinkEventTool"
@@ -85,7 +80,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				IgnoreImportLibrary="true"
-				AdditionalDependencies="comctl32.lib shlwapi.lib"
+				AdditionalDependencies="comctl32.lib msimg32.lib gdiplus.lib shlwapi.lib"
 				SuppressStartupBanner="true"
 				DelayLoadDLLs=""
 				GenerateDebugInformation="true"
@@ -152,17 +147,12 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="../../include;./include"
+				AdditionalIncludeDirectories="../../include"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;CLIST_EXPORTS"
-				StringPooling="true"
-				ExceptionHandling="2"
-				BasicRuntimeChecks="0"
+				ExceptionHandling="0"
+				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
-				BufferSecurityCheck="true"
 				EnableFunctionLevelLinking="true"
-				FloatingPointModel="1"
-				RuntimeTypeInfo="false"
-				UsePrecompiledHeader="2"
 				PrecompiledHeaderThrough="commonheaders.h"
 				AssemblerListingLocation=""
 				WarningLevel="3"
@@ -176,9 +166,9 @@
 			/>
 			<Tool
 				Name="VCResourceCompilerTool"
-				PreprocessorDefinitions="_UNICODE;UNICODE;_WIN64;_AMD64"
+				PreprocessorDefinitions="_DEBUG"
 				Culture="2057"
-				AdditionalIncludeDirectories="../../include;./include"
+				AdditionalIncludeDirectories="../../include/"
 			/>
 			<Tool
 				Name="VCPreLinkEventTool"
@@ -186,7 +176,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				IgnoreImportLibrary="true"
-				AdditionalDependencies="comctl32.lib shlwapi.lib"
+				AdditionalDependencies="comctl32.lib msimg32.lib gdiplus.lib shlwapi.lib"
 				SuppressStartupBanner="true"
 				AdditionalManifestDependencies="type=&apos;Win32&apos; name=&apos;Microsoft.Windows.Common-Controls&apos; version=&apos;6.0.0.0&apos; processorArchitecture=&apos;*&apos; publicKeyToken=&apos;6595b64144ccf1df&apos; language=&apos;*&apos;"
 				DelayLoadDLLs=""
@@ -258,19 +248,16 @@
 				InlineFunctionExpansion="1"
 				EnableIntrinsicFunctions="true"
 				FavorSizeOrSpeed="2"
-				OmitFramePointers="true"
 				WholeProgramOptimization="true"
-				AdditionalIncludeDirectories="../../include;./include"
+				AdditionalIncludeDirectories="../../include/"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;CLIST_EXPORTS"
 				StringPooling="true"
-				ExceptionHandling="2"
-				BasicRuntimeChecks="0"
+				ExceptionHandling="0"
 				RuntimeLibrary="2"
 				BufferSecurityCheck="false"
 				EnableFunctionLevelLinking="true"
-				FloatingPointModel="1"
+				FloatingPointModel="2"
 				RuntimeTypeInfo="false"
-				UsePrecompiledHeader="2"
 				PrecompiledHeaderThrough="commonheaders.h"
 				AssemblerListingLocation=""
 				WarningLevel="3"
@@ -286,7 +273,7 @@
 				Name="VCResourceCompilerTool"
 				PreprocessorDefinitions="NDEBUG"
 				Culture="2057"
-				AdditionalIncludeDirectories="../../include;./include"
+				AdditionalIncludeDirectories="../../include/"
 			/>
 			<Tool
 				Name="VCPreLinkEventTool"
@@ -294,7 +281,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				IgnoreImportLibrary="true"
-				AdditionalDependencies="comctl32.lib shlwapi.lib"
+				AdditionalDependencies="comctl32.lib msimg32.lib gdiplus.lib shlwapi.lib"
 				SuppressStartupBanner="true"
 				DelayLoadDLLs=""
 				GenerateDebugInformation="true"
@@ -369,19 +356,16 @@
 				InlineFunctionExpansion="1"
 				EnableIntrinsicFunctions="true"
 				FavorSizeOrSpeed="2"
-				OmitFramePointers="true"
 				WholeProgramOptimization="true"
-				AdditionalIncludeDirectories="../../include;./include"
+				AdditionalIncludeDirectories="../../include/"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;CLIST_EXPORTS"
 				StringPooling="true"
-				ExceptionHandling="2"
-				BasicRuntimeChecks="0"
+				ExceptionHandling="0"
 				RuntimeLibrary="2"
-				BufferSecurityCheck="true"
+				BufferSecurityCheck="false"
 				EnableFunctionLevelLinking="true"
-				FloatingPointModel="1"
+				FloatingPointModel="2"
 				RuntimeTypeInfo="false"
-				UsePrecompiledHeader="2"
 				PrecompiledHeaderThrough="commonheaders.h"
 				AssemblerListingLocation=""
 				WarningLevel="3"
@@ -395,9 +379,9 @@
 			/>
 			<Tool
 				Name="VCResourceCompilerTool"
-				PreprocessorDefinitions="_UNICODE;UNICODE;_WIN64;_AMD64"
+				PreprocessorDefinitions="NDEBUG"
 				Culture="2057"
-				AdditionalIncludeDirectories="../../include;./include"
+				AdditionalIncludeDirectories="../../include/"
 			/>
 			<Tool
 				Name="VCPreLinkEventTool"
@@ -405,7 +389,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				IgnoreImportLibrary="true"
-				AdditionalDependencies="comctl32.lib shlwapi.lib"
+				AdditionalDependencies="comctl32.lib msimg32.lib gdiplus.lib shlwapi.lib"
 				SuppressStartupBanner="true"
 				AdditionalManifestDependencies="type=&apos;Win32&apos; name=&apos;Microsoft.Windows.Common-Controls&apos; version=&apos;6.0.0.0&apos; processorArchitecture=&apos;*&apos; publicKeyToken=&apos;6595b64144ccf1df&apos; language=&apos;*&apos;"
 				DelayLoadDLLs=""
@@ -477,17 +461,14 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="../../include;./include"
+				AdditionalIncludeDirectories="../../include"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;CLIST_EXPORTS"
-				StringPooling="true"
-				ExceptionHandling="2"
-				BasicRuntimeChecks="0"
+				StringPooling="false"
+				ExceptionHandling="0"
+				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
-				BufferSecurityCheck="true"
 				EnableFunctionLevelLinking="true"
-				FloatingPointModel="1"
-				RuntimeTypeInfo="false"
-				UsePrecompiledHeader="2"
+				FloatingPointModel="0"
 				PrecompiledHeaderThrough="commonheaders.h"
 				AssemblerListingLocation=""
 				WarningLevel="3"
@@ -503,7 +484,7 @@
 				Name="VCResourceCompilerTool"
 				PreprocessorDefinitions="_DEBUG"
 				Culture="2057"
-				AdditionalIncludeDirectories="../../include;./include"
+				AdditionalIncludeDirectories="../../include/"
 			/>
 			<Tool
 				Name="VCPreLinkEventTool"
@@ -511,7 +492,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				IgnoreImportLibrary="true"
-				AdditionalDependencies="comctl32.lib shlwapi.lib"
+				AdditionalDependencies="comctl32.lib msimg32.lib gdiplus.lib shlwapi.lib"
 				SuppressStartupBanner="true"
 				DelayLoadDLLs=""
 				GenerateDebugInformation="true"
@@ -579,17 +560,12 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="../../include;./include"
+				AdditionalIncludeDirectories="../../include"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;CLIST_EXPORTS"
-				StringPooling="true"
-				ExceptionHandling="2"
-				BasicRuntimeChecks="0"
+				ExceptionHandling="0"
+				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
-				BufferSecurityCheck="true"
 				EnableFunctionLevelLinking="true"
-				FloatingPointModel="1"
-				RuntimeTypeInfo="false"
-				UsePrecompiledHeader="2"
 				PrecompiledHeaderThrough="commonheaders.h"
 				AssemblerListingLocation=""
 				WarningLevel="3"
@@ -603,9 +579,9 @@
 			/>
 			<Tool
 				Name="VCResourceCompilerTool"
-				PreprocessorDefinitions="_UNICODE;UNICODE;_WIN64;_AMD64"
+				PreprocessorDefinitions="_DEBUG"
 				Culture="2057"
-				AdditionalIncludeDirectories="../../include;./include"
+				AdditionalIncludeDirectories="../../include/"
 			/>
 			<Tool
 				Name="VCPreLinkEventTool"
@@ -613,7 +589,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				IgnoreImportLibrary="true"
-				AdditionalDependencies="comctl32.lib shlwapi.lib"
+				AdditionalDependencies="comctl32.lib msimg32.lib gdiplus.lib shlwapi.lib"
 				SuppressStartupBanner="true"
 				AdditionalManifestDependencies="type=&apos;Win32&apos; name=&apos;Microsoft.Windows.Common-Controls&apos; version=&apos;6.0.0.0&apos; processorArchitecture=&apos;*&apos; publicKeyToken=&apos;6595b64144ccf1df&apos; language=&apos;*&apos;"
 				DelayLoadDLLs=""
@@ -686,19 +662,16 @@
 				InlineFunctionExpansion="1"
 				EnableIntrinsicFunctions="true"
 				FavorSizeOrSpeed="2"
-				OmitFramePointers="false"
 				WholeProgramOptimization="true"
-				AdditionalIncludeDirectories="../../include;./include"
+				AdditionalIncludeDirectories="../../include/"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;CLIST_EXPORTS"
 				StringPooling="true"
-				ExceptionHandling="2"
-				BasicRuntimeChecks="0"
+				ExceptionHandling="0"
 				RuntimeLibrary="2"
 				BufferSecurityCheck="false"
 				EnableFunctionLevelLinking="true"
-				FloatingPointModel="1"
+				FloatingPointModel="2"
 				RuntimeTypeInfo="false"
-				UsePrecompiledHeader="2"
 				PrecompiledHeaderThrough="commonheaders.h"
 				AssemblerListingLocation=""
 				WarningLevel="3"
@@ -714,7 +687,7 @@
 				Name="VCResourceCompilerTool"
 				PreprocessorDefinitions="NDEBUG"
 				Culture="2057"
-				AdditionalIncludeDirectories="../../include;./include"
+				AdditionalIncludeDirectories="../../include/"
 			/>
 			<Tool
 				Name="VCPreLinkEventTool"
@@ -722,7 +695,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				IgnoreImportLibrary="true"
-				AdditionalDependencies="comctl32.lib shlwapi.lib"
+				AdditionalDependencies="comctl32.lib msimg32.lib gdiplus.lib shlwapi.lib"
 				AdditionalManifestDependencies="type=&apos;Win32&apos; name=&apos;Microsoft.Windows.Common-Controls&apos; version=&apos;6.0.0.0&apos; processorArchitecture=&apos;X86&apos; publicKeyToken=&apos;6595b64144ccf1df&apos; language=&apos;*&apos;"
 				DelayLoadDLLs=""
 				GenerateDebugInformation="true"
@@ -794,19 +767,16 @@
 				InlineFunctionExpansion="1"
 				EnableIntrinsicFunctions="true"
 				FavorSizeOrSpeed="2"
-				OmitFramePointers="false"
 				WholeProgramOptimization="true"
-				AdditionalIncludeDirectories="../../include;./include"
-				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;CLIST_EXPORTS;_WIN64;_AMD64"
+				AdditionalIncludeDirectories="../../include/"
+				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;CLIST_EXPORTS"
 				StringPooling="true"
-				ExceptionHandling="2"
-				BasicRuntimeChecks="0"
+				ExceptionHandling="0"
 				RuntimeLibrary="2"
 				BufferSecurityCheck="false"
 				EnableFunctionLevelLinking="true"
-				FloatingPointModel="1"
+				FloatingPointModel="2"
 				RuntimeTypeInfo="false"
-				UsePrecompiledHeader="2"
 				PrecompiledHeaderThrough="commonheaders.h"
 				AssemblerListingLocation=""
 				WarningLevel="3"
@@ -820,9 +790,9 @@
 			/>
 			<Tool
 				Name="VCResourceCompilerTool"
-				PreprocessorDefinitions="_UNICODE;UNICODE;_WIN64;_AMD64"
+				PreprocessorDefinitions="NDEBUG"
 				Culture="2057"
-				AdditionalIncludeDirectories="../../include;./include"
+				AdditionalIncludeDirectories="../../include/"
 			/>
 			<Tool
 				Name="VCPreLinkEventTool"
@@ -830,7 +800,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				IgnoreImportLibrary="true"
-				AdditionalDependencies="comctl32.lib shlwapi.lib"
+				AdditionalDependencies="comctl32.lib msimg32.lib gdiplus.lib shlwapi.lib"
 				AdditionalManifestDependencies="type=&apos;Win32&apos; name=&apos;Microsoft.Windows.Common-Controls&apos; version=&apos;6.0.0.0&apos; processorArchitecture=&apos;*&apos; publicKeyToken=&apos;6595b64144ccf1df&apos; language=&apos;*&apos;"
 				DelayLoadDLLs=""
 				GenerateDebugInformation="true"
@@ -874,194 +844,122 @@
 			Filter="cpp;c;cxx;rc;def;r;odl;idl;hpj;bat"
 			>
 			<File
-				RelativePath=".\SRC\alphablend.cpp"
+				RelativePath=".\alphablend.c"
 				>
 			</File>
 			<File
-				RelativePath=".\SRC\clc.cpp"
+				RelativePath="clc.c"
 				>
 			</File>
 			<File
-				RelativePath=".\SRC\CLCButton.cpp"
+				RelativePath=".\CLCButton.c"
 				>
 			</File>
 			<File
-				RelativePath=".\SRC\clcidents.cpp"
+				RelativePath="clcidents.c"
 				>
 			</File>
 			<File
-				RelativePath=".\SRC\clcitems.cpp"
+				RelativePath="clcitems.c"
 				>
 			</File>
 			<File
-				RelativePath=".\SRC\clcmsgs.cpp"
+				RelativePath="clcmsgs.c"
 				>
 			</File>
 			<File
-				RelativePath=".\SRC\clcopts.cpp"
+				RelativePath="clcopts.c"
 				>
 			</File>
 			<File
-				RelativePath=".\SRC\clcpaint.cpp"
+				RelativePath="clcpaint.c"
 				>
 			</File>
 			<File
-				RelativePath=".\SRC\clcutils.cpp"
+				RelativePath="clcutils.c"
 				>
 			</File>
 			<File
-				RelativePath=".\SRC\clistevents.cpp"
+				RelativePath=".\clistevents.c"
 				>
 			</File>
 			<File
-				RelativePath=".\SRC\clistmenus.cpp"
+				RelativePath=".\clistmenus.c"
 				>
 			</File>
 			<File
-				RelativePath=".\SRC\clistmod.cpp"
+				RelativePath=".\clistmod.c"
 				>
 			</File>
 			<File
-				RelativePath=".\SRC\clistopts.cpp"
+				RelativePath=".\clistopts.c"
 				>
 			</File>
 			<File
-				RelativePath=".\SRC\clistsettings.cpp"
+				RelativePath=".\clistsettings.c"
 				>
 			</File>
 			<File
-				RelativePath=".\SRC\clisttray.cpp"
+				RelativePath=".\clisttray.c"
 				>
 			</File>
 			<File
-				RelativePath=".\SRC\clnplus.cpp"
+				RelativePath=".\clnplus.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\SRC\clui.cpp"
+				RelativePath="clui.c"
 				>
 			</File>
 			<File
-				RelativePath=".\SRC\cluiopts.cpp"
+				RelativePath="cluiopts.c"
 				>
 			</File>
 			<File
-				RelativePath=".\SRC\cluiservices.cpp"
+				RelativePath="cluiservices.c"
 				>
 			</File>
 			<File
-				RelativePath=".\SRC\commonheaders.cpp"
-				>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="1"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|x64"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="1"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="1"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release|x64"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="1"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug Unicode|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="1"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug Unicode|x64"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="1"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release Unicode|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="1"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release Unicode|x64"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="1"
-					/>
-				</FileConfiguration>
-			</File>
-			<File
-				RelativePath=".\SRC\config.cpp"
+				RelativePath="commonheaders.c"
 				>
 			</File>
 			<File
-				RelativePath=".\SRC\contact.cpp"
+				RelativePath="contact.c"
 				>
 			</File>
 			<File
-				RelativePath=".\SRC\Docking.cpp"
+				RelativePath=".\Docking.c"
 				>
 			</File>
 			<File
-				RelativePath=".\SRC\extBackg.cpp"
+				RelativePath=".\extBackg.c"
 				>
 			</File>
 			<File
-				RelativePath=".\SRC\init.cpp"
+				RelativePath="init.c"
 				>
 			</File>
 			<File
-				RelativePath=".\SRC\rowheight_funcs.cpp"
+				RelativePath=".\rowheight_funcs.c"
 				>
 			</File>
 			<File
-				RelativePath=".\SRC\statusbar.cpp"
+				RelativePath=".\statusbar.c"
 				>
 			</File>
 			<File
-				RelativePath=".\SRC\statusfloater.cpp"
+				RelativePath=".\statusfloater.c"
 				>
 			</File>
 			<File
-				RelativePath=".\SRC\viewmodes.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\SRC\wallpaper.cpp"
+				RelativePath=".\viewmodes.c"
 				>
 			</File>
 			<Filter
 				Name="CLUIFrames"
 				>
 				<File
-					RelativePath=".\CLUIFrames\cluiframes.cpp"
+					RelativePath=".\CLUIFrames\cluiframes.c"
 					>
 				</File>
 				<File
@@ -1069,15 +967,15 @@
 					>
 				</File>
 				<File
-					RelativePath=".\CLUIFrames\framesmenu.cpp"
+					RelativePath=".\CLUIFrames\framesmenu.c"
 					>
 				</File>
 				<File
-					RelativePath=".\CLUIFrames\groupmenu.cpp"
+					RelativePath=".\CLUIFrames\groupmenu.c"
 					>
 				</File>
 				<File
-					RelativePath=".\CLUIFrames\movetogroup.cpp"
+					RelativePath=".\CLUIFrames\movetogroup.c"
 					>
 				</File>
 			</Filter>
@@ -1089,7 +987,7 @@
 					>
 				</File>
 				<File
-					RelativePath=".\coolsb\coolsblib.cpp"
+					RelativePath=".\coolsb\coolsblib.c"
 					>
 				</File>
 				<File
@@ -1097,7 +995,7 @@
 					>
 				</File>
 				<File
-					RelativePath=".\coolsb\coolscroll.cpp"
+					RelativePath=".\coolsb\coolscroll.c"
 					>
 				</File>
 				<File
@@ -1115,67 +1013,31 @@
 			Filter="h;hpp;hxx;hm;inl"
 			>
 			<File
-				RelativePath=".\INCLUDE\alphablend.h"
+				RelativePath=".\alphablend.h"
 				>
 			</File>
 			<File
-				RelativePath=".\INCLUDE\clc.h"
+				RelativePath="clc.h"
 				>
 			</File>
 			<File
-				RelativePath=".\INCLUDE\clist.h"
+				RelativePath="clist.h"
 				>
 			</File>
 			<File
-				RelativePath=".\INCLUDE\commonheaders.h"
+				RelativePath="commonheaders.h"
 				>
 			</File>
 			<File
-				RelativePath=".\INCLUDE\config.h"
+				RelativePath=".\extBackg.h"
 				>
 			</File>
 			<File
-				RelativePath=".\INCLUDE\extBackg.h"
+				RelativePath=".\m_cln_skinedit.h"
 				>
 			</File>
 			<File
-				RelativePath=".\INCLUDE\IcoLib.h"
-				>
-			</File>
-			<File
-				RelativePath=".\INCLUDE\m_avatars.h"
-				>
-			</File>
-			<File
-				RelativePath=".\INCLUDE\m_cln_skinedit.h"
-				>
-			</File>
-			<File
-				RelativePath=".\INCLUDE\m_metacontacts.h"
-				>
-			</File>
-			<File
-				RelativePath=".\INCLUDE\m_updater.h"
-				>
-			</File>
-			<File
-				RelativePath=".\INCLUDE\m_variables.h"
-				>
-			</File>
-			<File
-				RelativePath=".\INCLUDE\resource.h"
-				>
-			</File>
-			<File
-				RelativePath=".\INCLUDE\rowheight_funcs.h"
-				>
-			</File>
-			<File
-				RelativePath=".\INCLUDE\vsstyle.h"
-				>
-			</File>
-			<File
-				RelativePath=".\INCLUDE\vssym32.h"
+				RelativePath="resource.h"
 				>
 			</File>
 		</Filter>
@@ -1240,11 +1102,11 @@
 				>
 			</File>
 			<File
-				RelativePath="res\invisible.ico"
+				RelativePath=".\res\overlay\invisible.ico"
 				>
 			</File>
 			<File
-				RelativePath=".\res\overlay\invisible.ico"
+				RelativePath="res\invisible.ico"
 				>
 			</File>
 			<File
@@ -1280,11 +1142,11 @@
 				>
 			</File>
 			<File
-				RelativePath=".\res\online.ico"
+				RelativePath=".\res\overlay\online.ico"
 				>
 			</File>
 			<File
-				RelativePath=".\res\overlay\online.ico"
+				RelativePath=".\res\online.ico"
 				>
 			</File>
 			<File
