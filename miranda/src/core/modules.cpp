@@ -59,7 +59,15 @@ struct TService
 	char name[1];
 };
 
-LIST<TService> services( 100, NumericKeySortT );
+static int compareServices( const TService* p1, const TService* p2 )
+{
+	if ( p1->nameHash == p2->nameHash )
+		return 0;
+
+	return ( p1->nameHash > p2->nameHash ) ? 1 : -1;
+}
+
+static LIST<TService> services( 100, compareServices );
 
 typedef struct
 {
@@ -584,21 +592,30 @@ void KillObjectEventHooks( void* pObject )
 
 /////////////////////SERVICES
 
+static __inline TService* FindServiceByHash(DWORD hash)
+{
+	int idx;
+	if (( idx = services.getIndex(( TService* )&hash )) != -1 )
+		return services[idx];
+	return NULL;
+}
+
 static __inline TService* FindServiceByName( const char *name )
 {
-	unsigned hash = hashstr( name );
-	return services.find(( TService* )&hash );
+	return FindServiceByHash( hashstr( name ));
 }
 
 static HANDLE CreateServiceInt( int type, const char *name, MIRANDASERVICE serviceProc, void* object, LPARAM lParam)
 {
-	if ( name == NULL ) {
-#ifdef _DEBUG
-		MessageBoxA(0,"Someone tried to create a NULL'd service, see call stack for more info","",0);
-		DebugBreak();
-#endif
-		return NULL;
-	}
+	#ifdef _DEBUG
+		if ( name == NULL ) {
+			MessageBoxA(0,"Someone tried to create a NULL'd service, see call stack for more info","",0);
+			DebugBreak();
+			return NULL;
+		}
+	#else
+		if ( name == NULL ) return NULL;
+	#endif
 
 	TService tmp;
 	tmp.nameHash = hashstr( name );

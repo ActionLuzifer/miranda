@@ -28,9 +28,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #if defined( __cplusplus ) && MIRANDA_VER >= 0x0600
 extern LIST_INTERFACE li;
 
-#define	NumericKeySortT -1
-#define	HandleKeySortT  -2
-
 template<class T> struct LIST
 {
 	typedef int ( *FTSortFunc )( const T* p1, const T* p2 );
@@ -39,12 +36,6 @@ template<class T> struct LIST
 	{	memset( this, 0, sizeof( *this ));
 		increment = aincr;
 		sortFunc = afunc;
-	}
-
-	__inline LIST( int aincr, INT_PTR id )
-	{	memset( this, 0, sizeof( *this ));
-		increment = aincr;
-		sortFunc = FTSortFunc( id );
 	}
 
 	__inline T* operator[]( int idx ) const { return ( idx >= 0 && idx < count ) ? items[idx] : NULL; }
@@ -105,10 +96,6 @@ template<class T> struct OBJLIST : public LIST<T>
 
 	__inline OBJLIST( int aincr, FTSortFunc afunc = NULL ) :
 		LIST<T>( aincr, afunc )
-		{}
-
-	__inline OBJLIST( int aincr, INT_PTR id ) :
-		LIST<T>( aincr, ( FTSortFunc ) id )
 		{}
 
 	__inline OBJLIST( const OBJLIST& x ) : 
