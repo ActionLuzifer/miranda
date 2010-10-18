@@ -21,12 +21,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "msn_global.h"
 #include "msn_proto.h"
 
-HANDLE hKeepAliveThreadEvt = NULL;
-
 /////////////////////////////////////////////////////////////////////////////////////////
 //	Keep-alive thread for the main connection
-
-int msnPingTimeout = 45;
 
 void __cdecl CMsnProto::msn_keepAliveThread(void*)
 {
@@ -145,7 +141,8 @@ void __cdecl CMsnProto::MSNServerThread(void* arg)
 				break;
 
 			case SERVER_SWITCHBOARD:
-				if (info->mCaller) msnNsThread->sendPacket("XFR", "SB");
+				if (info->mCaller) 
+					msnNsThread->sendPacket("XFR", "SB");
 				break;
 		}
 		return;
@@ -230,9 +227,6 @@ void __cdecl CMsnProto::MSNServerThread(void* arg)
 				info->mBytesInData -= peol - info->mData;
 				memmove(info->mData, peol, info->mBytesInData);
 				MSN_DebugLog("RECV: %s", msg);
-
-				if (info->mType == SERVER_NOTIFICATION)
-					SetEvent(hKeepAliveThreadEvt);
 
 				if (!isalnum(msg[0]) || !isalnum(msg[1]) || !isalnum(msg[2]) || (msg[3] && msg[3] != ' ')) 
 				{
@@ -618,7 +612,7 @@ ThreadData::ThreadData()
 	memset(this, 0, sizeof(ThreadData));
 	mGatewayTimeout = 2;
 	resetTimeout();
-	hWaitEvent = CreateSemaphore(NULL, 0, 5, NULL);
+	hWaitEvent = CreateSemaphore(NULL, 0, MSN_PACKETS_COMBINE, NULL);
 }
 
 ThreadData::~ThreadData()
