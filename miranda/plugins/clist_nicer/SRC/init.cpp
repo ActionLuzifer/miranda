@@ -26,7 +26,7 @@
  *
  * (C) 2005-2010 by silvercircle _at_ gmail _dot_ com and contributors
  *
- * $Id$
+ * $Id: init.cpp 12909 2010-10-06 14:53:00Z silvercircle $
  *
  */
 
