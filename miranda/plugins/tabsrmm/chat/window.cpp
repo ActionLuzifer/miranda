@@ -258,7 +258,7 @@ static void Chat_UpdateWindowState(TWindowData *dat, UINT msg)
 	if (msg == WM_ACTIVATE) {
 		if (dat->pContainer->dwFlags & CNT_TRANSPARENCY && CMimAPI::m_pSetLayeredWindowAttributes != NULL) {
 			DWORD trans = LOWORD(dat->pContainer->settings->dwTransparency);
-			CMimAPI::m_pSetLayeredWindowAttributes(dat->pContainer->hwnd, CSkin::m_ContainerColorKey, (BYTE)trans, (CSkin::m_skinEnabled ? LWA_COLORKEY : 0) | (dat->pContainer->dwFlags & CNT_TRANSPARENCY ? LWA_ALPHA : 0));
+			CMimAPI::m_pSetLayeredWindowAttributes(dat->pContainer->hwnd, CSkin::m_ContainerColorKey, (BYTE)trans, (dat->pContainer->dwFlags & CNT_TRANSPARENCY ? LWA_ALPHA : 0));
 		}
 	}
 
@@ -3741,7 +3741,7 @@ LABEL_SHOWWINDOW:
 				DestroyWindow(dat->hwndTip);
 
 			if (hCurHyperlinkHand)
-				DestroyCursor(hCurHyperlinkHand);
+ 						DestroyCursor(hCurHyperlinkHand);
 
 			i = GetTabIndexFromHWND(hwndTab, hwndDlg);
 			if (i >= 0) {

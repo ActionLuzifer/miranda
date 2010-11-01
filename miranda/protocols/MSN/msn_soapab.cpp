@@ -70,11 +70,15 @@ ezxml_t CMsnProto::abSoapHdr(const char* service, const char* scenario, ezxml_t&
 
 ezxml_t CMsnProto::getSoapResponse(ezxml_t bdy, const char* service)
 {
-	char resp[40], res[40];
-	mir_snprintf(resp, sizeof(resp), "%sResponse", service);
-	mir_snprintf(res, sizeof(res), "%sResult", service);
+	char resp1[40], resp2[40];
+	mir_snprintf(resp1, sizeof(resp1), "%sResponse", service);
+	mir_snprintf(resp2, sizeof(resp2), "%sResult", service);
 
-	return ezxml_get(bdy, "soap:Body", 0, resp, 0, res, -1); 
+	ezxml_t res = ezxml_get(bdy, "soap:Body", 0, resp1, 0, resp2, -1); 
+	if (res == NULL)
+		res = ezxml_get(bdy, "s:Body", 0, resp1, 0, resp2, -1);
+
+	return res; 
 }
 
 ezxml_t CMsnProto::getSoapFault(ezxml_t bdy, bool err)
@@ -320,7 +324,7 @@ bool CMsnProto::MSN_SharingFindMembership(bool deltas, bool allowRecurse)
 			else if (strcmp(szErr, "PassportAuthFail") == 0 && allowRecurse)
 			{
 				MSN_GetPassportAuth();
-				status = MSN_SharingFindMembership(false) ? 200 : 500;
+				status = MSN_SharingFindMembership(deltas, false) ? 200 : 500;
 			}
 		}
 		ezxml_free(xmlm);
@@ -605,7 +609,7 @@ bool CMsnProto::MSN_ABFind(const char* szMethod, const char* szGuid, bool deltas
 	mir_free(reqHdr);
 	free(szData);
 
-	if (tResult != NULL && status == 200)
+	if (tResult != NULL)
 	{
 		UpdateABHost(szMethod, abUrl);
 		ezxml_t xmlm = ezxml_parse_str(tResult, strlen(tResult));
@@ -858,7 +862,7 @@ bool CMsnProto::MSN_ABFind(const char* szMethod, const char* szGuid, bool deltas
 			}
 			else if (strcmp(szErr, "FullSyncRequired") == 0 && deltas)
 			{
-				status = MSN_ABFind(szMethod, szGuid, false, false) ? 200 : 500;
+				status = MSN_ABFind(szMethod, szGuid) ? 200 : 500;
 			}
 		}
 		ezxml_free(xmlm);
@@ -1432,6 +1436,8 @@ unsigned CMsnProto::MSN_ABContactAdd(const char* szEmail, const char* szNick, in
 			else if (strcmp(szErr, "EmailDomainIsFederated") == 0)
 				status = 2;
 			else if (strcmp(szErr, "BadEmailArgument") == 0)
+				status = 4;
+			else if (strcmp(szErr, "QuotaLimitReached") == 0)
 				status = 4;
 			else if (strcmp(szErr, "ContactAlreadyExists") == 0) 
 			{

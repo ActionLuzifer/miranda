@@ -482,7 +482,7 @@ void  CMsnProto::p2p_sendSlp(
 
 	p = pHeaders.writeToBuffer(p);
 
-	p += sprintf(p, "Content-Length: %d\r\n\r\n", szContLen);
+	p += sprintf(p, "Content-Length: %d\r\n\r\n", szContLen + 2);
 	memcpy(p, szContent, szContLen);
 	p += szContLen;
 
@@ -1020,8 +1020,17 @@ void CMsnProto::p2p_InitFileTransfer(
 					ezxml_t xmldb = ezxml_parse_str(dbv.pszVal, strlen(dbv.pszVal));
 
 					const char *szCtBuf = ezxml_attr(xmlcon, "SHA1C");
-					const char *szPtBuf = ezxml_attr(xmldb,  "SHA1C");
-					pictmatch = szCtBuf && szPtBuf && strcmp(szCtBuf, szPtBuf) == 0;
+					if (szCtBuf)
+					{
+						const char *szPtBuf = ezxml_attr(xmldb,  "SHA1C");
+						pictmatch = szPtBuf && strcmp(szCtBuf, szPtBuf) == 0;
+					}
+					else
+					{
+						const char *szCtBuf = ezxml_attr(xmlcon, "SHA1D");
+						const char *szPtBuf = ezxml_attr(xmldb,  "SHA1D");
+						pictmatch = szCtBuf && szPtBuf && strcmp(szCtBuf, szPtBuf) == 0;
+					}
 
 					ezxml_free(xmlcon);
 					ezxml_free(xmldb);
@@ -1195,7 +1204,7 @@ void CMsnProto::p2p_InitDirectTransfer(P2P_Header* hdrdata, MimeHeaders& tFileIn
 	MimeHeaders chdrs(12);
 	bool listen = false;
 
-	MSN_DebugLog("Connection weight His: %d mine: %d", conType.weight, MyConnection.weight);
+	MSN_DebugLog("Connection weight, his: %d mine: %d", conType.weight, MyConnection.weight);
 	if (conType.weight <= MyConnection.weight)
 		listen = p2p_createListener(ft, dc, chdrs);
 

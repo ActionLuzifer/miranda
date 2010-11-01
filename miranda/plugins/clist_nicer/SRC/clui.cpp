@@ -26,7 +26,7 @@
  *
  * (C) 2005-2010 by silvercircle _at_ gmail _dot_ com and contributors
  *
- * $Id$
+ * $Id: clui.cpp 12978 2010-10-17 06:50:51Z silvercircle $
  *
  */
 
@@ -1671,6 +1671,7 @@ skipbg:
 					CallWindowProc(DefWindowProc, hwnd, msg, wParam, lParam);
 					SendMessage(hwnd, WM_SIZE, 0, 0);
 					SendMessage(hwnd, CLUIINTM_REDRAW, 0, 0);
+					SendMessage(hwnd, CLUIINTM_STATUSBARUPDATE, 0, 0);
 					cfg::writeByte("CList", "State", SETTING_STATE_NORMAL);
 					break;
 				}
