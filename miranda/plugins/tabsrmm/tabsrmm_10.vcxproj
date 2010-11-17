@@ -515,6 +515,7 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="API\m_timezones.h" />
     <ClInclude Include="chat\chat.h" />
     <ClInclude Include="chat\chat_resource.h" />
     <ClInclude Include="chat\chatprototypes.h" />
