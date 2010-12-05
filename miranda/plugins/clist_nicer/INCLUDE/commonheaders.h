@@ -26,7 +26,7 @@
  *
  * (C) 2005-2010 by silvercircle _at_ gmail _dot_ com and contributors
  *
- * $Id$
+ * $Id: commonheaders.h 12813 2010-09-26 11:09:45Z borkra $
  *
  */
 

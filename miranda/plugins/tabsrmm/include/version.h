@@ -1,8 +1,8 @@
-#define VER_PLAIN	"3,1,99,6"
+#define VER_PLAIN	"3,0,11,0"
 #define _VER_MAJOR	3
-#define _VER_MINOR  1
-#define _VER_REVISION 99
-#define _VER_BUILD	6
+#define _VER_MINOR  0
+#define _VER_REVISION 11
+#define _VER_BUILD	0
 
 #if defined(_WIN64)
 	#define RES_FILE_DESC "TabSRMM (Unicode) x86_amd64"
@@ -13,3 +13,4 @@
 	#define ADDONS_UPDATE_URL "http://addons.miranda-im.org/details.php?action=viewfile&id=4317"
 	#define ADDONS_DL_URL "http://addons.miranda-im.org/feed.php?dlfile=4317"
 #endif
+

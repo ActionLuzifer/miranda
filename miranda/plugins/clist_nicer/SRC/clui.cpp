@@ -26,7 +26,7 @@
  *
  * (C) 2005-2010 by silvercircle _at_ gmail _dot_ com and contributors
  *
- * $Id$
+ * $Id: clui.cpp 12978 2010-10-17 06:50:51Z silvercircle $
  *
  */
 
