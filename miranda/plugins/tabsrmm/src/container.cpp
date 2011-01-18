@@ -1265,6 +1265,7 @@ buttons_done:
 
 			mmi->ptMinTrackSize.x = 275;
 			mmi->ptMinTrackSize.y = 130;
+
 			GetClientRect(GetDlgItem(hwndDlg, IDC_MSGTABS), &rc);
 			if(pContainer->hwndActive)								// at container creation time, there is no hwndActive yet..
 				GetClientRect(pContainer->hwndActive, &rcClient);
@@ -1273,7 +1274,7 @@ buttons_done:
 			TabCtrl_AdjustRect(GetDlgItem(hwndDlg, IDC_MSGTABS), FALSE, &rc);
 			/*
 			 * uChildMinHeight holds the min height for the client window only
-			 * so let's add the container's vertical padding (title bar, tab bar,
+			 * so let's add the container's vertical padding (title bar, tab bar, 
 			 * window border, status bar) to this value
 			 */
 			if(pContainer->hwndActive)

@@ -818,10 +818,6 @@ SOURCE=.\resource.rc
 # End Source File
 # Begin Source File
 
-SOURCE=.\version.rc
-# End Source File
-# Begin Source File
-
 SOURCE=.\res\searchal.ico
 # End Source File
 # Begin Source File
