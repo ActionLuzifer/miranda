@@ -470,11 +470,12 @@ void  CMsnProto::MSN_StartP2PTransferByContact(HANDLE hContact)
 	for (int i=0; i < sttThreads.getCount(); i++) 
 	{
 		ThreadData* T = &sttThreads[i];
-		if (T->mType == SERVER_FILETRANS && T->hWaitEvent != INVALID_HANDLE_VALUE)
-		{
-			if (T->mInitialContact == hContact || (T->mJoinedCount && T->mJoinedContacts[0] == hContact))
+		if (T->mJoinedCount == 0 || T->mJoinedContacts == NULL)
+			continue;
+
+		if (T->mJoinedContacts[0] == hContact && T->mType == SERVER_FILETRANS
+			  && T->hWaitEvent != INVALID_HANDLE_VALUE)
 			ReleaseSemaphore(T->hWaitEvent, 1, NULL);
-		}
 	}
 
 	LeaveCriticalSection(&sttLock);

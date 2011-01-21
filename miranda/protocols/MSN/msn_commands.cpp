@@ -228,11 +228,9 @@ void CMsnProto::sttInviteMessage(ThreadData* info, char* msgBody, char* email, c
 		char command[1024];
 		int nBytes;
 
-		TCHAR text[512], *tszEmail = mir_a2t(email);
-		mir_sntprintf(text, SIZEOF(text), TranslateT("Accept NetMeeting request from %s?"), tszEmail);
-		mir_free(tszEmail);
+		mir_snprintf(command, sizeof(command), "Accept NetMeeting request from %s?", email);
 
-		if (MessageBox(NULL, text, TranslateT("MSN Protocol"), MB_YESNO | MB_ICONQUESTION) == IDYES) 
+		if (MessageBoxA(NULL, command, "MSN Protocol", MB_YESNO | MB_ICONQUESTION) == IDYES) 
 		{
 			nBytes = mir_snprintf(command, sizeof(command),
 				"MIME-Version: 1.0\r\n"
@@ -1609,7 +1607,7 @@ LBL_InvalidCommand:
 
 				case 3:
 					// P2P Bootstrap
-					p2p_processSIP(info, msgBody, NULL, hContact);
+					p2p_processSIP(info, msgBody, NULL);
 					break;
 
 				case 10:
@@ -1647,8 +1645,7 @@ LBL_InvalidCommand:
 		}
 
 		case ' RSU':	//********* USR: sections 7.3 Authentication, 8.2 Switchboard Connections and Authentication
-			if (info->mType == SERVER_SWITCHBOARD) //(section 8.2)
-			{
+			if (info->mType == SERVER_SWITCHBOARD) { //(section 8.2)
 				union {
 					char* tWords[3];
 					struct { char *status, *userHandle, *friendlyName; } data;
@@ -1659,8 +1656,7 @@ LBL_InvalidCommand:
 
 				UrlDecode(data.userHandle); UrlDecode(data.friendlyName);
 
-				if (strcmp(data.status, "OK"))
-				{
+				if (strcmp(data.status, "OK")) {
 					MSN_DebugLog("Unknown status to USR command (SB): '%s'", data.status);
 					break;
 				}
@@ -1670,8 +1666,7 @@ LBL_InvalidCommand:
 					hContact = MsgQueue_GetNextRecipient();
 				} while (hContact != NULL && MSN_GetUnconnectedThread(hContact) != NULL);
 
-				if (hContact == NULL) //can happen if both parties send first message at the same time
-				{
+				if (hContact == NULL) { //can happen if both parties send first message at the same time
 					MSN_DebugLog("USR (SB) internal: thread created for no reason");
 					return 1;
 					break;

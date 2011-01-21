@@ -688,12 +688,12 @@ void  CMsnProto::MSN_SetServerStatus(int newStatus)
 			 getStaticString(NULL, "PictObject", szMsnObject, sizeof(szMsnObject)))
 			szMsnObject[0] = 0;
 
-		// Capabilties: WLM 8.5, Chunking, UUN Bootstrap 
-		myFlags = 0x80000020 | 0x4000000;
+		// Capabilties: WLM 8.1, Chunking 
+		unsigned flags = 0x80000020;
 		if (getByte("MobileEnabled", 0) && getByte("MobileAllowed", 0))
-			myFlags |= 0x40;
+			flags |= 0x40;
 
-		msnNsThread->sendPacket("CHG", "%s %u %s", szStatusName, myFlags, szMsnObject);
+		msnNsThread->sendPacket("CHG", "%s %u %s", szStatusName, flags, szMsnObject);
 
 		char** msgptr = GetStatusMsgLoc(status);
 		if (msgptr != NULL)
@@ -816,8 +816,7 @@ LRESULT CALLBACK NullWindowProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lPara
 			PopupData* tData = (PopupData*)PUGetPluginData(hWnd);
 			if (tData != NULL && tData != (PopupData*)CALLSERVICE_NOTFOUND)
 			{
-				mir_free(tData->title);
-				mir_free(tData->text);
+				CallService(MS_SKIN2_RELEASEICON, (WPARAM)tData->hIcon, 0);
 				mir_free(tData->url);
 				mir_free(tData);
 			}
@@ -829,105 +828,64 @@ LRESULT CALLBACK NullWindowProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lPara
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////
-// InitPopups - popup plugin support
-
-void CMsnProto::InitPopups(void)
-{
-	TCHAR desc[256];
-	char name[256];
-
-	POPUPCLASS ppc = {0};
-	ppc.cbSize = sizeof(ppc);
-	ppc.flags = PCF_TCHAR;
-	ppc.PluginWindowProc = NullWindowProc;
-
-	ppc.hIcon = LoadIconEx("main");
-
-	ppc.ptszDescription = desc;
-	ppc.pszName = name;
-	ppc.colorBack = RGB(173, 206, 247);
-	ppc.colorText =  GetSysColor(COLOR_WINDOWTEXT);
-	ppc.iSeconds = 3;
-	mir_sntprintf(desc, SIZEOF(desc), _T("%s/%s"), m_tszUserName, TranslateT("Hotmail"));
-	mir_snprintf(name, SIZEOF(name), "%s_%s", m_szModuleName, "Hotmail");
-	CallService(MS_POPUP_REGISTERCLASS, 0, (WPARAM)&ppc);
-
-	ppc.ptszDescription = desc;
-	ppc.pszName = name;
-	ppc.colorBack = RGB(173, 206, 247);
-	ppc.colorText =  GetSysColor(COLOR_WINDOWTEXT);
-	ppc.iSeconds = 3;
-	mir_sntprintf(desc, SIZEOF(desc), _T("%s/%s"), m_tszUserName, TranslateT("Notify"));
-	mir_snprintf(name, SIZEOF(name), "%s_%s", m_szModuleName, "Notify");
-	CallService(MS_POPUP_REGISTERCLASS, 0, (WPARAM)&ppc);
-
-	ppc.ptszDescription = desc;
-	ppc.pszName = name;
-	ppc.hIcon = (HICON)LoadImage(NULL, IDI_WARNING, IMAGE_ICON, 0, 0, LR_SHARED);
-	ppc.colorBack = RGB(191, 0, 0); //Red
-	ppc.colorText = RGB(255, 245, 225); //Yellow
-	ppc.iSeconds = 60;
-
-	mir_sntprintf(desc, SIZEOF(desc), _T("%s/%s"), m_tszUserName, TranslateT("Error"));
-	mir_snprintf(name, SIZEOF(name), "%s_%s", m_szModuleName, "Error");
-	CallService(MS_POPUP_REGISTERCLASS, 0, (WPARAM)&ppc);
-}
-
-/////////////////////////////////////////////////////////////////////////////////////////
 // MSN_ShowPopup - popup plugin support
 
 void CALLBACK sttMainThreadCallback(PVOID dwParam)
 {
-	PopupData* pud = (PopupData*)dwParam;
+	LPPOPUPDATAT ppd = (LPPOPUPDATAT)dwParam;
+	PopupData* pud = (PopupData*)ppd->PluginData;
 
 	bool iserr = (pud->flags & MSN_SHOW_ERROR) != 0;
-	if ((iserr && !pud->proto->MyOptions.ShowErrorsAsPopups) || !ServiceExists(MS_POPUP_ADDPOPUPCLASS)) 
+	if ((iserr && !pud->proto->MyOptions.ShowErrorsAsPopups) || PUAddPopUpT(ppd) == CALLSERVICE_NOTFOUND) 
 	{
 		if (pud->flags & MSN_ALLOW_MSGBOX) 
 		{
 			TCHAR szMsg[MAX_SECONDLINE + MAX_CONTACTNAME];
-			mir_sntprintf(szMsg, SIZEOF(szMsg), _T("%s:\n%s"), pud->title, pud->text);
-			MessageBox(NULL, szMsg, TranslateT("MSN Protocol"), 
+			mir_sntprintf(szMsg, SIZEOF(szMsg), _T("%s:\n%s"), ppd->lptzContactName, ppd->lptzText);
+			MessageBox(NULL, szMsg, _T("MSN Protocol"), 
 				MB_OK | (iserr ? MB_ICONERROR : MB_ICONINFORMATION));
 		}
-		mir_free(pud->title);
-		mir_free(pud->text);
+		CallService(MS_SKIN2_RELEASEICON, (WPARAM)pud->hIcon, 0);
 		mir_free(pud->url);
 		mir_free(pud);
 	}
-	else
-	{
-		char name[256];
-
-		POPUPDATACLASS ppd = { sizeof(ppd) };
-		ppd.ptszTitle = pud->title;
-		ppd.ptszText = pud->text;
-		ppd.PluginData = pud;
-		ppd.pszClassName = name;
-		
-		if (pud->flags & MSN_SHOW_ERROR)
-			mir_snprintf(name, SIZEOF(name), "%s_%s", pud->proto->m_szModuleName, "Error");
-		else if (pud->flags & (MSN_HOTMAIL_POPUP | MSN_ALERT_POPUP))
-			mir_snprintf(name, SIZEOF(name), "%s_%s", pud->proto->m_szModuleName, "Hotmail");
-		else
-			mir_snprintf(name, SIZEOF(name), "%s_%s", pud->proto->m_szModuleName, "Notify");
-
-		CallService(MS_POPUP_ADDPOPUPCLASS, 0, (LPARAM)&ppd);
-	}
+	mir_free(ppd);
 }
 
 void CMsnProto::MSN_ShowPopup(const TCHAR* nickname, const TCHAR* msg, int flags, const char* url, HANDLE hContact)
 {
-	if (Miranda_Terminated()) return;
+	LPPOPUPDATAT ppd = (LPPOPUPDATAT)mir_calloc(sizeof(POPUPDATAT));
 
-	PopupData* pud = (PopupData*)mir_alloc(sizeof(PopupData));
+	ppd->lchContact = hContact;
+	_tcsncpy(ppd->lptzContactName, nickname, MAX_CONTACTNAME);
+	ppd->lptzContactName[MAX_CONTACTNAME-1] = 0;
+	_tcsncpy(ppd->lptzText, msg, MAX_SECONDLINE);
+	ppd->lptzText[MAX_SECONDLINE-1] = 0;
+
+	if (flags & MSN_SHOW_ERROR) {
+		ppd->lchIcon = (HICON)LoadImage(NULL, IDI_WARNING, IMAGE_ICON, 0, 0, LR_SHARED);
+		ppd->colorBack = RGB(191, 0, 0); //Red
+		ppd->colorText = RGB(255, 245, 225); //Yellow
+		ppd->iSeconds  = 60;
+	}
+	else {
+		ppd->lchIcon = LoadIconEx("main");
+		ppd->colorBack = (MyOptions.UseWinColors) ? GetSysColor(COLOR_BTNFACE) : MyOptions.BGColour;
+		ppd->colorText = (MyOptions.UseWinColors) ? GetSysColor(COLOR_WINDOWTEXT) : MyOptions.TextColour;
+		ppd->iSeconds = (flags & (MSN_HOTMAIL_POPUP | MSN_ALERT_POPUP)) ? 
+			MyOptions.PopupTimeoutHotmail : MyOptions.PopupTimeoutOther;
+	}
+
+	ppd->PluginWindowProc = (WNDPROC)NullWindowProc;
+	ppd->PluginData = mir_alloc(sizeof(PopupData));
+
+	PopupData* pud = (PopupData*)ppd->PluginData;
 	pud->flags = flags;
+	pud->hIcon = ppd->lchIcon;
 	pud->url = mir_strdup(url);
-	pud->title = mir_tstrdup(nickname);
-	pud->text = mir_tstrdup(msg);
 	pud->proto = this;
 
-	CallFunctionAsync(sttMainThreadCallback, pud);
+	CallFunctionAsync(sttMainThreadCallback, ppd);
 }
 
 
@@ -954,14 +912,12 @@ filetransfer::filetransfer(CMsnProto* prt)
 
 filetransfer::~filetransfer(void)
 {
-	if (p2p_sessionid)
-		proto->MSN_DebugLog("Destroying file transfer session %08X", p2p_sessionid);
+	proto->MSN_DebugLog("Destroying file transfer session %08X", p2p_sessionid);
 
 	WaitForSingleObject(hLockHandle, 2000);
 	CloseHandle(hLockHandle);
 
-	if (!bCompleted && p2p_appID == MSN_APPID_FILE) 
-	{
+	if (!bCompleted) {
 		std.ptszFiles = NULL;
 		std.totalFiles = 0;
 		proto->SendBroadcast(std.hContact, ACKTYPE_FILE, ACKRESULT_FAILED, this, 0);
@@ -1056,12 +1012,11 @@ int filetransfer::openNext(void)
 	return fileId;
 }
 
-directconnection::directconnection(const char* CallID, HANDLE HContact)
+directconnection::directconnection(filetransfer* ft)
 {
 	memset(this, 0, sizeof(directconnection));
 
-	hContact = HContact;
-	callId = mir_strdup(CallID);
+	callId = mir_strdup(ft->p2p_callID);
 	mNonce = (UUID*)mir_alloc(sizeof(UUID));
 	UuidCreate(mNonce);
 	ts = time(NULL);
