@@ -26,7 +26,7 @@
  *
  * (C) 2005-2010 by silvercircle _at_ gmail _dot_ com and contributors
  *
- * $Id$
+ * $Id: clc.h 12887 2010-10-04 03:58:32Z borkra $
  *
  */
 

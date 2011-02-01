@@ -33,6 +33,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 typedef BOOL (* SSL_EMPTY_CACHE_FN_M)(VOID);
 
+
 static HMODULE g_hSchannel;
 static PSecurityFunctionTableA g_pSSPI;
 static HANDLE g_hSslMutex; 
