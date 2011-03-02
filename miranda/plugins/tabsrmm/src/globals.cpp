@@ -555,11 +555,6 @@ int CGlobals::DBSettingChanged(WPARAM wParam, LPARAM lParam)
 		}
 		else if (!strcmp(setting, "MirVer"))
 			PostMessage(hwnd, DM_CLIENTCHANGED, 0, 0);
-		else if (!strcmp(setting, "display_uid")) {
-			if(c)
-				c->updateUIN();
-			PostMessage(hwnd, DM_UPDATEUIN, 0, 0);
-		}
 		else if(lstrlenA(setting) > 6 && strstr("StatusMsg,XStatusMsg,XStatusName,XStatusId,ListeningTo", setting)) {
 			if(c) {
 				c->updateStatusMsg(setting);

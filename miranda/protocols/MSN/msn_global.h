@@ -118,8 +118,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 /////////////////////////////////////////////////////////////////////////////////////////
 //	Global definitions
 
-#define MSN_MAX_EMAIL_LEN         128
-#define MSN_GUID_LEN			   40
+#define MSN_MAX_EMAIL_LEN        128
+#define MSN_GUID_LEN			  40
 
 #define MSN_PACKETS_COMBINE         7
 #define MSN_DEFAULT_PORT         1863
@@ -228,9 +228,8 @@ extern LONG (WINAPI *MyInterlockedIncrement)(LONG volatile* pVal);
 typedef struct _tag_PopupData
 {
 	unsigned flags;
+	HICON hIcon;
 	char* url;
-	TCHAR* title;
-	TCHAR* text;
 	CMsnProto* proto;
 } PopupData;
 
@@ -245,22 +244,21 @@ public:
 	MimeHeaders(unsigned);
 	~MimeHeaders();
 
-	void        clear(void);
-	char*       decodeMailBody(char* msgBody);
+	void clear(void);
+	char*	readFromBuffer(char* pSrc);
 	const char* find(const char* fieldName);
-	char*       flipStr(const char* src, size_t len, char* dest);
-	size_t      getLength(void);
-	char*       readFromBuffer(char* src);
-	char*       writeToBuffer(char* dest);
-
-	void        addString(const char* name, const char* szValue, unsigned flags = 0);
-	void        addLong(const char* name, long lValue, unsigned flags = 0);
-	void        addULong(const char* name, unsigned lValue);
-	void	    addBool(const char* name, bool lValue);
-
 	const char* operator[](const char* fieldName) { return find(fieldName); }
+	char* decodeMailBody(char* msgBody);
 
 	static wchar_t* decode(const char* val);
+
+	void  addString(const char* name, const char* szValue, unsigned flags = 0);
+	void    addLong(const char* name, long lValue);
+	void   addULong(const char* name, unsigned lValue);
+	void	addBool(const char* name, bool lValue);
+
+	size_t  getLength(void);
+	char* writeToBuffer(char* pDest);
 
 private:
 	typedef struct tag_MimeHeader
@@ -353,7 +351,7 @@ struct filetransfer
 
 struct directconnection
 {
-	directconnection(const char* CallID, HANDLE HContact);
+	directconnection(filetransfer* ft);
 	~directconnection();
 
 	char* calcHashedNonce(UUID* nonce);
@@ -363,9 +361,7 @@ struct directconnection
 
 	UUID* mNonce;
 	char* xNonce;
-
 	char* callId;
-	HANDLE hContact;
 
 	time_t ts;
 
@@ -567,12 +563,19 @@ struct MsnContact
 
 typedef struct _tag_MYOPTIONS
 {
+	COLORREF	BGColour;
+	COLORREF	TextColour;
+	bool		UseWinColors;
+
 	bool		EnableSounds;
 
 	bool		ShowErrorsAsPopups;
 	bool		AwayAsBrb;
 	bool		SlowSend;
 	bool		ManageServer;
+
+	DWORD		PopupTimeoutHotmail;
+	DWORD		PopupTimeoutOther;
 
 	char		szEmail[MSN_MAX_EMAIL_LEN];
 }
