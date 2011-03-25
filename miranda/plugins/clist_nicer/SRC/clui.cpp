@@ -26,7 +26,7 @@
  *
  * (C) 2005-2010 by silvercircle _at_ gmail _dot_ com and contributors
  *
- * $Id$
+ * $Id: clui.cpp 12978 2010-10-17 06:50:51Z silvercircle $
  *
  */
 
@@ -1126,7 +1126,7 @@ LRESULT CALLBACK ContactListWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM l
 			ConfigureCLUIGeometry(0);
 
 			for (i = ID_STATUS_OFFLINE; i <= ID_STATUS_OUTTOLUNCH; i++)
-				statusNames[i - ID_STATUS_OFFLINE] = reinterpret_cast<TCHAR *>(CallService(MS_CLIST_GETSTATUSMODEDESCRIPTION, (WPARAM)i, GSMDF_TCHAR));
+				statusNames[i - ID_STATUS_OFFLINE] = reinterpret_cast<TCHAR *>(CallService(MS_CLIST_GETSTATUSMODEDESCRIPTION, (WPARAM)i, GCMDF_TCHAR));
 
 			//delay creation of CLC so that it can get the status icons right the first time (needs protocol modules loaded)
 			if (cfg::dat.bLayeredHack) {

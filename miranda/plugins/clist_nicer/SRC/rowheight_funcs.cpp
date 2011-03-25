@@ -26,7 +26,7 @@
  *
  * (C) 2005-2010 by silvercircle _at_ gmail _dot_ com and contributors
  *
- * $Id$
+ * $Id: rowheight_funcs.cpp 12484 2010-08-27 04:02:43Z silvercircle $
  *
  */
 

@@ -21,7 +21,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 contact list view modes (CLVM)
 
-$Id$
+$Id: viewmodes.cpp 12535 2010-08-29 23:48:32Z silvercircle $
 
 */
 

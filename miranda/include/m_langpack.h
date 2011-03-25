@@ -2,8 +2,8 @@
 
 Miranda IM: the free IM client for Microsoft* Windows*
 
-Copyright 2000-2008 Miranda ICQ/IM project,
-all portions of this codebase are copyrighted to the people
+Copyright 2000-2008 Miranda ICQ/IM project, 
+all portions of this codebase are copyrighted to the people 
 listed in contributors.txt.
 
 This program is free software; you can redistribute it and/or
@@ -24,10 +24,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifndef M_LANGPACK_H__
 #define M_LANGPACK_H__
 
-#if !defined( MS_TRANSLATE_PREFIX )
-	#define MS_TRANSLATE_PREFIX "LangPack"
-#endif
-
 #define LANG_UNICODE 0x1000
 
 //translates a single string into the user's local language	  v0.1.1.0+
@@ -39,7 +35,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //Note that the Translate() macro as defined below will crash plugins that are
 //loaded into Miranda 0.1.0.1 and earlier. If anyone's actually using one of
 //these versions, I pity them.
-#define MS_LANGPACK_TRANSLATESTRING  MS_TRANSLATE_PREFIX##"/TranslateString"
+#define MS_LANGPACK_TRANSLATESTRING   "LangPack/TranslateString"
 #define Translate(s)   ((char*)CallService(MS_LANGPACK_TRANSLATESTRING,0,(LPARAM)(s)))
 #define TranslateW(s)   ((WCHAR*)CallService(MS_LANGPACK_TRANSLATESTRING,LANG_UNICODE,(LPARAM)(s)))
 #ifdef _UNICODE
@@ -80,7 +76,7 @@ typedef struct {
                    //non-read-only edit controls are not translated
 #define LPTDF_NOTITLE        2     //do not translate the title of the dialog
 
-#define MS_LANGPACK_TRANSLATEDIALOG  MS_TRANSLATE_PREFIX##"/TranslateDialog"
+#define MS_LANGPACK_TRANSLATEDIALOG  "LangPack/TranslateDialog"
 __inline static INT_PTR TranslateDialogDefault(HWND hwndDlg)
 {
 	LANGPACKTRANSLATEDIALOG lptd;
@@ -95,7 +91,7 @@ __inline static INT_PTR TranslateDialogDefault(HWND hwndDlg)
 //wParam=(WPARAM)(HMENU)hMenu
 //lParam=0
 //returns 0 on success, nonzero on failure
-#define MS_LANGPACK_TRANSLATEMENU    MS_TRANSLATE_PREFIX##"/TranslateMenu"
+#define MS_LANGPACK_TRANSLATEMENU    "LangPack/TranslateMenu"
 
 //returns the codepage used in the language pack 	  v0.4.3.0+
 //wParam=0
@@ -112,7 +108,7 @@ __inline static INT_PTR TranslateDialogDefault(HWND hwndDlg)
 //returns the strdup/wcsdup of lparam according to the langpack  v0.4.3.0+
 //wParam=0
 //lParam=(LPARAM)(char*)source string
-//returns a string converted from char* to TCHAR* using the langpack codepage.
+//returns a string converted from char* to TCHAR* using the langpack codepage. 
 //This string should be freed using mir_free() then
 #define MS_LANGPACK_PCHARTOTCHAR     "LangPack/PcharToTchar"
 #endif // M_LANGPACK_H__
