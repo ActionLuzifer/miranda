@@ -168,9 +168,6 @@
     <ClCompile Include="ui_utils.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="jabber_captcha.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="jabber.h">
@@ -242,9 +239,6 @@
     <ClInclude Include="version.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="jabber_db_utils.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="icos\add2roster.ico">
@@ -260,6 +254,9 @@
       <Filter>Resource Files</Filter>
     </None>
     <None Include="icos\auth_revoke.ico">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="icos\block.ico">
       <Filter>Resource Files</Filter>
     </None>
     <None Include="icos\bookmarks.ico">
@@ -286,6 +283,18 @@
     <None Include="icos\filter.ico">
       <Filter>Resource Files</Filter>
     </None>
+    <None Include="icos\gcadmin.ico">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="icos\gcmodera.ico">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="icos\gcowner.ico">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="icos\gcvoice.ico">
+      <Filter>Resource Files</Filter>
+    </None>
     <None Include="icos\go.ico">
       <Filter>Resource Files</Filter>
     </None>
@@ -305,6 +314,9 @@
       <Filter>Resource Files</Filter>
     </None>
     <None Include="icos\login.ico">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="icos\message.ico">
       <Filter>Resource Files</Filter>
     </None>
     <None Include="icos\message_allow.ico">
@@ -409,8 +421,12 @@
     <None Include="icos\weather.ico">
       <Filter>Resource Files</Filter>
     </None>
+    <None Include="icos\write.ico">
+      <Filter>Resource Files</Filter>
+    </None>
     <None Include="docs\changelog_jabber.txt" />
     <None Include="docs\readme_jabber.txt" />
+    <None Include="docs\translation_jabber.txt" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="jabber.rc">

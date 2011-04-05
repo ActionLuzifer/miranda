@@ -100,6 +100,12 @@ INT_PTR __cdecl CYahooProto::OnContactDeleted( WPARAM wParam, LPARAM lParam )
 		return 0;
 	}
 
+	szProto = ( char* )YAHOO_CallService( MS_PROTO_GETCONTACTBASEPROTO, wParam, 0 );
+	if ( szProto == NULL || lstrcmpA( szProto, m_szModuleName ))  {
+		DebugLog("[YahooContactDeleted] Not a Yahoo Contact!!!");
+		return 0;
+	}
+
 	// he is not a permanent contact!
 	if (DBGetContactSettingByte(hContact, "CList", "NotOnList", 0) != 0) {
 		DebugLog("[YahooContactDeleted] Not a permanent buddy!!!");
@@ -532,6 +538,7 @@ void CYahooProto::LoadYahooServices( void )
 	
 	//----| Events hooking |--------------------------------------------------------------
 	YHookEvent( ME_OPT_INITIALISE, &CYahooProto::OnOptionsInit );
+	YHookEvent( ME_DB_CONTACT_DELETED, &CYahooProto::OnContactDeleted );
 
 	//----| Create nudge event |----------------------------------------------------------
 	mir_snprintf( path, sizeof( path ), "%s/Nudge", m_szModuleName);

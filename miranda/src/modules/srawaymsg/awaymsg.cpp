@@ -42,6 +42,7 @@ static INT_PTR CALLBACK ReadAwayMsgDlgProc(HWND hwndDlg, UINT message, WPARAM wP
 		case WM_INITDIALOG:
 			TranslateDialogDefault(hwndDlg);
 			dat = (AwayMsgDlgData*)mir_alloc(sizeof(AwayMsgDlgData));
+			Utils_RestoreWindowPosition(hwndDlg,(HANDLE)lParam,"SRAway","AwayMsgDlg");
 			SetWindowLongPtr(hwndDlg, GWLP_USERDATA, (LONG_PTR)dat);
 
 			dat->hContact = (HANDLE)lParam;

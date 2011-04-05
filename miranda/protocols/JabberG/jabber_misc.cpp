@@ -52,7 +52,7 @@ void JabberChatDllError()
 {
 	MessageBox( NULL,
 		TranslateT( "CHAT plugin is required for conferences. Install it before chatting" ),
-		TranslateT( "Jabber Error" ), MB_OK|MB_SETFOREGROUND );
+		TranslateT( "Jabber Error Message" ), MB_OK|MB_SETFOREGROUND );
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -618,7 +618,7 @@ void CJabberProto::InitPopups(void)
 
 	ppc.ptszDescription = desc;
 	ppc.pszName = name;
-	ppc.hIcon = LoadIconEx("main");
+	ppc.hIcon = (HICON)LoadImage(NULL, IDI_ERROR, IMAGE_ICON, 0, 0, LR_SHARED);
 	ppc.colorBack = RGB(191, 0, 0); //Red
 	ppc.colorText = RGB(255, 245, 225); //Yellow
 	ppc.iSeconds = 60;
@@ -628,7 +628,7 @@ void CJabberProto::InitPopups(void)
 	JCallService(MS_POPUP_REGISTERCLASS, 0, (WPARAM)&ppc);
 }
 
-void CJabberProto::MsgPopup(HANDLE hContact, const TCHAR *szMsg, const TCHAR *szTitle)
+void CJabberProto::MsgPopup(const TCHAR *szMsg, const TCHAR *szTitle)
 {
 	if (ServiceExists(MS_POPUP_ADDPOPUPCLASS)) {
 		char name[256];
@@ -637,7 +637,6 @@ void CJabberProto::MsgPopup(HANDLE hContact, const TCHAR *szMsg, const TCHAR *sz
 		ppd.ptszTitle = szTitle;
 		ppd.ptszText = szMsg;
 		ppd.pszClassName = name;
-		ppd.hContact = hContact;
 		mir_snprintf(name, SIZEOF(name), "%s_%s", m_szModuleName, "Error");
 
 		JCallService(MS_POPUP_ADDPOPUPCLASS, 0, (LPARAM)&ppd);

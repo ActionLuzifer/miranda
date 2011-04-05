@@ -249,7 +249,7 @@ void CJabberProto::OnIqResultGetAuth( HXML iqNode )
 
 		TCHAR text[128];
 		mir_sntprintf( text, SIZEOF( text ), _T("%s %s."), TranslateT( "Authentication failed for" ), m_ThreadInfo->username );
-		MsgPopup( NULL, text, TranslateT( "Jabber Authentication" ));
+		MessageBox( NULL, text, TranslateT( "Jabber Authentication" ), MB_OK|MB_ICONSTOP|MB_SETFOREGROUND );
 		JSendBroadcast( NULL, ACKTYPE_LOGIN, ACKRESULT_FAILED, NULL, LOGINERR_WRONGPASSWORD );
 		m_ThreadInfo = NULL;	// To disallow auto reconnect
 }	}
@@ -278,7 +278,7 @@ void CJabberProto::OnIqResultSetAuth( HXML iqNode )
 
 		m_ThreadInfo->send( "</stream:stream>" );
 		mir_sntprintf( text, SIZEOF( text ), _T("%s %s."), TranslateT( "Authentication failed for" ), m_ThreadInfo->username );
-		MsgPopup( NULL, text, TranslateT( "Jabber Authentication" ));
+		MessageBox( NULL, text, TranslateT( "Jabber Authentication" ), MB_OK|MB_ICONSTOP|MB_SETFOREGROUND );
 		JSendBroadcast( NULL, ACKTYPE_LOGIN, ACKRESULT_FAILED, NULL, LOGINERR_WRONGPASSWORD );
 		m_ThreadInfo = NULL;	// To disallow auto reconnect
 }	}
@@ -672,7 +672,7 @@ LBL_Ret:
 		if ( p != NULL )
 			lstrcpy( p+1, szPicType + 6 );
 	}
-	else GetAvatarFileName( NULL, szAvatarFileName, SIZEOF( szAvatarFileName ));
+	else GetAvatarFileName( NULL, szAvatarFileName, sizeof( szAvatarFileName ));
 
 	Log( "Picture file name set to " TCHAR_STR_PARAM, szAvatarFileName );
 	HANDLE hFile = CreateFile( szAvatarFileName, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL );

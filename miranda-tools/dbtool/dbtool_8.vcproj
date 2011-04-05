@@ -502,10 +502,6 @@
 					RelativePath="settingschain.cpp"
 					>
 				</File>
-				<File
-					RelativePath=".\user.cpp"
-					>
-				</File>
 			</Filter>
 			<Filter
 				Name="Wizard Pages"

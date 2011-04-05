@@ -223,7 +223,7 @@ struct CJabberOptions
 	CMOption<BYTE> ProcessXMPPLinks;
 
 	CJabberOptions(PROTO_INTERFACE *proto):
-		BsDirect(proto, "BsDirect", TRUE),
+		BsDirect(proto, "BsDirect", FALSE),
 		AllowVersionRequests(proto, "AllowVersionRequests", TRUE),
 		AcceptHttpAuth(proto, "AcceptHttpAuth", TRUE),
 		AddRoster2Bookmarks(proto, "AddRoster2Bookmarks", TRUE),

@@ -1109,12 +1109,14 @@ void gg_broadcastnewstatus(GGPROTO *gg, int newStatus)
 }
 
 ////////////////////////////////////////////////////////////
-// When contact is deleted
-int gg_contactdeleted(GGPROTO *gg, WPARAM wParam, LPARAM lParam)
+// When user is deleted
+int gg_userdeleted(GGPROTO *gg, WPARAM wParam, LPARAM lParam)
 {
 	HANDLE hContact = (HANDLE) wParam;
 	uin_t uin; int type;
 	DBVARIANT dbv;
+
+	if(!hContact) return 0;
 
 	uin = (uin_t)DBGetContactSettingDword(hContact, GG_PROTO, GG_KEY_UIN, 0);
 	type = DBGetContactSettingByte(hContact, GG_PROTO, "ChatRoom", 0);
@@ -1168,7 +1170,11 @@ int gg_dbsettingchanged(GGPROTO *gg, WPARAM wParam, LPARAM lParam)
 	}
 
 	// Check if the contact is NULL or we are not online
-	if(!gg_isonline(gg))
+	if(!hContact || !gg_isonline(gg))
+		return 0;
+
+	// Fetch protocol name and check if it's our
+	if(!(szProto = (char *) CallService(MS_PROTO_GETCONTACTBASEPROTO, wParam, 0)) || strcmp(szProto, GG_PROTO))
 		return 0;
 
 	// If ignorance changed

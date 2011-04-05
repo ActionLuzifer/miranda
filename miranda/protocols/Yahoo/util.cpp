@@ -315,6 +315,9 @@ INT_PTR __cdecl CYahooProto::OnSettingChanged(WPARAM wParam, LPARAM lParam)
 				char *szProto;
 				DBVARIANT dbv;
 
+				szProto = (char *) CallService(MS_PROTO_GETCONTACTBASEPROTO, wParam, 0);
+				if (szProto==NULL || strcmp(szProto, m_szModuleName)) return 0;
+
 				if ( !DBGetContactSettingString( (HANDLE) wParam, m_szModuleName, YAHOO_LOGINID, &dbv )){
 					DebugLog("Adding Permanently %s to list.", dbv.pszVal);
 					AddBuddy(dbv.pszVal,GetWord((HANDLE) wParam, "yprotoid", 0), "miranda", NULL);
