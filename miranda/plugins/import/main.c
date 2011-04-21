@@ -48,7 +48,6 @@ INT_PTR CALLBACK WizardDlgProc(HWND hdlg,UINT message,WPARAM wParam,LPARAM lPara
 HINSTANCE hInst;
 PLUGINLINK *pluginLink;
 static HWND hwndWizard = NULL;
-int hLangpack;
 
 PLUGININFOEX pluginInfo = {
 	sizeof(PLUGININFOEX),
@@ -57,7 +56,7 @@ PLUGININFOEX pluginInfo = {
 	"Imports contacts and messages from Mirabilis ICQ and Miranda IM.",
 	"Miranda team",
 	"info@miranda-im.org",
-	"© 2000-2010 Martin Öberg, Richard Hughes, Dmitry Kuzkin, George Hazan",
+	"© 2000-2011 Martin Öberg, Richard Hughes, Dmitry Kuzkin, George Hazan",
 	"http://www.miranda-im.org",
 	UNICODE_AWARE,
 	0,	//{2D77A746-00A6-4343-BFC5-F808CDD772EA}
@@ -86,7 +85,7 @@ static INT_PTR ImportCommand(WPARAM wParam,LPARAM lParam)
 
 __declspec(dllexport) PLUGININFOEX* MirandaPluginInfoEx(DWORD mirandaVersion)
 {
-	if (mirandaVersion < MIRANDA_VERSION_CORE)
+	if (mirandaVersion < PLUGIN_MAKE_VERSION(0, 7, 0, 0))
 		return NULL;
 
 	return &pluginInfo;
@@ -137,7 +136,6 @@ int __declspec(dllexport) Load(PLUGINLINK *link)
 	pluginLink = link;
 	mir_getMMI( &mmi );
 	mir_getUTFI( &utfi );
-	mir_getLP( &pluginInfo );
 
 	hImportService = CreateServiceFunction(IMPORT_SERVICE, ImportCommand);
 	{

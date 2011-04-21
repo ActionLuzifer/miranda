@@ -52,7 +52,7 @@ const JabberFeatCapPair g_JabberFeatCapPairs[] = {
 	{	_T(JABBER_FEAT_MESSAGE_EVENTS),       JABBER_CAPS_MESSAGE_EVENTS,       _T("Can request and respond to events relating to the delivery, display, and composition of messages"), },
 	{	_T(JABBER_FEAT_VCARD_TEMP),           JABBER_CAPS_VCARD_TEMP,           _T("Supports vCard"), },
 	{	_T(JABBER_FEAT_AVATAR),               JABBER_CAPS_AVATAR,               _T("Supports iq-based avatars"), },
-	{	_T(JABBER_FEAT_XHTML),                JABBER_CAPS_XHTML,                _T("Supports XHTML formatting of chat messages"), },
+	{	_T(JABBER_FEAT_XHTML),                JABBER_CAPS_XHTML,                _T("Supports xHTML formatting of chat messages"), },
 	{	_T(JABBER_FEAT_AGENTS),               JABBER_CAPS_AGENTS,               _T("Supports Jabber Browsing"), },
 	{	_T(JABBER_FEAT_BROWSE),               JABBER_CAPS_BROWSE,               _T("Supports Jabber Browsing"), },
 	{	_T(JABBER_FEAT_FEATURE_NEG),          JABBER_CAPS_FEATURE_NEG,          _T("Can negotiate options for specific features"), },

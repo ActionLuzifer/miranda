@@ -156,6 +156,8 @@ CJabberProto::CJabberProto( const char* aProtoName, const TCHAR* aUserName ) :
 	// XMPP URI parser service for "File Association Manager" plugin
 	JCreateService( JS_PARSE_XMPP_URI, &CJabberProto::JabberServiceParseXmppURI );
 
+	JHookEvent( ME_DB_CONTACT_DELETED, &CJabberProto::OnContactDeleted );
+	JHookEvent( ME_DB_CONTACT_SETTINGCHANGED, &CJabberProto::OnDbSettingChanged );
 	JHookEvent( ME_MODERNOPT_INITIALIZE, &CJabberProto::OnModernOptInit );
 	JHookEvent( ME_OPT_INITIALISE, &CJabberProto::OnOptionsInit );
 	JHookEvent( ME_SKIN2_ICONSCHANGED, &CJabberProto::OnReloadIcons );
@@ -701,7 +703,7 @@ DWORD_PTR __cdecl CJabberProto::GetCaps( int type, HANDLE /*hContact*/ )
 {
 	switch( type ) {
 	case PFLAGNUM_1:
-		return PF1_IM | PF1_AUTHREQ | PF1_CHAT | PF1_SERVERCLIST | PF1_MODEMSG | PF1_BASICSEARCH | PF1_EXTSEARCH | PF1_FILE | PF1_CONTACT;
+		return PF1_IM | PF1_AUTHREQ | PF1_CHAT | PF1_SERVERCLIST | PF1_MODEMSG | PF1_BASICSEARCH | PF1_EXTSEARCH | PF1_FILE;
 	case PFLAGNUM_2:
 		return PF2_ONLINE | PF2_INVISIBLE | PF2_SHORTAWAY | PF2_LONGAWAY | PF2_HEAVYDND | PF2_FREECHAT;
 	case PFLAGNUM_3:
@@ -1020,40 +1022,8 @@ int __cdecl CJabberProto::RecvUrl( HANDLE /*hContact*/, PROTORECVEVENT* )
 ////////////////////////////////////////////////////////////////////////////////////////
 // SendContacts
 
-int __cdecl CJabberProto::SendContacts( HANDLE hContact, int flags, int nContacts, HANDLE* hContactsList )
+int __cdecl CJabberProto::SendContacts( HANDLE /*hContact*/, int /*flags*/, int /*nContacts*/, HANDLE* /*hContactsList*/ )
 {
-	DBVARIANT dbv;
-	if ( !m_bJabberOnline || JGetStringT( hContact, "jid", &dbv )) {
-//		JSendBroadcast( hContact, ACKTYPE_CONTACTS, ACKRESULT_FAILED, ( HANDLE ) 1, 0 );
-		return 0;
-	}
-
-	TCHAR szClientJid[ 256 ];
-	GetClientJID( dbv.ptszVal, szClientJid, SIZEOF( szClientJid ));
-	JFreeVariant( &dbv );
-
-	JabberCapsBits jcb = GetResourceCapabilites( szClientJid, TRUE );
-	if ( ~jcb & JABBER_CAPS_ROSTER_EXCHANGE )
-		return 0;
-
-	XmlNode m( _T("message"));
-//	m << XCHILD( _T("body"), msg );
-	HXML x = m << XCHILDNS( _T("x"), _T(JABBER_FEAT_ROSTER_EXCHANGE));
-
-	for ( int i = 0; i < nContacts; ++i ) {
-		if (!JGetStringT( hContactsList[i], "jid", &dbv )) {
-			x << XCHILD( _T("item")) << XATTR( _T("action"), _T("add")) << 
-				XATTR( _T("jid"), dbv.ptszVal);
-			JFreeVariant( &dbv );
-		}
-	}
-
-	int id = SerialNext();
-	m << XATTR( _T("to"), szClientJid ) << XATTRID( id );
-
-	m_ThreadInfo->send( m );
-//	mir_free( msg );
-
 	return 1;
 }
 
@@ -1639,12 +1609,6 @@ int __cdecl CJabberProto::OnEvent( PROTOEVENTTYPE eventType, WPARAM wParam, LPAR
 			JCallService( MS_CLIST_MODIFYMENUITEM, ( WPARAM )m_hMenuRoot, ( LPARAM )&clmi );
 		}
 		break;
-
-	case EV_PROTO_ONCONTACTDELETED:
-		return OnContactDeleted(wParam, lParam);
-
-	case EV_PROTO_DBSETTINGSCHANGED:
-		return OnDbSettingChanged(wParam, lParam);
 	}	
 	return 1;
 }
