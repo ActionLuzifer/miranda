@@ -230,6 +230,12 @@ EventData *getEventFromDB(struct MessageWindowData *dat, HANDLE hContact, HANDLE
 		}
 	} else {
 		event->pszTextT = DbGetEventTextT( &dbei, dat->windowData.codePage );
+		if (dat->flags & SMF_DISABLE_UNICODE) {
+			char * tmpStr = t2acp(event->pszTextT, dat->windowData.codePage);
+			mir_free(event->pszTextT);
+			event->pszTextT = a2tcp(tmpStr, dat->windowData.codePage);
+			mir_free(tmpStr);
+		}
 	}
 	if ( !(dat->flags & SMF_RTL)) {
 		if ( RTL_Detect(event->pszTextT)) {
@@ -484,9 +490,15 @@ TCHAR *TimestampToString(DWORD dwFlags, time_t check, int mode)
     static TCHAR szResult[512];
     TCHAR str[80];
 	TCHAR format[20];
+    DBTIMETOSTRINGT dbtts;
 
     szResult[0] = '\0';
     format[0] = '\0';
+
+    dbtts.cbDest = 70;;
+    dbtts.szDest = str;
+	dbtts.szFormat = format;
+
     if ((mode == 0 || mode == 1) && (dwFlags & SMF_SHOWDATE)) {
 		struct tm tm_now, tm_today;
 		time_t now = time(NULL);
@@ -520,9 +532,13 @@ TCHAR *TimestampToString(DWORD dwFlags, time_t check, int mode)
 		lstrcat(format, (dwFlags & SMF_SHOWSECONDS) ? _T("s") : _T("t"));
     }
     if (format[0] != '\0') {
-		tmi.printTimeStamp(NULL, check, format, str, SIZEOF(str), 0);
+#if defined ( _UNICODE )
+		CallService(MS_DB_TIME_TIMESTAMPTOSTRINGT, check, (LPARAM) & dbtts);
+#else
+		CallService(MS_DB_TIME_TIMESTAMPTOSTRING, check, (LPARAM) & dbtts);
+#endif
 		_tcsncat(szResult, str, 500);
-	}
+    }
     return szResult;
 }
 
@@ -1064,7 +1080,7 @@ void StreamInEvents(HWND hwndDlg, HANDLE hDbEventFirst, int count, int fAppend)
 		IEVIEWWINDOW ieWindow;
 		ZeroMemory(&event, sizeof(event));
 		event.cbSize = sizeof(event);
-		event.dwFlags = ((dat->flags & SMF_RTL) ? IEEF_RTL : 0);
+		event.dwFlags = ((dat->flags & SMF_RTL) ? IEEF_RTL : 0) | ((dat->flags & SMF_DISABLE_UNICODE) ? IEEF_NO_UNICODE : 0);
 		event.hwnd = dat->windowData.hwndLog;
 		event.hContact = dat->windowData.hContact;
 		event.codepage = dat->windowData.codePage;

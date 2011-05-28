@@ -26,7 +26,7 @@
  *
  * (C) 2005-2010 by silvercircle _at_ gmail _dot_ com and contributors
  *
- * $Id$
+ * $Id: clui.cpp 13551 2011-04-07 01:29:11Z borkra $
  *
  */
 
@@ -434,7 +434,7 @@ static void InitIcoLib()
 	for (i = IDI_OVL_OFFLINE; i <= IDI_OVL_OUTTOLUNCH; i++) {
 		mir_snprintf(szBuffer, sizeof(szBuffer), "cln_ovl_%d", ID_STATUS_OFFLINE + (i - IDI_OVL_OFFLINE));
 		sid.pszName = szBuffer;
-		sid.ptszDescription = (TCHAR *)CallService(MS_CLIST_GETSTATUSMODEDESCRIPTION, ID_STATUS_OFFLINE + (i - IDI_OVL_OFFLINE), GSMDF_TCHAR);
+		sid.ptszDescription = (TCHAR *)CallService(MS_CLIST_GETSTATUSMODEDESCRIPTION, ID_STATUS_OFFLINE + (i - IDI_OVL_OFFLINE), GCMDF_TCHAR);
 		sid.iDefaultIndex = -i;
 		CallService(MS_SKIN2_ADDICON, 0, (LPARAM) &sid);
 	}
@@ -1118,7 +1118,7 @@ LRESULT CALLBACK ContactListWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM l
 			ConfigureCLUIGeometry(0);
 
 			for (i = ID_STATUS_OFFLINE; i <= ID_STATUS_OUTTOLUNCH; i++)
-				statusNames[i - ID_STATUS_OFFLINE] = reinterpret_cast<TCHAR *>(CallService(MS_CLIST_GETSTATUSMODEDESCRIPTION, (WPARAM)i, GSMDF_TCHAR));
+				statusNames[i - ID_STATUS_OFFLINE] = reinterpret_cast<TCHAR *>(CallService(MS_CLIST_GETSTATUSMODEDESCRIPTION, (WPARAM)i, GCMDF_TCHAR));
 
 			//delay creation of CLC so that it can get the status icons right the first time (needs protocol modules loaded)
 			if (cfg::dat.bLayeredHack) {

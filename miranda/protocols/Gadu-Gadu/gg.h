@@ -21,7 +21,7 @@
 #ifndef GG_H
 #define GG_H
 
-#define MIRANDA_VER 0x1000
+#define MIRANDA_VER 0x900
 
 #if defined(__DEBUG__) || defined(_DEBUG) || defined(DEBUG)
 #define DEBUGMODE // Debug Mode
@@ -145,6 +145,8 @@ typedef struct
 	HANDLE netlib,
 		hookOptsInit,
 		hookUserInfoInit,
+		hookSettingDeleted,
+		hookSettingChanged,
 		hookGCUserEvent,
 		hookGCMenuBuild;
 	HGENMENU hMenuRoot;
@@ -377,7 +379,7 @@ int gg_isonline(GGPROTO *gg);
 int gg_refreshstatus(GGPROTO *gg, int status);
 
 void gg_broadcastnewstatus(GGPROTO *gg, int newStatus);
-int gg_contactdeleted(GGPROTO *gg, WPARAM wParam, LPARAM lParam);
+int gg_userdeleted(GGPROTO *gg, WPARAM wParam, LPARAM lParam);
 int gg_dbsettingchanged(GGPROTO *gg, WPARAM wParam, LPARAM lParam);
 int gg_idlechanged(GGPROTO *gg, WPARAM wParam, LPARAM lParam);
 void gg_notifyall(GGPROTO *gg);
@@ -394,6 +396,7 @@ int gg_img_releasepicture(void *img);
 int gg_img_display(GGPROTO *gg, HANDLE hContact, void *img);
 int gg_img_displayasmsg(GGPROTO *gg, HANDLE hContact, void *img);
 int gg_event(PROTO_INTERFACE *proto, PROTOEVENTTYPE eventType, WPARAM wParam, LPARAM lParam);
+int gg_recvmessage(PROTO_INTERFACE *proto, HANDLE hContact, PROTORECVEVENT *pre);
 
 /* Avatar functions */
 void gg_getavatarfilename(GGPROTO *gg, HANDLE hContact, char *pszDest, int cbLen);
