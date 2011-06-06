@@ -49,7 +49,6 @@ struct LIST_INTERFACE li;
 XML_API xi;
 SSL_API si;
 CLIST_INTERFACE *pcli;
-int hLangpack;
 
 // Event hooks
 static HANDLE hHookModulesLoaded = NULL;
@@ -142,11 +141,11 @@ const char *http_error_string(int h)
 // Gets plugin info
 __declspec(dllexport) PLUGININFOEX *MirandaPluginInfoEx(DWORD mirandaVersion)
 {
-	if (mirandaVersion < MIRANDA_VERSION_CORE)
+	if (mirandaVersion < PLUGIN_MAKE_VERSION(0, 9, 0, 0))
 	{
 		MessageBox(
 			NULL,
-			"The Gadu-Gadu protocol plugin cannot be loaded. It requires Miranda IM " MIRANDA_VERSION_CORE_STRING " or later.",
+			"The Gadu-Gadu protocol plugin cannot be loaded. It requires Miranda IM 0.9.0.0 or later.",
 			"Gadu-Gadu Protocol Plugin",
 			MB_OK | MB_ICONWARNING | MB_SETFOREGROUND | MB_TOPMOST
 		);
@@ -311,6 +310,8 @@ int gg_event(PROTO_INTERFACE *proto, PROTOEVENTTYPE eventType, WPARAM wParam, LP
 		{
 			gg->hookOptsInit = HookProtoEvent(ME_OPT_INITIALISE, gg_options_init, gg);
 			gg->hookUserInfoInit = HookProtoEvent(ME_USERINFO_INITIALISE, gg_details_init, gg);
+			gg->hookSettingDeleted = HookProtoEvent(ME_DB_CONTACT_DELETED, gg_userdeleted, gg);
+			gg->hookSettingChanged = HookProtoEvent(ME_DB_CONTACT_SETTINGCHANGED, gg_dbsettingchanged, gg);
 #ifdef DEBUGMODE
 			gg_netlog(gg, "gg_event(EV_PROTO_ONLOAD): loading modules...");
 #endif
@@ -360,12 +361,6 @@ int gg_event(PROTO_INTERFACE *proto, PROTOEVENTTYPE eventType, WPARAM wParam, LP
 				CallService(MS_CLIST_MODIFYMENUITEM, (WPARAM)gg->hMenuRoot, (LPARAM)&mi);
 			}
 			break;
-
-		case EV_PROTO_ONCONTACTDELETED:
-			return gg_contactdeleted(gg, wParam, lParam);
-
-		case EV_PROTO_DBSETTINGSCHANGED:
-			return gg_dbsettingchanged(gg, wParam, lParam);
 	}
 	return TRUE;
 }
@@ -458,6 +453,8 @@ static int gg_proto_uninit(PROTO_INTERFACE *proto)
 	// Close handles
 	LocalEventUnhook(gg->hookOptsInit);
 	LocalEventUnhook(gg->hookUserInfoInit);
+	LocalEventUnhook(gg->hookSettingDeleted);
+	LocalEventUnhook(gg->hookSettingChanged);
 	Netlib_CloseHandle(gg->netlib);
 
 	// Destroy mutexes
@@ -497,7 +494,6 @@ int __declspec(dllexport) Load(PLUGINLINK * link)
 	mir_getMD5I(&md5i);
 	mir_getLI(&li);
 	mir_getXI(&xi);
-	mir_getLP(&pluginInfo);
 
 	// Init winsock
 	if (WSAStartup(MAKEWORD( 1, 1 ), &wsaData))

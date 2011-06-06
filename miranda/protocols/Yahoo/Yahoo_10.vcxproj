@@ -182,6 +182,8 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>yahoo.h</PrecompiledHeaderFile>
+      <AssemblerListingLocation>
+      </AssemblerListingLocation>
       <BrowseInformationFile>
       </BrowseInformationFile>
       <WarningLevel>Level3</WarningLevel>
@@ -192,12 +194,14 @@
     <ResourceCompile>
       <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <Culture>0x0419</Culture>
-      <AdditionalIncludeDirectories>./../../include/msapi/</AdditionalIncludeDirectories>
     </ResourceCompile>
     <Link>
       <AdditionalDependencies>wsock32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <GenerateMapFile>false</GenerateMapFile>
+      <MapFileName>
+      </MapFileName>
       <RandomizedBaseAddress>false</RandomizedBaseAddress>
       <ImportLibrary>$(IntDir)$(TargetName).lib</ImportLibrary>
       <TargetMachine>MachineX86</TargetMachine>
@@ -222,6 +226,8 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>yahoo.h</PrecompiledHeaderFile>
+      <AssemblerListingLocation>
+      </AssemblerListingLocation>
       <BrowseInformationFile>
       </BrowseInformationFile>
       <WarningLevel>Level3</WarningLevel>
@@ -232,13 +238,15 @@
     <ResourceCompile>
       <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <Culture>0x0419</Culture>
-      <AdditionalIncludeDirectories>./../../include/msapi/</AdditionalIncludeDirectories>
     </ResourceCompile>
     <Link>
       <AdditionalDependencies>wsock32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <AdditionalManifestDependencies>%(AdditionalManifestDependencies)</AdditionalManifestDependencies>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <GenerateMapFile>false</GenerateMapFile>
+      <MapFileName>
+      </MapFileName>
       <RandomizedBaseAddress>false</RandomizedBaseAddress>
       <ImportLibrary>$(IntDir)$(TargetName).lib</ImportLibrary>
       <TargetMachine>MachineX64</TargetMachine>
@@ -271,6 +279,8 @@
       <RuntimeTypeInfo>false</RuntimeTypeInfo>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>yahoo.h</PrecompiledHeaderFile>
+      <AssemblerListingLocation>
+      </AssemblerListingLocation>
       <BrowseInformationFile>
       </BrowseInformationFile>
       <WarningLevel>Level3</WarningLevel>
@@ -281,13 +291,15 @@
     <ResourceCompile>
       <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <Culture>0x0419</Culture>
-      <AdditionalIncludeDirectories>./../../include/msapi/</AdditionalIncludeDirectories>
     </ResourceCompile>
     <Link>
       <AdditionalDependencies>wsock32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <AdditionalManifestDependencies>type=%27Win32%27 name=%27Microsoft.Windows.Common-Controls%27 version=%276.0.0.0%27 processorArchitecture=%27X86%27 publicKeyToken=%276595b64144ccf1df%27 language=%27*%27;%(AdditionalManifestDependencies)</AdditionalManifestDependencies>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <GenerateMapFile>false</GenerateMapFile>
+      <MapFileName>
+      </MapFileName>
       <OptimizeReferences>true</OptimizeReferences>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
@@ -323,6 +335,8 @@
       <RuntimeTypeInfo>false</RuntimeTypeInfo>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>yahoo.h</PrecompiledHeaderFile>
+      <AssemblerListingLocation>
+      </AssemblerListingLocation>
       <BrowseInformationFile>
       </BrowseInformationFile>
       <WarningLevel>Level3</WarningLevel>
@@ -333,13 +347,15 @@
     <ResourceCompile>
       <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <Culture>0x0419</Culture>
-      <AdditionalIncludeDirectories>./../../include/msapi/</AdditionalIncludeDirectories>
     </ResourceCompile>
     <Link>
       <AdditionalDependencies>wsock32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <AdditionalManifestDependencies>%(AdditionalManifestDependencies)</AdditionalManifestDependencies>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <GenerateMapFile>false</GenerateMapFile>
+      <MapFileName>
+      </MapFileName>
       <OptimizeReferences>true</OptimizeReferences>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
@@ -369,6 +385,8 @@
       <FloatingPointModel>Precise</FloatingPointModel>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>yahoo.h</PrecompiledHeaderFile>
+      <AssemblerListingLocation>
+      </AssemblerListingLocation>
       <BrowseInformationFile>
       </BrowseInformationFile>
       <WarningLevel>Level3</WarningLevel>
@@ -379,13 +397,15 @@
     <ResourceCompile>
       <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <Culture>0x0419</Culture>
-      <AdditionalIncludeDirectories>./../../include/msapi/</AdditionalIncludeDirectories>
     </ResourceCompile>
     <Link>
       <AdditionalDependencies>wsock32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <ProgramDatabaseFile>$(TargetDir)$(TargetName).pdb</ProgramDatabaseFile>
+      <GenerateMapFile>false</GenerateMapFile>
+      <MapFileName>
+      </MapFileName>
       <RandomizedBaseAddress>false</RandomizedBaseAddress>
       <ImportLibrary>$(IntDir)$(TargetName).lib</ImportLibrary>
       <TargetMachine>MachineX86</TargetMachine>
@@ -412,6 +432,8 @@
       <FloatingPointModel>Precise</FloatingPointModel>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>yahoo.h</PrecompiledHeaderFile>
+      <AssemblerListingLocation>
+      </AssemblerListingLocation>
       <BrowseInformationFile>
       </BrowseInformationFile>
       <WarningLevel>Level3</WarningLevel>
@@ -422,7 +444,6 @@
     <ResourceCompile>
       <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <Culture>0x0419</Culture>
-      <AdditionalIncludeDirectories>./../../include/msapi/</AdditionalIncludeDirectories>
     </ResourceCompile>
     <Link>
       <AdditionalDependencies>wsock32.lib;%(AdditionalDependencies)</AdditionalDependencies>
@@ -430,6 +451,9 @@
       <AdditionalManifestDependencies>%(AdditionalManifestDependencies)</AdditionalManifestDependencies>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <ProgramDatabaseFile>$(TargetDir)$(TargetName).pdb</ProgramDatabaseFile>
+      <GenerateMapFile>false</GenerateMapFile>
+      <MapFileName>
+      </MapFileName>
       <RandomizedBaseAddress>false</RandomizedBaseAddress>
       <ImportLibrary>$(IntDir)$(TargetName).lib</ImportLibrary>
       <TargetMachine>MachineX64</TargetMachine>
@@ -462,6 +486,8 @@
       <RuntimeTypeInfo>false</RuntimeTypeInfo>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>yahoo.h</PrecompiledHeaderFile>
+      <AssemblerListingLocation>
+      </AssemblerListingLocation>
       <BrowseInformationFile>
       </BrowseInformationFile>
       <WarningLevel>Level3</WarningLevel>
@@ -472,7 +498,6 @@
     <ResourceCompile>
       <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <Culture>0x0419</Culture>
-      <AdditionalIncludeDirectories>./../../include/msapi/</AdditionalIncludeDirectories>
     </ResourceCompile>
     <Link>
       <AdditionalDependencies>wsock32.lib;%(AdditionalDependencies)</AdditionalDependencies>
@@ -513,6 +538,8 @@
       <RuntimeTypeInfo>false</RuntimeTypeInfo>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>yahoo.h</PrecompiledHeaderFile>
+      <AssemblerListingLocation>
+      </AssemblerListingLocation>
       <BrowseInformationFile>
       </BrowseInformationFile>
       <WarningLevel>Level3</WarningLevel>
@@ -523,7 +550,6 @@
     <ResourceCompile>
       <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <Culture>0x0419</Culture>
-      <AdditionalIncludeDirectories>./../../include/msapi/</AdditionalIncludeDirectories>
     </ResourceCompile>
     <Link>
       <AdditionalDependencies>wsock32.lib;%(AdditionalDependencies)</AdditionalDependencies>

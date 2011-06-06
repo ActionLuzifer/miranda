@@ -25,7 +25,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define SRMM_COMMONHEADERS_H
 
 #define MIRANDA_VER 0x0800
-#define MIRANDA_CUSTOM_LP
 
 #define COMPILE_MULTIMON_STUBS
 #define _WIN32_WINNT 0x0501
@@ -71,7 +70,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <m_avatars.h>
 #include <m_hotkeys.h>
 #include <m_popup.h>
-#include <m_timezones.h>
 
 #include "m_ieview.h"
 

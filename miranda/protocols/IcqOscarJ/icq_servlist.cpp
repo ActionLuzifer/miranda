@@ -2285,8 +2285,8 @@ int CIcqProto::servlistMoveContact_gotTargetGroup(const char *szGroup, WORD wNew
 	{ // imitate icq5, previously here was different order, but AOL changed and it ceased to work
 		void *doubleObject = NULL;
 
-		icq_sendServerContact(ack->hContact, dwCookie2, ICQ_LISTS_ADDTOLIST, wNewGroupID, ack->wNewContactId, SSO_CONTACT_SETGROUP | SSOF_BEGIN_OPERATION, 500, &doubleObject);
 		icq_sendServerContact(ack->hContact, dwCookie, ICQ_LISTS_REMOVEFROMLIST, wGroupID, wItemID, SSO_CONTACT_SETGROUP | SSOF_BEGIN_OPERATION, 500, &doubleObject);
+		icq_sendServerContact(ack->hContact, dwCookie2, ICQ_LISTS_ADDTOLIST, wNewGroupID, ack->wNewContactId, SSO_CONTACT_SETGROUP | SSOF_BEGIN_OPERATION, 500, &doubleObject);
 	}
 	return CALLBACK_RESULT_CONTINUE;
 }
@@ -2678,6 +2678,13 @@ int CIcqProto::ServListDbSettingChanged(WPARAM wParam, LPARAM lParam)
 	if (!icqOnline() || !m_bSsiEnabled || bIsSyncingCL)
 		return 0;
 
+	{ // only our contacts will be handled
+		if (IsICQContact((HANDLE)wParam))
+			;// our contact, fine; otherwise return
+		else 
+			return 0;
+	}
+
 #ifdef _DEBUG
 	if (cws->value.type == DBVT_DELETED)
 		NetLog_Server("DB-Events: Module \"%s\", setting \"%s\" deleted.", cws->szModule, cws->szSetting);
@@ -2731,6 +2738,8 @@ int CIcqProto::ServListDbSettingChanged(WPARAM wParam, LPARAM lParam)
 
 int CIcqProto::ServListDbContactDeleted(WPARAM wParam, LPARAM lParam)
 {
+	if (!IsICQContact((HANDLE)wParam)) return 0;
+
 #ifdef _DEBUG
 	NetLog_Server("DB-Events: Contact %x deleted.", wParam);
 #endif

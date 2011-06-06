@@ -529,7 +529,7 @@ static INT_PTR CALLBACK WaitForProcessDlgProc(HWND hwnd, UINT msg, WPARAM wParam
 	return FALSE;
 }
 
-void ParseCommandLine()
+static void ParseCommandLine()
 {
 	char* cmdline = GetCommandLineA();
 	char* p = strstr( cmdline, "/restart:" );
@@ -571,49 +571,53 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int )
 		MyGetMonitorInfo = (pfnMyGetMonitorInfo)GetProcAddress(hUser32, "GetMonitorInfoA");
 	#endif
 
-	hShFolder = GetModuleHandleA("shell32");
+    hShFolder = GetModuleHandleA("shell32");
 	shGetSpecialFolderPathA = (pfnSHGetSpecialFolderPathA)GetProcAddress(hShFolder,"SHGetSpecialFolderPathA");
-	shGetSpecialFolderPathW = (pfnSHGetSpecialFolderPathW)GetProcAddress(hShFolder,"SHGetSpecialFolderPathW");
-	if (shGetSpecialFolderPathA == NULL)
-	{
-		hShFolder = LoadLibraryA("ShFolder.dll");
-		shGetSpecialFolderPathA = (pfnSHGetSpecialFolderPathA)GetProcAddress(hShFolder,"SHGetSpecialFolderPathA");
-		shGetSpecialFolderPathW = (pfnSHGetSpecialFolderPathW)GetProcAddress(hShFolder,"SHGetSpecialFolderPathW");
-	}
+    shGetSpecialFolderPathW = (pfnSHGetSpecialFolderPathW)GetProcAddress(hShFolder,"SHGetSpecialFolderPathW");
+    if (shGetSpecialFolderPathA == NULL)
+    {
+        hShFolder = LoadLibraryA("ShFolder.dll");
+	    shGetSpecialFolderPathA = (pfnSHGetSpecialFolderPathA)GetProcAddress(hShFolder,"SHGetSpecialFolderPathA");
+	    shGetSpecialFolderPathW = (pfnSHGetSpecialFolderPathW)GetProcAddress(hShFolder,"SHGetSpecialFolderPathW");
+    }
 
 	shAutoComplete = (pfnSHAutoComplete)GetProcAddress(GetModuleHandleA("shlwapi"),"SHAutoComplete");
 
-	if (IsWinVerXPPlus()) {
-		hThemeAPI = LoadLibraryA("uxtheme.dll");
-		if (hThemeAPI) {
-			openThemeData = (pfnOpenThemeData)GetProcAddress(hThemeAPI, "OpenThemeData");
-			isThemeBackgroundPartiallyTransparent = (pfnIsThemeBackgroundPartiallyTransparent)GetProcAddress(hThemeAPI, "IsThemeBackgroundPartiallyTransparent");
-			drawThemeParentBackground  = (pfnDrawThemeParentBackground)GetProcAddress(hThemeAPI, "DrawThemeParentBackground");
-			drawThemeBackground = (pfnDrawThemeBackground)GetProcAddress(hThemeAPI, "DrawThemeBackground");
-			drawThemeText = (pfnDrawThemeText)GetProcAddress(hThemeAPI, "DrawThemeText");
-			drawThemeTextEx = (pfnDrawThemeTextEx)GetProcAddress(hThemeAPI, "DrawThemeTextEx");
-			getThemeBackgroundContentRect = (pfnGetThemeBackgroundContentRect)GetProcAddress(hThemeAPI ,"GetThemeBackgroundContentRect");
-			getThemeFont = (pfnGetThemeFont)GetProcAddress(hThemeAPI, "GetThemeFont");
-			closeThemeData  = (pfnCloseThemeData)GetProcAddress(hThemeAPI, "CloseThemeData");
-			enableThemeDialogTexture = (pfnEnableThemeDialogTexture)GetProcAddress(hThemeAPI, "EnableThemeDialogTexture");
-			setWindowTheme = (pfnSetWindowTheme)GetProcAddress(hThemeAPI, "SetWindowTheme");
-			setWindowThemeAttribute = (pfnSetWindowThemeAttribute)GetProcAddress(hThemeAPI, "SetWindowThemeAttribute");
-			isThemeActive = (pfnIsThemeActive)GetProcAddress(hThemeAPI, "IsThemeActive");
-			bufferedPaintInit = (pfnBufferedPaintInit)GetProcAddress(hThemeAPI, "BufferedPaintInit");
-			bufferedPaintUninit = (pfnBufferedPaintUninit)GetProcAddress(hThemeAPI, "BufferedPaintUninit");
-			beginBufferedPaint = (pfnBeginBufferedPaint)GetProcAddress(hThemeAPI, "BeginBufferedPaint");
-			endBufferedPaint = (pfnEndBufferedPaint)GetProcAddress(hThemeAPI, "EndBufferedPaint");
-			getBufferedPaintBits = (pfnGetBufferedPaintBits)GetProcAddress(hThemeAPI, "GetBufferedPaintBits");
+    if (IsWinVerXPPlus())
+    {
+	    hThemeAPI = LoadLibraryA("uxtheme.dll");
+	    if (hThemeAPI)
+		{
+		    openThemeData = (pfnOpenThemeData)GetProcAddress(hThemeAPI, "OpenThemeData");
+		    isThemeBackgroundPartiallyTransparent = (pfnIsThemeBackgroundPartiallyTransparent)GetProcAddress(hThemeAPI, "IsThemeBackgroundPartiallyTransparent");
+		    drawThemeParentBackground  = (pfnDrawThemeParentBackground)GetProcAddress(hThemeAPI, "DrawThemeParentBackground");
+		    drawThemeBackground = (pfnDrawThemeBackground)GetProcAddress(hThemeAPI, "DrawThemeBackground");
+		    drawThemeText = (pfnDrawThemeText)GetProcAddress(hThemeAPI, "DrawThemeText");
+		    drawThemeTextEx = (pfnDrawThemeTextEx)GetProcAddress(hThemeAPI, "DrawThemeTextEx");
+            getThemeBackgroundContentRect = (pfnGetThemeBackgroundContentRect)GetProcAddress(hThemeAPI ,"GetThemeBackgroundContentRect");
+            getThemeFont = (pfnGetThemeFont)GetProcAddress(hThemeAPI, "GetThemeFont");
+		    closeThemeData  = (pfnCloseThemeData)GetProcAddress(hThemeAPI, "CloseThemeData");
+            enableThemeDialogTexture = (pfnEnableThemeDialogTexture)GetProcAddress(hThemeAPI, "EnableThemeDialogTexture");
+            setWindowTheme = (pfnSetWindowTheme)GetProcAddress(hThemeAPI, "SetWindowTheme");
+            setWindowThemeAttribute = (pfnSetWindowThemeAttribute)GetProcAddress(hThemeAPI, "SetWindowThemeAttribute");
+            isThemeActive = (pfnIsThemeActive)GetProcAddress(hThemeAPI, "IsThemeActive");
+            bufferedPaintInit = (pfnBufferedPaintInit)GetProcAddress(hThemeAPI, "BufferedPaintInit");
+            bufferedPaintUninit = (pfnBufferedPaintUninit)GetProcAddress(hThemeAPI, "BufferedPaintUninit");
+            beginBufferedPaint = (pfnBeginBufferedPaint)GetProcAddress(hThemeAPI, "BeginBufferedPaint");
+            endBufferedPaint = (pfnEndBufferedPaint)GetProcAddress(hThemeAPI, "EndBufferedPaint");
+            getBufferedPaintBits = (pfnGetBufferedPaintBits)GetProcAddress(hThemeAPI, "GetBufferedPaintBits");
 		}
-	}
+    }
 
-	if (IsWinVerVistaPlus()) {
-		hDwmApi = LoadLibraryA("dwmapi.dll");
-		if (hDwmApi) {
-			dwmExtendFrameIntoClientArea = (pfnDwmExtendFrameIntoClientArea)GetProcAddress(hDwmApi,"DwmExtendFrameIntoClientArea");
-			dwmIsCompositionEnabled = (pfnDwmIsCompositionEnabled)GetProcAddress(hDwmApi,"DwmIsCompositionEnabled");
-		}
-	}
+    if (IsWinVerVistaPlus())
+    {
+	    hDwmApi = LoadLibraryA("dwmapi.dll");
+	    if (hDwmApi)
+	    {
+            dwmExtendFrameIntoClientArea = (pfnDwmExtendFrameIntoClientArea)GetProcAddress(hDwmApi,"DwmExtendFrameIntoClientArea");
+            dwmIsCompositionEnabled = (pfnDwmIsCompositionEnabled)GetProcAddress(hDwmApi,"DwmIsCompositionEnabled");
+	    }
+    }
 
 	if (bufferedPaintInit) bufferedPaintInit();
 
@@ -623,7 +627,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int )
 		CoCreateInstance(CLSID_TaskbarList, NULL, CLSCTX_ALL, IID_ITaskbarList3, (void**)&pTaskbarInterface);
 
 	InitialiseModularEngine();
-//	ParseCommandLine();
+	ParseCommandLine();
 
 	if (LoadDefaultModules()) {
 		NotifyEventHooks(hShutdownEvent,0,0);
@@ -698,9 +702,9 @@ exit:
 
 	if (bufferedPaintUninit) bufferedPaintUninit();
 
-	if (hDwmApi) FreeLibrary(hDwmApi);
-	if (hThemeAPI) FreeLibrary(hThemeAPI);
-	if (hShFolder) FreeLibrary(hShFolder);
+    if (hDwmApi) FreeLibrary(hDwmApi);
+    if (hThemeAPI) FreeLibrary(hThemeAPI);
+    if (hShFolder) FreeLibrary(hShFolder);
 
 	return result;
 }
