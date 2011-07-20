@@ -5,6 +5,8 @@
 	Name="clist_nicer"
 	ProjectGUID="{3C42510C-A29E-4A53-899C-203BFA874E0B}"
 	RootNamespace="clist_nicer"
+	SccProjectName=""
+	SccLocalPath=""
 	>
 	<Platforms>
 		<Platform
@@ -47,7 +49,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="../../include;./include"
+				AdditionalIncludeDirectories="../../include"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;CLIST_EXPORTS"
 				ExceptionHandling="0"
 				BasicRuntimeChecks="3"
@@ -149,7 +151,7 @@
 				FavorSizeOrSpeed="2"
 				OmitFramePointers="true"
 				WholeProgramOptimization="true"
-				AdditionalIncludeDirectories="../../include;./include"
+				AdditionalIncludeDirectories="../../include/"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;CLIST_EXPORTS"
 				StringPooling="true"
 				ExceptionHandling="0"
@@ -249,7 +251,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="../../include;./include"
+				AdditionalIncludeDirectories="../../include"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;CLIST_EXPORTS"
 				StringPooling="false"
 				ExceptionHandling="0"
@@ -353,7 +355,7 @@
 				InlineFunctionExpansion="1"
 				FavorSizeOrSpeed="2"
 				WholeProgramOptimization="true"
-				AdditionalIncludeDirectories="../../include;./include"
+				AdditionalIncludeDirectories="../../include/"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;CLIST_EXPORTS"
 				StringPooling="true"
 				ExceptionHandling="0"
@@ -431,97 +433,553 @@
 			Filter="cpp;c;cxx;rc;def;r;odl;idl;hpj;bat"
 			>
 			<File
-				RelativePath=".\SRC\alphablend.cpp"
+				RelativePath=".\alphablend.c"
 				>
+				<FileConfiguration
+					Name="Release|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="2"
+						FavorSizeOrSpeed="1"
+						UsePrecompiledHeader="0"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release Unicode|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="2"
+						FavorSizeOrSpeed="1"
+						WholeProgramOptimization="false"
+						UsePrecompiledHeader="0"
+					/>
+				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\SRC\clc.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\SRC\CLCButton.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\SRC\clcidents.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\SRC\clcitems.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\SRC\clcmsgs.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\SRC\clcopts.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\SRC\clcpaint.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\SRC\clcutils.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\SRC\clistevents.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\SRC\clistmenus.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\SRC\clistmod.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\SRC\clistopts.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\SRC\clistsettings.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\SRC\clisttray.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\SRC\clnplus.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\SRC\clui.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\SRC\cluiopts.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\SRC\cluiservices.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\SRC\commonheaders.cpp"
+				RelativePath="clc.c"
 				>
 				<FileConfiguration
 					Name="Debug|Win32"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="1"
+						Optimization="0"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_MBCS;_USRDLL;CLIST_EXPORTS;$(NoInherit)"
+						BasicRuntimeChecks="3"
 					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="Debug|x64"
+					Name="Release|Win32"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
+						Optimization="1"
+						AdditionalIncludeDirectories=""
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug Unicode|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="0"
+						AdditionalIncludeDirectories=""
+						BasicRuntimeChecks="3"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release Unicode|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="1"
+						AdditionalIncludeDirectories=""
+					/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath=".\CLCButton.c"
+				>
+			</File>
+			<File
+				RelativePath="clcidents.c"
+				>
+				<FileConfiguration
+					Name="Debug|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="0"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_MBCS;_USRDLL;CLIST_EXPORTS;$(NoInherit)"
+						BasicRuntimeChecks="3"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="1"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_MBCS;_USRDLL;CLIST_EXPORTS;$(NoInherit)"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug Unicode|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="0"
+						AdditionalIncludeDirectories=""
+						BasicRuntimeChecks="3"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release Unicode|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="1"
+						AdditionalIncludeDirectories=""
+					/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="clcitems.c"
+				>
+				<FileConfiguration
+					Name="Debug|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="0"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_MBCS;_USRDLL;CLIST_EXPORTS;$(NoInherit)"
+						BasicRuntimeChecks="3"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="1"
+						AdditionalIncludeDirectories=""
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug Unicode|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="0"
+						AdditionalIncludeDirectories=""
+						BasicRuntimeChecks="3"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release Unicode|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="1"
+						AdditionalIncludeDirectories=""
+					/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="clcmsgs.c"
+				>
+				<FileConfiguration
+					Name="Debug|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="0"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_MBCS;_USRDLL;CLIST_EXPORTS;$(NoInherit)"
+						BasicRuntimeChecks="3"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="1"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_MBCS;_USRDLL;CLIST_EXPORTS;$(NoInherit)"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug Unicode|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="0"
+						AdditionalIncludeDirectories=""
+						BasicRuntimeChecks="3"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release Unicode|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="1"
+						AdditionalIncludeDirectories=""
+					/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="clcopts.c"
+				>
+				<FileConfiguration
+					Name="Debug|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="0"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_MBCS;_USRDLL;CLIST_EXPORTS;$(NoInherit)"
+						BasicRuntimeChecks="3"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="1"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_MBCS;_USRDLL;CLIST_EXPORTS;$(NOINHERIT)"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug Unicode|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="0"
+						AdditionalIncludeDirectories=""
+						BasicRuntimeChecks="3"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release Unicode|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="1"
+						AdditionalIncludeDirectories=""
+					/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="clcpaint.c"
+				>
+				<FileConfiguration
+					Name="Debug|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="0"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_MBCS;_USRDLL;CLIST_EXPORTS;$(NoInherit)"
+						BasicRuntimeChecks="3"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="2"
+						FavorSizeOrSpeed="1"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_MBCS;_USRDLL;CLIST_EXPORTS"
+						UsePrecompiledHeader="0"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug Unicode|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="0"
+						AdditionalIncludeDirectories=""
+						BasicRuntimeChecks="3"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release Unicode|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="2"
+						FavorSizeOrSpeed="1"
+						WholeProgramOptimization="false"
+						AdditionalIncludeDirectories=""
+						UsePrecompiledHeader="0"
+					/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="clcutils.c"
+				>
+				<FileConfiguration
+					Name="Debug|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="0"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_MBCS;_USRDLL;CLIST_EXPORTS;$(NoInherit)"
+						BasicRuntimeChecks="3"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="1"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_MBCS;_USRDLL;CLIST_EXPORTS;$(NoInherit)"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug Unicode|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="0"
+						AdditionalIncludeDirectories=""
+						BasicRuntimeChecks="3"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release Unicode|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="1"
+						AdditionalIncludeDirectories=""
+					/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath=".\clistevents.c"
+				>
+			</File>
+			<File
+				RelativePath=".\clistmenus.c"
+				>
+			</File>
+			<File
+				RelativePath=".\clistmod.c"
+				>
+			</File>
+			<File
+				RelativePath=".\clistopts.c"
+				>
+			</File>
+			<File
+				RelativePath=".\clistsettings.c"
+				>
+			</File>
+			<File
+				RelativePath=".\clisttray.c"
+				>
+			</File>
+			<File
+				RelativePath=".\clnplus.cpp"
+				>
+				<FileConfiguration
+					Name="Debug|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						ExceptionHandling="1"
+						UsePrecompiledHeader="0"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						ExceptionHandling="1"
+						UsePrecompiledHeader="0"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug Unicode|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						ExceptionHandling="1"
+						UsePrecompiledHeader="0"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release Unicode|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						ExceptionHandling="1"
+						UsePrecompiledHeader="0"
+					/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="clui.c"
+				>
+				<FileConfiguration
+					Name="Debug|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="0"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_MBCS;_USRDLL;CLIST_EXPORTS;$(NoInherit)"
+						BasicRuntimeChecks="3"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="1"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_MBCS;_USRDLL;CLIST_EXPORTS;$(NoInherit)"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug Unicode|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="0"
+						AdditionalIncludeDirectories=""
+						BasicRuntimeChecks="3"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release Unicode|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="1"
+						AdditionalIncludeDirectories=""
+					/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="cluiopts.c"
+				>
+				<FileConfiguration
+					Name="Debug|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="0"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_MBCS;_USRDLL;CLIST_EXPORTS;$(NoInherit)"
+						BasicRuntimeChecks="3"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="1"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_MBCS;_USRDLL;CLIST_EXPORTS;$(NoInherit)"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug Unicode|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="0"
+						AdditionalIncludeDirectories=""
+						BasicRuntimeChecks="3"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release Unicode|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="1"
+						AdditionalIncludeDirectories=""
+					/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="cluiservices.c"
+				>
+				<FileConfiguration
+					Name="Debug|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="0"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_MBCS;_USRDLL;CLIST_EXPORTS;$(NoInherit)"
+						BasicRuntimeChecks="3"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="1"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_MBCS;_USRDLL;CLIST_EXPORTS;$(NoInherit)"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug Unicode|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="0"
+						AdditionalIncludeDirectories=""
+						BasicRuntimeChecks="3"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release Unicode|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="1"
+						AdditionalIncludeDirectories=""
+					/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="commonheaders.c"
+				>
+				<FileConfiguration
+					Name="Debug|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="0"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_MBCS;_USRDLL;CLIST_EXPORTS;$(NoInherit)"
+						BasicRuntimeChecks="3"
 						UsePrecompiledHeader="1"
 					/>
 				</FileConfiguration>
@@ -530,14 +988,9 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="1"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release|x64"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
+						Optimization="1"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_MBCS;_USRDLL;CLIST_EXPORTS;$(NoInherit)"
 						UsePrecompiledHeader="1"
 					/>
 				</FileConfiguration>
@@ -546,14 +999,9 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="1"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug Unicode|x64"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
+						Optimization="0"
+						AdditionalIncludeDirectories=""
+						BasicRuntimeChecks="3"
 						UsePrecompiledHeader="1"
 					/>
 				</FileConfiguration>
@@ -562,80 +1010,318 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
+						Optimization="1"
+						AdditionalIncludeDirectories=""
 						UsePrecompiledHeader="1"
 					/>
 				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="contact.c"
+				>
 				<FileConfiguration
-					Name="Release Unicode|x64"
+					Name="Debug|Win32"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="1"
+						Optimization="0"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_MBCS;_USRDLL;CLIST_EXPORTS;$(NoInherit)"
+						BasicRuntimeChecks="3"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="1"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_MBCS;_USRDLL;CLIST_EXPORTS;$(NoInherit)"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug Unicode|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="0"
+						AdditionalIncludeDirectories=""
+						BasicRuntimeChecks="3"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release Unicode|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="1"
+						AdditionalIncludeDirectories=""
 					/>
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\SRC\config.cpp"
+				RelativePath=".\Docking.c"
 				>
 			</File>
 			<File
-				RelativePath=".\SRC\contact.cpp"
+				RelativePath=".\extBackg.c"
 				>
 			</File>
 			<File
-				RelativePath=".\SRC\Docking.cpp"
+				RelativePath="forkthread.c"
+				>
+				<FileConfiguration
+					Name="Debug|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="0"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_MBCS;_USRDLL;CLIST_EXPORTS;$(NoInherit)"
+						BasicRuntimeChecks="3"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="1"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_MBCS;_USRDLL;CLIST_EXPORTS;$(NoInherit)"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug Unicode|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="0"
+						AdditionalIncludeDirectories=""
+						BasicRuntimeChecks="3"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release Unicode|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="1"
+						AdditionalIncludeDirectories=""
+					/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="init.c"
+				>
+				<FileConfiguration
+					Name="Debug|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="0"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_MBCS;_USRDLL;CLIST_EXPORTS;$(NoInherit)"
+						BasicRuntimeChecks="3"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="1"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_MBCS;_USRDLL;CLIST_EXPORTS;$(NoInherit)"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug Unicode|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="0"
+						AdditionalIncludeDirectories=""
+						BasicRuntimeChecks="3"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release Unicode|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="1"
+						AdditionalIncludeDirectories=""
+					/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath=".\rowheight_funcs.c"
 				>
 			</File>
 			<File
-				RelativePath=".\SRC\extBackg.cpp"
+				RelativePath=".\statusbar.c"
 				>
 			</File>
 			<File
-				RelativePath=".\SRC\init.cpp"
+				RelativePath=".\statusfloater.c"
 				>
 			</File>
 			<File
-				RelativePath=".\SRC\rowheight_funcs.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\SRC\statusbar.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\SRC\statusfloater.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\SRC\viewmodes.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\SRC\wallpaper.cpp"
+				RelativePath=".\viewmodes.c"
 				>
 			</File>
 			<Filter
 				Name="CLUIFrames"
 				>
 				<File
-					RelativePath=".\CLUIFrames\cluiframes.cpp"
+					RelativePath=".\CLUIFrames\cluiframes.c"
 					>
+					<FileConfiguration
+						Name="Debug|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							PrecompiledHeaderThrough="../commonheaders.h"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							PrecompiledHeaderThrough="../commonheaders.h"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Debug Unicode|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							PrecompiledHeaderThrough="../commonheaders.h"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release Unicode|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							PrecompiledHeaderThrough="../commonheaders.h"
+						/>
+					</FileConfiguration>
 				</File>
 				<File
 					RelativePath=".\CLUIFrames\cluiframes.h"
 					>
 				</File>
 				<File
-					RelativePath=".\CLUIFrames\framesmenu.cpp"
+					RelativePath=".\CLUIFrames\framesmenu.c"
 					>
+					<FileConfiguration
+						Name="Debug|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							PrecompiledHeaderThrough="../commonheaders.h"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							PrecompiledHeaderThrough="../commonheaders.h"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Debug Unicode|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							PrecompiledHeaderThrough="../commonheaders.h"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release Unicode|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							PrecompiledHeaderThrough="../commonheaders.h"
+						/>
+					</FileConfiguration>
 				</File>
 				<File
-					RelativePath=".\CLUIFrames\groupmenu.cpp"
+					RelativePath=".\CLUIFrames\groupmenu.c"
 					>
+					<FileConfiguration
+						Name="Debug|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							PrecompiledHeaderThrough="../commonheaders.h"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							PrecompiledHeaderThrough="../commonheaders.h"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Debug Unicode|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							PrecompiledHeaderThrough="../commonheaders.h"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release Unicode|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							PrecompiledHeaderThrough="../commonheaders.h"
+						/>
+					</FileConfiguration>
 				</File>
 				<File
-					RelativePath=".\CLUIFrames\movetogroup.cpp"
+					RelativePath=".\CLUIFrames\movetogroup.c"
 					>
+					<FileConfiguration
+						Name="Debug|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							PrecompiledHeaderThrough="../commonheaders.h"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							PrecompiledHeaderThrough="../commonheaders.h"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Debug Unicode|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							PrecompiledHeaderThrough="../commonheaders.h"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release Unicode|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							PrecompiledHeaderThrough="../commonheaders.h"
+						/>
+					</FileConfiguration>
 				</File>
 			</Filter>
 			<Filter
@@ -646,16 +1332,80 @@
 					>
 				</File>
 				<File
-					RelativePath=".\coolsb\coolsblib.cpp"
+					RelativePath=".\coolsb\coolsblib.c"
 					>
+					<FileConfiguration
+						Name="Debug|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Debug Unicode|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release Unicode|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
+						/>
+					</FileConfiguration>
 				</File>
 				<File
 					RelativePath=".\coolsb\coolsblib.h"
 					>
 				</File>
 				<File
-					RelativePath=".\coolsb\coolscroll.cpp"
+					RelativePath=".\coolsb\coolscroll.c"
 					>
+					<FileConfiguration
+						Name="Debug|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Debug Unicode|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release Unicode|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
+						/>
+					</FileConfiguration>
 				</File>
 				<File
 					RelativePath=".\coolsb\coolscroll.h"
@@ -672,67 +1422,39 @@
 			Filter="h;hpp;hxx;hm;inl"
 			>
 			<File
-				RelativePath=".\INCLUDE\alphablend.h"
+				RelativePath=".\alphablend.h"
 				>
 			</File>
 			<File
-				RelativePath=".\INCLUDE\clc.h"
+				RelativePath="clc.h"
 				>
 			</File>
 			<File
-				RelativePath=".\INCLUDE\clist.h"
+				RelativePath="clist.h"
 				>
 			</File>
 			<File
-				RelativePath=".\INCLUDE\commonheaders.h"
+				RelativePath="commonheaders.h"
 				>
 			</File>
 			<File
-				RelativePath=".\INCLUDE\config.h"
+				RelativePath=".\extBackg.h"
 				>
 			</File>
 			<File
-				RelativePath=".\INCLUDE\extBackg.h"
+				RelativePath="forkthread.h"
 				>
 			</File>
 			<File
-				RelativePath=".\INCLUDE\IcoLib.h"
+				RelativePath=".\m_cln_skinedit.h"
 				>
 			</File>
 			<File
-				RelativePath=".\INCLUDE\m_avatars.h"
+				RelativePath="m_cluiframes.h"
 				>
 			</File>
 			<File
-				RelativePath=".\INCLUDE\m_cln_skinedit.h"
-				>
-			</File>
-			<File
-				RelativePath=".\INCLUDE\m_metacontacts.h"
-				>
-			</File>
-			<File
-				RelativePath=".\INCLUDE\m_updater.h"
-				>
-			</File>
-			<File
-				RelativePath=".\INCLUDE\m_variables.h"
-				>
-			</File>
-			<File
-				RelativePath=".\INCLUDE\resource.h"
-				>
-			</File>
-			<File
-				RelativePath=".\INCLUDE\rowheight_funcs.h"
-				>
-			</File>
-			<File
-				RelativePath=".\INCLUDE\vsstyle.h"
-				>
-			</File>
-			<File
-				RelativePath=".\INCLUDE\vssym32.h"
+				RelativePath="resource.h"
 				>
 			</File>
 		</Filter>
@@ -741,11 +1463,19 @@
 			Filter="ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe"
 			>
 			<File
-				RelativePath=".\res\accounts.ico"
+				RelativePath=".\res\clients\&amp;RQ.ico"
 				>
 			</File>
 			<File
 				RelativePath=".\res\addgoupp.ico"
+				>
+			</File>
+			<File
+				RelativePath=".\res\clients\AgileMobile.ico"
+				>
+			</File>
+			<File
+				RelativePath=".\res\clients\AlIcq.ico"
 				>
 			</File>
 			<File
@@ -758,6 +1488,10 @@
 			</File>
 			<File
 				RelativePath="res\blank.ico"
+				>
+			</File>
+			<File
+				RelativePath=".\res\clients\Center.ico"
 				>
 			</File>
 			<File
@@ -789,6 +1523,18 @@
 				>
 			</File>
 			<File
+				RelativePath=".\res\clients\Gaim.ico"
+				>
+			</File>
+			<File
+				RelativePath=".\res\globus.ico"
+				>
+			</File>
+			<File
+				RelativePath=".\res\clients\Gnomeicu.ico"
+				>
+			</File>
+			<File
 				RelativePath=".\res\groups.ico"
 				>
 			</File>
@@ -797,11 +1543,71 @@
 				>
 			</File>
 			<File
-				RelativePath="res\invisible.ico"
+				RelativePath=".\res\clients\ico00001.ico"
+				>
+			</File>
+			<File
+				RelativePath=".\res\clients\ico00002.ico"
+				>
+			</File>
+			<File
+				RelativePath=".\res\clients\ico00003.ico"
+				>
+			</File>
+			<File
+				RelativePath=".\res\clients\ico00004.ico"
+				>
+			</File>
+			<File
+				RelativePath=".\res\clients\ico00005.ico"
+				>
+			</File>
+			<File
+				RelativePath=".\res\clients\icon2.ico"
+				>
+			</File>
+			<File
+				RelativePath=".\res\clients\IcqMac.ico"
+				>
+			</File>
+			<File
+				RelativePath=".\res\clients\IM+.ico"
+				>
+			</File>
+			<File
+				RelativePath=".\res\clients\IM2.ico"
 				>
 			</File>
 			<File
 				RelativePath=".\res\overlay\invisible.ico"
+				>
+			</File>
+			<File
+				RelativePath="res\invisible.ico"
+				>
+			</File>
+			<File
+				RelativePath=".\res\clients\Kopete.ico"
+				>
+			</File>
+			<File
+				RelativePath=".\res\clients\L.ico"
+				>
+			</File>
+			<File
+				RelativePath=".\res\clients\L4.ico"
+				>
+			</File>
+			<File
+				RelativePath=".\res\clients\L5.ico"
+				>
+			</File>
+			<File
+				RelativePath=".\res\clients\LibIcq2000.ico"
+				>
+			</File>
+			<File
+				RelativePath=".\res\clients\Licq.ico"
 				>
 			</File>
 			<File
@@ -817,7 +1623,15 @@
 				>
 			</File>
 			<File
+				RelativePath=".\res\clients\Mob2Icq.ico"
+				>
+			</File>
+			<File
 				RelativePath=".\res\overlay\NA.ico"
+				>
+			</File>
+			<File
+				RelativePath=".\res\clients\NICQ2.ico"
 				>
 			</File>
 			<File
@@ -857,15 +1671,71 @@
 				>
 			</File>
 			<File
+				RelativePath=".\res\clients\PSI.ico"
+				>
+			</File>
+			<File
+				RelativePath=".\res\clients\QIP.ico"
+				>
+			</File>
+			<File
 				RelativePath="res\rename.ico"
 				>
 			</File>
 			<File
 				RelativePath="resource.rc"
 				>
+				<FileConfiguration
+					Name="Debug|Win32"
+					>
+					<Tool
+						Name="VCResourceCompilerTool"
+						PreprocessorDefinitions=""
+						AdditionalIncludeDirectories=""
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32"
+					>
+					<Tool
+						Name="VCResourceCompilerTool"
+						PreprocessorDefinitions=""
+						AdditionalIncludeDirectories=""
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug Unicode|Win32"
+					>
+					<Tool
+						Name="VCResourceCompilerTool"
+						PreprocessorDefinitions=""
+						AdditionalIncludeDirectories=""
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release Unicode|Win32"
+					>
+					<Tool
+						Name="VCResourceCompilerTool"
+						PreprocessorDefinitions=""
+						AdditionalIncludeDirectories=""
+					/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="res\sendmail.ico"
+				>
+			</File>
+			<File
+				RelativePath=".\res\clients\Sim.ico"
+				>
 			</File>
 			<File
 				RelativePath=".\res\slist.ico"
+				>
+			</File>
+			<File
+				RelativePath="res\sms.ico"
 				>
 			</File>
 			<File
@@ -877,11 +1747,43 @@
 				>
 			</File>
 			<File
+				RelativePath=".\res\clients\Spambot.ico"
+				>
+			</File>
+			<File
+				RelativePath=".\res\clients\Sticq.ico"
+				>
+			</File>
+			<File
+				RelativePath=".\res\clients\Stricq.ico"
+				>
+			</File>
+			<File
 				RelativePath=".\res\tabsrmm_menu.ico"
 				>
 			</File>
 			<File
+				RelativePath=".\res\clients\Trillian.ico"
+				>
+			</File>
+			<File
+				RelativePath=".\res\clients\Vicq.ico"
+				>
+			</File>
+			<File
 				RelativePath=".\res\visible.ico"
+				>
+			</File>
+			<File
+				RelativePath=".\res\clients\WebIcq.ico"
+				>
+			</File>
+			<File
+				RelativePath=".\res\clients\Yamigo.ico"
+				>
+			</File>
+			<File
+				RelativePath=".\res\clients\Ysm.ico"
 				>
 			</File>
 		</Filter>

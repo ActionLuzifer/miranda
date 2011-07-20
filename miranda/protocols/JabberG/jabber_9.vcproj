@@ -1121,10 +1121,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\jabber_db_utils.h"
-				>
-			</File>
-			<File
 				RelativePath="jabber_disco.h"
 				>
 			</File>
