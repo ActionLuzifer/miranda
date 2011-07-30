@@ -1265,6 +1265,7 @@ buttons_done:
 
 			mmi->ptMinTrackSize.x = 275;
 			mmi->ptMinTrackSize.y = 130;
+
 			GetClientRect(GetDlgItem(hwndDlg, IDC_MSGTABS), &rc);
 			if(pContainer->hwndActive)								// at container creation time, there is no hwndActive yet..
 				GetClientRect(pContainer->hwndActive, &rcClient);
@@ -1273,7 +1274,7 @@ buttons_done:
 			TabCtrl_AdjustRect(GetDlgItem(hwndDlg, IDC_MSGTABS), FALSE, &rc);
 			/*
 			 * uChildMinHeight holds the min height for the client window only
-			 * so let's add the container's vertical padding (title bar, tab bar,
+			 * so let's add the container's vertical padding (title bar, tab bar, 
 			 * window border, status bar) to this value
 			 */
 			if(pContainer->hwndActive)
@@ -2623,7 +2624,7 @@ HMENU TSAPI BuildMCProtocolMenu(HWND hwndDlg) {
 				nick = (TCHAR *)CallService(MS_CLIST_GETCONTACTDISPLAYNAME, (WPARAM)handle, GCDNF_TCHAR);
 				mir_snprintf(szTemp, sizeof(szTemp), "Status%d", i);
 				wStatus = (WORD)DBGetContactSettingWord(dat->hContact, PluginConfig.szMetaName, szTemp, 0);
-				szStatusText = (TCHAR *) CallService(MS_CLIST_GETSTATUSMODEDESCRIPTION, wStatus, GSMDF_TCHAR);
+				szStatusText = (TCHAR *) CallService(MS_CLIST_GETSTATUSMODEDESCRIPTION, wStatus, GCMDF_TCHAR);
 			}
 			mir_sntprintf(szMenuLine, safe_sizeof(szMenuLine), _T("%s: %s [%s] %s"), acc->tszAccountName, nick, szStatusText,
 						  i == isForced ? CTranslator::get(CTranslator::GEN_META_FORCED) : _T(""));

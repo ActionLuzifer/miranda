@@ -64,7 +64,6 @@ CLEAN :
 	-@erase "$(INTDIR)\resolver.obj"
 	-@erase "$(INTDIR)\resource.res"
 	-@erase "$(INTDIR)\services.obj"
-	-@erase "$(INTDIR)\sessions.obj"
 	-@erase "$(INTDIR)\sha1.obj"
 	-@erase "$(INTDIR)\token.obj"
 	-@erase "$(INTDIR)\userutils.obj"
@@ -151,7 +150,6 @@ LINK32_OBJS= \
 	"$(INTDIR)\oauth.obj" \
 	"$(INTDIR)\ownerinfo.obj" \
 	"$(INTDIR)\services.obj" \
-	"$(INTDIR)\sessions.obj" \
 	"$(INTDIR)\token.obj" \
 	"$(INTDIR)\userutils.obj" \
 	"$(INTDIR)\resource.res"
@@ -200,7 +198,6 @@ CLEAN :
 	-@erase "$(INTDIR)\resolver.obj"
 	-@erase "$(INTDIR)\resource.res"
 	-@erase "$(INTDIR)\services.obj"
-	-@erase "$(INTDIR)\sessions.obj"
 	-@erase "$(INTDIR)\sha1.obj"
 	-@erase "$(INTDIR)\token.obj"
 	-@erase "$(INTDIR)\userutils.obj"
@@ -288,7 +285,6 @@ LINK32_OBJS= \
 	"$(INTDIR)\oauth.obj" \
 	"$(INTDIR)\ownerinfo.obj" \
 	"$(INTDIR)\services.obj" \
-	"$(INTDIR)\sessions.obj" \
 	"$(INTDIR)\token.obj" \
 	"$(INTDIR)\userutils.obj" \
 	"$(INTDIR)\resource.res"

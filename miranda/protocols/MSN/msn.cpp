@@ -24,7 +24,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 HINSTANCE hInst;
 PLUGINLINK *pluginLink;
-int hLangpack;
 
 MM_INTERFACE   mmi;
 LIST_INTERFACE li;
@@ -54,7 +53,7 @@ PLUGININFOEX pluginInfo =
 	"Adds support for communicating with users of the MSN Messenger network",
 	"Boris Krasnovskiy, George Hazan, Richard Hughes",
 	"borkra@miranda-im.org",
-	"© 2001-2010 Richard Hughes, George Hazan, Boris Krasnovskiy",
+	"© 2001-2011 Richard Hughes, George Hazan, Boris Krasnovskiy",
 	"http://miranda-im.org",
 	UNICODE_AWARE,	
 	0,
@@ -130,7 +129,6 @@ extern "C" int __declspec(dllexport) Load(PLUGINLINK* link)
 	mir_getUTFI(&utfi);
 	mir_getMD5I(&md5i);
 	mir_getSHA1I(&sha1i);
-	mir_getLP(&pluginInfo);
 
 	hMooduleLoaded = HookEvent(ME_SYSTEM_MODULESLOADED, OnModulesLoaded);
 
@@ -144,6 +142,7 @@ extern "C" int __declspec(dllexport) Load(PLUGINLINK* link)
 
 	MsnInitIcons();
 	MSN_InitContactMenu();
+
 	return 0;
 }
 
@@ -165,8 +164,7 @@ extern "C" __declspec(dllexport) PLUGININFOEX* MirandaPluginInfoEx(DWORD miranda
 {
 	if (mirandaVersion < PLUGIN_MAKE_VERSION(0, 9, 0, 0)) 
 	{
-		MessageBox(NULL, _T("The MSN protocol plugin cannot be loaded. It requires Miranda IM 0.9.0.0 or later."), 
-			_T("MSN Protocol"), MB_OK | MB_ICONWARNING | MB_SETFOREGROUND | MB_TOPMOST);
+		MessageBox(NULL, _T("The MSN protocol plugin cannot be loaded. It requires Miranda IM 0.9.0.0 or later."), _T("MSN Protocol Plugin"), MB_OK|MB_ICONWARNING|MB_SETFOREGROUND|MB_TOPMOST);
 		return NULL;
 	}
 

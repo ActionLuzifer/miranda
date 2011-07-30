@@ -506,6 +506,9 @@ int CMsnProto::OnContactDeleted(WPARAM wParam, LPARAM lParam)
 	if (!msnLoggedIn)  //should never happen for MSN contacts
 		return 0;
 
+	if (!MSN_IsMyContact(hContact))
+		return 0;
+
 	int type = getByte(hContact, "ChatRoom", 0);
 	if (type != 0) 
 	{
@@ -602,6 +605,9 @@ int CMsnProto::OnDbSettingChanged(WPARAM wParam,LPARAM lParam)
 
 	if (!strcmp(cws->szSetting, "ApparentMode")) 
 	{
+		if (!MSN_IsMyContact(hContact))
+			return 0;
+
 		char tEmail[MSN_MAX_EMAIL_LEN];
 		if (!getStaticString(hContact, "e-mail", tEmail, sizeof(tEmail))) 
 		{
@@ -622,6 +628,9 @@ int CMsnProto::OnDbSettingChanged(WPARAM wParam,LPARAM lParam)
 
 	if (!strcmp(cws->szSetting, "MyHandle") && !strcmp(cws->szModule, "CList")) 
 	{
+		if (!MSN_IsMyContact(hContact))
+			return 0;
+
 		bool isMe = MSN_IsMeByContact(hContact);
 		if (!isMe || !nickChg)
 		{

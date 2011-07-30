@@ -1,48 +1,35 @@
 # Microsoft Developer Studio Generated Dependency File, included by Gadu-Gadu.mak
 
 .\libgadu\common.c : \
-	"..\..\include\m_plugins.h"\
-	"..\..\include\m_ssl.h"\
-	"..\..\include\newpluginapi.h"\
 	".\libgadu\internal.h"\
 	".\libgadu\libgadu.h"\
 	".\libgadu\win32.h"\
 	
 
 .\libgadu\dcc.c : \
-	"..\..\include\m_plugins.h"\
-	"..\..\include\m_ssl.h"\
-	"..\..\include\newpluginapi.h"\
 	".\libgadu\compat.h"\
 	".\libgadu\libgadu.h"\
 	".\libgadu\win32.h"\
 	
 
 .\libgadu\dcc7.c : \
-	"..\..\include\m_plugins.h"\
-	"..\..\include\m_ssl.h"\
-	"..\..\include\newpluginapi.h"\
 	".\libgadu\compat.h"\
-	".\libgadu\internal.h"\
 	".\libgadu\libgadu.h"\
+	".\libgadu\protocol.h"\
 	".\libgadu\resolver.h"\
+	".\libgadu\internal.h"\
 	".\libgadu\win32.h"\
 	
 
 .\libgadu\events.c : \
-	"..\..\include\m_plugins.h"\
-	"..\..\include\m_ssl.h"\
-	"..\..\include\newpluginapi.h"\
 	".\libgadu\compat.h"\
 	".\libgadu\internal.h"\
 	".\libgadu\libgadu.h"\
+	".\libgadu\protocol.h"\
 	".\libgadu\win32.h"\
 	
 
 .\libgadu\http.c : \
-	"..\..\include\m_plugins.h"\
-	"..\..\include\m_ssl.h"\
-	"..\..\include\newpluginapi.h"\
 	".\libgadu\compat.h"\
 	".\libgadu\libgadu.h"\
 	".\libgadu\resolver.h"\
@@ -50,44 +37,32 @@
 	
 
 .\libgadu\libgadu.c : \
-	"..\..\include\m_plugins.h"\
-	"..\..\include\m_ssl.h"\
-	"..\..\include\newpluginapi.h"\
 	".\libgadu\compat.h"\
 	".\libgadu\internal.h"\
 	".\libgadu\libgadu.h"\
+	".\libgadu\protocol.h"\
 	".\libgadu\resolver.h"\
 	".\libgadu\win32.h"\
 	
 
 .\libgadu\pthread.c : \
-	"..\..\include\m_plugins.h"\
 	"..\..\include\m_system.h"\
 	"..\..\include\newpluginapi.h"\
 	".\libgadu\pthread.h"\
 	
 
 .\libgadu\pubdir.c : \
-	"..\..\include\m_plugins.h"\
-	"..\..\include\m_ssl.h"\
-	"..\..\include\newpluginapi.h"\
 	".\libgadu\libgadu.h"\
 	".\libgadu\win32.h"\
 	
 
 .\libgadu\pubdir50.c : \
-	"..\..\include\m_plugins.h"\
-	"..\..\include\m_ssl.h"\
-	"..\..\include\newpluginapi.h"\
 	".\libgadu\internal.h"\
 	".\libgadu\libgadu.h"\
 	".\libgadu\win32.h"\
 	
 
 .\libgadu\resolver.c : \
-	"..\..\include\m_plugins.h"\
-	"..\..\include\m_ssl.h"\
-	"..\..\include\newpluginapi.h"\
 	".\libgadu\compat.h"\
 	".\libgadu\libgadu.h"\
 	".\libgadu\pthread.h"\
@@ -96,9 +71,6 @@
 	
 
 .\libgadu\sha1.c : \
-	"..\..\include\m_plugins.h"\
-	"..\..\include\m_ssl.h"\
-	"..\..\include\newpluginapi.h"\
 	".\libgadu\libgadu.h"\
 	".\libgadu\win32.h"\
 	
@@ -117,10 +89,8 @@
 	"..\..\include\m_clui.h"\
 	"..\..\include\m_database.h"\
 	"..\..\include\m_file.h"\
-	"..\..\include\m_freeimage.h"\
 	"..\..\include\m_genmenu.h"\
 	"..\..\include\m_icolib.h"\
-	"..\..\include\m_idle.h"\
 	"..\..\include\m_ignore.h"\
 	"..\..\include\m_imgsrvc.h"\
 	"..\..\include\m_langpack.h"\
@@ -128,23 +98,23 @@
 	"..\..\include\m_netlib.h"\
 	"..\..\include\m_options.h"\
 	"..\..\include\m_plugins.h"\
+	"..\..\include\m_popup.h"\
 	"..\..\include\m_protocols.h"\
-	"..\..\include\m_protoint.h"\
 	"..\..\include\m_protomod.h"\
 	"..\..\include\m_protosvc.h"\
+	"..\..\include\m_protoint.h"\
 	"..\..\include\m_skin.h"\
-	"..\..\include\m_ssl.h"\
-	"..\..\include\m_stdhdr.h"\
 	"..\..\include\m_system.h"\
 	"..\..\include\m_userinfo.h"\
 	"..\..\include\m_utils.h"\
 	"..\..\include\m_xml.h"\
 	"..\..\include\newpluginapi.h"\
 	"..\..\include\statusmodes.h"\
-	"..\..\include\win2k.h"\
+	"..\..\include\m_freeimage.h"\
 	".\dynstuff.h"\
 	".\gg.h"\
 	".\libgadu\libgadu.h"\
+	".\libgadu\protocol.h"\
 	".\m_folders.h"\
 	".\resource.h"\
 	
@@ -159,10 +129,8 @@
 	"..\..\include\m_clui.h"\
 	"..\..\include\m_database.h"\
 	"..\..\include\m_file.h"\
-	"..\..\include\m_freeimage.h"\
 	"..\..\include\m_genmenu.h"\
 	"..\..\include\m_icolib.h"\
-	"..\..\include\m_idle.h"\
 	"..\..\include\m_ignore.h"\
 	"..\..\include\m_imgsrvc.h"\
 	"..\..\include\m_langpack.h"\
@@ -170,20 +138,19 @@
 	"..\..\include\m_netlib.h"\
 	"..\..\include\m_options.h"\
 	"..\..\include\m_plugins.h"\
+	"..\..\include\m_popup.h"\
 	"..\..\include\m_protocols.h"\
-	"..\..\include\m_protoint.h"\
 	"..\..\include\m_protomod.h"\
 	"..\..\include\m_protosvc.h"\
+	"..\..\include\m_protoint.h"\
 	"..\..\include\m_skin.h"\
-	"..\..\include\m_ssl.h"\
-	"..\..\include\m_stdhdr.h"\
 	"..\..\include\m_system.h"\
 	"..\..\include\m_userinfo.h"\
 	"..\..\include\m_utils.h"\
 	"..\..\include\m_xml.h"\
 	"..\..\include\newpluginapi.h"\
 	"..\..\include\statusmodes.h"\
-	"..\..\include\win2k.h"\
+	"..\..\include\m_freeimage.h"\
 	".\dynstuff.h"\
 	".\gg.h"\
 	".\libgadu\libgadu.h"\
@@ -201,10 +168,8 @@
 	"..\..\include\m_clui.h"\
 	"..\..\include\m_database.h"\
 	"..\..\include\m_file.h"\
-	"..\..\include\m_freeimage.h"\
 	"..\..\include\m_genmenu.h"\
 	"..\..\include\m_icolib.h"\
-	"..\..\include\m_idle.h"\
 	"..\..\include\m_ignore.h"\
 	"..\..\include\m_imgsrvc.h"\
 	"..\..\include\m_langpack.h"\
@@ -212,20 +177,19 @@
 	"..\..\include\m_netlib.h"\
 	"..\..\include\m_options.h"\
 	"..\..\include\m_plugins.h"\
+	"..\..\include\m_popup.h"\
 	"..\..\include\m_protocols.h"\
-	"..\..\include\m_protoint.h"\
 	"..\..\include\m_protomod.h"\
 	"..\..\include\m_protosvc.h"\
+	"..\..\include\m_protoint.h"\
 	"..\..\include\m_skin.h"\
-	"..\..\include\m_ssl.h"\
-	"..\..\include\m_stdhdr.h"\
 	"..\..\include\m_system.h"\
 	"..\..\include\m_userinfo.h"\
 	"..\..\include\m_utils.h"\
 	"..\..\include\m_xml.h"\
 	"..\..\include\newpluginapi.h"\
 	"..\..\include\statusmodes.h"\
-	"..\..\include\win2k.h"\
+	"..\..\include\m_freeimage.h"\
 	".\dynstuff.h"\
 	".\gg.h"\
 	".\libgadu\libgadu.h"\
@@ -243,10 +207,8 @@
 	"..\..\include\m_clui.h"\
 	"..\..\include\m_database.h"\
 	"..\..\include\m_file.h"\
-	"..\..\include\m_freeimage.h"\
 	"..\..\include\m_genmenu.h"\
 	"..\..\include\m_icolib.h"\
-	"..\..\include\m_idle.h"\
 	"..\..\include\m_ignore.h"\
 	"..\..\include\m_imgsrvc.h"\
 	"..\..\include\m_langpack.h"\
@@ -254,20 +216,19 @@
 	"..\..\include\m_netlib.h"\
 	"..\..\include\m_options.h"\
 	"..\..\include\m_plugins.h"\
+	"..\..\include\m_popup.h"\
 	"..\..\include\m_protocols.h"\
-	"..\..\include\m_protoint.h"\
 	"..\..\include\m_protomod.h"\
 	"..\..\include\m_protosvc.h"\
+	"..\..\include\m_protoint.h"\
 	"..\..\include\m_skin.h"\
-	"..\..\include\m_ssl.h"\
-	"..\..\include\m_stdhdr.h"\
 	"..\..\include\m_system.h"\
 	"..\..\include\m_userinfo.h"\
 	"..\..\include\m_utils.h"\
 	"..\..\include\m_xml.h"\
 	"..\..\include\newpluginapi.h"\
 	"..\..\include\statusmodes.h"\
-	"..\..\include\win2k.h"\
+	"..\..\include\m_freeimage.h"\
 	".\dynstuff.h"\
 	".\gg.h"\
 	".\libgadu\libgadu.h"\
@@ -285,10 +246,8 @@
 	"..\..\include\m_clui.h"\
 	"..\..\include\m_database.h"\
 	"..\..\include\m_file.h"\
-	"..\..\include\m_freeimage.h"\
 	"..\..\include\m_genmenu.h"\
 	"..\..\include\m_icolib.h"\
-	"..\..\include\m_idle.h"\
 	"..\..\include\m_ignore.h"\
 	"..\..\include\m_imgsrvc.h"\
 	"..\..\include\m_langpack.h"\
@@ -296,20 +255,19 @@
 	"..\..\include\m_netlib.h"\
 	"..\..\include\m_options.h"\
 	"..\..\include\m_plugins.h"\
+	"..\..\include\m_popup.h"\
 	"..\..\include\m_protocols.h"\
-	"..\..\include\m_protoint.h"\
 	"..\..\include\m_protomod.h"\
 	"..\..\include\m_protosvc.h"\
+	"..\..\include\m_protoint.h"\
 	"..\..\include\m_skin.h"\
-	"..\..\include\m_ssl.h"\
-	"..\..\include\m_stdhdr.h"\
 	"..\..\include\m_system.h"\
 	"..\..\include\m_userinfo.h"\
 	"..\..\include\m_utils.h"\
 	"..\..\include\m_xml.h"\
 	"..\..\include\newpluginapi.h"\
 	"..\..\include\statusmodes.h"\
-	"..\..\include\win2k.h"\
+	"..\..\include\m_freeimage.h"\
 	".\dynstuff.h"\
 	".\gg.h"\
 	".\libgadu\libgadu.h"\
@@ -327,10 +285,8 @@
 	"..\..\include\m_clui.h"\
 	"..\..\include\m_database.h"\
 	"..\..\include\m_file.h"\
-	"..\..\include\m_freeimage.h"\
 	"..\..\include\m_genmenu.h"\
 	"..\..\include\m_icolib.h"\
-	"..\..\include\m_idle.h"\
 	"..\..\include\m_ignore.h"\
 	"..\..\include\m_imgsrvc.h"\
 	"..\..\include\m_langpack.h"\
@@ -338,21 +294,19 @@
 	"..\..\include\m_netlib.h"\
 	"..\..\include\m_options.h"\
 	"..\..\include\m_plugins.h"\
+	"..\..\include\m_popup.h"\
 	"..\..\include\m_protocols.h"\
-	"..\..\include\m_protoint.h"\
 	"..\..\include\m_protomod.h"\
 	"..\..\include\m_protosvc.h"\
+	"..\..\include\m_protoint.h"\
 	"..\..\include\m_skin.h"\
-	"..\..\include\m_ssl.h"\
-	"..\..\include\m_stdhdr.h"\
 	"..\..\include\m_system.h"\
 	"..\..\include\m_userinfo.h"\
 	"..\..\include\m_utils.h"\
-	"..\..\include\m_version.h"\
 	"..\..\include\m_xml.h"\
 	"..\..\include\newpluginapi.h"\
 	"..\..\include\statusmodes.h"\
-	"..\..\include\win2k.h"\
+	"..\..\include\m_freeimage.h"\
 	".\dynstuff.h"\
 	".\gg.h"\
 	".\libgadu\libgadu.h"\
@@ -371,10 +325,8 @@
 	"..\..\include\m_clui.h"\
 	"..\..\include\m_database.h"\
 	"..\..\include\m_file.h"\
-	"..\..\include\m_freeimage.h"\
 	"..\..\include\m_genmenu.h"\
 	"..\..\include\m_icolib.h"\
-	"..\..\include\m_idle.h"\
 	"..\..\include\m_ignore.h"\
 	"..\..\include\m_imgsrvc.h"\
 	"..\..\include\m_langpack.h"\
@@ -382,20 +334,19 @@
 	"..\..\include\m_netlib.h"\
 	"..\..\include\m_options.h"\
 	"..\..\include\m_plugins.h"\
+	"..\..\include\m_popup.h"\
 	"..\..\include\m_protocols.h"\
-	"..\..\include\m_protoint.h"\
 	"..\..\include\m_protomod.h"\
 	"..\..\include\m_protosvc.h"\
+	"..\..\include\m_protoint.h"\
 	"..\..\include\m_skin.h"\
-	"..\..\include\m_ssl.h"\
-	"..\..\include\m_stdhdr.h"\
 	"..\..\include\m_system.h"\
 	"..\..\include\m_userinfo.h"\
 	"..\..\include\m_utils.h"\
 	"..\..\include\m_xml.h"\
 	"..\..\include\newpluginapi.h"\
 	"..\..\include\statusmodes.h"\
-	"..\..\include\win2k.h"\
+	"..\..\include\m_freeimage.h"\
 	".\dynstuff.h"\
 	".\gg.h"\
 	".\libgadu\libgadu.h"\
@@ -414,10 +365,8 @@
 	"..\..\include\m_clui.h"\
 	"..\..\include\m_database.h"\
 	"..\..\include\m_file.h"\
-	"..\..\include\m_freeimage.h"\
 	"..\..\include\m_genmenu.h"\
 	"..\..\include\m_icolib.h"\
-	"..\..\include\m_idle.h"\
 	"..\..\include\m_ignore.h"\
 	"..\..\include\m_imgsrvc.h"\
 	"..\..\include\m_langpack.h"\
@@ -425,20 +374,19 @@
 	"..\..\include\m_netlib.h"\
 	"..\..\include\m_options.h"\
 	"..\..\include\m_plugins.h"\
+	"..\..\include\m_popup.h"\
 	"..\..\include\m_protocols.h"\
-	"..\..\include\m_protoint.h"\
 	"..\..\include\m_protomod.h"\
 	"..\..\include\m_protosvc.h"\
+	"..\..\include\m_protoint.h"\
 	"..\..\include\m_skin.h"\
-	"..\..\include\m_ssl.h"\
-	"..\..\include\m_stdhdr.h"\
 	"..\..\include\m_system.h"\
 	"..\..\include\m_userinfo.h"\
 	"..\..\include\m_utils.h"\
 	"..\..\include\m_xml.h"\
 	"..\..\include\newpluginapi.h"\
 	"..\..\include\statusmodes.h"\
-	"..\..\include\win2k.h"\
+	"..\..\include\m_freeimage.h"\
 	".\dynstuff.h"\
 	".\gg.h"\
 	".\libgadu\libgadu.h"\
@@ -456,10 +404,8 @@
 	"..\..\include\m_clui.h"\
 	"..\..\include\m_database.h"\
 	"..\..\include\m_file.h"\
-	"..\..\include\m_freeimage.h"\
 	"..\..\include\m_genmenu.h"\
 	"..\..\include\m_icolib.h"\
-	"..\..\include\m_idle.h"\
 	"..\..\include\m_ignore.h"\
 	"..\..\include\m_imgsrvc.h"\
 	"..\..\include\m_langpack.h"\
@@ -467,20 +413,19 @@
 	"..\..\include\m_netlib.h"\
 	"..\..\include\m_options.h"\
 	"..\..\include\m_plugins.h"\
+	"..\..\include\m_popup.h"\
 	"..\..\include\m_protocols.h"\
-	"..\..\include\m_protoint.h"\
 	"..\..\include\m_protomod.h"\
 	"..\..\include\m_protosvc.h"\
+	"..\..\include\m_protoint.h"\
 	"..\..\include\m_skin.h"\
-	"..\..\include\m_ssl.h"\
-	"..\..\include\m_stdhdr.h"\
 	"..\..\include\m_system.h"\
 	"..\..\include\m_userinfo.h"\
 	"..\..\include\m_utils.h"\
 	"..\..\include\m_xml.h"\
 	"..\..\include\newpluginapi.h"\
 	"..\..\include\statusmodes.h"\
-	"..\..\include\win2k.h"\
+	"..\..\include\m_freeimage.h"\
 	".\dynstuff.h"\
 	".\gg.h"\
 	".\libgadu\libgadu.h"\
@@ -498,10 +443,8 @@
 	"..\..\include\m_clui.h"\
 	"..\..\include\m_database.h"\
 	"..\..\include\m_file.h"\
-	"..\..\include\m_freeimage.h"\
 	"..\..\include\m_genmenu.h"\
 	"..\..\include\m_icolib.h"\
-	"..\..\include\m_idle.h"\
 	"..\..\include\m_ignore.h"\
 	"..\..\include\m_imgsrvc.h"\
 	"..\..\include\m_langpack.h"\
@@ -509,20 +452,19 @@
 	"..\..\include\m_netlib.h"\
 	"..\..\include\m_options.h"\
 	"..\..\include\m_plugins.h"\
+	"..\..\include\m_popup.h"\
 	"..\..\include\m_protocols.h"\
-	"..\..\include\m_protoint.h"\
 	"..\..\include\m_protomod.h"\
 	"..\..\include\m_protosvc.h"\
+	"..\..\include\m_protoint.h"\
 	"..\..\include\m_skin.h"\
-	"..\..\include\m_ssl.h"\
-	"..\..\include\m_stdhdr.h"\
 	"..\..\include\m_system.h"\
 	"..\..\include\m_userinfo.h"\
 	"..\..\include\m_utils.h"\
 	"..\..\include\m_xml.h"\
 	"..\..\include\newpluginapi.h"\
 	"..\..\include\statusmodes.h"\
-	"..\..\include\win2k.h"\
+	"..\..\include\m_freeimage.h"\
 	".\dynstuff.h"\
 	".\gg.h"\
 	".\libgadu\libgadu.h"\
@@ -540,10 +482,8 @@
 	"..\..\include\m_clui.h"\
 	"..\..\include\m_database.h"\
 	"..\..\include\m_file.h"\
-	"..\..\include\m_freeimage.h"\
 	"..\..\include\m_genmenu.h"\
 	"..\..\include\m_icolib.h"\
-	"..\..\include\m_idle.h"\
 	"..\..\include\m_ignore.h"\
 	"..\..\include\m_imgsrvc.h"\
 	"..\..\include\m_langpack.h"\
@@ -551,20 +491,19 @@
 	"..\..\include\m_netlib.h"\
 	"..\..\include\m_options.h"\
 	"..\..\include\m_plugins.h"\
+	"..\..\include\m_popup.h"\
 	"..\..\include\m_protocols.h"\
-	"..\..\include\m_protoint.h"\
 	"..\..\include\m_protomod.h"\
 	"..\..\include\m_protosvc.h"\
+	"..\..\include\m_protoint.h"\
 	"..\..\include\m_skin.h"\
-	"..\..\include\m_ssl.h"\
-	"..\..\include\m_stdhdr.h"\
 	"..\..\include\m_system.h"\
 	"..\..\include\m_userinfo.h"\
 	"..\..\include\m_utils.h"\
 	"..\..\include\m_xml.h"\
 	"..\..\include\newpluginapi.h"\
 	"..\..\include\statusmodes.h"\
-	"..\..\include\win2k.h"\
+	"..\..\include\m_freeimage.h"\
 	".\dynstuff.h"\
 	".\gg.h"\
 	".\libgadu\libgadu.h"\
@@ -582,10 +521,8 @@
 	"..\..\include\m_clui.h"\
 	"..\..\include\m_database.h"\
 	"..\..\include\m_file.h"\
-	"..\..\include\m_freeimage.h"\
 	"..\..\include\m_genmenu.h"\
 	"..\..\include\m_icolib.h"\
-	"..\..\include\m_idle.h"\
 	"..\..\include\m_ignore.h"\
 	"..\..\include\m_imgsrvc.h"\
 	"..\..\include\m_langpack.h"\
@@ -593,20 +530,19 @@
 	"..\..\include\m_netlib.h"\
 	"..\..\include\m_options.h"\
 	"..\..\include\m_plugins.h"\
+	"..\..\include\m_popup.h"\
 	"..\..\include\m_protocols.h"\
-	"..\..\include\m_protoint.h"\
 	"..\..\include\m_protomod.h"\
 	"..\..\include\m_protosvc.h"\
+	"..\..\include\m_protoint.h"\
 	"..\..\include\m_skin.h"\
-	"..\..\include\m_ssl.h"\
-	"..\..\include\m_stdhdr.h"\
 	"..\..\include\m_system.h"\
 	"..\..\include\m_userinfo.h"\
 	"..\..\include\m_utils.h"\
 	"..\..\include\m_xml.h"\
 	"..\..\include\newpluginapi.h"\
 	"..\..\include\statusmodes.h"\
-	"..\..\include\win2k.h"\
+	"..\..\include\m_freeimage.h"\
 	".\dynstuff.h"\
 	".\gg.h"\
 	".\libgadu\libgadu.h"\
@@ -625,10 +561,8 @@
 	"..\..\include\m_clui.h"\
 	"..\..\include\m_database.h"\
 	"..\..\include\m_file.h"\
-	"..\..\include\m_freeimage.h"\
 	"..\..\include\m_genmenu.h"\
 	"..\..\include\m_icolib.h"\
-	"..\..\include\m_idle.h"\
 	"..\..\include\m_ignore.h"\
 	"..\..\include\m_imgsrvc.h"\
 	"..\..\include\m_langpack.h"\
@@ -636,23 +570,23 @@
 	"..\..\include\m_netlib.h"\
 	"..\..\include\m_options.h"\
 	"..\..\include\m_plugins.h"\
+	"..\..\include\m_popup.h"\
 	"..\..\include\m_protocols.h"\
-	"..\..\include\m_protoint.h"\
 	"..\..\include\m_protomod.h"\
 	"..\..\include\m_protosvc.h"\
+	"..\..\include\m_protoint.h"\
 	"..\..\include\m_skin.h"\
-	"..\..\include\m_ssl.h"\
-	"..\..\include\m_stdhdr.h"\
 	"..\..\include\m_system.h"\
 	"..\..\include\m_userinfo.h"\
 	"..\..\include\m_utils.h"\
 	"..\..\include\m_xml.h"\
 	"..\..\include\newpluginapi.h"\
 	"..\..\include\statusmodes.h"\
-	"..\..\include\win2k.h"\
+	"..\..\include\m_freeimage.h"\
 	".\dynstuff.h"\
 	".\gg.h"\
 	".\libgadu\libgadu.h"\
+	".\libgadu\protocol.h"\
 	".\m_folders.h"\
 	".\resource.h"\
 	
@@ -667,10 +601,8 @@
 	"..\..\include\m_clui.h"\
 	"..\..\include\m_database.h"\
 	"..\..\include\m_file.h"\
-	"..\..\include\m_freeimage.h"\
 	"..\..\include\m_genmenu.h"\
 	"..\..\include\m_icolib.h"\
-	"..\..\include\m_idle.h"\
 	"..\..\include\m_ignore.h"\
 	"..\..\include\m_imgsrvc.h"\
 	"..\..\include\m_langpack.h"\
@@ -678,20 +610,19 @@
 	"..\..\include\m_netlib.h"\
 	"..\..\include\m_options.h"\
 	"..\..\include\m_plugins.h"\
+	"..\..\include\m_popup.h"\
 	"..\..\include\m_protocols.h"\
-	"..\..\include\m_protoint.h"\
 	"..\..\include\m_protomod.h"\
 	"..\..\include\m_protosvc.h"\
+	"..\..\include\m_protoint.h"\
 	"..\..\include\m_skin.h"\
-	"..\..\include\m_ssl.h"\
-	"..\..\include\m_stdhdr.h"\
 	"..\..\include\m_system.h"\
 	"..\..\include\m_userinfo.h"\
 	"..\..\include\m_utils.h"\
 	"..\..\include\m_xml.h"\
 	"..\..\include\newpluginapi.h"\
 	"..\..\include\statusmodes.h"\
-	"..\..\include\win2k.h"\
+	"..\..\include\m_freeimage.h"\
 	".\dynstuff.h"\
 	".\gg.h"\
 	".\libgadu\libgadu.h"\
@@ -709,10 +640,8 @@
 	"..\..\include\m_clui.h"\
 	"..\..\include\m_database.h"\
 	"..\..\include\m_file.h"\
-	"..\..\include\m_freeimage.h"\
 	"..\..\include\m_genmenu.h"\
 	"..\..\include\m_icolib.h"\
-	"..\..\include\m_idle.h"\
 	"..\..\include\m_ignore.h"\
 	"..\..\include\m_imgsrvc.h"\
 	"..\..\include\m_langpack.h"\
@@ -720,20 +649,19 @@
 	"..\..\include\m_netlib.h"\
 	"..\..\include\m_options.h"\
 	"..\..\include\m_plugins.h"\
+	"..\..\include\m_popup.h"\
 	"..\..\include\m_protocols.h"\
-	"..\..\include\m_protoint.h"\
 	"..\..\include\m_protomod.h"\
 	"..\..\include\m_protosvc.h"\
+	"..\..\include\m_protoint.h"\
 	"..\..\include\m_skin.h"\
-	"..\..\include\m_ssl.h"\
-	"..\..\include\m_stdhdr.h"\
 	"..\..\include\m_system.h"\
 	"..\..\include\m_userinfo.h"\
 	"..\..\include\m_utils.h"\
 	"..\..\include\m_xml.h"\
 	"..\..\include\newpluginapi.h"\
 	"..\..\include\statusmodes.h"\
-	"..\..\include\win2k.h"\
+	"..\..\include\m_freeimage.h"\
 	".\dynstuff.h"\
 	".\gg.h"\
 	".\libgadu\libgadu.h"\
@@ -751,10 +679,8 @@
 	"..\..\include\m_clui.h"\
 	"..\..\include\m_database.h"\
 	"..\..\include\m_file.h"\
-	"..\..\include\m_freeimage.h"\
 	"..\..\include\m_genmenu.h"\
 	"..\..\include\m_icolib.h"\
-	"..\..\include\m_idle.h"\
 	"..\..\include\m_ignore.h"\
 	"..\..\include\m_imgsrvc.h"\
 	"..\..\include\m_langpack.h"\
@@ -762,20 +688,19 @@
 	"..\..\include\m_netlib.h"\
 	"..\..\include\m_options.h"\
 	"..\..\include\m_plugins.h"\
+	"..\..\include\m_popup.h"\
 	"..\..\include\m_protocols.h"\
-	"..\..\include\m_protoint.h"\
 	"..\..\include\m_protomod.h"\
 	"..\..\include\m_protosvc.h"\
+	"..\..\include\m_protoint.h"\
 	"..\..\include\m_skin.h"\
-	"..\..\include\m_ssl.h"\
-	"..\..\include\m_stdhdr.h"\
 	"..\..\include\m_system.h"\
 	"..\..\include\m_userinfo.h"\
 	"..\..\include\m_utils.h"\
 	"..\..\include\m_xml.h"\
 	"..\..\include\newpluginapi.h"\
 	"..\..\include\statusmodes.h"\
-	"..\..\include\win2k.h"\
+	"..\..\include\m_freeimage.h"\
 	".\dynstuff.h"\
 	".\gg.h"\
 	".\libgadu\libgadu.h"\
@@ -793,10 +718,8 @@
 	"..\..\include\m_clui.h"\
 	"..\..\include\m_database.h"\
 	"..\..\include\m_file.h"\
-	"..\..\include\m_freeimage.h"\
 	"..\..\include\m_genmenu.h"\
 	"..\..\include\m_icolib.h"\
-	"..\..\include\m_idle.h"\
 	"..\..\include\m_ignore.h"\
 	"..\..\include\m_imgsrvc.h"\
 	"..\..\include\m_langpack.h"\
@@ -804,20 +727,19 @@
 	"..\..\include\m_netlib.h"\
 	"..\..\include\m_options.h"\
 	"..\..\include\m_plugins.h"\
+	"..\..\include\m_popup.h"\
 	"..\..\include\m_protocols.h"\
-	"..\..\include\m_protoint.h"\
 	"..\..\include\m_protomod.h"\
 	"..\..\include\m_protosvc.h"\
+	"..\..\include\m_protoint.h"\
 	"..\..\include\m_skin.h"\
-	"..\..\include\m_ssl.h"\
-	"..\..\include\m_stdhdr.h"\
 	"..\..\include\m_system.h"\
 	"..\..\include\m_userinfo.h"\
 	"..\..\include\m_utils.h"\
 	"..\..\include\m_xml.h"\
 	"..\..\include\newpluginapi.h"\
 	"..\..\include\statusmodes.h"\
-	"..\..\include\win2k.h"\
+	"..\..\include\m_freeimage.h"\
 	".\dynstuff.h"\
 	".\gg.h"\
 	".\libgadu\libgadu.h"\
@@ -835,10 +757,8 @@
 	"..\..\include\m_clui.h"\
 	"..\..\include\m_database.h"\
 	"..\..\include\m_file.h"\
-	"..\..\include\m_freeimage.h"\
 	"..\..\include\m_genmenu.h"\
 	"..\..\include\m_icolib.h"\
-	"..\..\include\m_idle.h"\
 	"..\..\include\m_ignore.h"\
 	"..\..\include\m_imgsrvc.h"\
 	"..\..\include\m_langpack.h"\
@@ -846,20 +766,19 @@
 	"..\..\include\m_netlib.h"\
 	"..\..\include\m_options.h"\
 	"..\..\include\m_plugins.h"\
+	"..\..\include\m_popup.h"\
 	"..\..\include\m_protocols.h"\
-	"..\..\include\m_protoint.h"\
 	"..\..\include\m_protomod.h"\
 	"..\..\include\m_protosvc.h"\
+	"..\..\include\m_protoint.h"\
 	"..\..\include\m_skin.h"\
-	"..\..\include\m_ssl.h"\
-	"..\..\include\m_stdhdr.h"\
 	"..\..\include\m_system.h"\
 	"..\..\include\m_userinfo.h"\
 	"..\..\include\m_utils.h"\
 	"..\..\include\m_xml.h"\
 	"..\..\include\newpluginapi.h"\
 	"..\..\include\statusmodes.h"\
-	"..\..\include\win2k.h"\
+	"..\..\include\m_freeimage.h"\
 	".\dynstuff.h"\
 	".\gg.h"\
 	".\libgadu\libgadu.h"\
@@ -868,7 +787,6 @@
 	
 
 .\resource.rc : \
-	"..\..\include\m_version.h"\
 	".\icons\clear_ignored_conference.ico"\
 	".\icons\conference.ico"\
 	".\icons\delete.ico"\
