@@ -220,7 +220,6 @@ struct CJabberOptions
 	CMOption<DWORD> ConnectionKeepAliveInterval;
 	CMOption<DWORD> ConnectionKeepAliveTimeout;
 	CMOption<BYTE> ProcessXMPPLinks;
-	CMOption<BYTE> IgnoreRosterGroups;
 
 	CJabberOptions(PROTO_INTERFACE *proto):
 		BsDirect(proto, "BsDirect", TRUE),
@@ -273,8 +272,7 @@ struct CJabberOptions
 		RcMarkMessagesAsRead(proto, "RcMarkMessagesAsRead", 1),
 		ConnectionKeepAliveInterval(proto, "ConnectionKeepAliveInterval", 60000),
 		ConnectionKeepAliveTimeout(proto, "ConnectionKeepAliveTimeout", 50000),
-		ProcessXMPPLinks(proto, "ProcessXMPPLinks", FALSE),
-		IgnoreRosterGroups(proto, "IgnoreRosterGroups", FALSE)
+		ProcessXMPPLinks(proto, "ProcessXMPPLinks", FALSE)
 		{}
 };
 

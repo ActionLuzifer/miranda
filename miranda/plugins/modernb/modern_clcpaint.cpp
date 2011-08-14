@@ -577,7 +577,8 @@ MODERNMASK * CLCPaint::_GetCLCContactRowBackModernMask( struct ClcGroup * group,
 {
     MODERNMASK * mpModernMask = NULL;
     char buf[BUF2SIZE] = {0};
-    mpModernMask = ( MODERNMASK* )mir_calloc( sizeof( MODERNMASK ) );
+    mpModernMask = ( MODERNMASK* )mir_alloc( sizeof( MODERNMASK ) );
+    memset( mpModernMask, 0, sizeof( MODERNMASK ) );
 
     _AddParamShort( mpModernMask, hi_Module, hi_CL );
     _AddParamShort( mpModernMask, hi_ID, hi_Row );

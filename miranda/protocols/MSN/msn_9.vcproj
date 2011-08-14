@@ -42,6 +42,12 @@
 			/>
 			<Tool
 				Name="VCMIDLTool"
+				PreprocessorDefinitions="NDEBUG"
+				MkTypLibCompatible="true"
+				SuppressStartupBanner="true"
+				TargetEnvironment="1"
+				TypeLibraryName=".\Release/msn.tlb"
+				HeaderFileName=""
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
@@ -61,7 +67,9 @@
 				RuntimeTypeInfo="false"
 				UsePrecompiledHeader="2"
 				PrecompiledHeaderThrough="msn_global.h"
+				AssemblerListingLocation=""
 				WarningLevel="3"
+				SuppressStartupBanner="true"
 				DebugInformationFormat="3"
 				CompileAs="0"
 				DisableSpecificWarnings="4996"
@@ -72,6 +80,7 @@
 			<Tool
 				Name="VCResourceCompilerTool"
 				PreprocessorDefinitions="NDEBUG"
+				Culture="2057"
 			/>
 			<Tool
 				Name="VCPreLinkEventTool"
@@ -80,13 +89,17 @@
 				Name="VCLinkerTool"
 				IgnoreImportLibrary="true"
 				AdditionalDependencies="wsock32.lib comctl32.lib Rpcrt4.lib"
+				SuppressStartupBanner="true"
 				GenerateDebugInformation="true"
+				GenerateMapFile="false"
+				MapFileName=""
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"
 				OptimizeForWindows98="0"
 				LinkTimeCodeGeneration="1"
 				BaseAddress="0x19000000"
 				RandomizedBaseAddress="1"
+				DataExecutionPrevention="0"
 				ImportLibrary="$(IntDir)/$(TargetName).lib"
 				TargetMachine="1"
 			/>
@@ -136,6 +149,12 @@
 			/>
 			<Tool
 				Name="VCMIDLTool"
+				PreprocessorDefinitions="NDEBUG"
+				MkTypLibCompatible="true"
+				SuppressStartupBanner="true"
+				TargetEnvironment="3"
+				TypeLibraryName=".\Release/msn.tlb"
+				HeaderFileName=""
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
@@ -155,7 +174,9 @@
 				RuntimeTypeInfo="false"
 				UsePrecompiledHeader="2"
 				PrecompiledHeaderThrough="msn_global.h"
+				AssemblerListingLocation=""
 				WarningLevel="3"
+				SuppressStartupBanner="true"
 				DebugInformationFormat="3"
 				CompileAs="0"
 				DisableSpecificWarnings="4996"
@@ -166,6 +187,7 @@
 			<Tool
 				Name="VCResourceCompilerTool"
 				PreprocessorDefinitions="NDEBUG"
+				Culture="2057"
 			/>
 			<Tool
 				Name="VCPreLinkEventTool"
@@ -174,13 +196,17 @@
 				Name="VCLinkerTool"
 				IgnoreImportLibrary="true"
 				AdditionalDependencies="wsock32.lib comctl32.lib Rpcrt4.lib"
+				SuppressStartupBanner="true"
 				AdditionalManifestDependencies="type=&apos;Win32&apos; name=&apos;Microsoft.Windows.Common-Controls&apos; version=&apos;6.0.0.0&apos; processorArchitecture=&apos;*&apos; publicKeyToken=&apos;6595b64144ccf1df&apos; language=&apos;*&apos;"
 				GenerateDebugInformation="true"
+				GenerateMapFile="false"
+				MapFileName=""
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"
 				LinkTimeCodeGeneration="1"
 				BaseAddress="0x19000000"
 				RandomizedBaseAddress="1"
+				DataExecutionPrevention="0"
 				ImportLibrary="$(IntDir)/$(TargetName).lib"
 				TargetMachine="17"
 			/>
@@ -229,6 +255,12 @@
 			/>
 			<Tool
 				Name="VCMIDLTool"
+				PreprocessorDefinitions="_DEBUG"
+				MkTypLibCompatible="true"
+				SuppressStartupBanner="true"
+				TargetEnvironment="1"
+				TypeLibraryName=".\Debug/msn.tlb"
+				HeaderFileName=""
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
@@ -243,6 +275,7 @@
 				UsePrecompiledHeader="2"
 				PrecompiledHeaderThrough="msn_global.h"
 				WarningLevel="3"
+				SuppressStartupBanner="true"
 				DebugInformationFormat="4"
 				CompileAs="0"
 				DisableSpecificWarnings="4996"
@@ -253,6 +286,7 @@
 			<Tool
 				Name="VCResourceCompilerTool"
 				PreprocessorDefinitions="_DEBUG"
+				Culture="2057"
 			/>
 			<Tool
 				Name="VCPreLinkEventTool"
@@ -261,8 +295,10 @@
 				Name="VCLinkerTool"
 				IgnoreImportLibrary="true"
 				AdditionalDependencies="wsock32.lib comctl32.lib Rpcrt4.lib"
+				SuppressStartupBanner="true"
 				GenerateDebugInformation="true"
 				RandomizedBaseAddress="1"
+				DataExecutionPrevention="0"
 				ImportLibrary="$(IntDir)/$(TargetName).lib"
 				TargetMachine="1"
 			/>
@@ -311,6 +347,12 @@
 			/>
 			<Tool
 				Name="VCMIDLTool"
+				PreprocessorDefinitions="_DEBUG"
+				MkTypLibCompatible="true"
+				SuppressStartupBanner="true"
+				TargetEnvironment="3"
+				TypeLibraryName=".\Debug/msn.tlb"
+				HeaderFileName=""
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
@@ -325,6 +367,7 @@
 				UsePrecompiledHeader="2"
 				PrecompiledHeaderThrough="msn_global.h"
 				WarningLevel="3"
+				SuppressStartupBanner="true"
 				DebugInformationFormat="3"
 				CompileAs="0"
 				DisableSpecificWarnings="4996"
@@ -335,18 +378,20 @@
 			<Tool
 				Name="VCResourceCompilerTool"
 				PreprocessorDefinitions="_DEBUG"
+				Culture="2057"
 			/>
 			<Tool
 				Name="VCPreLinkEventTool"
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				IgnoreImportLibrary="true"
 				AdditionalDependencies="wsock32.lib comctl32.lib Rpcrt4.lib"
 				LinkIncremental="1"
+				SuppressStartupBanner="true"
 				AdditionalManifestDependencies="type=&apos;Win32&apos; name=&apos;Microsoft.Windows.Common-Controls&apos; version=&apos;6.0.0.0&apos; processorArchitecture=&apos;*&apos; publicKeyToken=&apos;6595b64144ccf1df&apos; language=&apos;*&apos;"
 				GenerateDebugInformation="true"
 				RandomizedBaseAddress="1"
+				DataExecutionPrevention="0"
 				ImportLibrary="$(IntDir)/$(TargetName).lib"
 				TargetMachine="17"
 			/>
@@ -397,6 +442,12 @@
 			/>
 			<Tool
 				Name="VCMIDLTool"
+				PreprocessorDefinitions="_DEBUG"
+				MkTypLibCompatible="true"
+				SuppressStartupBanner="true"
+				TargetEnvironment="1"
+				TypeLibraryName=".\Debug/msn.tlb"
+				HeaderFileName=""
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
@@ -411,7 +462,10 @@
 				RuntimeTypeInfo="false"
 				UsePrecompiledHeader="2"
 				PrecompiledHeaderThrough="msn_global.h"
+				AssemblerListingLocation=""
+				BrowseInformationFile=""
 				WarningLevel="3"
+				SuppressStartupBanner="true"
 				DebugInformationFormat="4"
 				CompileAs="0"
 				DisableSpecificWarnings="4996"
@@ -422,6 +476,7 @@
 			<Tool
 				Name="VCResourceCompilerTool"
 				PreprocessorDefinitions="_DEBUG"
+				Culture="2057"
 			/>
 			<Tool
 				Name="VCPreLinkEventTool"
@@ -430,8 +485,13 @@
 				Name="VCLinkerTool"
 				IgnoreImportLibrary="true"
 				AdditionalDependencies="wsock32.lib comctl32.lib Rpcrt4.lib"
+				SuppressStartupBanner="true"
 				GenerateDebugInformation="true"
+				ProgramDatabaseFile="$(TargetDir)$(TargetName).pdb"
+				GenerateMapFile="false"
+				MapFileName=""
 				RandomizedBaseAddress="1"
+				DataExecutionPrevention="0"
 				ImportLibrary="$(IntDir)/$(TargetName).lib"
 				TargetMachine="1"
 			/>
@@ -482,6 +542,12 @@
 			/>
 			<Tool
 				Name="VCMIDLTool"
+				PreprocessorDefinitions="_DEBUG"
+				MkTypLibCompatible="true"
+				SuppressStartupBanner="true"
+				TargetEnvironment="3"
+				TypeLibraryName=".\Debug/msn.tlb"
+				HeaderFileName=""
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
@@ -496,7 +562,10 @@
 				RuntimeTypeInfo="false"
 				UsePrecompiledHeader="2"
 				PrecompiledHeaderThrough="msn_global.h"
+				AssemblerListingLocation=""
+				BrowseInformationFile=""
 				WarningLevel="3"
+				SuppressStartupBanner="true"
 				DebugInformationFormat="3"
 				CompileAs="0"
 				DisableSpecificWarnings="4996"
@@ -507,6 +576,7 @@
 			<Tool
 				Name="VCResourceCompilerTool"
 				PreprocessorDefinitions="_DEBUG"
+				Culture="2057"
 			/>
 			<Tool
 				Name="VCPreLinkEventTool"
@@ -516,9 +586,14 @@
 				IgnoreImportLibrary="true"
 				AdditionalDependencies="wsock32.lib comctl32.lib Rpcrt4.lib"
 				LinkIncremental="1"
+				SuppressStartupBanner="true"
 				AdditionalManifestDependencies="type=&apos;Win32&apos; name=&apos;Microsoft.Windows.Common-Controls&apos; version=&apos;6.0.0.0&apos; processorArchitecture=&apos;*&apos; publicKeyToken=&apos;6595b64144ccf1df&apos; language=&apos;*&apos;"
 				GenerateDebugInformation="true"
+				ProgramDatabaseFile="$(TargetDir)$(TargetName).pdb"
+				GenerateMapFile="false"
+				MapFileName=""
 				RandomizedBaseAddress="1"
+				DataExecutionPrevention="0"
 				ImportLibrary="$(IntDir)/$(TargetName).lib"
 				TargetMachine="17"
 			/>
@@ -568,6 +643,12 @@
 			/>
 			<Tool
 				Name="VCMIDLTool"
+				PreprocessorDefinitions="NDEBUG"
+				MkTypLibCompatible="true"
+				SuppressStartupBanner="true"
+				TargetEnvironment="1"
+				TypeLibraryName=".\Release/msn.tlb"
+				HeaderFileName=""
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
@@ -587,7 +668,9 @@
 				RuntimeTypeInfo="false"
 				UsePrecompiledHeader="2"
 				PrecompiledHeaderThrough="msn_global.h"
+				AssemblerListingLocation=""
 				WarningLevel="3"
+				SuppressStartupBanner="true"
 				DebugInformationFormat="3"
 				CompileAs="0"
 				DisableSpecificWarnings="4996"
@@ -598,6 +681,7 @@
 			<Tool
 				Name="VCResourceCompilerTool"
 				PreprocessorDefinitions="NDEBUG"
+				Culture="2057"
 			/>
 			<Tool
 				Name="VCPreLinkEventTool"
@@ -614,6 +698,7 @@
 				LinkTimeCodeGeneration="1"
 				BaseAddress="0x19000000"
 				RandomizedBaseAddress="1"
+				DataExecutionPrevention="0"
 				ImportLibrary="$(IntDir)/$(TargetName).lib"
 				TargetMachine="1"
 			/>
@@ -663,6 +748,12 @@
 			/>
 			<Tool
 				Name="VCMIDLTool"
+				PreprocessorDefinitions="NDEBUG"
+				MkTypLibCompatible="true"
+				SuppressStartupBanner="true"
+				TargetEnvironment="3"
+				TypeLibraryName=".\Release/msn.tlb"
+				HeaderFileName=""
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
@@ -682,7 +773,9 @@
 				RuntimeTypeInfo="false"
 				UsePrecompiledHeader="2"
 				PrecompiledHeaderThrough="msn_global.h"
+				AssemblerListingLocation=""
 				WarningLevel="3"
+				SuppressStartupBanner="true"
 				DebugInformationFormat="3"
 				CompileAs="0"
 				DisableSpecificWarnings="4996"
@@ -693,6 +786,7 @@
 			<Tool
 				Name="VCResourceCompilerTool"
 				PreprocessorDefinitions="NDEBUG"
+				Culture="2057"
 			/>
 			<Tool
 				Name="VCPreLinkEventTool"
@@ -705,11 +799,14 @@
 				SuppressStartupBanner="true"
 				AdditionalManifestDependencies="type=&apos;Win32&apos; name=&apos;Microsoft.Windows.Common-Controls&apos; version=&apos;6.0.0.0&apos; processorArchitecture=&apos;*&apos; publicKeyToken=&apos;6595b64144ccf1df&apos; language=&apos;*&apos;"
 				GenerateDebugInformation="true"
+				ProgramDatabaseFile="$(TargetDir)$(TargetName).pdb"
+				GenerateMapFile="false"
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"
 				LinkTimeCodeGeneration="1"
 				BaseAddress="0x19000000"
 				RandomizedBaseAddress="1"
+				DataExecutionPrevention="0"
 				ImportLibrary="$(IntDir)/$(TargetName).lib"
 				TargetMachine="17"
 			/>

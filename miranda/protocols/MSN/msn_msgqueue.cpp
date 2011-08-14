@@ -1,6 +1,6 @@
 /*
 Plugin of Miranda IM for communicating with users of the MSN Messenger protocol.
-Copyright (c) 2006-2011 Boris Krasnovskiy.
+Copyright (c) 2006-2010 Boris Krasnovskiy.
 Copyright (c) 2003-2005 George Hazan.
 Copyright (c) 2002-2003 Richard Hughes (original version).
 
@@ -36,7 +36,7 @@ void CMsnProto::MsgQueue_Uninit(void)
 	DeleteCriticalSection(&csMsgQueue);
 }
 
-int  CMsnProto::MsgQueue_Add(const char* wlid, int msgType, const char* msg, int msgSize, filetransfer* ft, int flags)
+int  CMsnProto::MsgQueue_Add(HANDLE hContact, int msgType, const char* msg, int msgSize, filetransfer* ft, int flags)
 {
 	EnterCriticalSection(&csMsgQueue);
 
@@ -45,7 +45,7 @@ int  CMsnProto::MsgQueue_Add(const char* wlid, int msgType, const char* msg, int
 
 	int seq = msgQueueSeq++;
 
-	E->wlid = mir_strdup(wlid);
+	E->hContact = hContact;
 	E->msgSize = msgSize;
 	E->msgType = msgType;
 	if (msgSize <= 0)
@@ -63,17 +63,17 @@ int  CMsnProto::MsgQueue_Add(const char* wlid, int msgType, const char* msg, int
 }
 
 // shall we create another session?
-const char* CMsnProto::MsgQueue_CheckContact(const char* wlid, time_t tsc)
+HANDLE  CMsnProto::MsgQueue_CheckContact(HANDLE hContact, time_t tsc)
 {
 	EnterCriticalSection(&csMsgQueue);
 
 	time_t ts = time(NULL);
-	const char* ret = NULL;
+	HANDLE ret = NULL;
 	for (int i=0; i < msgQueueList.getCount(); i++)
 	{
-		if (_stricmp(msgQueueList[i].wlid, wlid) == 0 && (tsc == 0 || (ts - msgQueueList[i].ts) < tsc))
+		if (msgQueueList[i].hContact == hContact && (tsc == 0 || (ts - msgQueueList[i].ts) < tsc))
 		{	
-			ret = wlid;
+			ret = hContact;
 			break;
 		}	
 	}
@@ -83,21 +83,21 @@ const char* CMsnProto::MsgQueue_CheckContact(const char* wlid, time_t tsc)
 }
 
 //for threads to determine who they should connect to
-const char* CMsnProto::MsgQueue_GetNextRecipient(void)
+HANDLE  CMsnProto::MsgQueue_GetNextRecipient(void)
 {
 	EnterCriticalSection(&csMsgQueue);
 
-	const char* ret = NULL;
+	HANDLE ret = NULL;
 	for (int i=0; i < msgQueueList.getCount(); i++)
 	{
 		MsgQueueEntry& E = msgQueueList[i];
 		if (!E.allocatedToThread)
 		{
 			E.allocatedToThread = 1;
-			ret = E.wlid;
+			ret = E.hContact;
 
 			while(++i < msgQueueList.getCount())
-				if (_stricmp(msgQueueList[i].wlid, ret) == 0)
+				if (msgQueueList[i].hContact == ret)
 					msgQueueList[i].allocatedToThread = 1;
 
 			break;
@@ -109,13 +109,13 @@ const char* CMsnProto::MsgQueue_GetNextRecipient(void)
 }
 
 //deletes from list. Must mir_free() return value
-bool  CMsnProto::MsgQueue_GetNext(const char* wlid, MsgQueueEntry& retVal)
+bool  CMsnProto::MsgQueue_GetNext(HANDLE hContact, MsgQueueEntry& retVal)
 {
 	int i;
 
 	EnterCriticalSection(&csMsgQueue);
 	for(i=0; i < msgQueueList.getCount(); i++)
-		if (_stricmp(msgQueueList[i].wlid, wlid) == 0)
+		if (msgQueueList[i].hContact == hContact)
 			break;
 	
 	bool res = i != msgQueueList.getCount();
@@ -128,37 +128,33 @@ bool  CMsnProto::MsgQueue_GetNext(const char* wlid, MsgQueueEntry& retVal)
 	return res;
 }
 
-int  CMsnProto::MsgQueue_NumMsg(const char* wlid)
+int  CMsnProto::MsgQueue_NumMsg(HANDLE hContact)
 {
 	int res = 0;
 	EnterCriticalSection(&csMsgQueue);
 
 	for(int i=0; i < msgQueueList.getCount(); i++)
-		res += (_stricmp(msgQueueList[i].wlid, wlid) == 0);
+		res += msgQueueList[i].hContact == hContact;
 	
 	LeaveCriticalSection(&csMsgQueue);
 	return res;
 }
 
-void  CMsnProto::MsgQueue_Clear(const char* wlid, bool msg)
+void  CMsnProto::MsgQueue_Clear(HANDLE hContact, bool msg)
 {
 	int i;
 
 	EnterCriticalSection(&csMsgQueue);
-	if (wlid == NULL)
+	if (hContact == NULL)
 	{
 
 		for(i=0; i < msgQueueList.getCount(); i++)
 		{
 			const MsgQueueEntry& E = msgQueueList[i];
 			if (E.msgSize == 0)
-			{
-				HANDLE hContact = MSN_HContactFromEmail(E.wlid);
-				SendBroadcast(hContact, ACKTYPE_MESSAGE, ACKRESULT_FAILED, 
+				SendBroadcast(E.hContact, ACKTYPE_MESSAGE, ACKRESULT_FAILED, 
 					(HANDLE)E.seq, (LPARAM)MSN_Translate("Message delivery failed"));
-			}
 			mir_free(E.message);
-			mir_free(E.wlid);
 		}
 		msgQueueList.destroy();
 
@@ -170,19 +166,17 @@ void  CMsnProto::MsgQueue_Clear(const char* wlid, bool msg)
 		{
 			time_t ts = time(NULL);
 			const MsgQueueEntry& E = msgQueueList[i];
-			if (_stricmp(msgQueueList[i].wlid, wlid) == 0 && (!msg || E.msgSize == 0))
+			if (E.hContact == hContact && (!msg || E.msgSize == 0))
 			{
 				bool msgfnd = E.msgSize == 0 && E.ts < ts;
 				int seq = E.seq;
 				
 				mir_free(E.message);
-				mir_free(E.wlid);
 				msgQueueList.remove(i);
 
 				if (msgfnd) 
 				{
 					LeaveCriticalSection(&csMsgQueue);
-					HANDLE hContact = MSN_HContactFromEmail(wlid);
 					SendBroadcast(hContact, ACKTYPE_MESSAGE, ACKRESULT_FAILED, (HANDLE)seq, 
 						(LPARAM)MSN_Translate("Message delivery failed"));
 					i = 0;
@@ -196,6 +190,5 @@ void  CMsnProto::MsgQueue_Clear(const char* wlid, bool msg)
 
 void __cdecl CMsnProto::MsgQueue_AllClearThread(void* arg)
 {
-	MsgQueue_Clear((char*)arg);
-	mir_free(arg);
+	MsgQueue_Clear(arg);
 }

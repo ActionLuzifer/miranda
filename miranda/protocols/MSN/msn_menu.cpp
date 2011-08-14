@@ -1,6 +1,6 @@
 /*
 Plugin of Miranda IM for communicating with users of the MSN Messenger protocol.
-Copyright (c) 2006-2011 Boris Krasnovskiy.
+Copyright (c) 2006-2010 Boris Krasnovskiy.
 Copyright (c) 2003-2005 George Hazan.
 Copyright (c) 2002-2003 Richard Hughes (original version).
 
@@ -42,10 +42,7 @@ INT_PTR CMsnProto::MsnBlockCommand(WPARAM wParam, LPARAM)
 		char tEmail[MSN_MAX_EMAIL_LEN];
 		getStaticString(hContact, "e-mail", tEmail, sizeof(tEmail));
 
-		if (Lists_IsInList(LIST_BL, tEmail))
-			deleteSetting(hContact, "ApparentMode");
-		else
-			setWord(hContact, "ApparentMode", ID_STATUS_OFFLINE);
+		setWord(hContact, "ApparentMode", Lists_IsInList(LIST_BL, tEmail) ? 0 : ID_STATUS_OFFLINE);
 	}
 	return 0;
 }
@@ -55,10 +52,10 @@ INT_PTR CMsnProto::MsnBlockCommand(WPARAM wParam, LPARAM)
 
 INT_PTR CMsnProto::MsnGotoInbox(WPARAM, LPARAM)
 {
-	HANDLE hContact = MSN_HContactFromEmail(MyOptions.szEmail);
+	HANDLE hContact = MSN_HContactFromEmail(MyOptions.szEmail, NULL, false, false);
 	if (hContact) CallService(MS_CLIST_REMOVEEVENT, (WPARAM)hContact, (LPARAM) 1);
 
-	MsnInvokeMyURL(true, rru);
+	MsnInvokeMyURL(true, NULL);
 	return 0;
 }
 
@@ -85,25 +82,21 @@ INT_PTR CMsnProto::MsnSetupAlerts(WPARAM, LPARAM)
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////
-// MsnViewProfile - view a contact's profile
+// MsnViewProfile - view a contact's profile at http://members.msn.com
 
 INT_PTR CMsnProto::MsnViewProfile(WPARAM wParam, LPARAM)
 {
 	const HANDLE hContact = (HANDLE)wParam;
-	char buf[64], *cid;
 
-	if (hContact == NULL)
-		cid = mycid;
-	else 
+	if (MSN_IsMeByContact(hContact))
+		MsnInvokeMyURL(false, NULL);
+	else
 	{
-		cid = buf;
-		if (getStaticString(hContact, "CID", buf, 30))
-			return 0;
-	}
+		char tUrl[256] = "http://spaces.live.com/Profile.aspx?partner=Messenger&cid=";
 
-	char tUrl[256];
-	mir_snprintf(tUrl, sizeof(tUrl), "http://cid-%I64X.profiles.live.com", _atoi64(cid));
-	MsnInvokeMyURL(false, tUrl);
+		if (!getStaticString(hContact, "CID", strchr(tUrl, 0), 30))
+			MsnInvokeMyURL(false, tUrl);
+	}
 	return 0;
 }
 
@@ -112,7 +105,7 @@ INT_PTR CMsnProto::MsnViewProfile(WPARAM wParam, LPARAM)
 
 INT_PTR CMsnProto::MsnEditProfile(WPARAM, LPARAM)
 {
-	MsnViewProfile(0, 0);
+	MsnInvokeMyURL(false, NULL);
 	return 0;
 }
 
@@ -138,18 +131,14 @@ INT_PTR CMsnProto::MsnInviteCommand(WPARAM wParam, LPARAM)
 
 		for (int i=0; i < tThreads; i++) 
 		{
-			if (tActiveThreads[i]->mChatID[0]) 
+			if (IsChatHandle(tActiveThreads[i]->mJoinedContacts[0])) 
 			{
 				TCHAR sessionName[255];
 				mir_sntprintf(sessionName, SIZEOF(sessionName), _T("%s %s%s"),
 					m_tszUserName, TranslateT("Chat #"), tActiveThreads[i]->mChatID);
 				::AppendMenu(tMenu, MF_STRING, (UINT_PTR)(i+1), sessionName);
 			}
-			else
-			{
-				HANDLE hContact = tActiveThreads[i]->getContactHandle();
-				::AppendMenu(tMenu, MF_STRING, (UINT_PTR)(i+1), MSN_GetContactNameT(hContact));
-			}
+			else ::AppendMenu(tMenu, MF_STRING, (UINT_PTR)(i+1), MSN_GetContactNameT(*tActiveThreads[i]->mJoinedContacts));
 		}
 
 		HWND tWindow = CreateWindow(_T("EDIT"),_T(""),0,1,1,1,1,NULL,NULL,hInst,NULL);
@@ -172,7 +161,7 @@ INT_PTR CMsnProto::MsnInviteCommand(WPARAM wParam, LPARAM)
 		for (int j=0; j < tActiveThreads[tChosenThread]->mJoinedCount; j++) 
 		{
 			// if the user is already in the chat session
-			if (_stricmp(tActiveThreads[tChosenThread]->mJoinedContactsWLID[j], tEmail) == 0) 
+			if (tActiveThreads[tChosenThread]->mJoinedContacts[j] == (HANDLE)wParam) 
 			{
 				MessageBox(NULL, TranslateT("User is already in the chat session."), 
 					TranslateT("MSN Chat"), MB_OK | MB_ICONINFORMATION);
@@ -218,6 +207,10 @@ int CMsnProto::OnPrebuildContactMenu(WPARAM wParam, LPARAM)
 		mi.pszName = isMe ? LPGEN("Open &Hotmail Inbox") : LPGEN("Send &Hotmail E-mail");
 		MSN_CallService(MS_CLIST_MODIFYMENUITEM, (WPARAM)hOpenInboxMenuItem, (LPARAM)&mi);
 
+		mi.flags = CMIM_NAME | CMIM_FLAGS | CMIF_ICONFROMICOLIB;
+		mi.pszName = isMe ? LPGEN("Edit Live &Space") : LPGEN("View Live &Space");
+		MSN_CallService(MS_CLIST_MODIFYMENUITEM, (WPARAM)hLiveSpaceMenuItem, (LPARAM)&mi);
+
 		mi.flags = CMIM_FLAGS | CMIF_ICONFROMICOLIB | CMIF_NOTOFFLINE;
 		if (noChat) mi.flags |= CMIF_HIDDEN;
 		MSN_CallService(MS_CLIST_MODIFYMENUITEM, (WPARAM)hNetmeetingMenuItem, (LPARAM)&mi);
@@ -248,10 +241,9 @@ INT_PTR CMsnProto::MsnSendNetMeeting(WPARAM wParam, LPARAM)
 
 	HANDLE hContact = HANDLE(wParam);
 
-	char szEmail[MSN_MAX_EMAIL_LEN];
-	if (MSN_IsMeByContact(hContact, szEmail)) return 0;
+	if (MSN_IsMeByContact(hContact)) return 0;
 
-	ThreadData* thread = MSN_GetThreadByContact(szEmail);
+	ThreadData* thread = MSN_GetThreadByContact(hContact);
 
 	if (thread == NULL) {
 		MessageBox(NULL, TranslateT("You must be talking to start Netmeeting"), TranslateT("MSN Protocol"), MB_OK | MB_ICONERROR);
@@ -392,7 +384,7 @@ void CMsnProto::MsnInitMainMenu(void)
 	CreateProtoService(MS_EDIT_PROFILE, &CMsnProto::MsnEditProfile);
 	mi.position = 201003;
 	mi.icolibItem = GetIconHandle(IDI_PROFILE);
-	mi.pszName = LPGEN("View &Profile");
+	mi.pszName = LPGEN("My Live &Space");
 	menuItemsMain[2] = (HGENMENU)MSN_CallService(MS_CLIST_ADDPROTOMENUITEM, 0, (LPARAM)&mi);
 
 	strcpy(tDest, MS_EDIT_ALERTS);
@@ -528,7 +520,7 @@ void MSN_InitContactMenu(void)
 	hViewProfile = CreateServiceFunction(servicefunction, MsnMenuViewProfile);
 	mi.position = -500050003;
 	mi.icolibItem = GetIconHandle(IDI_PROFILE);
-	mi.pszName = LPGEN("View &Profile");
+	mi.pszName = LPGEN("View Live &Space");
 	hLiveSpaceMenuItem = (HGENMENU)MSN_CallService(MS_CLIST_ADDCONTACTMENUITEM, 0, (LPARAM)&mi);
 
 	strcpy(tDest, MSN_NETMEETING);

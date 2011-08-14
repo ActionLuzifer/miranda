@@ -188,8 +188,8 @@ void RegisterFontServiceFonts() {
 	FontIDT fid = {0};
 	ColourIDT cid = {0};
 	fid.cbSize = sizeof(FontIDT);
-    mir_sntprintf(fid.group, SIZEOF(fid.group), _T("%s"), LPGENT("Messaging"));
-    mir_sntprintf(fid.backgroundGroup, SIZEOF(fid.backgroundGroup), _T("%s"), LPGENT("Messaging"));
+    mir_sntprintf(fid.group, SIZEOF(fid.group), _T("%s/%s"), LPGENT("Messaging"), LPGENT("Single Messaging"));
+    mir_sntprintf(fid.backgroundGroup, SIZEOF(fid.backgroundGroup), _T("%s/%s"), LPGENT("Messaging"), LPGENT("Single Messaging"));
 	strncpy(fid.dbSettingsGroup, (SRMMMOD), SIZEOF(fid.dbSettingsGroup));
 	fid.flags = FIDF_DEFAULTVALID;
 	for (i = 0; i < SIZEOF(fontOptionsList); i++) {
@@ -206,7 +206,7 @@ void RegisterFontServiceFonts() {
 		CallService(MS_FONT_REGISTERT, (WPARAM)&fid, 0);
 	}
 	cid.cbSize = sizeof(ColourIDT);
-    mir_sntprintf(cid.group, SIZEOF(cid.group), _T("%s"), LPGENT("Messaging"));
+    mir_sntprintf(cid.group, SIZEOF(cid.group), _T("%s/%s"), LPGENT("Messaging"), LPGENT("Single Messaging"));
 	strncpy(cid.dbSettingsGroup, (SRMMMOD), SIZEOF(fid.dbSettingsGroup));
 	cid.flags = 0;
 	for (i = 0; i < SIZEOF(colourOptionsList); i++) {
@@ -242,26 +242,24 @@ int SmileySettingsChanged(WPARAM wParam, LPARAM lParam)
 	return 0;
 }
 
-void LoadMsgDlgFont(int i, LOGFONT * lf, COLORREF * colour, BOOL chatMode)
+void LoadMsgDlgFont(int i, LOGFONT * lf, COLORREF * colour)
 {
 	char str[32];
 	int style;
 	DBVARIANT dbv;
-	const char * module =  chatMode ? "ChatFonts" : SRMMMOD;
-	const char * prefix = chatMode ? "Font" : "SRMFont";
 
 	if (colour) {
-		wsprintfA(str, "%s%dCol", prefix, i);
-		*colour = DBGetContactSettingDword(NULL, module, str, fontOptionsList[i].defColour);
+		wsprintfA(str, "SRMFont%dCol", i);
+		*colour = DBGetContactSettingDword(NULL, SRMMMOD, str, fontOptionsList[i].defColour);
 	}
 	if (lf) {
-		wsprintfA(str, "%s%dSize", prefix, i);
-		lf->lfHeight = (char) DBGetContactSettingByte(NULL, module, str, fontOptionsList[i].defSize);
+		wsprintfA(str, "SRMFont%dSize", i);
+		lf->lfHeight = (char) DBGetContactSettingByte(NULL, SRMMMOD, str, fontOptionsList[i].defSize);
 		lf->lfWidth = 0;
 		lf->lfEscapement = 0;
 		lf->lfOrientation = 0;
-		wsprintfA(str, "%s%dSty", prefix, i);
-		style = DBGetContactSettingByte(NULL, module, str, fontOptionsList[i].defStyle);
+		wsprintfA(str, "SRMFont%dSty", i);
+		style = DBGetContactSettingByte(NULL, SRMMMOD, str, fontOptionsList[i].defStyle);
 		lf->lfWeight = style & FONTF_BOLD ? FW_BOLD : FW_NORMAL;
 		lf->lfItalic = style & FONTF_ITALIC ? 1 : 0;
 		lf->lfUnderline = 0;
@@ -270,15 +268,15 @@ void LoadMsgDlgFont(int i, LOGFONT * lf, COLORREF * colour, BOOL chatMode)
 		lf->lfClipPrecision = CLIP_DEFAULT_PRECIS;
 		lf->lfQuality = DEFAULT_QUALITY;
 		lf->lfPitchAndFamily = DEFAULT_PITCH | FF_DONTCARE;
-		wsprintfA(str, "%s%d", prefix, i);
-		if (DBGetContactSettingTString(NULL, module, str, &dbv))
+		wsprintfA(str, "SRMFont%d", i);
+		if (DBGetContactSettingTString(NULL, SRMMMOD, str, &dbv))
 			lstrcpy(lf->lfFaceName, fontOptionsList[i].szDefFace);
 		else {
 			_tcsncpy(lf->lfFaceName, dbv.ptszVal, SIZEOF(lf->lfFaceName));
 			DBFreeVariant(&dbv);
 		}
-		wsprintfA(str, "%s%dSet", prefix, i);
-		lf->lfCharSet = DBGetContactSettingByte(NULL, module, str, MsgDlgGetFontDefaultCharset(lf->lfFaceName));
+		wsprintfA(str, "SRMFont%dSet", i);
+		lf->lfCharSet = DBGetContactSettingByte(NULL, SRMMMOD, str, MsgDlgGetFontDefaultCharset(lf->lfFaceName));
 	}
 }
 
@@ -597,6 +595,7 @@ static INT_PTR CALLBACK DlgProcOptions(HWND hwndDlg, UINT msg, WPARAM wParam, LP
 			CheckDlgButton(hwndDlg, IDC_STAYMINIMIZED, DBGetContactSettingByte(NULL, SRMMMOD, SRMSGSET_STAYMINIMIZED, SRMSGDEFSET_STAYMINIMIZED));
 			CheckDlgButton(hwndDlg, IDC_AUTOMIN, DBGetContactSettingByte(NULL, SRMMMOD, SRMSGSET_AUTOMIN, SRMSGDEFSET_AUTOMIN));
 			CheckDlgButton(hwndDlg, IDC_SAVEDRAFTS, DBGetContactSettingByte(NULL, SRMMMOD, SRMSGSET_SAVEDRAFTS, SRMSGDEFSET_SAVEDRAFTS));
+			CheckDlgButton(hwndDlg, IDC_AUTORESIZE, DBGetContactSettingByte(NULL, SRMMMOD, SRMSGSET_AUTORESIZE, SRMSGDEFSET_AUTORESIZE));
 
 			CheckDlgButton(hwndDlg, IDC_DELTEMP, DBGetContactSettingByte(NULL, SRMMMOD, SRMSGSET_DELTEMP, SRMSGDEFSET_DELTEMP));
 			msgTimeout = DBGetContactSettingDword(NULL, SRMMMOD, SRMSGSET_MSGTIMEOUT, SRMSGDEFSET_MSGTIMEOUT);
@@ -676,6 +675,8 @@ static INT_PTR CALLBACK DlgProcOptions(HWND hwndDlg, UINT msg, WPARAM wParam, LP
 							DBWriteContactSettingByte(NULL, SRMMMOD, SRMSGSET_STAYMINIMIZED, (BYTE) IsDlgButtonChecked(hwndDlg, IDC_STAYMINIMIZED));
 							DBWriteContactSettingByte(NULL, SRMMMOD, SRMSGSET_AUTOMIN, (BYTE) IsDlgButtonChecked(hwndDlg, IDC_AUTOMIN));
 							DBWriteContactSettingByte(NULL, SRMMMOD, SRMSGSET_SAVEDRAFTS, (BYTE) IsDlgButtonChecked(hwndDlg, IDC_SAVEDRAFTS));
+							DBWriteContactSettingByte(NULL, SRMMMOD, SRMSGSET_AUTORESIZE, (BYTE) IsDlgButtonChecked(hwndDlg, IDC_AUTORESIZE));
+
 
 							DBWriteContactSettingByte(NULL, SRMMMOD, SRMSGSET_DELTEMP, (BYTE) IsDlgButtonChecked(hwndDlg, IDC_DELTEMP));
 							msgTimeout = GetDlgItemInt(hwndDlg, IDC_SECONDS, NULL, TRUE) >= SRMSGSET_MSGTIMEOUT_MIN / 1000 ? GetDlgItemInt(hwndDlg, IDC_SECONDS, NULL, TRUE) * 1000 : SRMSGDEFSET_MSGTIMEOUT;

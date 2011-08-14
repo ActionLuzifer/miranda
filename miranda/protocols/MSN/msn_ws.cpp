@@ -1,6 +1,6 @@
 /*
 Plugin of Miranda IM for communicating with users of the MSN Messenger protocol.
-Copyright (c) 2006-2011 Boris Krasnovskiy.
+Copyright (c) 2006-2010 Boris Krasnovskiy.
 Copyright (c) 2003-2005 George Hazan.
 Copyright (c) 2002-2003 Richard Hughes (original version).
 
@@ -65,16 +65,14 @@ bool ThreadData::isTimeout(void)
 	}
 	else if (mJoinedCount <= 1 || mChatID[0] == 0) 
 	{
-		HANDLE hContact = getContactHandle();
-
 		if (mJoinedCount == 0 || termPending)
 			res = true;
-		else if (proto->p2p_getThreadSession(hContact, mType) != NULL)
+		else if (proto->p2p_getThreadSession(mJoinedContacts[0], mType) != NULL)
 			res = false;
 		else if (mType == SERVER_SWITCHBOARD) 
 		{
 			MessageWindowInputData msgWinInData = 
-				{ sizeof(MessageWindowInputData), hContact, MSG_WINDOW_UFLAG_MSG_BOTH };
+				{ sizeof(MessageWindowInputData), mJoinedContacts[0], MSG_WINDOW_UFLAG_MSG_BOTH };
 			MessageWindowData msgWinData = {0};
 			msgWinData.cbSize = sizeof(MessageWindowData);
 
@@ -82,7 +80,7 @@ bool ThreadData::isTimeout(void)
 			res |= (msgWinData.hwndWindow == NULL);
 			if (res) 
 			{	
-				msgWinInData.hContact = (HANDLE)MSN_CallService(MS_MC_GETMETACONTACT, (WPARAM)hContact, 0);
+				msgWinInData.hContact = (HANDLE)MSN_CallService(MS_MC_GETMETACONTACT, (WPARAM)mJoinedContacts[0], 0);
 				if (msgWinInData.hContact != NULL) 
 				{
 					res = MSN_CallService(MS_MSG_GETWINDOWDATA, (WPARAM)&msgWinInData, (LPARAM)&msgWinData) != 0;
@@ -91,7 +89,7 @@ bool ThreadData::isTimeout(void)
 			}
 			if (res) 
 			{	
-				WORD status = proto->getWord(hContact, "Status", ID_STATUS_OFFLINE);
+				WORD status = proto->getWord(mJoinedContacts[0], "Status", ID_STATUS_OFFLINE);
 				if ((status == ID_STATUS_OFFLINE || status == ID_STATUS_INVISIBLE || proto->m_iStatus == ID_STATUS_INVISIBLE)) 
 					res = false;
 			}
@@ -109,11 +107,12 @@ bool ThreadData::isTimeout(void)
 
 		if (proto->getByte("EnableSessionPopup", 0)) 
 		{
-			HANDLE hContact = proto->MSN_HContactFromEmail(mJoinedCount ? mJoinedContactsWLID[0] : mInitialContactWLID);
+			HANDLE hContact = mJoinedCount ? mJoinedContacts[0] : mInitialContact;
 			proto->MSN_ShowPopup(hContact, TranslateT("Chat session dropped due to inactivity"), 0);
 		}
 
-		sendTerminate();
+		sendPacket("OUT", NULL);
+		termPending = true;
 		resetTimeout(true);
 	}
 	else
