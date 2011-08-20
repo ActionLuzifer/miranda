@@ -26,7 +26,7 @@
  *
  * (C) 2005-2010 by silvercircle _at_ gmail _dot_ com and contributors
  *
- * $Id$
+ * $Id: config.h 12709 2010-09-16 12:06:06Z borkra $
  *
  */
 

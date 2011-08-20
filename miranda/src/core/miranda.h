@@ -183,7 +183,7 @@ int   Ucs2toUtf8Len(const wchar_t *src);
 int    LangPackGetDefaultCodePage();
 int    LangPackGetDefaultLocale();
 TCHAR* LangPackPcharToTchar( const char* pszStr );
-char*  LangPackTranslateString(struct LangPackMuuid* pUuid, const char *szEnglish, const int W);
+char*  LangPackTranslateString(const char *szEnglish, const int W);
 
 unsigned int __fastcall hash(const void * key, unsigned int len);
 
@@ -273,12 +273,11 @@ int TryProcessDoubleClick( HANDLE hContact );
 
 extern LIST<PROTOACCOUNT> accounts;
 
-PROTOACCOUNT* __fastcall Proto_GetAccount( const char* accName );
-PROTOACCOUNT* __fastcall Proto_GetAccount( HANDLE hContact );
-PROTOCOLDESCRIPTOR* __fastcall Proto_IsProtocolLoaded( const char* szProtoName );
+PROTOACCOUNT* Proto_GetAccount( const char* accName );
+PROTOCOLDESCRIPTOR* Proto_IsProtocolLoaded( const char* szProtoName );
 
-bool __fastcall Proto_IsAccountEnabled( PROTOACCOUNT* pa );
-bool __fastcall Proto_IsAccountLocked( PROTOACCOUNT* pa );
+int Proto_IsAccountEnabled( PROTOACCOUNT* pa );
+int Proto_IsAccountLocked( PROTOACCOUNT* pa );
 
 PROTO_INTERFACE* AddDefaultAccount( const char* szProtoName );
 int  FreeDefaultAccount( PROTO_INTERFACE* ppi );
