@@ -722,10 +722,6 @@ SOURCE=.\res\mirandaw.ico
 # End Source File
 # Begin Source File
 
-SOURCE=.\msvc6.rc
-# End Source File
-# Begin Source File
-
 SOURCE=.\res\multisend.ico
 # End Source File
 # Begin Source File
@@ -815,6 +811,10 @@ SOURCE=.\res\reply.ico
 # Begin Source File
 
 SOURCE=.\res\reset_view.ico
+# End Source File
+# Begin Source File
+
+SOURCE=.\resource.rc
 # End Source File
 # Begin Source File
 
