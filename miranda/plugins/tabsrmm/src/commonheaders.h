@@ -43,7 +43,7 @@
 
 //#define __USE_EX_HANDLERS 1
 
-// #define __DELAYED_FOR_3_1 1							// features not going into 3.0.x and will be completed later
+#define __DELAYED_FOR_3_1 1							// features not going into 3.0.x and will be completed later
 
 #if !defined __DELAYED_FOR_3_1
 	#define __FEAT_EXP_AUTOSPLITTER 1
@@ -54,7 +54,7 @@
 #define _WIN32_IE 0x0501
 #define WIN32_LEAN_AND_MEAN
 
-#define MIRANDA_VER 0x1000
+#define MIRANDA_VER 0x0700
 
 #include <m_stdhdr.h>
 

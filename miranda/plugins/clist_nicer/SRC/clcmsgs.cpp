@@ -26,7 +26,7 @@
  *
  * (C) 2005-2010 by silvercircle _at_ gmail _dot_ com and contributors
  *
- * $Id$
+ * $Id: clcmsgs.cpp 12535 2010-08-29 23:48:32Z silvercircle $
  *
  */
 

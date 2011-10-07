@@ -50,7 +50,7 @@ void FormatTime(const SYSTEMTIME *st, const TCHAR *szFormat, TCHAR *szDest, int 
 	for (const TCHAR* pFormat = szFormat; *pFormat; ++pFormat) 
 	{
 		DWORD fmt;
-		bool date, iso = false;
+		bool date;
 		switch (*pFormat) 
 		{
 		case 't':
@@ -78,10 +78,6 @@ void FormatTime(const SYSTEMTIME *st, const TCHAR *szFormat, TCHAR *szDest, int 
 			date = true;
 			break;
 
-		case 'I':
-			iso = true;
-			break;
-
 		default:
 			if (destCharsLeft--) 
 				*pDest++ = *pFormat;
@@ -91,19 +87,10 @@ void FormatTime(const SYSTEMTIME *st, const TCHAR *szFormat, TCHAR *szDest, int 
 		TCHAR dateTimeStr[64];
 		int dateTimeStrLen;
 
-		if (iso)
-		{
-			dateTimeStrLen = mir_sntprintf(dateTimeStr, SIZEOF(dateTimeStr),
-				_T("%d-%02d-%02dT%02d:%02d:%02dZ"), 
-				st->wYear, st->wMonth, st->wDay, 
-				st->wHour, st->wMinute, st->wSecond) + 1;
-		}
-		else if (date) 
-			dateTimeStrLen = GetDateFormat(LOCALE_USER_DEFAULT, fmt, st, NULL,
-				dateTimeStr, SIZEOF(dateTimeStr));
+		if (date) 
+			dateTimeStrLen = GetDateFormat(LOCALE_USER_DEFAULT, fmt, st, NULL, dateTimeStr, SIZEOF(dateTimeStr));
 		else
-			dateTimeStrLen = GetTimeFormat(LOCALE_USER_DEFAULT, fmt, st, NULL,
-				dateTimeStr, SIZEOF(dateTimeStr));
+			dateTimeStrLen = GetTimeFormat(LOCALE_USER_DEFAULT, fmt, st, NULL, dateTimeStr, SIZEOF(dateTimeStr));
 
 		if (dateTimeStrLen) --dateTimeStrLen;
 		if (destCharsLeft < dateTimeStrLen) dateTimeStrLen = destCharsLeft;
