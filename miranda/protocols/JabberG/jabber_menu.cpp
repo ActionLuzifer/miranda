@@ -500,7 +500,7 @@ int CJabberProto::OnPrebuildContactMenu( WPARAM wParam, LPARAM )
 						}
 						mir_sntprintf(szTmp, SIZEOF(szTmp), _T("%s [%s, %d]"),
 							item->resource[i].resourceName,
-							(TCHAR *)CallService(MS_CLIST_GETSTATUSMODEDESCRIPTION, item->resource[i].status, GSMDF_TCHAR),
+							(TCHAR *)CallService(MS_CLIST_GETSTATUSMODEDESCRIPTION, item->resource[i].status, GCMDF_TCHAR),
 							item->resource[i].priority);
 						clmi.ptszName = szTmp;
 						CallService( MS_CLIST_MODIFYMENUITEM, ( WPARAM )m_phMenuResourceItems[i], ( LPARAM )&clmi );
@@ -1055,7 +1055,7 @@ void CJabberProto::CheckMenuItems()
 
 	clmi.flags = CMIM_FLAGS | (( m_ThreadInfo && ( m_ThreadInfo->jabberServerCaps & JABBER_CAPS_PRIVACY_LISTS)) ? 0 : CMIF_HIDDEN );
 	JCallService( MS_CLIST_MODIFYMENUITEM, ( WPARAM )m_hPrivacyMenuRoot, ( LPARAM )&clmi );
-	
+
 	clmi.flags = CMIM_FLAGS | ( m_menuItemsStatus ? 0 : CMIF_HIDDEN);
 	JCallService( MS_CLIST_MODIFYMENUITEM, ( WPARAM )m_hMenuPriorityRoot, ( LPARAM )&clmi );
 

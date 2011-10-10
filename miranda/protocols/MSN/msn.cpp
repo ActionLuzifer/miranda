@@ -132,7 +132,6 @@ extern "C" int __declspec(dllexport) Load(PLUGINLINK* link)
 	mir_getMD5I(&md5i);
 	mir_getSHA1I(&sha1i);
 	mir_getTMI(&tmi);
-	mir_getLP(&pluginInfo);
 
 	hMooduleLoaded = HookEvent(ME_SYSTEM_MODULESLOADED, OnModulesLoaded);
 
@@ -165,9 +164,9 @@ extern "C" int __declspec(dllexport) Unload(void)
 
 extern "C" __declspec(dllexport) const PLUGININFOEX* MirandaPluginInfoEx(DWORD mirandaVersion)
 {
-	if (mirandaVersion < PLUGIN_MAKE_VERSION(0, 10, 0, 2)) 
+	if (mirandaVersion < PLUGIN_MAKE_VERSION(0, 9, 24, 0)) 
 	{
-		MessageBox(NULL, _T("The MSN protocol plugin cannot be loaded. It requires Miranda IM 0.10.0.2 or later."), 
+		MessageBox(NULL, _T("The MSN protocol plugin cannot be loaded. It requires Miranda IM 0.9.24.0 or later."), 
 			_T("MSN Protocol"), MB_OK | MB_ICONWARNING | MB_SETFOREGROUND | MB_TOPMOST);
 		return NULL;
 	}
