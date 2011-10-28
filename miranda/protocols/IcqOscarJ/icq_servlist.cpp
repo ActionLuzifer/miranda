@@ -2678,6 +2678,13 @@ int CIcqProto::ServListDbSettingChanged(WPARAM wParam, LPARAM lParam)
 	if (!icqOnline() || !m_bSsiEnabled || bIsSyncingCL)
 		return 0;
 
+	{ // only our contacts will be handled
+		if (IsICQContact((HANDLE)wParam))
+			;// our contact, fine; otherwise return
+		else 
+			return 0;
+	}
+
 #ifdef _DEBUG
 	if (cws->value.type == DBVT_DELETED)
 		NetLog_Server("DB-Events: Module \"%s\", setting \"%s\" deleted.", cws->szModule, cws->szSetting);
@@ -2687,15 +2694,6 @@ int CIcqProto::ServListDbSettingChanged(WPARAM wParam, LPARAM lParam)
 
 	if (!strcmpnull(cws->szModule, "CList"))
 	{
-		// Has a temporary contact just been added permanently?
-		if (!strcmpnull(cws->szSetting, "NotOnList") &&
-			(cws->value.type == DBVT_DELETED || (cws->value.type == DBVT_BYTE && cws->value.bVal == 0)))
-		{ // Add to server-list
-			setContactHidden((HANDLE)wParam, 0);
-			if (getSettingByte(NULL, "ServerAddRemove", DEFAULT_SS_ADDSERVER))
-				AddServerContact(wParam, 0);
-		}
-
 		// Has contact been renamed?
 		if (!strcmpnull(cws->szSetting, "MyHandle") &&
 			getSettingByte(NULL, "StoreServerDetails", DEFAULT_SS_STORE))
@@ -2731,6 +2729,8 @@ int CIcqProto::ServListDbSettingChanged(WPARAM wParam, LPARAM lParam)
 
 int CIcqProto::ServListDbContactDeleted(WPARAM wParam, LPARAM lParam)
 {
+	if (!IsICQContact((HANDLE)wParam)) return 0;
+
 #ifdef _DEBUG
 	NetLog_Server("DB-Events: Contact %x deleted.", wParam);
 #endif

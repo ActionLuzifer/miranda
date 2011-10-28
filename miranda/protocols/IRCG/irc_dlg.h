@@ -98,7 +98,7 @@ struct CListDlg : public CProtoDlgBase<CIrcProto>
 	TCHAR m_title[255];
 	CCtrlListView m_list, m_list2;
 	CCtrlEdit m_filter, m_status;
-	UINT_PTR m_timer;
+	UINT m_timer;
 
 	CCtrlButton m_Join;
 	void OnJoin( CCtrlButton* );

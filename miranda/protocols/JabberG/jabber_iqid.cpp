@@ -75,7 +75,7 @@ void CJabberProto::OnIqResultServerDiscoInfo( HXML iqNode )
 							m_ThreadInfo->jabberServerCaps |= g_JabberFeatCapPairs[j].jcbCap;
 							break;
 		}	}	}	}	}
-	
+
 		OnProcessLoginRq( m_ThreadInfo, JABBER_LOGIN_SERVERINFO);
 }	}
 

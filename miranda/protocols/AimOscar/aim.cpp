@@ -26,7 +26,6 @@ MD5_INTERFACE md5i;
 MM_INTERFACE mmi;
 UTF8_INTERFACE utfi;
 LIST_INTERFACE li;
-int hLangpack;
 
 HINSTANCE hInstance;
 
@@ -75,11 +74,11 @@ static const PLUGININFOEX pluginInfo =
 
 extern "C" __declspec(dllexport) const PLUGININFOEX* MirandaPluginInfoEx(DWORD mirandaVersion)
 {
-	if (mirandaVersion < MIRANDA_VERSION_CORE) 
+	if (mirandaVersion < __VERSION_DWORD) 
 	{
 		MessageBox(NULL, 
 			_T("The AIM protocol plugin cannot be loaded. It requires Miranda IM ") 
-			_T(MIRANDA_VERSION_CORE_STRING) _T(" or later."),
+			_T(__VERSION_STRING) _T(" or later."),
 			_T("Miranda"), MB_OK | MB_ICONWARNING | MB_SETFOREGROUND | MB_TOPMOST);
 		return NULL;
 	}
@@ -132,7 +131,6 @@ extern "C" int __declspec(dllexport) Load(PLUGINLINK *link)
 	mir_getMD5I(&md5i);
 	mir_getUTFI(&utfi);
 	mir_getLI(&li);
-	mir_getLP(&pluginInfo);
 
 	hMooduleLoaded = HookEvent(ME_SYSTEM_MODULESLOADED, OnModulesLoaded);
 
