@@ -56,6 +56,7 @@ static ToolbarButton toolbarButtons[] = {
 	{_T("Filter"), IDC_CHAT_FILTER, 1, 0, 24},
 	{_T("Manager"), IDC_CHAT_CHANMGR, 1, 0, 24},
 	{_T("Nick list"), IDC_CHAT_SHOWNICKLIST, 1, 0, 24},
+	{_T("Close"), IDCANCEL, 1, 0, 24},
 	{_T("Send"), IDOK, 1, 0, 38},
 };
 
@@ -75,7 +76,7 @@ static LRESULT CALLBACK SplitterSubclassProc(HWND hwnd,UINT msg,WPARAM wParam,LP
       return HTCLIENT;
 
 	case WM_SETCURSOR:
-		{
+		if (!(g_dat->flags & SMF_AUTORESIZE)) {
 			RECT rc;
 			GetClientRect(hwnd, &rc);
 			SetCursor(rc.right > rc.bottom ? hCurSplitNS : hCurSplitWE);
@@ -117,6 +118,7 @@ static void   InitButtons(HWND hwndDlg, SESSION_INFO* si)
 	SendDlgItemMessage(hwndDlg,IDC_CHAT_SHOWNICKLIST,BM_SETIMAGE,IMAGE_ICON,(LPARAM)GetCachedIcon(si->bNicklistEnabled?"chat_nicklist":"chat_nicklist2"));
 	SendDlgItemMessage(hwndDlg,IDC_CHAT_FILTER,BM_SETIMAGE,IMAGE_ICON,(LPARAM)GetCachedIcon(si->bFilterEnabled?"chat_filter":"chat_filter2"));
 	SendDlgItemMessage(hwndDlg, IDOK, BM_SETIMAGE, IMAGE_ICON, (LPARAM) GetCachedIcon("scriver_SEND"));
+	SendDlgItemMessage(hwndDlg, IDCANCEL, BM_SETIMAGE, IMAGE_ICON, (LPARAM) GetCachedIcon("scriver_CANCEL"));
 
    SendDlgItemMessage(hwndDlg,IDC_CHAT_SMILEY, BUTTONSETASFLATBTN, 0, 0);
    SendDlgItemMessage(hwndDlg,IDC_CHAT_BOLD, BUTTONSETASFLATBTN, 0, 0);
@@ -129,6 +131,7 @@ static void   InitButtons(HWND hwndDlg, SESSION_INFO* si)
    SendDlgItemMessage(hwndDlg,IDC_CHAT_CHANMGR, BUTTONSETASFLATBTN, 0, 0);
    SendDlgItemMessage(hwndDlg,IDC_CHAT_FILTER, BUTTONSETASFLATBTN, 0, 0);
 	SendDlgItemMessage(hwndDlg,IDOK, BUTTONSETASFLATBTN, 0, 0);
+	SendDlgItemMessage(hwndDlg,IDCANCEL, BUTTONSETASFLATBTN, 0, 0);
 
    SendMessage(GetDlgItem(hwndDlg,IDC_CHAT_SMILEY), BUTTONADDTOOLTIP, (WPARAM)Translate("Insert a smiley"), 0);
    SendMessage(GetDlgItem(hwndDlg,IDC_CHAT_BOLD), BUTTONADDTOOLTIP, (WPARAM)Translate("Make the text bold (CTRL+B)"), 0);
@@ -141,6 +144,7 @@ static void   InitButtons(HWND hwndDlg, SESSION_INFO* si)
    SendMessage(GetDlgItem(hwndDlg,IDC_CHAT_CHANMGR), BUTTONADDTOOLTIP, (WPARAM)Translate("Control this room (CTRL+O)"), 0);
    SendMessage(GetDlgItem(hwndDlg,IDC_CHAT_FILTER), BUTTONADDTOOLTIP, (WPARAM)Translate("Enable/disable the event filter (CTRL+F)"), 0);
 	SendMessage(GetDlgItem(hwndDlg, IDOK), BUTTONADDTOOLTIP, (WPARAM) Translate("Send Message"), 0);
+	SendMessage(GetDlgItem(hwndDlg, IDCANCEL), BUTTONADDTOOLTIP, (WPARAM) Translate("Close Session"), 0);
    SendDlgItemMessage(hwndDlg, IDC_CHAT_BOLD, BUTTONSETASPUSHBTN, 0, 0);
    SendDlgItemMessage(hwndDlg, IDC_CHAT_ITALICS, BUTTONSETASPUSHBTN, 0, 0);
    SendDlgItemMessage(hwndDlg, IDC_CHAT_UNDERLINE, BUTTONSETASPUSHBTN, 0, 0);
@@ -172,7 +176,15 @@ static void MessageDialogResize(HWND hwndDlg, SESSION_INFO *si, int w, int h) {
 	int		  hSplitterMinTop = TOOLBAR_HEIGHT + si->windowData.minLogBoxHeight, hSplitterMinBottom = si->windowData.minEditBoxHeight;
 	int		  toolbarHeight = bToolbar ? IsToolbarVisible(SIZEOF(toolbarButtons), g_dat->chatBbuttonVisibility) ? TOOLBAR_HEIGHT : TOOLBAR_HEIGHT / 3 : 0;
 
-	si->iSplitterY = si->desiredInputAreaHeight + SPLITTER_HEIGHT + 3;
+	if (g_dat->flags & SMF_AUTORESIZE) {
+		si->iSplitterY = si->desiredInputAreaHeight + SPLITTER_HEIGHT + 3;
+		if (si->iSplitterY < h / 8) {
+			si->iSplitterY = h / 8;
+			if (si->desiredInputAreaHeight <= 80 && si->iSplitterY > 80) {
+				si->iSplitterY = 80;
+			}
+		}
+	}
 
 	if (h - si->iSplitterY < hSplitterMinTop) {
 		si->iSplitterY = h - hSplitterMinTop;
@@ -488,6 +500,11 @@ static LRESULT CALLBACK MessageSubclassProc(HWND hwnd, UINT msg, WPARAM wParam, 
             return TRUE;
          }
 
+         if (((wParam == 45 && isShift) || (wParam == 0x56 && isCtrl)) && !isAlt) { // ctrl-v (paste clean text)
+            SendMessage(hwnd, EM_PASTESPECIAL, CF_TEXT, 0);
+            return TRUE;
+         }
+
          if (wParam == VK_NEXT || wParam == VK_PRIOR) {
             HWND htemp = GetParent(hwnd);
             SendDlgItemMessage(htemp, IDC_CHAT_LOG, msg, wParam, lParam);
@@ -514,7 +531,7 @@ static LRESULT CALLBACK MessageSubclassProc(HWND hwnd, UINT msg, WPARAM wParam, 
          UINT u2 = 0;
          COLORREF cr;
 
-         LoadMsgDlgFont(MSGFONTID_MESSAGEAREA, NULL, &cr, FALSE);
+         Chat_LoadMsgDlgFont(17, NULL, &cr);
 
          cf.cbSize = sizeof(CHARFORMAT2);
          cf.dwMask = CFM_BOLD|CFM_ITALIC|CFM_UNDERLINE|CFM_BACKCOLOR|CFM_COLOR;
@@ -537,7 +554,7 @@ static LRESULT CALLBACK MessageSubclassProc(HWND hwnd, UINT msg, WPARAM wParam, 
 
          if (MM_FindModule(Parentsi->pszModule) && MM_FindModule(Parentsi->pszModule)->bBkgColor) {
             int index = GetColorIndex(Parentsi->pszModule, cf.crBackColor);
-            COLORREF crB = DBGetContactSettingDword(NULL, SRMMMOD, SRMSGSET_INPUTBKGCOLOUR, SRMSGDEFSET_INPUTBKGCOLOUR);
+            COLORREF crB = (COLORREF)DBGetContactSettingDword(NULL, "Chat", "ColorMessageBG", GetSysColor(COLOR_WINDOW));
             u = IsDlgButtonChecked(GetParent(hwnd), IDC_CHAT_BKGCOLOR);
 
             if (index >= 0) {
@@ -778,7 +795,6 @@ static LRESULT CALLBACK LogSubclassProc(HWND hwnd, UINT msg, WPARAM wParam, LPAR
 			break;
 
 		case IDM_SEARCH_GOOGLE:
-		case IDM_SEARCH_BING:
 		case IDM_SEARCH_YAHOO:
 		case IDM_SEARCH_WIKIPEDIA:
 		case IDM_SEARCH_FOODNETWORK:
@@ -1139,6 +1155,7 @@ INT_PTR CALLBACK RoomWndProc(HWND hwndDlg,UINT uMsg,WPARAM wParam,LPARAM lParam)
 			RichUtil_SubClass(GetDlgItem(hwndDlg, IDC_CHAT_LOG));
 			RichUtil_SubClass(GetDlgItem(hwndDlg, IDC_CHAT_LIST));
 			OldSplitterProc=(WNDPROC)SetWindowLongPtr(GetDlgItem(hwndDlg,IDC_CHAT_SPLITTERX),GWLP_WNDPROC,(LONG_PTR)SplitterSubclassProc);
+			SetWindowLongPtr(GetDlgItem(hwndDlg,IDC_CHAT_SPLITTERY),GWLP_WNDPROC,(LONG_PTR)SplitterSubclassProc);
 			OldNicklistProc=(WNDPROC)SetWindowLongPtr(hNickList,GWLP_WNDPROC,(LONG_PTR)NicklistSubclassProc);
 			OldLogProc=(WNDPROC)SetWindowLongPtr(GetDlgItem(hwndDlg,IDC_CHAT_LOG),GWLP_WNDPROC,(LONG_PTR)LogSubclassProc);
 			OldFilterButtonProc=(WNDPROC)SetWindowLongPtr(GetDlgItem(hwndDlg,IDC_CHAT_FILTER),GWLP_WNDPROC,(LONG_PTR)ButtonSubclassProc);
@@ -1225,13 +1242,13 @@ INT_PTR CALLBACK RoomWndProc(HWND hwndDlg,UINT uMsg,WPARAM wParam,LPARAM lParam)
             COLORREF   crFore;
 
             CHARFORMAT2 cf;
-            LoadMsgDlgFont(MSGFONTID_MESSAGEAREA, NULL, &crFore, FALSE);
+            Chat_LoadMsgDlgFont(17, NULL, &crFore);
             cf.cbSize = sizeof(CHARFORMAT2);
             cf.dwMask = CFM_COLOR|CFM_BOLD|CFM_UNDERLINE|CFM_BACKCOLOR;
             cf.dwEffects = 0;
             cf.crTextColor = crFore;
-            cf.crBackColor = DBGetContactSettingDword(NULL, SRMMMOD, SRMSGSET_INPUTBKGCOLOUR, SRMSGDEFSET_INPUTBKGCOLOUR);
-            SendMessage(GetDlgItem(hwndDlg, IDC_CHAT_MESSAGE), EM_SETBKGNDCOLOR , 0, DBGetContactSettingDword(NULL, SRMMMOD, SRMSGSET_INPUTBKGCOLOUR, SRMSGDEFSET_INPUTBKGCOLOUR));
+            cf.crBackColor = (COLORREF)DBGetContactSettingDword(NULL, "Chat", "ColorMessageBG", GetSysColor(COLOR_WINDOW));
+            SendMessage(GetDlgItem(hwndDlg, IDC_CHAT_MESSAGE), EM_SETBKGNDCOLOR , 0, DBGetContactSettingDword(NULL, "Chat", "ColorMessageBG", GetSysColor(COLOR_WINDOW)));
             SendDlgItemMessage(hwndDlg, IDC_CHAT_MESSAGE, WM_SETFONT, (WPARAM) g_Settings.MessageBoxFont, MAKELPARAM(TRUE, 0));
             SendDlgItemMessage(hwndDlg, IDC_CHAT_MESSAGE, EM_SETCHARFORMAT, (WPARAM)SCF_ALL , (LPARAM)&cf);
          }
@@ -1768,15 +1785,14 @@ LABEL_SHOWWINDOW:
          switch (pNmhdr->code) {
 		case EN_REQUESTRESIZE:
 			if (pNmhdr->idFrom == IDC_CHAT_MESSAGE) {
-				REQRESIZE *rr = (REQRESIZE *)lParam;
-				int height = rr->rc.bottom - rr->rc.top + 1;
-				if (height < g_dat->minInputAreaHeight) {
-					height = g_dat->minInputAreaHeight;
-				}
-				if (si->desiredInputAreaHeight != height) {
-					si->desiredInputAreaHeight = height;
-					SendMessage(hwndDlg, WM_SIZE, 0, 0);
-					PostMessage(hwndDlg, GC_SCROLLTOBOTTOM, 0, 0);
+				if (g_dat->flags & SMF_AUTORESIZE) {
+					REQRESIZE *rr = (REQRESIZE *)lParam;
+					int height = rr->rc.bottom - rr->rc.top + 1;
+					if (si->desiredInputAreaHeight != height) {
+						si->desiredInputAreaHeight = height;
+						SendMessage(hwndDlg, WM_SIZE, 0, 0);
+						PostMessage(hwndDlg, GC_SCROLLTOBOTTOM, 0, 0);
+					}
 				}
 			}
 			break;
@@ -2003,7 +2019,7 @@ LABEL_SHOWWINDOW:
             }   }
             else {
                cf.dwMask = CFM_BACKCOLOR;
-               cf.crBackColor = (COLORREF)DBGetContactSettingDword(NULL, SRMMMOD, SRMSGSET_INPUTBKGCOLOUR, SRMSGDEFSET_INPUTBKGCOLOUR);
+               cf.crBackColor = (COLORREF)DBGetContactSettingDword(NULL, "Chat", "ColorMessageBG", GetSysColor(COLOR_WINDOW));
 				if (pInfo->bSingleFormat) {
 					SendDlgItemMessage(hwndDlg, IDC_CHAT_MESSAGE, EM_SETCHARFORMAT, SCF_ALL, (LPARAM)&cf);
 				} else {
@@ -2037,7 +2053,7 @@ LABEL_SHOWWINDOW:
             else {
 				COLORREF cr;
 
-				LoadMsgDlgFont(MSGFONTID_MESSAGEAREA, NULL, &cr, FALSE);
+				Chat_LoadMsgDlgFont(17, NULL, &cr);
 				cf.dwMask = CFM_COLOR;
 				cf.crTextColor = cr;
 				if (pInfo->bSingleFormat) {
@@ -2173,6 +2189,7 @@ LABEL_SHOWWINDOW:
 		NotifyLocalWinEvent(si->windowData.hContact, hwndDlg, MSG_WINDOW_EVT_CLOSING);
 		si->hWnd = NULL;
 		SetWindowLongPtr(hwndDlg,GWLP_USERDATA,0);
+		SetWindowLongPtr(GetDlgItem(hwndDlg,IDC_CHAT_SPLITTERX),GWLP_WNDPROC,(LONG_PTR)OldSplitterProc);
 		SetWindowLongPtr(GetDlgItem(hwndDlg,IDC_CHAT_SPLITTERY),GWLP_WNDPROC,(LONG_PTR)OldSplitterProc);
 		SetWindowLongPtr(GetDlgItem(hwndDlg,IDC_CHAT_LIST),GWLP_WNDPROC,(LONG_PTR)OldNicklistProc);
 		SendDlgItemMessage(hwndDlg, IDC_CHAT_MESSAGE, EM_UNSUBCLASSED, 0, 0);
