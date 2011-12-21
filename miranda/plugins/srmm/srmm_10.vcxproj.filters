@@ -56,6 +56,9 @@
     <ClInclude Include="globals.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="m_message.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
     <ClInclude Include="msgs.h">
       <Filter>Header Files</Filter>
     </ClInclude>
