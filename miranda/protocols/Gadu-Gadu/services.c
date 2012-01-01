@@ -2,7 +2,7 @@
 // Gadu-Gadu Plugin for Miranda IM
 //
 // Copyright (c) 2003-2009 Adam Strzelecki <ono+miranda@java.pl>
-// Copyright (c) 2009-2011 Bartosz Bia³ek
+// Copyright (c) 2009-2012 Bartosz Bia³ek
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -205,9 +205,6 @@ int gg_setstatus(PROTO_INTERFACE *proto, int iNewStatus)
 	EnterCriticalSection(&gg->modemsg_mutex);
 	gg->proto.m_iDesiredStatus = nNewStatus;
 	LeaveCriticalSection(&gg->modemsg_mutex);
-
-	// If waiting for connection retry attempt then signal to stop that
-	if (gg->hConnStopEvent) SetEvent(gg->hConnStopEvent);
 
 	if (gg->proto.m_iStatus == nNewStatus) return 0;
 	gg_netlog(gg, "gg_setstatus(): PS_SETSTATUS(%d) normalized to %d.", iNewStatus, nNewStatus);

@@ -1,6 +1,6 @@
 /*
 Plugin of Miranda IM for communicating with users of the MSN Messenger protocol.
-Copyright (c) 2006-2011 Boris Krasnovskiy.
+Copyright (c) 2006-2012 Boris Krasnovskiy.
 Copyright (c) 2003-2005 George Hazan.
 Copyright (c) 2002-2003 Richard Hughes (original version).
 
@@ -55,7 +55,7 @@ static const PLUGININFOEX pluginInfo =
 	"Adds support for communicating with users of the MSN Messenger network",
 	"Boris Krasnovskiy, George Hazan, Richard Hughes",
 	"borkra@miranda-im.org",
-	"© 2001-2011 Richard Hughes, George Hazan, Boris Krasnovskiy",
+	"© 2001-2012 Richard Hughes, George Hazan, Boris Krasnovskiy",
 	"http://miranda-im.org",
 	UNICODE_AWARE,	
 	0,
@@ -132,7 +132,6 @@ extern "C" int __declspec(dllexport) Load(PLUGINLINK* link)
 	mir_getMD5I(&md5i);
 	mir_getSHA1I(&sha1i);
 	mir_getTMI(&tmi);
-	mir_getLP(&pluginInfo);
 
 	hMooduleLoaded = HookEvent(ME_SYSTEM_MODULESLOADED, OnModulesLoaded);
 
@@ -165,9 +164,9 @@ extern "C" int __declspec(dllexport) Unload(void)
 
 extern "C" __declspec(dllexport) const PLUGININFOEX* MirandaPluginInfoEx(DWORD mirandaVersion)
 {
-	if (mirandaVersion < PLUGIN_MAKE_VERSION(0, 10, 0, 2)) 
+	if (mirandaVersion < PLUGIN_MAKE_VERSION(0, 9, 24, 0)) 
 	{
-		MessageBox(NULL, _T("The MSN protocol plugin cannot be loaded. It requires Miranda IM 0.10.0.2 or later."), 
+		MessageBox(NULL, _T("The MSN protocol plugin cannot be loaded. It requires Miranda IM 0.9.24.0 or later."), 
 			_T("MSN Protocol"), MB_OK | MB_ICONWARNING | MB_SETFOREGROUND | MB_TOPMOST);
 		return NULL;
 	}

@@ -2,7 +2,7 @@
 
 Jabber Protocol Plugin for Miranda IM
 Copyright ( C ) 2002-04  Santithorn Bunchua
-Copyright ( C ) 2005-11  George Hazan
+Copyright ( C ) 2005-12  George Hazan
 Copyright ( C ) 2007     Maxim Mluhov
 
 This program is free software; you can redistribute it and/or
@@ -46,6 +46,10 @@ Last change by : $Author$
 int CJabberProto::OnContactDeleted( WPARAM wParam, LPARAM )
 {
 	if( !m_bJabberOnline )	// should never happen
+		return 0;
+
+	char* szProto = ( char* )JCallService( MS_PROTO_GETCONTACTBASEPROTO, wParam, 0 );
+	if ( szProto==NULL || strcmp( szProto, m_szModuleName ))
 		return 0;
 
 	DBVARIANT dbv;
@@ -204,6 +208,10 @@ int __cdecl CJabberProto::OnDbSettingChanged( WPARAM wParam, LPARAM lParam )
 
 	DBCONTACTWRITESETTING* cws = ( DBCONTACTWRITESETTING* )lParam;
 	if ( strcmp( cws->szModule, "CList" ))
+		return 0;
+
+	char* szProto = ( char* )JCallService( MS_PROTO_GETCONTACTBASEPROTO, ( WPARAM ) hContact, 0 );
+	if ( szProto == NULL || strcmp( szProto, m_szModuleName ))
 		return 0;
 
 	if ( !strcmp( cws->szSetting, "Group" ))

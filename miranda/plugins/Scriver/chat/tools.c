@@ -393,9 +393,9 @@ void CheckColorsInModule(const char* pszModule)
 	MODULEINFO * pMod = MM_FindModule( pszModule );
 	int i = 0;
 	COLORREF crFG;
-	COLORREF crBG = (COLORREF)DBGetContactSettingDword(NULL, SRMMMOD, SRMSGSET_INPUTBKGCOLOUR, SRMSGDEFSET_INPUTBKGCOLOUR);
+	COLORREF crBG = (COLORREF)DBGetContactSettingDword(NULL, "Chat", "ColorMessageBG", GetSysColor(COLOR_WINDOW));
 
-	LoadMsgDlgFont(MSGFONTID_MESSAGEAREA, NULL, &crFG, FALSE);
+	Chat_LoadMsgDlgFont(17, NULL, &crFG);
 
 	if ( !pMod )
 		return;

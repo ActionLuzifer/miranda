@@ -1,6 +1,6 @@
 /*
 Plugin of Miranda IM for communicating with users of the AIM protocol.
-Copyright (c) 2008-2011 Boris Krasnovskiy
+Copyright (c) 2008-2012 Boris Krasnovskiy
 Copyright (C) 2005-2006 Aaron Myles Landwehr
 
 This program is free software; you can redistribute it and/or
@@ -124,7 +124,7 @@ int CAimProto::OnDbSettingChanged(WPARAM wParam,LPARAM lParam)
 		HANDLE hContact = (HANDLE)wParam;
 		if (strcmp(cws->szSetting, AIM_KEY_NL) == 0)
 		{
-			if (cws->value.type == DBVT_DELETED)
+			if (cws->value.type == DBVT_DELETED && is_my_contact(hContact))
 			{
 				DBVARIANT dbv;
 				if(!DBGetContactSettingStringUtf(hContact, MOD_KEY_CL, OTH_KEY_GP, &dbv) && dbv.pszVal[0])
@@ -138,28 +138,31 @@ int CAimProto::OnDbSettingChanged(WPARAM wParam,LPARAM lParam)
 		}
 		else if (strcmp(cws->szSetting, "MyHandle") == 0)
 		{
-			char* name;
-			switch (cws->value.type)
+			if (is_my_contact(hContact))
 			{
-			case DBVT_DELETED:
-				set_local_nick(hContact, NULL, NULL);
-				break;
+				char* name;
+				switch (cws->value.type)
+				{
+				case DBVT_DELETED:
+					set_local_nick(hContact, NULL, NULL);
+					break;
 
-			case DBVT_ASCIIZ:
-				name = mir_utf8encode(cws->value.pszVal);
-				set_local_nick(hContact, name, NULL);
-				mir_free(name);
-				break;
+				case DBVT_ASCIIZ:
+					name = mir_utf8encode(cws->value.pszVal);
+					set_local_nick(hContact, name, NULL);
+					mir_free(name);
+					break;
 
-			case DBVT_UTF8:
-				set_local_nick(hContact, cws->value.pszVal, NULL);
-				break;
+				case DBVT_UTF8:
+					set_local_nick(hContact, cws->value.pszVal, NULL);
+					break;
 
-			case DBVT_WCHAR:
-				name = mir_utf8encodeW(cws->value.pwszVal);
-				set_local_nick(hContact, name, NULL);
-				mir_free(name);
-				break;
+				case DBVT_WCHAR:
+					name = mir_utf8encodeW(cws->value.pwszVal);
+					set_local_nick(hContact, name, NULL);
+					mir_free(name);
+					break;
+				}
 			}
 		}
 	}
@@ -173,7 +176,7 @@ int CAimProto::OnContactDeleted(WPARAM wParam,LPARAM /*lParam*/)
 
 	const HANDLE hContact = (HANDLE)wParam;
 
-	if (DBGetContactSettingByte(hContact, MOD_KEY_CL, AIM_KEY_NL, 0))
+	if (!is_my_contact(hContact) || DBGetContactSettingByte(hContact, MOD_KEY_CL, AIM_KEY_NL, 0))
 		return 0;
 
 	DBVARIANT dbv;

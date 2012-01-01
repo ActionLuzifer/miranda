@@ -26,7 +26,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #pragma once
 #define MIRANDA_VER 0x0700
-#define MIRANDA_CUSTOM_LP
 
 #define _WIN32_WINNT 0x0501
 
@@ -219,9 +218,9 @@ extern void FreeDisplayNameCache();
 extern int CLUI_ShowWindowMod(HWND hwnd, int cmd);
 
 #ifdef UNICODE
-	#define GSMDF_TCHAR_MY GSMDF_TCHAR|CNF_UNICODE
+	#define GCMDF_TCHAR_MY GCMDF_TCHAR|CNF_UNICODE
 #else
-	#define GSMDF_TCHAR_MY 0
+	#define GCMDF_TCHAR_MY 0
 #endif
 
 #ifndef LWA_COLORKEY

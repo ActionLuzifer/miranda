@@ -2,7 +2,7 @@
 // Gadu-Gadu Plugin for Miranda IM
 //
 // Copyright (c) 2003-2009 Adam Strzelecki <ono+miranda@java.pl>
-// Copyright (c) 2009-2011 Bartosz Bia³ek
+// Copyright (c) 2009-2012 Bartosz Bia³ek
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -22,6 +22,8 @@
 #include "gg.h"
 #include <errno.h>
 #include <io.h>
+
+extern int gg_failno;
 
 ////////////////////////////////////////////////////////////
 // Swap bits in DWORD
@@ -50,7 +52,7 @@ GGINLINE int gg_isonline(GGPROTO *gg)
 // Send disconnect request and wait for server thread to die
 void gg_disconnect(GGPROTO *gg)
 {
-	// If main loop then send disconnect request
+	// If main loop go and send disconnect request
 	if (gg_isonline(gg))
 	{
 		// Fetch proper status msg
@@ -146,9 +148,6 @@ void gg_disconnect(GGPROTO *gg)
 		}
 		LeaveCriticalSection(&gg->sess_mutex);
 	}
-	// Else cancel connection attempt
-	else if (gg->sock)
-		closesocket(gg->sock);
 }
 
 ////////////////////////////////////////////////////////////
@@ -257,9 +256,8 @@ void __cdecl gg_mainthread(GGPROTO *gg, void *empty)
 		{ GG_FAILURE_UNAVAILABLE,	"Gadu-Gadu servers are now down. Try again later." },
 		{ 0,						"Unknown" }
 	};
-	time_t logonTime = 0;
+	// Time deviation (300s)
 	time_t timeDeviation = DBGetContactSettingWord(NULL, GG_PROTO, GG_KEY_TIMEDEVIATION, GG_KEYDEF_TIMEDEVIATION);
-	int gg_failno = 0;
 
 	gg_netlog(gg, "gg_mainthread(%x): Server Thread Starting", gg);
 #ifdef DEBUGMODE
@@ -375,7 +373,12 @@ void __cdecl gg_mainthread(GGPROTO *gg, void *empty)
 			{
 				char error[128];
 				mir_snprintf(error, sizeof(error), Translate("External direct connections hostname %s is invalid. Disabling external host forwarding."), dbv.pszVal);
-				gg_showpopup(gg, GG_PROTONAME, error, GG_POPUP_WARNING | GG_POPUP_ALLOW_MSGBOX);
+				MessageBox(
+					NULL,
+					error,
+					GG_PROTONAME,
+					MB_OK | MB_ICONEXCLAMATION
+				);
 			}
 			else
 				gg_netlog(gg, "gg_mainthread(%x): Loading forwarding host %s and port %d.", dbv.pszVal, p.external_port, gg);
@@ -403,7 +406,12 @@ retry:
 		{
 			char error[128];
 			mir_snprintf(error, sizeof(error), Translate("Server hostname %s is invalid. Using default hostname provided by the network."), hosts[hostnum].hostname);
-			gg_showpopup(gg, GG_PROTONAME, error, GG_POPUP_WARNING | GG_POPUP_ALLOW_MSGBOX);
+			MessageBox(
+				NULL,
+				error,
+				GG_PROTONAME,
+				MB_OK | MB_ICONEXCLAMATION
+			);
 		}
 		else
 		{
@@ -417,70 +425,62 @@ retry:
 		p.server_port = p.server_addr = 0;
 
 	// Send login request
-	if (!(sess = gg_login(&p, &gg->sock, &gg_failno)))
+	if(!(sess = gg_login(&p)))
 	{
-		gg_broadcastnewstatus(gg, ID_STATUS_OFFLINE);
-		// Check if connection attempt wasn't cancelled by the user
-		if (gg->proto.m_iDesiredStatus != ID_STATUS_OFFLINE)
+#ifndef DEBUGMODE
+		if(DBGetContactSettingByte(NULL, GG_PROTO, GG_KEY_SHOWCERRORS, GG_KEYDEF_SHOWCERRORS))
+#endif
 		{
 			char error[128], *perror = NULL;
+			int i;
+
+			gg_broadcastnewstatus(gg, ID_STATUS_OFFLINE);
 			// Lookup for error desciption
-			if (errno == EACCES)
+			if(errno == EACCES)
 			{
-				int i;
-				for (i = 0; reason[i].type; i++) if (reason[i].type == gg_failno)
+				for(i = 0; reason[i].type; i++) if(reason[i].type == gg_failno)
 				{
 					perror = Translate(reason[i].str);
 					break;
 				}
 			}
-			if (!perror)
+			if(!perror)
 			{
 				mir_snprintf(error, sizeof(error), Translate("Connection cannot be established because of error:\n\t%s"), strerror(errno));
 				perror = error;
 			}
+#ifdef DEBUGMODE
+			if(DBGetContactSettingByte(NULL, GG_PROTO, GG_KEY_SHOWCERRORS, GG_KEYDEF_SHOWCERRORS))
+#endif
+			MessageBox(
+				NULL,
+				perror,
+				GG_PROTONAME,
+				MB_OK | MB_ICONSTOP
+			);
 			gg_netlog(gg, "gg_mainthread(%x): %s", gg, perror);
-			if (DBGetContactSettingByte(NULL, GG_PROTO, GG_KEY_SHOWCERRORS, GG_KEYDEF_SHOWCERRORS))
-				gg_showpopup(gg, GG_PROTONAME, perror, GG_POPUP_ERROR | GG_POPUP_ALLOW_MSGBOX | GG_POPUP_ONCE);
-
-			// Check if we should reconnect
-			if ((gg_failno >= GG_FAILURE_RESOLVING && gg_failno != GG_FAILURE_PASSWORD && gg_failno != GG_FAILURE_INTRUDER && gg_failno != GG_FAILURE_UNAVAILABLE)
-				&& errno == EACCES
-				&& (DBGetContactSettingByte(NULL, GG_PROTO, GG_KEY_ARECONNECT, GG_KEYDEF_ARECONNECT) || (hostnum < hostcount - 1)))
-			{
-				DWORD dwInterval = DBGetContactSettingDword(NULL, GG_PROTO, GG_KEY_RECONNINTERVAL, GG_KEYDEF_RECONNINTERVAL), dwResult;
-				BOOL bRetry = TRUE;
-
-				gg->hConnStopEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
-				dwResult = WaitForSingleObjectEx(gg->hConnStopEvent, dwInterval, TRUE);
-				if ((dwResult == WAIT_OBJECT_0 && gg->proto.m_iDesiredStatus == ID_STATUS_OFFLINE)
-					|| (dwResult == WAIT_IO_COMPLETION && Miranda_Terminated()))
-					bRetry = FALSE;
-				CloseHandle(gg->hConnStopEvent);
-				gg->hConnStopEvent = NULL;
-
-				// Reconnect to the next server on the list
-				if (bRetry)
-				{
-					if (hostnum < hostcount - 1) hostnum++;
-					mir_free(p.status_descr);
-					gg_broadcastnewstatus(gg, ID_STATUS_CONNECTING);
-					goto retry;
-				}
-			}
-			// We cannot do more about this
-			EnterCriticalSection(&gg->modemsg_mutex);
-			gg->proto.m_iDesiredStatus = ID_STATUS_OFFLINE;
-			LeaveCriticalSection(&gg->modemsg_mutex);
 		}
-		else
-			gg_netlog(gg, "gg_mainthread(%x)): Connection attempt cancelled by the user.", gg);
+
+		// Reconnect to the next server on the list
+		if(gg->proto.m_iDesiredStatus != ID_STATUS_OFFLINE
+			&& errno == EACCES
+			&& (gg_failno >= GG_FAILURE_RESOLVING && gg_failno != GG_FAILURE_PASSWORD && gg_failno != GG_FAILURE_INTRUDER && gg_failno != GG_FAILURE_UNAVAILABLE)
+			&& (DBGetContactSettingByte(NULL, GG_PROTO, GG_KEY_ARECONNECT, GG_KEYDEF_ARECONNECT)
+				|| (hostnum < hostcount - 1)))
+		{
+			if(hostnum < hostcount - 1) hostnum ++;
+			gg_broadcastnewstatus(gg, ID_STATUS_CONNECTING);
+			mir_free(p.status_descr);
+			goto retry;
+		}
+		// We cannot do more about this
+		EnterCriticalSection(&gg->modemsg_mutex);
+		gg->proto.m_iDesiredStatus = ID_STATUS_OFFLINE;
+		LeaveCriticalSection(&gg->modemsg_mutex);
 	}
 	else
 	{
 		// Successfully connected
-		logonTime = time(NULL);
-		DBWriteContactSettingDword(NULL, GG_PROTO, GG_KEY_LOGONTIME, logonTime);
 		EnterCriticalSection(&gg->sess_mutex);
 		gg->sess = sess;
 		LeaveCriticalSection(&gg->sess_mutex);
@@ -933,22 +933,12 @@ retry:
 			case GG_EVENT_MULTILOGON_INFO:
 				{
 					list_t l;
-					int* iIndexes = NULL, i;
+					int i;
 					gg_netlog(gg, "gg_mainthread(): Concurrent sessions count: %d.", e->event.multilogon_info.count);
-					if (e->event.multilogon_info.count > 0)
-						iIndexes = mir_calloc(e->event.multilogon_info.count * sizeof(int));
 					EnterCriticalSection(&gg->sessions_mutex);
 					for (l = gg->sessions; l; l = l->next)
 					{
 						struct gg_multilogon_session* sess = (struct gg_multilogon_session*)l->data;
-						for (i = 0; i < e->event.multilogon_info.count; i++)
-						{
-							if (!memcmp(&sess->id, &e->event.multilogon_info.sessions[i].id, sizeof(gg_multilogon_id_t)) && iIndexes)
-							{
-								iIndexes[i]++;
-								break;
-							}
-						}
 						mir_free(sess->name);
 						mir_free(sess);
 					}
@@ -965,23 +955,6 @@ retry:
 					}
 					LeaveCriticalSection(&gg->sessions_mutex);
 					gg_sessions_updatedlg(gg);
-					if (ServiceExists(MS_POPUP_ADDPOPUPCLASS))
-					{
-						const char* szText = time(NULL) - logonTime > 3
-							? Translate("You have logged in at another location")
-							: Translate("You are logged in at another location");
-						for (i = 0; i < e->event.multilogon_info.count; i++)
-						{
-							char szMsg[MAX_SECONDLINE];
-							if (iIndexes && iIndexes[i]) continue;
-							mir_snprintf(szMsg, SIZEOF(szMsg), "%s (%s)", szText,
-										 *e->event.multilogon_info.sessions[i].name != '\0'
-										 ? e->event.multilogon_info.sessions[i].name
-										 : Translate("Unknown client"));
-							gg_showpopup(gg, GG_PROTONAME, szMsg, GG_POPUP_MULTILOGON);
-						}
-					}
-					mir_free(iIndexes);
 				}
 				break;
 
@@ -1211,7 +1184,6 @@ retry:
 
 	gg_broadcastnewstatus(gg, ID_STATUS_OFFLINE);
 	gg_setalloffline(gg);
-	DBWriteContactSettingDword(NULL, GG_PROTO, GG_KEY_LOGONTIME, 0);
 
 	// If it was unwanted disconnection reconnect
 	if(gg->proto.m_iDesiredStatus != ID_STATUS_OFFLINE
@@ -1275,12 +1247,14 @@ void gg_broadcastnewstatus(GGPROTO *gg, int newStatus)
 }
 
 ////////////////////////////////////////////////////////////
-// When contact is deleted
-int gg_contactdeleted(GGPROTO *gg, WPARAM wParam, LPARAM lParam)
+// When user is deleted
+int gg_userdeleted(GGPROTO *gg, WPARAM wParam, LPARAM lParam)
 {
 	HANDLE hContact = (HANDLE) wParam;
 	uin_t uin; int type;
 	DBVARIANT dbv;
+
+	if(!hContact) return 0;
 
 	uin = (uin_t)DBGetContactSettingDword(hContact, GG_PROTO, GG_KEY_UIN, 0);
 	type = DBGetContactSettingByte(hContact, GG_PROTO, "ChatRoom", 0);
@@ -1326,7 +1300,11 @@ int gg_dbsettingchanged(GGPROTO *gg, WPARAM wParam, LPARAM lParam)
 	char *szProto = NULL;
 
 	// Check if the contact is NULL or we are not online
-	if(!gg_isonline(gg))
+	if(!hContact || !gg_isonline(gg))
+		return 0;
+
+	// Fetch protocol name and check if it's our
+	if(!(szProto = (char *) CallService(MS_PROTO_GETCONTACTBASEPROTO, wParam, 0)) || strcmp(szProto, GG_PROTO))
 		return 0;
 
 	// If ignorance changed

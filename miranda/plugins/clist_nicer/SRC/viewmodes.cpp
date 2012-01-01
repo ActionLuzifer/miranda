@@ -21,7 +21,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 contact list view modes (CLVM)
 
-$Id$
+$Id: viewmodes.cpp 13824 2011-09-03 06:32:11Z borkra $
 
 */
 
