@@ -2,7 +2,7 @@
 
 Jabber Protocol Plugin for Miranda IM
 Copyright ( C ) 2002-04  Santithorn Bunchua
-Copyright ( C ) 2005-11  George Hazan
+Copyright ( C ) 2005-12  George Hazan
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -224,13 +224,13 @@ void CJabberProto::GcLogShowInformation( JABBER_LIST_ITEM *item, JABBER_RESOURCE
 				{
 					mir_sntprintf(buf, SIZEOF(buf), TranslateT("User %s changed status to %s with message: %s"),
 						user->resourceName,
-						CallService(MS_CLIST_GETSTATUSMODEDESCRIPTION, user->status, GSMDF_TCHAR),
+						CallService(MS_CLIST_GETSTATUSMODEDESCRIPTION, user->status, GCMDF_TCHAR),
 						user->statusMessage);
 				} else
 				{
 					mir_sntprintf(buf, SIZEOF(buf), TranslateT("User %s changed status to %s"),
 						user->resourceName,
-						CallService(MS_CLIST_GETSTATUSMODEDESCRIPTION, user->status, GSMDF_TCHAR));
+						CallService(MS_CLIST_GETSTATUSMODEDESCRIPTION, user->status, GCMDF_TCHAR));
 				}
 			}
 			break;
