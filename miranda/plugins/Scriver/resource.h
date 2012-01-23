@@ -12,6 +12,7 @@
 #define IDI_USERDETAILS                 121
 #define IDI_HISTORY                     122
 #define IDI_SEND                        123
+#define IDI_CANCEL                      124
 #define IDI_SMILEY                      125
 #define IDI_TYPING                      126
 #define IDI_UNICODEON                   127
@@ -24,10 +25,9 @@
 #define IDI_CLOSEX                      135
 
 #define IDI_GOOGLE                      140
-#define IDI_BING						141
-#define IDI_YAHOO                       142
-#define IDI_WIKIPEDIA		  			143
-#define IDI_FOODNETWORK					144
+#define IDI_YAHOO                       141
+#define IDI_WIKIPEDIA		  			142
+#define IDI_FOODNETWORK					143
 
 #define IDR_CONTEXT                     180
 
@@ -81,6 +81,7 @@
 #define IDC_STAYMINIMIZED				1006
 #define IDC_SWITCHTOACTIVE				1007
 #define IDC_SEPARATECHATSCONTAINERS		1008
+#define IDC_TABCLOSEBUTTON				1009
 #define IDC_LIMITTABS					1010
 #define IDC_LIMITTABSNUM				1011
 #define IDC_LIMITCHATSTABS				1012
@@ -123,6 +124,7 @@
 #define IDC_HISTORY                     1080
 #define IDC_SMILEYS                     1081
 #define IDC_REMEMBER					1082
+#define IDC_AUTORESIZE                  1083
 #define IDC_INFOBAR_NAME				1090
 #define IDC_INFOBAR_STATUS				1091
 #define IDC_STMSGLOGGROUP               1442
@@ -148,6 +150,7 @@
 #define IDC_ATRANSPARENCYPERC           1620
 #define IDC_ITRANSPARENCYVALUE			1621
 #define IDC_ITRANSPARENCYPERC           1622
+#define IDC_ALWAYSSHOWTABS              1623
 #define IDC_SENDALL						1624
 #define IDC_TRANSPARENCYTEXT1			1627
 #define IDC_TRANSPARENCYTEXT2			1628
@@ -185,10 +188,9 @@
 #define IDM_CLOSEOTHERTABS				40021
 #define IDM_TOPMOST						40040
 #define IDM_SEARCH_GOOGLE               40080
-#define IDM_SEARCH_BING                 40081
-#define IDM_SEARCH_YAHOO				40082
-#define IDM_SEARCH_WIKIPEDIA            40083
-#define IDM_SEARCH_FOODNETWORK          40084
+#define IDM_SEARCH_YAHOO				40081
+#define IDM_SEARCH_WIKIPEDIA            40082
+#define IDM_SEARCH_FOODNETWORK          40083
 /* chat.dll resources */
 
 #define IDC_CHAT_LOG                         5005

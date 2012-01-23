@@ -2,7 +2,7 @@
 
 Miranda IM: the free IM client for Microsoft* Windows*
 
-Copyright 2000-2011 Miranda ICQ/IM project,
+Copyright 2000-2012 Miranda ICQ/IM project,
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
 
@@ -534,7 +534,7 @@ static INT_PTR CALLBACK WaitForProcessDlgProc(HWND hwnd, UINT msg, WPARAM wParam
 	return FALSE;
 }
 
-void ParseCommandLine()
+static void ParseCommandLine()
 {
 	char* cmdline = GetCommandLineA();
 	char* p = strstr( cmdline, "/restart:" );
@@ -634,7 +634,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int )
 		CoCreateInstance(CLSID_TaskbarList, NULL, CLSCTX_ALL, IID_ITaskbarList3, (void**)&pTaskbarInterface);
 
 	InitialiseModularEngine();
-//	ParseCommandLine();
+	ParseCommandLine();
 
 	if (LoadDefaultModules()) {
 		NotifyEventHooks(hShutdownEvent,0,0);

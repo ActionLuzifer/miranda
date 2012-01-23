@@ -50,20 +50,22 @@ BEGIN
     CONTROL         "Hide windows on close",
 					IDC_HIDECONTAINERS,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,
 					8,91,292,10
+    CONTROL         "Auto resize input area",IDC_AUTORESIZE,"Button",
+					BS_AUTOCHECKBOX | WS_TABSTOP,8,102,283,10
     CONTROL         "Send message on 'Enter'",IDC_SENDONENTER,"Button",
-					BS_AUTOCHECKBOX | WS_TABSTOP,8,102,292,10
+					BS_AUTOCHECKBOX | WS_TABSTOP,8,113,292,10
     CONTROL         "Send message on double 'Enter'",IDC_SENDONDBLENTER,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,8,113,292,10
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,8,124,292,10
     CONTROL         "Remember unsent messages",
 					IDC_SAVEDRAFTS,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,8,
-					124,292,10
+					135,292,10
     CONTROL         "Delete temporary contacts on closing",
-					IDC_DELTEMP,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,8,135,
+					IDC_DELTEMP,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,8,146,
 					292,10
     LTEXT           "Show warning when message has not been received after",
-					IDC_STATIC,8,148,211,8
-    EDITTEXT        IDC_SECONDS,223,146,25,12,ES_AUTOHSCROLL
-    LTEXT           "seconds.",IDC_STATIC,253,148,44,8
+					IDC_STATIC,8,159,211,8
+    EDITTEXT        IDC_SECONDS,223,157,25,12,ES_AUTOHSCROLL
+    LTEXT           "seconds.",IDC_STATIC,253,159,44,8
 
 END
 
@@ -75,22 +77,26 @@ BEGIN
     GROUPBOX        "Tabs",IDC_STATIC,0,0,304,118
     CONTROL         "Enable tabs",IDC_USETABS,"Button",BS_AUTOCHECKBOX |
 					WS_TABSTOP,8,12,260,10
+    CONTROL         "Always show tab bar",IDC_ALWAYSSHOWTABS,
+					"Button",BS_AUTOCHECKBOX | WS_TABSTOP,20,23,252,10
     CONTROL         "Tabs at bottom",IDC_TABSATBOTTOM,"Button",
-					BS_AUTOCHECKBOX | WS_TABSTOP,20,23,252,10
+					BS_AUTOCHECKBOX | WS_TABSTOP,20,34,252,10
     CONTROL         "Limit names on tabs to",IDC_LIMITNAMES,
-					"Button",BS_AUTOCHECKBOX | WS_TABSTOP,20,34,126,10
-    EDITTEXT        IDC_LIMITNAMESLEN,212,33,20,12,ES_RIGHT | ES_NUMBER
-    LTEXT           "characters",IDC_CHARS,236,34,65,8,WS_DISABLED
+					"Button",BS_AUTOCHECKBOX | WS_TABSTOP,20,45,126,10
+    EDITTEXT        IDC_LIMITNAMESLEN,212,44,20,12,ES_RIGHT | ES_NUMBER
+    LTEXT           "characters",IDC_CHARS,236,45,65,8,WS_DISABLED
+    CONTROL         "Show close button on each tab ",IDC_TABCLOSEBUTTON,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,20,56,192,10
     CONTROL         "Switch to active tab",IDC_SWITCHTOACTIVE,
-					"Button",BS_AUTOCHECKBOX | WS_TABSTOP,20,45,252,10
+					"Button",BS_AUTOCHECKBOX | WS_TABSTOP,20,67,252,10
     CONTROL         "Limit number of tabs per window to",IDC_LIMITTABS,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,20,56,180,10
-    EDITTEXT        IDC_LIMITTABSNUM,212,55,20,12,ES_RIGHT | ES_NUMBER
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,20,78,180,10
+    EDITTEXT        IDC_LIMITTABSNUM,212,77,20,12,ES_RIGHT | ES_NUMBER
     CONTROL         "Use separate windows for group chats",IDC_SEPARATECHATSCONTAINERS,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,20,67,192,10
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,20,89,192,10
     CONTROL         "Limit number of group chats tabs per window to",IDC_LIMITCHATSTABS,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,32,78,180,10
-    EDITTEXT        IDC_LIMITCHATSTABSNUM,212,77,20,12,ES_RIGHT | ES_NUMBER
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,32,100,180,10
+    EDITTEXT        IDC_LIMITCHATSTABSNUM,212,99,20,12,ES_RIGHT | ES_NUMBER
 END
 
 IDD_OPT_LAYOUT DIALOGEX 2, 0, 304, 230
@@ -289,6 +295,8 @@ BEGIN
 					0x18000000L
     CONTROL         "&Q",IDC_QUOTE,"MButtonClass",0x0,130,71,16,14,
 					0x18000000L
+    CONTROL         "Close",IDCANCEL,"MButtonClass",0x0,146,71,16,14,
+					0x18000000L
     CONTROL         "",IDOK,"MButtonClass",0x0,162,71,20,14,0x18000000L
     CONTROL         "",IDC_SPLITTER,"Static",SS_ENHMETAFILE | WS_CLIPSIBLINGS,0,85,183,2
     CONTROL         "",IDC_AVATAR,"Static", SS_OWNERDRAW,180,80,0,0
@@ -322,6 +330,7 @@ BEGIN
     CONTROL         "",IDC_CHAT_BKGCOLOR,"MButtonClass",WS_DISABLED | WS_TABSTOP,96,108,15,13,0x18000000L
   //  COMBOBOX        IDC_CHAT_FONTSIZE,112,108,27,80,CBS_DROPDOWNLIST | WS_DISABLED | WS_VSCROLL | WS_TABSTOP
     CONTROL         "",IDC_CHAT_HISTORY,"MButtonClass",WS_TABSTOP,188,108,15,13,0x18000000L
+    CONTROL         "Close",IDCANCEL,"MButtonClass",0x0,146,71,16,14,0x18000000L
     CONTROL         "",IDOK,"MButtonClass",0x0,162,71,20,14,0x18000000L
     CONTROL         "",IDC_CHAT_FILTER,"MButtonClass",WS_TABSTOP,220,108,15,13,0x18000000L
     CONTROL         "",IDC_CHAT_CHANMGR,"MButtonClass",WS_DISABLED | WS_TABSTOP,204,108,15,13,0x18000000L
@@ -527,6 +536,7 @@ IDI_ADDCONTACT          ICON    DISCARDABLE     "res/addcontact.ico"
 IDI_USERDETAILS         ICON    DISCARDABLE     "res/details.ico"
 IDI_HISTORY             ICON    DISCARDABLE     "res/history.ico"
 IDI_SEND                ICON    DISCARDABLE     "res/send.ico"
+IDI_CANCEL              ICON    DISCARDABLE     "res/delete.ico"
 IDI_SMILEY              ICON    DISCARDABLE     "res/smiley.ico"
 IDI_TYPING              ICON    DISCARDABLE     "res/typing.ico"
 IDI_TYPINGOFF           ICON    DISCARDABLE     "res/typingoff.ico"
@@ -570,7 +580,6 @@ IDI_NICKLIST2           ICON                    "res/chat/nicklist2.ico"
 IDI_FILTER2             ICON                    "res/chat/filter2.ico"
 
 IDI_GOOGLE				ICON                    "res/google.ico"
-IDI_BING				ICON                    "res/bing.ico"
 IDI_YAHOO           	ICON                    "res/yahoo.ico"
 IDI_WIKIPEDIA 			ICON                    "res/wikipedia.ico"
 IDI_FOODNETWORK			ICON                    "res/foodnetwork.ico"
@@ -601,7 +610,6 @@ BEGIN
         POPUP "Word lookup", GRAYED
         BEGIN
             MENUITEM "Google",                      IDM_SEARCH_GOOGLE
-            MENUITEM "Bing",                        IDM_SEARCH_BING
             MENUITEM "Yahoo",                       IDM_SEARCH_YAHOO
             MENUITEM "Wikipedia (en)",              IDM_SEARCH_WIKIPEDIA
             MENUITEM "Foodnetwork",                 IDM_SEARCH_FOODNETWORK
@@ -652,10 +660,9 @@ BEGIN
         POPUP "Word lookup", GRAYED
         BEGIN
             MENUITEM "Google",                      IDM_SEARCH_GOOGLE
-            MENUITEM "Bing",                      IDM_SEARCH_BING
             MENUITEM "Yahoo",                       IDM_SEARCH_YAHOO
             MENUITEM "Wikipedia (en)",                  IDM_SEARCH_WIKIPEDIA
-			MENUITEM "Foodnetwork",		IDM_SEARCH_FOODNETWORK
+	    MENUITEM "Foodnetwork",		IDM_SEARCH_FOODNETWORK
         END
     END
 END
@@ -667,8 +674,8 @@ END
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 2,9,0,4
- PRODUCTVERSION 2,9,0,4
+ FILEVERSION 2,9,0,6
+ PRODUCTVERSION 2,9,0,6
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -686,14 +693,14 @@ BEGIN
             VALUE "Comments", "http://www.miranda-im.org\0"
             VALUE "CompanyName", "Miranda IM Development Team\0"
             VALUE "FileDescription", "Scriver - send and receive instant messages\0"
-            VALUE "FileVersion", "2.9.0.4\0"
+            VALUE "FileVersion", "2.9.0.6\0"
             VALUE "InternalName", "scriver\0"
-            VALUE "LegalCopyright", "Copyright (c) 2000-2009 Miranda IM Project\0"
+            VALUE "LegalCopyright", "Copyright (c) 2000-2010 Miranda IM Project\0"
             VALUE "LegalTrademarks", "\0"
             VALUE "OriginalFilename", "scriver.dll\0"
             VALUE "PrivateBuild", "\0"
             VALUE "ProductName", "Scriver\0"
-            VALUE "ProductVersion", "2.9.0.4\0"
+            VALUE "ProductVersion", "2.9.0.6\0"
             VALUE "SpecialBuild", "\0"
         END
     END

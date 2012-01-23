@@ -555,11 +555,6 @@ int CGlobals::DBSettingChanged(WPARAM wParam, LPARAM lParam)
 		}
 		else if (!strcmp(setting, "MirVer"))
 			PostMessage(hwnd, DM_CLIENTCHANGED, 0, 0);
-		else if (!strcmp(setting, "display_uid")) {
-			if(c)
-				c->updateUIN();
-			PostMessage(hwnd, DM_UPDATEUIN, 0, 0);
-		}
 		else if(lstrlenA(setting) > 6 && strstr("StatusMsg,XStatusMsg,XStatusName,XStatusId,ListeningTo", setting)) {
 			if(c) {
 				c->updateStatusMsg(setting);
@@ -810,8 +805,8 @@ void CGlobals::logStatusChange(WPARAM wParam, const CContactCache *c)
 		TCHAR 			buffer[450];
 		HANDLE 			hNewEvent;
 
-		TCHAR*	szOldStatus = (TCHAR *)CallService(MS_CLIST_GETSTATUSMODEDESCRIPTION, (WPARAM)wOldStatus, GSMDF_TCHAR);
-		TCHAR*	szNewStatus = (TCHAR *)CallService(MS_CLIST_GETSTATUSMODEDESCRIPTION, (WPARAM)wStatus, GSMDF_TCHAR);
+		TCHAR*	szOldStatus = (TCHAR *)CallService(MS_CLIST_GETSTATUSMODEDESCRIPTION, (WPARAM)wOldStatus, GCMDF_TCHAR);
+		TCHAR*	szNewStatus = (TCHAR *)CallService(MS_CLIST_GETSTATUSMODEDESCRIPTION, (WPARAM)wStatus, GCMDF_TCHAR);
 
 		if(szOldStatus == 0 || szNewStatus == 0)
 			return;

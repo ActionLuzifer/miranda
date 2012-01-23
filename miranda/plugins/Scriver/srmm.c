@@ -28,11 +28,9 @@ int OnUnloadModule(void);
 struct MM_INTERFACE mmi;
 struct LIST_INTERFACE li;
 struct UTF8_INTERFACE utfi;
-TIME_API tmi;
 
 PLUGINLINK *pluginLink;
 HINSTANCE g_hInst;
-int hLangpack;
 
 ITaskbarList3 * pTaskbarInterface;
 
@@ -43,11 +41,11 @@ PLUGININFOEX pluginInfo = {
 #else
 	"Scriver",
 #endif
-	PLUGIN_MAKE_VERSION(2, 10, 0, 2),
+	PLUGIN_MAKE_VERSION(2, 9, 0, 6),
 	"Scriver - send and receive instant messages",
 	"Miranda IM Development Team",
 	"the_leech@users.berlios.de",
-	"Copyright (c) 2000-2011 Miranda IM Project",
+	"Copyright (c) 2000-2012 Miranda IM Project",
 	"http://www.miranda-im.org",
 	UNICODE_AWARE,
 	DEFMOD_SRMESSAGE,            // replace internal version (if any)
@@ -87,8 +85,6 @@ int __declspec(dllexport) Load(PLUGINLINK * link)
 	mir_getMMI( &mmi );
 	mir_getLI( &li );
 	mir_getUTFI( &utfi );
-	mir_getTMI(&tmi);
-	mir_getLP( &pluginInfo );
 
 	if (IsWinVer7Plus())
 		CoCreateInstance(&CLSID_TaskbarList, NULL, CLSCTX_ALL, &IID_ITaskbarList3, (void**)&pTaskbarInterface);

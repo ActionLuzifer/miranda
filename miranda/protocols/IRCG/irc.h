@@ -22,7 +22,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifndef _IRCWIN_H_
 #define _IRCWIN_H_
 
-#define MIRANDA_VER  0x1000
+#define MIRANDA_VER  0x0900
 #define _WIN32_WINNT 0x0501
 #define _WIN32_IE 0x0501
 
@@ -356,7 +356,7 @@ struct CIrcProto : public PROTO_INTERFACE, public CCallocBase
 	INT_PTR __cdecl OnShowServerMenuCommand( WPARAM, LPARAM );
 
 	// Events
-	int __cdecl OnContactDeleted( WPARAM, LPARAM );
+	int __cdecl OnDeletedContact( WPARAM, LPARAM );
 	int __cdecl OnInitOptionsPages( WPARAM, LPARAM );
 	int __cdecl OnInitUserInfo( WPARAM, LPARAM );
 	int __cdecl OnModulesLoaded( WPARAM, LPARAM );
