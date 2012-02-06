@@ -1,7 +1,7 @@
 /*
 Scriver
 
-Copyright 2000-2009 Miranda ICQ/IM project,
+Copyright 2000-2012 Miranda ICQ/IM project,
 
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
@@ -25,7 +25,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define SRMM_COMMONHEADERS_H
 
 #define MIRANDA_VER 0x0800
-#define MIRANDA_CUSTOM_LP
 
 #define COMPILE_MULTIMON_STUBS
 #define _WIN32_WINNT 0x0501

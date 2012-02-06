@@ -24,12 +24,13 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 PLUGINLINK*    pluginLink;
 HINSTANCE      hInst = NULL;
+
+int            mirVersion;
+
 UTF8_INTERFACE utfi;
 MM_INTERFACE   mmi;
 LIST_INTERFACE li;
 
-int mirVersion;
-int hLangpack;
 
 static int CompareServers( const SERVER_INFO* p1, const SERVER_INFO* p2 )
 {
@@ -76,9 +77,8 @@ extern "C" BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD, LPVOID)
 
 extern "C" __declspec(dllexport) PLUGININFOEX* MirandaPluginInfoEx(DWORD mirandaVersion)
 {
-	if ( mirandaVersion < MIRANDA_VERSION_CORE ) {
-		MessageBoxA( NULL, 
-			"The IRC protocol plugin cannot be loaded. It requires Miranda IM " MIRANDA_VERSION_CORE_STRING " or later.", 
+	if ( mirandaVersion < __VERSION_DWORD) {
+		MessageBoxA( NULL, "The IRC protocol plugin cannot be loaded. It requires Miranda IM " __VERSION_STRING " or later.", 
 			"IRC Protocol Plugin", MB_OK|MB_ICONWARNING|MB_SETFOREGROUND|MB_TOPMOST );
 		return NULL;
 	}
@@ -116,7 +116,6 @@ extern "C" int __declspec(dllexport) Load( PLUGINLINK *link )
 	mir_getMMI( &mmi );
 	mir_getUTFI( &utfi );
 	mir_getLI( &li );
-	mir_getLP( &pluginInfo );
 
 	AddIcons();
 	InitTimers();

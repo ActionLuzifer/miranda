@@ -2,7 +2,7 @@
 
 Jabber Protocol Plugin for Miranda IM
 Copyright ( C ) 2002-04  Santithorn Bunchua
-Copyright ( C ) 2005-11  George Hazan
+Copyright ( C ) 2005-12  George Hazan
 Copyright ( C ) 2007-09  Maxim Mluhov
 Copyright ( C ) 2007-09  Victor Pavlychko
 
@@ -858,7 +858,7 @@ INT_PTR __cdecl CJabberProto::OnMenuSendNote(WPARAM wParam, LPARAM)
 {
 	if (!wParam) return 0;
 
-	TCHAR szClientJid[ JABBER_MAX_JID_LEN ];
+	TCHAR szClientJid[ 256 ];
 	GetClientJID( JGetStringT( (HANDLE)wParam, "jid"), szClientJid, SIZEOF( szClientJid ));
 
 	CNoteItem *pItem = new CNoteItem( NULL, szClientJid );

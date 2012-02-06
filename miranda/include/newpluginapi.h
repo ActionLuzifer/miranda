@@ -205,7 +205,7 @@ typedef struct tagPLUGINLINK {
 		#define SetHookDefaultForHookableEvent(a,b)       pluginLink->SetHookDefaultForHookableEvent(a,b)
 		#define CreateServiceFunctionParam(a,b,c)         pluginLink->CreateServiceFunctionParam(a,b,c)
 		#define NotifyEventHooksDirect(a,b,c)             pluginLink->NotifyEventHooksDirect(a,b,c)
-		#if MIRANDA_VER >= 0x800
+		#if MIRANDA_VER >= 0x800							
 			#define CallProtoService(a,b,c,d)              pluginLink->CallProtoService(a,b,c,d)
 			#define CallContactService(a,b,c,d)            pluginLink->CallContactService(a,b,c,d)
 			#define HookEventParam(a,b,c)                  pluginLink->HookEventParam(a,b,c)

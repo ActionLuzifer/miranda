@@ -1,7 +1,7 @@
 /*
 Scriver
 
-Copyright 2000-2009 Miranda ICQ/IM project,
+Copyright 2000-2012 Miranda ICQ/IM project,
 
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
@@ -59,6 +59,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define SMF2_LIMITNAMES					0x00000008
 #define SMF2_SWITCHTOACTIVE  			0x00000010
 #define SMF2_SEPARATECHATSCONTAINERS 	0x00000020
+#define SMF2_TABCLOSEBUTTON  			0x00000040
 #define SMF2_LIMITTABS					0x00000080
 #define SMF2_LIMITCHATSTABS				0x00000100
 #define SMF2_HIDECONTAINERS         	0x00000200

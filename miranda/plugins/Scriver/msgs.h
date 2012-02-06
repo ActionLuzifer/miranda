@@ -1,7 +1,7 @@
 /*
 Scriver
 
-Copyright 2000-2009 Miranda ICQ/IM project,
+Copyright 2000-2012 Miranda ICQ/IM project,
 
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
@@ -252,11 +252,15 @@ extern int fontOptionsListSize;
 #define SRMSGDEFSET_USETABS		   1
 #define SRMSGSET_TABSATBOTTOM	   "TabsPosition"
 #define SRMSGDEFSET_TABSATBOTTOM   0
+#define SRMSGSET_TABCLOSEBUTTON	   "TabCloseButton"
+#define SRMSGDEFSET_TABCLOSEBUTTON 0
 #define SRMSGSET_LIMITNAMES		   "LimitNamesOnTabs"
 #define SRMSGDEFSET_LIMITNAMES	   1
 #define SRMSGSET_LIMITNAMESLEN	   "LimitNamesLength"
 #define SRMSGDEFSET_LIMITNAMESLEN  20
 #define SRMSGSET_LIMITNAMESLEN_MIN 0
+#define SRMSGSET_HIDEONETAB		   "HideOneTab"
+#define SRMSGDEFSET_HIDEONETAB	   1
 #define SRMSGSET_SEPARATECHATSCONTAINERS "SeparateChatsContainers"
 #define SRMSGDEFSET_SEPARATECHATSCONTAINERS 0
 #define SRMSGSET_LIMITTABS		   "LimitTabs"
