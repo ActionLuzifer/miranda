@@ -2,7 +2,7 @@
 
 Jabber Protocol Plugin for Miranda IM
 Copyright ( C ) 2002-04  Santithorn Bunchua
-Copyright ( C ) 2005-11  George Hazan
+Copyright ( C ) 2005-12  George Hazan
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -329,11 +329,21 @@ static INT_PTR CALLBACK PhotoDlgProc( HWND hwndDlg, UINT msg, WPARAM wParam, LPA
 		case IDC_LOAD:
 			{
 				TCHAR szFilter[512];
-				TCHAR szFileName[MAX_PATH];
+				union {
+					TCHAR szFileName[MAX_PATH];
+					char  boo[512];
+				};
 
-				JCallService( MS_UTILS_GETBITMAPFILTERSTRINGST, SIZEOF( szFilter ), ( LPARAM )szFilter );
+				#if defined( _UNICODE )
+					JCallService( MS_UTILS_GETBITMAPFILTERSTRINGS, sizeof( boo ), ( LPARAM )boo );
+					memset( szFilter, 0, sizeof( szFilter ));
+					MultiByteToWideChar( CP_ACP, 0, boo, -1, szFilter, SIZEOF(szFilter));
+				#else
+					JCallService( MS_UTILS_GETBITMAPFILTERSTRINGS, sizeof( szFilter ), ( LPARAM )szFilter );
+				#endif
 
 				OPENFILENAME ofn = {0};
+				ofn.lStructSize = OPENFILENAME_SIZE_VERSION_400;
 				ofn.hwndOwner = hwndDlg;
 				ofn.lpstrFilter = szFilter;
 				ofn.lpstrCustomFilter = NULL;

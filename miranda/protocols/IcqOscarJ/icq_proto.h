@@ -378,8 +378,6 @@ struct CIcqProto : public PROTO_INTERFACE
 
 	HANDLE HContactFromRecordName(const char *szRecordName, int *bAdded);
 
-	void   processCListReply(const char *szRecordName, WORD wGroupId, WORD wItemId, WORD wItemType, oscar_tlv_chain *pItemData);
-
 	void   icq_sendServerBeginOperation(int bImport);
 	void   icq_sendServerEndOperation();
 	void   sendRosterAck(void);
@@ -733,8 +731,6 @@ struct CIcqProto : public PROTO_INTERFACE
 	DWORD  icq_modifyServerPrivacyItem(HANDLE hContact, DWORD dwUin, char *szUid, WORD wAction, DWORD dwOperation, WORD wItemId, WORD wType);
 	DWORD  icq_removeServerPrivacyItem(HANDLE hContact, DWORD dwUin, char *szUid, WORD wItemId, WORD wType);
 	DWORD  icq_addServerPrivacyItem(HANDLE hContact, DWORD dwUin, char *szUid, WORD wItemId, WORD wType);
-
-	time_t dwLastCListGroupsChange;
 
 	int __cdecl ServListDbSettingChanged(WPARAM wParam, LPARAM lParam);
 	int __cdecl ServListDbContactDeleted(WPARAM wParam, LPARAM lParam);

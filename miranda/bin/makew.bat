@@ -171,8 +171,6 @@ echo #define MIRANDA_VERSION_FILEVERSION 0,%1,%2,%3                             
 echo #define MIRANDA_VERSION_STRING      "0.%1.%2.%3"                              >>..\include\m_version.h
 echo #define MIRANDA_VERSION_DISPLAY     "0.%1.%2 alpha build #%3"                 >>..\include\m_version.h
 echo #define MIRANDA_VERSION_DWORD       MIRANDA_MAKE_VERSION(0, %1, %2, %3)       >>..\include\m_version.h
-echo #define MIRANDA_VERSION_CORE        MIRANDA_MAKE_VERSION(0, %1, %2, 0)        >>..\include\m_version.h
-echo #define MIRANDA_VERSION_CORE_STRING "0.%1.%2.0"                               >>..\include\m_version.h
 echo.                                                                              >>..\include\m_version.h
 echo #endif // M_VERSION_H__                                                       >>..\include\m_version.h
 goto :eof
@@ -249,7 +247,7 @@ copy ..\..\plugins\scriver\Release_Unicode\scriver.pdb         %Temp%\pdbw\plugi
 copy ..\..\plugins\srmm\Release_Unicode\srmm.pdb               %Temp%\pdbw\plugins
 copy ..\..\plugins\tabSRMM\Release_Unicode\tabSRMM.pdb         %Temp%\pdbw\plugins
 copy ..\..\plugins\import\Release_Unicode\import.pdb           %Temp%\pdbw\plugins
-rem copy ..\..\plugins\modernopt\Release_Unicode\modernopt.pdb     %Temp%\pdbw\plugins
+copy ..\..\plugins\modernopt\Release_Unicode\modernopt.pdb     %Temp%\pdbw\plugins
 rem  Non-Unicode plugins
 copy ..\..\plugins\freeimage\Release\advaimg.pdb               %Temp%\pdbw\plugins
 
