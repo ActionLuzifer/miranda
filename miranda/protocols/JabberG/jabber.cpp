@@ -2,7 +2,7 @@
 
 Jabber Protocol Plugin for Miranda IM
 Copyright ( C ) 2002-04  Santithorn Bunchua
-Copyright ( C ) 2005-11  George Hazan
+Copyright ( C ) 2005-12  George Hazan
 Copyright ( C ) 2007     Maxim Mluhov
 
 This program is free software; you can redistribute it and/or
@@ -43,7 +43,6 @@ Last change by : $Author$
 
 HINSTANCE hInst;
 PLUGINLINK *pluginLink;
-int hLangpack;
 
 int g_cbCountries;
 struct CountryListEntry* g_countries;
@@ -57,7 +56,7 @@ PLUGININFOEX pluginInfo = {
 	szVersion,
 	"George Hazan, Maxim Mluhov, Victor Pavlychko, Artem Shpynov, Michael Stepura",
 	"ghazan@miranda-im.org",
-	"(c) 2005-11 George Hazan, Maxim Mluhov, Victor Pavlychko, Artem Shpynov, Michael Stepura",
+	"(c) 2005-2012 George Hazan, Maxim Mluhov, Victor Pavlychko, Artem Shpynov, Michael Stepura",
 	"http://miranda-im.org",
 	UNICODE_AWARE,
 	0,
@@ -114,9 +113,9 @@ extern "C" BOOL WINAPI DllMain( HINSTANCE hModule, DWORD, LPVOID )
 
 extern "C" __declspec( dllexport ) PLUGININFOEX *MirandaPluginInfoEx( DWORD mirandaVersion )
 {
-	if ( mirandaVersion < MIRANDA_VERSION_CORE ) {
+	if ( mirandaVersion < __VERSION_DWORD ) {
 		MessageBoxA( NULL, 
-			"The Jabber protocol plugin cannot be loaded. It requires Miranda IM " MIRANDA_VERSION_CORE_STRING " or later.", 
+			"The Jabber protocol plugin cannot be loaded. It requires Miranda IM " __VERSION_STRING " or later.", 
 			"Jabber Protocol Plugin", MB_OK|MB_ICONWARNING|MB_SETFOREGROUND|MB_TOPMOST );
 		return NULL;
 	}
@@ -253,7 +252,6 @@ extern "C" int __declspec( dllexport ) Load( PLUGINLINK *link )
 	mir_getSHA1I( &sha1i );
 	mir_getXI( &xi );
 	mir_getTMI( &tmi );
-	mir_getLP( &pluginInfo );
 
 	CallService( MS_UTILS_GETCOUNTRYLIST, ( WPARAM )&g_cbCountries, ( LPARAM )&g_countries );
 	
