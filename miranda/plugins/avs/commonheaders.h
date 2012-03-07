@@ -21,8 +21,7 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
-#define MIRANDA_VER  0x0A00
-#define MIRANDA_CUSTOM_LP
+#define MIRANDA_VER  0x0800
 #define _WIN32_WINNT 0x0501
 
 #include "m_stdhdr.h"
@@ -114,5 +113,3 @@ int SetAvatarAttribute(HANDLE hContact, DWORD attrib, int mode);
 #define GAIR_FAILED 1000
 
 #define AVS_IGNORENOTIFY 0x1000
-
-#define AVS_DEFAULT "Global avatar"

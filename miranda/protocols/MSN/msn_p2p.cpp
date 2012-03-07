@@ -211,7 +211,7 @@ void CMsnProto::p2p_savePicture2disk(filetransfer* ft)
 			return;
 		}
 
-		const TCHAR* ext;
+		const char* ext;
 		int format;
 		BYTE buf[6];
 
@@ -230,13 +230,15 @@ void CMsnProto::p2p_savePicture2disk(filetransfer* ft)
 		case MSN_APPID_AVATAR:
 		case MSN_APPID_AVATAR2:
 			{
-				PROTO_AVATAR_INFORMATIONT AI = {0};
+				PROTO_AVATAR_INFORMATION AI = {0};
 				AI.cbSize = sizeof(AI);
 				AI.format = format;
 				AI.hContact = ft->std.hContact;
-				MSN_GetAvatarFileName(AI.hContact, AI.filename, SIZEOF(AI.filename), ext);
+				MSN_GetAvatarFileName(AI.hContact, AI.filename, sizeof(AI.filename), ext);
 
-				_trename(ft->std.tszCurrentFile, AI.filename);
+				TCHAR *aname = mir_a2t(AI.filename);
+				_trename(ft->std.tszCurrentFile, aname);
+				mir_free(aname);
 
 				setString(ft->std.hContact, "PictSavedContext", ft->p2p_object);
 				SendBroadcast(AI.hContact, ACKTYPE_AVATAR, ACKRESULT_SUCCESS, &AI, 0);
@@ -257,9 +259,11 @@ void CMsnProto::p2p_savePicture2disk(filetransfer* ft)
 				cont.hContact = ft->std.hContact;
 				cont.type = 1;
 
+				TCHAR *extt = mir_a2t(ext);
 				TCHAR* pathcpy = mir_tstrdup(ft->std.tszCurrentFile);
-				_tcscpy(_tcsrchr(pathcpy, '.') + 1, ext);
+				_tcscpy(_tcsrchr(pathcpy, '.') + 1, extt);
 				_trename(ft->std.tszCurrentFile, pathcpy);
+				mir_free(extt);
 
 				cont.path = pathcpy;
 
@@ -1247,9 +1251,9 @@ void CMsnProto::p2p_InitFileTransfer(
 			}
 			if (pictmatch) 
 			{
-				TCHAR szFileName[MAX_PATH];
+				char szFileName[MAX_PATH];
 				MSN_GetAvatarFileName(NULL, szFileName, SIZEOF(szFileName), NULL);
-				ft->fileId = _topen(szFileName, O_RDONLY | _O_BINARY, _S_IREAD);
+				ft->fileId = _open(szFileName, O_RDONLY | _O_BINARY, _S_IREAD);
 				if (ft->fileId == -1) 
 				{
 					p2p_sendStatus(ft, 603);
@@ -1260,7 +1264,7 @@ void CMsnProto::p2p_InitFileTransfer(
 				else
 				{
 					mir_free(ft->std.tszCurrentFile);
-					ft->std.tszCurrentFile = mir_tstrdup(szFileName);
+					ft->std.tszCurrentFile = mir_a2t(szFileName);
 //						MSN_DebugLog("My avatar file opened for %s as %08p::%d", szEmail, ft, ft->fileId);
 					ft->std.totalBytes = ft->std.currentFileSize = _filelengthi64(ft->fileId);
 					ft->std.flags |= PFTS_SENDING;

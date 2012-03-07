@@ -400,6 +400,11 @@ char* trim_str(char* s)
 	return s;
 }
 
+void CAimProto::execute_cmd(const char* arg) 
+{
+	ShellExecuteA(NULL,"open", arg, NULL, NULL, SW_SHOW);
+}
+
 void create_group(const char *group)
 {
 	if (strcmp(group, AIM_DEFAULT_GROUP) == 0) return;
@@ -594,51 +599,39 @@ int CAimProto::deleteGroupId(HANDLE hContact, int i)
 
 /////////////////////////////////////////////////////////////////////////////////////////
 
-int CAimProto::open_contact_file(const char* sn, const TCHAR* file, const char* mode, TCHAR* &path, bool contact_dir)
+int CAimProto::open_contact_file(const char* sn, const char* file, const char* mode, char* &path, bool contact_dir)
 {
-	path = (TCHAR*)mir_alloc(MAX_PATH * sizeof(TCHAR));
+	path = (char*)mir_alloc(MAX_PATH);
 
-	TCHAR *tmpPath = Utils_ReplaceVarsT(_T("%miranda_userdata%"));
-	TCHAR *sztModuleName = mir_a2t(m_szModuleName);
-	int pos = mir_sntprintf(path, MAX_PATH, _T("%s\\%s"), tmpPath, sztModuleName);
-	mir_free(sztModuleName);
+	char *tmpPath = Utils_ReplaceVars("%miranda_userdata%");
+	int pos = mir_snprintf(path, MAX_PATH, "%s\\%s", tmpPath, m_szModuleName);
 	mir_free(tmpPath);
 	if  (contact_dir)
 	{
 		char* norm_sn = normalize_name(sn);
-		TCHAR *norm_snt = mir_a2t(m_szModuleName);
-		pos += mir_sntprintf(path + pos, MAX_PATH - pos, _T("\\%s"), norm_snt);
-		mir_free(norm_snt);
+		pos += mir_snprintf(path + pos, MAX_PATH - pos,"\\%s", norm_sn);
 		mir_free(norm_sn);
 	}
 
-	if (_taccess(path, 0))
-		CallService(MS_UTILS_CREATEDIRTREET, 0, (LPARAM)path);
+	if (_access(path, 0))
+		CallService(MS_UTILS_CREATEDIRTREE, 0, (LPARAM)path);
 
-	mir_sntprintf(path + pos, MAX_PATH - pos, _T("\\%s"), file);
-	int fid = _topen(path, _O_CREAT | _O_RDWR | _O_BINARY, _S_IREAD);
+	mir_snprintf(path + pos, MAX_PATH - pos,"\\%s", file);
+	int fid = _open(path, _O_CREAT | _O_RDWR | _O_BINARY, _S_IREAD);
 	if (fid < 0)
 	{
-		#if _MSC_VER > 1200
-			TCHAR errmsg[512];
-			mir_sntprintf(errmsg, SIZEOF(errmsg), TranslateT("Failed to open file: %s "), path);
-			TCHAR* error = __tcserror(errmsg);
-			ShowPopup((char*)error, ERROR_POPUP | TCHAR_POPUP);
-		#else
-			char errmsg[512], *szFileName = mir_t2a(path);
-			mir_snprintf(errmsg, SIZEOF(errmsg), Translate("Failed to open file: %s "), szFileName);
-			char* error = _strerror(errmsg);
-			ShowPopup((char*)error, ERROR_POPUP);
-			mir_free(szFileName);
-		#endif
+		char errmsg[512];
+		mir_snprintf(errmsg, SIZEOF(errmsg), Translate("Failed to open file: %s "), path);
+		char* error = _strerror(errmsg);
+		ShowPopup(error, ERROR_POPUP);
 	}
 	return fid;
 }
 
 void CAimProto::write_away_message(const char* sn, const char* msg, bool utf)
 {
-	TCHAR* path;
-	int fid = open_contact_file(sn, _T("away.html"), "wb", path, 1);
+	char* path;
+	int fid = open_contact_file(sn,"away.html","wb",path,1);
 	if (fid >= 0)
 	{
 		if (utf) _write(fid, "\xEF\xBB\xBF", 3);
@@ -648,7 +641,7 @@ void CAimProto::write_away_message(const char* sn, const char* msg, bool utf)
 		_write(fid, "'s Away Message:</h3>", 21);
 		_write(fid, s_msg, (unsigned)strlen(s_msg));
 		_close(fid);
-		ShellExecute(NULL, _T("open"), path, NULL, NULL, SW_SHOW);
+		execute_cmd(path);
 		mir_free(path);
 		mir_free(s_msg);
 	}
@@ -656,8 +649,8 @@ void CAimProto::write_away_message(const char* sn, const char* msg, bool utf)
 
 void CAimProto::write_profile(const char* sn, const char* msg, bool utf)
 {
-	TCHAR* path;
-	int fid = open_contact_file(sn, _T("profile.html"),"wb", path, 1);
+	char* path;
+	int fid = open_contact_file(sn,"profile.html","wb", path, 1);
 	if (fid >= 0)
 	{
 		if (utf) _write(fid, "\xEF\xBB\xBF", 3);
@@ -667,7 +660,7 @@ void CAimProto::write_profile(const char* sn, const char* msg, bool utf)
 		_write(fid, "'s Profile:</h3>", 16);
 		_write(fid, s_msg, (unsigned)strlen(s_msg));
 		_close(fid);
-		ShellExecute(NULL, _T("open"), path, NULL, NULL, SW_SHOW);
+		execute_cmd(path);
 		mir_free(path);
 		mir_free(s_msg);
 	}

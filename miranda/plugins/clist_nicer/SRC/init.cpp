@@ -26,7 +26,7 @@
  *
  * (C) 2005-2010 by silvercircle _at_ gmail _dot_ com and contributors
  *
- * $Id$
+ * $Id: init.cpp 12909 2010-10-06 14:53:00Z silvercircle $
  *
  */
 
@@ -36,7 +36,6 @@
 HINSTANCE g_hInst = 0;
 PLUGINLINK *pluginLink;
 CLIST_INTERFACE* pcli = NULL;
-int hLangpack;
 
 #define DEFAULT_TB_VISIBILITY (1 | 2 | 4 | 8 | 16 | 32 | 64 | 8192)
 TCHAR *szNoevents = _T("No events...");
@@ -105,9 +104,9 @@ void RecalcScrollBar(HWND hwnd, struct ClcData *dat);
 
 PLUGININFOEX pluginInfo = {
 #if defined(_UNICODE)
-		sizeof(PLUGININFOEX), "CList Nicer+ (Unicode)", PLUGIN_MAKE_VERSION(0, 9, 2, 1),
+		sizeof(PLUGININFOEX), "CList Nicer+ (Unicode)", PLUGIN_MAKE_VERSION(0, 9, 14, 0),
 #else
-		sizeof(PLUGININFOEX), "CList Nicer+", PLUGIN_MAKE_VERSION(0, 9, 2, 1),
+		sizeof(PLUGININFOEX), "CList Nicer+", PLUGIN_MAKE_VERSION(0, 9, 14, 0),
 #endif
 		"Display contacts, event notifications, protocol status",
 		"Pixel, egoDust, cyreve, Nightwish", "", "Copyright 2000-2010 Miranda-IM project", "http://www.miranda-im.org",
@@ -238,7 +237,6 @@ extern "C" int __declspec(dllexport) CListInitialise(PLUGINLINK * link)
 	mir_getMMI(&mmi);
 	mir_getLI(&li);
 	mir_getTMI(&tmi);
-	mir_getLP( &pluginInfo );
 
 	API::onInit();
 	LoadCLCButtonModule();

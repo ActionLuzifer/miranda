@@ -105,7 +105,8 @@ char* CMsnProto::getSslResult(char** parUrl, const char* parAuthInfo, const char
 	return result;
 }
 
-bool CMsnProto::getMyAvatarFile(char *url, TCHAR *fname) 
+
+bool CMsnProto::getMyAvatarFile(char *url, char *fname) 
 {
 	NETLIBHTTPREQUEST nlhr = {0};
 	bool result = true;
