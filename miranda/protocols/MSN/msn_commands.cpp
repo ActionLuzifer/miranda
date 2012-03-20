@@ -324,9 +324,9 @@ void CMsnProto::sttCustomSmiley(const char* msgBody, char* email, char* nick, in
 			UrlEncode(buf, smileyName, rlen*3);
 			mir_free(buf);
 
-			TCHAR path[MAX_PATH];
+			char path[MAX_PATH];
 			MSN_GetCustomSmileyFileName(hContact, path, SIZEOF(path), smileyName, iSmileyType);
-			ft->std.tszCurrentFile = mir_tstrdup(path);
+			ft->std.tszCurrentFile = mir_a2t(path);
 			mir_free(smileyName);
 
 			if (p2p_IsDlFileOk(ft))
@@ -1105,7 +1105,9 @@ void CMsnProto::MSN_InitSB(ThreadData* info, const char* szEmail)
 			0);
 	}
 
-	PROTO_AVATAR_INFORMATIONT ai = { sizeof(ai), cont->hContact };
+	PROTO_AVATAR_INFORMATION ai = {0};
+	ai.cbSize = sizeof(ai);
+	ai.hContact = cont->hContact;
 	GetAvatarInfo(GAIF_FORCE, (LPARAM)&ai);
 }
 
@@ -1432,7 +1434,7 @@ LBL_InvalidCommand:
 							char szSavedContext[64];
 							int result = getStaticString(hContact, "PictSavedContext", szSavedContext, sizeof(szSavedContext));
 							if (result || strcmp(szSavedContext, data.cmdstring))
-								SendBroadcast(hContact, ACKTYPE_AVATAR, ACKRESULT_STATUS, NULL, 0);
+								setString(hContact, "PictSavedContext", szSavedContext);
 						}
 						mir_free(szAvatarHash);
 					}
@@ -1939,7 +1941,7 @@ remove:
 				newThread->mType = SERVER_NOTIFICATION;
 				newThread->mTrid = info->mTrid;
 				newThread->mIsMainThread = true;
-				usingGateway |= *data.security == 'G';
+				usingGateway = usingGateway || *data.security == 'G';
 				info->mIsMainThread = false;
 
 				MSN_DebugLog("Switching to notification server '%s'...", data.newServer);

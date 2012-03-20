@@ -41,7 +41,7 @@ LRESULT CALLBACK PopupWindowProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM 
 		{
 			CAimPopupData* p = (CAimPopupData*)PUGetPluginData(hWnd);
 			if (p->url != NULL)
-				ShellExecuteA(NULL, "open", p->url, NULL, NULL, SW_SHOW);
+				p->ppro->execute_cmd(p->url);
 
 			PUDeletePopUp(hWnd);
 			return 0;
@@ -90,7 +90,7 @@ void CAimProto::ShowPopup(const char* msg, int flags, char* url)
 			size_t len = _tcslen(ppd.lptzText);
 			mir_sntprintf(&ppd.lptzText[len], SIZEOF(ppd.lptzText) - len, _T(" %s"), TranslateT("Open mail account?"));
 			if (MessageBox(NULL, ppd.lptzText, ppd.lptzContactName, MB_YESNO | MB_ICONINFORMATION) == IDYES)
-				ShellExecuteA(NULL, "open", url, NULL, NULL, SW_SHOW);
+				execute_cmd(url);
 		}
 		else
 		{

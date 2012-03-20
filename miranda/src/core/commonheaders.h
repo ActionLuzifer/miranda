@@ -22,7 +22,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
 // to enable all 0.9.0 core functions
-#define MIRANDA_VER 0x1000
+#define MIRANDA_VER 0x0900
 
 #define _ALPHA_BASE_ 1	// defined for CVS builds
 #define _ALPHA_FUSE_ 1	// defined for fuse powered core
@@ -60,11 +60,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <m_database.h>
 #include <m_clc.h>
 #include <m_clui.h>
-#include <m_crypto.h>
 #include <m_langpack.h>
 #include <m_clist.h>
 #include <m_clistint.h>
-#include <m_avatars.h>
 #include <m_button.h>
 #include <m_protosvc.h>
 #include <m_protomod.h>
