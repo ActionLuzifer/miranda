@@ -77,9 +77,6 @@ pfnGetBufferedPaintBits getBufferedPaintBits;
 pfnDwmExtendFrameIntoClientArea dwmExtendFrameIntoClientArea;
 pfnDwmIsCompositionEnabled dwmIsCompositionEnabled;
 
-pfnGetaddrinfo MyGetaddrinfo;
-pfnFreeaddrinfo MyFreeaddrinfo;
-
 ITaskbarList3 * pTaskbarInterface;
 
 static DWORD MsgWaitForMultipleObjectsExWorkaround(DWORD nCount, const HANDLE *pHandles,
@@ -537,7 +534,7 @@ static INT_PTR CALLBACK WaitForProcessDlgProc(HWND hwnd, UINT msg, WPARAM wParam
 	return FALSE;
 }
 
-void ParseCommandLine()
+static void ParseCommandLine()
 {
 	char* cmdline = GetCommandLineA();
 	char* p = strstr( cmdline, "/restart:" );
@@ -629,10 +626,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int )
 		}
 	}
 
-	HMODULE hWinSock = GetModuleHandleA("ws2_32");
-	MyGetaddrinfo = (pfnGetaddrinfo)GetProcAddress(hWinSock, "getaddrinfo");
-	MyFreeaddrinfo = (pfnFreeaddrinfo)GetProcAddress(hWinSock, "freeaddrinfo");
-
 	if (bufferedPaintInit) bufferedPaintInit();
 
 	OleInitialize(NULL);
@@ -641,7 +634,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int )
 		CoCreateInstance(CLSID_TaskbarList, NULL, CLSCTX_ALL, IID_ITaskbarList3, (void**)&pTaskbarInterface);
 
 	InitialiseModularEngine();
-//	ParseCommandLine();
+	ParseCommandLine();
 
 	if (LoadDefaultModules()) {
 		NotifyEventHooks(hShutdownEvent,0,0);

@@ -366,20 +366,20 @@ INT_PTR CAimProto::InstantIdle(WPARAM /*wParam*/, LPARAM /*lParam*/)
 
 INT_PTR CAimProto::ManageAccount(WPARAM /*wParam*/, LPARAM /*lParam*/)
 {
-	ShellExecuteA(NULL, "open", "https://my.screenname.aol.com", NULL, NULL, SW_SHOW);
+	execute_cmd("https://my.screenname.aol.com");
 	return 0;
 }
 
 INT_PTR CAimProto::GetAvatarInfo(WPARAM wParam, LPARAM lParam)
 {
-	PROTO_AVATAR_INFORMATIONT* AI = (PROTO_AVATAR_INFORMATIONT*)lParam;
+	PROTO_AVATAR_INFORMATION* AI = (PROTO_AVATAR_INFORMATION*)lParam;
 	
 	AI->filename[0] = 0;
 	AI->format = PA_FORMAT_UNKNOWN;
 
 	if (getByte(AIM_KEY_DA, 0)) return GAIR_NOAVATAR;
 
-	switch (get_avatar_filename(AI->hContact, AI->filename, SIZEOF(AI->filename), NULL))
+	switch (get_avatar_filename(AI->hContact, AI->filename, sizeof(AI->filename), NULL))
 	{
 	case GAIR_SUCCESS:
 		if (!(wParam & GAIF_FORCE) || state != 1 ) 
@@ -437,16 +437,16 @@ INT_PTR CAimProto::GetAvatarCaps(WPARAM wParam, LPARAM lParam)
 
 INT_PTR CAimProto::GetAvatar(WPARAM wParam, LPARAM lParam)
 {
-	TCHAR* buf = (TCHAR*)wParam;
+	char* buf = (char*)wParam;
 	int  size = (int)lParam;
 
 	if (buf == NULL || size <= 0)
 		return -1;
 
-	PROTO_AVATAR_INFORMATIONT ai = { sizeof(ai) };
+	PROTO_AVATAR_INFORMATION ai = { sizeof(ai) };
 	if (GetAvatarInfo(0, (LPARAM)&ai) == GAIR_SUCCESS)
 	{
-		_tcsncpy(buf, ai.filename, size);
+		strncpy(buf, ai.filename, size);
 		buf[size-1] = 0;
 		return 0;
 	}
@@ -456,7 +456,7 @@ INT_PTR CAimProto::GetAvatar(WPARAM wParam, LPARAM lParam)
 
 INT_PTR CAimProto::SetAvatar(WPARAM wParam, LPARAM lParam)
 {
-	TCHAR* szFileName = (TCHAR*)lParam;
+	char* szFileName = (char*)lParam;
 
 	if (state != 1) return 1;
 
@@ -513,10 +513,10 @@ INT_PTR CAimProto::SetAvatar(WPARAM wParam, LPARAM lParam)
 		avatar_up_req *req = new avatar_up_req(data, size, data1, size1);
 		ForkThread(&CAimProto::avatar_upload_thread, req);
 
-		TCHAR tFileName[MAX_PATH];
-		TCHAR *ext = _tcsrchr(szFileName, '.');
-		get_avatar_filename(NULL, tFileName, SIZEOF(tFileName), ext);
-		int fileId = _topen(tFileName, _O_CREAT | _O_TRUNC | _O_WRONLY | O_BINARY, _S_IREAD | _S_IWRITE);
+		char tFileName[MAX_PATH];
+		char *ext = strrchr(szFileName, '.');
+		get_avatar_filename(NULL, tFileName, MAX_PATH, ext);
+		int fileId = _open(tFileName, _O_CREAT | _O_TRUNC | _O_WRONLY | O_BINARY, _S_IREAD | _S_IWRITE);
 		if (fileId < 0)
 		{
 			char errmsg[512];

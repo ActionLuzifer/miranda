@@ -82,9 +82,6 @@ static THook *pLastHook = NULL;
 
 HINSTANCE GetInstByAddress( void* codePtr );
 
-void LangPackDropUnusedItems( void );
-
-void ParseCommandLine();		// core: IDD_WAITRESTART
 int LoadSystemModule(void);		// core: m_system.h services
 int LoadNewPluginsModuleInfos(void); // core: preloading plugins
 int LoadNewPluginsModule(void);	// core: N.O. plugins
@@ -151,10 +148,11 @@ int LoadHeaderbarModule();
 int LoadDescButtonModule();
 int LoadDefaultModules(void)
 {
+	INT_PTR *disableDefaultModule = 0;
+
     //load order is very important for these
 	if (LoadSystemModule()) return 1;
-	if (LoadLangPackModule()) return 1;		// langpack will be a system module in the new order so this is moved here
-	ParseCommandLine();						// IDD_WAITRESTART need langpack  so this is moved here
+	if (LoadLangPackModule()) return 1; // langpack will be a system module in the new order so this is moved 'ere
 	if (LoadUtilsModule()) return 1;		//order not important for this, but no dependencies and no point in pluginising
 	if (LoadIcoTabsModule()) return 1;
 	if (LoadHeaderbarModule()) return 1;
@@ -176,11 +174,10 @@ int LoadDefaultModules(void)
 	}
 
 	//this info will be available at LoadNewPluginsModule()
-	INT_PTR *disableDefaultModule=(INT_PTR*)CallService(MS_PLUGINS_GETDISABLEDEFAULTARRAY,0,0);
+	disableDefaultModule=(INT_PTR*)CallService(MS_PLUGINS_GETDISABLEDEFAULTARRAY,0,0);
 
 	if (LoadSkinSounds()) return 1;
 	if (LoadSkinHotkeys()) return 1;
-	if (LoadFontserviceModule()) return 1;
 
 	if (LoadDescButtonModule()) return 1;
 	if (LoadOptionsModule()) return 1;
@@ -192,14 +189,13 @@ int LoadDefaultModules(void)
 	if (LoadAddContactModule()) return 1;
 	if (LoadNewPluginsModule()) return 1;    // will call Load() on everything, clist will load first
 
-	LangPackDropUnusedItems();
-
 	if (!disableDefaultModule[DEFMOD_SSL]) if (LoadSslModule()) return 1;
-	NetlibInitSsl();
+    NetlibInitSsl();
 
-	if (LoadAccountsModule()) return 1;
+    if (LoadAccountsModule()) return 1;
 
     //order becomes less important below here
+	if (!disableDefaultModule[DEFMOD_FONTSERVICE]) if (LoadFontserviceModule()) return 1;
 	if (!disableDefaultModule[DEFMOD_UIFINDADD]) if (LoadFindAddModule()) return 1;
 	if (!disableDefaultModule[DEFMOD_UIUSERINFO]) if (LoadUserInfoModule()) return 1;
 	if (!disableDefaultModule[DEFMOD_SRURL]) if (LoadSendRecvUrlModule()) return 1;

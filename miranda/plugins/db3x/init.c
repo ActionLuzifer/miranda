@@ -28,28 +28,11 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 struct MM_INTERFACE   mmi;
 struct LIST_INTERFACE li;
 struct UTF8_INTERFACE utfi;
-int hLangpack;
 
 extern char szDbPath[MAX_PATH];
 
 HINSTANCE g_hInst=NULL;
 PLUGINLINK *pluginLink;
-
-static PLUGININFOEX pluginInfo = {
-	sizeof(PLUGININFOEX),
-	"Miranda database driver",
-	__VERSION_DWORD,
-	"Provides Miranda database support: global settings, contacts, history, settings per contact.",
-	"Miranda-IM project",
-	"ghazan@miranda-im.org",
-	"Copyright 2000-2011 Miranda IM project",
-	"",
-	UNICODE_AWARE,
-	DEFMOD_DB,
-    {0x1394a3ab, 0x2585, 0x4196, { 0x8f, 0x72, 0xe, 0xae, 0xc2, 0x45, 0xe, 0x11 }} //{1394A3AB-2585-4196-8F72-0EAEC2450E11}
-};
-
-/////////////////////////////////////////////////////////////////////////////////////////
 
 static int getCapability( int flag )
 {
@@ -138,7 +121,6 @@ static int LoadDatabase( char * profile, void * plink )
 	mir_getLI( &li );
 	mir_getMMI( &mmi );
 	mir_getUTFI( &utfi );
-	mir_getLP( &pluginInfo );
 
 	// inject all APIs and hooks into the core
 	return LoadDatabaseModule();
@@ -168,6 +150,21 @@ static DATABASELINK dblink = {
 	UnloadDatabase,
 };
 
+static PLUGININFOEX pluginInfo = {
+	sizeof(PLUGININFOEX),
+	"Miranda database driver",
+	__VERSION_DWORD,
+	"Provides Miranda database support: global settings, contacts, history, settings per contact.",
+	"Miranda-IM project",
+	"ghazan@miranda-im.org",
+	"Copyright 2000-2012 Miranda IM project",
+	"",
+	UNICODE_AWARE,
+	DEFMOD_DB,
+    {0x1394a3ab, 0x2585, 0x4196, { 0x8f, 0x72, 0xe, 0xae, 0xc2, 0x45, 0xe, 0x11 }} //{1394A3AB-2585-4196-8F72-0EAEC2450E11}
+};
+
+
 BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD dwReason, LPVOID reserved)
 {
 	g_hInst = hInstDLL;
@@ -181,7 +178,7 @@ __declspec(dllexport) DATABASELINK* DatabasePluginInfo(void * reserved)
 
 __declspec(dllexport) PLUGININFOEX * MirandaPluginInfoEx(DWORD mirandaVersion)
 {
-	if ( mirandaVersion < MIRANDA_VERSION_CORE ) {
+	if ( mirandaVersion < PLUGIN_MAKE_VERSION(0,7,0,0)) {
 		MessageBox( NULL, _T("The db3x plugin cannot be loaded. It requires Miranda IM 0.7.0.0 or later."), _T("db3x Plugin"), MB_OK|MB_ICONWARNING|MB_SETFOREGROUND|MB_TOPMOST );
 		return NULL;
 	}

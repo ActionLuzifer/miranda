@@ -62,6 +62,7 @@ struct NetlibConnection
 	bool dnsThroughProxy;
 	bool termRequested;
 	struct NetlibUser *nlu;
+	SOCKADDR_IN sinProxy;
 	NETLIBHTTPPROXYINFO nlhpi;
 	PBYTE dataBuffer;
 	int dataBufferLen;

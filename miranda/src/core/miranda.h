@@ -108,12 +108,6 @@ typedef HRESULT ( STDAPICALLTYPE *pfnDwmIsCompositionEnabled )( BOOL * );
 extern pfnDwmExtendFrameIntoClientArea dwmExtendFrameIntoClientArea;
 extern pfnDwmIsCompositionEnabled dwmIsCompositionEnabled;
 
-typedef INT (STDAPICALLTYPE *pfnGetaddrinfo)(PCSTR pNodeName, PCSTR pServiceName, const ADDRINFOA * pHints, PADDRINFOA * ppResult);
-typedef INT (STDAPICALLTYPE *pfnFreeaddrinfo)(PADDRINFOA pAddrInfo);
-
-extern pfnGetaddrinfo MyGetaddrinfo;
-extern pfnFreeaddrinfo MyFreeaddrinfo;
-
 /**** file.c ***************************************************************************/
 
 void PushFileEvent( HANDLE hContact, HANDLE hdbe, LPARAM lParam );
@@ -189,7 +183,7 @@ int   Ucs2toUtf8Len(const wchar_t *src);
 int    LangPackGetDefaultCodePage();
 int    LangPackGetDefaultLocale();
 TCHAR* LangPackPcharToTchar( const char* pszStr );
-char*  LangPackTranslateString(struct LangPackMuuid* pUuid, const char *szEnglish, const int W);
+char*  LangPackTranslateString(const char *szEnglish, const int W);
 
 unsigned int __fastcall hash(const void * key, unsigned int len);
 

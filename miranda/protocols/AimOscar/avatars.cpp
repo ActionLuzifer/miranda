@@ -97,18 +97,18 @@ void CAimProto::avatar_request_handler(HANDLE hContact, char* hash, unsigned cha
 void CAimProto::avatar_retrieval_handler(const char* sn, const char* hash, const char* data, int data_len)
 {
 	bool res = false;
-	PROTO_AVATAR_INFORMATIONT AI = {0};
+	PROTO_AVATAR_INFORMATION AI = {0};
 	AI.cbSize = sizeof(AI);
 
 	AI.hContact = contact_from_sn(sn);
 	
 	if (data_len > 0)
 	{
-		const TCHAR *type; 
+		const char *type; 
 		AI.format = detect_image_type(data, type);
-		get_avatar_filename(AI.hContact, AI.filename, SIZEOF(AI.filename), type);
+		get_avatar_filename(AI.hContact, AI.filename, sizeof(AI.filename), type);
 
-		int fileId = _topen(AI.filename, _O_CREAT | _O_TRUNC | _O_WRONLY | O_BINARY,  _S_IREAD | _S_IWRITE);
+		int fileId = _open(AI.filename, _O_CREAT | _O_TRUNC | _O_WRONLY | O_BINARY,  _S_IREAD | _S_IWRITE);
 		if (fileId >= 0)
 		{
 			_write(fileId, data, data_len);
@@ -129,40 +129,40 @@ void CAimProto::avatar_retrieval_handler(const char* sn, const char* hash, const
 	sendBroadcast(AI.hContact, ACKTYPE_AVATAR, res ? ACKRESULT_SUCCESS : ACKRESULT_FAILED, &AI, 0);
 }
 
-int detect_image_type(const char* stream, const TCHAR* &type_ret)
+int detect_image_type(const char* stream, const char* &type_ret)
 {
 	if(stream[0]=='G'&&stream[1]=='I'&&stream[2]=='F')
 	{
-		type_ret = _T(".gif");
+		type_ret = ".gif";
 		return PA_FORMAT_GIF;
 	}
 	else if(stream[1]=='P'&&stream[2]=='N'&&stream[3]=='G')
 	{
-		type_ret = _T(".png");
+		type_ret = ".png";
 		return PA_FORMAT_PNG;
 	}
 	else if(stream[0]=='B'&&stream[1]=='M')
 	{
-		type_ret = _T(".bmp");
+		type_ret = ".bmp";
 		return PA_FORMAT_BMP;
 	}
 	else//assume jpg
 	{
-		type_ret = _T(".jpg");
+		type_ret = ".jpg";
 		return PA_FORMAT_JPEG;
 	}
 }
 
-int detect_image_type(const TCHAR* file)
+int detect_image_type(const char* file)
 {
-   const TCHAR *ext = _tcsrchr(file, '.');
+   const char *ext = strrchr(file, '.');
    if (ext == NULL) 
 	   return PA_FORMAT_UNKNOWN;
-   if (_tcsicmp(ext, _T(".gif")) == 0)
+   if (strcmp(ext, ".gif") == 0)
 	   return PA_FORMAT_GIF;
-   else if (_tcsicmp(ext, _T(".bmp")) == 0)
+   else if (strcmp(ext, ".bmp") == 0)
 	   return PA_FORMAT_BMP;
-   else if (_tcsicmp(ext, _T(".png")) == 0)
+   else if (strcmp(ext, ".png") == 0)
 	   return PA_FORMAT_PNG;
    else
 	   return PA_FORMAT_JPEG;
@@ -172,63 +172,62 @@ void CAimProto::init_custom_folders(void)
 {
 	if (init_cst_fld_ran) return; 
 
-	TCHAR AvatarsFolder[MAX_PATH];
+	char AvatarsFolder[MAX_PATH];
 
-	TCHAR *tszModuleName = mir_a2t(m_szModuleName);
-	mir_sntprintf(AvatarsFolder, SIZEOF(AvatarsFolder), _T("%%miranda_avatarcache%%\\%s"), tszModuleName);
-	hAvatarsFolder = FoldersRegisterCustomPathT(m_szModuleName, "Avatars", AvatarsFolder);
-	mir_free(tszModuleName);
+	char *tmpPath = Utils_ReplaceVars("%miranda_avatarcache%");
+	mir_snprintf(AvatarsFolder, SIZEOF(AvatarsFolder), "%s\\%s", tmpPath, m_szModuleName);
+	mir_free(tmpPath);
+
+	hAvatarsFolder = FoldersRegisterCustomPath(m_szModuleName, "Avatars", AvatarsFolder);
 
 	init_cst_fld_ran = true;
 }
 
-int CAimProto::get_avatar_filename(HANDLE hContact, TCHAR* pszDest, size_t cbLen, const TCHAR *ext)
+int CAimProto::get_avatar_filename(HANDLE hContact, char* pszDest, size_t cbLen, const char *ext)
 {
 	size_t tPathLen;
 	bool found = false;
 
 	init_custom_folders();
 
-	TCHAR* path = (TCHAR*)alloca(cbLen * sizeof(TCHAR));
-	if (hAvatarsFolder == NULL || FoldersGetCustomPathT(hAvatarsFolder, path, (int)cbLen, _T("")))
+	char* path = (char*)alloca(cbLen);
+	if (hAvatarsFolder == NULL || FoldersGetCustomPath(hAvatarsFolder, path, (int)cbLen, ""))
 	{
-		TCHAR *tmpPath = Utils_ReplaceVarsT(_T("%miranda_avatarcache%"));
-		TCHAR *tszModuleName = mir_a2t(m_szModuleName);
-		tPathLen = mir_sntprintf(pszDest, cbLen, _T("%s\\%s"), tmpPath, tszModuleName);
-		mir_free(tszModuleName);
+		char *tmpPath = Utils_ReplaceVars("%miranda_avatarcache%");
+		tPathLen = mir_snprintf(pszDest, cbLen, "%s\\%s", tmpPath, m_szModuleName);
 		mir_free(tmpPath);
 	}
 	else 
 	{
-		_tcscpy(pszDest, path);
-		tPathLen = _tcslen(pszDest);
+		strcpy(pszDest, path);
+		tPathLen = strlen(pszDest);
 	}
 
-	if (ext && _taccess(pszDest, 0))
-		CallService(MS_UTILS_CREATEDIRTREET, 0, (LPARAM)pszDest);
+	if (ext && _access(pszDest, 0))
+		CallService(MS_UTILS_CREATEDIRTREE, 0, (LPARAM)pszDest);
 
 	size_t tPathLen2 = tPathLen;
 	
-	DBVARIANT dbv;
-	if (getTString(hContact, AIM_KEY_AH, &dbv)) return GAIR_NOAVATAR;
-	tPathLen += mir_sntprintf(pszDest + tPathLen, cbLen - tPathLen, _T("\\%s"), dbv.ptszVal);
-	DBFreeVariant(&dbv);
+	char* hash = getSetting(hContact, AIM_KEY_AH);
+	if (hash == NULL) return GAIR_NOAVATAR;
+	tPathLen += mir_snprintf(pszDest + tPathLen, cbLen - tPathLen, "\\%s", hash);
+	mir_free(hash);
 
 	if (ext == NULL)
 	{
-		mir_sntprintf(pszDest + tPathLen, cbLen - tPathLen, _T(".*"));
+		mir_snprintf(pszDest + tPathLen, cbLen - tPathLen, ".*");
 
-		_tfinddata_t c_file;
-		long hFile = _tfindfirst(pszDest, &c_file);
+		_finddata_t c_file;
+		long hFile = _findfirst(pszDest, &c_file);
 		if (hFile > -1L)
 		{
 			do {
-				if (_tcsrchr(c_file.name, '.'))
+				if (strrchr(c_file.name, '.'))
 				{
-					mir_sntprintf(pszDest + tPathLen2, cbLen - tPathLen2, _T("\\%s"), c_file.name);
+					mir_snprintf(pszDest + tPathLen2, cbLen - tPathLen2, "\\%s", c_file.name);
 					found = true;
 				}
-			} while (_tfindnext(hFile, &c_file) == 0);
+			} while (_findnext(hFile, &c_file) == 0);
 			_findclose( hFile );
 		}
 		
@@ -236,16 +235,16 @@ int CAimProto::get_avatar_filename(HANDLE hContact, TCHAR* pszDest, size_t cbLen
 	}
 	else
 	{
-		mir_sntprintf(pszDest + tPathLen, cbLen - tPathLen, ext);
-		found = _taccess(pszDest, 0) == 0;
+		mir_snprintf(pszDest + tPathLen, cbLen - tPathLen, ext);
+		found = _access(pszDest, 0) == 0;
 	}
 
 	return found ? GAIR_SUCCESS : GAIR_WAITFOR;
 }
 
-bool get_avatar_hash(const TCHAR* file, char* hash, char** data, unsigned short &size)
+bool get_avatar_hash(const char* file, char* hash, char** data, unsigned short &size)
 {
-	int fileId = _topen(file, _O_RDONLY | _O_BINARY, _S_IREAD);
+	int fileId = _open(file, _O_RDONLY | _O_BINARY, _S_IREAD);
 	if (fileId == -1) return false;
 
 	long  lAvatar = _filelength(fileId);
