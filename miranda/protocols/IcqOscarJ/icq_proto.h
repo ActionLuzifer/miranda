@@ -378,8 +378,6 @@ struct CIcqProto : public PROTO_INTERFACE
 
 	HANDLE HContactFromRecordName(const char *szRecordName, int *bAdded);
 
-	void   processCListReply(const char *szRecordName, WORD wGroupId, WORD wItemId, WORD wItemType, oscar_tlv_chain *pItemData);
-
 	void   icq_sendServerBeginOperation(int bImport);
 	void   icq_sendServerEndOperation();
 	void   sendRosterAck(void);
@@ -434,12 +432,12 @@ struct CIcqProto : public PROTO_INTERFACE
 	void   InitAvatars();
 	avatars_request *ReleaseAvatarRequestInQueue(avatars_request *request);
 
-	TCHAR* GetOwnAvatarFileName();
-	void   GetFullAvatarFileName(int dwUin, const char *szUid, int dwFormat, TCHAR *pszDest, int cbLen);
-	void   GetAvatarFileName(int dwUin, const char *szUid, TCHAR *pszDest, int cbLen);
+	char*  GetOwnerAvatarFileName();
+	void   GetFullAvatarFileName(int dwUin, const char *szUid, int dwFormat, char *pszDest, int cbLen);
+	void   GetAvatarFileName(int dwUin, const char *szUid, char *pszDest, int cbLen);
 	int    IsAvatarChanged(HANDLE hContact, const BYTE *pHash, int nHashLen);
 
-	int    GetAvatarData(HANDLE hContact, DWORD dwUin, const char *szUid, const BYTE *hash, unsigned int hashlen, const TCHAR *file);
+	int    GetAvatarData(HANDLE hContact, DWORD dwUin, const char *szUid, const BYTE *hash, unsigned int hashlen, const char *file);
 	int    SetAvatarData(HANDLE hContact, WORD wRef, const BYTE *data, unsigned int datalen);
 
 	void   StartAvatarThread(HANDLE hConn, char* cookie, WORD cookieLen);
@@ -733,8 +731,6 @@ struct CIcqProto : public PROTO_INTERFACE
 	DWORD  icq_modifyServerPrivacyItem(HANDLE hContact, DWORD dwUin, char *szUid, WORD wAction, DWORD dwOperation, WORD wItemId, WORD wType);
 	DWORD  icq_removeServerPrivacyItem(HANDLE hContact, DWORD dwUin, char *szUid, WORD wItemId, WORD wType);
 	DWORD  icq_addServerPrivacyItem(HANDLE hContact, DWORD dwUin, char *szUid, WORD wItemId, WORD wType);
-
-	time_t dwLastCListGroupsChange;
 
 	int __cdecl ServListDbSettingChanged(WPARAM wParam, LPARAM lParam);
 	int __cdecl ServListDbContactDeleted(WPARAM wParam, LPARAM lParam);

@@ -293,7 +293,7 @@ bool CMsnProto::MSN_StoreGetProfile(bool allowRecurse)
 					const char *docname = ezxml_txt(ezxml_child(docstr, "DocumentStreamName"));
 					if (!strcmp(docname, "UserTileStatic"))
 					{
-						getMyAvatarFile(ezxml_txt(ezxml_child(docstr, "PreAuthURL")), _T("miranda_avatar.tmp"));
+						getMyAvatarFile(ezxml_txt(ezxml_child(docstr, "PreAuthURL")), "miranda_avatar.tmp");
 						break;
 					}
 					docstr = ezxml_next(docstr);
@@ -535,11 +535,10 @@ bool CMsnProto::MSN_StoreDeleteRelationships(bool tile, bool allowRecurse)
 }
 
 
-bool CMsnProto::MSN_StoreCreateDocument(const TCHAR *sztName, const char *szMimeType, const char *szPicData, bool allowRecurse)
+bool CMsnProto::MSN_StoreCreateDocument(const char *szName, const char *szMimeType, const char *szPicData, bool allowRecurse)
 {
 	char* reqHdr;
 	ezxml_t tbdy;
-	char* szName = mir_utf8encodeT(sztName);
 	ezxml_t xmlp = storeSoapHdr("CreateDocument", "RoamingIdentityChanged", tbdy, reqHdr);
 
 	ezxml_t hndl = ezxml_add_child(tbdy, "parentHandle", 0);
@@ -576,7 +575,6 @@ bool CMsnProto::MSN_StoreCreateDocument(const TCHAR *sztName, const char *szMime
 	char* szData = ezxml_toxml(xmlp, true);
 
 	ezxml_free(xmlp);
-	mir_free(szName);
 
 	unsigned status = 0;
 	char *storeUrl = NULL, *tResult = NULL;
@@ -610,7 +608,7 @@ bool CMsnProto::MSN_StoreCreateDocument(const TCHAR *sztName, const char *szMime
 			if (strcmp(szErr, "PassportAuthFail") == 0 && allowRecurse)
 			{
 				MSN_GetPassportAuth();
-				status = MSN_StoreCreateDocument(sztName, szMimeType, szPicData, false) ? 200 : 500;
+				status = MSN_StoreCreateDocument(szName, szMimeType, szPicData, false) ? 200 : 500;
 			}
 			ezxml_free(xmlm);
 		}
@@ -623,10 +621,9 @@ bool CMsnProto::MSN_StoreCreateDocument(const TCHAR *sztName, const char *szMime
 }
 
 
-bool CMsnProto::MSN_StoreUpdateDocument(const TCHAR *sztName, const char *szMimeType, const char *szPicData, bool allowRecurse)
+bool CMsnProto::MSN_StoreUpdateDocument(const char *szName, const char *szMimeType, const char *szPicData, bool allowRecurse)
 {
 	char* reqHdr;
-	char* szName = mir_utf8encodeT(sztName);
 	ezxml_t tbdy;
 	ezxml_t xmlp = storeSoapHdr("UpdateDocument", "RoamingIdentityChanged", tbdy, reqHdr);
 
@@ -653,7 +650,6 @@ bool CMsnProto::MSN_StoreUpdateDocument(const TCHAR *sztName, const char *szMime
 	char* szData = ezxml_toxml(xmlp, true);
 
 	ezxml_free(xmlp);
-	mir_free(szName);
 
 	unsigned status = 0;
 	char *storeUrl = NULL, *tResult = NULL;
@@ -680,14 +676,14 @@ bool CMsnProto::MSN_StoreUpdateDocument(const TCHAR *sztName, const char *szMime
 			if (strcmp(szErr, "PassportAuthFail") == 0)
 			{
 				MSN_GetPassportAuth();
-				status = MSN_StoreUpdateDocument(sztName, szMimeType, szPicData, false) ? 200 : 500;
+				status = MSN_StoreUpdateDocument(szName, szMimeType, szPicData, false) ? 200 : 500;
 			}
 			else if (szErr[0])
 			{
 				MSN_StoreDeleteRelationships(true);
 				MSN_StoreDeleteRelationships(false);
 
-				MSN_StoreCreateDocument(sztName, szMimeType, szPicData);
+				MSN_StoreCreateDocument(szName, szMimeType, szPicData);
 				MSN_StoreCreateRelationships();
 			}
 			ezxml_free(xmlm);

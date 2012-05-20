@@ -180,16 +180,24 @@ void CMsnProto::InitCustomFolders(void)
 {
 	if (InitCstFldRan) return; 
 
-	TCHAR folder[MAX_PATH];
-	TCHAR* tszModuleName = mir_a2t( m_szModuleName );
+	{
+		char folder[MAX_PATH];
 
-	mir_sntprintf(folder, SIZEOF(folder), _T("%%miranda_avatarcache%%\\%s"), tszModuleName);
-	hMSNAvatarsFolder = FoldersRegisterCustomPathT(m_szModuleName, "Avatars", folder);
+		char *tmpPath = Utils_ReplaceVars("%miranda_avatarcache%");
+		mir_snprintf(folder, SIZEOF(folder), "%s\\%s", tmpPath, m_szModuleName);
+		hMSNAvatarsFolder = FoldersRegisterCustomPath(m_szModuleName, "Avatars", folder);
+		mir_free(tmpPath);
+	}
 
-	mir_sntprintf(folder, SIZEOF(folder), _T("%%miranda_userdata%%\\%s\\CustomSmiley"), tszModuleName);
-	hCustomSmileyFolder = FoldersRegisterCustomPathT(m_szModuleName, "Custom Smiley", folder);
+	{
+		char folder[MAX_PATH];
 
-	mir_free(tszModuleName);
+		char *tmpPath = Utils_ReplaceVars("%miranda_userdata%");
+		mir_snprintf(folder, SIZEOF(folder), "%s\\%s\\CustomSmiley", tmpPath, m_szModuleName);
+		hCustomSmileyFolder = FoldersRegisterCustomPath(m_szModuleName, "Custom Smiley", folder);
+		mir_free(tmpPath);
+	}
+
 	InitCstFldRan = true;
 }
 
@@ -220,28 +228,26 @@ char* MSN_GetAvatarHash(char* szContext)
 /////////////////////////////////////////////////////////////////////////////////////////
 // MSN_GetAvatarFileName - gets a file name for an contact's avatar
 
-void  CMsnProto::MSN_GetAvatarFileName(HANDLE hContact, TCHAR* pszDest, size_t cbLen, const TCHAR *ext)
+void  CMsnProto::MSN_GetAvatarFileName(HANDLE hContact, char* pszDest, size_t cbLen, const char *ext)
 {
 	size_t tPathLen;
 
 	InitCustomFolders();
 
-	TCHAR* path = (TCHAR*)alloca(cbLen * sizeof(TCHAR));
-	if (hMSNAvatarsFolder == NULL || FoldersGetCustomPathT(hMSNAvatarsFolder, path, (int)cbLen, _T("")))
+	char* path = (char*)alloca(cbLen);
+	if (hMSNAvatarsFolder == NULL || FoldersGetCustomPath(hMSNAvatarsFolder, path, (int)cbLen, ""))
 	{
-		TCHAR *tmpPath = Utils_ReplaceVarsT(_T("%miranda_avatarcache%"));
-		TCHAR *sztModuleName = mir_a2t(m_szModuleName);
-		tPathLen = mir_sntprintf(pszDest, cbLen, _T("%s\\%s"), tmpPath, sztModuleName);
-		mir_free(sztModuleName);
+		char *tmpPath = Utils_ReplaceVars("%miranda_avatarcache%");
+		tPathLen = mir_snprintf(pszDest, cbLen,"%s\\%s", tmpPath, m_szModuleName);
 		mir_free(tmpPath);
 	}
 	else {
-		_tcscpy(pszDest, path);
-		tPathLen = _tcslen(pszDest);
+		strcpy(pszDest, path);
+		tPathLen = strlen(pszDest);
 	}
 
-	if (_taccess(pszDest, 0))
-		MSN_CallService(MS_UTILS_CREATEDIRTREET, 0, (LPARAM)pszDest);
+	if (_access(pszDest, 0))
+		MSN_CallService(MS_UTILS_CREATEDIRTREE, 0, (LPARAM)pszDest);
 
 	size_t tPathLen2 = tPathLen;
 	if (hContact != NULL) 
@@ -252,9 +258,7 @@ void  CMsnProto::MSN_GetAvatarFileName(HANDLE hContact, TCHAR* pszDest, size_t c
 			char* szAvatarHash = MSN_GetAvatarHash(dbv.pszVal);
 			if (szAvatarHash != NULL)
 			{
-				TCHAR *sztAvatarHash = mir_a2t(szAvatarHash);
-				tPathLen += mir_sntprintf(pszDest + tPathLen, cbLen - tPathLen, _T("\\%s."), sztAvatarHash);
-				mir_free(sztAvatarHash);
+				tPathLen += mir_snprintf(pszDest + tPathLen, cbLen - tPathLen, "\\%s.", szAvatarHash);
 				mir_free(szAvatarHash);
 			}
 			else
@@ -269,91 +273,86 @@ void  CMsnProto::MSN_GetAvatarFileName(HANDLE hContact, TCHAR* pszDest, size_t c
 			if (cbLen) pszDest[0] = 0;
 		}
 	}
-	else
-	{
-		TCHAR *sztModuleName = mir_a2t(m_szModuleName);
-		tPathLen += mir_sntprintf(pszDest + tPathLen, cbLen - tPathLen, _T("\\%s avatar."), sztModuleName);
-		mir_free(sztModuleName);
-	}
+	else 
+		tPathLen += mir_snprintf(pszDest + tPathLen, cbLen - tPathLen, "\\%s avatar.", m_szModuleName);
 
 	if (ext == NULL)
 	{
-		mir_sntprintf(pszDest + tPathLen, cbLen - tPathLen, _T("*"));
+		mir_snprintf(pszDest + tPathLen, cbLen - tPathLen, "*");
 
 		bool found = false;
-		_tfinddata_t c_file;
-		long hFile = _tfindfirst(pszDest, &c_file);
+		_finddata_t c_file;
+		long hFile = _findfirst(pszDest, &c_file);
 		if (hFile > -1L)
 		{
 			do {
-				if (_tcsrchr(c_file.name, '.'))
+				if (strrchr(c_file.name, '.'))
 				{
-					mir_sntprintf(pszDest + tPathLen2, cbLen - tPathLen2, _T("\\%s"), c_file.name);
+					mir_snprintf(pszDest + tPathLen2, cbLen - tPathLen2, "\\%s", c_file.name);
 					found = true;
 				}
-			} while(_tfindnext(hFile, &c_file) == 0);
+			} while(_findnext(hFile, &c_file) == 0);
 			_findclose( hFile );
 		}
 		
 		if (!found) pszDest[0] = 0;
 	}
 	else
-		mir_sntprintf(pszDest + tPathLen, cbLen - tPathLen, ext);
+		mir_snprintf(pszDest + tPathLen, cbLen - tPathLen, ext);
 }
 
-int MSN_GetImageFormat(void* buf, const TCHAR** ext)
+int MSN_GetImageFormat(void* buf, const char** ext)
 {
 	int res;
 	if (*(unsigned short*)buf == 0xd8ff)
 	{
 		res =  PA_FORMAT_JPEG;
-		*ext = _T("jpg"); 
+		*ext = "jpg"; 
 	}
 	else if (*(unsigned short*)buf == 0x4d42)
 	{
 		res = PA_FORMAT_BMP;
-		*ext = _T("bmp"); 
+		*ext = "bmp"; 
 	}
 	else if (*(unsigned*)buf == 0x474e5089)
 	{
 		res = PA_FORMAT_PNG;
-		*ext = _T("png"); 
+		*ext = "png"; 
 	}
 	else if (*(unsigned*)buf == 0x38464947)
 	{
 		res = PA_FORMAT_GIF;
-		*ext = _T("gif"); 
+		*ext = "gif"; 
 	}
 	else 
 	{
 		res = PA_FORMAT_UNKNOWN;
-		*ext = _T("unk");
+		*ext = "unk";
 	}
 	return res;
 }
 
-int MSN_GetImageFormat(const TCHAR* file)
+int MSN_GetImageFormat(const char* file)
 {
-   const TCHAR *ext = _tcsrchr(file, '.');
+   const char *ext = strrchr(file, '.');
    if (ext == NULL) 
 	   return PA_FORMAT_UNKNOWN;
-   if (_tcsicmp(ext, _T(".gif")) == 0)
+   if (strcmp(ext, ".gif") == 0)
 	   return PA_FORMAT_GIF;
-   else if (_tcsicmp(ext, _T(".bmp")) == 0)
+   else if (strcmp(ext, ".bmp") == 0)
 	   return PA_FORMAT_BMP;
-   else if (_tcsicmp(ext, _T(".png")) == 0)
+   else if (strcmp(ext, ".png") == 0)
 	   return PA_FORMAT_PNG;
    else
 	   return PA_FORMAT_JPEG;
 }
 
-int  CMsnProto::MSN_SetMyAvatar(const TCHAR* sztFname, void* pData, size_t cbLen)
+
+int  CMsnProto::MSN_SetMyAvatar(const char* szFname, void* pData, size_t cbLen)
 {
 	mir_sha1_ctx sha1ctx;
 	BYTE sha1c[MIR_SHA1_HASH_SIZE], sha1d[MIR_SHA1_HASH_SIZE];
 	char szSha1c[41], szSha1d[41];
-
-	char *szFname = mir_utf8encodeT(sztFname);
 
 	mir_sha1_init(&sha1ctx);
 	mir_sha1_append(&sha1ctx, (mir_sha1_byte_t*)pData, (int)cbLen);
@@ -404,23 +403,22 @@ int  CMsnProto::MSN_SetMyAvatar(const TCHAR* sztFname, void* pData, size_t cbLen
 
 	char* szBuffer = ezxml_toxml(xmlp, false);
 	ezxml_free(xmlp);
-	mir_free(szFname);
 
 	char szEncodedBuffer[2000];
 	UrlEncode(szBuffer, szEncodedBuffer, sizeof(szEncodedBuffer));
 	free(szBuffer);
 
-	const TCHAR *szExt;
+	const char *szExt;
 	int fmt = MSN_GetImageFormat(pData, &szExt);
 	if (fmt == PA_FORMAT_UNKNOWN) return fmt;
 
-	TCHAR szFileName[MAX_PATH];
+	char szFileName[MAX_PATH];
 	MSN_GetAvatarFileName(NULL, szFileName, SIZEOF(szFileName), NULL);
-	_tremove(szFileName);
+	remove(szFileName);
 
 	MSN_GetAvatarFileName(NULL, szFileName, SIZEOF(szFileName), szExt);
 
-	int fileId = _topen(szFileName, _O_CREAT | _O_TRUNC | _O_WRONLY | O_BINARY, _S_IREAD | _S_IWRITE);
+	int fileId = _open(szFileName, _O_CREAT | _O_TRUNC | _O_WRONLY | O_BINARY,  _S_IREAD | _S_IWRITE);
 	if (fileId >= 0) 
 	{
 		_write(fileId, pData, (unsigned)cbLen);
@@ -437,7 +435,11 @@ int  CMsnProto::MSN_SetMyAvatar(const TCHAR* sztFname, void* pData, size_t cbLen
 		mir_free(szAvatarHash);
 	}
 	else
-		MSN_ShowError("Cannot set avatar. File '%s' could not be created/overwritten", szFileName);
+	{
+		TCHAR *fname = mir_a2t(szFileName);
+		MSN_ShowError("Cannot set avatar. File '%s' could not be created/overwritten", fname);
+		mir_free(fname);
+	}
 
 	return fmt;
 }
@@ -445,48 +447,37 @@ int  CMsnProto::MSN_SetMyAvatar(const TCHAR* sztFname, void* pData, size_t cbLen
 /////////////////////////////////////////////////////////////////////////////////////////
 // MSN_GetCustomSmileyFileName - gets a file name for an contact's custom smiley
 
-void  CMsnProto::MSN_GetCustomSmileyFileName(HANDLE hContact, TCHAR* pszDest, size_t cbLen, const char* SmileyName, int type)
+void  CMsnProto::MSN_GetCustomSmileyFileName(HANDLE hContact, char* pszDest, size_t cbLen, const char* SmileyName, int type)
 {
 	size_t tPathLen;
 
 	InitCustomFolders();
 
-	TCHAR* path = (TCHAR*)alloca(cbLen * sizeof(TCHAR));
-	if (hCustomSmileyFolder == NULL || FoldersGetCustomPathT(hCustomSmileyFolder, path, (int)cbLen, _T(""))) 
+	char* path = (char*)alloca(cbLen);
+	if (hCustomSmileyFolder == NULL || FoldersGetCustomPath(hCustomSmileyFolder, path, (int)cbLen, "")) 
 	{
-		TCHAR *tmpPath = Utils_ReplaceVarsT(_T("%miranda_userdata%"));
-		TCHAR *tszModuleName = mir_a2t(m_szModuleName);
-		tPathLen = mir_sntprintf(pszDest, cbLen, _T("%s\\%s\\CustomSmiley"), tmpPath, tszModuleName);
-		mir_free(tszModuleName);
+		char *tmpPath = Utils_ReplaceVars("%miranda_userdata%");
+		tPathLen = mir_snprintf(pszDest, cbLen, "%s\\%s\\CustomSmiley", tmpPath, m_szModuleName);
 		mir_free(tmpPath);
 	}
 	else 
 	{
-		_tcscpy(pszDest, path);
-		tPathLen = _tcslen(pszDest);
+		strcpy(pszDest, path);
+		tPathLen = strlen(pszDest);
 	}
 
 	if (hContact != NULL) 
 	{
-		DBVARIANT dbv = {0};
-		if (getTString(hContact, "e-mail", &dbv))
-		{
-			dbv.type = DBVT_ASCIIZ;
-			dbv.ptszVal = (TCHAR*)mir_alloc(11);
-			_ui64tot((UINT_PTR)hContact, dbv.ptszVal, 10);
-		}
+		char szEmail[MSN_MAX_EMAIL_LEN];
+		if (getStaticString(hContact, "e-mail", szEmail, sizeof(szEmail)))
+			_ui64toa((UINT_PTR)hContact, szEmail, 10);
 		
-		tPathLen += mir_sntprintf(pszDest + tPathLen, cbLen - tPathLen, _T("\\%s"), dbv.ptszVal);
-		DBFreeVariant(&dbv);
+		tPathLen += mir_snprintf(pszDest + tPathLen, cbLen - tPathLen, "\\%s", szEmail);
 	}
-	else
-	{
-		TCHAR *tszModuleName = mir_a2t(m_szModuleName);
-		tPathLen += mir_sntprintf(pszDest + tPathLen, cbLen - tPathLen, _T("\\%s"), tszModuleName);
-		mir_free(tszModuleName);
-	}
+	else 
+		tPathLen += mir_snprintf(pszDest + tPathLen, cbLen - tPathLen, "\\%s", m_szModuleName);
 		
-	bool exist = _taccess(pszDest, 0) == 0;
+	bool exist = _access(pszDest, 0) == 0;
 	
 	if (type == 0)
 	{
@@ -495,12 +486,10 @@ void  CMsnProto::MSN_GetCustomSmileyFileName(HANDLE hContact, TCHAR* pszDest, si
 	}
 
 	if (!exist)
-		MSN_CallService(MS_UTILS_CREATEDIRTREET, 0, (LPARAM)pszDest);
+		MSN_CallService(MS_UTILS_CREATEDIRTREE, 0, (LPARAM)pszDest);
 
-	TCHAR *sztSmileyName = mir_a2t(SmileyName);
-	mir_sntprintf(pszDest + tPathLen, cbLen - tPathLen, _T("\\%s.%s"), sztSmileyName,
-		type == MSN_APPID_CUSTOMSMILEY ? _T("png") : _T("gif"));
-	mir_free(sztSmileyName);
+	mir_snprintf(pszDest + tPathLen, cbLen - tPathLen, "\\%s.%s", SmileyName,
+		type == MSN_APPID_CUSTOMSMILEY ? "png" : "gif");
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////

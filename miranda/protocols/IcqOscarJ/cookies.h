@@ -125,7 +125,7 @@ struct cookie_avatar
   unsigned int hashlen;
   BYTE *hash;
   unsigned int cbData;
-  TCHAR *szFile;
+  char *szFile;
 };
 
 

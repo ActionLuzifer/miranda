@@ -28,9 +28,7 @@ enum SEARCHENGINES {
 	SEARCHENGINE_BING = 2,
 	SEARCHENGINE_YAHOO = 3,
 	SEARCHENGINE_WIKIPEDIA = 4,
-	SEARCHENGINE_GOOGLE_MAPS = 5,
-	SEARCHENGINE_GOOGLE_TRANSLATE = 6,
-	SEARCHENGINE_FOODNETWORK=7
+	SEARCHENGINE_FOODNETWORK=5
 };
 
 HANDLE HookEvent_Ex(const char *name, MIRANDAHOOK hook);
@@ -46,11 +44,9 @@ extern char* t2acp(const TCHAR* src, int cp);
 extern char* u2a( const wchar_t* src, int codepage );
 extern wchar_t* a2u( const char* src, int codepage );
 extern wchar_t *a2w(const char *src, int len);
-extern TCHAR *limitText(TCHAR *text, int limit);
 extern void logInfo(const char *fmt, ...);
 extern int GetRichTextLength(HWND hwnd, int codepage, BOOL inBytes);
 extern TCHAR* GetRichText(HWND hwnd, int codepage);
-extern TCHAR *GetRichEditSelection(HWND hwnd);
 extern char* GetRichTextRTF(HWND hwnd);
 extern char* GetRichTextEncoded(HWND hwnd, int codepage);
 extern TCHAR *GetRichTextWord(HWND hwnd, POINTL *pt);

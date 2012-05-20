@@ -219,19 +219,15 @@ static int NetlibInitSocks5Connection(struct NetlibConnection *nlc,struct Netlib
 		int nHostLen;
 		DWORD hostIP;
 
-		if (nlc->dnsThroughProxy) 
-		{
-			hostIP = inet_addr(nloc->szHost);
-			if(hostIP == INADDR_NONE)
-				nHostLen = lstrlenA(nloc->szHost)+1;
-			else nHostLen = 4;
+		if(nlc->dnsThroughProxy) {
+			if((hostIP=inet_addr(nloc->szHost))==INADDR_NONE)
+				nHostLen=lstrlenA(nloc->szHost)+1;
+			else nHostLen=4;
 		}
-		else 
-		{
-			hostIP = DnsLookup(nlu,nloc->szHost);
-			if (hostIP == 0)
+		else {
+			if((hostIP=DnsLookup(nlu,nloc->szHost))==0)
 				return 0;
-			nHostLen = 4;
+			nHostLen=4;
 		}
 		pInit=(PBYTE)mir_alloc(6+nHostLen);
 		pInit[0]=5;   //SOCKS5
@@ -374,7 +370,8 @@ static void FreePartiallyInitedConnection(struct NetlibConnection *nlc)
 	SetLastError(dwOriginalLastError);
 }
 
-static bool my_connectIPv4(NetlibConnection *nlc, NETLIBOPENCONNECTION * nloc)
+
+static int my_connect(NetlibConnection *nlc, NETLIBOPENCONNECTION * nloc)
 {
 	int rc = 0, retrycnt = 0;
 	u_long notblocking = 1;	
@@ -395,326 +392,98 @@ static bool my_connectIPv4(NetlibConnection *nlc, NETLIBOPENCONNECTION * nloc)
 		ReleaseMutex(hConnectionOpenMutex);
 
 		// might of died in between the wait
-		if (Miranda_Terminated()) return false;
+		if (Miranda_Terminated()) return SOCKET_ERROR;
 	}
-
-	PHOSTENT he;
-	SOCKADDR_IN sin = {0};
-	sin.sin_family = AF_INET;
-
-	if (nlc->proxyType)
-	{
-		if (!nlc->szProxyServer) return false;
-
-		if (nloc)
-			NetlibLogf(nlc->nlu,"(%p) Connecting to proxy %s:%d for %s:%d ....", nlc, nlc->szProxyServer, nlc->wProxyPort, nloc->szHost, nloc->wPort);
-		else
-			NetlibLogf(nlc->nlu,"(%p) Connecting to proxy %s:%d ....", nlc, nlc->szProxyServer, nlc->wProxyPort);
-
-		sin.sin_port = htons(nlc->wProxyPort);
-		he = gethostbyname(nlc->szProxyServer);
-	}
-	else
-	{
-		if (!nloc || !nloc->szHost || nloc->szHost[0] == '[') return false;
-		NetlibLogf(nlc->nlu,"(%p) Connecting to server %s:%d....", nlc, nloc->szHost, nloc->wPort);
-
-		sin.sin_port = htons(nloc->wPort);
-		he = gethostbyname(nloc->szHost);
-	}
-
-	for (char** har = he->h_addr_list; *har && !Miranda_Terminated(); ++har)
-	{
-		sin.sin_addr.s_addr = *(u_long*)*har;
-
-		char* szIp = NetlibAddressToString((PSOCKADDR_INET)&sin);
-		NetlibLogf(nlc->nlu,"(%p) Connecting to ip %s ....", nlc, szIp);
-		mir_free(szIp);
 
 retry:
-		nlc->s = socket(AF_INET, nloc->flags & NLOCF_UDP ? SOCK_DGRAM : SOCK_STREAM, 0);
-		if (nlc->s == INVALID_SOCKET) return false;
+	nlc->s = socket(AF_INET,nloc->flags & NLOCF_UDP ? SOCK_DGRAM : SOCK_STREAM, 0);
+	if (nlc->s == INVALID_SOCKET) return SOCKET_ERROR;
 
-		// return the socket to non blocking
-		if (ioctlsocket(nlc->s, FIONBIO, &notblocking) != 0) return false;
+	// return the socket to non blocking
+	if (ioctlsocket(nlc->s, FIONBIO, &notblocking) != 0) return SOCKET_ERROR;
 
-		if (nlc->nlu->settings.specifyOutgoingPorts && nlc->nlu->settings.szOutgoingPorts  && nlc->nlu->settings.szOutgoingPorts[0]) 
-		{
-			if (!BindSocketToPort(nlc->nlu->settings.szOutgoingPorts, nlc->s, INVALID_SOCKET, &nlc->nlu->inportnum))
-				NetlibLogf(nlc->nlu,"Netlib connect: Not enough ports for outgoing connections specified");
-		} 
+	if (nlc->nlu->settings.specifyOutgoingPorts && nlc->nlu->settings.szOutgoingPorts  && nlc->nlu->settings.szOutgoingPorts[0]) 
+	{
+		if (!BindSocketToPort(nlc->nlu->settings.szOutgoingPorts, nlc->s, &nlc->nlu->inportnum))
+			NetlibLogf(nlc->nlu,"Netlib connect: Not enough ports for outgoing connections specified");
+	} 
 
-		// try a connect
-		if (connect(nlc->s, (LPSOCKADDR)&sin, sizeof(sin)) == 0) 
-		{
-			rc = 0;
+	// try a connect
+	if (connect(nlc->s, (LPSOCKADDR)&nlc->sinProxy, sizeof(nlc->sinProxy)) == 0) 
+	{
+		goto unblock;
+	}
+
+	// didn't work, was it cos of nonblocking?
+	if (WSAGetLastError() != WSAEWOULDBLOCK) 
+	{
+		rc = SOCKET_ERROR;
+		goto unblock;
+	}
+
+	for (;;) 
+	{		
+		fd_set r, w, e;
+		FD_ZERO(&r); FD_ZERO(&w); FD_ZERO(&e);
+		FD_SET(nlc->s, &r);
+		FD_SET(nlc->s, &w);
+		FD_SET(nlc->s, &e);		
+		if ((rc = select(0, &r, &w, &e, &tv)) == SOCKET_ERROR) 
 			break;
-		}
 
-		// didn't work, was it cos of nonblocking?
-		if (WSAGetLastError() != WSAEWOULDBLOCK) 
+		if (rc > 0) 
+		{			
+			if (FD_ISSET(nlc->s, &w))
+			{
+				// connection was successful
+				rc = 0;
+			}
+			if (FD_ISSET(nlc->s, &r)) 
+			{
+				// connection was closed
+				rc = SOCKET_ERROR;
+				lasterr = WSAECONNRESET;
+			}
+			if (FD_ISSET(nlc->s, &e)) 
+			{
+				// connection failed.
+				int len = sizeof(lasterr);
+				rc = SOCKET_ERROR;
+				getsockopt(nlc->s, SOL_SOCKET, SO_ERROR, (char*)&lasterr, &len);
+				if (lasterr == WSAEADDRINUSE && ++retrycnt <= 2) 
+				{
+					closesocket(nlc->s);
+					goto retry;
+				}
+			}
+			break;
+		} 
+		else if (Miranda_Terminated()) 
 		{
 			rc = SOCKET_ERROR;
-
-			closesocket(nlc->s);
-			nlc->s = INVALID_SOCKET;
-			continue;
-		}
-
-		for (;;) 
-		{		
-			fd_set r, w, e;
-			FD_ZERO(&r); FD_ZERO(&w); FD_ZERO(&e);
-			FD_SET(nlc->s, &r);
-			FD_SET(nlc->s, &w);
-			FD_SET(nlc->s, &e);
-			if ((rc = select(0, &r, &w, &e, &tv)) == SOCKET_ERROR) 
-				break;
-
-			if (rc > 0) 
-			{			
-				if (FD_ISSET(nlc->s, &w))
-				{
-					// connection was successful
-					rc = 0;
-				}
-				if (FD_ISSET(nlc->s, &r)) 
-				{
-					// connection was closed
-					rc = SOCKET_ERROR;
-					lasterr = WSAECONNRESET;
-				}
-				if (FD_ISSET(nlc->s, &e)) 
-				{
-					// connection failed.
-					int len = sizeof(lasterr);
-					rc = SOCKET_ERROR;
-					getsockopt(nlc->s, SOL_SOCKET, SO_ERROR, (char*)&lasterr, &len);
-					if (lasterr == WSAEADDRINUSE && ++retrycnt <= 2) 
-					{
-						closesocket(nlc->s);
-						goto retry;
-					}
-				}
-				break;
-			} 
-			else if (Miranda_Terminated()) 
-			{
-				rc = SOCKET_ERROR;
-				lasterr = ERROR_TIMEOUT;
-				break;
-			} 
-			else if (nloc->cbSize == sizeof(NETLIBOPENCONNECTION) && nloc->flags & NLOCF_V2 && 
-				nloc->waitcallback != NULL && nloc->waitcallback(&dwTimeout) == 0)
-			{
-				rc = SOCKET_ERROR;
-				lasterr = ERROR_TIMEOUT;
-				break;
-			}
-			if (--dwTimeout == 0) 
-			{
-				rc = SOCKET_ERROR;
-				lasterr = ERROR_TIMEOUT;
-				break;
-			}
-		}
-
-		if (rc == 0) break;
-
-		closesocket(nlc->s);
-		nlc->s = INVALID_SOCKET;
-	}
-
-	notblocking = 0;
-	if (nlc->s != INVALID_SOCKET) ioctlsocket(nlc->s, FIONBIO, &notblocking);
-	if (rc && lasterr) SetLastError(lasterr);
-	return rc == 0;
-}
-
-static bool my_connectIPv6(NetlibConnection *nlc, NETLIBOPENCONNECTION * nloc)
-{
-	int rc = SOCKET_ERROR, retrycnt = 0;
-	u_long notblocking = 1;	
-	DWORD lasterr = 0;	
-	static const TIMEVAL tv = { 1, 0 };
-
-	unsigned int dwTimeout = (nloc->cbSize == sizeof(NETLIBOPENCONNECTION) && nloc->flags & NLOCF_V2) ? nloc->timeout : 0;
-	// if dwTimeout is zero then its an old style connection or new with a 0 timeout, select() will error quicker anyway
-	if (dwTimeout == 0) dwTimeout = 30;
-
-	// this is for XP SP2 where there is a default connection attempt limit of 10/second
-	if (connectionTimeout)
-	{
-		WaitForSingleObject(hConnectionOpenMutex, 10000);
-		int waitdiff = GetTickCount() - g_LastConnectionTick;
-		if (waitdiff < connectionTimeout) SleepEx(connectionTimeout, TRUE);
-		g_LastConnectionTick = GetTickCount();
-		ReleaseMutex(hConnectionOpenMutex);
-
-		// might of died in between the wait
-		if (Miranda_Terminated()) return false;
-	}
-
-	char szPort[6];
-	addrinfo *air = NULL, *ai, hints = {0};
-
-	hints.ai_family = AF_UNSPEC;
-
-	if (nloc->flags & NLOCF_UDP)
-	{
-		hints.ai_socktype = SOCK_DGRAM;
-		hints.ai_protocol = IPPROTO_UDP;
-	}
-	else
-	{
-		hints.ai_socktype = SOCK_STREAM;
-		hints.ai_protocol = IPPROTO_TCP;
-	}
-
-	if (nlc->proxyType)
-	{
-		if (!nlc->szProxyServer) return false;
-
-		if (nloc)
-			NetlibLogf(nlc->nlu,"(%p) Connecting to proxy %s:%d for %s:%d ....", nlc, nlc->szProxyServer, nlc->wProxyPort, nloc->szHost, nloc->wPort);
-		else
-			NetlibLogf(nlc->nlu,"(%p) Connecting to proxy %s:%d ....", nlc, nlc->szProxyServer, nlc->wProxyPort);
-
-		_itoa(nlc->wProxyPort, szPort, 10);
-		if (MyGetaddrinfo(nlc->szProxyServer, szPort, &hints, &air))
-		{
-			NetlibLogf(nlc->nlu,"%s %d: %s() for host %s failed (%u)",__FILE__,__LINE__,"getaddrinfo", nlc->szProxyServer, WSAGetLastError());
-			return false;
-		}
-	}
-	else
-	{
-		if (!nloc || !nloc->szHost) return false;
-		NetlibLogf(nlc->nlu,"(%p) Connecting to server %s:%d....", nlc, nloc->szHost, nloc->wPort);
-
-		_itoa(nlc->nloc.wPort, szPort, 10);
-
-		if (MyGetaddrinfo(nlc->nloc.szHost, szPort, &hints, &air))
-		{
-			NetlibLogf(nlc->nlu,"%s %d: %s() for host %s failed (%u)",__FILE__,__LINE__,"getaddrinfo", nlc->nloc.szHost, WSAGetLastError());
-			return false;
-		}
-	}
-
-	for (ai = air; ai && !Miranda_Terminated(); ai = ai->ai_next)
-	{
-		char* szIp = NetlibAddressToString((PSOCKADDR_INET)ai->ai_addr);
-		NetlibLogf(nlc->nlu,"(%p) Connecting to ip %s ....", nlc, szIp);
-		mir_free(szIp);
-retry:
-		nlc->s = socket(ai->ai_family, ai->ai_socktype, ai->ai_protocol);
-		if (nlc->s == INVALID_SOCKET) return false;
-
-		// return the socket to non blocking
-		if (ioctlsocket(nlc->s, FIONBIO, &notblocking) != 0) return false;
-
-		if (nlc->nlu->settings.specifyOutgoingPorts && nlc->nlu->settings.szOutgoingPorts  && nlc->nlu->settings.szOutgoingPorts[0]) 
-		{
-			SOCKET s = ai->ai_family == AF_INET ? nlc->s : INVALID_SOCKET;
-			SOCKET s6 = ai->ai_family == AF_INET6 ? nlc->s : INVALID_SOCKET;
-			if (!BindSocketToPort(nlc->nlu->settings.szOutgoingPorts, s, s6, &nlc->nlu->inportnum))
-				NetlibLogf(nlc->nlu,"Netlib connect: Not enough ports for outgoing connections specified");
-		} 
-
-		// try a connect
-		if (connect(nlc->s, ai->ai_addr, (int)ai->ai_addrlen) == 0) 
-		{
-			rc = 0;
+			lasterr = ERROR_TIMEOUT;
 			break;
-		}
-
-		// didn't work, was it cos of nonblocking?
-		if (WSAGetLastError() != WSAEWOULDBLOCK) 
+		} 
+		else if (nloc->cbSize == sizeof(NETLIBOPENCONNECTION) && nloc->flags & NLOCF_V2 && 
+			nloc->waitcallback != NULL && nloc->waitcallback(&dwTimeout) == 0)
 		{
 			rc = SOCKET_ERROR;
-
-			closesocket(nlc->s);
-			nlc->s = INVALID_SOCKET;
-			continue;
+			lasterr = ERROR_TIMEOUT;
+			break;
 		}
-
-		for (;;) // timeout loop 
-		{		
-			fd_set r, w, e;
-			FD_ZERO(&r); FD_ZERO(&w); FD_ZERO(&e);
-			FD_SET(nlc->s, &r);
-			FD_SET(nlc->s, &w);
-			FD_SET(nlc->s, &e);		
-			if ((rc = select(0, &r, &w, &e, &tv)) == SOCKET_ERROR) 
-				break;
-
-			if (rc > 0) 
-			{			
-				if (FD_ISSET(nlc->s, &w))
-				{
-					// connection was successful
-					rc = 0;
-					lasterr = 0;
-				}
-				if (FD_ISSET(nlc->s, &r)) 
-				{
-					// connection was closed
-					rc = SOCKET_ERROR;
-					lasterr = WSAECONNRESET;
-				}
-				if (FD_ISSET(nlc->s, &e)) 
-				{
-					// connection failed.
-					int len = sizeof(lasterr);
-					rc = SOCKET_ERROR;
-					getsockopt(nlc->s, SOL_SOCKET, SO_ERROR, (char*)&lasterr, &len);
-					if (lasterr == WSAEADDRINUSE && ++retrycnt <= 2) 
-					{
-						closesocket(nlc->s);
-						nlc->s = INVALID_SOCKET;
-						goto retry;
-					}
-				}
-				break;
-			} 
-			else if (Miranda_Terminated()) 
-			{
-				rc = SOCKET_ERROR;
-				lasterr = ERROR_TIMEOUT;
-				break;
-			} 
-			else if (nloc->cbSize == sizeof(NETLIBOPENCONNECTION) && nloc->flags & NLOCF_V2 && 
-				nloc->waitcallback != NULL && nloc->waitcallback(&dwTimeout) == 0)
-			{
-				rc = SOCKET_ERROR;
-				lasterr = ERROR_TIMEOUT;
-				break;
-			}
-			if (--dwTimeout == 0) 
-			{
-				rc = SOCKET_ERROR;
-				lasterr = ERROR_TIMEOUT;
-				break;
-			}
+		if (--dwTimeout == 0) 
+		{
+			rc = SOCKET_ERROR;
+			lasterr = ERROR_TIMEOUT;
+			break;
 		}
-
-		if (rc == 0) break;
-
-		closesocket(nlc->s);
-		nlc->s = INVALID_SOCKET;
 	}
 
-	MyFreeaddrinfo(air);
-
+unblock:	
 	notblocking = 0;
-	if (nlc->s != INVALID_SOCKET) ioctlsocket(nlc->s, FIONBIO, &notblocking);
-	if (rc && lasterr) SetLastError(lasterr);
-	return rc == 0;
-}
-
-static bool my_connect(NetlibConnection *nlc, NETLIBOPENCONNECTION * nloc)
-{
-	return MyGetaddrinfo && MyFreeaddrinfo ? my_connectIPv6(nlc, nloc) : my_connectIPv4(nlc, nloc);
+	ioctlsocket(nlc->s, FIONBIO, &notblocking);
+	if (lasterr) SetLastError(lasterr);
+	return rc;
 }
 
 static int NetlibHttpFallbackToDirect(struct NetlibConnection *nlc, struct NetlibUser *nlu, NETLIBOPENCONNECTION *nloc)
@@ -722,13 +491,18 @@ static int NetlibHttpFallbackToDirect(struct NetlibConnection *nlc, struct Netli
 	NetlibDoClose(nlc, true);
 
 	NetlibLogf(nlu,"Fallback to direct connection");
+	NetlibLogf(nlu,"(%p) Connecting to server %s:%d....", nlc, nloc->szHost, nloc->wPort);
 
 	nlc->proxyAuthNeeded = false;
 	nlc->proxyType = 0;
 	mir_free(nlc->szProxyServer); nlc->szProxyServer = NULL;
-	if (!my_connect(nlc, nloc)) 
+	nlc->sinProxy.sin_family = AF_INET;
+	nlc->sinProxy.sin_port = htons(nloc->wPort);
+	nlc->sinProxy.sin_addr.S_un.S_addr = DnsLookup(nlu, nloc->szHost);
+	if (nlc->sinProxy.sin_addr.S_un.S_addr == 0 || my_connect(nlc, nloc) == SOCKET_ERROR) 
 	{
-		NetlibLogf(nlu, "%s %d: %s() failed (%u)", __FILE__, __LINE__, "connect", WSAGetLastError());
+		if (nlc->sinProxy.sin_addr.S_un.S_addr)
+			NetlibLogf(nlu, "%s %d: %s() failed (%u)", __FILE__, __LINE__, "connect", WSAGetLastError());
 		return false;
 	}
 	return true;
@@ -739,6 +513,7 @@ bool NetlibDoConnect(NetlibConnection *nlc)
 	NETLIBOPENCONNECTION *nloc = &nlc->nloc;
 	NetlibUser *nlu = nlc->nlu;
 
+	nlc->sinProxy.sin_family = AF_INET;
 	mir_free(nlc->szProxyServer); nlc->szProxyServer = NULL;
 
 	bool usingProxy = false, forceHttps = false;
@@ -763,7 +538,10 @@ bool NetlibDoConnect(NetlibConnection *nlc)
 retry:
 	if (usingProxy) 
 	{
-		if (!my_connect(nlc, nloc)) 
+		NetlibLogf(nlu,"(%p) Resolving proxy %s:%d for %s:%d ....", nlc, nlc->szProxyServer, nlc->wProxyPort, nloc->szHost, nloc->wPort);
+		nlc->sinProxy.sin_port = htons(nlc->wProxyPort);
+		nlc->sinProxy.sin_addr.S_un.S_addr = DnsLookup(nlu, nlc->szProxyServer);
+		if (nlc->sinProxy.sin_addr.S_un.S_addr == 0) 
 		{
 			usingProxy = false;
 			nlc->proxyType = 0;
@@ -771,10 +549,16 @@ retry:
 	}
 	if (!usingProxy)
 	{
-		my_connect(nlc, nloc);
+		NetlibLogf(nlu,"(%p) Connecting to server %s:%d....", nlc, nloc->szHost, nloc->wPort);
+		nlc->sinProxy.sin_port = htons(nloc->wPort);
+		nlc->sinProxy.sin_addr.S_un.S_addr = DnsLookup(nlu, nloc->szHost);
 	}
+	else
+		NetlibLogf(nlu,"(%p) Connecting to proxy %s:%d for %s:%d ....", nlc, nlc->szProxyServer, nlc->wProxyPort, nloc->szHost, nloc->wPort);
 
-	if (nlc->s == INVALID_SOCKET) 
+	if (nlc->sinProxy.sin_addr.S_un.S_addr == 0) return false;
+
+	if (my_connect(nlc, nloc) == SOCKET_ERROR) 
 	{
 		if (usingProxy && (nlc->proxyType == PROXYTYPE_HTTPS || nlc->proxyType == PROXYTYPE_HTTP))
 		{
@@ -867,36 +651,34 @@ retry:
 bool NetlibReconnect(NetlibConnection *nlc)
 {
 	char buf[4];
-	bool opened = nlc->s != INVALID_SOCKET;  
+	bool opened;  
 
-	if (opened)
+	switch (WaitUntilReadable(nlc->s, 0, true))
 	{
-		switch (WaitUntilReadable(nlc->s, 0, true))
-		{
-		case SOCKET_ERROR:
-			opened = false;
-			break;
+	case SOCKET_ERROR:
+		opened = false;
+		break;
 
-		case 0:
-			opened = true;
-			break;
+	case 0:
+		opened = true;
+		break;
 
-		case 1:
-			opened = recv(nlc->s, buf, 1, MSG_PEEK) > 0;
-			break;
-		}
-
-		if (!opened)
-			NetlibDoClose(nlc, true);
+	case 1:
+		opened = recv(nlc->s, buf, 1, MSG_PEEK) > 0;
+		break;
 	}
 
 	if (!opened)
 	{
+		NetlibDoClose(nlc, true);
+
 		if (Miranda_Terminated()) return false;
+
 		if (nlc->usingHttpGateway)
 		{
 			nlc->proxyAuthNeeded = true;
-			return my_connect(nlc, &nlc->nloc);
+			NetlibLogf(nlc->nlu,"(%p) Connecting....", nlc);
+			return my_connect(nlc, &nlc->nloc) == 0;
 		}
 		else
 			return NetlibDoConnect(nlc);

@@ -464,7 +464,8 @@ void CIcqProto::handleServiceFam(BYTE *pBuffer, WORD wBufferLength, snac_header 
 				  { // this refreshes avatar state - it used to work automatically, but now it does not
 					  if (getSettingByte(NULL, "ForceOurAvatar", 0))
 					  { // keep our avatar
-						  TCHAR *file = GetOwnAvatarFileName();
+						  char *file = GetOwnerAvatarFileName();
+
 						  SetMyAvatar(0, (LPARAM)file);
 						  SAFE_FREE(&file);
 					  }

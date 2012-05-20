@@ -2,7 +2,7 @@
 
 Miranda IM: the free IM client for Microsoft* Windows*
 
-Copyright 2000-2012 Miranda ICQ/IM project,
+Copyright 2000-2009 Miranda ICQ/IM project,
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
 
@@ -227,8 +227,6 @@ static INT_PTR NetlibSetUserSettings(WPARAM wParam,LPARAM lParam)
 
 void NetlibDoClose(NetlibConnection *nlc, bool noShutdown)
 {
-	if (nlc->s == INVALID_SOCKET) return;
-
 	NetlibLogf(nlc->nlu, "(%p:%u) Connection closed internal", nlc, nlc->s);
 	if (nlc->hSsl)
 	{
@@ -236,17 +234,15 @@ void NetlibDoClose(NetlibConnection *nlc, bool noShutdown)
 		si.sfree(nlc->hSsl);
 		nlc->hSsl = NULL;
 	}
-	closesocket(nlc->s);
+	if (nlc->s != INVALID_SOCKET) closesocket(nlc->s);
 	nlc->s = INVALID_SOCKET;
 }
 
 INT_PTR NetlibCloseHandle(WPARAM wParam, LPARAM)
 {
-	switch(GetNetlibHandleType(wParam))
-	{
+	switch(GetNetlibHandleType(wParam)) {
 		case NLH_USER:
-		{	
-			struct NetlibUser *nlu=(struct NetlibUser*)wParam;
+		{	struct NetlibUser *nlu=(struct NetlibUser*)wParam;
 			int i;
 			
 			EnterCriticalSection(&csNetlibUser);
@@ -293,6 +289,7 @@ INT_PTR NetlibCloseHandle(WPARAM wParam, LPARAM)
 				return 0;
 			}
 			nlc->handleType=0;
+			nlc->sinProxy.sin_addr.S_un.S_addr = 0;
 			mir_free(nlc->nlhpi.szHttpPostUrl);
 			mir_free(nlc->nlhpi.szHttpGetUrl);
 			mir_free(nlc->dataBuffer);
@@ -325,51 +322,27 @@ INT_PTR NetlibCloseHandle(WPARAM wParam, LPARAM)
 static INT_PTR NetlibGetSocket(WPARAM wParam, LPARAM)
 {
 	SOCKET s;
-	if (wParam == 0)
-	{
-		s = INVALID_SOCKET;
+	if(wParam==0) {
+		s=INVALID_SOCKET;
 		SetLastError(ERROR_INVALID_PARAMETER);
 	}
-	else
-	{
+	else {
 		WaitForSingleObject(hConnectionHeaderMutex,INFINITE);
-		switch (GetNetlibHandleType(wParam))
-		{
+		switch(GetNetlibHandleType(wParam)) {
 			case NLH_CONNECTION:
-				s = ((struct NetlibConnection*)wParam)->s;
+				s=((struct NetlibConnection*)wParam)->s;
 				break;
 			case NLH_BOUNDPORT:
-				s = ((struct NetlibBoundPort*)wParam)->s;
+				s=((struct NetlibBoundPort*)wParam)->s;
 				break;
 			default:
-				s = INVALID_SOCKET;
+				s=INVALID_SOCKET;
 				SetLastError(ERROR_INVALID_PARAMETER);
 				break;
 		}
 		ReleaseMutex(hConnectionHeaderMutex);
 	}
 	return s;
-}
-
-INT_PTR NetlibStringToAddressSrv(WPARAM wParam, LPARAM lParam)
-{
-	return (INT_PTR)!NetlibStringToAddress((char*)wParam, (PSOCKADDR_INET)lParam);
-}
-
-INT_PTR NetlibAddressToStringSrv(WPARAM wParam, LPARAM)
-{
-	return (INT_PTR)NetlibAddressToString((PSOCKADDR_INET)wParam);
-}
-
-INT_PTR NetlibGetConnectionInfoSrv(WPARAM wParam, LPARAM lParam)
-{
-	NetlibGetConnectionInfo((NetlibConnection*)wParam, (NETLIBCONNINFO*)lParam);
-	return 0;
-}
-
-INT_PTR NetlibGetMyIp(WPARAM, LPARAM)
-{
-	return (INT_PTR)GetMyIp();
 }
 
 INT_PTR NetlibShutdown(WPARAM wParam, LPARAM)
@@ -384,6 +357,7 @@ INT_PTR NetlibShutdown(WPARAM wParam, LPARAM)
 					if (nlc->hSsl) si.shutdown(nlc->hSsl);
 					if (nlc->s != INVALID_SOCKET) shutdown(nlc->s, 2);
 					if (nlc->s2 != INVALID_SOCKET) shutdown(nlc->s2, 2);
+					nlc->sinProxy.sin_addr.S_un.S_addr = 0;
 					nlc->termRequested = true;
 				}
 				break;
@@ -563,7 +537,7 @@ int LoadNetlibModule(void)
 
 	bModuleInitialized = TRUE;
 	
-	WSAStartup(MAKEWORD(2,2), &wsadata);
+	WSAStartup(MAKEWORD(1,1), &wsadata);
 
 	HookEvent(ME_OPT_INITIALISE,NetlibOptInitialise);
 
@@ -649,10 +623,6 @@ int LoadNetlibModule(void)
 	CreateServiceFunction(MS_NETLIB_GETMOREPACKETS,NetlibPacketRecverGetMore);
 	CreateServiceFunction(MS_NETLIB_SETPOLLINGTIMEOUT,NetlibHttpSetPollingTimeout);
 	CreateServiceFunction(MS_NETLIB_STARTSSL,NetlibStartSsl);
-	CreateServiceFunction(MS_NETLIB_STARINGTOADDRESS,NetlibStringToAddressSrv);
-	CreateServiceFunction(MS_NETLIB_ADDRESSTOSTRING,NetlibAddressToStringSrv);
-	CreateServiceFunction(MS_NETLIB_GETCONNECTIONINFO,NetlibGetConnectionInfoSrv);
-	CreateServiceFunction(MS_NETLIB_GETMYIP,NetlibGetMyIp);
 
 	hRecvEvent = CreateHookableEvent(ME_NETLIB_FASTRECV);
 	hSendEvent = CreateHookableEvent(ME_NETLIB_FASTSEND);

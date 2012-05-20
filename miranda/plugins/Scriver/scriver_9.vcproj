@@ -61,7 +61,6 @@
 				PrecompiledHeaderThrough="commonheaders.h"
 				AssemblerListingLocation=""
 				WarningLevel="3"
-				SuppressStartupBanner="true"
 				DebugInformationFormat="4"
 				DisableSpecificWarnings="4996"
 			/>
@@ -87,7 +86,6 @@
 				GenerateMapFile="false"
 				MapFileName=""
 				RandomizedBaseAddress="1"
-				DataExecutionPrevention="0"
 				ImportLibrary="$(IntDir)/$(TargetName).lib"
 				TargetMachine="1"
 			/>
@@ -156,7 +154,6 @@
 				PrecompiledHeaderThrough="commonheaders.h"
 				AssemblerListingLocation=""
 				WarningLevel="3"
-				SuppressStartupBanner="true"
 				DebugInformationFormat="3"
 				DisableSpecificWarnings="4996"
 			/>
@@ -182,7 +179,6 @@
 				GenerateMapFile="false"
 				MapFileName=""
 				RandomizedBaseAddress="1"
-				DataExecutionPrevention="0"
 				ImportLibrary="$(IntDir)/$(TargetName).lib"
 				TargetMachine="17"
 			/>
@@ -259,7 +255,6 @@
 				PrecompiledHeaderThrough="commonheaders.h"
 				AssemblerListingLocation=""
 				WarningLevel="3"
-				SuppressStartupBanner="true"
 				DebugInformationFormat="3"
 				DisableSpecificWarnings="4996"
 			/>
@@ -288,7 +283,6 @@
 				EnableCOMDATFolding="2"
 				LinkTimeCodeGeneration="1"
 				RandomizedBaseAddress="1"
-				DataExecutionPrevention="0"
 				ImportLibrary="$(IntDir)/$(TargetName).lib"
 				TargetMachine="1"
 			/>
@@ -365,7 +359,6 @@
 				PrecompiledHeaderThrough="commonheaders.h"
 				AssemblerListingLocation=""
 				WarningLevel="3"
-				SuppressStartupBanner="true"
 				DebugInformationFormat="3"
 				DisableSpecificWarnings="4996"
 			/>
@@ -394,7 +387,6 @@
 				EnableCOMDATFolding="2"
 				LinkTimeCodeGeneration="1"
 				RandomizedBaseAddress="1"
-				DataExecutionPrevention="0"
 				ImportLibrary="$(IntDir)/$(TargetName).lib"
 				TargetMachine="17"
 			/>
@@ -471,7 +463,6 @@
 				PrecompiledHeaderThrough="commonheaders.h"
 				AssemblerListingLocation=""
 				WarningLevel="3"
-				SuppressStartupBanner="true"
 				DebugInformationFormat="3"
 				DisableSpecificWarnings="4996"
 			/>
@@ -497,7 +488,6 @@
 				EnableCOMDATFolding="2"
 				LinkTimeCodeGeneration="1"
 				RandomizedBaseAddress="1"
-				DataExecutionPrevention="0"
 				ImportLibrary="$(IntDir)/$(TargetName).lib"
 				TargetMachine="1"
 			/>
@@ -574,7 +564,6 @@
 				PrecompiledHeaderThrough="commonheaders.h"
 				AssemblerListingLocation=""
 				WarningLevel="3"
-				SuppressStartupBanner="true"
 				DebugInformationFormat="3"
 				DisableSpecificWarnings="4996"
 			/>
@@ -600,7 +589,6 @@
 				EnableCOMDATFolding="2"
 				LinkTimeCodeGeneration="1"
 				RandomizedBaseAddress="1"
-				DataExecutionPrevention="0"
 				ImportLibrary="$(IntDir)/$(TargetName).lib"
 				TargetMachine="17"
 			/>
@@ -671,7 +659,6 @@
 				PrecompiledHeaderThrough="commonheaders.h"
 				AssemblerListingLocation=""
 				WarningLevel="3"
-				SuppressStartupBanner="true"
 				DebugInformationFormat="4"
 				DisableSpecificWarnings="4996"
 			/>
@@ -698,7 +685,6 @@
 				GenerateMapFile="false"
 				MapFileName=""
 				RandomizedBaseAddress="1"
-				DataExecutionPrevention="0"
 				ImportLibrary="$(IntDir)/$(TargetName).lib"
 				TargetMachine="1"
 			/>
@@ -769,7 +755,6 @@
 				PrecompiledHeaderThrough="commonheaders.h"
 				AssemblerListingLocation=""
 				WarningLevel="3"
-				SuppressStartupBanner="true"
 				DebugInformationFormat="3"
 				DisableSpecificWarnings="4996"
 			/>
@@ -796,7 +781,6 @@
 				GenerateMapFile="false"
 				MapFileName=""
 				RandomizedBaseAddress="1"
-				DataExecutionPrevention="0"
 				ImportLibrary="$(IntDir)/$(TargetName).lib"
 				TargetMachine="17"
 			/>
@@ -1714,6 +1698,10 @@
 			</File>
 			<File
 				RelativePath=".\res\ansi.ico"
+				>
+			</File>
+			<File
+				RelativePath=".\res\bing.ico"
 				>
 			</File>
 			<File
