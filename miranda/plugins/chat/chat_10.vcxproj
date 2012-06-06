@@ -186,7 +186,6 @@
     <ResourceCompile>
       <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <Culture>0x041d</Culture>
-      <AdditionalIncludeDirectories>./../../include/msapi/</AdditionalIncludeDirectories>
     </ResourceCompile>
     <Link>
       <AdditionalOptions>/DLL %(AdditionalOptions)</AdditionalOptions>
@@ -232,7 +231,6 @@
     <ResourceCompile>
       <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <Culture>0x041d</Culture>
-      <AdditionalIncludeDirectories>./../../include/msapi/</AdditionalIncludeDirectories>
     </ResourceCompile>
     <Link>
       <AdditionalOptions>/DLL %(AdditionalOptions)</AdditionalOptions>
@@ -278,7 +276,6 @@
     <ResourceCompile>
       <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <Culture>0x041d</Culture>
-      <AdditionalIncludeDirectories>./../../include/msapi/</AdditionalIncludeDirectories>
     </ResourceCompile>
     <Link>
       <AdditionalOptions>/DLL %(AdditionalOptions)</AdditionalOptions>
@@ -325,7 +322,6 @@
     <ResourceCompile>
       <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <Culture>0x041d</Culture>
-      <AdditionalIncludeDirectories>./../../include/msapi/</AdditionalIncludeDirectories>
     </ResourceCompile>
     <Link>
       <AdditionalOptions>/DLL %(AdditionalOptions)</AdditionalOptions>
@@ -377,7 +373,6 @@
     <ResourceCompile>
       <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <Culture>0x041d</Culture>
-      <AdditionalIncludeDirectories>./../../include/msapi/</AdditionalIncludeDirectories>
     </ResourceCompile>
     <Link>
       <AdditionalOptions>/DLL %(AdditionalOptions)</AdditionalOptions>
@@ -430,7 +425,6 @@
     <ResourceCompile>
       <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <Culture>0x041d</Culture>
-      <AdditionalIncludeDirectories>./../../include/msapi/</AdditionalIncludeDirectories>
     </ResourceCompile>
     <Link>
       <AdditionalOptions>/DLL %(AdditionalOptions)</AdditionalOptions>
@@ -483,7 +477,6 @@
     <ResourceCompile>
       <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <Culture>0x041d</Culture>
-      <AdditionalIncludeDirectories>./../../include/msapi/</AdditionalIncludeDirectories>
     </ResourceCompile>
     <Link>
       <AdditionalOptions>/DLL %(AdditionalOptions)</AdditionalOptions>
@@ -541,7 +534,6 @@
     <ResourceCompile>
       <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <Culture>0x041d</Culture>
-      <AdditionalIncludeDirectories>./../../include/msapi/</AdditionalIncludeDirectories>
     </ResourceCompile>
     <Link>
       <AdditionalOptions>/DLL %(AdditionalOptions)</AdditionalOptions>

@@ -42,7 +42,7 @@ PLUGININFOEX pluginInfo={
 		"Yahoo Protocol support via libyahoo2 library. [Built: "__DATE__" "__TIME__"]",
 		"Gennady Feldman",
 		"gena01@miranda-im.org",
-		"© 2003-2010 Gennady Feldman, Laurent Marechal",
+		"© 2003-2012 Gennady Feldman, Laurent Marechal",
 		"http://www.miranda-im.org",
 		UNICODE_AWARE, //not transient
 		0, //DEFMOD_PROTOCOLYAHOO - no core yahoo protocol
@@ -172,12 +172,13 @@ extern "C" int __declspec(dllexport) Unload(void)
 extern "C" __declspec(dllexport) PLUGININFOEX* MirandaPluginInfoEx(DWORD mirandaVersion)
 {
 	/*
+     * We require Miranda 0.8.0.24
 	 * This requires the latest trunk... [md5, sha, etc..]
 	 */
-    if (mirandaVersion < MIRANDA_VERSION_CORE ) {
-		MessageBoxA( NULL, 
-				"Yahoo plugin cannot be loaded. It requires Miranda IM " MIRANDA_VERSION_CORE_STRING " or later.",
-				"Yahoo",
+    if (mirandaVersion < __VERSION_DWORD) {
+		MessageBoxA( NULL,
+				"Yahoo plugin cannot be loaded. It requires Miranda IM " __VERSION_STRING " or later.",
+				"Yahoo", 
 				MB_OK|MB_ICONWARNING|MB_SETFOREGROUND|MB_TOPMOST );
 
         return NULL;

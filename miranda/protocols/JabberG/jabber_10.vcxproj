@@ -517,6 +517,7 @@
       <RandomizedBaseAddress>false</RandomizedBaseAddress>
       <TargetMachine>MachineX64</TargetMachine>
       <ImportLibrary>$(IntDir)$(TargetName).lib</ImportLibrary>
+      <OutputFile>\miranda im\plugins\$(TargetName)$(TargetExt)</OutputFile>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
