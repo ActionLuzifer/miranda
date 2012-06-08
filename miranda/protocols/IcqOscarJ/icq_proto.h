@@ -379,8 +379,6 @@ struct CIcqProto : public PROTO_INTERFACE
 
 	HANDLE HContactFromRecordName(const char *szRecordName, int *bAdded);
 
-	void   processCListReply(const char *szRecordName, WORD wGroupId, WORD wItemId, WORD wItemType, oscar_tlv_chain *pItemData);
-
 	void   icq_sendServerBeginOperation(int bImport);
 	void   icq_sendServerEndOperation();
 	void   sendRosterAck(void);

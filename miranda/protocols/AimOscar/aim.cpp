@@ -62,7 +62,7 @@ static const PLUGININFOEX pluginInfo =
 	"Provides support for AOL® Instant Messenger (AIM) protocol",
 	"Boris Krasnovskiy, Aaron Myles Landwehr",
 	"borkra@miranda-im.org",
-	"© 2008-2011 Boris Krasnovskiy, 2005-2006 Aaron Myles Landwehr",
+	"© 2008-2012 Boris Krasnovskiy, 2005-2006 Aaron Myles Landwehr",
 	"http://www.miranda-im.org",
 	UNICODE_AWARE,		//not transient
 	0,		//doesn't replace anything built-in
@@ -75,11 +75,11 @@ static const PLUGININFOEX pluginInfo =
 
 extern "C" __declspec(dllexport) const PLUGININFOEX* MirandaPluginInfoEx(DWORD mirandaVersion)
 {
-	if (mirandaVersion < MIRANDA_VERSION_CORE) 
+	if (mirandaVersion < __VERSION_DWORD) 
 	{
 		MessageBox(NULL, 
 			_T("The AIM protocol plugin cannot be loaded. It requires Miranda IM ") 
-			_T(MIRANDA_VERSION_CORE_STRING) _T(" or later."),
+			_T(__VERSION_STRING) _T(" or later."),
 			_T("Miranda"), MB_OK | MB_ICONWARNING | MB_SETFOREGROUND | MB_TOPMOST);
 		return NULL;
 	}

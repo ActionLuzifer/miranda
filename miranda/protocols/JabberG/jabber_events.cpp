@@ -2,7 +2,7 @@
 
 Jabber Protocol Plugin for Miranda IM
 Copyright ( C ) 2002-04  Santithorn Bunchua
-Copyright ( C ) 2005-11  George Hazan
+Copyright ( C ) 2005-12  George Hazan
 Copyright ( C ) 2007     Maxim Mluhov
 
 This program is free software; you can redistribute it and/or
@@ -199,7 +199,7 @@ void __cdecl CJabberProto::OnAddContactForever( DBCONTACTWRITESETTING* cws, HAND
 int __cdecl CJabberProto::OnDbSettingChanged( WPARAM wParam, LPARAM lParam )
 {
 	HANDLE hContact = ( HANDLE ) wParam;
-	if ( hContact == NULL || !m_bJabberOnline )
+	if ( !m_bJabberOnline )
 		return 0;
 
 	DBCONTACTWRITESETTING* cws = ( DBCONTACTWRITESETTING* )lParam;
