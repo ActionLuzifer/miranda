@@ -28,7 +28,6 @@ HINSTANCE g_hInst = 0;
 PLUGINLINK *pluginLink;
 CLIST_INTERFACE* pcli = NULL;
 HIMAGELIST himlCListClc = NULL;
-int hLangpack;
 
 struct MM_INTERFACE mmi;
 BOOL(WINAPI * MySetLayeredWindowAttributes) (HWND, COLORREF, BYTE, DWORD) = NULL;
@@ -67,7 +66,7 @@ PLUGININFOEX pluginInfo = {
 	"Display contacts, event notifications, protocol status",
 	"Miranda IM project",
 	"ghazan@miranda-im.org",
-	"Copyright 2000-2008 Miranda IM project",
+	"Copyright 2000-2012 Miranda IM project",
 	"http://www.miranda-im.org",
 	UNICODE_AWARE,
 	DEFMOD_CLISTALL,
@@ -80,7 +79,7 @@ PLUGININFOEX pluginInfo = {
 
 __declspec(dllexport) PLUGININFOEX *MirandaPluginInfoEx(DWORD mirandaVersion)
 {
-	if (mirandaVersion < MIRANDA_VERSION_CORE)
+	if (mirandaVersion < __VERSION_DWORD)
 		return NULL;
 	return &pluginInfo;
 }
@@ -154,7 +153,6 @@ int __declspec(dllexport) CListInitialise(PLUGINLINK * link)
 
 	// get the internal malloc/free()
 	mir_getMMI( &mmi );
-	mir_getLP( &pluginInfo );
 
 	pcli = ( CLIST_INTERFACE* )CallService(MS_CLIST_RETRIEVE_INTERFACE, 0, (LPARAM)g_hInst);
 	if ( (INT_PTR)pcli == CALLSERVICE_NOTFOUND ) {

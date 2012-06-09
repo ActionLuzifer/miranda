@@ -2264,7 +2264,7 @@ LRESULT CLUI::OnPaint( UINT msg, WPARAM wParam, LPARAM lParam )
 
 LRESULT CLUI::OnCreate( UINT msg, WPARAM wParam, LPARAM lParam )
 {
-	TranslateMenu(GetMenu(m_hWnd));
+	CallService(MS_LANGPACK_TRANSLATEMENU,(WPARAM)GetMenu(m_hWnd),0);
 	DrawMenuBar(m_hWnd);       
 	CLUIServices_ProtocolStatusChanged(0,0);
 

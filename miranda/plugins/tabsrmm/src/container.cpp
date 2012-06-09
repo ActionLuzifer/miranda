@@ -1273,7 +1273,7 @@ buttons_done:
 			TabCtrl_AdjustRect(GetDlgItem(hwndDlg, IDC_MSGTABS), FALSE, &rc);
 			/*
 			 * uChildMinHeight holds the min height for the client window only
-			 * so let's add the container's vertical padding (title bar, tab bar,
+			 * so let's add the container's vertical padding (title bar, tab bar, 
 			 * window border, status bar) to this value
 			 */
 			if(pContainer->hwndActive)

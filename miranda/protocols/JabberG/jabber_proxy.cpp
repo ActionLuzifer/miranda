@@ -2,7 +2,7 @@
 
 Jabber Protocol Plugin for Miranda IM
 Copyright ( C ) 2002-04  Santithorn Bunchua
-Copyright ( C ) 2005-11  George Hazan
+Copyright ( C ) 2005-12  George Hazan
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -100,42 +100,25 @@ int JabberHttpGatewayBegin( HANDLE /*hConn*/, NETLIBOPENCONNECTION* /*nloc*/ )
 	return 1;
 }
 
-int JabberHttpGatewayWrapSend( HANDLE hConn, PBYTE buf, int len, int flags, MIRANDASERVICE pfnNetlibSend )
+#if 0
+int icq_httpGatewayWrapSend( HANDLE hConn, PBYTE buf, int len, int flags, MIRANDASERVICE pfnNetlibSend )
 {
-	#if defined( _UNICODE )
-		TCHAR* strb = mir_utf8decodeW(( char* )buf );
-	#else
-		TCHAR* strb = ( TCHAR* )buf;
-	#endif
+	icq_packet packet;
+	int sendResult;
 
-	TCHAR sid[25] = _T("");
-	unsigned __int64 rid = 0;
-
-	XmlNode hPayLoad( strb ); 
-	XmlNode body( _T("body"));
-	HXML hBody = body << XATTRI64( _T("rid"), rid++ ) << XATTR( _T("sid"), sid ) <<
-		XATTR( _T("xmlns"), _T( "http://jabber.org/protocol/httpbind" ));
-	xmlAddChild( hBody, hPayLoad );
-
-	TCHAR* str = xi.toString( hBody, NULL );
-
-	#if defined( _UNICODE )
-		mir_free( strb );
-		char* utfStr = mir_utf8encodeT( str );
-		NETLIBBUFFER nlb = { utfStr, (int)strlen( utfStr ), flags };
-		int result = pfnNetlibSend(( WPARAM )hConn, ( LPARAM )&nlb);
-		mir_free( utfStr );
-	#else
-		NETLIBBUFFER nlb = { str, (int)strlen( str ), flags };
-		int result = pfnNetlibSend(( WPARAM )hConn, ( LPARAM )&nlb);
-	#endif
-	xi.freeMem( str );
-
-	return result;
+	packet.wLen = len;
+	write_httphdr( &packet, HTTP_PACKETTYPE_FLAP );
+	packString( &packet, buf, ( WORD )len );
+	sendResult = Netlib_Send( hConn, packet.pData, packet.wLen, flags );
+	mir_free( packet.pData );
+	if( sendResult <= 0 )
+		return sendResult;
+	if( sendResult < 14 )
+		return 0;
+	return sendResult - 14;
 }
 
-#if 0
-PBYTE JabberHttpGatewayUnwrapRecv( NETLIBHTTPREQUEST *nlhr, PBYTE buf, int len, int *outBufLen, void *( *NetlibRealloc )( void *, size_t ))
+PBYTE icq_httpGatewayUnwrapRecv( NETLIBHTTPREQUEST *nlhr, PBYTE buf, int len, int *outBufLen, void *( *NetlibRealloc )( void *, size_t ))
 {
 	WORD wLen, wType;
 	PBYTE tbuf;
