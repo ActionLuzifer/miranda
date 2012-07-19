@@ -63,7 +63,7 @@ PLUGININFOEX pluginInfo = {
 	"Provides chat rooms for protocols supporting it",
 	"Miranda team",
 	"project-info@miranda-im.org",
-	"© 2003-2010 Miranda team",
+	"© 2003-2012 Miranda team",
 	"http://miranda-im.org/",
 	UNICODE_AWARE,
 	0,
@@ -82,7 +82,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL,DWORD fdwReason,LPVOID lpvReserved)
 
 __declspec(dllexport) PLUGININFOEX* MirandaPluginInfoEx(DWORD mirandaVersion)
 {
-	if (mirandaVersion < MIRANDA_VERSION_CORE) return NULL;
+	if (mirandaVersion < __VERSION_DWORD) return NULL;
 	return &pluginInfo;
 }
 

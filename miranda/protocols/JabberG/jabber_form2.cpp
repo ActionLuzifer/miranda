@@ -2,7 +2,7 @@
 
 Jabber Protocol Plugin for Miranda IM
 Copyright ( C ) 2002-04  Santithorn Bunchua
-Copyright ( C ) 2005-11  George Hazan
+Copyright ( C ) 2005-12  George Hazan
 Copyright ( C ) 2007-09  Maxim Mluhov
 Copyright ( C ) 2007-09  Victor Pavlychko
 
@@ -1182,7 +1182,7 @@ private:
 	CCtrlJabberForm m_frm;
 };
 
-static VOID CALLBACK CreateDialogApcProc(void* param)
+static VOID CALLBACK CreateDialogApcProc(DWORD param)
 {
 	XmlNode *node = (XmlNode *)param;
 
@@ -1198,5 +1198,12 @@ static VOID CALLBACK CreateDialogApcProc(void* param)
 void LaunchForm(XmlNode *node)
 {
 	node = JabberXmlCopyNode(node);
-	CallFunctionAsync(CreateDialogApcProc, node);
+
+	if (GetCurrentThreadId() != jabberMainThreadId)
+	{
+		QueueUserAPC(CreateDialogApcProc, hMainThread, (DWORD)node);
+	} else
+	{
+		CreateDialogApcProc((DWORD)node);
+	}
 }

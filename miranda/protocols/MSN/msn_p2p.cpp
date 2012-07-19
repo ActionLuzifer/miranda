@@ -808,7 +808,7 @@ bool CMsnProto::p2p_connectTo(ThreadData* info, directconnection *dc)
 
 bool CMsnProto::p2p_listen(ThreadData* info, directconnection *dc)
 {
-	switch(WaitForSingleObject(info->hWaitEvent, 10000)) 
+	switch(WaitForSingleObject(info->hWaitEvent, 6000)) 
 	{
 	case WAIT_TIMEOUT:
 	case WAIT_FAILED:
@@ -1433,7 +1433,6 @@ void CMsnProto::p2p_InitDirectTransfer(MimeHeaders& tFileInfo, MimeHeaders& tFil
 		if (MSN_GetThreadByContact(wlid, SERVER_P2P_DIRECT))
 		{
 			p2p_sendStatus(ft, 1603);
-			p2p_unregisterDC(dc);
 			return;
 		}
 		p2p_unregisterDC(dc);
@@ -1822,18 +1821,18 @@ void CMsnProto::p2p_processSIP(ThreadData* info, char* msgbody, P2PB_Header* hdr
 
 	case 4:
 		{
-			const char* szCallID = tFileInfo["Call-ID"];
+			const char* callID = tFileInfo["Call-ID"];
 
 //			application/x-msnmsgr-session-failure-respbody
 
-			directconnection *dc = p2p_getDCByCallID(szCallID, wlid);
+			directconnection *dc = p2p_getDCByCallID(callID, wlid);
 			if (dc != NULL)
 			{
 				p2p_unregisterDC(dc);
 				break;
 			}
 
-			filetransfer* ft = p2p_getSessionByCallID(szCallID, wlid);
+			filetransfer* ft = p2p_getSessionByCallID(callID, wlid);
 			if (ft == NULL)
 				break;
 
@@ -2402,14 +2401,13 @@ void CMsnProto::p2p_sendSessionAck(filetransfer* ft)
 */
 void  CMsnProto::p2p_sessionComplete(filetransfer* ft)
 {
-	if (ft->p2p_appID != MSN_APPID_FILE)
-		p2p_unregisterSession(ft);
-	else if (ft->std.flags & PFTS_SENDING) 
+	if (ft->std.flags & PFTS_SENDING) 
 	{
 		if (ft->openNext() == -1) 
 		{
 			bool success = ft->std.currentFileNumber >= ft->std.totalFiles && ft->bCompleted;
 			SendBroadcast(ft->std.hContact, ACKTYPE_FILE, success ? ACKRESULT_SUCCESS : ACKRESULT_FAILED, ft, 0);
+			p2p_unregisterSession(ft);
 		}
 		else 
 		{

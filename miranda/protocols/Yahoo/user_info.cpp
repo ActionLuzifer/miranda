@@ -111,7 +111,7 @@ static INT_PTR CALLBACK YahooUserInfoDlgProc( HWND hwndDlg, UINT msg, WPARAM wPa
 /////////////////////////////////////////////////////////////////////////////////////////
 // OnInfoInit - initializes user info option dialogs
 
-int __cdecl CYahooProto::OnUserInfoInit( WPARAM wParam, LPARAM lParam )
+INT_PTR __cdecl CYahooProto::OnUserInfoInit( WPARAM wParam, LPARAM lParam )
 {
 	//if ( !JCallService( MS_PROTO_ISPROTOCOLLOADED, 0, ( LPARAM )m_szModuleName ))
 	//	return 0;
@@ -122,15 +122,19 @@ int __cdecl CYahooProto::OnUserInfoInit( WPARAM wParam, LPARAM lParam )
 	odp.dwInitParam = ( LPARAM )this;
 
 	HANDLE hContact = ( HANDLE )lParam;
-	if (IsMyContact(hContact))
+	if ( hContact )
 	{
-		odp.pfnDlgProc = YahooUserInfoDlgProc;
-		odp.position = -1900000000;
-		odp.pszTemplate = MAKEINTRESOURCEA( IDD_USER_INFO );
-		odp.pszTitle = m_szModuleName;
-		CallService( MS_USERINFO_ADDPAGE, wParam, ( LPARAM )&odp );
+		char* szProto = ( char* )CallService( MS_PROTO_GETCONTACTBASEPROTO, ( WPARAM ) hContact, 0 );
+		if ( szProto != NULL && !strcmp( szProto, m_szModuleName ))
+		{
+			odp.pfnDlgProc = YahooUserInfoDlgProc;
+			odp.position = -1900000000;
+			odp.pszTemplate = MAKEINTRESOURCEA( IDD_USER_INFO );
+			odp.pszTitle = m_szModuleName;
+			CallService( MS_USERINFO_ADDPAGE, wParam, ( LPARAM )&odp );
 
-	}
+		}
+	} 
 
 	return 0;
 }

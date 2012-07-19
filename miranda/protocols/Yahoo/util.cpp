@@ -203,19 +203,6 @@ DWORD CYahooProto::SetStringUtf( HANDLE hContact, const char* valueName, const c
 	return DBWriteContactSettingStringUtf( hContact, m_szModuleName, valueName, parValue );
 }
 
-char* CYahooProto::GetLoginId(HANDLE hContact)
-{ 
-	DBVARIANT dbv;
-	return GetString( hContact, YAHOO_LOGINID, &dbv) ? NULL : dbv.pszVal;
-}
-
-char* CYahooProto::GetLoginIdent(HANDLE hContact)
-{ 
-	DBVARIANT dbv;
-	return GetString( hContact, "MyIdentity", &dbv) ? NULL : dbv.pszVal;
-}
-
-
 /////////////////////////////////////////////////////////////////////////////////////////
 // Popups
 
@@ -314,7 +301,7 @@ void CYahooProto::ShowError(const char *title, const char *buff)
 			ShowNotification(title, buff, NIIF_ERROR);
 }
 
-int __cdecl CYahooProto::OnSettingChanged(WPARAM wParam, LPARAM lParam)
+INT_PTR __cdecl CYahooProto::OnSettingChanged(WPARAM wParam, LPARAM lParam)
 {
 	DBCONTACTWRITESETTING *cws = (DBCONTACTWRITESETTING *) lParam;
 
@@ -333,14 +320,6 @@ int __cdecl CYahooProto::OnSettingChanged(WPARAM wParam, LPARAM lParam)
 		}
 	}
 	return 0;
-}
-
-bool CYahooProto::IsMyContact(HANDLE hContact)
-{
-	if (!hContact) return false;
-
-	char* szProto = (char*)CallService(MS_PROTO_GETCONTACTBASEPROTO, (WPARAM)hContact, 0);
-	return szProto && !strcmp(szProto, m_szModuleName);
 }
 
 char* YAHOO_GetContactName( HANDLE hContact )

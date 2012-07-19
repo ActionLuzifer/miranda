@@ -101,8 +101,6 @@ static INT_PTR CALLBACK DlgProcYahooOpts(HWND hwndDlg, UINT msg, WPARAM wParam, 
 
 			char str[128];
 			GetDlgItemTextA( hwndDlg, IDC_HANDLE, str, sizeof( str ));
-			char *c = strstr(str, "@yahoo.com"); if (c) *c = 0;
-			
 			dbv.pszVal = NULL;
 			
 			if ( ppro->GetString( YAHOO_LOGINID, &dbv ) || lstrcmpA( str, dbv.pszVal ))
@@ -369,7 +367,7 @@ static INT_PTR CALLBACK DlgProcYahooOptsIgnore(HWND hwndDlg, UINT msg, WPARAM wP
  * YahooOptInit - initialize/register our Options w/ Miranda.
  */
 
-int __cdecl CYahooProto::OnOptionsInit(WPARAM wParam,LPARAM lParam)
+INT_PTR __cdecl CYahooProto::OnOptionsInit(WPARAM wParam,LPARAM lParam)
 {
 	OPTIONSDIALOGPAGE odp = { 0 };
 	

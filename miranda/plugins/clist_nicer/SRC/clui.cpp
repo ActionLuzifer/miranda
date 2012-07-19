@@ -26,7 +26,7 @@
  *
  * (C) 2005-2010 by silvercircle _at_ gmail _dot_ com and contributors
  *
- * $Id$
+ * $Id: clui.cpp 13551 2011-04-07 01:29:11Z borkra $
  *
  */
 
@@ -1141,7 +1141,7 @@ LRESULT CALLBACK ContactListWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM l
 			}
 			transparentFocus = 1;
 
-            TranslateMenu(GetMenu(hwnd));
+            CallService(MS_LANGPACK_TRANSLATEMENU, (WPARAM) GetMenu(hwnd), 0);
 			PostMessage(hwnd, M_CREATECLC, 0, 0);
 			return FALSE;
 		}
@@ -2056,7 +2056,7 @@ buttons_done:
 				CheckMenuItem(hMenu, ID_BUTTONBAR_NOVISUALSTYLES, MF_BYCOMMAND | ((cfg::dat.dwFlags & CLUI_FRAME_BUTTONSCLASSIC) ? MF_CHECKED : MF_UNCHECKED));
 				CheckMenuItem(hMenu, ID_BUTTONBAR_DRAWSUNKENFRAME, MF_BYCOMMAND | ((cfg::dat.dwFlags & CLUI_FRAME_BUTTONBARSUNKEN) ? MF_CHECKED : MF_UNCHECKED));
 				CheckMenuItem(hMenu, ID_BUTTONBAR_SKINNEDTOOLBAR, MF_BYCOMMAND | (cfg::dat.bSkinnedToolbar ? MF_CHECKED : MF_UNCHECKED));
-				TranslateMenu(hMenu);
+				CallService(MS_LANGPACK_TRANSLATEMENU, (WPARAM) hMenu, 0);
 
 				iSelection = TrackPopupMenu(hMenu, TPM_RETURNCMD | TPM_TOPALIGN | TPM_LEFTALIGN | TPM_RIGHTBUTTON, pt.x, pt.y, 0, hwnd, NULL);
 				if (iSelection >= 50000) {

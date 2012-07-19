@@ -9,10 +9,9 @@ typedef struct tagSYNCCALLITEM
 	HANDLE  hDoneEvent;
 	PSYNCCALLBACKPROC pfnProc;    
 } SYNCCALLITEM;
-
-static void CALLBACK _SyncCallerUserAPCProc(void* pParam)
+static void CALLBACK _SyncCallerUserAPCProc(ULONG_PTR dwParam)
 {
-	SYNCCALLITEM* item = (SYNCCALLITEM*) pParam;
+	SYNCCALLITEM* item = (SYNCCALLITEM*) dwParam;
 	item->nResult = item->pfnProc(item->wParam, item->lParam);
 	SetEvent(item->hDoneEvent);
 }
@@ -126,29 +125,37 @@ HRESULT SyncCallAPCProxy( PSYNCCALLBACKPROC pfnProc, WPARAM wParam, LPARAM lPara
 {
 	hReturn = 0;
 
-	if (pfnProc == NULL) 
+	if (g_hMainThread==NULL || pfnProc==NULL) 
 		return E_FAIL;
 
-	if (GetCurrentThreadId() != g_dwMainThreadID)
+	SYNCCALLITEM item={0};
+
+	if (GetCurrentThreadId()!=g_dwMainThreadID)
 	{
-		SYNCCALLITEM item = {0};
 		item.wParam = wParam;
 		item.lParam = lParam;
 		item.pfnProc = pfnProc;
 		item.hDoneEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
 
-		CallFunctionAsync(_SyncCallerUserAPCProc, &item);	
+		QueueUserAPC(_SyncCallerUserAPCProc, g_hMainThread, (ULONG_PTR) &item);	
+		PostMessage(pcli->hwndContactList,WM_NULL,0,0); // let this get processed in its own time
 		
 		WaitForSingleObject(item.hDoneEvent, INFINITE);
 		CloseHandle(item.hDoneEvent);
 
 		hReturn = item.nResult;
-	}
-	else
-		hReturn = pfnProc(wParam, lParam);
 
+		return S_OK;
+	}
+	/* else */
+
+	hReturn = pfnProc(wParam, lParam);
 	return S_OK;
 }
+
+
+
+
 
 LRESULT SyncOnWndProcCall( WPARAM wParam )
 {

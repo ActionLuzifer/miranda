@@ -2,7 +2,7 @@
 
 Jabber Protocol Plugin for Miranda IM
 Copyright ( C ) 2002-04  Santithorn Bunchua
-Copyright ( C ) 2005-11  George Hazan
+Copyright ( C ) 2005-12  George Hazan
 Copyright ( C ) 2007     Maxim Mluhov
 
 This program is free software; you can redistribute it and/or
@@ -392,8 +392,8 @@ static void sttFillUserInfo( CJabberProto* ppro, HWND hwndTree, JABBER_LIST_ITEM
 		item->itemResource.statusMessage ? item->itemResource.statusMessage : TranslateT( "<not specified>" ), sttInfoLineId(0, INFOLINE_LOGOFF_MSG));
 
 	// activity
-	if ( item->lastSeenResource )
-		lstrcpyn( buf, item->lastSeenResource->resourceName, SIZEOF( buf ));
+	if (( item->lastSeenResource >= 0 ) && ( item->lastSeenResource < item->resourceCount ))
+		lstrcpyn( buf, item->resource[item->lastSeenResource].resourceName, SIZEOF( buf ));
 	else
 		lstrcpyn( buf, TranslateT( "<no information available>" ), SIZEOF( buf ));
 

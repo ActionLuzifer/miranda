@@ -792,7 +792,7 @@ INT_PTR fnTrayIconProcessMessage(WPARAM wParam, LPARAM lParam)
 			POINT pt;
 			HMENU hMainMenu = LoadMenu(cli.hInst, MAKEINTRESOURCE(IDR_CONTEXT));
 			HMENU hMenu = GetSubMenu(hMainMenu, 0);
-			TranslateMenu(hMenu);
+			CallService(MS_LANGPACK_TRANSLATEMENU, (WPARAM) hMenu, 0);
 
 			ZeroMemory(&mi, sizeof(mi));
 			mi.cbSize = MENUITEMINFO_V4_SIZE;

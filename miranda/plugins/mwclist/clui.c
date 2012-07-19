@@ -562,7 +562,7 @@ LRESULT CALLBACK ContactListWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM l
 
 	switch (msg) {
 	case WM_CREATE:
-		TranslateMenu(GetMenu(hwnd));
+		CallService(MS_LANGPACK_TRANSLATEMENU,(WPARAM)GetMenu(hwnd),0);
 		DrawMenuBar(hwnd);
 		showOpts=DBGetContactSettingByte(NULL,"CLUI","SBarShow",1);		
 

@@ -220,10 +220,7 @@ void CYahooProto::logout()
 	LOG(("[yahoo_logout]"));
 
 	if (m_bLoggedIn)
-	{
-		ChatLeaveAll();
 		yahoo_logoff(m_id);
-	}
 
 	/* need to stop the server and close all the connections */
 	poll_loop = 0;
@@ -242,12 +239,22 @@ void CYahooProto::AddBuddy(HANDLE hContact, const char *group, const TCHAR *msg)
 	
 	No refresh needed. */
 	
-	who = GetLoginId(hContact);
-	if (!who) return;
+	if (!GetString(hContact, YAHOO_LOGINID, &dbv))
+	{
+		who = strdup(dbv.pszVal);
+		DBFreeVariant(&dbv);
+	}
+	else
+		return;
 
 	protocol = GetWord(hContact, "yprotoid", 0);
 	u_msg = mir_utf8encodeT(msg);
-	ident = GetLoginIdent(hContact);
+
+	if (!GetString(hContact, "MyIdentity", &dbv))
+	{
+		ident = strdup(dbv.pszVal);
+		DBFreeVariant(&dbv);
+	}
 
 	if (!GetStringUtf(NULL, "FirstName", &dbv))
 	{
@@ -268,20 +275,22 @@ void CYahooProto::AddBuddy(HANDLE hContact, const char *group, const TCHAR *msg)
 
 	free(fname);
 	free(lname);
-	mir_free(who);
-	mir_free(ident);
+	free(ident);
+	free(who);
 	mir_free(u_msg);
 }
 
 HANDLE CYahooProto::getbuddyH(const char *yahoo_id)
 {
+	char  *szProto;
 	HANDLE hContact;
 
 	for ( hContact = ( HANDLE )YAHOO_CallService( MS_DB_CONTACT_FINDFIRST, 0, 0 );
 		hContact != NULL;
 		hContact = ( HANDLE )YAHOO_CallService( MS_DB_CONTACT_FINDNEXT, ( WPARAM )hContact, 0 ))
 	{
-		if (IsMyContact(hContact))
+		szProto = ( char* )YAHOO_CallService( MS_PROTO_GETCONTACTBASEPROTO, ( WPARAM )hContact, 0 );
+		if ( szProto != NULL && !lstrcmpA( szProto, m_szModuleName ))
 		{
 			DBVARIANT dbv;
 			if (GetString(hContact, YAHOO_LOGINID, &dbv))
@@ -548,7 +557,7 @@ void CYahooProto::ext_status_logon(const char *who, int protocol, int stat, cons
 		if (cksum == 0 || cksum == -1){
 			// no avatar
 			DBWriteContactSettingDword(hContact, m_szModuleName, "PictCK", 0);
-		} else if (DBGetContactSettingDword(hContact, m_szModuleName,"PictCK", 0) != (unsigned)cksum) {
+		} else if (DBGetContactSettingDword(hContact, m_szModuleName,"PictCK", 0) != cksum) {
 			//char szFile[MAX_PATH];
 			
 			// Save new Checksum
@@ -605,6 +614,7 @@ void CYahooProto::ext_got_stealth(char *stealthlist)
 	char **s;
 	int found = 0;
 	char **stealth = NULL;
+	char  *szProto;
 	HANDLE hContact;
 
 	LOG(("[ext_got_stealth] list: %s", stealthlist));
@@ -616,7 +626,8 @@ void CYahooProto::ext_got_stealth(char *stealthlist)
 		   hContact != NULL;
 			hContact = ( HANDLE )YAHOO_CallService( MS_DB_CONTACT_FINDNEXT, ( WPARAM )hContact, 0 ))
 	{
-		if (IsMyContact(hContact)) {
+		szProto = ( char* )YAHOO_CallService( MS_PROTO_GETCONTACTBASEPROTO, ( WPARAM )hContact, 0 );
+		if ( szProto != NULL && !lstrcmpA( szProto, m_szModuleName )) {
 			DBVARIANT dbv;
 			if (GetString( hContact, YAHOO_LOGINID, &dbv))
 				continue;

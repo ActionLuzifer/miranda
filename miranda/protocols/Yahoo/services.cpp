@@ -34,7 +34,7 @@ void CYahooProto::logoff_buddies()
 	HANDLE hContact = ( HANDLE )YAHOO_CallService( MS_DB_CONTACT_FINDFIRST, 0, 0 );
 	while ( hContact != NULL ) 
 	{
-		if (IsMyContact(hContact)) {
+		if ( !lstrcmpA( m_szModuleName, ( char* )YAHOO_CallService( MS_PROTO_GETCONTACTBASEPROTO, ( WPARAM )hContact,0 ))) {
 			SetWord( hContact, "Status", ID_STATUS_OFFLINE );
 			SetDword(hContact, "IdleTS", 0);
 			SetDword(hContact, "PictLastCheck", 0);
@@ -87,7 +87,7 @@ void CYahooProto::BroadcastStatus(int s)
 //=======================================================
 //Contact deletion event
 //=======================================================
-int __cdecl CYahooProto::OnContactDeleted( WPARAM wParam, LPARAM lParam )
+INT_PTR __cdecl CYahooProto::OnContactDeleted( WPARAM wParam, LPARAM lParam )
 {
 	DBVARIANT dbv;
 	HANDLE hContact = (HANDLE) wParam;
@@ -340,7 +340,7 @@ INT_PTR __cdecl CYahooProto::OnRefreshCommand( WPARAM wParam, LPARAM lParam )
 	return 0;
 }
 
-int __cdecl CYahooProto::OnIdleEvent(WPARAM wParam, LPARAM lParam)
+INT_PTR __cdecl CYahooProto::OnIdleEvent(WPARAM wParam, LPARAM lParam)
 {
 	BOOL bIdle = (lParam & IDF_ISIDLE);
 
@@ -426,7 +426,7 @@ void CYahooProto::MenuMainInit( void )
 	mi.position = 290006;
 	mi.icolibItem = GetIconHandle( IDI_PROFILE );
 	mi.pszName = LPGEN( "&My Profile" );
-	menuItemsAll[2] = ( HGENMENU )YAHOO_CallService( MS_CLIST_ADDPROTOMENUITEM, 0, ( LPARAM )&mi );
+	menuItemsAll[2] = ( HGENMENU ) YAHOO_CallService( MS_CLIST_ADDPROTOMENUITEM, 0, ( LPARAM )&mi );
 
 	// Show Yahoo mail 
 	strcpy( tDest, YAHOO_YAHOO_MAIL );
@@ -455,15 +455,6 @@ void CYahooProto::MenuMainInit( void )
 	mi.pszName = LPGEN( "&Calendar" );
 	menuItemsAll[5] = ( HGENMENU )YAHOO_CallService( MS_CLIST_ADDPROTOMENUITEM, 0, ( LPARAM )&mi );
 
-	strcpy( tDest, "/JoinChatRoom" );
-	YCreateService("/JoinChatRoom", &CYahooProto::CreateConference);
-
-	mi.position = 290018;
-	mi.icolibItem = GetIconHandle(IDI_YAHOO);
-	mi.pszName = LPGEN("Create Conference");
-	menuItemsAll[6] = (HGENMENU)YAHOO_CallService(MS_CLIST_ADDPROTOMENUITEM, 0, (LPARAM)&mi);
-
-
 	// Show Refresh     
 	/*strcpy( tDest, YAHOO_REFRESH );
 	YCreateService( YAHOO_REFRESH, &CYahooProto::OnRefreshCommand );
@@ -471,7 +462,7 @@ void CYahooProto::MenuMainInit( void )
 	mi.position = 500090015;
 	mi.icolibItem = GetIconHandle( IDI_REFRESH );
 	mi.pszName = LPGEN( "&Refresh" );
-	menuItemsAll[7] = ( HGENMENU )YAHOO_CallService( MS_CLIST_ADDPROTOMENUITEM, 0, ( LPARAM )&mi );
+	menuItemsAll[6] = ( HGENMENU )YAHOO_CallService( MS_CLIST_ADDPROTOMENUITEM, 0, ( LPARAM )&mi );
 	*/
 }
 	
@@ -506,21 +497,23 @@ void CYahooProto::MenuUninit( void )
 	YAHOO_CallService( MS_CLIST_REMOVECONTACTMENUITEM, ( WPARAM )hShowProfileMenuItem, 0 );
 }
 
-int __cdecl CYahooProto::OnPrebuildContactMenu(WPARAM wParam, LPARAM)
+INT_PTR __cdecl CYahooProto::OnPrebuildContactMenu(WPARAM wParam, LPARAM)
 {
     const HANDLE hContact = (HANDLE)wParam;
+	char *szProto;
 	
 	CLISTMENUITEM mi = {0};
 	mi.cbSize = sizeof(mi);
 
-	if (!IsMyContact(hContact))  {
+    szProto = ( char* )YAHOO_CallService( MS_PROTO_GETCONTACTBASEPROTO, (WPARAM) hContact, 0 );
+	if ( szProto == NULL || lstrcmpA( szProto, m_szModuleName ))  {
 		DebugLog("[OnPrebuildContactMenu] Not a Yahoo Contact!!!");
 		return 0;
 	}
 
 	mi.flags = CMIM_FLAGS;
 	
-    if (GetWord(hContact, "yprotoid", 0) != 0) 
+    if (GetWord( hContact, "yprotoid", 0) != 0) 
 		mi.flags |= CMIF_HIDDEN;
 	
 	YAHOO_CallService(MS_CLIST_MODIFYMENUITEM, (WPARAM)hShowProfileMenuItem, (LPARAM)&mi);

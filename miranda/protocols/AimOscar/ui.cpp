@@ -696,7 +696,7 @@ INT_PTR CALLBACK admin_dialog(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lPar
 
 			char name[64];
 			GetDlgItemTextA(hwndDlg, IDC_FNAME, name, sizeof(name));
-			if (trim_str(name)[0] && !ppro->getString(AIM_KEY_SN, &dbv))
+			if (strlen(trim_str(name)) > 0 && !ppro->getString(AIM_KEY_SN, &dbv))
 			{
 				if (strcmp(name, dbv.pszVal))
 					ppro->aim_admin_format_name(ppro->hAdminConn,ppro->admin_seqno,name);
@@ -718,7 +718,7 @@ INT_PTR CALLBACK admin_dialog(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lPar
 			GetDlgItemTextA(hwndDlg, IDC_CPW, cpw, sizeof(cpw));
 			GetDlgItemTextA(hwndDlg, IDC_NPW1, npw1, sizeof(npw1));
 			GetDlgItemTextA(hwndDlg, IDC_NPW2, npw2, sizeof(npw2));
-			if (cpw[0] && npw1[0] && npw2[0])
+			if (strlen(cpw) > 0 && strlen(npw1) > 0 && strlen(npw2) > 0)
 			{
 				// AOL only requires that you send the current password and a (single) new password.
 				// Let's allow the client to type (two) new passwords incase they make a mistake so we
@@ -878,18 +878,15 @@ static INT_PTR CALLBACK options_dialog(HWND hwndDlg, UINT msg, WPARAM wParam, LP
 				char str[128];
 				//SN
 				GetDlgItemTextA(hwndDlg, IDC_SN, str, sizeof(str));
-				if (str[0])
+				if(strlen(str)>0)
 					ppro->setString(AIM_KEY_SN, str);
 				else
 					ppro->deleteSetting(NULL, AIM_KEY_SN);
 				//END SN
 
 				//NK
-				if (GetDlgItemTextA(hwndDlg, IDC_NK, str, sizeof(str)))
-				{
-					char *c = strstr(str, "@aol.com"); if (c) *c = 0;
+				if(GetDlgItemTextA(hwndDlg, IDC_NK, str, sizeof(str)))
 					ppro->setString(AIM_KEY_NK, str);
-				}
 				else
 				{
 					GetDlgItemTextA(hwndDlg, IDC_SN, str, sizeof(str));
@@ -899,7 +896,7 @@ static INT_PTR CALLBACK options_dialog(HWND hwndDlg, UINT msg, WPARAM wParam, LP
 
 				//PW
 				GetDlgItemTextA(hwndDlg, IDC_PW, str, sizeof(str));
-				if (str[0])
+				if(strlen(str)>0)
 				{
 					CallService(MS_DB_CRYPT_ENCODESTRING, sizeof(str), (LPARAM) str);
 					ppro->setString(AIM_KEY_PW, str);
@@ -910,7 +907,7 @@ static INT_PTR CALLBACK options_dialog(HWND hwndDlg, UINT msg, WPARAM wParam, LP
 
 				//HN
 				GetDlgItemTextA(hwndDlg, IDC_HN, str, sizeof(str));
-				if(str[0] && strcmp(str, AIM_DEFAULT_SERVER))
+				if(strlen(str)>0 && strcmp(str, AIM_DEFAULT_SERVER))
 					ppro->setString(AIM_KEY_HN, str);
 				else
 					ppro->deleteSetting(NULL, AIM_KEY_HN);
@@ -1228,7 +1225,6 @@ INT_PTR CALLBACK first_run_dialog(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM 
 
 			char str[128];
 			GetDlgItemTextA(hwndDlg, IDC_SN, str, sizeof(str));
-			char *c = strstr(str, "@aol.com"); if (c) *c = 0;
 			ppro->setString(AIM_KEY_SN, str);
 			GetDlgItemTextA(hwndDlg, IDC_PW, str, sizeof(str));
 			CallService(MS_DB_CRYPT_ENCODESTRING, sizeof(str), (LPARAM) str);
@@ -1343,7 +1339,7 @@ INT_PTR CALLBACK join_chat_dialog(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM 
 			case IDOK:
 				char room[128];
 				GetDlgItemTextA(hwndDlg, IDC_ROOM, room, sizeof(room));
-				if (ppro->state==1 && room[0])
+				if (ppro->state==1 && strlen(room) > 0)
 				{
 					chatnav_param* par = new chatnav_param(room, 4);
 					ppro->ForkThread(&CAimProto::chatnav_request_thread, par);
@@ -1545,13 +1541,13 @@ INT_PTR CALLBACK chat_request_dialog(HWND hwndDlg, UINT msg, WPARAM wParam, LPAR
 
 		WindowSetIcon(hwndDlg, "aol");
 
-		SetDlgItemTextA(hwndDlg, IDC_ROOMNAME, strrchr(param->cnp->id, '-') + 1);
+		SetDlgItemTextA(hwndDlg, IDC_ROOMNAME, strrchr(param->cnp->id, '-')+1);
 		SetDlgItemTextA(hwndDlg, IDC_SCREENNAME,  param->name);
 		SetDlgItemTextA(hwndDlg, IDC_MSG, param->message);
 		break;
 
 	case WM_CLOSE:
-		DestroyWindow(hwndDlg);
+		EndDialog(hwndDlg, 0);
 		break;
 
 	case WM_DESTROY:
@@ -1565,13 +1561,13 @@ INT_PTR CALLBACK chat_request_dialog(HWND hwndDlg, UINT msg, WPARAM wParam, LPAR
 			{
 			case IDOK:
 				param->ppro->ForkThread(&CAimProto::chatnav_request_thread, param->cnp);
-				DestroyWindow(hwndDlg);
+				EndDialog(hwndDlg, IDOK);
 				break;
 
 			case IDCANCEL:
 				param->ppro->aim_chat_deny(param->ppro->hServerConn,param->ppro->seqno,param->name,param->icbm_cookie);
 				delete param->cnp;
-				DestroyWindow(hwndDlg);
+				EndDialog(hwndDlg, IDCANCEL);
 				break;
 			}
 		}
@@ -1583,6 +1579,6 @@ INT_PTR CALLBACK chat_request_dialog(HWND hwndDlg, UINT msg, WPARAM wParam, LPAR
 
 void CALLBACK chat_request_cb(PVOID dwParam)
 {
-	CreateDialogParam(hInstance, MAKEINTRESOURCE(IDD_CHATROOM_INVITE_REQ), 
+	CreateDialogParam (hInstance, MAKEINTRESOURCE(IDD_CHATROOM_INVITE_REQ), 
 		 NULL, chat_request_dialog, (LPARAM)dwParam);
 }

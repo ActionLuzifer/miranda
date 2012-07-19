@@ -26,11 +26,11 @@
  *
  * (C) 2005-2010 by silvercircle _at_ gmail _dot_ com and contributors
  *
- * $Id$
+ * $Id: commonheaders.h 12813 2010-09-26 11:09:45Z borkra $
  *
  */
 
-#define MIRANDA_VER 0x0A00
+#define MIRANDA_VER 0x0900
 
 #define _WIN32_WINNT 0x0501
 #define _WIN32_IE 0x0501
@@ -218,3 +218,4 @@ void FreeAndNil( void** );
 #if _MSC_VER >= 1500
 	#define wEffects wReserved
 #endif
+

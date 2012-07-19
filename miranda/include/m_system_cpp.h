@@ -163,9 +163,13 @@ template<class T> struct OBJLIST : public LIST<T>
 
 	__inline int remove( T* p )
 	{
-		int i = getIndex( p );
-		if ( i > -1 ) {	
-			remove(i);
+		#if defined( _STATIC )
+		if ( li.List_RemovePtr(( SortedList* )this, p ) != -1 )
+		#else
+		if ( li.List_RemovePtr(( SortedList* )this, p ) != -1 )
+		#endif
+		{
+			delete p;
 			return 1;
 		}
 		return 0;

@@ -2,7 +2,7 @@
 
 Jabber Protocol Plugin for Miranda IM
 Copyright ( C ) 2002-04  Santithorn Bunchua
-Copyright ( C ) 2005-11  George Hazan
+Copyright ( C ) 2005-12  George Hazan
 Copyright ( C ) 2007     Maxim Mluhov
 
 This program is free software; you can redistribute it and/or
@@ -153,10 +153,15 @@ JABBER_LIST_ITEM *CJabberProto::ListAdd( JABBER_LIST list, const TCHAR* jid )
 			bUseResource=TRUE;
 		}
 	}
-	item = ( JABBER_LIST_ITEM* )mir_calloc( sizeof( JABBER_LIST_ITEM ));
+	item = ( JABBER_LIST_ITEM* )mir_alloc( sizeof( JABBER_LIST_ITEM ));
+	ZeroMemory( item, sizeof( JABBER_LIST_ITEM ));
 	item->list = list;
 	item->jid = s;
 	item->itemResource.status = ID_STATUS_OFFLINE;
+	item->resource = NULL;
+	item->resourceMode = RSMODE_LASTSEEN;
+	item->lastSeenResource = -1;
+	item->manualResource = -1;
 	item->bUseResource = bUseResource;
 
 	m_lstRoster.insert( item );
@@ -304,17 +309,19 @@ void CJabberProto::ListRemoveResource( JABBER_LIST list, const TCHAR* jid )
 			}
 			if ( j < LI->resourceCount ) {
 				// Found last seen resource ID to be removed
-				if ( LI->lastSeenResource == r )
-					LI->lastSeenResource = NULL;
-
+				if ( LI->lastSeenResource == j )
+					LI->lastSeenResource = -1;
+				else if ( LI->lastSeenResource > j )
+					LI->lastSeenResource--;
 				// update manually selected resource ID
 				if (LI->resourceMode == RSMODE_MANUAL)
 				{
-					if ( LI->manualResource == r )
+					if ( LI->manualResource == j )
 					{
-						LI->resourceMode = RSMODE_SERVER;
-						LI->manualResource = NULL;
-					} 
+						LI->resourceMode = RSMODE_LASTSEEN;
+						LI->manualResource = -1;
+					} else if ( LI->manualResource > j )
+						LI->manualResource--;
 				}
 
 				// Update MirVer due to possible resource changes
@@ -349,19 +356,25 @@ TCHAR* CJabberProto::ListGetBestResourceNamePtr( const TCHAR* jid )
 
 	JABBER_LIST_ITEM* LI = m_lstRoster[i-1];
 	if ( LI->resourceCount > 1 ) {
-		if (LI->resourceMode == RSMODE_MANUAL && LI->manualResource )
-			res = LI->manualResource->resourceName;
+		if ( LI->resourceMode == RSMODE_LASTSEEN && LI->lastSeenResource>=0 && LI->lastSeenResource < LI->resourceCount )
+			res = LI->resource[ LI->lastSeenResource ].resourceName;
+		else if (LI->resourceMode == RSMODE_MANUAL && LI->manualResource>=0 && LI->manualResource < LI->resourceCount )
+			res = LI->resource[ LI->manualResource ].resourceName;
 		else {
-			for ( int j = 0; j < LI->resourceCount; j++ ) {
-				if ( LI->resource[ j ].uMessageSessionActive + 120 > time( NULL )) {
-					res = LI->resource[ j ].resourceName;
-					break;
+			int nBestPos = -1, nBestPri = -200, j;
+			for ( j = 0; j < LI->resourceCount; j++ ) {
+				if ( LI->resource[ j ].priority > nBestPri ) {
+					nBestPri = LI->resource[ j ].priority;
+					nBestPos = j;
 				}
-				else
-					LI->resource[ j ].uMessageSessionActive = 0;
 			}
+			if ( nBestPos != -1 )
+				res = LI->resource[ nBestPos ].resourceName;
 		}
 	}
+
+	if ( !res && LI->resource)
+		res = LI->resource[0].resourceName;
 
 	LeaveCriticalSection( &m_csLists );
 	return res;
@@ -378,7 +391,6 @@ TCHAR* CJabberProto::ListGetBestClientResourceNamePtr( const TCHAR* jid )
 
 	JABBER_LIST_ITEM* LI = m_lstRoster[i-1];
 	TCHAR* res = ListGetBestResourceNamePtr( jid );
-	if ( res == NULL ) res = LI->lastSeenResource->resourceName;
 	if ( res == NULL ) {
 		JABBER_RESOURCE_STATUS* r = LI->resource;
 		int status = ID_STATUS_OFFLINE;

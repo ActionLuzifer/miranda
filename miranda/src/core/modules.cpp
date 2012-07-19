@@ -2,7 +2,7 @@
 
 Miranda IM: the free IM client for Microsoft* Windows*
 
-Copyright 2000-2012 Miranda ICQ/IM project,
+Copyright 2000-2009 Miranda ICQ/IM project,
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
 
@@ -393,7 +393,7 @@ static int checkHook( HANDLE hHook )
 	return 0;
 }
 
-static void CALLBACK HookToMainAPCFunc(void* dwParam)
+static void CALLBACK HookToMainAPCFunc(ULONG_PTR dwParam)
 {
 	THookToMainThreadItem* item = ( THookToMainThreadItem* )dwParam;
 
@@ -406,6 +406,8 @@ static void CALLBACK HookToMainAPCFunc(void* dwParam)
 
 int NotifyEventHooks( HANDLE hEvent, WPARAM wParam, LPARAM lParam )
 {
+	extern HWND hAPCWindow;
+
 	if ( GetCurrentThreadId() != mainThreadId ) {
 		THookToMainThreadItem item;
 
@@ -414,7 +416,8 @@ int NotifyEventHooks( HANDLE hEvent, WPARAM wParam, LPARAM lParam )
 		item.wParam = wParam;
 		item.lParam = lParam;
 
-		CallMainThread(HookToMainAPCFunc, &item);
+		QueueUserAPC( HookToMainAPCFunc, hMainThread, ( ULONG_PTR )&item );
+		PostMessage( hAPCWindow, WM_NULL, 0, 0 ); // let it process APC even if we're in a common dialog
 		WaitForSingleObject( item.hDoneEvent, INFINITE );
 		CloseHandle( item.hDoneEvent );
 		return item.result;
@@ -712,27 +715,29 @@ INT_PTR CallService(const char *name,WPARAM wParam,LPARAM lParam)
 		default: return pfnService(wParam,lParam);
 }	}
 
-static void CALLBACK CallServiceToMainAPCFunc(void* pParam)
+static void CALLBACK CallServiceToMainAPCFunc(ULONG_PTR dwParam)
 {
-	TServiceToMainThreadItem *item = (TServiceToMainThreadItem*) pParam;
+	TServiceToMainThreadItem *item = (TServiceToMainThreadItem*) dwParam;
 	item->result = CallService(item->name, item->wParam, item->lParam);
 	SetEvent(item->hDoneEvent);
 }
 
 INT_PTR CallServiceSync(const char *name, WPARAM wParam, LPARAM lParam)
 {
-	if (name == NULL) return CALLSERVICE_NOTFOUND;
+	extern HWND hAPCWindow;
+
+	if (name==NULL) return CALLSERVICE_NOTFOUND;
 	// the service is looked up within the main thread, since the time it takes
 	// for the APC queue to clear the service being called maybe removed.
 	// even thou it may exists before the call, the critsec can't be locked between calls.
-	if (GetCurrentThreadId() != mainThreadId)
-	{
+	if (GetCurrentThreadId() != mainThreadId) {
 		TServiceToMainThreadItem item;
 		item.wParam = wParam;
 		item.lParam = lParam;
 		item.name = name;
 		item.hDoneEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
-		CallMainThread(CallServiceToMainAPCFunc, &item);
+		QueueUserAPC(CallServiceToMainAPCFunc, hMainThread, (ULONG_PTR) &item);
+		PostMessage(hAPCWindow,WM_NULL,0,0); // let this get processed in its own time
 		WaitForSingleObject(item.hDoneEvent, INFINITE);
 		CloseHandle(item.hDoneEvent);
 		return item.result;
@@ -743,8 +748,10 @@ INT_PTR CallServiceSync(const char *name, WPARAM wParam, LPARAM lParam)
 
 int CallFunctionAsync( void (__stdcall *func)(void *), void *arg)
 {
-	CallMainThread(func, arg);
-	return 0;
+	extern HWND hAPCWindow;
+	int r = QueueUserAPC(( void (__stdcall *)( ULONG_PTR ))func, hMainThread, ( ULONG_PTR )arg );
+	PostMessage(hAPCWindow,WM_NULL,0,0);
+	return r;
 }
 
 void KillModuleServices( HINSTANCE hInst )

@@ -150,7 +150,7 @@ void CGlobals::reloadSystemStartup()
 	dwThreadID = 						GetCurrentThreadId();
 
 	PluginConfig.g_hMenuContext = 		LoadMenu(g_hInst, MAKEINTRESOURCE(IDR_TABCONTEXT));
-	TranslateMenu(g_hMenuContext);
+	CallService(MS_LANGPACK_TRANSLATEMENU, (WPARAM)g_hMenuContext, 0);
 
 	SkinAddNewSoundEx("RecvMsgActive", "Instant messages", "Incoming (Focused Window)");
 	SkinAddNewSoundEx("RecvMsgInactive", "Instant messages", "Incoming (Unfocused Window)");
@@ -315,7 +315,7 @@ void CGlobals::reloadSettings(bool fReloadSkins)
 	m_FlashOnMTN = 						M->GetByte(SRMSGMOD, SRMSGSET_SHOWTYPINGWINFLASH, SRMSGDEFSET_SHOWTYPINGWINFLASH);
 	if(m_MenuBar == 0) {
 		m_MenuBar = ::LoadMenu(g_hInst, MAKEINTRESOURCE(IDR_MENUBAR));
-		TranslateMenu(m_MenuBar);
+		CallService(MS_LANGPACK_TRANSLATEMENU, WPARAM(m_MenuBar), 0);
 	}
 
 	m_ipBackgroundGradient = 			M->GetDword(FONTMODULE, "ipfieldsbg", 0x62caff);
@@ -364,7 +364,7 @@ const HMENU CGlobals::getMenuBar()
 {
 	if(m_MenuBar == 0) {
 		m_MenuBar = ::LoadMenu(g_hInst, MAKEINTRESOURCE(IDR_MENUBAR));
-		TranslateMenu(m_MenuBar);
+		CallService(MS_LANGPACK_TRANSLATEMENU, WPARAM(m_MenuBar), 0);
 	}
 	return(m_MenuBar);
 }
@@ -555,11 +555,6 @@ int CGlobals::DBSettingChanged(WPARAM wParam, LPARAM lParam)
 		}
 		else if (!strcmp(setting, "MirVer"))
 			PostMessage(hwnd, DM_CLIENTCHANGED, 0, 0);
-		else if (!strcmp(setting, "display_uid")) {
-			if(c)
-				c->updateUIN();
-			PostMessage(hwnd, DM_UPDATEUIN, 0, 0);
-		}
 		else if(lstrlenA(setting) > 6 && strstr("StatusMsg,XStatusMsg,XStatusName,XStatusId,ListeningTo", setting)) {
 			if(c) {
 				c->updateStatusMsg(setting);

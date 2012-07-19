@@ -19,12 +19,12 @@
 #include "im.h"
 #include "ignore.h"
 
-void CYahooProto::send_msg(const char *id, const char* from, int protocol, const char *msg, int utf8)
+void CYahooProto::send_msg(const char *id, int protocol, const char *msg, int utf8)
 {
 	LOG(("[send_msg] Who: %s: protocol: %d Msg: '%s', utf: %d", id, protocol, msg, utf8));
 	
 	int buddy_icon = (GetDword("AvatarHash", 0) != 0) ? 2: 0;
-	yahoo_send_im(m_id, from, id, protocol, msg, utf8, buddy_icon);
+	yahoo_send_im(m_id, NULL, id, protocol, msg, utf8, buddy_icon);
 }
 
 void CYahooProto::ext_got_im(const char *me, const char *who, int protocol, const char *msg, 
@@ -186,7 +186,8 @@ void __cdecl CYahooProto::im_sendackfail_longmsg(HANDLE hContact)
 
 int __cdecl CYahooProto::SendMsg( HANDLE hContact, int flags, const char* pszSrc )
 {
-	char *msg, *ident, *who;
+	DBVARIANT dbv;
+	char *msg;
 	int  bANSI;
 
 	bANSI = 0;/*GetByte( "DisableUTF8", 0 );*/
@@ -212,19 +213,15 @@ int __cdecl CYahooProto::SendMsg( HANDLE hContact, int flags, const char* pszSrc
 		return 1;
 	}
 
-	who = GetLoginId(hContact);
-	if (who) {
-		ident = GetLoginIdent(hContact);
-
-		send_msg(who, ident, GetWord( hContact, "yprotoid", 0), msg, !bANSI);
+	if (!GetString( hContact, YAHOO_LOGINID, &dbv)) {
+		send_msg(dbv.pszVal, GetWord( hContact, "yprotoid", 0), msg, (!bANSI) ? 1 : 0);
 
 		if (!bANSI)
 			mir_free(msg);
 
 		YForkThread( &CYahooProto::im_sendacksuccess, hContact );
 
-		mir_free(ident);
-		mir_free(who);
+		DBFreeVariant(&dbv);
 		return 1;
 	}
 
@@ -264,12 +261,10 @@ INT_PTR __cdecl CYahooProto::SendNudge(WPARAM wParam, LPARAM lParam)
 		return 1;
 	}
 
-	char* who = GetLoginId(hContact);
-	if (who) {
-		char* ident = GetLoginIdent(hContact);
-		send_msg(who, ident, GetWord(hContact, "yprotoid", 0), "<ding>", 0);
-		mir_free(ident);
-		mir_free(who);
+	DBVARIANT dbv;
+	if (!GetString(hContact, YAHOO_LOGINID, &dbv)) {
+		send_msg(dbv.pszVal, GetWord(hContact, "yprotoid", 0), "<ding>", 0);
+		DBFreeVariant(&dbv);
 
 		YForkThread( &CYahooProto::im_sendacksuccess, hContact );
 		return 1;

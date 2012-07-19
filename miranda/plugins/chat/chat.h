@@ -21,7 +21,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifndef _CHAT_H_
 #define _CHAT_H_
 
-#define MIRANDA_VER 0x1000
+#define MIRANDA_VER 0x0900
 
 //#pragma warning( disable : 4786 ) // limitation in MSVC's debugger.
 //#pragma warning( disable : 4996 ) // limitation in MSVC's debugger.
@@ -431,7 +431,7 @@ void          SetActiveSession(const TCHAR* pszID, const char* pszModule);
 void          SetActiveSessionEx(SESSION_INFO* si);
 SESSION_INFO* GetActiveSession(void);
 SESSION_INFO* SM_AddSession(const TCHAR* pszID, const char* pszModule);
-int           SM_RemoveSession(const TCHAR* pszID, const char* pszModule, BOOL removeContact);
+int           SM_RemoveSession(const TCHAR* pszID, const char* pszModule);
 SESSION_INFO* SM_FindSession(const TCHAR* pszID, const char* pszModule);
 USERINFO*     SM_AddUser(const TCHAR* pszID, const char* pszModule, const TCHAR* pszUID, const TCHAR* pszNick, WORD wStatus);
 BOOL          SM_ChangeUID(const TCHAR* pszID, const char* pszModule, const TCHAR* pszUID, const TCHAR* pszNewUID);

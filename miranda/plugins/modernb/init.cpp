@@ -120,6 +120,7 @@ PLUGININTERFACE int CListInitialise(PLUGINLINK * link)
 		fnGetAncestor = MyGetAncestor;
 
 	g_dwMainThreadID = GetCurrentThreadId();
+	DuplicateHandle(GetCurrentProcess(),GetCurrentThread(),GetCurrentProcess(),&g_hMainThread,0,FALSE,DUPLICATE_SAME_ACCESS);
 
 	mir_getMMI(&mmi);
 	mir_getUTFI(&utfi);
